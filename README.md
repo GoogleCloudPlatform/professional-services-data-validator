@@ -7,11 +7,32 @@ The goal of this tool is to allow easy comparison and validation between differe
 	- Stretch: Random sampling of data matches between source and destination
 
 
-## Example
+## Source Configuration
+Every source type requires its own configuration for connectivity.  Below is an example of the expected configuration for each source type.
 
-client = example_client.ExampleClient()
+### BigQuery
+{
+    "source_type": "BigQuery",
+    "project_id": os.environ["PROJECT_ID"],
+    "schema_name": "bigquery-public-data.new_york_citibike",
+    "table_name": "citibike_trips"
+}
+
+## Example of Comparing BigQuery to BigQuery
+```
+from data_validation import data_validation
+from data_validation.data_sources import data_client, example_client, bigquery
+from data_validation.query_builder import query_builder
+
+inp_config = {"source_type": "BigQuery",
+              "project_id": os.environ["PROJECT_ID"],
+              "schema_name": "bigquery-public-data.new_york_citibike",
+              "table_name": "citibike_trips"}
+out_config = {"source_type": "BigQuery",
+              "project_id": os.environ["PROJECT_ID"],
+              "schema_name": "bigquery-public-data.new_york_citibike",
+              "table_name": "citibike_trips"}
+
 builder = query_builder.QueryBuilder.build_count_validator()
-
-query = builder.render_query(client, "schema_name", "table_name", partition_column=None, partition_column_type=None)
-print(query)
-TODO more
+data_validation.process_data(builder, inp_config, out_config)
+```
