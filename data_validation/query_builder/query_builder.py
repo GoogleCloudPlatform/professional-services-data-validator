@@ -9,7 +9,7 @@ class QueryBuilder(object):
 {groups}
     """
 
-    def __init__(self, query_fields, filters=None, grouped_fields=None):
+    def __init__(self, query_fields, filters, grouped_fields):
         """ Build a QueryBuilder object which can be used to build queries easily
 
             :param query_fields: Fields to query in body
@@ -24,8 +24,8 @@ class QueryBuilder(object):
     @staticmethod
     def build_count_validator():
         query_fields = ["{count_star}"]
-        filters = None
-        grouped_fields = None
+        filters = []
+        grouped_fields = []
 
         return QueryBuilder(query_fields, filters=filters, grouped_fields=grouped_fields)
 
@@ -74,4 +74,15 @@ class QueryBuilder(object):
             return ",".join(self.grouped_fields)
 
         return ""
+
+    def add_query_field(self, query_field):
+        self.query_fields.append(query_field)
+
+    def add_filter_field(self, filter_obj):
+        """ Add a filter object to your query
+
+            :param filter_obj: A dictionary object with filter field attrs  
+                Each dict: {"type": "(DATE|INT|OTHER)", "column": "...", "value": 0, "comparison": ">="}
+        """
+        self.filters.append(filter_obj)
 
