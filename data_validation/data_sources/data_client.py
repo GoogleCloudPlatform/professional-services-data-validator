@@ -53,7 +53,7 @@ class DataClient(ABC):
         return self.COUNT_STAR.format(q=self.DEFAULT_QUOTE, name=name)
 
     def __del__(self):
-        if self.is_connected(self.conn) and hasattr("close", self.conn):
+        if self.is_connected(self.conn) and hasattr(self.conn, "close"):
             self.conn.close()
 
     def _query(self, sql):
