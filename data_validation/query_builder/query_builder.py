@@ -1,3 +1,4 @@
+from data_validation import consts
 
 class QueryBuilder(object):
 
@@ -29,6 +30,14 @@ class QueryBuilder(object):
 
         return QueryBuilder(query_fields, filters=filters, grouped_fields=grouped_fields)
 
+    @staticmethod
+    def build_partition_count_validator():
+        query_fields = ["{partition_column_sql}", "{count_star}"]
+        filters = []
+        grouped_fields = ["{grouped_column_sql}"]
+
+        return QueryBuilder(query_fields, filters=filters, grouped_fields=grouped_fields)
+
     def render_query(self, data_client, schema_name, table_name, partition_column=None, partition_column_type=None):
         sql_template = self._render_query_template(data_client)
 
@@ -39,7 +48,8 @@ class QueryBuilder(object):
             "table_name": table_name,
         }
         if partition_column and partition_column_type:
-            sql_formatting["partition_column"] = data_client.get_partition_column_sql(partition_column, partition_column_type)
+            sql_formatting[consts.PARTITION_COLUMN_SQL] = data_client.get_partition_column_sql(partition_column, partition_column_type)
+            sql_formatting[consts.GROUP_COLUMN_SQL] = data_client.get_group_column_sql(partition_column, partition_column_type)
 
         sql_query = sql_template.format(**sql_formatting)
         return sql_query
@@ -67,13 +77,13 @@ class QueryBuilder(object):
         for filter_obj in self.filters:
             data_client.get_filter_template(filter_obj)
 
-        return data_client.get_where() + data_client.get_filter_joiner.join(filter_templates)
+        return data_client.get_where() + " " + data_client.get_filter_joiner.join(filter_templates)
 
     def _render_groups(self, data_client):
-        if self.grouped_fields:
-            return ",".join(self.grouped_fields)
+        if not self.grouped_fields:
+            return ""
 
-        return ""
+        return data_client.get_group() + " " + ",".join(self.grouped_fields)
 
     def add_query_field(self, query_field):
         self.query_fields.append(query_field)

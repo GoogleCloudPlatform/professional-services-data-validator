@@ -2,7 +2,7 @@
 
 # from nose.tools import assert_equals, assert_true
 
-from data_validation import data_validation
+from data_validation import data_validation, consts
 from data_validation.data_sources import data_client, example_client, bigquery
 from data_validation.query_builder import query_builder
 
@@ -35,16 +35,36 @@ def test_example_client_count_validator():
 
 
 # def test_example_client_count_validator():
-inp_config = {"source_type": "BigQuery",
-              "project_id": os.environ["PROJECT_ID"],
-              "schema_name": "bigquery-public-data.new_york_citibike",
-              "table_name": "citibike_trips"}
-out_config = {"source_type": "BigQuery",
-              "project_id": os.environ["PROJECT_ID"],
-              "schema_name": "bigquery-public-data.new_york_citibike",
-              "table_name": "citibike_trips"}
+inp_config = {
+    # Configuration Required for All Data Soures
+    "source_type": "BigQuery",
 
-builder = query_builder.QueryBuilder.build_count_validator()
+    # BigQuery Specific Connection Config
+    "project_id": os.environ["PROJECT_ID"],
+
+    # Configuration Required Depending on Validator Type
+    "schema_name": "bigquery-public-data.new_york_citibike",
+    "table_name": "citibike_trips",
+    consts.PARTITION_COLUMN: "starttime",
+    consts.PARTITION_COLUMN_TYPE: "DATE",
+}
+out_config = {
+    # Configuration Required for All Data Soures
+    "source_type": "BigQuery",
+
+    # BigQuery Specific Connection Config
+    "project_id": os.environ["PROJECT_ID"],
+
+    # Configuration Required Depending on Validator Type
+    "schema_name": "bigquery-public-data.new_york_citibike",
+    "table_name": "citibike_trips",
+    consts.PARTITION_COLUMN: "starttime",
+    consts.PARTITION_COLUMN_TYPE: "DATE",
+}
+
+builder = query_builder.QueryBuilder.build_partition_count_validator()
 data_validation.process_data(builder, inp_config, out_config)
 
-
+# TODO This will error out due to partition column being submitted.... shoulld this case be handle gracefully or error out
+# builder = query_builder.QueryBuilder.build_count_validator()
+# data_validation.process_data(builder, inp_config, out_config)

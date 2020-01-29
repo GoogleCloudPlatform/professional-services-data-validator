@@ -1,6 +1,8 @@
 import pandas
 from abc import ABC, abstractmethod
 
+from data_validation import consts
+
 
 class DataClient(ABC):
 
@@ -14,11 +16,13 @@ class DataClient(ABC):
     SELECT = "SELECT"
     FROM = "FROM"
     WHERE = "WHERE"
+    GROUP_BY = "GROUP BY"
     FILTER_JOINER = " AND "
     COUNT_STAR = "COUNT(*) {q}{name}{q}"
     TABLE_OBJECT = "{q}{schema_name}{q}.{q}{table_name}{q}"
-    DATE_COLUMN = "DATE({q}{partition_column}{q}) {q}partition_column{q}"
-    INT_COLUMN = ""
+    DATE_COLUMN_CAST = "DATE({q}{partition_column}{q})"
+    PARTITION_COLUMN_NAME = " {q}{partition_key}{q}"
+    INT_COLUMN_CAST = "INTEGER({partition_key}/{partition_size})*{partition_size}"
 
     def __init__(self, **config):
         self.config = config
@@ -29,6 +33,9 @@ class DataClient(ABC):
 
     def get_where(self):
         return self.WHERE
+
+    def get_group(self):
+        return self.GROUP_BY
 
     def get_filter_joiner(self):
         return self.FILTER_JOINER
@@ -41,13 +48,32 @@ class DataClient(ABC):
         """
         return ""
 
-    def get_partition_column_sql(self, partition_column, partition_column_type):
+    def get_partition_column_sql(self, partition_column, partition_column_type, partition_size=None):
+        partition_column_name = self.PARTITION_COLUMN_NAME.format(q=self.DEFAULT_QUOTE,
+                                                                  partition_key=consts.DEFAULT_PARTITION_KEY)
         if partition_column_type == "DATE":
-            return self.DATE_COLUMN.format(q=self.DEFAULT_QUOTE, partition_column=partition_column)
+            date_column_cast = self.get_date_column_cast(partition_column)
+            return date_column_cast + partition_column_name
         elif partition_column_type == "INT":
-            return self.INT_COLUMN.format(q=self.DEFAULT_QUOTE, partition_column=partition_column)
+            int_column_cast = self.get_int_column_cast(partition_column, partition_size)
+            return int_column_cast + partition_column_name
         else:
             raise Exception("Unsupported Partition Column Type: {}".format(partition_column_type))
+
+    def get_group_column_sql(self, partition_column, partition_column_type, partition_size=None):
+        if partition_column_type == "DATE":
+            return self.get_date_column_cast(partition_column)
+        elif partition_column_type == "INT":
+            return self.get_int_column_cast(partition_column, partition_size)
+        else:
+            raise Exception("Unsupported Partition Column Type: {}".format(partition_column_type))
+
+    def get_date_column_cast(self, partition_column):
+        return self.DATE_COLUMN_CAST.format(q=self.DEFAULT_QUOTE, partition_column=partition_column)
+
+    def get_int_column_cast(self, partition_column, partition_size):
+        return self.INT_COLUMN_CAST.format(q=self.DEFAULT_QUOTE, partition_column=partition_column,
+                                           partition_size=partition_size)
 
     def get_count_star(self, name="rows"):
         return self.COUNT_STAR.format(q=self.DEFAULT_QUOTE, name=name)
