@@ -25,7 +25,7 @@ def process_data(builder, inp_config, out_config):
     out_results = out_client.read_sql(out_query)
 
     df = combine_data(inp_results, out_results)
-    print(df)
+    store_results(df)
 
 def combine_data(inp_results, out_results):
     """ Return List of Dictionaries """
@@ -46,3 +46,7 @@ def _clean_raw_data(results):
         df_results[consts.DEFAULT_PARTITION_KEY] = consts.DEFAULT_PARTITION_KEY
 
     return df_results
+
+def store_results(df):
+    """ Store Results of Data Validation """
+    print(df.to_string(index=False))
