@@ -4,12 +4,14 @@ import pandas
 import ibis
 
 from ibis.bigquery.client import BigQueryClient
+from ibis.sql.mysql.client import MySQLClient
 
 from data_validation import consts
 from data_validation.query_builder import query_builder
 
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
+    "MySQL": MySQLClient,
 }
 def process_data(builder, inp_config, out_config, verbose=False):
     inp_client = CLIENT_LOOKUP[inp_config[consts.SOURCE_TYPE]](**inp_config[consts.CONFIG])
