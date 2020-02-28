@@ -11,19 +11,22 @@ from data_validation.query_builder import query_builder
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
 }
-def process_data(builder, inp_config, out_config, verbose=True):
+def process_data(builder, inp_config, out_config, verbose=False):
     inp_client = CLIENT_LOOKUP[inp_config[consts.SOURCE_TYPE]](**inp_config[consts.CONFIG])
     out_client = CLIENT_LOOKUP[out_config[consts.SOURCE_TYPE]](**out_config[consts.CONFIG])
 
     inp_query = builder.compile(inp_client, inp_config[consts.SCHEMA_NAME], inp_config[consts.TABLE_NAME],
-                                     partition_column=inp_config.get(consts.PARTITION_COLUMN),
-                                     partition_column_type=inp_config.get(consts.PARTITION_COLUMN_TYPE))
+                                     partition_column=inp_config.get(consts.PARTITION_COLUMN))
     out_query = builder.compile(out_client, out_config[consts.SCHEMA_NAME], out_config[consts.TABLE_NAME],
-                                     partition_column=inp_config.get(consts.PARTITION_COLUMN),
-                                     partition_column_type=inp_config.get(consts.PARTITION_COLUMN_TYPE))
+                                     partition_column=inp_config.get(consts.PARTITION_COLUMN))
 
     # Return Query Results in Dataframe from Ibis
-    # 
+    if verbose:
+        print("-- ** Input Query ** --")
+        print(inp_query.compile())
+        print("-- ** Output Query ** --")
+        print(out_query.compile())
+
     inp_df = inp_client.execute(inp_query)
     out_df = out_client.execute(out_query)
 

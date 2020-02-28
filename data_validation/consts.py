@@ -5,7 +5,6 @@ CONFIG = "config"
 SCHEMA_NAME = "schema_name"
 TABLE_NAME = "table_name"
 PARTITION_COLUMN = "partition_column"
-PARTITION_COLUMN_TYPE = "partition_column_type"
 
 # Configurations Used in SQL Generation
 DEFAULT_PARTITION_KEY = "partition_key"
