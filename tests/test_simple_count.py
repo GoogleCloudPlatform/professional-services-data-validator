@@ -33,7 +33,6 @@ inp_config = {
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
     consts.PARTITION_COLUMN: "starttime",
-    consts.PARTITION_COLUMN_TYPE: "DATE",
 }
 out_config = {
     # Configuration Required for All Data Soures
@@ -46,16 +45,17 @@ out_config = {
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
     consts.PARTITION_COLUMN: "starttime",
-    consts.PARTITION_COLUMN_TYPE: "DATE",
 }
 
-builder = query_builder.QueryBuilder.build_partition_count_validator(limit=10)
-data_validation.process_data(builder, inp_config, out_config)
+print("****** Partitioned Count Comparison ********")
+builder = query_builder.QueryBuilder.build_partition_count_validator(days_past=700, limit=100)
+data_validation.process_data(builder, inp_config, out_config, verbose=False)
 
 
 # TODO This will error out due to partition column being submitted.... shoulld this case be handle gracefully or error out
-# builder = query_builder.QueryBuilder.build_count_validator()
-# data_validation.process_data(builder, inp_config, out_config)
+print("****** Simple Count Comparison ********")
+builder = query_builder.QueryBuilder.build_count_validator()
+data_validation.process_data(builder, inp_config, out_config, verbose=False)
 
 
 
