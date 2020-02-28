@@ -1,6 +1,7 @@
 
 # Generic Config Used in Submission
 SOURCE_TYPE = "source_type"
+CONFIG = "config"
 SCHEMA_NAME = "schema_name"
 TABLE_NAME = "table_name"
 PARTITION_COLUMN = "partition_column"

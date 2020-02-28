@@ -1,90 +1,117 @@
+import ibis
 from data_validation import consts
+
+class AggregateField(object):
+
+    def __init__(self, ibis_expr, field_name=None, name=None):
+        """
+            field_name: A field to act on in the table.  Table level expr do not have a field name
+        """
+        self.expr = ibis_expr
+        self.field_name = field_name
+        self.name = name
+
+        print("USING IBIS")
+
+    @staticmethod
+    def count(name=None):
+        return AggregateField(ibis.expr.types.ColumnExpr.count, field_name=None, name=name)
+
+    def compile(self, ibis_table):
+        if self.field_name:
+            agg_field = self.expr(ibis_table[self.field_name])
+        else:
+            agg_field = self.expr(ibis_table)
+        
+        if self.name:
+            agg_field = agg_field.name(self.name)
+        
+        return agg_field
+
+class GroupedField(object):
+
+    def __init__(self, field_name=None, name=None, cast=None):
+        """
+            field_name: A field to act on in the table.  Table level expr do not have a field name
+        """
+        self.field_name = field_name
+        self.name = name
+        self.cast = cast
+
+    def compile(self, ibis_table, field_name=None):
+        # Fields are supplied on compile or on build
+        field_name = field_name or self.field_name
+        group_field = ibis_table[field_name]
+        
+        # TODO: generate cast for known types not specified
+        if self.cast:
+            group_field = group_field.cast(self.cast)
+        else:
+            group_field = group_field.cast("date")
+
+        # The Casts require we also supply a name.  TODO this culd be a requirement in the init
+        name = self.name or field_name
+        group_field = group_field.name(name)
+        
+        return group_field
 
 class QueryBuilder(object):
 
-    SQL_TEMPLATE = """
-{select} {query_fields}
-{from}
-    {table_object}
-{filters}
-{groups}
-    """
-
-    def __init__(self, query_fields, filters, grouped_fields):
+    def __init__(self, aggregate_fields, filters, grouped_fields, limit=None):
         """ Build a QueryBuilder object which can be used to build queries easily
 
-            :param query_fields: Fields to query in body
-            :param filters: A list of dicts.  
+            :param query_fields: List of AggregateField objects with Ibis expressions
+            :param filters: A list of dicts. TODO: change this
                 Each dict: {"type": "(DATE|INT|OTHER)", "column": "...", "value": 0, "comparison": ">="}
 
         """
-        self.query_fields = query_fields
+        self.aggregate_fields = aggregate_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
+        self.limit = limit
 
     @staticmethod
-    def build_count_validator():
-        query_fields = ["{count_star}"]
+    def build_count_validator(limit=None):
+        aggregate_fields = [AggregateField.count("count")]
         filters = []
         grouped_fields = []
 
-        return QueryBuilder(query_fields, filters=filters, grouped_fields=grouped_fields)
+        return QueryBuilder(aggregate_fields, filters=filters, grouped_fields=grouped_fields, limit=limit)
 
     @staticmethod
-    def build_partition_count_validator():
-        query_fields = ["{partition_column_sql}", "{count_star}"]
+    def build_partition_count_validator(limit=None):
+        aggregate_fields = [AggregateField.count("count")]
         filters = []
-        grouped_fields = ["{grouped_column_sql}"]
+        grouped_fields = [GroupedField(name=consts.DEFAULT_PARTITION_KEY)]
 
-        return QueryBuilder(query_fields, filters=filters, grouped_fields=grouped_fields)
+        return QueryBuilder(aggregate_fields, filters=filters, grouped_fields=grouped_fields, limit=limit)
 
-    def render_query(self, data_client, schema_name, table_name, partition_column=None, partition_column_type=None):
-        sql_template = self._render_query_template(data_client)
+    def compile_aggregate_fields(self, table):
+        aggs = [field.compile(table) for field in self.aggregate_fields]
 
-        sql_formatting = {
-            "q": data_client.DEFAULT_QUOTE,
-            "count_star": data_client.get_count_star(name="rows"),
-            "schema_name": schema_name,
-            "table_name": table_name,
-        }
-        if partition_column and partition_column_type:
-            sql_formatting[consts.PARTITION_COLUMN_SQL] = data_client.get_partition_column_sql(partition_column, partition_column_type)
-            sql_formatting[consts.GROUP_COLUMN_SQL] = data_client.get_group_column_sql(partition_column, partition_column_type)
+        return aggs
 
-        sql_query = sql_template.format(**sql_formatting)
-        return sql_query
+    def compile_group_fields(self, table, partition_column=None):
+        groups = [field.compile(table, field_name=partition_column) for field in self.grouped_fields]
+        return groups
 
-    # TODO: replace with consts
-    def _render_query_template(self, data_client):
-        template_formatting = {
-            "select": data_client.SELECT,
-            "from": data_client.FROM,
-            "query_fields": self._render_query_fields(data_client),
-            "table_object": data_client.get_table_object_template(),
-            "filters": self._render_filters(data_client),
-            "groups": self._render_groups(data_client)
-        }
-        return self.SQL_TEMPLATE.format(**template_formatting)
+    def compile(self, data_client, schema_name, table_name, partition_column=None, partition_column_type=None):
+        table = data_client.table(table_name, database=schema_name)
 
-    def _render_query_fields(self, data_client):
-        return ",".join(self.query_fields)
+        aggs = self.compile_aggregate_fields(table)
+        filters = []
+        groups = self.compile_group_fields(table, partition_column=partition_column)
+        if groups:
+            query = table.groupby(groups).aggregate(aggs)
+        else:
+            query = table.aggregate(aggs)
 
-    def _render_filters(self, data_client):
-        if not self.filters:
-            return ""
+        if self.limit:
+            query = query.limit(self.limit)
 
-        filter_templates = []
-        for filter_obj in self.filters:
-            data_client.get_filter_template(filter_obj)
+        return query
 
-        return data_client.get_where() + " " + data_client.get_filter_joiner.join(filter_templates)
-
-    def _render_groups(self, data_client):
-        if not self.grouped_fields:
-            return ""
-
-        return data_client.get_group() + " " + ",".join(self.grouped_fields)
-
+    # TODO: these should be submitted as QueryField objects
     def add_query_field(self, query_field):
         self.query_fields.append(query_field)
 

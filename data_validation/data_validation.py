@@ -1,46 +1,47 @@
 import os
 import pandas
 
+import ibis
+
+from ibis.bigquery.client import BigQueryClient
+
 from data_validation import consts
-from data_validation.data_sources import data_client, example_client, bigquery
 from data_validation.query_builder import query_builder
 
 CLIENT_LOOKUP = {
-    "BigQuery": bigquery.BigQueryClient,
-    "Example": example_client.ExampleClient,
+    "BigQuery": BigQueryClient,
 }
-def process_data(builder, inp_config, out_config):
+def process_data(builder, inp_config, out_config, verbose=True):
+    inp_client = CLIENT_LOOKUP[inp_config[consts.SOURCE_TYPE]](**inp_config[consts.CONFIG])
+    out_client = CLIENT_LOOKUP[out_config[consts.SOURCE_TYPE]](**out_config[consts.CONFIG])
 
-    inp_client = CLIENT_LOOKUP[inp_config[consts.SOURCE_TYPE]](**inp_config)
-    out_client = CLIENT_LOOKUP[out_config[consts.SOURCE_TYPE]](**out_config)
-
-    inp_query = builder.render_query(inp_client, inp_config[consts.SCHEMA_NAME], inp_config[consts.TABLE_NAME],
+    inp_query = builder.compile(inp_client, inp_config[consts.SCHEMA_NAME], inp_config[consts.TABLE_NAME],
                                      partition_column=inp_config.get(consts.PARTITION_COLUMN),
                                      partition_column_type=inp_config.get(consts.PARTITION_COLUMN_TYPE))
-    out_query = builder.render_query(out_client, out_config[consts.SCHEMA_NAME], out_config[consts.TABLE_NAME],
+    out_query = builder.compile(out_client, out_config[consts.SCHEMA_NAME], out_config[consts.TABLE_NAME],
                                      partition_column=inp_config.get(consts.PARTITION_COLUMN),
                                      partition_column_type=inp_config.get(consts.PARTITION_COLUMN_TYPE))
 
-    inp_results = inp_client.read_sql(inp_query)
-    out_results = out_client.read_sql(out_query)
+    # Return Query Results in Dataframe from Ibis
+    # 
+    inp_df = inp_client.execute(inp_query)
+    out_df = out_client.execute(out_query)
 
-    df = combine_data(inp_results, out_results)
+    df = combine_data(inp_df, out_df)
     store_results(df)
 
-def combine_data(inp_results, out_results):
+def combine_data(inp_df, out_df):
     """ Return List of Dictionaries """
     # Clean Data to Standardize
-    inp_df = _clean_raw_data(inp_results)
-    out_df = _clean_raw_data(out_results)
+    inp_df = _clean_raw_data(inp_df)
+    out_df = _clean_raw_data(out_df)
 
     df = inp_df.merge(out_df, how="outer", on=consts.DEFAULT_PARTITION_KEY,
                       suffixes=(consts.INPUT_SUFFIX, consts.OUTPUT_SUFFIX))
     return df
 
-def _clean_raw_data(results):
+def _clean_raw_data(df_results):
     """ Return Pandas DataFrame with standardized result data to be combined """
-    df_results = pandas.DataFrame(results)
-
     # All data is joined via partition key
     if consts.DEFAULT_PARTITION_KEY not in df_results.columns:
         df_results[consts.DEFAULT_PARTITION_KEY] = consts.DEFAULT_PARTITION_KEY

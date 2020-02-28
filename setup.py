@@ -3,7 +3,8 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-install_requires = ["pandas", "google-api-python-client==1.7.11", "google-cloud-bigquery==1.22.0"]
+install_requires = ["pandas", "google-api-python-client==1.7.11",
+                    "google-cloud-bigquery==1.22.0", "ibis-framework==1.2.0"]
 
 setuptools.setup(
     name="Data Validation Tool", # Replace with your own username
