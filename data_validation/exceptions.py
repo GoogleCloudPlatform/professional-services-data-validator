@@ -1,0 +1,4 @@
+
+
+class DataClientConnectionFailure(Exception):
+	pass

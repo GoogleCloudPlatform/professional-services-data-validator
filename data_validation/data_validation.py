@@ -6,7 +6,7 @@ import ibis
 from ibis.bigquery.client import BigQueryClient
 from ibis.sql.mysql.client import MySQLClient
 
-from data_validation import consts
+from data_validation import consts, exceptions
 from data_validation.query_builder import query_builder
 
 CLIENT_LOOKUP = {
@@ -65,7 +65,13 @@ class DataValidation(object):
             msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(source_type=source_type)
             raise Exception(msg)
 
-        return CLIENT_LOOKUP[source_type](**config[consts.CONFIG])
+        try:
+            data_client = CLIENT_LOOKUP[source_type](**config[consts.CONFIG])
+        except Exception as e:
+            msg = 'Connection Type "{source_type}" could not connect'.format(source_type=source_type)
+            raise exceptions.DataClientConnectionFailure(msg)
+
+        return data_client
 
     def execute(self):
         """ Execute Queries and Store Results """
