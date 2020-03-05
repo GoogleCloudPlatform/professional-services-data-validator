@@ -52,10 +52,19 @@ dag = DAG(
 
 
 # priority_weight has type int in Airflow DB, uses the maximum.
-validate_table = operators.DataValidationCountOperator(
-    task_id="validate_table",
+validate_bq_table_count = operators.DataValidationCountOperator(
+    task_id="validate_bq_table_count",
     source_config=BQ_CONFIG_VALID,
     target_config=BQ_CONFIG_VALID,
+    dag=dag,
+    # depends_on_past=False,
+    # priority_weight=2**31-1
+    )
+
+validate_mysql_table_count = operators.DataValidationCountOperator(
+    task_id="validate_mysql_table_count",
+    source_config=MYSQL_CONFIG_INVALID,
+    target_config=MYSQL_CONFIG_INVALID,
     dag=dag,
     # depends_on_past=False,
     # priority_weight=2**31-1
