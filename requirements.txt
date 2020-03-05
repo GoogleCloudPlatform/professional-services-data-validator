@@ -1,7 +1,8 @@
 google-api-python-client==1.7.11
-pymysql==0.9.3
-ibis-framework==1.2.0
+ibis-framework==1.3.0
 sqlalchemy==1.3.13
+pymysql==0.9.3
+pyspark==2.4.5
 apache-airflow==1.10.9
 pandas==0.25.3
 google-cloud-bigquery==1.22.0
