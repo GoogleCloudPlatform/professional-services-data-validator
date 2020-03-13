@@ -262,7 +262,7 @@ class TeradataClient(SQLClient):
         return ops.SQLQueryResult(query, schema, self).to_expr()
 
     def _build_ast(self, expr, context): # TODO NEXT
-        result = comp.build_ast(expr, context)
+        result = compiler.build_ast(expr, context)
         return result
 
     # def table(self, name, database=None):

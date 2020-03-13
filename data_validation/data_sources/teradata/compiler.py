@@ -24,17 +24,23 @@ from ibis.impala.compiler import (
 )
 
 
-class BigQueryUDFNode(ops.ValueOp):
+class TeradataUDFNode(ops.ValueOp):
     pass
 
+def find_bigquery_udf(expr):
+    if isinstance(expr.op(), TeradataUDFNode):
+        result = expr
+    else:
+        result = None
+    return lin.proceed, result
 
-class BigQuerySelectBuilder(comp.SelectBuilder):
+class TeradataSelectBuilder(comp.SelectBuilder):
     @property
     def _select_class(self):
-        return BigQuerySelect
+        return TeradataSelect
 
 
-class BigQueryUDFDefinition(comp.DDL):
+class TeradataUDFDefinition(comp.DDL):
     def __init__(self, expr, context):
         self.expr = expr
         self.context = context
@@ -43,28 +49,20 @@ class BigQueryUDFDefinition(comp.DDL):
         return self.expr.op().js
 
 
-class BigQueryUnion(comp.Union):
+class TeradataUnion(comp.Union): # TODO rebuild class
     @staticmethod
     def keyword(distinct):
         return 'UNION DISTINCT' if distinct else 'UNION ALL'
 
 
-def find_bigquery_udf(expr):
-    if isinstance(expr.op(), BigQueryUDFNode):
-        result = expr
-    else:
-        result = None
-    return lin.proceed, result
+class TeradataQueryBuilder(comp.QueryBuilder): # TODO rebuild class
 
-
-class BigQueryQueryBuilder(comp.QueryBuilder):
-
-    select_builder = BigQuerySelectBuilder
-    union_class = BigQueryUnion
+    select_builder = TeradataSelectBuilder
+    union_class = TeradataUnion
 
     def generate_setup_queries(self):
         queries = map(
-            partial(BigQueryUDFDefinition, context=self.context),
+            partial(TeradataUDFDefinition, context=self.context),
             lin.traverse(find_bigquery_udf, self.expr),
         )
 
@@ -76,7 +74,7 @@ class BigQueryQueryBuilder(comp.QueryBuilder):
 
 
 def build_ast(expr, context):
-    builder = BigQueryQueryBuilder(expr, context=context)
+    builder = TeradataQueryBuilder(expr, context=context)
     return builder.get_result()
 
 
@@ -86,7 +84,7 @@ def to_sql(expr, context):
     return compiled
 
 
-class BigQueryContext(comp.QueryContext):
+class TeradataContext(comp.QueryContext):
     def _to_sql(self, expr, ctx):
         return to_sql(expr, context=ctx)
 
@@ -403,11 +401,11 @@ _operation_registry = {
 }
 
 
-class BigQueryExprTranslator(impala_compiler.ImpalaExprTranslator):
+class TeradataExprTranslator(impala_compiler.ImpalaExprTranslator):
     _registry = _operation_registry
     _rewrites = impala_compiler.ImpalaExprTranslator._rewrites.copy()
 
-    context_class = BigQueryContext
+    context_class = TeradataContext
 
     def _trans_param(self, expr):
         op = expr.op()
@@ -416,8 +414,8 @@ class BigQueryExprTranslator(impala_compiler.ImpalaExprTranslator):
         return '@{}'.format(expr.get_name())
 
 
-compiles = BigQueryExprTranslator.compiles
-rewrites = BigQueryExprTranslator.rewrites
+compiles = TeradataExprTranslator.compiles
+rewrites = TeradataExprTranslator.rewrites
 
 
 @compiles(ops.DayOfWeekIndex)
@@ -470,20 +468,20 @@ def compiles_string_to_timestamp(translator, expr):
     return 'PARSE_TIMESTAMP({}, {})'.format(fmt_string, arg_formatted)
 
 
-class BigQueryTableSetFormatter(ImpalaTableSetFormatter):
+class TeradataTableSetFormatter(ImpalaTableSetFormatter):
     def _quote_identifier(self, name):
         if re.match(r'^[A-Za-z][A-Za-z_0-9]*$', name):
             return name
         return '`{}`'.format(name)
 
 
-class BigQuerySelect(ImpalaSelect):
+class TeradataSelect(ImpalaSelect):
 
-    translator = BigQueryExprTranslator
+    translator = TeradataExprTranslator
 
     @property
     def table_set_formatter(self):
-        return BigQueryTableSetFormatter
+        return TeradataTableSetFormatter
 
 
 @rewrites(ops.IdenticalTo)
@@ -604,7 +602,7 @@ def bigquery_compile_notall(translator, expr):
 
 
 class TeradataDialect(impala_compiler.ImpalaDialect):
-    translator = BigQueryExprTranslator
+    translator = TeradataExprTranslator
 
 
 dialect = TeradataDialect
