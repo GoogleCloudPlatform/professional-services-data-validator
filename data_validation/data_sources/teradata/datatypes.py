@@ -20,6 +20,99 @@ class UDFContext(TypeTranslationContext):
     __slots__ = ()
 
 
+# RAW TYPES MAPPED TODO all of these
+# CASE ColumnType
+#     WHEN 'BF' THEN 'BYTE('            || TRIM(CAST(ColumnLength AS INTEGER)) || ')'
+#     WHEN 'BV' THEN 'VARBYTE('         || TRIM(CAST(ColumnLength AS INTEGER)) || ')'
+#     WHEN 'CF' THEN 'CHAR('            || TRIM(CAST(ColumnLength AS INTEGER)) || ')'
+#     WHEN 'DA' THEN 'DATE'
+#     WHEN 'F ' THEN 'FLOAT'
+#     WHEN 'I1' THEN 'BYTEINT'
+#     WHEN 'I2' THEN 'SMALLINT'
+#     WHEN 'I8' THEN 'BIGINT'
+#     WHEN 'I ' THEN 'INTEGER'
+#     WHEN 'AT' THEN 'TIME('            || TRIM(DecimalFractionalDigits) || ')'
+#     WHEN 'TS' THEN 'TIMESTAMP('       || TRIM(DecimalFractionalDigits) || ')'
+#     WHEN 'TZ' THEN 'TIME('            || TRIM(DecimalFractionalDigits) || ')' || ' WITH TIME ZONE'
+#     WHEN 'SZ' THEN 'TIMESTAMP('       || TRIM(DecimalFractionalDigits) || ')' || ' WITH TIME ZONE'
+#     WHEN 'YR' THEN 'INTERVAL YEAR('   || TRIM(DecimalTotalDigits) || ')'
+#     WHEN 'YM' THEN 'INTERVAL YEAR('   || TRIM(DecimalTotalDigits) || ')'      || ' TO MONTH'
+#     WHEN 'MO' THEN 'INTERVAL MONTH('  || TRIM(DecimalTotalDigits) || ')'
+#     WHEN 'DY' THEN 'INTERVAL DAY('    || TRIM(DecimalTotalDigits) || ')'
+#     WHEN 'DH' THEN 'INTERVAL DAY('    || TRIM(DecimalTotalDigits) || ')'      || ' TO HOUR'
+#     WHEN 'DM' THEN 'INTERVAL DAY('    || TRIM(DecimalTotalDigits) || ')'      || ' TO MINUTE'
+#     WHEN 'DS' THEN 'INTERVAL DAY('    || TRIM(DecimalTotalDigits) || ')'      || ' TO SECOND('
+#                                       || TRIM(DecimalFractionalDigits) || ')'
+#     WHEN 'HR' THEN 'INTERVAL HOUR('   || TRIM(DecimalTotalDigits) || ')'
+#     WHEN 'HM' THEN 'INTERVAL HOUR('   || TRIM(DecimalTotalDigits) || ')'      || ' TO MINUTE'
+#     WHEN 'HS' THEN 'INTERVAL HOUR('   || TRIM(DecimalTotalDigits) || ')'      || ' TO SECOND('
+#                                       || TRIM(DecimalFractionalDigits) || ')'
+#     WHEN 'MI' THEN 'INTERVAL MINUTE(' || TRIM(DecimalTotalDigits) || ')'
+#     WHEN 'MS' THEN 'INTERVAL MINUTE(' || TRIM(DecimalTotalDigits) || ')'      || ' TO SECOND('
+#                                       || TRIM(DecimalFractionalDigits) || ')'
+#     WHEN 'SC' THEN 'INTERVAL SECOND(' || TRIM(DecimalTotalDigits) || ',' 
+#                                       || TRIM(DecimalFractionalDigits) || ')'
+#     WHEN 'BO' THEN 'BLOB('            || TRIM(CAST(ColumnLength AS INTEGER)) || ')'
+#     WHEN 'CO' THEN 'CLOB('            || TRIM(CAST(ColumnLength AS INTEGER)) || ')'
+
+#     WHEN 'PD' THEN 'PERIOD(DATE)'     
+#     WHEN 'PM' THEN 'PERIOD(TIMESTAMP('|| TRIM(DecimalFractionalDigits) || ')' || ' WITH TIME ZONE'
+#     WHEN 'PS' THEN 'PERIOD(TIMESTAMP('|| TRIM(DecimalFractionalDigits) || '))'
+#     WHEN 'PT' THEN 'PERIOD(TIME('     || TRIM(DecimalFractionalDigits) || '))'
+#     WHEN 'PZ' THEN 'PERIOD(TIME('     || TRIM(DecimalFractionalDigits) || '))' || ' WITH TIME ZONE'
+#     WHEN 'UT' THEN COALESCE(ColumnUDTName,  '<Unknown> ' || ColumnType)
+
+#     WHEN '++' THEN 'TD_ANYTYPE'
+#     WHEN 'N'  THEN 'NUMBER('          || CASE WHEN DecimalTotalDigits = -128 THEN '*' ELSE TRIM(DecimalTotalDigits) END
+#                                       || CASE WHEN DecimalFractionalDigits IN (0, -128) THEN '' ELSE ',' || TRIM(DecimalFractionalDigits) END
+#                                       || ')'
+#     WHEN 'A1' THEN COALESCE('SYSUDTLIB.' || ColumnUDTName,  '<Unknown> ' || ColumnType)
+#     WHEN 'AN' THEN COALESCE('SYSUDTLIB.' || ColumnUDTName,  '<Unknown> ' || ColumnType)
+
+#     ELSE '<Unknown> ' || ColumnType
+#   END
+
+class TeradataTypeTranslator(object):
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def to_ibis(cls, col_data):
+        td_type = col_data["Type"].strip()
+
+        to_ibis_func_name = "to_ibis_from_{}".format(td_type)
+        if hasattr(cls, to_ibis_func_name):
+            return getattr(cls, to_ibis_func_name)(col_data, return_ibis_type=True)
+
+        return cls.to_ibis_from_other(col_data, return_ibis_type=True)
+
+    @classmethod
+    def to_ibis_from_other(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.string
+
+        return "VARCHAR"
+
+    @classmethod
+    def to_ibis_from_CV(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.string
+
+        return "VARCHAR"
+
+    @classmethod
+    def to_ibis_from_D(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Decimal(col_data["DecimalTotalDigits"],
+                              col_data["DecimalFractionalDigits"]) # TODO more detail here
+        value_type = "DECIMAL(%d, %d)" % (col_data["DecimalTotalDigits"],
+                                          col_data["DecimalFractionalDigits"])
+        return value_type
+
+
+
+
 ibis_type_to_teradata_type = Dispatcher('ibis_type_to_teradata_type')
 
 # TODO

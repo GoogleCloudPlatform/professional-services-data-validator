@@ -23,7 +23,7 @@ from ibis.client import Database, Query, SQLClient
 from ibis.common.exceptions import UnsupportedBackendType
 
 from . import compiler # TODO non local import ie from ibis.teradata import compiler
-from .datatypes import ibis_type_to_teradata_type # TODO non local import
+from .datatypes import TeradataTypeTranslator # TODO non local import
 
 
 NATIVE_PARTITION_COL = '_PARTITIONTIME'
@@ -246,26 +246,6 @@ class TeradataClient(SQLClient):
 
         return None
 
-    # def table(self, name, database=None):
-    #     t = super().table(name, database=database)
-    #     project, dataset, name = t.op().name.split('.')
-    #     dataset_ref = self.client.dataset(dataset, project=project)
-    #     table_ref = dataset_ref.table(name)
-    #     bq_table = self.client.get_table(table_ref)
-    #     return rename_partitioned_column(t, bq_table)
-
-    def _build_ast(self, expr, context): # TODO NEXT
-        result = comp.build_ast(expr, context)
-        return result
-
-    def _fully_qualified_name(self, name, database):
-        return "{}.{}".format(database, name)
-
-    def _get_table_schema(self, qualified_name):
-        dataset, table = qualified_name.rsplit('.', 1)
-        assert dataset is not None, "dataset is None"
-        return self.get_schema(table, database=dataset)
-
     def sql(self, query): # TODO is this ever used?  its uselss, queries dont return schemas
         """ Convert a SQL query to an Ibis table expression.
         Parameters
@@ -280,6 +260,56 @@ class TeradataClient(SQLClient):
         limited_query = 'SELECT * FROM ({}) t0 SAMPLE 0'.format(query)
         schema = self._get_schema_using_query(limited_query)
         return ops.SQLQueryResult(query, schema, self).to_expr()
+
+    def _build_ast(self, expr, context): # TODO NEXT
+        result = comp.build_ast(expr, context)
+        return result
+
+    # def table(self, name, database=None):
+    #     t = super().table(name, database=database)
+    #     project, dataset, name = t.op().name.split('.')
+    #     dataset_ref = self.client.dataset(dataset, project=project)
+    #     table_ref = dataset_ref.table(name)
+    #     bq_table = self.client.get_table(table_ref)
+    #     return rename_partitioned_column(t, bq_table)
+
+    def _fully_qualified_name(self, name, database):
+        return "{}.{}".format(database, name)
+
+    def _breakdown_qualified_name(self, qualified_name):
+        database, table = qualified_name.split(".")
+        return database, table
+
+    def _get_table_schema(self, qualified_name): # TODO should any validation happen?
+        dataset, table = self._breakdown_qualified_name(qualified_name)
+        return self.get_schema(table, database=dataset)
+
+    def get_schema(self, name, database=None):
+        schema_df = self._get_teradata_schema(database, name)
+        return sch.Schema(schema_df.names, schema_df.types)
+
+    TABLE_SCHEMA_SQL = """
+    HELP COLUMN {database}.{table}.*;
+    """ # TODO move somewhere better
+    def _get_teradata_schema(self, database, table):
+        table_schema_sql = self.TABLE_SCHEMA_SQL.format(database=database, table=table)
+        schema_df = self._execute(table_schema_sql, results=True)
+
+        clean_schema = self._clean_teradata_schema(schema_df)
+
+        return clean_schema_df
+
+    def _clean_teradata_schema(self, schema_df):
+        schema_list = schema_df.to_dict(orient="record")
+        clean_schema = []
+        for col_data in schema_list:
+            schema_field = {
+                "names": col_data["Column Name"],
+                "types": TeradataTypeTranslator.to_ibis(col_data)
+            }
+            clean_schema.append(schema_field)
+
+        return pandas.DataFrame(clean_schema)
 
     def _get_schema_using_query(self, limited_query):
         schema_df = self._execute(limited_query, results=True)
@@ -337,7 +367,7 @@ class TeradataClient(SQLClient):
         return list(databases_df.DatabaseName)
 
     LIST_TABLE_SQL = """
-        SELECT * FROM DBC.Tables 
+        SELECT * FROM DBC.Tables
         WHERE DatabaseName LIKE '%{database_like}%'
               AND TableName LIKE '%{table_like}%'
     """ # TODO move somewhere better
@@ -349,12 +379,6 @@ class TeradataClient(SQLClient):
         tables_df = self._execute(list_table_sql, results=True)
 
         return list(tables_df.TableName)
-
-    def get_schema(self, name, database=None):
-        project, dataset = self._parse_project_and_dataset(database)
-        table_ref = self.client.dataset(dataset, project=project).table(name)
-        bq_table = self.client.get_table(table_ref)
-        return sch.infer(bq_table)
 
     @property
     def version(self):
