@@ -122,7 +122,7 @@ def _cast(translator, expr):
 def _struct_field(translator, expr):
     arg, field = expr.op().args
     arg_formatted = translator.translate(arg)
-    return '{}.`{}`'.format(arg_formatted, field)
+    return '{}.{}'.format(arg_formatted, field)
 
 
 def _array_concat(translator, expr):
@@ -469,10 +469,11 @@ def compiles_string_to_timestamp(translator, expr):
 
 
 class TeradataTableSetFormatter(ImpalaTableSetFormatter):
+
     def _quote_identifier(self, name):
         if re.match(r'^[A-Za-z][A-Za-z_0-9]*$', name):
             return name
-        return '`{}`'.format(name)
+        return '"{}"'.format(name)
 
 
 class TeradataSelect(ImpalaSelect):
