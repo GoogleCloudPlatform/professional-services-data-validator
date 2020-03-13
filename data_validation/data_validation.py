@@ -23,11 +23,18 @@ from ibis.sql.mysql.client import MySQLClient
 from data_validation import consts, exceptions
 from data_validation.query_builder import query_builder
 
+# If you have a Teradata License there is an optional teradatasql import
+try:
+    from data_validation.data_sources.teradata.client import TeradataClient
+except Exception:
+    TeradataClient = None
+
+
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
     "MySQL": MySQLClient,
+    "Teradata": TeradataClient,
 }
-
 
 class ResultHandler(object):
 
