@@ -114,7 +114,7 @@ class TeradataQuery(Query):
         # ]
 
     def execute(self):
-        return pandas.read_sql(self.compiled_sql, self.client)
+        return pandas.read_sql(self.compiled_sql, self.client.client)
 
 
 class TeradataDatabase(Database):
@@ -238,6 +238,13 @@ class TeradataClient(SQLClient):
         }
 
         self.client = teradatasql.connect(**self.teradata_config)
+
+    def _execute(self, dml, results=False, **kwargs):
+        df = self._execute_query(dml, **kwargs)
+        if results:
+            return df
+
+        return None
 
     # def table(self, name, database=None):
     #     t = super().table(name, database=database)
