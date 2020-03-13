@@ -20,7 +20,7 @@ import ibis.expr.schema as sch
 import ibis.expr.types as ir
 
 from ibis.client import Database, Query, SQLClient
-from ibis.common import UnsupportedBackendType
+from ibis.common.exceptions import UnsupportedBackendType
 
 from . import compiler # TODO non local import ie from ibis.teradata import compiler
 from .datatypes import ibis_type_to_teradata_type # TODO non local import

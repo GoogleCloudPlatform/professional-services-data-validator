@@ -12,7 +12,7 @@ import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
 import ibis.sql.compiler as comp
-from ibis.common import UnsupportedOperationError
+from ibis.common.exceptions import UnsupportedOperationError
 from ibis.bigquery.datatypes import ibis_type_to_bigquery_type
 from ibis.impala import compiler as impala_compiler
 from ibis.impala.compiler import (

@@ -18,6 +18,13 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = open("requirements.txt").read().strip().split("\n")
+install_requires = [v for v in install_requires if not v.startswith("#")] # Remove comments
+
+packages = ["data_validation",
+            "data_validation.data_sources",
+            "data_validation.data_sources.teradata",
+            "data_validation.query_builder"
+            ]
 
 setuptools.setup(
     name="Data Validation Tool", # Replace with your own username
@@ -28,7 +35,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pypa/sampleproject",
-    packages=["data_validation", "data_validation.data_sources", "data_validation.query_builder"],
+    packages=packages,
     # packages=setuptools.find_packages(include=["data_validation*"]),
     classifiers=[
         "Programming Language :: Python :: 3",
