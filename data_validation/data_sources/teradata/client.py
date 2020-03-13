@@ -295,8 +295,7 @@ class TeradataClient(SQLClient):
         table_schema_sql = self.TABLE_SCHEMA_SQL.format(database=database, table=table)
         schema_df = self._execute(table_schema_sql, results=True)
 
-        clean_schema = self._clean_teradata_schema(schema_df)
-
+        clean_schema_df = self._clean_teradata_schema(schema_df)
         return clean_schema_df
 
     def _clean_teradata_schema(self, schema_df):
