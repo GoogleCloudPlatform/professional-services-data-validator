@@ -232,7 +232,7 @@ class TeradataClient(SQLClient):
         """
         self.teradata_config = {
             "host": host, 
-            "user_name": user_name, 
+            "user": user_name, 
             "password": password, 
             "dbs_port": port
         }
