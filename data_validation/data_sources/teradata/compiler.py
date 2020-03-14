@@ -25,7 +25,7 @@ from ibis.impala.compiler import (
 
 # TODO _table_column in impala needs to be overwritten everywhere (quotes)
 teradata_identifiers = impala_compiler.identifiers.impala_identifiers
-def quote_identifier(name, quotechar='', force=False):
+def quote_identifier(name, quotechar='"', force=False):
     if force or name.count(' ') or name in teradata_identifiers:
         return '{0}{1}{0}'.format(quotechar, name)
     else:
@@ -485,6 +485,17 @@ class TeradataSelect(ImpalaSelect):
     @property
     def table_set_formatter(self):
         return TeradataTableSetFormatter
+
+    def format_limit(self):
+        if not self.limit:
+            return None
+
+        buf = StringIO()
+
+        n, offset = self.limit['n'], self.limit['offset']
+        buf.write('SAMPLE {}'.format(n))
+
+        return buf.getvalue()
 
 
 @rewrites(ops.IdenticalTo)
