@@ -23,6 +23,18 @@ from ibis.impala.compiler import (
     unary,
 )
 
+# TODO _table_column in impala needs to be overwritten everywhere (quotes)
+
+def quote_identifier(name, quotechar='', force=False):
+    if force or name.count(' ') or name in identifiers.impala_identifiers:
+        return '{0}{1}{0}'.format(quotechar, name)
+    else:
+        return name
+
+impala_compiler.quote_identifier = quote_identifier
+
+def _name_expr(formatted_expr, quoted_name):
+    return '{} AS {}'.format(formatted_expr, quoted_name)
 
 class TeradataUDFNode(ops.ValueOp):
     pass
@@ -400,19 +412,13 @@ _operation_registry = {
     if k not in _invalid_operations
 }
 
+class TeradataExprTranslator(comp.ExprTranslator):
 
-class TeradataExprTranslator(impala_compiler.ImpalaExprTranslator):
     _registry = _operation_registry
-    _rewrites = impala_compiler.ImpalaExprTranslator._rewrites.copy()
-
     context_class = TeradataContext
 
-    def _trans_param(self, expr):
-        op = expr.op()
-        if op not in self.context.params:
-            raise KeyError(op)
-        return '@{}'.format(expr.get_name())
-
+    def name(self, translated, name, force=True):
+        return _name_expr(translated, quote_identifier(name, force=force))
 
 compiles = TeradataExprTranslator.compiles
 rewrites = TeradataExprTranslator.rewrites
@@ -471,9 +477,7 @@ def compiles_string_to_timestamp(translator, expr):
 class TeradataTableSetFormatter(ImpalaTableSetFormatter):
 
     def _quote_identifier(self, name):
-        if re.match(r'^[A-Za-z][A-Za-z_0-9]*$', name):
-            return name
-        return '"{}"'.format(name)
+        return quote_identifier(name)
 
 
 class TeradataSelect(ImpalaSelect):
