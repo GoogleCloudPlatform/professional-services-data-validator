@@ -490,13 +490,8 @@ class TeradataSelect(ImpalaSelect):
         if not self.limit:
             return None
 
-        buf = StringIO()
-
-        n, offset = self.limit['n'], self.limit['offset']
-        buf.write('SAMPLE {}'.format(n))
-
-        return buf.getvalue()
-
+        limit_sql = 'SAMPLE {}'.format(self.limit['n'])
+        return limit_sql
 
 @rewrites(ops.IdenticalTo)
 def identical_to(expr):
