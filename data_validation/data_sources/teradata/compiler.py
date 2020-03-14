@@ -24,14 +24,12 @@ from ibis.impala.compiler import (
 )
 
 # TODO _table_column in impala needs to be overwritten everywhere (quotes)
-
+teradata_identifiers = impala_compiler.identifiers.impala_identifiers
 def quote_identifier(name, quotechar='', force=False):
-    if force or name.count(' ') or name in identifiers.impala_identifiers:
+    if force or name.count(' ') or name in teradata_identifiers:
         return '{0}{1}{0}'.format(quotechar, name)
     else:
         return name
-
-impala_compiler.quote_identifier = quote_identifier
 
 def _name_expr(formatted_expr, quoted_name):
     return '{} AS {}'.format(formatted_expr, quoted_name)
