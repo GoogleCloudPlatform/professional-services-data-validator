@@ -92,6 +92,7 @@ class TeradataTypeTranslator(object):
         if return_ibis_type:
             return dt.string
 
+        print('Unsupported Date Type Seen; "%s" (Also I should be a log)' % col_data["Type"])
         return "VARCHAR"
 
     @classmethod
