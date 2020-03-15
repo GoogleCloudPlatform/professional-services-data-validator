@@ -100,7 +100,7 @@ class TeradataTableSetFormatter(ImpalaTableSetFormatter):
 
     identifiers = impala_compiler.identifiers.impala_identifiers
 
-    @staticmethod
+    @classmethod
     def _quote_identifier(self, name, quotechar='"', force=False):
         if force or name.count(' ') or name in self.identifiers:
             return '{0}{1}{0}'.format(quotechar, name)
