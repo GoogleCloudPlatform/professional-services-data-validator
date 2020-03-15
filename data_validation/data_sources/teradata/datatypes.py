@@ -110,9 +110,15 @@ class TeradataTypeTranslator(object):
                                           col_data["DecimalFractionalDigits"])
         return value_type
 
+    @classmethod
+    def to_ibis_from_DA(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Date
+
+        return "DATE"
 
 
-
+# TODO all below here is likely not needed
 ibis_type_to_teradata_type = Dispatcher('ibis_type_to_teradata_type')
 
 # TODO
