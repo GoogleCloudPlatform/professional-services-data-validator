@@ -26,9 +26,6 @@ from . import compiler # TODO non local import ie from ibis.teradata import comp
 from .datatypes import TeradataTypeTranslator # TODO non local import
 
 
-NATIVE_PARTITION_COL = '_PARTITIONTIME'
-
-
 _DTYPE_TO_IBIS_TYPE = {
     'INT64': dt.int64,
     'FLOAT64': dt.double,
@@ -60,22 +57,6 @@ def teradata_field_to_ibis_dtype(col_data):
     if field.mode == 'REPEATED':
         ibis_type = dt.Array(ibis_type)
     return ibis_type
-
-
-# @sch.infer.register(bq.table.Table)
-# def bigquery_schema(table):
-#     """Infer the schema of a BigQuery `table` object."""
-#     fields = OrderedDict((el.name, dt.dtype(el)) for el in table.schema)
-#     partition_info = table._properties.get('timePartitioning', None)
-
-#     # We have a partitioned table
-#     if partition_info is not None:
-#         partition_field = partition_info.get('field', NATIVE_PARTITION_COL)
-
-#         # Only add a new column if it's not already a column in the schema
-#         fields.setdefault(partition_field, dt.timestamp)
-#     return sch.schema(fields)
-
 
 def _find_scalar_parameter(expr):
     """Find all :class:`~ibis.expr.types.ScalarParameter` instances.

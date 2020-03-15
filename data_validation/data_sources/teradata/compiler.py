@@ -23,32 +23,70 @@ from ibis.impala.compiler import (
     unary,
 )
 
-# TODO _table_column in impala needs to be overwritten everywhere (quotes)
-teradata_identifiers = impala_compiler.identifiers.impala_identifiers
-def quote_identifier(name, quotechar='"', force=False):
-    if force or name.count(' ') or name in teradata_identifiers:
-        return '{0}{1}{0}'.format(quotechar, name)
-    else:
-        return name
+""" *Extending Compilers for a new Data Source*
 
-def _name_expr(formatted_expr, quoted_name):
-    return '{} AS {}'.format(formatted_expr, quoted_name)
+To build a new Data Source you will likely need to extend a SQL Compiler Set.
+There is a large set of dependent classes which will all need to be extended
+for many use cases. The docs below show each:
+
+# Global configs required
+_operation_registry = impala_compiler._operation_registry.copy()
+
+# Build AST is the entrypoint from the Data Client
+def build_ast(expr, context):
+    builder = ExampleQueryBuilder(expr, context=context)
+    return builder.get_result()
+
+# Classes below are all dependancies of the QueryBuilder.  They will likely
+# but not neccesarily need to be extened.
+class TeradataUDFDefinition(comp.DDL):
+    def __init__(self, expr, context):
+        self.expr = expr
+        self.context = context
+
+    def compile(self):
+        return self.expr.op().js
+
+class TeradataTableSetFormatter(comp.TableSetFormatter):
+    pass
 
 class TeradataUDFNode(ops.ValueOp):
     pass
 
-def find_bigquery_udf(expr):
-    if isinstance(expr.op(), TeradataUDFNode):
-        result = expr
-    else:
-        result = None
-    return lin.proceed, result
+class TeradataContext(comp.QueryContext):
+    pass
+
+class TeradataExprTranslator(comp.ExprTranslator):
+
+    _registry = _operation_registry
+    context_class = TeradataContext
+
+class TeradataSelect(ImpalaSelect):
+
+    translator = TeradataExprTranslator
+
+    @property
+    def table_set_formatter(self):
+        return TeradataTableSetFormatter
 
 class TeradataSelectBuilder(comp.SelectBuilder):
-    @property
-    def _select_class(self):
-        return TeradataSelect
+    pass
 
+class TeradataUnion(comp.Union):
+    pass
+
+class TeradataQueryBuilder(comp.QueryBuilder):
+
+    select_builder = TeradataSelectBuilder
+    union_class = TeradataUnion
+
+"""
+
+_operation_registry = impala_compiler._operation_registry.copy()
+
+def build_ast(expr, context):
+    builder = TeradataQueryBuilder(expr, context=context)
+    return builder.get_result()
 
 class TeradataUDFDefinition(comp.DDL):
     def __init__(self, expr, context):
@@ -58,12 +96,57 @@ class TeradataUDFDefinition(comp.DDL):
     def compile(self):
         return self.expr.op().js
 
+class TeradataTableSetFormatter(ImpalaTableSetFormatter):
+
+    identifiers = impala_compiler.identifiers.impala_identifiers
+
+    @staticmethod
+    def _quote_identifier(self, name, quotechar='"', force=False):
+        if force or name.count(' ') or name in self.identifiers:
+            return '{0}{1}{0}'.format(quotechar, name)
+        else:
+            return name
+
+class TeradataUDFNode(ops.ValueOp):
+    pass
+
+class TeradataContext(comp.QueryContext):
+    def _to_sql(self, expr, ctx):
+        return to_sql(expr, context=ctx)
+
+class TeradataExprTranslator(comp.ExprTranslator):
+
+    _registry = _operation_registry
+    context_class = TeradataContext
+
+    def name(self, translated, name, force=True):
+        quoted_name = TeradataTableSetFormatter._quote_identifier(name, force=force)
+        return _name_expr(translated, quoted_name)
+
+class TeradataSelect(ImpalaSelect):
+
+    translator = TeradataExprTranslator
+
+    @property
+    def table_set_formatter(self):
+        return TeradataTableSetFormatter
+
+    def format_limit(self):
+        if not self.limit:
+            return None
+
+        limit_sql = 'SAMPLE {}'.format(self.limit['n'])
+        return limit_sql
+
+class TeradataSelectBuilder(comp.SelectBuilder):
+    @property
+    def _select_class(self):
+        return TeradataSelect
 
 class TeradataUnion(comp.Union): # TODO rebuild class
     @staticmethod
     def keyword(distinct):
         return 'UNION DISTINCT' if distinct else 'UNION ALL'
-
 
 class TeradataQueryBuilder(comp.QueryBuilder): # TODO rebuild class
 
@@ -82,22 +165,23 @@ class TeradataQueryBuilder(comp.QueryBuilder): # TODO rebuild class
             toolz.unique(queries, key=lambda x: type(x.expr.op()).__name__)
         )
 
+""" Customized functions used for the current compiler buildout """
+# TODO TODO below this pint still contains mostly BQ and needs cleaning
 
-def build_ast(expr, context):
-    builder = TeradataQueryBuilder(expr, context=context)
-    return builder.get_result()
+def _name_expr(formatted_expr, quoted_name):
+    return '{} AS {}'.format(formatted_expr, quoted_name)
 
+def find_bigquery_udf(expr):
+    if isinstance(expr.op(), TeradataUDFNode):
+        result = expr
+    else:
+        result = None
+    return lin.proceed, result
 
 def to_sql(expr, context):
     query_ast = build_ast(expr, context)
     compiled = query_ast.compile()
     return compiled
-
-
-class TeradataContext(comp.QueryContext):
-    def _to_sql(self, expr, ctx):
-        return to_sql(expr, context=ctx)
-
 
 def _extract_field(sql_attr):
     def extract_field_formatter(translator, expr):
@@ -341,7 +425,6 @@ STRFTIME_FORMAT_FUNCTIONS = {
 }
 
 
-_operation_registry = impala_compiler._operation_registry.copy()
 _operation_registry.update(
     {
         ops.ExtractYear: _extract_field('year'),
@@ -410,14 +493,6 @@ _operation_registry = {
     if k not in _invalid_operations
 }
 
-class TeradataExprTranslator(comp.ExprTranslator):
-
-    _registry = _operation_registry
-    context_class = TeradataContext
-
-    def name(self, translated, name, force=True):
-        return _name_expr(translated, quote_identifier(name, force=force))
-
 compiles = TeradataExprTranslator.compiles
 rewrites = TeradataExprTranslator.rewrites
 
@@ -470,28 +545,6 @@ def compiles_string_to_timestamp(translator, expr):
             fmt_string, arg_formatted, timezone_str
         )
     return 'PARSE_TIMESTAMP({}, {})'.format(fmt_string, arg_formatted)
-
-
-class TeradataTableSetFormatter(ImpalaTableSetFormatter):
-
-    def _quote_identifier(self, name):
-        return quote_identifier(name)
-
-
-class TeradataSelect(ImpalaSelect):
-
-    translator = TeradataExprTranslator
-
-    @property
-    def table_set_formatter(self):
-        return TeradataTableSetFormatter
-
-    def format_limit(self):
-        if not self.limit:
-            return None
-
-        limit_sql = 'SAMPLE {}'.format(self.limit['n'])
-        return limit_sql
 
 @rewrites(ops.IdenticalTo)
 def identical_to(expr):
