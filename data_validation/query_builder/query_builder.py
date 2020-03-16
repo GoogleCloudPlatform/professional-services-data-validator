@@ -100,8 +100,9 @@ class GroupedField(object):
             group_field = group_field.cast("date")
         else:
             # TODO: need to build Truncation Int support
-            print("WARNING: Non timestamp fields not supported")
-            group_field = group_field.cast("date")
+            # TODO: should be using a logger
+            print("WARNING: Unknown cast types can cause memory errors")
+            group_field = group_field # No cast if type is not handled
 
         # The Casts require we also supply a name.  TODO this culd be a requirement in the init
         name = self.name or field_name
