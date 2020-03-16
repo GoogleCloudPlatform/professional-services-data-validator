@@ -143,6 +143,13 @@ class TeradataSelectBuilder(comp.SelectBuilder):
     def _select_class(self):
         return TeradataSelect
 
+    def _visit_select_expr(self, expr):
+        op = expr.op()
+
+        method = '_visit_select_{0}'.format(type(op).__name__)
+        print("VISIT METHOD: %s" % method)
+        return super()._visit_select_expr(expr)
+
 class TeradataUnion(comp.Union): # TODO rebuild class
     @staticmethod
     def keyword(distinct):

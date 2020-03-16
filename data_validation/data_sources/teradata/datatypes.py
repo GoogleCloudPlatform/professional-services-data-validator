@@ -177,7 +177,7 @@ def trans_lossy_integer(t, context):
 #     )
 
 
-@ibis_type_to_teradata_type.register(dt.date, TypeTranslationContext)
+@ibis_type_to_teradata_type.register(dt.Date, TypeTranslationContext)
 def trans_date(t, context):
     return 'DATE'
 
