@@ -114,7 +114,7 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_DA(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.Date
+            return dt.date
 
         return "DATE"
 
@@ -177,7 +177,7 @@ def trans_lossy_integer(t, context):
 #     )
 
 
-@ibis_type_to_teradata_type.register(dt.Date, TypeTranslationContext)
+@ibis_type_to_teradata_type.register(dt.date, TypeTranslationContext)
 def trans_date(t, context):
     return 'DATE'
 

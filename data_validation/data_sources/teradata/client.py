@@ -284,7 +284,7 @@ class TeradataClient(SQLClient):
         clean_schema = []
         for col_data in schema_list:
             schema_field = {
-                "names": col_data["Column Name"],
+                "names": col_data["Column Name"].rstrip(),
                 "types": TeradataTypeTranslator.to_ibis(col_data)
             }
             clean_schema.append(schema_field)

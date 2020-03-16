@@ -166,8 +166,38 @@ class TeradataQueryBuilder(comp.QueryBuilder): # TODO rebuild class
         )
 
 """ Customized functions used for the current compiler buildout """
-# TODO TODO below this pint still contains mostly BQ and needs cleaning
+def _table_column(translator, expr):
+    op = expr.op()
+    field_name = op.name
+    quoted_name = TeradataTableSetFormatter._quote_identifier(field_name, force=True)
 
+    table = op.table
+    ctx = translator.context
+
+    # If the column does not originate from the table set in the current SELECT
+    # context, we should format as a subquery
+    if translator.permit_subquery and ctx.is_foreign_expr(table):
+        proj_expr = table.projection([field_name]).to_array()
+        return _table_array_view(translator, proj_expr)
+
+    if ctx.need_aliases():
+        alias = ctx.get_ref(table)
+        if alias is not None:
+            quoted_name = '{}.{}'.format(alias, quoted_name)
+
+    return quoted_name
+
+
+""" Add New Customizations to Operations registry """
+_operation_registry.update(
+    {
+        ops.TableColumn: _table_column,
+    })
+
+
+# TODO TODO below this pint still contains mostly BQ and needs cleaning
+# TODO teradata gives tons os spaces that don't exist
+# need to clean these possibly
 def _name_expr(formatted_expr, quoted_name):
     return '{} AS {}'.format(formatted_expr, quoted_name)
 
