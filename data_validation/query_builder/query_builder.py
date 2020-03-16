@@ -157,6 +157,8 @@ class QueryBuilder(object):
         return [field.compile(table, field_name=partition_column) for field in self.grouped_fields]
 
     def compile(self, data_client, schema_name, table_name, partition_column=None):
+        """ TODO
+        """
         table = data_client.table(table_name, database=schema_name)
 
         # Build Query Expressions
@@ -166,7 +168,7 @@ class QueryBuilder(object):
 
         # Check if a Dast Past Filter should be added
         # TODO this is ugly but difficult to know anywhere else
-        if partition_column and self.days_past and groups:
+        if self._verify_requires_date_filter(table, partition_column):
             days_past_ts = datetime.utcnow() - timedelta(days=self.days_past)
             date_fiter = FilterField.greater_than(partition_column, days_past_ts)
             filters.append(date_fiter.compile(table))
@@ -184,6 +186,22 @@ class QueryBuilder(object):
             query = query.limit(self.limit)
 
         return query
+
+    def _verify_requires_date_filter(self, ibis_table, partition_column):
+        """ Return Boolean describing if a date filter should be added
+
+            * This can only happen on grouped queries
+            * where a days_past filter is supplied and
+            * the column being grouped is a timestamp or date field
+        """
+        if not partition_column or self.days_past is None or not self.grouped_fields:
+            return False
+        elif isinstance(ibis_table[partition_column], ibis.expr.types.TemporalColumn):
+            return True
+        else:
+            return False
+
+
 
     # TODO: these should be submitted as QueryField objects
     def add_query_field(self, query_field):
