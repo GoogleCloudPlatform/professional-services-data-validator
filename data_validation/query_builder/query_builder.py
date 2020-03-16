@@ -44,27 +44,38 @@ class AggregateField(object):
 
 class FilterField(object):
 
-    def __init__(self, ibis_expr, left, right):
+    def __init__(self, ibis_expr, left=None, right=None, left_field=None, right_field=None):
         """
             field_name: A field to act on in the table.  Table level expr do not have a field name
         """
         self.expr = ibis_expr
         self.left = left
         self.right = right
+        self.left_field = left_field
+        self.right_field = right_field
 
     @staticmethod
-    def greater_than(table, field_name, value):
+    def greater_than(field_name, value):
         # Build Left and Right Objects
-        left = table[field_name]
-        right = value
+        return FilterField(ibis.expr.types.ColumnExpr.__gt__, left_field=field_name, right=value)
 
-        # Cast All Datetime to Date (TODO this may be a bug in BQ)
-        if isinstance(table[field_name].type(), ibis.expr.datatypes.Timestamp):
-            left = left.cast("date")
+    @staticmethod
+    def less_than(field_name, value):
+        # Build Left and Right Objects
+        return FilterField(ibis.expr.types.ColumnExpr.__lt__, left_field=field_name, right=value)
 
-        return FilterField(ibis.expr.types.ColumnExpr.__gt__, left, right)
+    def compile(self, ibis_table):
+        if self.left_field:
+            self.left = ibis_table[self.left_field]
+            # Cast All Datetime to Date (TODO this may be a bug in BQ)
+            if isinstance(ibis_table[self.left_field].type(), ibis.expr.datatypes.Timestamp):
+                self.left = self.left.cast("date")
+        if self.right_field:
+            self.right = ibis_table[self.right_field]
+            # Cast All Datetime to Date (TODO this may be a bug in BQ)
+            if isinstance(ibis_table[self.right_field].type(), ibis.expr.datatypes.Timestamp):
+                self.right = self.right.cast("date")
 
-    def compile(self):
         return self.expr(self.left, self.right)
 
 class GroupedField(object):
@@ -139,8 +150,8 @@ class QueryBuilder(object):
 
         return aggs
 
-    def compile_filter_fields(self):
-        return [field.compile() for field in self.filters]
+    def compile_filter_fields(self, table):
+        return [field.compile(table) for field in self.filters]
 
     def compile_group_fields(self, table, partition_column=None):
         return [field.compile(table, field_name=partition_column) for field in self.grouped_fields]
@@ -150,15 +161,15 @@ class QueryBuilder(object):
 
         # Build Query Expressions
         aggs = self.compile_aggregate_fields(table)
-        filters = self.compile_filter_fields()
+        filters = self.compile_filter_fields(table)
         groups = self.compile_group_fields(table, partition_column=partition_column)
 
         # Check if a Dast Past Filter should be added
         # TODO this is ugly but difficult to know anywhere else
         if partition_column and self.days_past and groups:
             days_past_ts = datetime.utcnow() - timedelta(days=self.days_past)
-            date_fiter = FilterField.greater_than(table, partition_column, days_past_ts)
-            filters.append(date_fiter.compile())
+            date_fiter = FilterField.greater_than(partition_column, days_past_ts)
+            filters.append(date_fiter.compile(table))
 
         query = table.filter(filters)
         query = query.groupby(groups)
