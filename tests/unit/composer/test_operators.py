@@ -26,10 +26,8 @@ from data_validation.composer import operators
 BQ_CONFIG_VALID = {
     # Configuration Required for All Data Soures
     "source_type": "BigQuery",
-
     # BigQuery Specific Connection Config
     "config": {"project_id": os.environ["GCP_PROJECT"]},
-
     # Configuration Required Depending on Validator Type
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
@@ -40,10 +38,15 @@ BQ_CONFIG_VALID = {
 MYSQL_CONFIG_INVALID = {
     # Configuration Required for All Data Soures
     "source_type": "MySQL",
-
     # BigQuery Specific Connection Config
-    "config": {"host": "35.227.139.75", "user": "root", "password": "password", "port": 3306, "database": 'guestbook', "driver": 'pymysql'},
-
+    "config": {
+        "host": "35.227.139.75",
+        "user": "root",
+        "password": "password",
+        "port": 3306,
+        "database": "guestbook",
+        "driver": "pymysql",
+    },
     # Configuration Required Depending on Validator Type
     "schema_name": "guestbook",
     "table_name": "entries",
@@ -52,17 +55,18 @@ MYSQL_CONFIG_INVALID = {
 
 
 default_args = {
-    'start_date': airflow.utils.dates.days_ago(0),
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5)
+    "start_date": airflow.utils.dates.days_ago(0),
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
 }
 
 dag = DAG(
-    'data_validation_test',
+    "data_validation_test",
     default_args=default_args,
-    description='Test Data Validation Operators',
+    description="Test Data Validation Operators",
     schedule_interval=None,
-    dagrun_timeout=timedelta(minutes=60))
+    dagrun_timeout=timedelta(minutes=60),
+)
 
 
 # priority_weight has type int in Airflow DB, uses the maximum.
@@ -73,7 +77,7 @@ validate_bq_table_count = operators.DataValidationCountOperator(
     dag=dag,
     # depends_on_past=False,
     # priority_weight=2**31-1
-    )
+)
 
 validate_mysql_table_count = operators.DataValidationCountOperator(
     task_id="validate_mysql_table_count",
@@ -82,5 +86,4 @@ validate_mysql_table_count = operators.DataValidationCountOperator(
     dag=dag,
     # depends_on_past=False,
     # priority_weight=2**31-1
-    )
-
+)
