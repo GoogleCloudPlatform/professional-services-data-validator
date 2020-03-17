@@ -84,9 +84,11 @@ class TeradataQueryBuilder(comp.QueryBuilder):
 
 _operation_registry = impala_compiler._operation_registry.copy()
 
+
 def build_ast(expr, context):
     builder = TeradataQueryBuilder(expr, context=context)
     return builder.get_result()
+
 
 class TeradataUDFDefinition(comp.DDL):
     def __init__(self, expr, context):
@@ -96,23 +98,27 @@ class TeradataUDFDefinition(comp.DDL):
     def compile(self):
         return self.expr.op().js
 
+
 class TeradataTableSetFormatter(ImpalaTableSetFormatter):
 
     identifiers = impala_compiler.identifiers.impala_identifiers
 
     @classmethod
     def _quote_identifier(self, name, quotechar='"', force=False):
-        if force or name.count(' ') or name in self.identifiers:
-            return '{0}{1}{0}'.format(quotechar, name)
+        if force or name.count(" ") or name in self.identifiers:
+            return "{0}{1}{0}".format(quotechar, name)
         else:
             return name
+
 
 class TeradataUDFNode(ops.ValueOp):
     pass
 
+
 class TeradataContext(comp.QueryContext):
     def _to_sql(self, expr, ctx):
         return to_sql(expr, context=ctx)
+
 
 class TeradataExprTranslator(comp.ExprTranslator):
 
@@ -122,6 +128,7 @@ class TeradataExprTranslator(comp.ExprTranslator):
     def name(self, translated, name, force=True):
         quoted_name = TeradataTableSetFormatter._quote_identifier(name, force=force)
         return _name_expr(translated, quoted_name)
+
 
 class TeradataSelect(ImpalaSelect):
 
@@ -135,8 +142,9 @@ class TeradataSelect(ImpalaSelect):
         if not self.limit:
             return None
 
-        limit_sql = 'SAMPLE {}'.format(self.limit['n'])
+        limit_sql = "SAMPLE {}".format(self.limit["n"])
         return limit_sql
+
 
 class TeradataSelectBuilder(comp.SelectBuilder):
     @property
@@ -146,16 +154,18 @@ class TeradataSelectBuilder(comp.SelectBuilder):
     def _visit_select_expr(self, expr):
         op = expr.op()
 
-        method = '_visit_select_{0}'.format(type(op).__name__)
+        method = "_visit_select_{0}".format(type(op).__name__)
         print("VISIT METHOD: %s" % method)
         return super()._visit_select_expr(expr)
 
-class TeradataUnion(comp.Union): # TODO rebuild class
+
+class TeradataUnion(comp.Union):  # TODO rebuild class
     @staticmethod
     def keyword(distinct):
-        return 'UNION DISTINCT' if distinct else 'UNION ALL'
+        return "UNION DISTINCT" if distinct else "UNION ALL"
 
-class TeradataQueryBuilder(comp.QueryBuilder): # TODO rebuild class
+
+class TeradataQueryBuilder(comp.QueryBuilder):  # TODO rebuild class
 
     select_builder = TeradataSelectBuilder
     union_class = TeradataUnion
@@ -168,11 +178,12 @@ class TeradataQueryBuilder(comp.QueryBuilder): # TODO rebuild class
 
         # UDFs are uniquely identified by the name of the Node subclass we
         # generate.
-        return list(
-            toolz.unique(queries, key=lambda x: type(x.expr.op()).__name__)
-        )
+        return list(toolz.unique(queries, key=lambda x: type(x.expr.op()).__name__))
+
 
 """ Customized functions used for the current compiler buildout """
+
+
 def _table_column(translator, expr):
     op = expr.op()
     field_name = op.name
@@ -190,23 +201,23 @@ def _table_column(translator, expr):
     if ctx.need_aliases():
         alias = ctx.get_ref(table)
         if alias is not None:
-            quoted_name = '{}.{}'.format(alias, quoted_name)
+            quoted_name = "{}.{}".format(alias, quoted_name)
 
     return quoted_name
 
 
 """ Add New Customizations to Operations registry """
 _operation_registry.update(
-    {
-        ops.TableColumn: _table_column,
-    })
+    {ops.TableColumn: _table_column,}
+)
 
 
 # TODO TODO below this pint still contains mostly BQ and needs cleaning
 # TODO teradata gives tons os spaces that don't exist
 # need to clean these possibly
 def _name_expr(formatted_expr, quoted_name):
-    return '{} AS {}'.format(formatted_expr, quoted_name)
+    return "{} AS {}".format(formatted_expr, quoted_name)
+
 
 def find_bigquery_udf(expr):
     if isinstance(expr.op(), TeradataUDFNode):
@@ -215,32 +226,34 @@ def find_bigquery_udf(expr):
         result = None
     return lin.proceed, result
 
+
 def to_sql(expr, context):
     query_ast = build_ast(expr, context)
     compiled = query_ast.compile()
     return compiled
 
+
 def _extract_field(sql_attr):
     def extract_field_formatter(translator, expr):
         op = expr.op()
         arg = translator.translate(op.args[0])
-        return 'EXTRACT({} from {})'.format(sql_attr, arg)
+        return "EXTRACT({} from {})".format(sql_attr, arg)
 
     return extract_field_formatter
 
 
-bigquery_cast = Dispatcher('bigquery_cast')
+bigquery_cast = Dispatcher("bigquery_cast")
 
 
 @bigquery_cast.register(str, dt.Timestamp, dt.Integer)
 def bigquery_cast_timestamp_to_integer(compiled_arg, from_, to):
-    return 'UNIX_MICROS({})'.format(compiled_arg)
+    return "UNIX_MICROS({})".format(compiled_arg)
 
 
 @bigquery_cast.register(str, dt.DataType, dt.DataType)
 def bigquery_cast_generate(compiled_arg, from_, to):
     sql_type = ibis_type_to_bigquery_type(to)
-    return 'CAST({} AS {})'.format(compiled_arg, sql_type)
+    return "CAST({} AS {})".format(compiled_arg, sql_type)
 
 
 def _cast(translator, expr):
@@ -253,53 +266,49 @@ def _cast(translator, expr):
 def _struct_field(translator, expr):
     arg, field = expr.op().args
     arg_formatted = translator.translate(arg)
-    return '{}.{}'.format(arg_formatted, field)
+    return "{}.{}".format(arg_formatted, field)
 
 
 def _array_concat(translator, expr):
-    return 'ARRAY_CONCAT({})'.format(
-        ', '.join(map(translator.translate, expr.op().args))
+    return "ARRAY_CONCAT({})".format(
+        ", ".join(map(translator.translate, expr.op().args))
     )
 
 
 def _array_index(translator, expr):
     # SAFE_OFFSET returns NULL if out of bounds
-    return '{}[SAFE_OFFSET({})]'.format(
-        *map(translator.translate, expr.op().args)
-    )
+    return "{}[SAFE_OFFSET({})]".format(*map(translator.translate, expr.op().args))
 
 
 def _string_find(translator, expr):
     haystack, needle, start, end = expr.op().args
 
     if start is not None:
-        raise NotImplementedError('start not implemented for string find')
+        raise NotImplementedError("start not implemented for string find")
     if end is not None:
-        raise NotImplementedError('end not implemented for string find')
+        raise NotImplementedError("end not implemented for string find")
 
-    return 'STRPOS({}, {}) - 1'.format(
+    return "STRPOS({}, {}) - 1".format(
         translator.translate(haystack), translator.translate(needle)
     )
 
 
 def _translate_pattern(translator, pattern):
     # add 'r' to string literals to indicate to BigQuery this is a raw string
-    return 'r' * isinstance(pattern.op(), ops.Literal) + translator.translate(
-        pattern
-    )
+    return "r" * isinstance(pattern.op(), ops.Literal) + translator.translate(pattern)
 
 
 def _regex_search(translator, expr):
     arg, pattern = expr.op().args
     regex = _translate_pattern(translator, pattern)
-    result = 'REGEXP_CONTAINS({}, {})'.format(translator.translate(arg), regex)
+    result = "REGEXP_CONTAINS({}, {})".format(translator.translate(arg), regex)
     return result
 
 
 def _regex_extract(translator, expr):
     arg, pattern, index = expr.op().args
     regex = _translate_pattern(translator, pattern)
-    result = 'REGEXP_EXTRACT_ALL({}, {})[SAFE_OFFSET({})]'.format(
+    result = "REGEXP_EXTRACT_ALL({}, {})[SAFE_OFFSET({})]".format(
         translator.translate(arg), regex, translator.translate(index)
     )
     return result
@@ -308,35 +317,31 @@ def _regex_extract(translator, expr):
 def _regex_replace(translator, expr):
     arg, pattern, replacement = expr.op().args
     regex = _translate_pattern(translator, pattern)
-    result = 'REGEXP_REPLACE({}, {}, {})'.format(
+    result = "REGEXP_REPLACE({}, {}, {})".format(
         translator.translate(arg), regex, translator.translate(replacement)
     )
     return result
 
 
 def _string_concat(translator, expr):
-    return 'CONCAT({})'.format(
-        ', '.join(map(translator.translate, expr.op().arg))
-    )
+    return "CONCAT({})".format(", ".join(map(translator.translate, expr.op().arg)))
 
 
 def _string_join(translator, expr):
     sep, args = expr.op().args
-    return 'ARRAY_TO_STRING([{}], {})'.format(
-        ', '.join(map(translator.translate, args)), translator.translate(sep)
+    return "ARRAY_TO_STRING([{}], {})".format(
+        ", ".join(map(translator.translate, args)), translator.translate(sep)
     )
 
 
 def _string_ascii(translator, expr):
     (arg,) = expr.op().args
-    return 'TO_CODE_POINTS({})[SAFE_OFFSET(0)]'.format(
-        translator.translate(arg)
-    )
+    return "TO_CODE_POINTS({})[SAFE_OFFSET(0)]".format(translator.translate(arg))
 
 
 def _string_right(translator, expr):
     arg, nchars = map(translator.translate, expr.op().args)
-    return 'SUBSTR({arg}, -LEAST(LENGTH({arg}), {nchars}))'.format(
+    return "SUBSTR({arg}, -LEAST(LENGTH({arg}), {nchars}))".format(
         arg=arg, nchars=nchars
     )
 
@@ -351,10 +356,10 @@ def _log(translator, expr):
     arg_formatted = translator.translate(arg)
 
     if base is None:
-        return 'ln({})'.format(arg_formatted)
+        return "ln({})".format(arg_formatted)
 
     base_formatted = translator.translate(base)
-    return 'log({}, {})'.format(arg_formatted, base_formatted)
+    return "log({}, {})".format(arg_formatted, base_formatted)
 
 
 def _literal(translator, expr):
@@ -362,7 +367,7 @@ def _literal(translator, expr):
     if isinstance(expr, ir.NumericValue):
         value = expr.op().value
         if not np.isfinite(value):
-            return 'CAST({!r} AS FLOAT64)'.format(str(value))
+            return "CAST({!r} AS FLOAT64)".format(str(value))
 
     # special case literal timestamp, date, and time scalars
     if isinstance(expr.op(), ops.Literal):
@@ -393,29 +398,29 @@ def _arbitrary(translator, expr):
     if where is not None:
         arg = where.ifelse(arg, ibis.NA)
 
-    if how not in (None, 'first'):
+    if how not in (None, "first"):
         raise com.UnsupportedOperationError(
-            '{!r} value not supported for arbitrary in BigQuery'.format(how)
+            "{!r} value not supported for arbitrary in BigQuery".format(how)
         )
 
-    return 'ANY_VALUE({})'.format(translator.translate(arg))
+    return "ANY_VALUE({})".format(translator.translate(arg))
 
 
 _date_units = {
-    'Y': 'YEAR',
-    'Q': 'QUARTER',
-    'W': 'WEEK',
-    'M': 'MONTH',
-    'D': 'DAY',
+    "Y": "YEAR",
+    "Q": "QUARTER",
+    "W": "WEEK",
+    "M": "MONTH",
+    "D": "DAY",
 }
 
 
 _timestamp_units = {
-    'us': 'MICROSECOND',
-    'ms': 'MILLISECOND',
-    's': 'SECOND',
-    'm': 'MINUTE',
-    'h': 'HOUR',
+    "us": "MICROSECOND",
+    "ms": "MILLISECOND",
+    "s": "SECOND",
+    "m": "MINUTE",
+    "h": "HOUR",
 }
 _time_units = _timestamp_units.copy()
 _timestamp_units.update(_date_units)
@@ -428,10 +433,10 @@ def _truncate(kind, units):
         valid_unit = units.get(unit)
         if valid_unit is None:
             raise com.UnsupportedOperationError(
-                'BigQuery does not support truncating {} values to unit '
-                '{!r}'.format(arg.type(), unit)
+                "BigQuery does not support truncating {} values to unit "
+                "{!r}".format(arg.type(), unit)
             )
-        return '{}_TRUNC({}, {})'.format(kind, trans_arg, valid_unit)
+        return "{}_TRUNC({}, {})".format(kind, trans_arg, valid_unit)
 
     return truncator
 
@@ -444,75 +449,71 @@ def _timestamp_op(func, units):
         unit = offset.type().unit
         if unit not in units:
             raise com.UnsupportedOperationError(
-                'BigQuery does not allow binary operation '
-                '{} with INTERVAL offset {}'.format(func, unit)
+                "BigQuery does not allow binary operation "
+                "{} with INTERVAL offset {}".format(func, unit)
             )
         formatted_arg = translator.translate(arg)
         formatted_offset = translator.translate(offset)
-        result = '{}({}, {})'.format(func, formatted_arg, formatted_offset)
+        result = "{}({}, {})".format(func, formatted_arg, formatted_offset)
         return result
 
     return _formatter
 
 
 STRFTIME_FORMAT_FUNCTIONS = {
-    dt.Date: 'DATE',
-    dt.Time: 'TIME',
-    dt.Timestamp: 'TIMESTAMP',
+    dt.Date: "DATE",
+    dt.Time: "TIME",
+    dt.Timestamp: "TIMESTAMP",
 }
 
 
 _operation_registry.update(
     {
-        ops.ExtractYear: _extract_field('year'),
-        ops.ExtractMonth: _extract_field('month'),
-        ops.ExtractDay: _extract_field('day'),
-        ops.ExtractHour: _extract_field('hour'),
-        ops.ExtractMinute: _extract_field('minute'),
-        ops.ExtractSecond: _extract_field('second'),
-        ops.ExtractMillisecond: _extract_field('millisecond'),
-        ops.StringReplace: fixed_arity('REPLACE', 3),
-        ops.StringSplit: fixed_arity('SPLIT', 2),
+        ops.ExtractYear: _extract_field("year"),
+        ops.ExtractMonth: _extract_field("month"),
+        ops.ExtractDay: _extract_field("day"),
+        ops.ExtractHour: _extract_field("hour"),
+        ops.ExtractMinute: _extract_field("minute"),
+        ops.ExtractSecond: _extract_field("second"),
+        ops.ExtractMillisecond: _extract_field("millisecond"),
+        ops.StringReplace: fixed_arity("REPLACE", 3),
+        ops.StringSplit: fixed_arity("SPLIT", 2),
         ops.StringConcat: _string_concat,
         ops.StringJoin: _string_join,
         ops.StringAscii: _string_ascii,
         ops.StringFind: _string_find,
         ops.StrRight: _string_right,
-        ops.Repeat: fixed_arity('REPEAT', 2),
+        ops.Repeat: fixed_arity("REPEAT", 2),
         ops.RegexSearch: _regex_search,
         ops.RegexExtract: _regex_extract,
         ops.RegexReplace: _regex_replace,
-        ops.GroupConcat: _reduction('STRING_AGG'),
-        ops.IfNull: fixed_arity('IFNULL', 2),
+        ops.GroupConcat: _reduction("STRING_AGG"),
+        ops.IfNull: fixed_arity("IFNULL", 2),
         ops.Cast: _cast,
         ops.StructField: _struct_field,
-        ops.ArrayCollect: unary('ARRAY_AGG'),
+        ops.ArrayCollect: unary("ARRAY_AGG"),
         ops.ArrayConcat: _array_concat,
         ops.ArrayIndex: _array_index,
-        ops.ArrayLength: unary('ARRAY_LENGTH'),
-        ops.HLLCardinality: _reduction('APPROX_COUNT_DISTINCT'),
+        ops.ArrayLength: unary("ARRAY_LENGTH"),
+        ops.HLLCardinality: _reduction("APPROX_COUNT_DISTINCT"),
         ops.Log: _log,
-        ops.Sign: unary('SIGN'),
-        ops.Modulus: fixed_arity('MOD', 2),
-        ops.Date: unary('DATE'),
+        ops.Sign: unary("SIGN"),
+        ops.Modulus: fixed_arity("MOD", 2),
+        ops.Date: unary("DATE"),
         # BigQuery doesn't have these operations built in.
         # ops.ArrayRepeat: _array_repeat,
         # ops.ArraySlice: _array_slice,
         ops.Literal: _literal,
         ops.Arbitrary: _arbitrary,
-        ops.TimestampTruncate: _truncate('TIMESTAMP', _timestamp_units),
-        ops.DateTruncate: _truncate('DATE', _date_units),
-        ops.TimeTruncate: _truncate('TIME', _timestamp_units),
-        ops.Time: unary('TIME'),
-        ops.TimestampAdd: _timestamp_op(
-            'TIMESTAMP_ADD', {'h', 'm', 's', 'ms', 'us'}
-        ),
-        ops.TimestampSub: _timestamp_op(
-            'TIMESTAMP_DIFF', {'h', 'm', 's', 'ms', 'us'}
-        ),
-        ops.DateAdd: _timestamp_op('DATE_ADD', {'D', 'W', 'M', 'Q', 'Y'}),
-        ops.DateSub: _timestamp_op('DATE_SUB', {'D', 'W', 'M', 'Q', 'Y'}),
-        ops.TimestampNow: fixed_arity('CURRENT_TIMESTAMP', 0),
+        ops.TimestampTruncate: _truncate("TIMESTAMP", _timestamp_units),
+        ops.DateTruncate: _truncate("DATE", _date_units),
+        ops.TimeTruncate: _truncate("TIME", _timestamp_units),
+        ops.Time: unary("TIME"),
+        ops.TimestampAdd: _timestamp_op("TIMESTAMP_ADD", {"h", "m", "s", "ms", "us"}),
+        ops.TimestampSub: _timestamp_op("TIMESTAMP_DIFF", {"h", "m", "s", "ms", "us"}),
+        ops.DateAdd: _timestamp_op("DATE_ADD", {"D", "W", "M", "Q", "Y"}),
+        ops.DateSub: _timestamp_op("DATE_SUB", {"D", "W", "M", "Q", "Y"}),
+        ops.TimestampNow: fixed_arity("CURRENT_TIMESTAMP", 0),
     }
 )
 
@@ -525,9 +526,7 @@ _invalid_operations = {
 }
 
 _operation_registry = {
-    k: v
-    for k, v in _operation_registry.items()
-    if k not in _invalid_operations
+    k: v for k, v in _operation_registry.items() if k not in _invalid_operations
 }
 
 compiles = TeradataExprTranslator.compiles
@@ -538,18 +537,18 @@ rewrites = TeradataExprTranslator.rewrites
 def bigquery_day_of_week_index(t, e):
     arg = e.op().args[0]
     arg_formatted = t.translate(arg)
-    return 'MOD(EXTRACT(DAYOFWEEK FROM {}) + 5, 7)'.format(arg_formatted)
+    return "MOD(EXTRACT(DAYOFWEEK FROM {}) + 5, 7)".format(arg_formatted)
 
 
 @rewrites(ops.DayOfWeekName)
 def bigquery_day_of_week_name(e):
     arg = e.op().args[0]
-    return arg.strftime('%A')
+    return arg.strftime("%A")
 
 
 @compiles(ops.Divide)
 def bigquery_compiles_divide(t, e):
-    return 'IEEE_DIVIDE({}, {})'.format(*map(t.translate, e.op().args))
+    return "IEEE_DIVIDE({}, {})".format(*map(t.translate, e.op().args))
 
 
 @compiles(ops.Strftime)
@@ -560,13 +559,13 @@ def compiles_strftime(translator, expr):
     fmt_string = translator.translate(format_string)
     arg_formatted = translator.translate(arg)
     if isinstance(arg_type, dt.Timestamp):
-        return 'FORMAT_{}({}, {}, {!r})'.format(
+        return "FORMAT_{}({}, {}, {!r})".format(
             strftime_format_func_name,
             fmt_string,
             arg_formatted,
-            arg_type.timezone if arg_type.timezone is not None else 'UTC',
+            arg_type.timezone if arg_type.timezone is not None else "UTC",
         )
-    return 'FORMAT_{}({}, {})'.format(
+    return "FORMAT_{}({}, {})".format(
         strftime_format_func_name, fmt_string, arg_formatted
     )
 
@@ -578,10 +577,11 @@ def compiles_string_to_timestamp(translator, expr):
     arg_formatted = translator.translate(arg)
     if timezone_arg is not None:
         timezone_str = translator.translate(timezone_arg)
-        return 'PARSE_TIMESTAMP({}, {}, {})'.format(
+        return "PARSE_TIMESTAMP({}, {}, {})".format(
             fmt_string, arg_formatted, timezone_str
         )
-    return 'PARSE_TIMESTAMP({}, {})'.format(fmt_string, arg_formatted)
+    return "PARSE_TIMESTAMP({}, {})".format(fmt_string, arg_formatted)
+
 
 @rewrites(ops.IdenticalTo)
 def identical_to(expr):
@@ -600,7 +600,7 @@ def bq_sum(expr):
     arg = expr.op().args[0]
     where = expr.op().args[1]
     if isinstance(arg, ir.BooleanColumn):
-        return arg.cast('int64').sum(where=where)
+        return arg.cast("int64").sum(where=where)
     else:
         return expr
 
@@ -610,25 +610,25 @@ def bq_mean(expr):
     arg = expr.op().args[0]
     where = expr.op().args[1]
     if isinstance(arg, ir.BooleanColumn):
-        return arg.cast('int64').mean(where=where)
+        return arg.cast("int64").mean(where=where)
     else:
         return expr
 
 
-UNIT_FUNCS = {'s': 'SECONDS', 'ms': 'MILLIS', 'us': 'MICROS'}
+UNIT_FUNCS = {"s": "SECONDS", "ms": "MILLIS", "us": "MICROS"}
 
 
 @compiles(ops.TimestampFromUNIX)
 def compiles_timestamp_from_unix(t, e):
     value, unit = e.op().args
-    return 'TIMESTAMP_{}({})'.format(UNIT_FUNCS[unit], t.translate(value))
+    return "TIMESTAMP_{}({})".format(UNIT_FUNCS[unit], t.translate(value))
 
 
 @compiles(ops.Floor)
 def compiles_floor(t, e):
     bigquery_type = ibis_type_to_bigquery_type(e.type())
     arg = e.op().arg
-    return 'CAST(FLOOR({}) AS {})'.format(t.translate(arg), bigquery_type)
+    return "CAST(FLOOR({}) AS {})".format(t.translate(arg), bigquery_type)
 
 
 @compiles(ops.CMSMedian)
@@ -640,9 +640,7 @@ def compiles_approx(translator, expr):
     if where is not None:
         arg = where.ifelse(arg, ibis.NA)
 
-    return 'APPROX_QUANTILES({}, 2)[OFFSET(1)]'.format(
-        translator.translate(arg)
-    )
+    return "APPROX_QUANTILES({}, 2)[OFFSET(1)]".format(translator.translate(arg))
 
 
 @compiles(ops.Covariance)
@@ -652,14 +650,12 @@ def compiles_covar(translator, expr):
     right = expr.right
     where = expr.where
 
-    if expr.how == 'sample':
-        how = 'SAMP'
-    elif expr.how == 'pop':
-        how = 'POP'
+    if expr.how == "sample":
+        how = "SAMP"
+    elif expr.how == "pop":
+        how = "POP"
     else:
-        raise ValueError(
-            "Covariance with how={!r} is not supported.".format(how)
-        )
+        raise ValueError("Covariance with how={!r} is not supported.".format(how))
 
     if where is not None:
         left = where.ifelse(left, ibis.NA)
@@ -683,9 +679,7 @@ def bigquery_compile_any(translator, expr):
 
 @compiles(ops.NotAny)
 def bigquery_compile_notany(translator, expr):
-    return "LOGICAL_AND(NOT ({}))".format(
-        *map(translator.translate, expr.op().args)
-    )
+    return "LOGICAL_AND(NOT ({}))".format(*map(translator.translate, expr.op().args))
 
 
 @compiles(ops.All)
@@ -695,9 +689,7 @@ def bigquery_compile_all(translator, expr):
 
 @compiles(ops.NotAll)
 def bigquery_compile_notall(translator, expr):
-    return "LOGICAL_OR(NOT ({}))".format(
-        *map(translator.translate, expr.op().args)
-    )
+    return "LOGICAL_OR(NOT ({}))".format(*map(translator.translate, expr.op().args))
 
 
 class TeradataDialect(impala_compiler.ImpalaDialect):

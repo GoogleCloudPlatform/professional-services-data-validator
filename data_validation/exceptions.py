@@ -13,6 +13,5 @@
 # limitations under the License.
 
 
-
 class DataClientConnectionFailure(Exception):
-	pass
+    pass

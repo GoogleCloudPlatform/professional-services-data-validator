@@ -1,10 +1,59 @@
-## Mac OSX ##
-*.DS_Store
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
+# Copied from https://github.com/googleapis/synthtool/blob/master/synthtool/gcp/templates/python_library/.gitignore
 *.py[cod]
-*$py.class
+*.sw[op]
 
-# Distribution / packaging
-*.egg-info/
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+__pycache__
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.nox
+.cache
+.pytest_cache
+
+
+# Mac
+.DS_Store
+
+# JetBrains
+.idea
+
+# VS Code
+.vscode
+
+# emacs
+*~
+
+# Built documentation
+docs/_build
+bigquery/docs/generated
+
+# Virtual environment
+env/
+coverage.xml
+
+# System test environment variables.
+system_tests/local_test_setup
+
+# Make sure a generated file isn't accidentally committed.
+pylintrc
+pylintrc.test

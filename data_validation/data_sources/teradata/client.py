@@ -7,9 +7,11 @@
 # import google.cloud.bigquery as bq
 import pandas
 import teradatasql
+
 # import regex as re
 # from google.api_core.exceptions import NotFound
 from multipledispatch import Dispatcher
+
 # from pkg_resources import parse_version
 
 import ibis
@@ -22,22 +24,22 @@ import ibis.expr.types as ir
 from ibis.client import Database, Query, SQLClient
 from ibis.common.exceptions import UnsupportedBackendType
 
-from . import compiler # TODO non local import ie from ibis.teradata import compiler
-from .datatypes import TeradataTypeTranslator # TODO non local import
+from . import compiler  # TODO non local import ie from ibis.teradata import compiler
+from .datatypes import TeradataTypeTranslator  # TODO non local import
 
 
 _DTYPE_TO_IBIS_TYPE = {
-    'INT64': dt.int64,
-    'FLOAT64': dt.double,
-    'BOOL': dt.boolean,
-    'STRING': dt.string,
-    'DATE': dt.date,
+    "INT64": dt.int64,
+    "FLOAT64": dt.double,
+    "BOOL": dt.boolean,
+    "STRING": dt.string,
+    "DATE": dt.date,
     # FIXME: enforce no tz info
-    'DATETIME': dt.timestamp,
-    'TIME': dt.time,
-    'TIMESTAMP': dt.timestamp,
-    'BYTES': dt.binary,
-    'NUMERIC': dt.Decimal(38, 9),
+    "DATETIME": dt.timestamp,
+    "TIME": dt.time,
+    "TIMESTAMP": dt.timestamp,
+    "BYTES": dt.binary,
+    "NUMERIC": dt.Decimal(38, 9),
 }
 
 # TODO implement
@@ -45,18 +47,19 @@ _DTYPE_TO_IBIS_TYPE = {
 def teradata_field_to_ibis_dtype(col_data):
     """ Convert Teradata data to an ibis type."""
     typ = field.field_type
-    if typ == 'RECORD':
+    if typ == "RECORD":
         fields = field.fields
-        assert fields, 'RECORD fields are empty'
+        assert fields, "RECORD fields are empty"
         names = [el.name for el in fields]
         ibis_types = list(map(dt.dtype, fields))
         ibis_type = dt.Struct(names, ibis_types)
     else:
         ibis_type = _LEGACY_TO_STANDARD.get(typ, typ)
         ibis_type = _DTYPE_TO_IBIS_TYPE.get(ibis_type, ibis_type)
-    if field.mode == 'REPEATED':
+    if field.mode == "REPEATED":
         ibis_type = dt.Array(ibis_type)
     return ibis_type
+
 
 def _find_scalar_parameter(expr):
     """Find all :class:`~ibis.expr.types.ScalarParameter` instances.
@@ -78,15 +81,11 @@ def _find_scalar_parameter(expr):
 
 
 class TeradataQuery(Query):
-
-
     def __init__(self, client, ddl):
         super().__init__(client, ddl)
 
         # self.expr comes from the parent class
-        query_parameter_names = dict(
-            lin.traverse(_find_scalar_parameter, self.expr)
-        )
+        query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
         # self.query_parameters = [
         #     teradata_param(
         #         param.to_expr().name(query_parameter_names[param]), value
@@ -212,10 +211,10 @@ class TeradataClient(SQLClient):
             The database port to connect to (default. 1025)
         """
         self.teradata_config = {
-            "host": host, 
-            "user": user_name, 
-            "password": password, 
-            "dbs_port": port
+            "host": host,
+            "user": user_name,
+            "password": password,
+            "dbs_port": port,
         }
 
         self.client = teradatasql.connect(**self.teradata_config)
@@ -227,7 +226,9 @@ class TeradataClient(SQLClient):
 
         return None
 
-    def sql(self, query): # TODO is this ever used?  its uselss, queries dont return schemas
+    def sql(
+        self, query
+    ):  # TODO is this ever used?  its uselss, queries dont return schemas
         """ Convert a SQL query to an Ibis table expression.
         Parameters
         ----------
@@ -238,11 +239,11 @@ class TeradataClient(SQLClient):
         """
         # Get the schema by adding a LIMIT 0 on to the end of the query. If
         # there is already a limit in the query, we find and remove it
-        limited_query = 'SELECT * FROM ({}) t0 SAMPLE 0'.format(query)
+        limited_query = "SELECT * FROM ({}) t0 SAMPLE 0".format(query)
         schema = self._get_schema_using_query(limited_query)
         return ops.SQLQueryResult(query, schema, self).to_expr()
 
-    def _build_ast(self, expr, context): # TODO NEXT
+    def _build_ast(self, expr, context):  # TODO NEXT
         result = compiler.build_ast(expr, context)
         return result
 
@@ -261,7 +262,7 @@ class TeradataClient(SQLClient):
         database, table = qualified_name.split(".")
         return database, table
 
-    def _get_table_schema(self, qualified_name): # TODO should any validation happen?
+    def _get_table_schema(self, qualified_name):  # TODO should any validation happen?
         dataset, table = self._breakdown_qualified_name(qualified_name)
         return self.get_schema(table, database=dataset)
 
@@ -271,7 +272,8 @@ class TeradataClient(SQLClient):
 
     TABLE_SCHEMA_SQL = """
     HELP COLUMN {database}.{table}.*;
-    """ # TODO move somewhere better
+    """  # TODO move somewhere better
+
     def _get_teradata_schema(self, database, table):
         table_schema_sql = self.TABLE_SCHEMA_SQL.format(database=database, table=table)
         schema_df = self._execute(table_schema_sql, results=True)
@@ -285,7 +287,7 @@ class TeradataClient(SQLClient):
         for col_data in schema_list:
             schema_field = {
                 "names": col_data["Column Name"].rstrip(),
-                "types": TeradataTypeTranslator.to_ibis(col_data)
+                "types": TeradataTypeTranslator.to_ibis(col_data),
             }
             clean_schema.append(schema_field)
 
@@ -337,10 +339,11 @@ class TeradataClient(SQLClient):
     LIST_DATABASE_SQL = """
     SELECT * FROM DBC.Databases
     WHERE DatabaseName LIKE '%{database_like}%'
-    """ # TODO move somewhere better
+    """  # TODO move somewhere better
+
     def list_databases(self, like=None):
         database_like = like or ""
-        
+
         list_database_sql = self.LIST_DATABASE_SQL.format(database_like=database_like)
         databases_df = self._execute(list_database_sql, results=True)
 
@@ -350,12 +353,15 @@ class TeradataClient(SQLClient):
         SELECT * FROM DBC.Tables
         WHERE DatabaseName LIKE '%{database_like}%'
               AND TableName LIKE '%{table_like}%'
-    """ # TODO move somewhere better
+    """  # TODO move somewhere better
+
     def list_tables(self, like=None, database=None):
         database = database or ""
         table = like or ""
-        
-        list_table_sql = self.LIST_TABLE_SQL.format(database_like=database, table_like=table)
+
+        list_table_sql = self.LIST_TABLE_SQL.format(
+            database_like=database, table_like=table
+        )
         tables_df = self._execute(list_table_sql, results=True)
 
         return list(tables_df.TableName)

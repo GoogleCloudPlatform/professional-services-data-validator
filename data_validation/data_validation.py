@@ -36,12 +36,13 @@ CLIENT_LOOKUP = {
     "Teradata": TeradataClient,
 }
 
-class ResultHandler(object):
 
+class ResultHandler(object):
     def execute(self, inp_config, out_config, result_df):
         print(result_df.to_string(index=False))
 
         return result_df
+
 
 """ The DataValidation class is where the code becomes source/target aware
 
@@ -50,9 +51,12 @@ class ResultHandler(object):
 
     data_validator = DataValidation(builder, source_config, target_config, result_handler=None, verbose=False)
 """
-class DataValidation(object):
 
-    def __init__(self, builder, source_config, target_config, result_handler=None, verbose=False):
+
+class DataValidation(object):
+    def __init__(
+        self, builder, source_config, target_config, result_handler=None, verbose=False
+    ):
         """ Initialize a DataValidation client
 
             :param builder: A QueryBuilder client with the structure of the desired validation
@@ -83,25 +87,35 @@ class DataValidation(object):
         source_type = config[consts.SOURCE_TYPE]
 
         if source_type not in CLIENT_LOOKUP:
-            msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(source_type=source_type)
+            msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
+                source_type=source_type
+            )
             raise Exception(msg)
 
         try:
             data_client = CLIENT_LOOKUP[source_type](**config[consts.CONFIG])
         except Exception as e:
-            msg = 'Connection Type "{source_type}" could not connect'.format(source_type=source_type)
+            msg = 'Connection Type "{source_type}" could not connect'.format(
+                source_type=source_type
+            )
             raise exceptions.DataClientConnectionFailure(msg)
 
         return data_client
 
     def execute(self):
         """ Execute Queries and Store Results """
-        source_query = self.builder.compile(self.source_client,
-                                self.source_config[consts.SCHEMA_NAME], self.source_config[consts.TABLE_NAME],
-                                       partition_column=self.source_config.get(consts.PARTITION_COLUMN))
-        target_query = self.builder.compile(self.target_client,
-                                self.target_config[consts.SCHEMA_NAME], self.target_config[consts.TABLE_NAME],
-                                partition_column=self.target_config.get(consts.PARTITION_COLUMN))
+        source_query = self.builder.compile(
+            self.source_client,
+            self.source_config[consts.SCHEMA_NAME],
+            self.source_config[consts.TABLE_NAME],
+            partition_column=self.source_config.get(consts.PARTITION_COLUMN),
+        )
+        target_query = self.builder.compile(
+            self.target_client,
+            self.target_config[consts.SCHEMA_NAME],
+            self.target_config[consts.TABLE_NAME],
+            partition_column=self.target_config.get(consts.PARTITION_COLUMN),
+        )
 
         # Return Query Results in Dataframe from Ibis
         if self.verbose:
@@ -116,7 +130,9 @@ class DataValidation(object):
         result_df = self.combine_data(source_df, target_df)
 
         # Call Result Handler to Manage Results
-        return self.result_handler.execute(self.source_config, self.target_config, result_df)
+        return self.result_handler.execute(
+            self.source_config, self.target_config, result_df
+        )
 
     def combine_data(self, source_df, target_df):
         """ TODO: Return List of Dictionaries """
@@ -124,8 +140,12 @@ class DataValidation(object):
         source_df = self._clean_raw_data(source_df)
         target_df = self._clean_raw_data(target_df)
 
-        df = source_df.merge(target_df, how="outer", on=consts.DEFAULT_PARTITION_KEY,
-                             suffixes=(consts.INPUT_SUFFIX, consts.OUTPUT_SUFFIX))
+        df = source_df.merge(
+            target_df,
+            how="outer",
+            on=consts.DEFAULT_PARTITION_KEY,
+            suffixes=(consts.INPUT_SUFFIX, consts.OUTPUT_SUFFIX),
+        )
         return df
 
     def _clean_raw_data(self, result_df):

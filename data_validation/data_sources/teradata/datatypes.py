@@ -50,12 +50,12 @@ class UDFContext(TypeTranslationContext):
 #     WHEN 'MI' THEN 'INTERVAL MINUTE(' || TRIM(DecimalTotalDigits) || ')'
 #     WHEN 'MS' THEN 'INTERVAL MINUTE(' || TRIM(DecimalTotalDigits) || ')'      || ' TO SECOND('
 #                                       || TRIM(DecimalFractionalDigits) || ')'
-#     WHEN 'SC' THEN 'INTERVAL SECOND(' || TRIM(DecimalTotalDigits) || ',' 
+#     WHEN 'SC' THEN 'INTERVAL SECOND(' || TRIM(DecimalTotalDigits) || ','
 #                                       || TRIM(DecimalFractionalDigits) || ')'
 #     WHEN 'BO' THEN 'BLOB('            || TRIM(CAST(ColumnLength AS INTEGER)) || ')'
 #     WHEN 'CO' THEN 'CLOB('            || TRIM(CAST(ColumnLength AS INTEGER)) || ')'
 
-#     WHEN 'PD' THEN 'PERIOD(DATE)'     
+#     WHEN 'PD' THEN 'PERIOD(DATE)'
 #     WHEN 'PM' THEN 'PERIOD(TIMESTAMP('|| TRIM(DecimalFractionalDigits) || ')' || ' WITH TIME ZONE'
 #     WHEN 'PS' THEN 'PERIOD(TIMESTAMP('|| TRIM(DecimalFractionalDigits) || '))'
 #     WHEN 'PT' THEN 'PERIOD(TIME('     || TRIM(DecimalFractionalDigits) || '))'
@@ -72,8 +72,8 @@ class UDFContext(TypeTranslationContext):
 #     ELSE '<Unknown> ' || ColumnType
 #   END
 
-class TeradataTypeTranslator(object):
 
+class TeradataTypeTranslator(object):
     def __init__(self):
         pass
 
@@ -92,7 +92,10 @@ class TeradataTypeTranslator(object):
         if return_ibis_type:
             return dt.string
 
-        print('Unsupported Date Type Seen; "%s" (Also I should be a log)' % col_data["Type"])
+        print(
+            'Unsupported Date Type Seen; "%s" (Also I should be a log)'
+            % col_data["Type"]
+        )
         return "VARCHAR"
 
     @classmethod
@@ -105,10 +108,13 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_D(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.Decimal(col_data["DecimalTotalDigits"],
-                              col_data["DecimalFractionalDigits"]) # TODO more detail here
-        value_type = "DECIMAL(%d, %d)" % (col_data["DecimalTotalDigits"],
-                                          col_data["DecimalFractionalDigits"])
+            return dt.Decimal(
+                col_data["DecimalTotalDigits"], col_data["DecimalFractionalDigits"]
+            )  # TODO more detail here
+        value_type = "DECIMAL(%d, %d)" % (
+            col_data["DecimalTotalDigits"],
+            col_data["DecimalFractionalDigits"],
+        )
         return value_type
 
     @classmethod
@@ -120,12 +126,13 @@ class TeradataTypeTranslator(object):
 
 
 # TODO all below here is likely not needed
-ibis_type_to_teradata_type = Dispatcher('ibis_type_to_teradata_type')
+ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")
 
 # TODO
 @ibis_type_to_teradata_type.register(str)
 def trans_string_default(datatype):
     return ibis_type_to_teradata_type(dt.dtype(datatype))
+
 
 # TODO
 @ibis_type_to_teradata_type.register(dt.DataType)
@@ -141,21 +148,18 @@ def trans_string_context(datatype, context):
 
 @ibis_type_to_teradata_type.register(dt.Floating, TypeTranslationContext)
 def trans_float64(t, context):
-    return 'FLOAT64'
+    return "FLOAT64"
 
 
 @ibis_type_to_teradata_type.register(dt.Integer, TypeTranslationContext)
 def trans_integer(t, context):
-    return 'INT64'
+    return "INT64"
+
 
 # TODO
-@ibis_type_to_teradata_type.register(
-    dt.UInt64, (TypeTranslationContext, UDFContext)
-)
+@ibis_type_to_teradata_type.register(dt.UInt64, (TypeTranslationContext, UDFContext))
 def trans_lossy_integer(t, context):
-    raise TypeError(
-        'Conversion from uint64 to BigQuery integer type (int64) is lossy'
-    )
+    raise TypeError("Conversion from uint64 to BigQuery integer type (int64) is lossy")
 
 
 # @ibis_type_to_teradata_type.register(dt.Array, TypeTranslationContext)
@@ -179,19 +183,21 @@ def trans_lossy_integer(t, context):
 
 @ibis_type_to_teradata_type.register(dt.Date, TypeTranslationContext)
 def trans_date(t, context):
-    return 'DATE'
+    return "DATE"
+
 
 # TODO
 @ibis_type_to_teradata_type.register(dt.Timestamp, TypeTranslationContext)
 def trans_timestamp(t, context):
     if t.timezone is not None:
-        raise TypeError('BigQuery does not support timestamps with timezones')
-    return 'TIMESTAMP'
+        raise TypeError("BigQuery does not support timestamps with timezones")
+    return "TIMESTAMP"
 
 
 @ibis_type_to_teradata_type.register(dt.DataType, TypeTranslationContext)
 def trans_type(t, context):
     return str(t).upper()
+
 
 # TODO
 # @ibis_type_to_teradata_type.register(dt.Integer, UDFContext)
@@ -209,12 +215,13 @@ def trans_type(t, context):
 def trans_numeric(t, context):
     if (t.precision, t.scale) != (38, 9):
         raise TypeError(
-            'BigQuery only supports decimal types with precision of 38 and '
-            'scale of 9'
+            "BigQuery only supports decimal types with precision of 38 and "
+            "scale of 9"
         )
-    return 'NUMERIC'
+    return "NUMERIC"
+
 
 # TODO
 @ibis_type_to_teradata_type.register(dt.Decimal, TypeTranslationContext)
 def trans_numeric_udf(t, context):
-    raise TypeError('Decimal types are not supported in BigQuery UDFs')
+    raise TypeError("Decimal types are not supported in BigQuery UDFs")

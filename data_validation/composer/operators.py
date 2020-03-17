@@ -23,6 +23,7 @@ from airflow.utils.decorators import apply_defaults
 from data_validation import data_validation, consts, exceptions
 from data_validation.query_builder import query_builder
 
+
 class DataValidationCountOperator(BaseOperator):
     """
     Execute a Data Validation run using total count aggregation styles.
@@ -41,17 +42,18 @@ class DataValidationCountOperator(BaseOperator):
     :type env: dict
     """
 
-
     @apply_defaults
     def __init__(
-            self,
-            source_config,
-            target_config,
-            # aggregates,
-            # filters,
-            env=None,
-            xcom_push=False,
-            *args, **kwargs):
+        self,
+        source_config,
+        target_config,
+        # aggregates,
+        # filters,
+        env=None,
+        xcom_push=False,
+        *args,
+        **kwargs
+    ):
         # TODO add dict with {"agg_function": ("source_field_name", "target_field_name")}
 
         super(DataValidationCountOperator, self).__init__(*args, **kwargs)
@@ -79,8 +81,13 @@ class DataValidationCountOperator(BaseOperator):
         # env.update(airflow_context_vars)
 
         builder = query_builder.QueryBuilder.build_count_validator()
-        data_validator = data_validation.DataValidation(builder, self.source_config, self.target_config,
-                                                        result_handler=None, verbose=False)
+        data_validator = data_validation.DataValidation(
+            builder,
+            self.source_config,
+            self.target_config,
+            result_handler=None,
+            verbose=False,
+        )
         df = data_validator.execute()
 
         if False:
@@ -89,6 +96,5 @@ class DataValidationCountOperator(BaseOperator):
         if self.xcom_push_flag:
             return {}
 
-
     def on_kill(self):
-        self.log.info('Sending SIGTERM signal to data validation process')
+        self.log.info("Sending SIGTERM signal to data validation process")

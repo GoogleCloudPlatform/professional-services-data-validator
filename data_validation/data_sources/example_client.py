@@ -15,6 +15,7 @@
 
 from . import data_client
 
+
 class ExampleClient(data_client.DataClient):
 
     SOURCE_TYPE = "Example"

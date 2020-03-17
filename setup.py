@@ -18,16 +18,19 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = open("requirements.txt").read().strip().split("\n")
-install_requires = [v for v in install_requires if not v.startswith("#")] # Remove comments
+install_requires = [
+    v for v in install_requires if not v.startswith("#")
+]  # Remove comments
 
-packages = ["data_validation",
-            "data_validation.data_sources",
-            "data_validation.data_sources.teradata",
-            "data_validation.query_builder"
-            ]
+packages = [
+    "data_validation",
+    "data_validation.data_sources",
+    "data_validation.data_sources.teradata",
+    "data_validation.query_builder",
+]
 
 setuptools.setup(
-    name="Data Validation Tool", # Replace with your own username
+    name="Data Validation Tool",  # Replace with your own username
     version="0.0.1",
     author="Dylan Hercher",
     author_email="dhercher@google.com",
@@ -42,6 +45,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
     install_requires=install_requires,
 )

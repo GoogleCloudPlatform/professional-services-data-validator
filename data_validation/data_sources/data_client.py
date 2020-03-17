@@ -20,12 +20,12 @@ from data_validation import consts
 
 class DataClient(ABC):
 
-    SOURCE_TYPE = "Generic" # Recommend to overwrite this var
+    SOURCE_TYPE = "Generic"  # Recommend to overwrite this var
 
     COUNT_SQL = """
     SELECT COUNT(1) {q}rows{q} {aggregate_cols} FROM {q}{schema}{q}.{q}{table}{q} {where};
     """.strip()
-    
+
     DEFAULT_QUOTE = '"'
     SELECT = "SELECT"
     FROM = "FROM"
@@ -62,9 +62,12 @@ class DataClient(ABC):
         """
         return ""
 
-    def get_partition_column_sql(self, partition_column, partition_column_type, partition_size=None):
-        partition_column_name = self.PARTITION_COLUMN_NAME.format(q=self.DEFAULT_QUOTE,
-                                                                  partition_key=consts.DEFAULT_PARTITION_KEY)
+    def get_partition_column_sql(
+        self, partition_column, partition_column_type, partition_size=None
+    ):
+        partition_column_name = self.PARTITION_COLUMN_NAME.format(
+            q=self.DEFAULT_QUOTE, partition_key=consts.DEFAULT_PARTITION_KEY
+        )
         if partition_column_type == "DATE":
             date_column_cast = self.get_date_column_cast(partition_column)
             return date_column_cast + partition_column_name
@@ -72,22 +75,33 @@ class DataClient(ABC):
             int_column_cast = self.get_int_column_cast(partition_column, partition_size)
             return int_column_cast + partition_column_name
         else:
-            raise Exception("Unsupported Partition Column Type: {}".format(partition_column_type))
+            raise Exception(
+                "Unsupported Partition Column Type: {}".format(partition_column_type)
+            )
 
-    def get_group_column_sql(self, partition_column, partition_column_type, partition_size=None):
+    def get_group_column_sql(
+        self, partition_column, partition_column_type, partition_size=None
+    ):
         if partition_column_type == "DATE":
             return self.get_date_column_cast(partition_column)
         elif partition_column_type == "INT":
             return self.get_int_column_cast(partition_column, partition_size)
         else:
-            raise Exception("Unsupported Partition Column Type: {}".format(partition_column_type))
+            raise Exception(
+                "Unsupported Partition Column Type: {}".format(partition_column_type)
+            )
 
     def get_date_column_cast(self, partition_column):
-        return self.DATE_COLUMN_CAST.format(q=self.DEFAULT_QUOTE, partition_column=partition_column)
+        return self.DATE_COLUMN_CAST.format(
+            q=self.DEFAULT_QUOTE, partition_column=partition_column
+        )
 
     def get_int_column_cast(self, partition_column, partition_size):
-        return self.INT_COLUMN_CAST.format(q=self.DEFAULT_QUOTE, partition_column=partition_column,
-                                           partition_size=partition_size)
+        return self.INT_COLUMN_CAST.format(
+            q=self.DEFAULT_QUOTE,
+            partition_column=partition_column,
+            partition_size=partition_size,
+        )
 
     def get_count_star(self, name="rows"):
         return self.COUNT_STAR.format(q=self.DEFAULT_QUOTE, name=name)
@@ -141,7 +155,7 @@ class DataClient(ABC):
         result = self._query(sql)
 
         if isinstance(result, pandas.DataFrame):
-            return result.to_dict(orient='record')
+            return result.to_dict(orient="record")
 
         return result
 
@@ -192,7 +206,7 @@ class DataClient(ABC):
 
     # def count(self, schema, table, aggregate_cols="", where="", **kwargs):
     #     """ Return Count and Other Metrics for Given Filter
-    
+
     #         :param schema: Schema for Table to Count
     #         :param table: Name of Table to Count
     #         :param aggregate_cols: SQL for Extra Aggregations to run (ie "MAX(ID) max_id")
@@ -203,13 +217,12 @@ class DataClient(ABC):
     #     if aggregate_cols:
     #         aggregate_cols = ", %s" % aggregate_cols
     #     quote_char = self.DEFAULT_QUOTE
-    #     count_sql = self.COUNT_SQL.format(schema=schema, table=table, where=where, 
+    #     count_sql = self.COUNT_SQL.format(schema=schema, table=table, where=where,
     #                                       aggregate_cols=aggregate_cols, q=quote_char)
     #     res = self.read_sql(count_sql)[0]
     #     if "ROWS" in res:
     #         res["rows"] = res["ROWS"]
-        
-        
+
     #     return res
 
     # def count_by_partition(self, schema, table, column, **kwargs):

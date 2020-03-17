@@ -17,8 +17,8 @@ from data_validation import consts
 
 from datetime import datetime, timedelta
 
-class AggregateField(object):
 
+class AggregateField(object):
     def __init__(self, ibis_expr, field_name=None, name=None):
         """
             field_name: A field to act on in the table.  Table level expr do not have a field name
@@ -29,22 +29,26 @@ class AggregateField(object):
 
     @staticmethod
     def count(name=None):
-        return AggregateField(ibis.expr.types.ColumnExpr.count, field_name=None, name=name)
+        return AggregateField(
+            ibis.expr.types.ColumnExpr.count, field_name=None, name=name
+        )
 
     def compile(self, ibis_table):
         if self.field_name:
             agg_field = self.expr(ibis_table[self.field_name])
         else:
             agg_field = self.expr(ibis_table)
-        
+
         if self.name:
             agg_field = agg_field.name(self.name)
-        
+
         return agg_field
 
-class FilterField(object):
 
-    def __init__(self, ibis_expr, left=None, right=None, left_field=None, right_field=None):
+class FilterField(object):
+    def __init__(
+        self, ibis_expr, left=None, right=None, left_field=None, right_field=None
+    ):
         """
             field_name: A field to act on in the table.  Table level expr do not have a field name
         """
@@ -57,29 +61,37 @@ class FilterField(object):
     @staticmethod
     def greater_than(field_name, value):
         # Build Left and Right Objects
-        return FilterField(ibis.expr.types.ColumnExpr.__gt__, left_field=field_name, right=value)
+        return FilterField(
+            ibis.expr.types.ColumnExpr.__gt__, left_field=field_name, right=value
+        )
 
     @staticmethod
     def less_than(field_name, value):
         # Build Left and Right Objects
-        return FilterField(ibis.expr.types.ColumnExpr.__lt__, left_field=field_name, right=value)
+        return FilterField(
+            ibis.expr.types.ColumnExpr.__lt__, left_field=field_name, right=value
+        )
 
     def compile(self, ibis_table):
         if self.left_field:
             self.left = ibis_table[self.left_field]
             # Cast All Datetime to Date (TODO this may be a bug in BQ)
-            if isinstance(ibis_table[self.left_field].type(), ibis.expr.datatypes.Timestamp):
+            if isinstance(
+                ibis_table[self.left_field].type(), ibis.expr.datatypes.Timestamp
+            ):
                 self.left = self.left.cast("date")
         if self.right_field:
             self.right = ibis_table[self.right_field]
             # Cast All Datetime to Date (TODO this may be a bug in BQ)
-            if isinstance(ibis_table[self.right_field].type(), ibis.expr.datatypes.Timestamp):
+            if isinstance(
+                ibis_table[self.right_field].type(), ibis.expr.datatypes.Timestamp
+            ):
                 self.right = self.right.cast("date")
 
         return self.expr(self.left, self.right)
 
-class GroupedField(object):
 
+class GroupedField(object):
     def __init__(self, field_name=None, name=None, cast=None):
         """
             field_name: A field to act on in the table.  Table level expr do not have a field name
@@ -92,7 +104,7 @@ class GroupedField(object):
         # Fields are supplied on compile or on build
         field_name = field_name or self.field_name
         group_field = ibis_table[field_name]
-        
+
         # TODO: generate cast for known types not specified
         if self.cast:
             group_field = group_field.cast(self.cast)
@@ -102,17 +114,19 @@ class GroupedField(object):
             # TODO: need to build Truncation Int support
             # TODO: should be using a logger
             print("WARNING: Unknown cast types can cause memory errors")
-            group_field = group_field # No cast if type is not handled
+            group_field = group_field  # No cast if type is not handled
 
         # The Casts require we also supply a name.  TODO this culd be a requirement in the init
         name = self.name or field_name
         group_field = group_field.name(name)
-        
+
         return group_field
 
-class QueryBuilder(object):
 
-    def __init__(self, aggregate_fields, filters, grouped_fields, days_past=30, limit=None):
+class QueryBuilder(object):
+    def __init__(
+        self, aggregate_fields, filters, grouped_fields, days_past=30, limit=None
+    ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
             :param aggregate_fields: List of AggregateField objects with Ibis expressions
@@ -134,7 +148,12 @@ class QueryBuilder(object):
         filters = []
         grouped_fields = []
 
-        return QueryBuilder(aggregate_fields, filters=filters, grouped_fields=grouped_fields, limit=limit)
+        return QueryBuilder(
+            aggregate_fields,
+            filters=filters,
+            grouped_fields=grouped_fields,
+            limit=limit,
+        )
 
     # A Static function with prebuilt comparisons to use in query building
     @staticmethod
@@ -143,8 +162,13 @@ class QueryBuilder(object):
         filters = []
         grouped_fields = [GroupedField(name=consts.DEFAULT_PARTITION_KEY)]
 
-        return QueryBuilder(aggregate_fields, filters=filters, grouped_fields=grouped_fields,
-                            days_past=days_past, limit=limit)
+        return QueryBuilder(
+            aggregate_fields,
+            filters=filters,
+            grouped_fields=grouped_fields,
+            days_past=days_past,
+            limit=limit,
+        )
 
     def compile_aggregate_fields(self, table):
         aggs = [field.compile(table) for field in self.aggregate_fields]
@@ -155,7 +179,10 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.filters]
 
     def compile_group_fields(self, table, partition_column=None):
-        return [field.compile(table, field_name=partition_column) for field in self.grouped_fields]
+        return [
+            field.compile(table, field_name=partition_column)
+            for field in self.grouped_fields
+        ]
 
     def compile(self, data_client, schema_name, table_name, partition_column=None):
         """ TODO
@@ -202,8 +229,6 @@ class QueryBuilder(object):
         else:
             return False
 
-
-
     # TODO: these should be submitted as QueryField objects
     def add_query_field(self, query_field):
         self.query_fields.append(query_field)
@@ -214,4 +239,3 @@ class QueryBuilder(object):
             :param filter_obj: A FilterField Object
         """
         self.filters.append(filter_obj)
-
