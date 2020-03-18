@@ -11,3 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import pytest
+
+
+@pytest.fixture
+def module_under_test():
+    import data_validation.data_validation
+
+    return data_validation.data_validation
+
+
+def test_import(module_under_test):
+    # TODO: make better tests than just verifying import
+    assert True

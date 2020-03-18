@@ -16,8 +16,7 @@
 
 This is a configuration file for use with `nox <https://nox.thea.codes/>`__.
 
-This particular configuration is modelled after the configuration for the
-`google-cloud-biguery
+This configuration is modelled after the one for the `google-cloud-biguery
 <https://github.com/googleapis/python-bigquery/blob/master/noxfile.py>`__
 package.
 """
@@ -29,6 +28,42 @@ import nox
 
 PYTHON_VERSION = "3.7"
 BLACK_PATHS = ("data_validation", "tests", "noxfile.py", "setup.py")
+
+
+@nox.session(python=PYTHON_VERSION)
+def unit(session):
+    # Install all test dependencies, then install local packages in-place.
+    session.install("pytest", "pytest-cov")
+    session.install("-e", ".")
+
+    # Run py.test against the unit tests.
+    session.run(
+        "py.test",
+        "--quiet",
+        "--cov=data_validation",
+        "--cov=tests.unit",
+        "--cov-append",
+        "--cov-config=.coveragerc",
+        "--cov-report=",
+        os.path.join("tests", "unit"),
+        *session.posargs,
+    )
+
+
+@nox.session(python=PYTHON_VERSION)
+def samples(session):
+    """Run the snippets test suite."""
+
+    # Sanity check: Only run snippets tests if the environment variable is set.
+    if not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", ""):
+        session.skip("Credentials must be set via environment variable.")
+
+    # Install all test dependencies, then install local packages in place.
+    session.install("pytest")
+    session.install("-e", ".")
+
+    # Run pytest against the samples tests.
+    session.run("pytest", "samples", *session.posargs)
 
 
 @nox.session(python=PYTHON_VERSION)
