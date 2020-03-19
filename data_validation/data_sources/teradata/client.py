@@ -56,6 +56,7 @@ class TeradataQuery(Query):
 
 class TeradataDatabase(Database):
     """A Teradata dataset """
+
     pass
 
 
@@ -100,7 +101,9 @@ class TeradataClient(SQLClient):
 
         return None
 
-    def sql(self, query):  # TODO is this ever used?  its uselss, queries dont return schemas
+    def sql(
+        self, query
+    ):  # TODO is this ever used?  its uselss, queries dont return schemas
         """ Convert a SQL query to an Ibis table expression.
         Parameters
         ----------
@@ -137,6 +140,7 @@ class TeradataClient(SQLClient):
     TABLE_SCHEMA_SQL = """
     HELP COLUMN {database}.{table}.*;
     """  # TODO move somewhere better
+
     def _get_teradata_schema(self, database, table):
         table_schema_sql = self.TABLE_SCHEMA_SQL.format(database=database, table=table)
         schema_df = self._execute(table_schema_sql, results=True)
@@ -203,6 +207,7 @@ class TeradataClient(SQLClient):
     SELECT * FROM DBC.Databases
     WHERE DatabaseName LIKE '%{database_like}%'
     """  # TODO move somewhere better
+
     def list_databases(self, like=None):
         database_like = like or ""
 

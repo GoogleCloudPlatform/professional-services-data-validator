@@ -23,7 +23,6 @@ from data_validation.query_builder import query_builder
 TERADATA_CONFIG = {
     # Configuration Required for All Data Soures
     "source_type": "Teradata",
-
     # BigQuery Specific Connection Config
     "config": {
         "host": "127.0.0.1",
@@ -31,12 +30,12 @@ TERADATA_CONFIG = {
         "password": "dbc",
         "port": 10255,
     },
-
     # Configuration Required Depending on Validator Type
     "schema_name": "Sys_Calendar",
     "table_name": "CALENDAR",
     "partition_column": "year_of_calendar",
 }
+
 
 def create_validator(builder):
     return data_validation.DataValidation(
@@ -50,6 +49,7 @@ def test_count_validator():
     df = validator.execute()
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
+
 
 def test_partitioned_count_validator():
     builder = query_builder.QueryBuilder.build_partition_count_validator(
@@ -70,10 +70,13 @@ def test_partitioned_count_validator():
         assert row["count_inp"] > 0
         assert row["count_inp"] == row["count_out"]
 
+
 def _add_calendar_date_filters(builder):
     # Adding custom filter for better results
     project_start_date = datetime(2020, 1, 1, 0, 0, 0)
-    filter_obj = query_builder.FilterField.less_than("calendar_date", project_start_date)
+    filter_obj = query_builder.FilterField.less_than(
+        "calendar_date", project_start_date
+    )
     builder.add_filter_field(filter_obj)
 
     in_the_past = datetime(1991, 5, 2, 0, 0, 0)
