@@ -81,6 +81,20 @@ class TeradataQueryBuilder(comp.QueryBuilder):
     union_class = TeradataUnion
 
 """
+"""
+Depedancy Design of Classes
+    TeradataQueryBuilder
+        -- TeradataSelectBuilder
+            -- TeradataSelect
+                -- TeradataExprTranslator
+                    -- TeradataContext
+                    -- TeradataTableSetFormatter
+                -- TeradataTableSetFormatter
+        -- TeradataUnion
+        -- TeradataUDFDefinition
+
+
+"""
 
 _operation_registry = impala_compiler._operation_registry.copy()
 
@@ -147,6 +161,7 @@ class TeradataSelect(ImpalaSelect):
 
 
 class TeradataSelectBuilder(comp.SelectBuilder):
+
     @property
     def _select_class(self):
         return TeradataSelect
@@ -160,17 +175,18 @@ class TeradataSelectBuilder(comp.SelectBuilder):
 
 
 class TeradataUnion(comp.Union):  # TODO rebuild class
+
     @staticmethod
     def keyword(distinct):
-        return "UNION DISTINCT" if distinct else "UNION ALL"
+        return "UNION" if distinct else "UNION ALL"
 
 
-class TeradataQueryBuilder(comp.QueryBuilder):  # TODO rebuild class
+class TeradataQueryBuilder(comp.QueryBuilder):
 
     select_builder = TeradataSelectBuilder
     union_class = TeradataUnion
 
-    def generate_setup_queries(self):
+    def generate_setup_queries(self): # TODO validate if I need to override this function
         queries = map(
             partial(TeradataUDFDefinition, context=self.context),
             lin.traverse(find_bigquery_udf, self.expr),
@@ -208,7 +224,9 @@ def _table_column(translator, expr):
 
 """ Add New Customizations to Operations registry """
 _operation_registry.update(
-    {ops.TableColumn: _table_column,}
+    {
+        ops.TableColumn: _table_column,
+    }
 )
 
 

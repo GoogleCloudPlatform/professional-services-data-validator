@@ -1,18 +1,8 @@
 """ Teradata ibis client implementation """
 
-# import datetime
-# from collections import OrderedDict
 # from typing import Optional, Tuple
-
-# import google.cloud.bigquery as bq
 import pandas
 import teradatasql
-
-# import regex as re
-# from google.api_core.exceptions import NotFound
-from multipledispatch import Dispatcher
-
-# from pkg_resources import parse_version
 
 import ibis
 import ibis.expr.datatypes as dt
@@ -26,39 +16,6 @@ from ibis.common.exceptions import UnsupportedBackendType
 
 from . import compiler  # TODO non local import ie from ibis.teradata import compiler
 from .datatypes import TeradataTypeTranslator  # TODO non local import
-
-
-_DTYPE_TO_IBIS_TYPE = {
-    "INT64": dt.int64,
-    "FLOAT64": dt.double,
-    "BOOL": dt.boolean,
-    "STRING": dt.string,
-    "DATE": dt.date,
-    # FIXME: enforce no tz info
-    "DATETIME": dt.timestamp,
-    "TIME": dt.time,
-    "TIMESTAMP": dt.timestamp,
-    "BYTES": dt.binary,
-    "NUMERIC": dt.Decimal(38, 9),
-}
-
-# TODO implement
-# @dt.dtype.register(bq.schema.SchemaField)
-def teradata_field_to_ibis_dtype(col_data):
-    """ Convert Teradata data to an ibis type."""
-    typ = field.field_type
-    if typ == "RECORD":
-        fields = field.fields
-        assert fields, "RECORD fields are empty"
-        names = [el.name for el in fields]
-        ibis_types = list(map(dt.dtype, fields))
-        ibis_type = dt.Struct(names, ibis_types)
-    else:
-        ibis_type = _LEGACY_TO_STANDARD.get(typ, typ)
-        ibis_type = _DTYPE_TO_IBIS_TYPE.get(ibis_type, ibis_type)
-    if field.mode == "REPEATED":
-        ibis_type = dt.Array(ibis_type)
-    return ibis_type
 
 
 def _find_scalar_parameter(expr):
@@ -99,90 +56,7 @@ class TeradataQuery(Query):
 
 class TeradataDatabase(Database):
     """A Teradata dataset """
-
-
-# teradata_param = Dispatcher('teradata_param')
-
-
-# @teradata_param.register(ir.StructScalar, OrderedDict)
-# def bq_param_struct(param, value):
-#     field_params = [teradata_param(param[k], v) for k, v in value.items()]
-#     result = bq.StructQueryParameter(param.get_name(), *field_params)
-#     return result
-
-
-# @teradata_param.register(ir.ArrayValue, list)
-# def bq_param_array(param, value):
-#     param_type = param.type()
-#     assert isinstance(param_type, dt.Array), str(param_type)
-
-#     try:
-#         bigquery_type = ibis_type_to_bigquery_type(param_type.value_type)
-#     except NotImplementedError:
-#         raise UnsupportedBackendType(param_type)
-#     else:
-#         if isinstance(param_type.value_type, dt.Struct):
-#             query_value = [
-#                 teradata_param(param[i].name('element_{:d}'.format(i)), struct)
-#                 for i, struct in enumerate(value)
-#             ]
-#             bigquery_type = 'STRUCT'
-#         elif isinstance(param_type.value_type, dt.Array):
-#             raise TypeError('ARRAY<ARRAY<T>> is not supported in BigQuery')
-#         else:
-#             query_value = value
-#         result = bq.ArrayQueryParameter(
-#             param.get_name(), bigquery_type, query_value
-#         )
-#         return result
-
-
-# @teradata_param.register(
-#     ir.TimestampScalar, (str, datetime.datetime, datetime.date)
-# )
-# def bq_param_timestamp(param, value):
-#     assert isinstance(param.type(), dt.Timestamp), str(param.type())
-
-#     # TODO(phillipc): Not sure if this is the correct way to do this.
-#     timestamp_value = pandas.Timestamp(value, tz='UTC').to_pydatetime()
-#     return bq.ScalarQueryParameter(
-#         param.get_name(), 'TIMESTAMP', timestamp_value
-#     )
-
-
-# @teradata_param.register(ir.StringScalar, str)
-# def bq_param_string(param, value):
-#     return bq.ScalarQueryParameter(param.get_name(), 'STRING', value)
-
-
-# @teradata_param.register(ir.IntegerScalar, int)
-# def bq_param_integer(param, value):
-#     return bq.ScalarQueryParameter(param.get_name(), 'INT64', value)
-
-
-# @teradata_param.register(ir.FloatingScalar, float)
-# def bq_param_double(param, value):
-#     return bq.ScalarQueryParameter(param.get_name(), 'FLOAT64', value)
-
-
-# @teradata_param.register(ir.BooleanScalar, bool)
-# def bq_param_boolean(param, value):
-#     return bq.ScalarQueryParameter(param.get_name(), 'BOOL', value)
-
-
-# @teradata_param.register(ir.DateScalar, str)
-# def bq_param_date_string(param, value):
-#     return teradata_param(param, pandas.Timestamp(value).to_pydatetime().date())
-
-
-# @teradata_param.register(ir.DateScalar, datetime.datetime)
-# def bq_param_date_datetime(param, value):
-#     return teradata_param(param, value.date())
-
-
-# @teradata_param.register(ir.DateScalar, datetime.date)
-# def bq_param_date(param, value):
-#     return bq.ScalarQueryParameter(param.get_name(), 'DATE', value)
+    pass
 
 
 class TeradataTable(ops.DatabaseTable):
@@ -226,9 +100,7 @@ class TeradataClient(SQLClient):
 
         return None
 
-    def sql(
-        self, query
-    ):  # TODO is this ever used?  its uselss, queries dont return schemas
+    def sql(self, query):  # TODO is this ever used?  its uselss, queries dont return schemas
         """ Convert a SQL query to an Ibis table expression.
         Parameters
         ----------
@@ -246,14 +118,6 @@ class TeradataClient(SQLClient):
     def _build_ast(self, expr, context):  # TODO NEXT
         result = compiler.build_ast(expr, context)
         return result
-
-    # def table(self, name, database=None):
-    #     t = super().table(name, database=database)
-    #     project, dataset, name = t.op().name.split('.')
-    #     dataset_ref = self.client.dataset(dataset, project=project)
-    #     table_ref = dataset_ref.table(name)
-    #     bq_table = self.client.get_table(table_ref)
-    #     return rename_partitioned_column(t, bq_table)
 
     def _fully_qualified_name(self, name, database):
         return "{}.{}".format(database, name)
@@ -273,7 +137,6 @@ class TeradataClient(SQLClient):
     TABLE_SCHEMA_SQL = """
     HELP COLUMN {database}.{table}.*;
     """  # TODO move somewhere better
-
     def _get_teradata_schema(self, database, table):
         table_schema_sql = self.TABLE_SCHEMA_SQL.format(database=database, table=table)
         schema_df = self._execute(table_schema_sql, results=True)
@@ -340,7 +203,6 @@ class TeradataClient(SQLClient):
     SELECT * FROM DBC.Databases
     WHERE DatabaseName LIKE '%{database_like}%'
     """  # TODO move somewhere better
-
     def list_databases(self, like=None):
         database_like = like or ""
 
@@ -368,7 +230,7 @@ class TeradataClient(SQLClient):
 
     @property
     def version(self):
-        return parse_version(bq.__version__)
+        return teradatasql.vernumber.sVersionNumber
 
     # def exists_table(self, name, database=None):
     #     project, dataset = self._parse_project_and_dataset(database)
