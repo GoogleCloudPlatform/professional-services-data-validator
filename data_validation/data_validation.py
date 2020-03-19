@@ -12,16 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import pandas
-
-import ibis
-
 from ibis.bigquery.client import BigQueryClient
 from ibis.sql.mysql.client import MySQLClient
 
 from data_validation import consts, exceptions
-from data_validation.query_builder import query_builder
 
 # If you have a Teradata License there is an optional teradatasql import
 try:
@@ -94,7 +88,7 @@ class DataValidation(object):
 
         try:
             data_client = CLIENT_LOOKUP[source_type](**config[consts.CONFIG])
-        except Exception as e:
+        except Exception:
             msg = 'Connection Type "{source_type}" could not connect'.format(
                 source_type=source_type
             )

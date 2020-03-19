@@ -14,13 +14,12 @@
 
 
 import os
-import warnings
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
-from data_validation import data_validation, consts, exceptions
+from data_validation import data_validation
 from data_validation.query_builder import query_builder
 
 
