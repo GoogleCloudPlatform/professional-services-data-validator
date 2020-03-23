@@ -12,19 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from data_validation import data_validation, consts, exceptions
 from data_validation.query_builder import query_builder
 
 
-# TODO: To use this code I would need to whitelist the MySQL instance
+# TODO: To use this code I would need to use the Cloud SQL Proxy.
+#       https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test
 MYSQL_CONFIG_INVALID = {
     # Configuration Required for All Data Soures
     "source_type": "MySQL",
-    # BigQuery Specific Connection Config
+    # MySQL Specific Connection Config
     "config": {
-        "host": "35.227.139.75",
+        "host": "127.0.0.1",
         "user": "root",
-        "password": "password",
+        "password": os.getenv("MYSQL_PASSWORD"),
         "port": 3306,
         "database": "guestbook",
         "driver": "pymysql",
