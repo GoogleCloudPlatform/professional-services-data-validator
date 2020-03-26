@@ -4,15 +4,11 @@
 import pandas
 import teradatasql
 
-import ibis
-import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
-import ibis.expr.types as ir
 
 from ibis.client import Database, Query, SQLClient
-from ibis.common.exceptions import UnsupportedBackendType
 
 from . import compiler  # TODO non local import ie from ibis.teradata import compiler
 from .datatypes import TeradataTypeTranslator  # TODO non local import
@@ -42,7 +38,7 @@ class TeradataQuery(Query):
         super().__init__(client, ddl)
 
         # self.expr comes from the parent class
-        query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
+        # query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
         # self.query_parameters = [
         #     teradata_param(
         #         param.to_expr().name(query_parameter_names[param]), value
@@ -169,10 +165,10 @@ class TeradataClient(SQLClient):
     def _adapt_types(self, schema_df):
         names = []
         adapted_types = []
-        for col_data in schema_df.to_dict(orient="record"):
-            names.append(col_data["TODO"])
-            typename = bigquery_field_to_ibis_dtype(col_data)
-            adapted_types.append(typename)
+        # for col_data in schema_df.to_dict(orient="record"):
+        #     names.append(col_data["TODO"])
+        #     typename = bigquery_field_to_ibis_dtype(col_data)
+        #     adapted_types.append(typename)
 
         return names, adapted_types
 

@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from datetime import datetime
 
-from data_validation import data_validation, consts
+from data_validation import data_validation
 from data_validation.query_builder import query_builder
 
 

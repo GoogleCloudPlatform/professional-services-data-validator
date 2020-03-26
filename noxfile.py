@@ -26,14 +26,14 @@ import os
 import nox
 
 
-PYTHON_VERSION = "3.7"
-BLACK_PATHS = ("data_validation", "tests", "noxfile.py", "setup.py")
+PYTHON_VERSION = "3.6"
+BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 
 
-@nox.session(python=PYTHON_VERSION)
+@nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
-    session.install("pytest", "pytest-cov")
+    session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
     session.install("-e", ".")
 
     # Run py.test against the unit tests.
@@ -50,7 +50,7 @@ def unit(session):
     )
 
 
-@nox.session(python=PYTHON_VERSION)
+@nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def samples(session):
     """Run the snippets test suite."""
 
@@ -59,20 +59,21 @@ def samples(session):
         session.skip("Credentials must be set via environment variable.")
 
     # Install all test dependencies, then install local packages in place.
-    session.install("pytest")
+    session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
     session.install("-e", ".")
 
     # Run pytest against the samples tests.
     session.run("pytest", "samples", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSION)
+@nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def lint(session):
     """Run linters.
     Returns a failure if the linters find linting errors or sufficiently
     serious code quality issues.
     """
 
+    session.install("--upgrade", "pip", "wheel")
     session.install("black==19.10b0", "flake8")
     session.install("-e", ".")
     session.run("flake8", "data_validation")
@@ -80,19 +81,21 @@ def lint(session):
     session.run("black", "--check", *BLACK_PATHS)
 
 
-@nox.session(python=PYTHON_VERSION)
+@nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def lint_setup_py(session):
     """Verify that setup.py is valid."""
 
+    session.install("--upgrade", "pip", "wheel")
     session.run("python", "setup.py", "check", "--strict")
 
 
-@nox.session(python=PYTHON_VERSION)
+@nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def blacken(session):
     """Run black.
     Format code to uniform standard.
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
+    session.install("--upgrade", "pip", "wheel")
     session.install("black==19.10b0")
     session.run("black", *BLACK_PATHS)

@@ -2,7 +2,6 @@ import datetime
 from functools import partial
 
 import numpy as np
-import regex as re
 import toolz
 from multipledispatch import Dispatcher
 
@@ -210,9 +209,9 @@ def _table_column(translator, expr):
 
     # If the column does not originate from the table set in the current SELECT
     # context, we should format as a subquery
-    if translator.permit_subquery and ctx.is_foreign_expr(table):
-        proj_expr = table.projection([field_name]).to_array()
-        return _table_array_view(translator, proj_expr)
+    # if translator.permit_subquery and ctx.is_foreign_expr(table):
+    #     proj_expr = table.projection([field_name]).to_array()
+    #     return _table_array_view(translator, proj_expr)
 
     if ctx.need_aliases():
         alias = ctx.get_ref(table)
@@ -223,9 +222,7 @@ def _table_column(translator, expr):
 
 
 """ Add New Customizations to Operations registry """
-_operation_registry.update(
-    {ops.TableColumn: _table_column,}
-)
+_operation_registry.update({ops.TableColumn: _table_column})
 
 
 # TODO TODO below this pint still contains mostly BQ and needs cleaning
@@ -415,7 +412,7 @@ def _arbitrary(translator, expr):
         arg = where.ifelse(arg, ibis.NA)
 
     if how not in (None, "first"):
-        raise com.UnsupportedOperationError(
+        raise UnsupportedOperationError(
             "{!r} value not supported for arbitrary in BigQuery".format(how)
         )
 
@@ -448,7 +445,7 @@ def _truncate(kind, units):
         trans_arg = translator.translate(arg)
         valid_unit = units.get(unit)
         if valid_unit is None:
-            raise com.UnsupportedOperationError(
+            raise UnsupportedOperationError(
                 "BigQuery does not support truncating {} values to unit "
                 "{!r}".format(arg.type(), unit)
             )
@@ -464,7 +461,7 @@ def _timestamp_op(func, units):
 
         unit = offset.type().unit
         if unit not in units:
-            raise com.UnsupportedOperationError(
+            raise UnsupportedOperationError(
                 "BigQuery does not allow binary operation "
                 "{} with INTERVAL offset {}".format(func, unit)
             )

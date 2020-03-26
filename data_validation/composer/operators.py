@@ -87,7 +87,7 @@ class DataValidationCountOperator(BaseOperator):
             result_handler=None,
             verbose=False,
         )
-        df = data_validator.execute()
+        data_validator.execute()
 
         if False:
             raise AirflowException("An Error Occured")

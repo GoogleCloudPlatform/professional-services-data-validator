@@ -40,7 +40,6 @@ MYSQL_CONFIG_INVALID = {
 
 
 def test_mysql_count_invalid_host():
-    throws_error = False
     builder = query_builder.QueryBuilder.build_count_validator()
     try:
         data_validator = data_validation.DataValidation(
@@ -50,6 +49,8 @@ def test_mysql_count_invalid_host():
             result_handler=None,
             verbose=False,
         )
-        df = data_validator.execute()
+        data_validator.execute()
     except exceptions.DataClientConnectionFailure:
-        throws_error = True
+        pass
+    else:
+        raise AssertionError("expected DataClientConnectionFailure")

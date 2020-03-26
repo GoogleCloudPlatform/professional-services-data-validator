@@ -4,7 +4,6 @@ from typing import Optional
 
 import google.auth.credentials
 import google.cloud.bigquery  # noqa: F401, fail early if bigquery is missing
-import pydata_google_auth
 
 import ibis.common.exceptions as com
 from client import TeradataClient  # TODO make non local

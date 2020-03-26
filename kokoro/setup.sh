@@ -1,4 +1,5 @@
-# Copyright 2020 Google LLC
+#!/bin/bash
+# Copyright 2018 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,15 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import airflow_test_utils
+# Copied from https://github.com/googleapis/synthtool/blob/master/synthtool/gcp/templates/python_library/.kokoro/build.sh
 
+set -eo pipefail
 
-def test_dag_import():
-    """Test that the DAG file can be successfully imported.
-    This tests that the DAG can be parsed, but does not run it in an Airflow
-    environment. This is a recommended sanity check by the official Airflow
-    docs: https://airflow.incubator.apache.org/tutorial.html#testing
-    """
-    from .. import airflow_dag as module
+cd ${KOKORO_ARTIFACTS_DIR}/git/pso-data-validator
+#cd ${KOKORO_ARTIFACTS_DIR}/github/pso-data-validator
 
-    airflow_test_utils.assert_has_valid_dag(module)
+pyenv global 3.6.1
+
+# Disable buffering, so that the logs stream through.
+export PYTHONUNBUFFERED=1
+
+# Debug: show build environment
+env | grep KOKORO
+
+# Install nox
+python -m pip install --upgrade --quiet nox pip
+python -m nox --version

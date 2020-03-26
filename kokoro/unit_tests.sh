@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import airflow_test_utils
+# Save current directory of the script.
+# https://stackoverflow.com/a/246128/101923
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "${DIR}/setup.sh"
 
-
-def test_dag_import():
-    """Test that the DAG file can be successfully imported.
-    This tests that the DAG can be parsed, but does not run it in an Airflow
-    environment. This is a recommended sanity check by the official Airflow
-    docs: https://airflow.incubator.apache.org/tutorial.html#testing
-    """
-    from .. import airflow_dag as module
-
-    airflow_test_utils.assert_has_valid_dag(module)
+# TODO: add cover session to check test coverage.
+python -m nox -s unit
