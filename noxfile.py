@@ -26,15 +26,24 @@ import os
 import nox
 
 
-PYTHON_VERSION = "3.6"
+PYTHON_VERSION = "3"
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
+
+
+def _setup_session_requirements(session, extra_packages=[]):
+    """Install requirements for nox tests."""
+
+    session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
+    session.install("-e", ".")
+
+    if extra_packages:
+        session.install(*extra_packages)
 
 
 @nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
-    session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
-    session.install("-e", ".")
+    _setup_session_requirements(session)
 
     # Run py.test against the unit tests.
     session.run(
@@ -59,8 +68,7 @@ def samples(session):
         session.skip("Credentials must be set via environment variable.")
 
     # Install all test dependencies, then install local packages in place.
-    session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
-    session.install("-e", ".")
+    _setup_session_requirements(session)
 
     # Run pytest against the samples tests.
     session.run("pytest", "samples", *session.posargs)
@@ -73,9 +81,7 @@ def lint(session):
     serious code quality issues.
     """
 
-    session.install("--upgrade", "pip", "wheel")
-    session.install("black==19.10b0", "flake8")
-    session.install("-e", ".")
+    _setup_session_requirements(session, extra_packages=["flake8", "black==19.10b0"])
     session.run("flake8", "data_validation")
     session.run("flake8", "tests")
     session.run("black", "--check", *BLACK_PATHS)
@@ -96,6 +102,5 @@ def blacken(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
-    session.install("--upgrade", "pip", "wheel")
-    session.install("black==19.10b0")
+    _setup_session_requirements(session, extra_packages=["black==19.10b0"])
     session.run("black", *BLACK_PATHS)
