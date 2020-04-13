@@ -25,7 +25,7 @@ MYSQL_CONFIG_INVALID = {
     "source_type": "MySQL",
     # MySQL Specific Connection Config
     "config": {
-        "host": "127.0.0.1",
+        "host": os.getenv("MYSQL_HOST"),
         "user": "root",
         "password": os.getenv("MYSQL_PASSWORD"),
         "port": 3306,
@@ -50,7 +50,8 @@ def test_mysql_count_invalid_host():
             verbose=False,
         )
         data_validator.execute()
-    except exceptions.DataClientConnectionFailure:
-        pass
+    except exceptions.DataClientConnectionFailure as e:
+        # pass
+        raise
     else:
-        raise AssertionError("expected DataClientConnectionFailure")
+        raise AssertionError("Expected DataClientConnectionFailure")
