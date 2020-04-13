@@ -29,10 +29,12 @@ BQ_CONFIG_VALID = {
     consts.PARTITION_COLUMN: "starttime",
 }
 
+
 def create_validator(builder):
     return data_validation.DataValidation(
         builder, BQ_CONFIG_VALID, BQ_CONFIG_VALID, result_handler=None, verbose=False
     )
+
 
 def test_count_validator():
     builder = query_builder.QueryBuilder.build_count_validator()
@@ -40,6 +42,7 @@ def test_count_validator():
     df = validator.execute()
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
+
 
 def test_partitioned_count_validator():
     builder = query_builder.QueryBuilder.build_partition_count_validator(

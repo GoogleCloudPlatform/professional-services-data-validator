@@ -50,7 +50,7 @@ def test_mysql_count_invalid_host():
             verbose=False,
         )
         data_validator.execute()
-    except exceptions.DataClientConnectionFailure as e:
+    except exceptions.DataClientConnectionFailure:
         # pass
         raise
     else:

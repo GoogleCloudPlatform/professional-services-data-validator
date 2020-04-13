@@ -113,7 +113,7 @@ def integration_mysql(session):
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
     _setup_session_requirements(session, extra_packages=["black==19.10b0"])
-    # TODO: check if env vars required are set (use Cloud SQL name or host?)
+
     test_path = "tests/system/data_sources/test_mysql.py"
     expected_env_vars = ["MYSQL_HOST", "MYSQL_PASSWORD"]
     for env_var in expected_env_vars:
@@ -124,13 +124,11 @@ def integration_mysql(session):
 
 @nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def integration_bigquery(session):
-    """Run MySQL integration tests.
-    Ensure MySQL validation is running as expected.
+    """Run BigQuery integration tests.
+    Ensure BigQuery validation is running as expected.
     """
-    # Pin a specific version of black, so that the linter doesn't conflict with
-    # contributors.
     _setup_session_requirements(session, extra_packages=["black==19.10b0"])
-    # TODO: check if env vars required are set (use Cloud SQL name or host?)
+
     test_path = "tests/system/data_sources/test_bigquery.py"
     expected_env_vars = []
     for env_var in expected_env_vars:
