@@ -105,6 +105,7 @@ def blacken(session):
     _setup_session_requirements(session, extra_packages=["black==19.10b0"])
     session.run("black", *BLACK_PATHS)
 
+
 @nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def integration_mysql(session):
     """Run MySQL integration tests.
@@ -121,6 +122,7 @@ def integration_mysql(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", test_path, *session.posargs)
+
 
 @nox.session(python=PYTHON_VERSION, venv_backend="venv")
 def integration_bigquery(session):
