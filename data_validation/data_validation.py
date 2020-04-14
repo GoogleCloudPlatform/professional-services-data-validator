@@ -76,6 +76,17 @@ class DataValidation(object):
         self.result_handler = result_handler
 
     @staticmethod
+    def init_data_validation(builder, config, result_handler=None, verbose=False):
+        source_config = {"config": config.pop("source_config")}
+        target_config = {"config": config.pop("target_config")}
+
+        source_config.update(config)
+        source_config.update(target_config)
+
+        return DataValidation(builder, source_config, target_config, result_handler=result_handler, verbose=verbose)
+
+
+    @staticmethod
     def get_data_client(config):
         """ Return DataClient client from given configuration """
         source_type = config[consts.SOURCE_TYPE]
