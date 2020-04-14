@@ -86,16 +86,7 @@ class DataValidation(object):
         """
         # TODO: Improve the cleanup and section it out
         # TODO: Check for target [schema, table, column] lambda and apply
-        source_config = {consts.CONFIG: config.pop("source_config")}
-        target_config = {consts.CONFIG: config.pop("target_config")}
-        source_config.update(config)
-        target_config.update(config)
-        source_config[consts.SOURCE_TYPE] = source_config[consts.CONFIG].pop(
-            consts.SOURCE_TYPE
-        )
-        target_config[consts.SOURCE_TYPE] = target_config[consts.CONFIG].pop(
-            consts.SOURCE_TYPE
-        )
+        source_config, target_config = DataValidation._build_config_details(config)
 
         return DataValidation(
             builder,
@@ -104,6 +95,23 @@ class DataValidation(object):
             result_handler=result_handler,
             verbose=verbose,
         )
+
+    @staticmethod
+    def _build_config_details(config):
+        source_config = {consts.CONFIG: config.pop("source_config")}
+        target_config = {consts.CONFIG: config.pop("target_config")}
+        # Apply Source Types TODO: this can be built into the class
+        source_config[consts.SOURCE_TYPE] = source_config[consts.CONFIG].pop(
+            consts.SOURCE_TYPE
+        )
+        target_config[consts.SOURCE_TYPE] = target_config[consts.CONFIG].pop(
+            consts.SOURCE_TYPE
+        )
+        # Clean all config attributes
+        source_config.update(config)
+        target_config.update(config)
+
+        return source_config, target_config
 
     @staticmethod
     def get_data_client(config):
