@@ -77,17 +77,26 @@ class DataValidation(object):
 
     @staticmethod
     def init_data_validation(builder, config, result_handler=None, verbose=False):
+        """Return and initialized DataValidation object built from the config.
+
+            :param builder: A QueryBuilder client with the structure of the desired validation
+            :param config: The source and target config used for the comparison
+            :param result_handler: A ResultHandler client to be used when storing results (default is print)
+            :param verbose: If verbose, the Data Validation client will print queries run
+        """
+        # TODO: Improve the cleanup and section it out
+        # TODO: Check for target [schema, table, column] lambda and apply
         source_config = {consts.CONFIG: config.pop("source_config")}
         target_config = {consts.CONFIG: config.pop("target_config")}
-
         source_config.update(config)
         target_config.update(config)
+        source_config[consts.SOURCE_TYPE] = \
+            source_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
+        target_config[consts.SOURCE_TYPE] = \
+            target_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
 
-        source_config[consts.SOURCE_TYPE] = source_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
-        target_config[consts.SOURCE_TYPE] = target_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
-
-        return DataValidation(builder, source_config, target_config, result_handler=result_handler, verbose=verbose)
-
+        return DataValidation(builder, source_config, target_config,
+                              result_handler=result_handler, verbose=verbose)
 
     @staticmethod
     def get_data_client(config):
