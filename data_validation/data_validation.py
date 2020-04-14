@@ -90,13 +90,20 @@ class DataValidation(object):
         target_config = {consts.CONFIG: config.pop("target_config")}
         source_config.update(config)
         target_config.update(config)
-        source_config[consts.SOURCE_TYPE] = \
-            source_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
-        target_config[consts.SOURCE_TYPE] = \
-            target_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
+        source_config[consts.SOURCE_TYPE] = source_config[consts.CONFIG].pop(
+            consts.SOURCE_TYPE
+        )
+        target_config[consts.SOURCE_TYPE] = target_config[consts.CONFIG].pop(
+            consts.SOURCE_TYPE
+        )
 
-        return DataValidation(builder, source_config, target_config,
-                              result_handler=result_handler, verbose=verbose)
+        return DataValidation(
+            builder,
+            source_config,
+            target_config,
+            result_handler=result_handler,
+            verbose=verbose,
+        )
 
     @staticmethod
     def get_data_client(config):
