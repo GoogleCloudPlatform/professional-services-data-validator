@@ -49,7 +49,8 @@ def test_mysql_count_invalid_host():
             result_handler=None,
             verbose=False,
         )
-        data_validator.execute()
+        df = data_validator.execute()
+        assert df["count_inp"][0] == df["count_out"][0]
     except exceptions.DataClientConnectionFailure:
         # pass
         raise
