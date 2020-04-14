@@ -77,11 +77,14 @@ class DataValidation(object):
 
     @staticmethod
     def init_data_validation(builder, config, result_handler=None, verbose=False):
-        source_config = {"config": config.pop("source_config")}
-        target_config = {"config": config.pop("target_config")}
+        source_config = {consts.CONFIG: config.pop("source_config")}
+        target_config = {consts.CONFIG: config.pop("target_config")}
 
         source_config.update(config)
-        source_config.update(target_config)
+        target_config.update(config)
+
+        source_config[consts.SOURCE_TYPE] = source_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
+        target_config[consts.SOURCE_TYPE] = target_config[consts.CONFIG].pop(consts.SOURCE_TYPE)
 
         return DataValidation(builder, source_config, target_config, result_handler=result_handler, verbose=verbose)
 
