@@ -26,7 +26,7 @@ import os
 import nox
 
 
-PYTHON_VERSION = "3"
+PYTHON_VERSION = "3.6"
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 
 
