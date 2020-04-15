@@ -2,6 +2,7 @@ google-api-python-client==1.7.11
 ibis-framework==1.3.0
 sqlalchemy==1.3.13
 pymysql==0.9.3
+psycopg2-binary==2.8.5
 pyspark==2.4.5
 apache-airflow==1.10.9
 pandas==0.25.3

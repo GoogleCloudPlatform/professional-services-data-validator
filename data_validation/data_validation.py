@@ -14,6 +14,7 @@
 
 from ibis.bigquery.client import BigQueryClient
 from ibis.sql.mysql.client import MySQLClient
+from ibis.sql.postgres.client import PostgreSQLClient
 
 from data_validation import consts, exceptions
 
@@ -27,6 +28,7 @@ except Exception:
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
     "MySQL": MySQLClient,
+    "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
 }
 
