@@ -20,7 +20,7 @@ from data_validation import consts, exceptions
 
 # If you have a Teradata License there is an optional teradatasql import
 try:
-    from data_validation.data_sources.teradata.client import TeradataClient
+    from ibis_teradata.client import TeradataClient
 except Exception:
     TeradataClient = None
 

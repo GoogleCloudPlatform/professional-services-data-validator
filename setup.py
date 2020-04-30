@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import setuptools
+
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -24,13 +27,12 @@ install_requires = [
 
 packages = [
     "data_validation",
-    "data_validation.data_sources",
-    "data_validation.data_sources.teradata",
     "data_validation.query_builder",
 ]
+packages += setuptools.find_packages(where=os.path.join("third_party", "ibis"))
 
 setuptools.setup(
-    name="Data Validation Tool",  # Replace with your own username
+    name="data-validator",
     version="0.0.1",
     author="Dylan Hercher",
     author_email="dhercher@google.com",
@@ -39,7 +41,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/pypa/sampleproject",
     packages=packages,
-    # packages=setuptools.find_packages(include=["data_validation*"]),
+    package_dir={"ibis_teradata": os.path.join("third_party", "ibis")},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
