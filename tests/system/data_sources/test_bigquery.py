@@ -15,7 +15,6 @@
 import os
 
 from data_validation import data_validation, consts
-from data_validation.query_builder import query_builder
 
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
@@ -42,12 +41,6 @@ CONFIG_GROUPED_COUNT_VALID = {
     "table_name": "citibike_trips",
     consts.PARTITION_COLUMN: "starttime",
 }
-
-
-def create_validator(builder):
-    return data_validation.DataValidation(
-        builder, BQ_CONFIG_VALID, BQ_CONFIG_VALID, result_handler=None, verbose=False
-    )
 
 
 def test_count_validator():

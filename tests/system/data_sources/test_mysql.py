@@ -15,7 +15,6 @@
 import os
 
 from data_validation import data_validation, consts, exceptions
-from data_validation.query_builder import query_builder
 
 
 # TODO: To use this code I would need to use the Cloud SQL Proxy.
