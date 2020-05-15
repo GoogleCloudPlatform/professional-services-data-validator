@@ -45,7 +45,7 @@ class ValidationBuilder(object):
             )
         else:
             msg = "Validation Builder supplied unknown type: %s" % validation_type
-            raise Exception(msg)
+            raise ValueError(msg)
 
         return builder
 
