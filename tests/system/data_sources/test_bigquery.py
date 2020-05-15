@@ -18,11 +18,25 @@ from data_validation import data_validation, consts
 from data_validation.query_builder import query_builder
 
 
-BQ_CONFIG_VALID = {
-    # Configuration Required for All Data Soures
-    "source_type": "BigQuery",
+BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
+CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Config
-    "config": {"project_id": os.environ["PROJECT_ID"]},
+    "source_conn": BQ_CONN,
+    "target_conn": BQ_CONN,
+    # Validation Type
+    "Type": "Column",
+    # Configuration Required Depending on Validator Type
+    "schema_name": "bigquery-public-data.new_york_citibike",
+    "table_name": "citibike_trips",
+    consts.PARTITION_COLUMN: "starttime",
+}
+
+CONFIG_GROUPED_COUNT_VALID = {
+    # BigQuery Specific Connection Config
+    "source_conn": BQ_CONN,
+    "target_conn": BQ_CONN,
+    # Validation Type
+    "Type": "Column",
     # Configuration Required Depending on Validator Type
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
@@ -37,18 +51,14 @@ def create_validator(builder):
 
 
 def test_count_validator():
-    builder = query_builder.QueryBuilder.build_count_validator()
-    validator = create_validator(builder)
+    validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
 
 
 def test_partitioned_count_validator():
-    builder = query_builder.QueryBuilder.build_partition_count_validator(
-        days_past=700, limit=10
-    )
-    validator = create_validator(builder)
+    validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
     rows = list(df.iterrows())
 
