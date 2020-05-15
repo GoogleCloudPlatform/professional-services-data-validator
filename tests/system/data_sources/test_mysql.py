@@ -15,23 +15,26 @@
 import os
 
 from data_validation import data_validation, consts, exceptions
-from data_validation.query_builder import query_builder
 
 
 # TODO: To use this code I would need to use the Cloud SQL Proxy.
 #       https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test
-MYSQL_CONFIG_INVALID = {
-    # Configuration Required for All Data Soures
+
+CONN = {
     "source_type": "MySQL",
-    # MySQL Specific Connection Config
-    "config": {
-        "host": os.getenv("MYSQL_HOST"),
-        "user": "root",
-        "password": os.getenv("MYSQL_PASSWORD"),
-        "port": 3306,
-        "database": "guestbook",
-        "driver": "pymysql",
-    },
+    "host": os.getenv("MYSQL_HOST"),
+    "user": "root",
+    "password": os.getenv("MYSQL_PASSWORD"),
+    "port": 3306,
+    "database": "guestbook",
+    "driver": "pymysql",
+}
+CONFIG_COUNT_VALID = {
+    # BigQuery Specific Connection Config
+    "source_conn": CONN,
+    "target_conn": CONN,
+    # Validation Type
+    "Type": "Column",
     # Configuration Required Depending on Validator Type
     "schema_name": "guestbook",
     "table_name": "entries",
@@ -40,14 +43,9 @@ MYSQL_CONFIG_INVALID = {
 
 
 def test_mysql_count_invalid_host():
-    builder = query_builder.QueryBuilder.build_count_validator()
     try:
         data_validator = data_validation.DataValidation(
-            builder,
-            MYSQL_CONFIG_INVALID,
-            MYSQL_CONFIG_INVALID,
-            result_handler=None,
-            verbose=False,
+            CONFIG_COUNT_VALID, verbose=False,
         )
         df = data_validator.execute()
         assert df["count_inp"][0] == df["count_out"][0]
