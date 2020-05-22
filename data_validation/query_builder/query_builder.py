@@ -125,7 +125,7 @@ class GroupedField(object):
 
 class QueryBuilder(object):
     def __init__(
-        self, aggregate_fields, filters, grouped_fields, days_past=30, limit=None
+        self, aggregate_fields, filters, grouped_fields, days_past=None, limit=None
     ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
@@ -157,7 +157,7 @@ class QueryBuilder(object):
 
     # A Static function with prebuilt comparisons to use in query building
     @staticmethod
-    def build_partition_count_validator(days_past=30, limit=None):
+    def build_partition_count_validator(days_past=None, limit=None):
         aggregate_fields = [AggregateField.count("count")]
         filters = []
         grouped_fields = [GroupedField(name=consts.DEFAULT_PARTITION_KEY)]
