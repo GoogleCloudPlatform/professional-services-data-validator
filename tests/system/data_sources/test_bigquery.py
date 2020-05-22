@@ -35,7 +35,7 @@ CONFIG_GROUPED_COUNT_VALID = {
     "source_conn": BQ_CONN,
     "target_conn": BQ_CONN,
     # Validation Type
-    "Type": "Column",
+    "Type": "GroupedColumn",
     # Configuration Required Depending on Validator Type
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
@@ -46,6 +46,7 @@ CONFIG_GROUPED_COUNT_VALID = {
 def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
+
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
 
@@ -58,6 +59,7 @@ def test_partitioned_count_validator():
     # Check that all partitions are unique.
     partitions = frozenset(df["partition_key"])
     assert len(rows) == len(partitions)
+    assert len(rows) > 1
 
     for _, row in rows:
         assert row["count_inp"] > 0
