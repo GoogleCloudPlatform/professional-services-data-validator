@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from data_validation import consts
 from data_validation.query_builder import query_builder
 
 
@@ -34,15 +35,15 @@ class ValidationBuilder(object):
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
 
+        self.add_query_limit()
+
     @staticmethod
     def get_query_builder(validation_type):
         """ Return Query Builder object given validation type """
         if validation_type == "Column":
             builder = query_builder.QueryBuilder.build_count_validator()
         elif validation_type == "GroupedColumn":
-            builder = query_builder.QueryBuilder.build_partition_count_validator(
-                days_past=700, limit=10
-            )
+            builder = query_builder.QueryBuilder.build_partition_count_validator()
         else:
             msg = "Validation Builder supplied unknown type: %s" % validation_type
             raise ValueError(msg)
@@ -84,3 +85,19 @@ class ValidationBuilder(object):
             print(query)
 
         return query
+
+    def add_query_limit(self):
+        """ Add a limit to the query results
+
+            **WARNING** this can skew results and should be used carefully
+        """
+        limit = self._get_query_limit()
+        self.source_builder.limit = limit
+        self.target_builder.limit = limit
+
+    def _get_query_limit(self):
+        """ Return limit int value for query (Default None)
+
+            **WARNING** this can skew results and should be used carefully
+        """
+        return self.config.get(consts.CONFIG_LIMIT)
