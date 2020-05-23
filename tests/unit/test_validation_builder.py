@@ -43,50 +43,44 @@ QUERY_GROUPS_TEST = [
     }
 ]
 
+
 @pytest.fixture
 def module_under_test():
     import data_validation.validation_builder
 
     return data_validation.validation_builder
 
+
 def test_import(module_under_test):
     assert True
+
 
 def test_column_validation(module_under_test):
     mock_client = None
     builder = module_under_test.ValidationBuilder(
-        COLUMN_VALIDATION_CONFIG,
-        mock_client,
-        mock_client,
-        verbose=False
+        COLUMN_VALIDATION_CONFIG, mock_client, mock_client, verbose=False
     )
 
     assert builder.verbose == False
     assert builder._get_query_limit() is None
 
+
 def test_validation_add_groups(module_under_test):
     mock_client = None
     builder = module_under_test.ValidationBuilder(
-        COLUMN_VALIDATION_CONFIG,
-        mock_client,
-        mock_client,
-        verbose=False
+        COLUMN_VALIDATION_CONFIG, mock_client, mock_client, verbose=False
     )
 
     builder.add_query_groups(QUERY_GROUPS_TEST)
 
     assert builder.group_aliases == ["start_alias"]
 
+
 def test_column_validation_limit(module_under_test):
     mock_client = None
     builder = module_under_test.ValidationBuilder(
-        COLUMN_VALIDATION_CONFIG_LIMIT,
-        mock_client,
-        mock_client,
-        verbose=False
+        COLUMN_VALIDATION_CONFIG_LIMIT, mock_client, mock_client, verbose=False
     )
     builder.add_query_limit()
 
     assert builder.source_builder.limit == QUERY_LIMIT
-
-
