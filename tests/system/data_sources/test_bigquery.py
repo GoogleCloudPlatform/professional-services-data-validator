@@ -27,7 +27,7 @@ CONFIG_COUNT_VALID = {
     # Configuration Required Depending on Validator Type
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
-    consts.PARTITION_COLUMN: "starttime",
+    consts.CONFIG_GROUPED_COLUMNS: [],
 }
 
 CONFIG_GROUPED_COUNT_VALID = {
@@ -39,7 +39,14 @@ CONFIG_GROUPED_COUNT_VALID = {
     # Configuration Required Depending on Validator Type
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
-    consts.PARTITION_COLUMN: "starttime",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "starttime",
+            consts.CONFIG_SOURCE_COLUMN: "starttime",
+            consts.CONFIG_TARGET_COLUMN: "starttime",
+            consts.CONFIG_CAST: "date",
+        },
+    ],
 }
 
 
@@ -51,13 +58,13 @@ def test_count_validator():
     assert df["count_inp"][0] == df["count_out"][0]
 
 
-def test_partitioned_count_validator():
+def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
     rows = list(df.iterrows())
 
     # Check that all partitions are unique.
-    partitions = frozenset(df["partition_key"])
+    partitions = frozenset(df["starttime"])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
 
