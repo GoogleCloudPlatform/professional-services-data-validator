@@ -31,14 +31,13 @@ CONN = {
 }
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Config
-    "source_conn": CONN,
-    "target_conn": CONN,
+    consts.CONFIG_SOURCE_CONN: CONN,
+    consts.CONFIG_TARGET_CONN: CONN,
     # Validation Type
-    "Type": "Column",
+    consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
-    "schema_name": "guestbook",
-    "table_name": "entries",
-    consts.PARTITION_COLUMN: "starttime",
+    consts.CONFIG_SCHEMA_NAME: "guestbook",
+    consts.CONFIG_TABLE_NAME: "entries",
 }
 
 

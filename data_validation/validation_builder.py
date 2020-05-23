@@ -27,7 +27,7 @@ class ValidationBuilder(object):
         """
         self.verbose = verbose
         self.config = config
-        self.validation_type = config["Type"]
+        self.validation_type = config[consts.CONFIG_TYPE]
 
         self.source_client = source_client
         self.target_client = target_client

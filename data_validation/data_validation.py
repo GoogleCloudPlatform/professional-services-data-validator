@@ -85,7 +85,8 @@ class DataValidation(object):
             self.validation_builder.get_target_query()
         )
 
-        result_df = self.combine_data(source_df, target_df)
+        join_on_fields = self.validation_builder.get_group_aliases()
+        result_df = self.combine_data(source_df, target_df, join_on_fields)
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
@@ -112,11 +113,9 @@ class DataValidation(object):
 
         return data_client
 
-    def combine_data(self, source_df, target_df):
+    def combine_data(self, source_df, target_df, join_on_fields):
         """ TODO: Return List of Dictionaries """
         # Clean Data to Standardize
-        join_on_fields = self.validation_builder.get_group_aliases()
-
         if join_on_fields:
             df = source_df.merge(
                 target_df,

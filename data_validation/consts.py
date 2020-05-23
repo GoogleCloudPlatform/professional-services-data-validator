@@ -16,8 +16,11 @@
 # Configuration Fields
 SOURCE_TYPE = "source_type"
 CONFIG = "config"
-SCHEMA_NAME = "schema_name"
-TABLE_NAME = "table_name"
+CONFIG_SOURCE_CONN = "source_conn"
+CONFIG_TARGET_CONN = "target_conn"
+CONFIG_TYPE = "type"
+CONFIG_SCHEMA_NAME = "schema_name"
+CONFIG_TABLE_NAME = "table_name"
 CONFIG_FIELD_ALIAS = "field_alias"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
 CONFIG_SOURCE_COLUMN = "source_column"
