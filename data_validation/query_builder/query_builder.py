@@ -92,18 +92,19 @@ class FilterField(object):
 
 
 class GroupedField(object):
-    def __init__(self, field_name=None, name=None, cast=None):
+    def __init__(self, field_name, alias=None, cast=None):
         """
-            field_name: A field to act on in the table.  Table level expr do not have a field name
+            :param field_name: A field to act on in the table
+            :param alias: An alias to use for the group
+            :param cast: A cast on the column if required
         """
         self.field_name = field_name
-        self.name = name
+        self.alias = alias
         self.cast = cast
 
-    def compile(self, ibis_table, field_name=None):
+    def compile(self, ibis_table):
         # Fields are supplied on compile or on build
-        field_name = field_name or self.field_name
-        group_field = ibis_table[field_name]
+        group_field = ibis_table[self.field_name]
 
         # TODO: generate cast for known types not specified
         if self.cast:
@@ -114,11 +115,10 @@ class GroupedField(object):
             # TODO: need to build Truncation Int support
             # TODO: should be using a logger
             print("WARNING: Unknown cast types can cause memory errors")
-            group_field = group_field  # No cast if type is not handled
 
-        # The Casts require we also supply a name.  TODO this culd be a requirement in the init
-        name = self.name or field_name
-        group_field = group_field.name(name)
+        # The Casts require we also supply a name.
+        alias = self.alias or self.field_name
+        group_field = group_field.name(alias)
 
         return group_field
 
@@ -141,9 +141,9 @@ class QueryBuilder(object):
         self.days_past = days_past
         self.limit = limit
 
-    # A Static function with prebuilt comparisons to use in query building
     @staticmethod
     def build_count_validator(limit=None):
+        """ Return a basic template builder for most validations """
         aggregate_fields = [AggregateField.count("count")]
         filters = []
         grouped_fields = []
@@ -155,21 +155,6 @@ class QueryBuilder(object):
             limit=limit,
         )
 
-    # A Static function with prebuilt comparisons to use in query building
-    @staticmethod
-    def build_partition_count_validator(days_past=None, limit=None):
-        aggregate_fields = [AggregateField.count("count")]
-        filters = []
-        grouped_fields = [GroupedField(name=consts.DEFAULT_PARTITION_KEY)]
-
-        return QueryBuilder(
-            aggregate_fields,
-            filters=filters,
-            grouped_fields=grouped_fields,
-            days_past=days_past,
-            limit=limit,
-        )
-
     def compile_aggregate_fields(self, table):
         aggs = [field.compile(table) for field in self.aggregate_fields]
 
@@ -178,28 +163,25 @@ class QueryBuilder(object):
     def compile_filter_fields(self, table):
         return [field.compile(table) for field in self.filters]
 
-    def compile_group_fields(self, table, partition_column=None):
+    def compile_group_fields(self, table):
         return [
-            field.compile(table, field_name=partition_column)
+            field.compile(table)
             for field in self.grouped_fields
         ]
 
-    def compile(self, data_client, schema_name, table_name, partition_column=None):
-        """ TODO
+    def compile(self, data_client, schema_name, table_name):
+        """ Return an Ibis query object
+
+            :IbisClient data_client: The client used to validate the query
+            :String schema_name: The name of the schema for the givne table
+            :String table_name: The name of the table to query
         """
         table = data_client.table(table_name, database=schema_name)
 
         # Build Query Expressions
         aggs = self.compile_aggregate_fields(table)
         filters = self.compile_filter_fields(table)
-        groups = self.compile_group_fields(table, partition_column=partition_column)
-
-        # Check if a Dast Past Filter should be added
-        # TODO this is ugly but difficult to know anywhere else
-        if self._verify_requires_date_filter(table, partition_column):
-            days_past_ts = datetime.utcnow() - timedelta(days=self.days_past)
-            date_fiter = FilterField.greater_than(partition_column, days_past_ts)
-            filters.append(date_fiter.compile(table))
+        groups = self.compile_group_fields(table)
 
         query = table.filter(filters)
         query = query.groupby(groups)
@@ -215,23 +197,19 @@ class QueryBuilder(object):
 
         return query
 
-    def _verify_requires_date_filter(self, ibis_table, partition_column):
-        """ Return Boolean describing if a date filter should be added
-
-            * This can only happen on grouped queries
-            * where a days_past filter is supplied and
-            * the column being grouped is a timestamp or date field
-        """
-        if not partition_column or self.days_past is None or not self.grouped_fields:
-            return False
-        elif isinstance(ibis_table[partition_column], ibis.expr.types.TemporalColumn):
-            return True
-        else:
-            return False
-
-    # TODO: these should be submitted as QueryField objects
     def add_query_field(self, query_field):
+        """ Add a QueryField object to the query
+
+            :param query_field: A QueryField Object
+        """
         self.query_fields.append(query_field)
+
+    def add_grouped_field(self, grouped_field):
+        """ Add a GroupedField object to the query
+
+            :param query_field: A GroupedField Object
+        """
+        self.grouped_fields.append(grouped_field)
 
     def add_filter_field(self, filter_obj):
         """ Add a filter object to your query
