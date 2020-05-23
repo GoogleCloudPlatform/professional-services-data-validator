@@ -13,9 +13,6 @@
 # limitations under the License.
 
 import ibis
-from data_validation import consts
-
-from datetime import datetime, timedelta
 
 
 class AggregateField(object):
