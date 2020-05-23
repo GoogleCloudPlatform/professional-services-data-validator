@@ -77,8 +77,12 @@ class ValidationBuilder(object):
         target_field_name = grouped_field[consts.CONFIG_TARGET_COLUMN]
         cast = grouped_field.get(consts.CONFIG_CAST)
 
-        source_field = GroupedField(field_name=source_field_name, alias=alias, cast=cast)
-        target_field = GroupedField(field_name=target_field_name, alias=alias, cast=cast)
+        source_field = GroupedField(
+            field_name=source_field_name, alias=alias, cast=cast
+        )
+        target_field = GroupedField(
+            field_name=target_field_name, alias=alias, cast=cast
+        )
 
         self.source_builder.add_grouped_field(source_field)
         self.target_builder.add_grouped_field(target_field)

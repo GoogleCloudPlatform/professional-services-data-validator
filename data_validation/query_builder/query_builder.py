@@ -161,10 +161,7 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.filters]
 
     def compile_group_fields(self, table):
-        return [
-            field.compile(table)
-            for field in self.grouped_fields
-        ]
+        return [field.compile(table) for field in self.grouped_fields]
 
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object

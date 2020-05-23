@@ -126,7 +126,9 @@ class DataValidation(object):
             )
         else:
             df = source_df.join(
-                target_df, how="outer",
-                lsuffix=consts.INPUT_SUFFIX, rsuffix=consts.OUTPUT_SUFFIX
+                target_df,
+                how="outer",
+                lsuffix=consts.INPUT_SUFFIX,
+                rsuffix=consts.OUTPUT_SUFFIX,
             )
         return df
