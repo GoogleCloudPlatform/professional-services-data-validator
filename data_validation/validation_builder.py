@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from data_validation import consts
-from data_validation.query_builder import query_builder
+from data_validation.query_builder.query_builder import QueryBuilder, GroupedField
 
 
 class ValidationBuilder(object):
@@ -34,21 +34,55 @@ class ValidationBuilder(object):
 
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
+        self.group_aliases = []
 
+        self.add_query_groups(self.get_config_query_groups())
         self.add_query_limit()
 
     @staticmethod
     def get_query_builder(validation_type):
         """ Return Query Builder object given validation type """
-        if validation_type == "Column":
-            builder = query_builder.QueryBuilder.build_count_validator()
-        elif validation_type == "GroupedColumn":
-            builder = query_builder.QueryBuilder.build_partition_count_validator()
+        if validation_type in ["Column", "GroupedColumn"]:
+            builder = QueryBuilder.build_count_validator()
         else:
             msg = "Validation Builder supplied unknown type: %s" % validation_type
             raise ValueError(msg)
 
         return builder
+
+    def get_config_query_groups(self):
+        """ Return Query Groups from Config """
+        return self.config.get(consts.CONFIG_GROUPED_COLUMNS) or []
+
+    def get_group_aliases(self):
+        """ Return list String aliases
+
+            These are required in order to join data back together
+            after query results return.
+        """
+        return self.group_aliases
+
+    def add_query_groups(self, grouped_fields):
+        """ Add Grouped Columns to Query """
+        for grouped_field in grouped_fields:
+            self.add_query_group(grouped_field)
+
+    def add_query_group(self, grouped_field):
+        """ Add Grouped Field to Query
+
+            :param grouped_field: Dict object with source, target, and cast info
+        """
+        alias = grouped_field[consts.CONFIG_FIELD_ALIAS]
+        source_field_name = grouped_field[consts.CONFIG_SOURCE_COLUMN]
+        target_field_name = grouped_field[consts.CONFIG_TARGET_COLUMN]
+        cast = grouped_field.get(consts.CONFIG_CAST)
+
+        source_field = GroupedField(field_name=source_field_name, alias=alias, cast=cast)
+        target_field = GroupedField(field_name=target_field_name, alias=alias, cast=cast)
+
+        self.source_builder.add_grouped_field(source_field)
+        self.target_builder.add_grouped_field(target_field)
+        self.group_aliases.append(alias)
 
     def get_source_query(self):
         """ Return query for source validation """
@@ -56,7 +90,6 @@ class ValidationBuilder(object):
             "data_client": self.source_client,
             "schema_name": self.config["schema_name"],
             "table_name": self.config["table_name"],
-            "partition_column": self.config["partition_column"],
         }
         query = self.source_builder.compile(**source_config)
         if self.verbose:
@@ -74,9 +107,6 @@ class ValidationBuilder(object):
             ),
             "table_name": self.config.get(
                 "target_table_name", self.config["table_name"]
-            ),
-            "partition_column": self.config.get(
-                "target_partition_column", self.config["partition_column"]
             ),
         }
         query = self.target_builder.compile(**target_config)
