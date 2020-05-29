@@ -140,7 +140,7 @@ class ValidationBuilder(object):
         query = self.source_builder.compile(**source_config)
         if self.verbose:
             print("-- ** Source Query ** --")
-            print(query)
+            print(query.compile())
 
         return query
 
@@ -158,7 +158,7 @@ class ValidationBuilder(object):
         query = self.target_builder.compile(**target_config)
         if self.verbose:
             print("-- ** Target Query ** --")
-            print(query)
+            print(query.compile())
 
         return query
 

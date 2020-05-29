@@ -28,14 +28,14 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_GROUPED_COLUMNS: [],
-    # consts.CONFIG_AGGREGATES: [
-    #     {
-    #         consts.CONFIG_TYPE: "count",
-    #         consts.CONFIG_SOURCE_COLUMN: "tripduration",
-    #         consts.CONFIG_TARGET_COLUMN: "tripduration",
-    #         consts.CONFIG_FIELD_ALIAS: "count_tripduration",
-    #     },
-    # ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_SOURCE_COLUMN: "tripduration",
+            consts.CONFIG_TARGET_COLUMN: "tripduration",
+            consts.CONFIG_FIELD_ALIAS: "count_tripduration",
+        },
+    ],
 }
 
 CONFIG_GROUPED_COUNT_VALID = {
@@ -72,7 +72,7 @@ def test_count_validator():
 
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
-
+    assert df["count_tripduration_inp"][0] > 0
 
 def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)

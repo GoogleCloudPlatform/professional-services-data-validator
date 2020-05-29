@@ -27,7 +27,7 @@ class AggregateField(object):
     @staticmethod
     def count(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.count, field_name=None, alias=alias
+            ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias
         )
 
     @staticmethod
