@@ -74,6 +74,7 @@ def test_count_validator():
     assert df["count_inp"][0] == df["count_out"][0]
     assert df["count_tripduration_inp"][0] > 0
 
+
 def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()

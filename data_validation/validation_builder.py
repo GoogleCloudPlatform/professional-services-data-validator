@@ -86,7 +86,7 @@ class ValidationBuilder(object):
             self.add_query_group(grouped_field)
 
     def add_aggregate(self, aggregate_field):
-        """ Add Aggregate Field to Queries 
+        """ Add Aggregate Field to Queries
 
             :param aggregate_field: Dict object with source, target, and aggregation info
         """
