@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from data_validation import consts
-from data_validation.query_builder.query_builder import QueryBuilder, GroupedField, AggregateField
+from data_validation.query_builder.query_builder import (
+    QueryBuilder,
+    GroupedField,
+    AggregateField,
+)
 
 
 class ValidationBuilder(object):
@@ -34,7 +38,7 @@ class ValidationBuilder(object):
 
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
-        
+
         self.aggregate_aliases = []
         self.group_aliases = []
 
@@ -104,7 +108,6 @@ class ValidationBuilder(object):
         self.source_builder.add_aggregate_field(source_agg)
         self.target_builder.add_aggregate_field(target_agg)
         self.aggregate_aliases.append(alias)
-
 
     def add_query_group(self, grouped_field):
         """ Add Grouped Field to Query

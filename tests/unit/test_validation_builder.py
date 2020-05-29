@@ -73,6 +73,7 @@ def test_column_validation(module_under_test):
     assert builder.verbose == False
     assert builder._get_query_limit() is None
 
+
 def test_column_validation_aggregates(module_under_test):
     mock_client = None
     builder = module_under_test.ValidationBuilder(
@@ -83,6 +84,7 @@ def test_column_validation_aggregates(module_under_test):
     builder.add_config_aggregates()
 
     assert builder.aggregate_aliases == ["sum_starttime"]
+
 
 def test_validation_add_groups(module_under_test):
     mock_client = None
