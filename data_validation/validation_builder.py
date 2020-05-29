@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from data_validation import consts
-from data_validation.query_builder.query_builder import QueryBuilder, GroupedField
+from data_validation.query_builder.query_builder import QueryBuilder, GroupedField, AggregateField
 
 
 class ValidationBuilder(object):
@@ -34,9 +34,12 @@ class ValidationBuilder(object):
 
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
+        
+        self.aggregate_aliases = []
         self.group_aliases = []
 
-        self.add_query_groups(self.get_config_query_groups())
+        self.add_config_aggregates()
+        self.add_config_query_groups()
         self.add_query_limit()
 
     @staticmethod
@@ -50,22 +53,58 @@ class ValidationBuilder(object):
 
         return builder
 
+    def get_config_aggregates(self):
+        """ Return Aggregates from Config """
+        return self.config.get(consts.CONFIG_AGGREGATES) or []
+
     def get_config_query_groups(self):
         """ Return Query Groups from Config """
         return self.config.get(consts.CONFIG_GROUPED_COLUMNS) or []
 
-    def get_group_aliases(self):
-        """ Return list String aliases
+    def get_aggregate_aliases(self):
+        """ Return List of String Aliases """
+        return self.aggregate_aliases
 
-            These are required in order to join data back together
-            after query results return.
-        """
+    def get_group_aliases(self):
+        """ Return List of String Aliases """
         return self.group_aliases
 
-    def add_query_groups(self, grouped_fields):
+    def add_config_aggregates(self):
+        """ Add Aggregations to Query """
+        aggregate_fields = self.get_config_aggregates()
+        for aggregate_field in aggregate_fields:
+            self.add_aggregate(aggregate_field)
+
+    def add_config_query_groups(self):
         """ Add Grouped Columns to Query """
+        grouped_fields = self.get_config_query_groups()
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
+
+    def add_aggregate(self, aggregate_field):
+        """ Add Aggregate Field to Queries 
+
+            :param aggregate_field: Dict object with source, target, and aggregation info
+        """
+        alias = aggregate_field[consts.CONFIG_FIELD_ALIAS]
+        source_field_name = aggregate_field[consts.CONFIG_SOURCE_COLUMN]
+        target_field_name = aggregate_field[consts.CONFIG_TARGET_COLUMN]
+        aggregate_type = aggregate_field.get(consts.CONFIG_TYPE)
+
+        if not hasattr(AggregateField, aggregate_type):
+            raise Exception("Unknown Aggregation Type: {}".format(aggregate_type))
+
+        source_agg = getattr(AggregateField, aggregate_type)(
+            field_name=source_field_name, alias=alias
+        )
+        target_agg = getattr(AggregateField, aggregate_type)(
+            field_name=target_field_name, alias=alias
+        )
+
+        self.source_builder.add_aggregate_field(source_agg)
+        self.target_builder.add_aggregate_field(target_agg)
+        self.aggregate_aliases.append(alias)
+
 
     def add_query_group(self, grouped_field):
         """ Add Grouped Field to Query

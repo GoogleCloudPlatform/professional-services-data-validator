@@ -39,6 +39,17 @@ CONFIG_GROUPED_COUNT_VALID = {
     # Configuration Required Depending on Validator Type
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
+
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_SOURCE_COLUMN: "tripduration",
+            consts.CONFIG_TARGET_COLUMN: "tripduration",
+            consts.CONFIG_FIELD_ALIAS: "sum_tripduration",
+        },
+
+    ],
+
     consts.CONFIG_GROUPED_COLUMNS: [
         {
             consts.CONFIG_FIELD_ALIAS: "starttime",

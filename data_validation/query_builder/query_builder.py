@@ -16,18 +16,24 @@ import ibis
 
 
 class AggregateField(object):
-    def __init__(self, ibis_expr, field_name=None, name=None):
+    def __init__(self, ibis_expr, field_name=None, alias=None):
         """
             field_name: A field to act on in the table.  Table level expr do not have a field name
         """
         self.expr = ibis_expr
         self.field_name = field_name
-        self.name = name
+        self.alias = alias
 
     @staticmethod
-    def count(name=None):
+    def count(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.count, field_name=None, name=name
+            ibis.expr.types.ColumnExpr.count, field_name=None, alias=alias
+        )
+
+    @staticmethod
+    def sum(field_name=None, alias=None):
+        return AggregateField(
+            ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias
         )
 
     def compile(self, ibis_table):
@@ -36,8 +42,8 @@ class AggregateField(object):
         else:
             agg_field = self.expr(ibis_table)
 
-        if self.name:
-            agg_field = agg_field.name(self.name)
+        if self.alias:
+            agg_field = agg_field.name(self.alias)
 
         return agg_field
 
@@ -141,7 +147,7 @@ class QueryBuilder(object):
     @staticmethod
     def build_count_validator(limit=None):
         """ Return a basic template builder for most validations """
-        aggregate_fields = [AggregateField.count("count")]
+        aggregate_fields = [AggregateField.count(alias="count")]
         filters = []
         grouped_fields = []
 
@@ -191,12 +197,12 @@ class QueryBuilder(object):
 
         return query
 
-    def add_query_field(self, query_field):
-        """ Add a QueryField object to the query
+    def add_aggregate_field(self, aggregate_field):
+        """ Add a AggregateField object to the query
 
-            :param query_field: A QueryField Object
+            :param query_field: A AggregateField Object
         """
-        self.query_fields.append(query_field)
+        self.aggregate_fields.append(aggregate_field)
 
     def add_grouped_field(self, grouped_field):
         """ Add a GroupedField object to the query
