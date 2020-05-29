@@ -43,6 +43,15 @@ QUERY_GROUPS_TEST = [
     }
 ]
 
+AGGREGATES_TEST = [
+    {
+        consts.CONFIG_FIELD_ALIAS: "sum_starttime",
+        consts.CONFIG_SOURCE_COLUMN: "starttime",
+        consts.CONFIG_TARGET_COLUMN: "starttime",
+        consts.CONFIG_TYPE: "sum",
+    }
+]
+
 
 @pytest.fixture
 def module_under_test():
@@ -64,6 +73,16 @@ def test_column_validation(module_under_test):
     assert builder.verbose == False
     assert builder._get_query_limit() is None
 
+def test_column_validation_aggregates(module_under_test):
+    mock_client = None
+    builder = module_under_test.ValidationBuilder(
+        COLUMN_VALIDATION_CONFIG, mock_client, mock_client, verbose=False
+    )
+
+    builder.config[consts.CONFIG_AGGREGATES] = AGGREGATES_TEST
+    builder.add_config_aggregates()
+
+    assert builder.aggregate_aliases == ["sum_starttime"]
 
 def test_validation_add_groups(module_under_test):
     mock_client = None
@@ -71,7 +90,8 @@ def test_validation_add_groups(module_under_test):
         COLUMN_VALIDATION_CONFIG, mock_client, mock_client, verbose=False
     )
 
-    builder.add_query_groups(QUERY_GROUPS_TEST)
+    builder.config[consts.CONFIG_GROUPED_COLUMNS] = QUERY_GROUPS_TEST
+    builder.add_config_query_groups()
 
     assert builder.group_aliases == ["start_alias"]
 

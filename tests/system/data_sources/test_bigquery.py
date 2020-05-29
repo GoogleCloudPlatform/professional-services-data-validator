@@ -28,6 +28,15 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_GROUPED_COLUMNS: [],
+
+    # consts.CONFIG_AGGREGATES: [
+    #     {
+    #         consts.CONFIG_TYPE: "count",
+    #         consts.CONFIG_SOURCE_COLUMN: "tripduration",
+    #         consts.CONFIG_TARGET_COLUMN: "tripduration",
+    #         consts.CONFIG_FIELD_ALIAS: "count_tripduration",
+    #     },
+    # ],
 }
 
 CONFIG_GROUPED_COUNT_VALID = {
@@ -78,6 +87,7 @@ def test_grouped_count_validator():
     partitions = frozenset(df["starttime"])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
+    assert df["sum_tripduration_inp"].sum() == df["sum_tripduration_out"].sum()
 
     for _, row in rows:
         assert row["count_inp"] > 0
