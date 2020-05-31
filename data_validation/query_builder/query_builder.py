@@ -31,6 +31,12 @@ class AggregateField(object):
         )
 
     @staticmethod
+    def max(field_name=None, alias=None):
+        return AggregateField(
+            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias
+        )
+
+    @staticmethod
     def sum(field_name=None, alias=None):
         return AggregateField(
             ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias

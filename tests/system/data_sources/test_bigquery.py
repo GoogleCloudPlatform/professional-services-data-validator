@@ -35,6 +35,12 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "count_tripduration",
         },
+        {
+            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_SOURCE_COLUMN: "birth_year",
+            consts.CONFIG_TARGET_COLUMN: "birth_year",
+            consts.CONFIG_FIELD_ALIAS: "max_birth_year",
+        },
     ],
 }
 
@@ -73,6 +79,7 @@ def test_count_validator():
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
     assert df["count_tripduration_inp"][0] > 0
+    assert df["max_birth_year_inp"][0] >= 2002
 
 
 def test_grouped_count_validator():
