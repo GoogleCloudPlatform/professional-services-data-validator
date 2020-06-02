@@ -85,7 +85,8 @@ class DataValidation(object):
             self.validation_builder.get_target_query()
         )
 
-        result_df = self.combine_data(source_df, target_df)
+        join_on_fields = self.validation_builder.get_group_aliases()
+        result_df = self.combine_data(source_df, target_df, join_on_fields)
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
@@ -112,24 +113,21 @@ class DataValidation(object):
 
         return data_client
 
-    def combine_data(self, source_df, target_df):
+    def combine_data(self, source_df, target_df, join_on_fields):
         """ TODO: Return List of Dictionaries """
         # Clean Data to Standardize
-        source_df = self._clean_raw_data(source_df)
-        target_df = self._clean_raw_data(target_df)
-
-        df = source_df.merge(
-            target_df,
-            how="outer",
-            on=consts.DEFAULT_PARTITION_KEY,
-            suffixes=(consts.INPUT_SUFFIX, consts.OUTPUT_SUFFIX),
-        )
+        if join_on_fields:
+            df = source_df.merge(
+                target_df,
+                how="outer",
+                on=join_on_fields,
+                suffixes=(consts.INPUT_SUFFIX, consts.OUTPUT_SUFFIX),
+            )
+        else:
+            df = source_df.join(
+                target_df,
+                how="outer",
+                lsuffix=consts.INPUT_SUFFIX,
+                rsuffix=consts.OUTPUT_SUFFIX,
+            )
         return df
-
-    def _clean_raw_data(self, result_df):
-        """ TODO: Return Pandas DataFrame with standardized result data to be combined """
-        # All data is joined via partition key
-        if consts.DEFAULT_PARTITION_KEY not in result_df.columns:
-            result_df[consts.DEFAULT_PARTITION_KEY] = consts.DEFAULT_PARTITION_KEY
-
-        return result_df

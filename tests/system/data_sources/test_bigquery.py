@@ -20,44 +20,53 @@ from data_validation import data_validation, consts
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Config
-    "source_conn": BQ_CONN,
-    "target_conn": BQ_CONN,
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
     # Validation Type
-    "Type": "Column",
+    consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
-    "schema_name": "bigquery-public-data.new_york_citibike",
-    "table_name": "citibike_trips",
-    consts.PARTITION_COLUMN: "starttime",
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_GROUPED_COLUMNS: [],
 }
 
 CONFIG_GROUPED_COUNT_VALID = {
     # BigQuery Specific Connection Config
-    "source_conn": BQ_CONN,
-    "target_conn": BQ_CONN,
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
     # Validation Type
-    "Type": "Column",
+    consts.CONFIG_TYPE: "GroupedColumn",
     # Configuration Required Depending on Validator Type
-    "schema_name": "bigquery-public-data.new_york_citibike",
-    "table_name": "citibike_trips",
-    consts.PARTITION_COLUMN: "starttime",
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "starttime",
+            consts.CONFIG_SOURCE_COLUMN: "starttime",
+            consts.CONFIG_TARGET_COLUMN: "starttime",
+            consts.CONFIG_CAST: "date",
+        },
+    ],
 }
 
 
 def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
+
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
 
 
-def test_partitioned_count_validator():
+def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
     rows = list(df.iterrows())
 
     # Check that all partitions are unique.
-    partitions = frozenset(df["partition_key"])
+    partitions = frozenset(df["starttime"])
     assert len(rows) == len(partitions)
+    assert len(rows) > 1
 
     for _, row in rows:
         assert row["count_inp"] > 0

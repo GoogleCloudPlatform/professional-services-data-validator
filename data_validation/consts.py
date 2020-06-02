@@ -13,17 +13,20 @@
 # limitations under the License.
 
 
-# Generic Config Used in Submission
+# Configuration Fields
 SOURCE_TYPE = "source_type"
 CONFIG = "config"
-SCHEMA_NAME = "schema_name"
-TABLE_NAME = "table_name"
-PARTITION_COLUMN = "partition_column"
-
-# Configurations Used in SQL Generation
-DEFAULT_PARTITION_KEY = "partition_key"
-PARTITION_COLUMN_SQL = "partition_column_sql"
-GROUP_COLUMN_SQL = "grouped_column_sql"
+CONFIG_SOURCE_CONN = "source_conn"
+CONFIG_TARGET_CONN = "target_conn"
+CONFIG_TYPE = "type"
+CONFIG_SCHEMA_NAME = "schema_name"
+CONFIG_TABLE_NAME = "table_name"
+CONFIG_FIELD_ALIAS = "field_alias"
+CONFIG_GROUPED_COLUMNS = "grouped_columns"
+CONFIG_SOURCE_COLUMN = "source_column"
+CONFIG_TARGET_COLUMN = "target_column"
+CONFIG_CAST = "cast"
+CONFIG_LIMIT = "limit"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
