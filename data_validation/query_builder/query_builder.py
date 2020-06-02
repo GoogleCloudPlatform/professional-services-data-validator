@@ -199,7 +199,8 @@ class QueryBuilder(object):
             represents adding a column to group by n the
             query being built.
 
-            :param query_field: A GroupedField Object
+        Args:
+            grouped_field (GroupedField): A GroupedField instance
         """
         self.grouped_fields.append(grouped_field)
 
@@ -208,6 +209,7 @@ class QueryBuilder(object):
             will add the desired filter to your compiled
             query (ie. WHERE query_filter=True)
 
-            :param filter_obj: A FilterField Object
+        Args:
+            filter_obj (FilterField): A FilterField instance
         """
         self.filters.append(filter_obj)
