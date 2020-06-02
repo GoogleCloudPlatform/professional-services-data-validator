@@ -150,20 +150,19 @@ class GroupedField(object):
 
 class QueryBuilder(object):
     def __init__(
-        self, aggregate_fields, filters, grouped_fields, days_past=None, limit=None
+        self, aggregate_fields, filters, grouped_fields, limit=None
     ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
-            :param aggregate_fields: List of AggregateField objects with Ibis expressions
-            :param filters: A list of FilterField objects
-            :param grouped_fields: A list of GroupedField objects
-            :param days_past: Number of days past to use as date partition filter
-            :param limit: A limit value for the number of records to pull (used for testing)
+        Args:
+            aggregate_fields (list[AggregateField]): AggregateField instances with Ibis expressions
+            filters (list[FilterField]): A list of FilterField instances
+            grouped_fields (list[GroupedField]): A list of GroupedField instances
+            limit (int): A limit value for the number of records to pull (used for testing)
         """
         self.aggregate_fields = aggregate_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
-        self.days_past = days_past
         self.limit = limit
 
     @staticmethod
