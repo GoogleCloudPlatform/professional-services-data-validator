@@ -62,7 +62,7 @@ def test_column_validation(module_under_test):
         COLUMN_VALIDATION_CONFIG, mock_client, mock_client, verbose=False
     )
 
-    assert builder.verbose == False
+    assert not builder.verbose
     assert builder.get_query_limit() is None
 
 
