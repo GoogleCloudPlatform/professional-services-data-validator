@@ -52,11 +52,11 @@ class DataValidation(object):
     ):
         """ Initialize a DataValidation client
 
-            :param builder: A QueryBuilder client with the structure of the desired validation
-            :param source_config: The source config used for the comparison
-            :param target_config: The target config used for the comparison
-            :param result_handler: A ResultHandler client to be used when storing results (default is print)
-            :param verbose: If verbose, the Data Validation client will print queries run
+        Args:
+            config (dict): The validation config used for the comparison
+            validation_builder (ValidationBuilder): Optional instance of a ValidationBuilder
+            result_handler (ResultHandler): Optional instance of as ResultHandler client
+            verbose (bool): If verbose, the Data Validation client will print the queries run
         """
         self.verbose = verbose
 
