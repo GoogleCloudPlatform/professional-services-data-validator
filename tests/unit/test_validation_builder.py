@@ -52,7 +52,7 @@ def module_under_test():
 
 
 def test_import(module_under_test):
-    assert True
+    assert module_under_test is not None
 
 
 def test_column_validation(module_under_test):
