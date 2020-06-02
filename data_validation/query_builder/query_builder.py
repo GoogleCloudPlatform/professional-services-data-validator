@@ -16,20 +16,35 @@ import ibis
 
 
 class AggregateField(object):
-    def __init__(self, ibis_expr, field_name=None, name=None):
+    def __init__(self, ibis_expr, field_name=None, alias=None):
         """ A representation of a table or column aggregate in Ibis
 
         Args:
-            field_name: A field to act on in the table.  Table level expr do not have a field name
+            ibis_expr (ColumnExpr): A column aggregation to use from Ibis
+            field_name (String: A field to act on in the table.
+                Table level expr do not have a field name
+            alias (String): A field to use as the aggregate alias name
         """
         self.expr = ibis_expr
         self.field_name = field_name
-        self.name = name
+        self.alias = alias
 
     @staticmethod
-    def count(name=None):
+    def count(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.count, field_name=None, name=name
+            ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias
+        )
+
+    @staticmethod
+    def max(field_name=None, alias=None):
+        return AggregateField(
+            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias
+        )
+
+    @staticmethod
+    def sum(field_name=None, alias=None):
+        return AggregateField(
+            ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias
         )
 
     def compile(self, ibis_table):
@@ -38,8 +53,8 @@ class AggregateField(object):
         else:
             agg_field = self.expr(ibis_table)
 
-        if self.name:
-            agg_field = agg_field.name(self.name)
+        if self.alias:
+            agg_field = agg_field.name(self.alias)
 
         return agg_field
 
@@ -48,8 +63,17 @@ class FilterField(object):
     def __init__(
         self, ibis_expr, left=None, right=None, left_field=None, right_field=None
     ):
-        """
-            field_name: A field to act on in the table.  Table level expr do not have a field name
+        """ A representation of a query filter to be used while building a query.
+            You can alternatively use either (left or left_field) and
+            (right or right_field).
+
+        Args:
+            ibis_expr (ColumnExpr): A column expression to be used for comparisons
+            left (Object): A value to compare on the left side of the expression
+            left_field (String): A column name to be used to filter against
+            right (Object): A value to compare on the right side of the expression
+            right_field (String): A column name to be used to filter against
+
         """
         self.expr = ibis_expr
         self.left = left
@@ -92,10 +116,12 @@ class FilterField(object):
 
 class GroupedField(object):
     def __init__(self, field_name, alias=None, cast=None):
-        """
-            :param field_name: A field to act on in the table
-            :param alias: An alias to use for the group
-            :param cast: A cast on the column if required
+        """ A representation of a group by field used to build a query.
+
+        Args:
+            field_name (String): A field to act on in the table
+            alias (String): An alias to use for the group
+            cast (String): A cast on the column if required
         """
         self.field_name = field_name
         self.alias = alias
@@ -123,27 +149,24 @@ class GroupedField(object):
 
 
 class QueryBuilder(object):
-    def __init__(
-        self, aggregate_fields, filters, grouped_fields, days_past=None, limit=None
-    ):
+    def __init__(self, aggregate_fields, filters, grouped_fields, limit=None):
         """ Build a QueryBuilder object which can be used to build queries easily
 
-            :param aggregate_fields: List of AggregateField objects with Ibis expressions
-            :param filters: A list of FilterField objects
-            :param grouped_fields: A list of GroupedField objects
-            :param days_past: Number of days past to use as date partition filter
-            :param limit: A limit value for the number of records to pull (used for testing)
+        Args:
+            aggregate_fields (list[AggregateField]): AggregateField instances with Ibis expressions
+            filters (list[FilterField]): A list of FilterField instances
+            grouped_fields (list[GroupedField]): A list of GroupedField instances
+            limit (int): A limit value for the number of records to pull (used for testing)
         """
         self.aggregate_fields = aggregate_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
-        self.days_past = days_past
         self.limit = limit
 
     @staticmethod
     def build_count_validator(limit=None):
         """ Return a basic template builder for most validations """
-        aggregate_fields = [AggregateField.count("count")]
+        aggregate_fields = [AggregateField.count(alias="count")]
         filters = []
         grouped_fields = []
 
@@ -194,9 +217,18 @@ class QueryBuilder(object):
 
         return query
 
+    def add_aggregate_field(self, aggregate_field):
+        """ Add an AggregateField instance to the query which
+            will be used when compiling your query (ie. SUM(a))
+
+        Args:
+            aggregate_field (AggregateField): An AggregateField instance
+        """
+        self.aggregate_fields.append(aggregate_field)
+
     def add_grouped_field(self, grouped_field):
-        """ Add a GroupedField object to the query which
-            represents adding a column to group by n the
+        """ Add a GroupedField instance to the query which
+            represents adding a column to group by in the
             query being built.
 
         Args:
@@ -205,7 +237,7 @@ class QueryBuilder(object):
         self.grouped_fields.append(grouped_field)
 
     def add_filter_field(self, filter_obj):
-        """ Add a FilterField object to your query which
+        """ Add a FilterField instance to your query which
             will add the desired filter to your compiled
             query (ie. WHERE query_filter=True)
 

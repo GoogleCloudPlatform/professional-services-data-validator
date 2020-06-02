@@ -28,6 +28,20 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_SOURCE_COLUMN: "tripduration",
+            consts.CONFIG_TARGET_COLUMN: "tripduration",
+            consts.CONFIG_FIELD_ALIAS: "count_tripduration",
+        },
+        {
+            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_SOURCE_COLUMN: "birth_year",
+            consts.CONFIG_TARGET_COLUMN: "birth_year",
+            consts.CONFIG_FIELD_ALIAS: "max_birth_year",
+        },
+    ],
 }
 
 CONFIG_GROUPED_COUNT_VALID = {
@@ -39,6 +53,14 @@ CONFIG_GROUPED_COUNT_VALID = {
     # Configuration Required Depending on Validator Type
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_SOURCE_COLUMN: "tripduration",
+            consts.CONFIG_TARGET_COLUMN: "tripduration",
+            consts.CONFIG_FIELD_ALIAS: "sum_tripduration",
+        },
+    ],
     consts.CONFIG_GROUPED_COLUMNS: [
         {
             consts.CONFIG_FIELD_ALIAS: "starttime",
@@ -56,6 +78,8 @@ def test_count_validator():
 
     assert df["count_inp"][0] > 0
     assert df["count_inp"][0] == df["count_out"][0]
+    assert df["count_tripduration_inp"][0] > 0
+    assert df["max_birth_year_inp"][0] >= 2002
 
 
 def test_grouped_count_validator():
@@ -67,6 +91,7 @@ def test_grouped_count_validator():
     partitions = frozenset(df["starttime"])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
+    assert df["sum_tripduration_inp"].sum() == df["sum_tripduration_out"].sum()
 
     for _, row in rows:
         assert row["count_inp"] > 0

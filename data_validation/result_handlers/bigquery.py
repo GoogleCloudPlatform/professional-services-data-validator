@@ -14,6 +14,7 @@
 
 """Output validation report to BigQuery tables"""
 
+
 class BigQueryResultHandler(object):
     """Write results of data validation to BigQuery.
 
