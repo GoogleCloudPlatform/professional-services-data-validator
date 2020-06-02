@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
+
 import pytest
 
-from copy import deepcopy
 from data_validation import consts
 
 
@@ -61,7 +62,7 @@ def module_under_test():
 
 
 def test_import(module_under_test):
-    assert True
+    assert module_under_test is not None
 
 
 def test_column_validation(module_under_test):
@@ -71,7 +72,7 @@ def test_column_validation(module_under_test):
     )
 
     assert not builder.verbose
-    assert builder._get_query_limit() is None
+    assert builder.get_query_limit() is None
 
 
 def test_column_validation_aggregates(module_under_test):

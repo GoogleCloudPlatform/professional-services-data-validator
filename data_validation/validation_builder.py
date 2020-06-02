@@ -22,12 +22,14 @@ from data_validation.query_builder.query_builder import (
 
 class ValidationBuilder(object):
     def __init__(self, config, source_client, target_client, verbose=False):
-        """ Initialize a ValidationBuilder client
+        """ Initialize a ValidationBuilder client which supplies the
+            source and target queries tto run.
 
-            :param config: The Validation config supplied
-            :param source_client: The Ibis client for the source DB
-            :param target_client: The Ibis client for the target DB
-            :param verbose: If verbose, the Data Validation client will print queries run
+        Args:
+            config (Dict): The Validation config supplied
+            source_client (IbisClient): The Ibis client for the source DB
+            target_client (IbisClient): The Ibis client for the target DB
+            verbose (Bool): If verbose, the Data Validation client will print queries run
         """
         self.verbose = verbose
         self.config = config
@@ -112,7 +114,8 @@ class ValidationBuilder(object):
     def add_query_group(self, grouped_field):
         """ Add Grouped Field to Query
 
-            :param grouped_field: Dict object with source, target, and cast info
+        Args:
+            grouped_field (Dict): An object with source, target, and cast info
         """
         alias = grouped_field[consts.CONFIG_FIELD_ALIAS]
         source_field_name = grouped_field[consts.CONFIG_SOURCE_COLUMN]
@@ -167,11 +170,11 @@ class ValidationBuilder(object):
 
             **WARNING** this can skew results and should be used carefully
         """
-        limit = self._get_query_limit()
+        limit = self.get_query_limit()
         self.source_builder.limit = limit
         self.target_builder.limit = limit
 
-    def _get_query_limit(self):
+    def get_query_limit(self):
         """ Return limit int value for query (Default None)
 
             **WARNING** this can skew results and should be used carefully

@@ -17,8 +17,13 @@ import ibis
 
 class AggregateField(object):
     def __init__(self, ibis_expr, field_name=None, alias=None):
-        """
-            field_name: A field to act on in the table.  Table level expr do not have a field name
+        """ A representation of a table or column aggregate in Ibis
+
+        Args:
+            ibis_expr (ColumnExpr): A column aggregation to use from Ibis
+            field_name (String: A field to act on in the table.
+                Table level expr do not have a field name
+            alias (String): A field to use as the aggregate alias name
         """
         self.expr = ibis_expr
         self.field_name = field_name
@@ -58,8 +63,17 @@ class FilterField(object):
     def __init__(
         self, ibis_expr, left=None, right=None, left_field=None, right_field=None
     ):
-        """
-            field_name: A field to act on in the table.  Table level expr do not have a field name
+        """ A representation of a query filter to be used while building a query.
+            You can alternatively use either (left or left_field) and
+            (right or right_field).
+
+        Args:
+            ibis_expr (ColumnExpr): A column expression to be used for comparisons
+            left (Object): A value to compare on the left side of the expression
+            left_field (String): A column name to be used to filter against
+            right (Object): A value to compare on the right side of the expression
+            right_field (String): A column name to be used to filter against
+
         """
         self.expr = ibis_expr
         self.left = left
@@ -102,10 +116,12 @@ class FilterField(object):
 
 class GroupedField(object):
     def __init__(self, field_name, alias=None, cast=None):
-        """
-            :param field_name: A field to act on in the table
-            :param alias: An alias to use for the group
-            :param cast: A cast on the column if required
+        """ A representation of a group by field used to build a query.
+
+        Args:
+            field_name (String): A field to act on in the table
+            alias (String): An alias to use for the group
+            cast (String): A cast on the column if required
         """
         self.field_name = field_name
         self.alias = alias
@@ -178,9 +194,10 @@ class QueryBuilder(object):
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
 
-            :IbisClient data_client: The client used to validate the query
-            :String schema_name: The name of the schema for the givne table
-            :String table_name: The name of the table to query
+        Args:
+            data_client (IbisClient): The client used to validate the query.
+            schema_name (String): The name of the schema for the given table.
+            table_name (String): The name of the table to query.
         """
         table = data_client.table(table_name, database=schema_name)
 
@@ -204,22 +221,30 @@ class QueryBuilder(object):
         return query
 
     def add_aggregate_field(self, aggregate_field):
-        """ Add a AggregateField object to the query
+        """ Add an AggregateField instance to the query which
+            will be used when compiling your query (ie. SUM(a))
 
-            :param query_field: A AggregateField Object
+        Args:
+            aggregate_field (AggregateField): An AggregateField instance
         """
         self.aggregate_fields.append(aggregate_field)
 
     def add_grouped_field(self, grouped_field):
-        """ Add a GroupedField object to the query
+        """ Add a GroupedField instance to the query which
+            represents adding a column to group by in the
+            query being built.
 
-            :param query_field: A GroupedField Object
+        Args:
+            grouped_field (GroupedField): A GroupedField instance
         """
         self.grouped_fields.append(grouped_field)
 
     def add_filter_field(self, filter_obj):
-        """ Add a filter object to your query
+        """ Add a FilterField instance to your query which
+            will add the desired filter to your compiled
+            query (ie. WHERE query_filter=True)
 
-            :param filter_obj: A FilterField Object
+        Args:
+            filter_obj (FilterField): A FilterField instance
         """
         self.filters.append(filter_obj)
