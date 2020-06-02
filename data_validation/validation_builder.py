@@ -125,11 +125,11 @@ class ValidationBuilder(object):
 
             **WARNING** this can skew results and should be used carefully
         """
-        limit = self._get_query_limit()
+        limit = self.get_query_limit()
         self.source_builder.limit = limit
         self.target_builder.limit = limit
 
-    def _get_query_limit(self):
+    def get_query_limit(self):
         """ Return limit int value for query (Default None)
 
             **WARNING** this can skew results and should be used carefully

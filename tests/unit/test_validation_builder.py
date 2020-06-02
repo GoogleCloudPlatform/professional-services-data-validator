@@ -63,7 +63,7 @@ def test_column_validation(module_under_test):
     )
 
     assert builder.verbose == False
-    assert builder._get_query_limit() is None
+    assert builder.get_query_limit() is None
 
 
 def test_validation_add_groups(module_under_test):
