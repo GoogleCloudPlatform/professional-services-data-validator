@@ -20,7 +20,7 @@ class ValidationBuilder(object):
     def __init__(self, config, source_client, target_client, verbose=False):
         """ Initialize a ValidationBuilder client which supplies the
             source and target queries tto run.
-        
+
         Args:
             config (Dict): The Validation config supplied
             source_client (IbisClient): The Ibis client for the source DB
@@ -71,7 +71,7 @@ class ValidationBuilder(object):
 
     def add_query_group(self, grouped_field):
         """ Add Grouped Field to Query
-        
+
         Args:
             grouped_field (Dict): An object with source, target, and cast info
         """

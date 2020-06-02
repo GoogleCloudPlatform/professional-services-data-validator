@@ -17,7 +17,9 @@ import ibis
 
 class AggregateField(object):
     def __init__(self, ibis_expr, field_name=None, name=None):
-        """
+        """ A representation of a table or column aggregate in Ibis
+
+        Args:
             field_name: A field to act on in the table.  Table level expr do not have a field name
         """
         self.expr = ibis_expr
