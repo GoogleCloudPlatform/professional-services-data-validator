@@ -149,9 +149,7 @@ class GroupedField(object):
 
 
 class QueryBuilder(object):
-    def __init__(
-        self, aggregate_fields, filters, grouped_fields, limit=None
-    ):
+    def __init__(self, aggregate_fields, filters, grouped_fields, limit=None):
         """ Build a QueryBuilder object which can be used to build queries easily
 
         Args:
