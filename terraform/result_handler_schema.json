@@ -1,0 +1,289 @@
+[
+  {
+    "name": "run_id",
+    "type": "STRING",
+    "description": "Unique validation run id"
+  },
+  {
+    "name": "validation_name",
+    "type": "STRING",
+    "description": "Unique name of the validation"
+  },
+  {
+    "name": "validation_type",
+    "type": "STRING",
+    "description": "Enum value of validation types [count, max, min, avg, sum]"
+  },
+  {
+    "name": "start_time",
+    "type": "TIMESTAMP",
+    "description": "Timestamp when the validation starts"
+  },
+  {
+    "name": "end_time",
+    "type": "TIMESTAMP",
+    "description": "Timestamp when the validation finishes"
+  },
+  {
+    "name": "source_table_name",
+    "type": "STRING",
+    "description": "Source table name with schema info"
+  },
+  {
+    "name": "target_table_name",
+    "type": "STRING",
+    "description": "Target table name with schema info"
+  },
+  {
+    "name": "source_column_name",
+    "type": "STRING",
+    "description": "Source column name"
+  },
+  {
+    "name": "target_column_name",
+    "type": "STRING",
+    "description": "Target column name"
+  },
+  {
+    "name": "aggregation_type",
+    "type": "STRING",
+    "description": "Aggregation type: count, min, max, avg, sum"
+  },
+  {
+    "name": "source_group_by_columns",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "description": "Source group by columns, it stores key value pairs in an array.",
+    "fields": [
+      {
+        "name": "column_name",
+        "type": "STRING",
+        "description": "column name"
+      },
+      {
+        "name": "column_value",
+        "type": "RECORD",
+        "description": "value of group by key corresponding to column",
+        "fields": [
+          {
+            "name": "int64_value",
+            "type": "INTEGER"
+          },
+          {
+            "name": "numeric_value",
+            "type": "NUMERIC"
+          },
+          {
+            "name": "float64_value",
+            "type": "FLOAT"
+          },
+          {
+            "name": "bool_value",
+            "type": "BOOL"
+          },
+          {
+            "name": "string_value",
+            "type": "STRING"
+          },
+          {
+            "name": "bytes_value",
+            "type": "BYTES"
+          },
+          {
+            "name": "date_value",
+            "type": "DATE"
+          },
+          {
+            "name": "datetime_value",
+            "type": "DATETIME"
+          },
+          {
+            "name": "time_value",
+            "type": "TIME"
+          },
+          {
+            "name": "timestamp_value",
+            "type": "TIMESTAMP"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "target_group_by_column",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "description": "Target group by columns, it stores key value pairs in an array.",
+    "fields": [
+      {
+        "name": "column_name",
+        "type": "STRING",
+        "description": "column name"
+      },
+      {
+        "name": "column_value",
+        "type": "RECORD",
+        "description": "value of group by key corresponding to column",
+        "fields": [
+          {
+            "name": "int64_value",
+            "type": "INTEGER"
+          },
+          {
+            "name": "numeric_value",
+            "type": "NUMERIC"
+          },
+          {
+            "name": "float64_value",
+            "type": "FLOAT"
+          },
+          {
+            "name": "bool_value",
+            "type": "BOOL"
+          },
+          {
+            "name": "string_value",
+            "type": "STRING"
+          },
+          {
+            "name": "bytes_value",
+            "type": "BYTES"
+          },
+          {
+            "name": "date_value",
+            "type": "DATE"
+          },
+          {
+            "name": "datetime_value",
+            "type": "DATETIME"
+          },
+          {
+            "name": "time_value",
+            "type": "TIME"
+          },
+          {
+            "name": "timestamp_value",
+            "type": "TIMESTAMP"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "source_agg_value",
+    "type": "RECORD",
+    "description": "Source aggregation result",
+    "fields": [
+      {
+        "name": "int64_value",
+        "type": "INTEGER"
+      },
+      {
+        "name": "numeric_value",
+        "type": "NUMERIC"
+      },
+      {
+        "name": "float64_value",
+        "type": "FLOAT"
+      },
+      {
+        "name": "date_value",
+        "type": "DATE"
+      },
+      {
+        "name": "datetime_value",
+        "type": "DATETIME"
+      },
+      {
+        "name": "time_value",
+        "type": "TIME"
+      },
+      {
+        "name": "timestamp_value",
+        "type": "TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "name": "target_agg_value",
+    "type": "RECORD",
+    "description": "Target aggregation result",
+    "fields": [
+      {
+        "name": "int64_value",
+        "type": "INTEGER"
+      },
+      {
+        "name": "numeric_value",
+        "type": "NUMERIC"
+      },
+      {
+        "name": "float64_value",
+        "type": "FLOAT"
+      },
+      {
+        "name": "date_value",
+        "type": "DATE"
+      },
+      {
+        "name": "datetime_value",
+        "type": "DATETIME"
+      },
+      {
+        "name": "time_value",
+        "type": "TIME"
+      },
+      {
+        "name": "timestamp_value",
+        "type": "TIMESTAMP"
+      }
+    ]
+  },
+  {
+    "name": "difference",
+    "type": "FLOAT64",
+    "description": "Difference between the source and target aggregation result (derived from target_agg_value and source_agg_value for convenience)"
+  },
+  {
+    "name": "pct_difference",
+    "type": "FLOAT64",
+    "description": "Percentage difference between the source and target aggregation result, based on source_agg_value."
+  },
+  {
+    "name": "pct_threshold",
+    "type": "FLOAT64",
+    "description": "Percentage difference threshold set by the user, based on source_agg_value."
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "description": "Status of the validation, if the pct_difference is less than pc_threshold, it is considered as success. [validation_success, validation_fail, incomplete, warning, error]"
+  },
+  {
+    "name": "configuation_json",
+    "type": "STRING",
+    "description": "JSON representation of the validation metadata"
+  },
+  {
+    "name": "error_result",
+    "type": "RECORD",
+    "description": "Error info for debugging purpose",
+    "fields": [
+      {
+        "name": "code",
+        "type": "INTEGER",
+        "description": "Error code. See: https://cloud.google.com/apis/design/errors#handling_errors"
+      },
+      {
+        "name": "message",
+        "type": "STRING",
+        "description": "A developer-facing error message, which should be in English."
+      },
+      {
+        "name": "details",
+        "type": "STRING",
+        "description": "JSON-encoded information about the error(s)."
+      }
+    ]
+  }
+]

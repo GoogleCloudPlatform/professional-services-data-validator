@@ -20,7 +20,7 @@ from ibis.sql.postgres.client import PostgreSQLClient
 
 from data_validation import consts, exceptions
 from data_validation.validation_builder import ValidationBuilder
-from data_validation.result_handlers.result_handler import ResultHandler
+from data_validation.result_handlers.text import TextResultHandler
 
 # If you have a Teradata License there is an optional teradatasql import
 try:
@@ -72,7 +72,7 @@ class DataValidation(object):
         )
 
         # Initialize the default Result Handler if None was supplied
-        self.result_handler = result_handler or ResultHandler()
+        self.result_handler = result_handler or TextResultHandler()
 
     # TODO(dhercher) we planned on shifting this to use an Execution Handler.
     # Leaving to to swast on the design of how this should look.
