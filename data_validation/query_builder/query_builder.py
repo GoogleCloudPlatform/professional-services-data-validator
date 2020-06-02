@@ -192,22 +192,19 @@ class QueryBuilder(object):
 
         return query
 
-    def add_query_field(self, query_field):
-        """ Add a QueryField object to the query
-
-            :param query_field: A QueryField Object
-        """
-        self.query_fields.append(query_field)
-
     def add_grouped_field(self, grouped_field):
-        """ Add a GroupedField object to the query
+        """ Add a GroupedField object to the query which
+            represents adding a column to group by n the
+            query being built.
 
             :param query_field: A GroupedField Object
         """
         self.grouped_fields.append(grouped_field)
 
     def add_filter_field(self, filter_obj):
-        """ Add a filter object to your query
+        """ Add a FilterField object to your query which
+            will add the desired filter to your compiled
+            query (ie. WHERE query_filter=True)
 
             :param filter_obj: A FilterField Object
         """
