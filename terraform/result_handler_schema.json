@@ -171,73 +171,13 @@
   },
   {
     "name": "source_agg_value",
-    "type": "RECORD",
-    "description": "Source aggregation result",
-    "fields": [
-      {
-        "name": "int64_value",
-        "type": "INTEGER"
-      },
-      {
-        "name": "numeric_value",
-        "type": "NUMERIC"
-      },
-      {
-        "name": "float64_value",
-        "type": "FLOAT"
-      },
-      {
-        "name": "date_value",
-        "type": "DATE"
-      },
-      {
-        "name": "datetime_value",
-        "type": "DATETIME"
-      },
-      {
-        "name": "time_value",
-        "type": "TIME"
-      },
-      {
-        "name": "timestamp_value",
-        "type": "TIMESTAMP"
-      }
-    ]
+    "type": "STRING",
+    "description": "Source aggregation result, casted to a string"
   },
   {
     "name": "target_agg_value",
-    "type": "RECORD",
-    "description": "Target aggregation result",
-    "fields": [
-      {
-        "name": "int64_value",
-        "type": "INTEGER"
-      },
-      {
-        "name": "numeric_value",
-        "type": "NUMERIC"
-      },
-      {
-        "name": "float64_value",
-        "type": "FLOAT"
-      },
-      {
-        "name": "date_value",
-        "type": "DATE"
-      },
-      {
-        "name": "datetime_value",
-        "type": "DATETIME"
-      },
-      {
-        "name": "time_value",
-        "type": "TIME"
-      },
-      {
-        "name": "timestamp_value",
-        "type": "TIMESTAMP"
-      }
-    ]
+    "type": "STRING",
+    "description": "Target aggregation result, casted to a string"
   },
   {
     "name": "difference",
