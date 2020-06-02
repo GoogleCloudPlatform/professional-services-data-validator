@@ -166,9 +166,10 @@ class QueryBuilder(object):
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
 
-            :IbisClient data_client: The client used to validate the query
-            :String schema_name: The name of the schema for the givne table
-            :String table_name: The name of the table to query
+        Args:
+            data_client (IbisClient): The client used to validate the query.
+            schema_name (String): The name of the schema for the given table.
+            table_name (String): The name of the table to query.
         """
         table = data_client.table(table_name, database=schema_name)
 
