@@ -90,7 +90,8 @@ class ValidationBuilder(object):
     def add_aggregate(self, aggregate_field):
         """ Add Aggregate Field to Queries
 
-            :param aggregate_field: Dict object with source, target, and aggregation info
+        Args:
+            aggregate_field (dict): A dictionary with source, target, and aggregation info.
         """
         alias = aggregate_field[consts.CONFIG_FIELD_ALIAS]
         source_field_name = aggregate_field[consts.CONFIG_SOURCE_COLUMN]
