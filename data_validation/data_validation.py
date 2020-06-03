@@ -24,7 +24,9 @@ from data_validation.validation_builder import ValidationBuilder
 from data_validation.result_handlers.text import TextResultHandler
 
 
-warnings.filterwarnings("ignore", "Your application has authenticated using end user credentials")
+warnings.filterwarnings(
+    "ignore", "Your application has authenticated using end user credentials"
+)
 
 # If you have a Teradata License there is an optional teradatasql import
 try:
@@ -67,8 +69,12 @@ class DataValidation(object):
         # Data Client Management
         self.config = config
 
-        self.source_client = DataValidation.get_data_client(self.config[consts.CONFIG_SOURCE_CONN])
-        self.target_client = DataValidation.get_data_client(self.config[consts.CONFIG_TARGET_CONN])
+        self.source_client = DataValidation.get_data_client(
+            self.config[consts.CONFIG_SOURCE_CONN]
+        )
+        self.target_client = DataValidation.get_data_client(
+            self.config[consts.CONFIG_TARGET_CONN]
+        )
 
         # Initialize Validation Builder if None was supplied
         self.validation_builder = validation_builder or ValidationBuilder(
