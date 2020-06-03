@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-import copy
 import json
 import logging
 
@@ -107,6 +106,7 @@ def add_aggregate_config(args, config, source_table, target_table):
         _add_aggregate_of_type(
             config, source_table, target_table, "sum", args.sum, ["int64", "float64"])
 
+
 def build_config_from_args(args, config_type, source_conn, target_conn, table_obj, source_client, target_client):
     """Return config object ready to execute."""
     config = {
@@ -168,6 +168,7 @@ def run_validations(args, configs):
 def main():
     # Create Parser and Get Deployment Info
     args = configure_arg_parser()
+
     if args.command == "run":
         configs = build_configs_from_args(args)
         run_validations(args, configs)
