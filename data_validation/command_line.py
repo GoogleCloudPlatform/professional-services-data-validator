@@ -137,7 +137,6 @@ def build_configs_from_args(args):
     """Return a list of config dicts ready to execute."""
     configs = []
 
-    glb_config = {}
     config_type = args.type
     source_conn = json.loads(args.source_conn)
     target_conn = json.loads(args.target_conn)
@@ -157,7 +156,7 @@ def run_validation(config, verbose=False):
     """Run a single validation."""
     validator = data_validation.DataValidation(
         config, validation_builder=None, result_handler=None, verbose=verbose)
-    df = validator.execute()
+    validator.execute()
 
 
 def run_validations(args, configs):
