@@ -15,14 +15,18 @@
 """ The Data Validation CLI tool is intended to help to build and execute
 data validation runs with ease.
 
-ex.
+The Data Validator can be called either using:
+    data-validation -h
+    python -m data_validation -h
+
+ex
 data-validation run -t Column \
 -sc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
 --sum '*' --count '*'
 
-data-validation run -t GroupedColumn \
+python -m data_validation run -t GroupedColumn \
 -sc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' \
