@@ -12,14 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
-import json
-import logging
+""" The Data Validation CLI tool is intended to help to build and execute
+data validation runs with ease.
 
-from data_validation import data_validation, consts
-
-
-""" Example: python3 command_line.py can now be used as `data-validation`
+ex.
 data-validation run -t Column \
 -sc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
@@ -34,10 +30,19 @@ data-validation run -t GroupedColumn \
 --sum '["tripduration"]' --count '["tripduration"]'
 """
 
+import argparse
+import json
+import logging
+
+from data_validation import data_validation, consts
+
 
 def configure_arg_parser():
     """Extract Args for Run."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        usage=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
     parser.add_argument("command", help="Command to Run (run, build)")
 
     parser.add_argument(
@@ -76,7 +81,7 @@ def add_grouped_column_config(args, config, source_table, target_table):
         grouped_columns = json.loads(args.grouped_columns)
         for column in grouped_columns:
             if column not in source_table.columns:
-                raise Exception(f"GroupedColumn DNE: {source_table.op().name}.{column}")
+                raise ValueError(f"GroupedColumn DNE: {source_table.op().name}.{column}")
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: column,
                 consts.CONFIG_TARGET_COLUMN: column,
@@ -211,7 +216,7 @@ def main():
         configs = build_configs_from_args(args)
         run_validations(args, configs)
     else:
-        raise Exception(f"Positional Argument '{args.command}' is not supported")
+        raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
 
 if __name__ == "__main__":

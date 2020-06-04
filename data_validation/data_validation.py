@@ -24,6 +24,7 @@ from data_validation.validation_builder import ValidationBuilder
 from data_validation.result_handlers.text import TextResultHandler
 
 
+# TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
 warnings.filterwarnings(
     "ignore", "Your application has authenticated using end user credentials"
 )
