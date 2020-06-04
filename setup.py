@@ -51,6 +51,6 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=install_requires,
     entry_points={
-        "console_scripts": ["data-validation=data_validation.command_line:main",]
+        "console_scripts": ["data-validation=data_validation.__main__:main",]
     },
 )
