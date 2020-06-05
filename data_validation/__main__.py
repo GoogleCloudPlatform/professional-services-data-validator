@@ -19,7 +19,7 @@ The Data Validator can be called either using:
     data-validation -h
     python -m data_validation -h
 
-ex
+ex.
 data-validation run -t Column \
 -sc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
@@ -79,8 +79,9 @@ def configure_arg_parser():
     return parser.parse_args()
 
 
-def add_grouped_column_config(args, config, source_table, target_table):
-    """Add formated grouped column objects to config."""
+def get_grouped_column_config(args, source_table, target_table):
+    """Return list of formated grouped column objects."""
+    grouped_column_configs = []
     if args.grouped_columns:
         grouped_columns = json.loads(args.grouped_columns)
         for column in grouped_columns:
@@ -92,13 +93,16 @@ def add_grouped_column_config(args, config, source_table, target_table):
                 consts.CONFIG_FIELD_ALIAS: column,
                 consts.CONFIG_CAST: None,
             }
-            config[consts.CONFIG_GROUPED_COLUMNS].append(column_config)
+            grouped_column_configs.append(column_config)
+
+    return grouped_column_configs
 
 
-def _add_aggregate_of_type(
-    config, source_table, target_table, agg_type, arg_value, supported_types
+def _get_aggregates_of_type(
+    source_table, target_table, agg_type, arg_value, supported_types
 ):
-    """Add aggregate objects which align with the config and supported types."""
+    """Return list of aggregate objects of given agg_type."""
+    aggregate_configs = []
     whitelist_columns = (
         source_table.columns if arg_value == "*" else json.loads(arg_value)
     )
@@ -119,19 +123,24 @@ def _add_aggregate_of_type(
             consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
             consts.CONFIG_TYPE: agg_type,
         }
-        config[consts.CONFIG_AGGREGATES].append(aggregate_config)
+        aggregate_configs.append(aggregate_config)
+
+    return aggregate_configs
 
 
-def add_aggregate_config(args, config, source_table, target_table):
-    """Add formated aggregation objects to config."""
+def get_aggregate_config(args, source_table, target_table):
+    """Return list of formated aggregation objects."""
+    aggregate_configs = []
     if args.count:
-        _add_aggregate_of_type(
-            config, source_table, target_table, "count", args.count, None
+        aggregate_configs += _get_aggregates_of_type(
+            source_table, target_table, "count", args.count, None
         )
     if args.sum:
-        _add_aggregate_of_type(
-            config, source_table, target_table, "sum", args.sum, ["int64", "float64"]
+        aggregate_configs += _get_aggregates_of_type(
+            source_table, target_table, "sum", args.sum, ["int64", "float64"]
         )
+
+    return aggregate_configs
 
 
 def build_config_from_args(
@@ -150,9 +159,6 @@ def build_config_from_args(
         or table_obj[consts.CONFIG_SCHEMA_NAME],
         consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(consts.CONFIG_TARGET_TABLE_NAME)
         or table_obj[consts.CONFIG_TABLE_NAME],
-        consts.CONFIG_AGGREGATES: [],
-        consts.CONFIG_FILTERS: [],
-        consts.CONFIG_GROUPED_COLUMNS: [],
     }
 
     source_table = source_client.table(
@@ -163,10 +169,12 @@ def build_config_from_args(
         database=config[consts.CONFIG_TARGET_SCHEMA_NAME],
     )
 
-    add_aggregate_config(args, config, source_table, target_table)
-    # TODO(GH#18): Add query filter config logic
+    config[consts.CONFIG_AGGREGATES] = \
+        get_aggregate_config(args, source_table, target_table)
     if config_type == "GroupedColumn":
-        add_grouped_column_config(args, config, source_table, target_table)
+        config[consts.CONFIG_GROUPED_COLUMNS] = \
+            get_grouped_column_config(args, source_table, target_table)
+    # TODO(GH#18): Add query filter config logic
 
     return config
 
