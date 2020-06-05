@@ -50,7 +50,7 @@ class ConfigManager(object):
 
     def get_aggregates(self):
         """Return Aggregates from Config """
-        return self._config.get(consts.CONFIG_AGGREGATES) or []
+        return self._config.get(consts.CONFIG_AGGREGATES, [])
 
     def append_aggregates(self, aggregate_configs):
         """Append aggregate configs to existing config."""
