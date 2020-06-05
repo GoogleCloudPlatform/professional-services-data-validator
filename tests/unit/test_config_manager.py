@@ -53,6 +53,7 @@ class MockIbisTable(object):
     def type(self):
         return "int64"
 
+
 @pytest.fixture
 def module_under_test():
     from data_validation import config_manager
@@ -67,38 +68,55 @@ def test_import(module_under_test):
 
 def test_get_table_info(module_under_test):
     """Test basic handler executes """
-    config_manager = module_under_test.ConfigManager(SAMPLE_CONFIG, None, None, verbose=False)
-    
-    source_table_spec = "{}.{}".format(config_manager.get_source_schema(), config_manager.get_source_table())
-    target_table_spec = "{}.{}".format(config_manager.get_target_schema(), config_manager.get_target_table())
-    expected_table_spec = "{}.{}".format(SAMPLE_CONFIG[consts.CONFIG_SCHEMA_NAME], SAMPLE_CONFIG[consts.CONFIG_TABLE_NAME])
-    
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, None, None, verbose=False
+    )
+
+    source_table_spec = "{}.{}".format(
+        config_manager.get_source_schema(), config_manager.get_source_table()
+    )
+    target_table_spec = "{}.{}".format(
+        config_manager.get_target_schema(), config_manager.get_target_table()
+    )
+    expected_table_spec = "{}.{}".format(
+        SAMPLE_CONFIG[consts.CONFIG_SCHEMA_NAME],
+        SAMPLE_CONFIG[consts.CONFIG_TABLE_NAME],
+    )
+
     assert source_table_spec == expected_table_spec
     assert target_table_spec == expected_table_spec
 
 
 def test_build_config_grouped_columns(module_under_test):
-    config_manager = module_under_test.ConfigManager(SAMPLE_CONFIG, None, None, verbose=False)
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, None, None, verbose=False
+    )
     config_manager._source_table = MockIbisTable()
     config_manager._target_table = MockIbisTable()
-    
+
     column_configs = config_manager.build_config_grouped_columns(["a"])
     assert column_configs[0] == GROUPED_COLUMN_CONFIG_A
 
 
 def test_build_config_aggregates(module_under_test):
-    config_manager = module_under_test.ConfigManager(SAMPLE_CONFIG, None, None, verbose=False)
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, None, None, verbose=False
+    )
     config_manager._source_table = MockIbisTable()
     config_manager._target_table = MockIbisTable()
-    
+
     aggregate_configs = config_manager.build_config_aggregates("sum", ["a"], [])
     assert aggregate_configs[0] == AGGREGATE_CONFIG_A
 
 
 def test_build_config_aggregates_no_match(module_under_test):
-    config_manager = module_under_test.ConfigManager(SAMPLE_CONFIG, None, None, verbose=False)
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, None, None, verbose=False
+    )
     config_manager._source_table = MockIbisTable()
     config_manager._target_table = MockIbisTable()
-    
-    aggregate_configs = config_manager.build_config_aggregates("sum", ["a"], ["float64"])
+
+    aggregate_configs = config_manager.build_config_aggregates(
+        "sum", ["a"], ["float64"]
+    )
     assert not aggregate_configs

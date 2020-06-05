@@ -67,7 +67,9 @@ def test_import(module_under_test):
 
 
 def test_column_validation(module_under_test):
-    mock_config_manager = ConfigManager(COLUMN_VALIDATION_CONFIG, None, None, verbose=False)
+    mock_config_manager = ConfigManager(
+        COLUMN_VALIDATION_CONFIG, None, None, verbose=False
+    )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
 
     assert not builder.verbose
@@ -75,7 +77,9 @@ def test_column_validation(module_under_test):
 
 
 def test_column_validation_aggregates(module_under_test):
-    mock_config_manager = ConfigManager(COLUMN_VALIDATION_CONFIG, None, None, verbose=False)
+    mock_config_manager = ConfigManager(
+        COLUMN_VALIDATION_CONFIG, None, None, verbose=False
+    )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
 
     mock_config_manager.append_aggregates(AGGREGATES_TEST)
@@ -85,7 +89,9 @@ def test_column_validation_aggregates(module_under_test):
 
 
 def test_validation_add_groups(module_under_test):
-    mock_config_manager = ConfigManager(COLUMN_VALIDATION_CONFIG, None, None, verbose=False)
+    mock_config_manager = ConfigManager(
+        COLUMN_VALIDATION_CONFIG, None, None, verbose=False
+    )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
 
     mock_config_manager.append_query_groups(QUERY_GROUPS_TEST)
@@ -95,7 +101,9 @@ def test_validation_add_groups(module_under_test):
 
 
 def test_column_validation_limit(module_under_test):
-    mock_config_manager = ConfigManager(COLUMN_VALIDATION_CONFIG_LIMIT, None, None, verbose=False)
+    mock_config_manager = ConfigManager(
+        COLUMN_VALIDATION_CONFIG_LIMIT, None, None, verbose=False
+    )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
     builder.add_query_limit()
 
