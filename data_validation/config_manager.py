@@ -85,9 +85,9 @@ class ConfigManager(object):
 
     def get_target_table(self):
         """Return string value of target table."""
-        return (
-            self._config.get(consts.CONFIG_TARGET_TABLE_NAME)
-            or self._config[consts.CONFIG_TABLE_NAME]
+        return self._config.get(
+            consts.CONFIG_TARGET_TABLE_NAME,
+            self._config[consts.CONFIG_TABLE_NAME]
         )
 
     def get_query_limit(self):
