@@ -21,22 +21,22 @@ from data_validation.query_builder.query_builder import (
 
 
 class ValidationBuilder(object):
-    def __init__(self, config, source_client, target_client, verbose=False):
+    def __init__(self, config_manager):
         """ Initialize a ValidationBuilder client which supplies the
             source and target queries tto run.
 
         Args:
-            config (Dict): The Validation config supplied
+            config_manager (ConfigManager): A validation ConfigManager instance
             source_client (IbisClient): The Ibis client for the source DB
             target_client (IbisClient): The Ibis client for the target DB
             verbose (Bool): If verbose, the Data Validation client will print queries run
         """
-        self.verbose = verbose
-        self.config = config
-        self.validation_type = config[consts.CONFIG_TYPE]
+        self.config_manager = config_manager
+        self.verbose = self.config_manager.verbose
+        self.validation_type = self.config_manager.get_validation_type()
 
-        self.source_client = source_client
-        self.target_client = target_client
+        self.source_client = self.config_manager.source_client
+        self.target_client = self.config_manager.target_client
 
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
@@ -59,14 +59,6 @@ class ValidationBuilder(object):
 
         return builder
 
-    def get_config_aggregates(self):
-        """ Return Aggregates from Config """
-        return self.config.get(consts.CONFIG_AGGREGATES) or []
-
-    def get_config_query_groups(self):
-        """ Return Query Groups from Config """
-        return self.config.get(consts.CONFIG_GROUPED_COLUMNS) or []
-
     def get_aggregate_aliases(self):
         """ Return List of String Aliases """
         return self.aggregate_aliases
@@ -77,13 +69,13 @@ class ValidationBuilder(object):
 
     def add_config_aggregates(self):
         """ Add Aggregations to Query """
-        aggregate_fields = self.get_config_aggregates()
+        aggregate_fields = self.config_manager.get_aggregates()
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
     def add_config_query_groups(self):
         """ Add Grouped Columns to Query """
-        grouped_fields = self.get_config_query_groups()
+        grouped_fields = self.config_manager.get_query_groups()
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
 
@@ -138,8 +130,8 @@ class ValidationBuilder(object):
         """ Return query for source validation """
         source_config = {
             "data_client": self.source_client,
-            "schema_name": self.config["schema_name"],
-            "table_name": self.config["table_name"],
+            "schema_name": self.config_manager.get_source_schema(),
+            "table_name": self.config_manager.get_source_table(),
         }
         query = self.source_builder.compile(**source_config)
         if self.verbose:
@@ -152,12 +144,8 @@ class ValidationBuilder(object):
         """ Return query for source validation """
         target_config = {
             "data_client": self.target_client,
-            "schema_name": self.config.get(
-                "target_schema_name", self.config["schema_name"]
-            ),
-            "table_name": self.config.get(
-                "target_table_name", self.config["table_name"]
-            ),
+            "schema_name": self.config_manager.get_target_schema(),
+            "table_name": self.config_manager.get_target_table(),
         }
         query = self.target_builder.compile(**target_config)
         if self.verbose:
@@ -180,4 +168,4 @@ class ValidationBuilder(object):
 
             **WARNING** this can skew results and should be used carefully
         """
-        return self.config.get(consts.CONFIG_LIMIT)
+        return self.config_manager.get_query_limit()

@@ -38,7 +38,9 @@ import argparse
 import json
 import logging
 
-from data_validation import data_validation, consts
+from data_validation import consts
+from data_validation.config_manager import ConfigManager
+from data_validation.data_validation import DataValidation
 
 
 def configure_arg_parser():
@@ -79,104 +81,34 @@ def configure_arg_parser():
     return parser.parse_args()
 
 
-def get_grouped_column_config(args, source_table, target_table):
-    """Return list of formated grouped column objects."""
-    grouped_column_configs = []
-    if args.grouped_columns:
-        grouped_columns = json.loads(args.grouped_columns)
-        for column in grouped_columns:
-            if column not in source_table.columns:
-                raise ValueError(f"GroupedColumn DNE: {source_table.op().name}.{column}")
-            column_config = {
-                consts.CONFIG_SOURCE_COLUMN: column,
-                consts.CONFIG_TARGET_COLUMN: column,
-                consts.CONFIG_FIELD_ALIAS: column,
-                consts.CONFIG_CAST: None,
-            }
-            grouped_column_configs.append(column_config)
-
-    return grouped_column_configs
-
-
-def _get_aggregates_of_type(
-    source_table, target_table, agg_type, arg_value, supported_types
-):
-    """Return list of aggregate objects of given agg_type."""
-    aggregate_configs = []
-    whitelist_columns = (
-        source_table.columns if arg_value == "*" else json.loads(arg_value)
-    )
-    for column in source_table.columns:
-        if column not in whitelist_columns:
-            continue
-        elif column not in target_table.columns:
-            logging.info(f"Skipping Agg {agg_type}: {source_table.op().name}.{column}")
-            continue
-        elif (
-            supported_types and str(source_table[column].type()) not in supported_types
-        ):
-            continue
-
-        aggregate_config = {
-            consts.CONFIG_SOURCE_COLUMN: column,
-            consts.CONFIG_TARGET_COLUMN: column,
-            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
-            consts.CONFIG_TYPE: agg_type,
-        }
-        aggregate_configs.append(aggregate_config)
-
-    return aggregate_configs
-
-
-def get_aggregate_config(args, source_table, target_table):
+def get_aggregate_config(args, config_manager):
     """Return list of formated aggregation objects."""
     aggregate_configs = []
     if args.count:
-        aggregate_configs += _get_aggregates_of_type(
-            source_table, target_table, "count", args.count, None
+        aggregate_configs += config_manager.build_config_aggregates(
+            "count", args.count, None
         )
     if args.sum:
-        aggregate_configs += _get_aggregates_of_type(
-            source_table, target_table, "sum", args.sum, ["int64", "float64"]
+        aggregate_configs += config_manager.build_config_aggregates(
+            "sum", args.sum, ["int64", "float64"]
         )
 
     return aggregate_configs
 
 
-def build_config_from_args(
-    args, config_type, source_conn, target_conn, table_obj, source_client, target_client
-):
+def build_config_from_args(args, config_manager):
     """Return config object ready to execute."""
-    config = {
-        consts.CONFIG_TYPE: config_type,
-        consts.CONFIG_SOURCE_CONN: source_conn,
-        consts.CONFIG_TARGET_CONN: target_conn,
-        consts.CONFIG_SCHEMA_NAME: table_obj[consts.CONFIG_SCHEMA_NAME],
-        consts.CONFIG_TABLE_NAME: table_obj[consts.CONFIG_TABLE_NAME],
-        consts.CONFIG_TARGET_SCHEMA_NAME: table_obj.get(
-            consts.CONFIG_TARGET_SCHEMA_NAME
+    config_manager.append_aggregates(
+        get_aggregate_config(args, config_manager)
+    )
+    if config_manager.get_validation_type() == "GroupedColumn":
+        grouped_columns = json.loads(args.grouped_columns)
+        config_manager.append_query_groups(
+            config_manager.build_config_grouped_columns(grouped_columns)
         )
-        or table_obj[consts.CONFIG_SCHEMA_NAME],
-        consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(consts.CONFIG_TARGET_TABLE_NAME)
-        or table_obj[consts.CONFIG_TABLE_NAME],
-    }
-
-    source_table = source_client.table(
-        config[consts.CONFIG_TABLE_NAME], database=config[consts.CONFIG_SCHEMA_NAME]
-    )
-    target_table = target_client.table(
-        config[consts.CONFIG_TARGET_TABLE_NAME],
-        database=config[consts.CONFIG_TARGET_SCHEMA_NAME],
-    )
-
-    config[consts.CONFIG_AGGREGATES] = \
-        get_aggregate_config(args, source_table, target_table)
-    if config_type == "GroupedColumn":
-        config[consts.CONFIG_GROUPED_COLUMNS] = \
-            get_grouped_column_config(args, source_table, target_table)
     # TODO(GH#18): Add query filter config logic
 
-    return config
+    return config_manager.get_config()
 
 
 def build_configs_from_args(args):
@@ -187,28 +119,22 @@ def build_configs_from_args(args):
     source_conn = json.loads(args.source_conn)
     target_conn = json.loads(args.target_conn)
 
-    source_client = data_validation.DataValidation.get_data_client(source_conn)
-    target_client = data_validation.DataValidation.get_data_client(target_conn)
+    source_client = DataValidation.get_data_client(source_conn)
+    target_client = DataValidation.get_data_client(target_conn)
 
     tables_list = json.loads(args.tables_list)
     for table_obj in tables_list:
-        config = build_config_from_args(
-            args,
-            config_type,
-            source_conn,
-            target_conn,
-            table_obj,
-            source_client,
-            target_client,
+        config_manager = ConfigManager.build_config_manager(config_type, source_conn, target_conn, source_client, target_client, table_obj, verbose=False)
+        configs.append(
+            build_config_from_args(args, config_manager)
         )
-        configs.append(config)
 
     return configs
 
 
 def run_validation(config, verbose=False):
     """Run a single validation."""
-    validator = data_validation.DataValidation(
+    validator = DataValidation(
         config, validation_builder=None, result_handler=None, verbose=verbose
     )
     validator.execute()

@@ -20,6 +20,7 @@ from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
 from data_validation import consts, exceptions
+from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.result_handlers.text import TextResultHandler
 
@@ -77,10 +78,10 @@ class DataValidation(object):
             self.config[consts.CONFIG_TARGET_CONN]
         )
 
+        self.config_manager = ConfigManager(config, self.source_client, self.target_client, verbose=self.verbose)
+
         # Initialize Validation Builder if None was supplied
-        self.validation_builder = validation_builder or ValidationBuilder(
-            config, self.source_client, self.target_client, verbose=self.verbose
-        )
+        self.validation_builder = validation_builder or ValidationBuilder(self.config_manager)
 
         # Initialize the default Result Handler if None was supplied
         self.result_handler = result_handler or TextResultHandler()
