@@ -16,6 +16,7 @@ import logging
 
 from data_validation import consts
 
+
 class ConfigManager(object):
 
     _config: dict = None
@@ -53,8 +54,9 @@ class ConfigManager(object):
 
     def append_aggregates(self, aggregate_configs):
         """Append aggregate configs to existing config."""
-        self._config[consts.CONFIG_AGGREGATES] = \
+        self._config[consts.CONFIG_AGGREGATES] = (
             self.get_aggregates() + aggregate_configs
+        )
 
     def get_query_groups(self):
         """ Return Query Groups from Config """
@@ -62,8 +64,9 @@ class ConfigManager(object):
 
     def append_query_groups(self, grouped_column_configs):
         """Append aggregate configs to existing config."""
-        self._config[consts.CONFIG_GROUPED_COLUMNS] = \
+        self._config[consts.CONFIG_GROUPED_COLUMNS] = (
             self.get_query_groups() + grouped_column_configs
+        )
 
     def get_source_schema(self):
         """Return string value of source schema."""
@@ -75,11 +78,17 @@ class ConfigManager(object):
 
     def get_target_schema(self):
         """Return string value of target schema."""
-        return self._config.get(consts.CONFIG_TARGET_SCHEMA_NAME) or self._config[consts.CONFIG_SCHEMA_NAME]
+        return (
+            self._config.get(consts.CONFIG_TARGET_SCHEMA_NAME)
+            or self._config[consts.CONFIG_SCHEMA_NAME]
+        )
 
     def get_target_table(self):
         """Return string value of target table."""
-        return self._config.get(consts.CONFIG_TARGET_TABLE_NAME) or self._config[consts.CONFIG_TABLE_NAME]
+        return (
+            self._config.get(consts.CONFIG_TARGET_TABLE_NAME)
+            or self._config[consts.CONFIG_TABLE_NAME]
+        )
 
     def get_query_limit(self):
         """Return int limit for query executions."""
@@ -88,19 +97,31 @@ class ConfigManager(object):
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_table"):
-            self._source_table = self.source_client.table(self.get_source_table(), database=self.get_source_schema())
+            self._source_table = self.source_client.table(
+                self.get_source_table(), database=self.get_source_schema()
+            )
 
         return self._source_table
 
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_table"):
-            self._target_table = self.target_client.table(self.get_target_table(), database=self.get_target_schema())
+            self._target_table = self.target_client.table(
+                self.get_target_table(), database=self.get_target_schema()
+            )
 
         return self._target_table
 
     @staticmethod
-    def build_config_manager(config_type, source_conn, target_conn, source_client, target_client, table_obj, verbose=False):
+    def build_config_manager(
+        config_type,
+        source_conn,
+        target_conn,
+        source_client,
+        target_client,
+        table_obj,
+        verbose=False,
+    ):
         """Return a ConfigManager instance with available config."""
         config = {
             consts.CONFIG_TYPE: config_type,
@@ -112,7 +133,9 @@ class ConfigManager(object):
                 consts.CONFIG_TARGET_SCHEMA_NAME
             )
             or table_obj[consts.CONFIG_SCHEMA_NAME],
-            consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(consts.CONFIG_TARGET_TABLE_NAME)
+            consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(
+                consts.CONFIG_TARGET_TABLE_NAME
+            )
             or table_obj[consts.CONFIG_TABLE_NAME],
         }
 
@@ -124,7 +147,9 @@ class ConfigManager(object):
         source_table = self.get_source_ibis_table()
         for column in grouped_columns:
             if column not in source_table.columns:
-                raise ValueError(f"GroupedColumn DNE: {source_table.op().name}.{column}")
+                raise ValueError(
+                    f"GroupedColumn DNE: {source_table.op().name}.{column}"
+                )
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: column,
                 consts.CONFIG_TARGET_COLUMN: column,
@@ -145,10 +170,13 @@ class ConfigManager(object):
             if column not in whitelist_columns:
                 continue
             elif column not in target_table.columns:
-                logging.info(f"Skipping Agg {agg_type}: {source_table.op().name}.{column}")
+                logging.info(
+                    f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
+                )
                 continue
             elif (
-                supported_types and str(source_table[column].type()) not in supported_types
+                supported_types
+                and str(source_table[column].type()) not in supported_types
             ):
                 continue
 

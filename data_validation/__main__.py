@@ -46,8 +46,8 @@ from data_validation.data_validation import DataValidation
 def configure_arg_parser():
     """Extract Args for Run."""
     parser = argparse.ArgumentParser(
-        usage=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
     parser.add_argument("command", help="Command to Run (run, build)")
 
@@ -100,9 +100,7 @@ def get_aggregate_config(args, config_manager):
 
 def build_config_from_args(args, config_manager):
     """Return config object ready to execute."""
-    config_manager.append_aggregates(
-        get_aggregate_config(args, config_manager)
-    )
+    config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if config_manager.get_validation_type() == "GroupedColumn":
         grouped_columns = json.loads(args.grouped_columns)
         config_manager.append_query_groups(
@@ -126,10 +124,16 @@ def build_configs_from_args(args):
 
     tables_list = json.loads(args.tables_list)
     for table_obj in tables_list:
-        config_manager = ConfigManager.build_config_manager(config_type, source_conn, target_conn, source_client, target_client, table_obj, verbose=False)
-        configs.append(
-            build_config_from_args(args, config_manager)
+        config_manager = ConfigManager.build_config_manager(
+            config_type,
+            source_conn,
+            target_conn,
+            source_client,
+            target_client,
+            table_obj,
+            verbose=False,
         )
+        configs.append(build_config_from_args(args, config_manager))
 
     return configs
 

@@ -78,10 +78,14 @@ class DataValidation(object):
             self.config[consts.CONFIG_TARGET_CONN]
         )
 
-        self.config_manager = ConfigManager(config, self.source_client, self.target_client, verbose=self.verbose)
+        self.config_manager = ConfigManager(
+            config, self.source_client, self.target_client, verbose=self.verbose
+        )
 
         # Initialize Validation Builder if None was supplied
-        self.validation_builder = validation_builder or ValidationBuilder(self.config_manager)
+        self.validation_builder = validation_builder or ValidationBuilder(
+            self.config_manager
+        )
 
         # Initialize the default Result Handler if None was supplied
         self.result_handler = result_handler or TextResultHandler()
