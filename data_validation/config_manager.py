@@ -45,73 +45,81 @@ class ConfigManager(object):
         """Return config object."""
         return self._config
 
-    def get_validation_type(self):
+    @property
+    def validation_type(self):
         """Return string validation type (Column|GroupedColumn)."""
         return self._config[consts.CONFIG_TYPE]
 
-    def get_aggregates(self):
+    @property
+    def aggregates(self):
         """Return Aggregates from Config """
         return self._config.get(consts.CONFIG_AGGREGATES, [])
 
     def append_aggregates(self, aggregate_configs):
         """Append aggregate configs to existing config."""
         self._config[consts.CONFIG_AGGREGATES] = (
-            self.get_aggregates() + aggregate_configs
+            self.aggregates + aggregate_configs
         )
 
-    def get_query_groups(self):
+    @property
+    def query_groups(self):
         """ Return Query Groups from Config """
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
 
     def append_query_groups(self, grouped_column_configs):
         """Append aggregate configs to existing config."""
         self._config[consts.CONFIG_GROUPED_COLUMNS] = (
-            self.get_query_groups() + grouped_column_configs
+            self.query_groups + grouped_column_configs
         )
 
-    def get_source_schema(self):
+    @property
+    def source_schema(self):
         """Return string value of source schema."""
         return self._config[consts.CONFIG_SCHEMA_NAME]
 
-    def get_source_table(self):
+    @property
+    def source_table(self):
         """Return string value of source table."""
         return self._config[consts.CONFIG_TABLE_NAME]
 
-    def get_target_schema(self):
+    @property
+    def target_schema(self):
         """Return string value of target schema."""
         return self._config.get(
             consts.CONFIG_TARGET_SCHEMA_NAME,
             self._config[consts.CONFIG_SCHEMA_NAME]
         )
 
-    def get_target_table(self):
+    @property
+    def target_table(self):
         """Return string value of target table."""
         return self._config.get(
             consts.CONFIG_TARGET_TABLE_NAME,
             self._config[consts.CONFIG_TABLE_NAME]
         )
 
-    def get_query_limit(self):
+    @property
+    def query_limit(self):
         """Return int limit for query executions."""
         return self._config.get(consts.CONFIG_LIMIT)
 
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
-        if not hasattr(self, "_source_table"):
-            self._source_table = self.source_client.table(
-                self.get_source_table(), database=self.get_source_schema()
+        if not hasattr(self, "_source_ibis_table"):
+            self._source_ibis_table = self.source_client.table(
+                self.source_table, database=self.source_schema
             )
 
-        return self._source_table
+        return self._source_ibis_table
 
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
-        if not hasattr(self, "_target_table"):
-            self._target_table = self.target_client.table(
-                self.get_target_table(), database=self.get_target_schema()
+        if not hasattr(self, "_target_ibis_table"):
+            self._target_ibis_table = self.target_client.table(
+                self.target_table, database=self.target_schema
             )
 
-        return self._target_table
+        return self._target_ibis_table
 
     @staticmethod
     def build_config_manager(

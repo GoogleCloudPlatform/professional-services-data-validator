@@ -33,7 +33,7 @@ class ValidationBuilder(object):
         """
         self.config_manager = config_manager
         self.verbose = self.config_manager.verbose
-        self.validation_type = self.config_manager.get_validation_type()
+        self.validation_type = self.config_manager.validation_type
 
         self.source_client = self.config_manager.source_client
         self.target_client = self.config_manager.target_client
@@ -69,13 +69,13 @@ class ValidationBuilder(object):
 
     def add_config_aggregates(self):
         """ Add Aggregations to Query """
-        aggregate_fields = self.config_manager.get_aggregates()
+        aggregate_fields = self.config_manager.aggregates
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
     def add_config_query_groups(self):
         """ Add Grouped Columns to Query """
-        grouped_fields = self.config_manager.get_query_groups()
+        grouped_fields = self.config_manager.query_groups
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
 
@@ -130,8 +130,8 @@ class ValidationBuilder(object):
         """ Return query for source validation """
         source_config = {
             "data_client": self.source_client,
-            "schema_name": self.config_manager.get_source_schema(),
-            "table_name": self.config_manager.get_source_table(),
+            "schema_name": self.config_manager.source_schema,
+            "table_name": self.config_manager.source_table,
         }
         query = self.source_builder.compile(**source_config)
         if self.verbose:
@@ -144,8 +144,8 @@ class ValidationBuilder(object):
         """ Return query for source validation """
         target_config = {
             "data_client": self.target_client,
-            "schema_name": self.config_manager.get_target_schema(),
-            "table_name": self.config_manager.get_target_table(),
+            "schema_name": self.config_manager.target_schema,
+            "table_name": self.config_manager.target_table,
         }
         query = self.target_builder.compile(**target_config)
         if self.verbose:
@@ -159,13 +159,6 @@ class ValidationBuilder(object):
 
             **WARNING** this can skew results and should be used carefully
         """
-        limit = self.get_query_limit()
+        limit = self.config_manager.query_limit
         self.source_builder.limit = limit
         self.target_builder.limit = limit
-
-    def get_query_limit(self):
-        """ Return limit int value for query (Default None)
-
-            **WARNING** this can skew results and should be used carefully
-        """
-        return self.config_manager.get_query_limit()
