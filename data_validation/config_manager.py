@@ -40,7 +40,8 @@ class ConfigManager(object):
 
         self.verbose = verbose
 
-    def get_config(self):
+    @property
+    def config(self):
         """Return config object."""
         return self._config
 
