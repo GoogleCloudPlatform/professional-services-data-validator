@@ -78,9 +78,9 @@ class ConfigManager(object):
 
     def get_target_schema(self):
         """Return string value of target schema."""
-        return (
-            self._config.get(consts.CONFIG_TARGET_SCHEMA_NAME)
-            or self._config[consts.CONFIG_SCHEMA_NAME]
+        return self._config.get(
+            consts.CONFIG_TARGET_SCHEMA_NAME,
+            self._config[consts.CONFIG_SCHEMA_NAME]
         )
 
     def get_target_table(self):
