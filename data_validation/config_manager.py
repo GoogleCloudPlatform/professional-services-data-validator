@@ -60,7 +60,7 @@ class ConfigManager(object):
 
     def get_query_groups(self):
         """ Return Query Groups from Config """
-        return self._config.get(consts.CONFIG_GROUPED_COLUMNS) or []
+        return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
 
     def append_query_groups(self, grouped_column_configs):
         """Append aggregate configs to existing config."""
