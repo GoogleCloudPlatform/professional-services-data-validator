@@ -37,9 +37,6 @@ class ConfigManager(object):
         self.source_client = source_client
         self.target_client = target_client
 
-        self.source_table = self.source_client.table(self.get_source_table(), database=self.get_source_schema())
-        self.target_table = self.source_client.table(self.get_target_table(), database=self.get_target_schema())
-
         self.verbose = verbose
 
     def get_config(self):
@@ -88,6 +85,20 @@ class ConfigManager(object):
         """Return int limit for query executions."""
         return self._config.get(consts.CONFIG_LIMIT)
 
+    def get_source_ibis_table(self):
+        """Return IbisTable from source."""
+        if not hasattr(self, "_source_table"):
+            self._source_table = self.source_client.table(self.get_source_table(), database=self.get_source_schema())
+
+        return self._source_table
+
+    def get_target_ibis_table(self):
+        """Return IbisTable from target."""
+        if not hasattr(self, "_target_table"):
+            self._target_table = self.target_client.table(self.get_target_table(), database=self.get_target_schema())
+
+        return self._target_table
+
     @staticmethod
     def build_config_manager(config_type, source_conn, target_conn, source_client, target_client, table_obj, verbose=False):
         """Return a ConfigManager instance with available config."""
@@ -110,9 +121,10 @@ class ConfigManager(object):
     def build_config_grouped_columns(self, grouped_columns):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
+        source_table = self.get_source_ibis_table()
         for column in grouped_columns:
-            if column not in self.source_table.columns:
-                raise ValueError(f"GroupedColumn DNE: {self.source_table.op().name}.{column}")
+            if column not in source_table.columns:
+                raise ValueError(f"GroupedColumn DNE: {source_table.op().name}.{column}")
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: column,
                 consts.CONFIG_TARGET_COLUMN: column,
@@ -126,17 +138,19 @@ class ConfigManager(object):
     def build_config_aggregates(self, agg_type, arg_value, supported_types):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
+        source_table = self.get_source_ibis_table()
+        target_table = self.get_target_ibis_table()
         whitelist_columns = (
-            self.source_table.columns if arg_value == "*" else json.loads(arg_value)
+            source_table.columns if arg_value == "*" else json.loads(arg_value)
         )
-        for column in self.source_table.columns:
+        for column in source_table.columns:
             if column not in whitelist_columns:
                 continue
-            elif column not in self.target_table.columns:
-                logging.info(f"Skipping Agg {agg_type}: {self.source_table.op().name}.{column}")
+            elif column not in target_table.columns:
+                logging.info(f"Skipping Agg {agg_type}: {source_table.op().name}.{column}")
                 continue
             elif (
-                supported_types and str(self.source_table[column].type()) not in supported_types
+                supported_types and str(source_table[column].type()) not in supported_types
             ):
                 continue
 

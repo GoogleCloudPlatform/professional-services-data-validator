@@ -26,9 +26,9 @@ SAMPLE_RESULT_DATA = [
 
 @pytest.fixture
 def module_under_test():
-    from data_validation.result_handlers import result_handler
+    from data_validation.result_handlers import text
 
-    return result_handler
+    return text
 
 
 def test_import(module_under_test):
@@ -39,7 +39,7 @@ def test_import(module_under_test):
 def test_basic_result_handler(module_under_test):
     """Test basic handler executes """
     result_df = DataFrame(SAMPLE_RESULT_DATA)
-    result_handler = module_under_test.ResultHandler()
+    result_handler = module_under_test.TextResultHandler()
 
     handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
     assert handler_output["count"].sum() == result_df["count"].sum()
