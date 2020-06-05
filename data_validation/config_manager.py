@@ -140,9 +140,7 @@ class ConfigManager(object):
         aggregate_configs = []
         source_table = self.get_source_ibis_table()
         target_table = self.get_target_ibis_table()
-        whitelist_columns = (
-            source_table.columns if arg_value == "*" else json.loads(arg_value)
-        )
+        whitelist_columns = arg_value or source_table.columns
         for column in source_table.columns:
             if column not in whitelist_columns:
                 continue
