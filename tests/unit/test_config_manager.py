@@ -32,7 +32,7 @@ SAMPLE_CONFIG = {
 AGGREGATE_CONFIG_A = {
     consts.CONFIG_SOURCE_COLUMN: "a",
     consts.CONFIG_TARGET_COLUMN: "a",
-    consts.CONFIG_FIELD_ALIAS: f"sum__a",
+    consts.CONFIG_FIELD_ALIAS: "sum__a",
     consts.CONFIG_TYPE: "sum",
 }
 
