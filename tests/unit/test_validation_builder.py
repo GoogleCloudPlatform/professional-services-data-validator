@@ -106,7 +106,10 @@ def test_validation_add_groups(module_under_test):
 
 def test_column_validation_limit(module_under_test):
     mock_config_manager = ConfigManager(
-        COLUMN_VALIDATION_CONFIG_LIMIT, MockIbisClient(), MockIbisClient(), verbose=False
+        COLUMN_VALIDATION_CONFIG_LIMIT,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
     )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
     builder.add_query_limit()

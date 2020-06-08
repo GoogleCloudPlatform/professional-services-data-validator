@@ -45,7 +45,6 @@ GROUPED_COLUMN_CONFIG_A = {
 
 
 class MockIbisClient(object):
-
     def table(self, table, database=None):
         return MockIbisTable()
 

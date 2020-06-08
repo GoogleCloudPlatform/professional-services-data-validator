@@ -57,9 +57,7 @@ class ConfigManager(object):
 
     def append_aggregates(self, aggregate_configs):
         """Append aggregate configs to existing config."""
-        self._config[consts.CONFIG_AGGREGATES] = (
-            self.aggregates + aggregate_configs
-        )
+        self._config[consts.CONFIG_AGGREGATES] = self.aggregates + aggregate_configs
 
     @property
     def query_groups(self):
@@ -86,16 +84,14 @@ class ConfigManager(object):
     def target_schema(self):
         """Return string value of target schema."""
         return self._config.get(
-            consts.CONFIG_TARGET_SCHEMA_NAME,
-            self._config[consts.CONFIG_SCHEMA_NAME]
+            consts.CONFIG_TARGET_SCHEMA_NAME, self._config[consts.CONFIG_SCHEMA_NAME]
         )
 
     @property
     def target_table(self):
         """Return string value of target table."""
         return self._config.get(
-            consts.CONFIG_TARGET_TABLE_NAME,
-            self._config[consts.CONFIG_TABLE_NAME]
+            consts.CONFIG_TARGET_TABLE_NAME, self._config[consts.CONFIG_TABLE_NAME]
         )
 
     @property
