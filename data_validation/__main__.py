@@ -36,9 +36,7 @@ python -m data_validation run -t GroupedColumn \
 
 import argparse
 import json
-import logging
 
-from data_validation import consts
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
