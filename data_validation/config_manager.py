@@ -139,9 +139,9 @@ class ConfigManager(object):
                 table_obj[consts.CONFIG_SCHEMA_NAME]
             ),
             consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(
-                consts.CONFIG_TARGET_TABLE_NAME
-            )
-            or table_obj[consts.CONFIG_TABLE_NAME],
+                consts.CONFIG_TARGET_TABLE_NAME,
+                table_obj[consts.CONFIG_TABLE_NAME]
+            ),
         }
 
         return ConfigManager(config, source_client, target_client, verbose=verbose)
