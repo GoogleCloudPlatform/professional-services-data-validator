@@ -28,6 +28,7 @@ install_requires = [
 packages = [
     "data_validation",
     "data_validation.query_builder",
+    "data_validation.result_handlers",
 ]
 packages += setuptools.find_packages(where=os.path.join("third_party", "ibis"))
 
@@ -49,4 +50,7 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=install_requires,
+    entry_points={
+        "console_scripts": ["data-validation=data_validation.__main__:main",]
+    },
 )

@@ -13,14 +13,22 @@
 # limitations under the License.
 
 import copy
+import warnings
 
 from ibis.bigquery.client import BigQueryClient
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
 from data_validation import consts, exceptions
+from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.result_handlers.text import TextResultHandler
+
+
+# TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
+warnings.filterwarnings(
+    "ignore", "Your application has authenticated using end user credentials"
+)
 
 # If you have a Teradata License there is an optional teradatasql import
 try:
@@ -63,12 +71,20 @@ class DataValidation(object):
         # Data Client Management
         self.config = config
 
-        self.source_client = DataValidation.get_data_client(self.config["source_conn"])
-        self.target_client = DataValidation.get_data_client(self.config["target_conn"])
+        self.source_client = DataValidation.get_data_client(
+            self.config[consts.CONFIG_SOURCE_CONN]
+        )
+        self.target_client = DataValidation.get_data_client(
+            self.config[consts.CONFIG_TARGET_CONN]
+        )
+
+        self.config_manager = ConfigManager(
+            config, self.source_client, self.target_client, verbose=self.verbose
+        )
 
         # Initialize Validation Builder if None was supplied
         self.validation_builder = validation_builder or ValidationBuilder(
-            config, self.source_client, self.target_client, verbose=self.verbose
+            self.config_manager
         )
 
         # Initialize the default Result Handler if None was supplied
