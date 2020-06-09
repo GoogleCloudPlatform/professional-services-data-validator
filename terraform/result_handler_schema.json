@@ -110,7 +110,7 @@
     ]
   },
   {
-    "name": "target_group_by_column",
+    "name": "target_group_by_columns",
     "type": "RECORD",
     "mode": "REPEATED",
     "description": "Target group by columns, it stores key value pairs in an array.",

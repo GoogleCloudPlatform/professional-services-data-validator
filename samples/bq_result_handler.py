@@ -14,8 +14,10 @@
 
 import os
 
-from data_validation import consts, data_validation
+from google.cloud import bigquery
 
+from data_validation import consts, data_validation
+from data_validation.result_handlers import bigquery as bqhandler
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
 CONFIG_COUNT_VALID = {
@@ -29,5 +31,9 @@ CONFIG_COUNT_VALID = {
     "table_name": "citibike_trips",
 }
 
-validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
+bqclient = bigquery.Client()
+result_handler = bqhandler.BigQueryResultHandler(bqclient)
+validator = data_validation.DataValidation(
+    CONFIG_COUNT_VALID, verbose=True, result_handler=result_handler
+)
 df = validator.execute()

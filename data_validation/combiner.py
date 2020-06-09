@@ -107,6 +107,10 @@ def _join_pivots(source, target, join_on_fields):
         ]
         + [source[key] for key in join_on_fields]
     ]
+
     # TODO(GH#14): remove group-by key columns and write into an array of
     #              key-value structs
+    joined = joined[joined, ibis.literal([]).name("source_group_by_columns")]
+    joined = joined[joined, ibis.literal([]).name("target_group_by_columns")]
+
     return joined
