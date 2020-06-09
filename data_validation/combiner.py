@@ -42,7 +42,9 @@ def generate_report(
             grouped by.
 
     Returns:
-        TODO
+        pandas.DataFrame:
+            A pandas DataFrame with the results of the validation in the same
+            schema as the report table.
     """
     join_on_fields = tuple(join_on_fields)
     source = client.table(source_table)

@@ -32,7 +32,9 @@ class BigQueryResultHandler(object):
 
     def execute(self, config, result_df):
         table = self._bigquery_client.get_table(self._table_id)
-        chunk_errors = self._bigquery_client.insert_rows_from_dataframe(table, result_df)
+        chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
+            table, result_df
+        )
         if any(chunk_errors):
             raise RuntimeError(f"could not write rows: {chunk_errors}")
 

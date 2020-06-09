@@ -16,7 +16,7 @@ import os
 
 from google.cloud import bigquery
 
-from data_validation import consts, data_validation
+from data_validation import data_validation
 from data_validation.result_handlers import bigquery as bqhandler
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
