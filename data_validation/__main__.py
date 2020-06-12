@@ -99,14 +99,14 @@ def get_aggregate_config(args, config_manager):
 def build_config_from_args(args, config_manager):
     """Return config object ready to execute."""
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if config_manager.get_validation_type() == "GroupedColumn":
+    if config_manager.validation_type == "GroupedColumn":
         grouped_columns = json.loads(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
     # TODO(GH#18): Add query filter config logic
 
-    return config_manager.get_config()
+    return config_manager.config
 
 
 def build_configs_from_args(args):
