@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import copy
+import datetime
 import warnings
 
 from ibis.bigquery.client import BigQueryClient
@@ -20,11 +21,10 @@ import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
-from data_validation import consts, exceptions
+from data_validation import consts, combiner, exceptions, metadata
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.result_handlers.text import TextResultHandler
-from data_validation import combiner
 
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
@@ -96,6 +96,8 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
+        run_metadata = metadata.RunMetadata()
+
         source_df = self.source_client.execute(
             self.validation_builder.get_source_query()
         )
@@ -106,8 +108,14 @@ class DataValidation(object):
         pandas_client = ibis.pandas.connect(
             {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
         )
+
+        run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
+        run_metadata.validations = self.validation_builder.get_metadata()
+        # DEBUG
+        print(self.validation_builder.aggregate_aliases)
+        print(self.validation_builder.group_aliases)
         result_df = combiner.generate_report(
-            pandas_client, join_on_fields=join_on_fields
+            pandas_client, run_metadata, join_on_fields=join_on_fields
         )
 
         # Call Result Handler to Manage Results

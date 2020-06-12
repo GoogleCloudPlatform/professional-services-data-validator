@@ -12,7 +12,7 @@
   {
     "name": "validation_type",
     "type": "STRING",
-    "description": "Enum value of validation types [count, max, min, avg, sum]"
+    "description": "Enum value of validation types [Column, GroupedColumn]"
   },
   {
     "name": "start_time",
@@ -51,39 +51,13 @@
   },
   {
     "name": "source_group_by_columns",
-    "type": "RECORD",
-    "mode": "REPEATED",
-    "description": "Source group by columns, it stores key value pairs in an array.",
-    "fields": [
-      {
-        "name": "column_name",
-        "type": "STRING",
-        "description": "column name"
-      },
-      {
-        "name": "column_value",
-        "type": "STRING",
-        "description": "value of group by key corresponding to column, cast to a STRING"
-      }
-    ]
+    "type": "STRING",
+    "description": "Source group by columns, stored as a key-value JSON mapping."
   },
   {
     "name": "target_group_by_columns",
-    "type": "RECORD",
-    "mode": "REPEATED",
-    "description": "Target group by columns, it stores key value pairs in an array.",
-    "fields": [
-      {
-        "name": "column_name",
-        "type": "STRING",
-        "description": "column name"
-      },
-      {
-        "name": "column_value",
-        "type": "STRING",
-        "description": "value of group by key corresponding to column, cast to a STRING"
-      }
-    ]
+    "type": "STRING",
+    "description": "Target group by columns, stored as a key-value JSON mapping."
   },
   {
     "name": "source_agg_value",
