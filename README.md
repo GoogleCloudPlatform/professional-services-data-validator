@@ -48,7 +48,7 @@ Every source type requires its own configuration for connectivity.  Below is an 
 
     # BigQuery Specific Connection Config
     "project_id": "my-project-name",
-    
+
     # Configuration Required Depending on Validator Type
     "schema_name": "dataset_name",
     "table_name": "table_name",
@@ -93,3 +93,63 @@ out_config = {
 builder = query_builder.QueryBuilder.build_partition_count_validator()
 data_validation.process_data(builder, inp_config, out_config)
 ```
+
+## Validation Reports
+
+The data validation tool can write the results of a validation run to Google
+BigQuery.
+
+### Setup
+
+To write results to BigQuery, you'll need to setup the required cloud
+resources, local authentication, and configure the tool.
+
+#### Prerequisites
+
+A Google Cloud Platform with the BigQuery API enabled is required.
+
+Confirm which Google user account is used to execute the tool. If running in
+production, it's recommended that you create a service account specifically
+for running the tool.
+
+#### Create cloud resources - Terraform
+
+You can use Terraform to create the necessary BigQuery resources. (See next
+section for manually creating resources with `gcloud`.)
+
+```
+cd terraform
+terraform init
+terraform apply
+```
+
+You should see a dataset named `pso_data_validator` and a table named
+`results`.
+
+#### Create cloud resources - Cloud SDK (gcloud)
+
+Create a dataset for validation results.
+
+```
+bq mk pso_data_validator
+```
+
+Create a table.
+
+```
+bq mk --table \
+  --time_partitioning_field start_time \
+  --clustering_fields validation_name,run_id \
+  pso_data_validator.results \
+  terraform/results_schema.json
+```
+
+#### Configure tool to output to BigQuery
+
+TODO([GH#24](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/24)):
+Add support for BigQuery output to CLI
+
+## Contributing
+
+Contributions are welcome. See the [contributing guide](CONTRIBUTING.md) for
+details.
