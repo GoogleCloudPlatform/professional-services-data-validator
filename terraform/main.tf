@@ -23,7 +23,7 @@ resource "google_bigquery_dataset" "default" {
 resource "google_bigquery_table" "default" {
   dataset_id = google_bigquery_dataset.default.dataset_id
   table_id = "results"
-  schema = file("${path.module}/result_handler_schema.json")
+  schema = file("${path.module}/results_schema.json")
   time_partitioning {
       field = "start_time"
       type = "DAY"

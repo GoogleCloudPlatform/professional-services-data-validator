@@ -5,5 +5,5 @@ pymysql==0.9.3
 psycopg2-binary==2.8.5
 pyspark==2.4.5
 apache-airflow==1.10.9
-pandas==0.25.3
+pandas==1.0.4
 google-cloud-bigquery==1.22.0

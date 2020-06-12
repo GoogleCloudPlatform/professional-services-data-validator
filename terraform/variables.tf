@@ -14,6 +14,6 @@
 
 variable "project_id" {
     type = string
-    default = "pso-kokoro-resources"
+    default = null
     description = "ID of Google Cloud project ID where resources are deployed"
 }

@@ -16,6 +16,7 @@ import copy
 import warnings
 
 from ibis.bigquery.client import BigQueryClient
+import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
@@ -23,6 +24,7 @@ from data_validation import consts, exceptions
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.result_handlers.text import TextResultHandler
+from data_validation import combiner
 
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
@@ -100,9 +102,13 @@ class DataValidation(object):
         target_df = self.source_client.execute(
             self.validation_builder.get_target_query()
         )
-
         join_on_fields = self.validation_builder.get_group_aliases()
-        result_df = self.combine_data(source_df, target_df, join_on_fields)
+        pandas_client = ibis.pandas.connect(
+            {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
+        )
+        result_df = combiner.generate_report(
+            pandas_client, join_on_fields=join_on_fields
+        )
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)

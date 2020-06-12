@@ -135,12 +135,10 @@ class ConfigManager(object):
             consts.CONFIG_SCHEMA_NAME: table_obj[consts.CONFIG_SCHEMA_NAME],
             consts.CONFIG_TABLE_NAME: table_obj[consts.CONFIG_TABLE_NAME],
             consts.CONFIG_TARGET_SCHEMA_NAME: table_obj.get(
-                consts.CONFIG_TARGET_SCHEMA_NAME,
-                table_obj[consts.CONFIG_SCHEMA_NAME]
+                consts.CONFIG_TARGET_SCHEMA_NAME, table_obj[consts.CONFIG_SCHEMA_NAME]
             ),
             consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(
-                consts.CONFIG_TARGET_TABLE_NAME,
-                table_obj[consts.CONFIG_TABLE_NAME]
+                consts.CONFIG_TARGET_TABLE_NAME, table_obj[consts.CONFIG_TABLE_NAME]
             ),
         }
 

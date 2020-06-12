@@ -35,7 +35,3 @@ CONFIG_LIMIT = "limit"
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
 COUNT_STAR = "{count_star}"
-
-# Data Cleanup Consts
-INPUT_SUFFIX = "_inp"
-OUTPUT_SUFFIX = "_out"

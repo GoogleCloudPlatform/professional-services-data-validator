@@ -62,55 +62,13 @@
       },
       {
         "name": "column_value",
-        "type": "RECORD",
-        "description": "value of group by key corresponding to column",
-        "fields": [
-          {
-            "name": "int64_value",
-            "type": "INTEGER"
-          },
-          {
-            "name": "numeric_value",
-            "type": "NUMERIC"
-          },
-          {
-            "name": "float64_value",
-            "type": "FLOAT"
-          },
-          {
-            "name": "bool_value",
-            "type": "BOOL"
-          },
-          {
-            "name": "string_value",
-            "type": "STRING"
-          },
-          {
-            "name": "bytes_value",
-            "type": "BYTES"
-          },
-          {
-            "name": "date_value",
-            "type": "DATE"
-          },
-          {
-            "name": "datetime_value",
-            "type": "DATETIME"
-          },
-          {
-            "name": "time_value",
-            "type": "TIME"
-          },
-          {
-            "name": "timestamp_value",
-            "type": "TIMESTAMP"
-          }
-        ]
+        "type": "STRING",
+        "description": "value of group by key corresponding to column, cast to a STRING"
       }
     ]
   },
   {
-    "name": "target_group_by_column",
+    "name": "target_group_by_columns",
     "type": "RECORD",
     "mode": "REPEATED",
     "description": "Target group by columns, it stores key value pairs in an array.",
@@ -122,136 +80,34 @@
       },
       {
         "name": "column_value",
-        "type": "RECORD",
-        "description": "value of group by key corresponding to column",
-        "fields": [
-          {
-            "name": "int64_value",
-            "type": "INTEGER"
-          },
-          {
-            "name": "numeric_value",
-            "type": "NUMERIC"
-          },
-          {
-            "name": "float64_value",
-            "type": "FLOAT"
-          },
-          {
-            "name": "bool_value",
-            "type": "BOOL"
-          },
-          {
-            "name": "string_value",
-            "type": "STRING"
-          },
-          {
-            "name": "bytes_value",
-            "type": "BYTES"
-          },
-          {
-            "name": "date_value",
-            "type": "DATE"
-          },
-          {
-            "name": "datetime_value",
-            "type": "DATETIME"
-          },
-          {
-            "name": "time_value",
-            "type": "TIME"
-          },
-          {
-            "name": "timestamp_value",
-            "type": "TIMESTAMP"
-          }
-        ]
+        "type": "STRING",
+        "description": "value of group by key corresponding to column, cast to a STRING"
       }
     ]
   },
   {
     "name": "source_agg_value",
-    "type": "RECORD",
-    "description": "Source aggregation result",
-    "fields": [
-      {
-        "name": "int64_value",
-        "type": "INTEGER"
-      },
-      {
-        "name": "numeric_value",
-        "type": "NUMERIC"
-      },
-      {
-        "name": "float64_value",
-        "type": "FLOAT"
-      },
-      {
-        "name": "date_value",
-        "type": "DATE"
-      },
-      {
-        "name": "datetime_value",
-        "type": "DATETIME"
-      },
-      {
-        "name": "time_value",
-        "type": "TIME"
-      },
-      {
-        "name": "timestamp_value",
-        "type": "TIMESTAMP"
-      }
-    ]
+    "type": "STRING",
+    "description": "Source aggregation result, casted to a string"
   },
   {
     "name": "target_agg_value",
-    "type": "RECORD",
-    "description": "Target aggregation result",
-    "fields": [
-      {
-        "name": "int64_value",
-        "type": "INTEGER"
-      },
-      {
-        "name": "numeric_value",
-        "type": "NUMERIC"
-      },
-      {
-        "name": "float64_value",
-        "type": "FLOAT"
-      },
-      {
-        "name": "date_value",
-        "type": "DATE"
-      },
-      {
-        "name": "datetime_value",
-        "type": "DATETIME"
-      },
-      {
-        "name": "time_value",
-        "type": "TIME"
-      },
-      {
-        "name": "timestamp_value",
-        "type": "TIMESTAMP"
-      }
-    ]
+    "type": "STRING",
+    "description": "Target aggregation result, casted to a string"
   },
   {
     "name": "difference",
-    "type": "FLOAT64",
+    "type": "FLOAT",
     "description": "Difference between the source and target aggregation result (derived from target_agg_value and source_agg_value for convenience)"
   },
   {
     "name": "pct_difference",
-    "type": "FLOAT64",
+    "type": "FLOAT",
     "description": "Percentage difference between the source and target aggregation result, based on source_agg_value."
   },
   {
     "name": "pct_threshold",
-    "type": "FLOAT64",
+    "type": "FLOAT",
     "description": "Percentage difference threshold set by the user, based on source_agg_value."
   },
   {

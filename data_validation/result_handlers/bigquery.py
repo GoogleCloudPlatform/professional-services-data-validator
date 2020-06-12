@@ -26,10 +26,16 @@ class BigQueryResultHandler(object):
             destination table for results.
     """
 
-    def __init__(self, bigquery_client):
+    def __init__(self, bigquery_client, table_id="pso_data_validator.results"):
         self._bigquery_client = bigquery_client
+        self._table_id = table_id
 
     def execute(self, config, result_df):
-        self._bigquery_client.insert_rows_from_dataframe(result_df)
+        table = self._bigquery_client.get_table(self._table_id)
+        chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
+            table, result_df
+        )
+        if any(chunk_errors):
+            raise RuntimeError(f"could not write rows: {chunk_errors}")
 
         return result_df
