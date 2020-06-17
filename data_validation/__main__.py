@@ -43,7 +43,7 @@ data-validation store -t Column \
 
 import argparse
 import json
-from yaml import load, dump, Loader, Dumper
+from yaml import dump, Dumper
 
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
@@ -177,9 +177,9 @@ def run_validations(args, config_managers):
     for config_manager in config_managers:
         run_validation(config_manager, verbose=args.verbose)
 
+
 def store_yaml_config_file(args, config_managers):
     """Build a YAML config file fromt he supplied configs."""
-    # TODO: How do we handle overwriting current config files?
     if not args.config_file:
         raise ValueError("YAML Config File was not supplied.")
 
