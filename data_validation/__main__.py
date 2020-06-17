@@ -55,7 +55,7 @@ def configure_arg_parser():
         usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("command", help="Command to Run (run, build)")
+    parser.add_argument("command", help="Command to Run (run, store)")
 
     parser.add_argument(
         "--type", "-t", help="Type of Data Validation (Column, GroupedColumn)"
