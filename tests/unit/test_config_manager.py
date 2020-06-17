@@ -80,8 +80,8 @@ def test_config_property(module_under_test):
     config = config_manager.config
     assert config == config_manager._config
 
-    config["new_key"] = "I am a copy not a reference."
-    assert config != config_manager._config
+    config["new_key"] = "I am a reference to the config."
+    assert config == config_manager._config
 
 
 def test_source_connection_property(module_under_test):

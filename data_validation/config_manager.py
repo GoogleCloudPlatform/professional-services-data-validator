@@ -44,7 +44,7 @@ class ConfigManager(object):
     @property
     def config(self):
         """Return config object."""
-        return copy.deepcopy(self._config)
+        return self._config
 
     @property
     def source_connection(self):
@@ -130,10 +130,10 @@ class ConfigManager(object):
 
     def get_yaml_validation_block(self):
         """Return Dict object formatted for a Yaml file."""
-        config = self.config
+        config = copy.deepcopy(self.config)
 
-        config.pop(consts.CONFIG_SOURCE_CONN)
-        config.pop(consts.CONFIG_TARGET_CONN)
+        del config[consts.CONFIG_SOURCE_CONN]
+        del config[consts.CONFIG_TARGET_CONN]
 
         return config
 
