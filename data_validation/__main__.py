@@ -167,7 +167,10 @@ def convert_config_to_yaml(config_managers):
 def run_validation(config_manager, verbose=False):
     """Run a single validation."""
     validator = DataValidation(
-        config_manager.config, validation_builder=None, result_handler=None, verbose=verbose
+        config_manager.config,
+        validation_builder=None,
+        result_handler=None,
+        verbose=verbose,
     )
     validator.execute()
 
