@@ -170,8 +170,7 @@ def convert_config_to_yaml(config_managers):
     }
 
     for config_manager in config_managers:
-        yaml_validation = config_manager.get_yaml_validation_block()
-        yaml_config["validations"].append(yaml_validation)
+        yaml_config["validations"].append(config_manager.get_yaml_validation_block())
 
     return yaml_config
 
