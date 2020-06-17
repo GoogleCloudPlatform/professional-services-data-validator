@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
+import json
 import os
+from unittest import mock
 
-from data_validation import data_validation, consts
-
+from data_validation import consts, data_validation
+from data_validation import __main__ as main
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
 CONFIG_COUNT_VALID = {
@@ -71,6 +74,17 @@ CONFIG_GROUPED_COUNT_VALID = {
     ],
 }
 
+CLI_STORE_COLUMN_ARGS = {
+    "command": "store",
+    "type": "Column",
+    "source_conn": json.dumps(BQ_CONN),
+    "target_conn": json.dumps(BQ_CONN),
+    "tables_list": '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
+    "sum": '["tripduration","start_station_name"]',
+    "count": '["tripduration","start_station_name"]',
+    "config_file": "example_test.yaml"
+}
+
 
 def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
@@ -102,3 +116,13 @@ def test_grouped_count_validator():
     for _, row in rows:
         assert float(row["source_agg_value"]) > 0
         assert row["source_agg_value"] == row["target_agg_value"]
+
+@mock.patch('argparse.ArgumentParser.parse_args', return_value=argparse.Namespace(**CLI_STORE_COLUMN_ARGS))
+def test_cli_store_yaml(mock_args):
+    main.main()
+
+    yaml_file_path = CLI_STORE_COLUMN_ARGS["config_file"]
+    with open(yaml_file_path, "r") as yaml_file:
+        assert len(yaml_file.readlines()) == 25
+
+    os.remove(yaml_file_path)
