@@ -76,23 +76,29 @@ def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
 
-    assert df["count_inp"][0] > 0
-    assert df["count_inp"][0] == df["count_out"][0]
-    assert df["count_tripduration_inp"][0] > 0
-    assert df["max_birth_year_inp"][0] >= 2002
+    count_value = df[df["validation_name"]=="count"]["source_agg_value"].values[0]
+    count_tripduration_value = \
+        df[df["validation_name"]=="count_tripduration"]["source_agg_value"].values[0]
+    max_birth_year_value = \
+        df[df["validation_name"]=="max_birth_year"]["source_agg_value"].values[0]
+
+    assert float(count_value) > 0
+    assert float(count_tripduration_value) > 0
+    assert float(max_birth_year_value) > 0
+    assert df["source_agg_value"].astype(float).sum() == df["target_agg_value"].astype(float).sum()
 
 
 def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
-    rows = list(df.iterrows())
+    rows = list(df[df["validation_name"]=="count"].iterrows())
 
     # Check that all partitions are unique.
     partitions = frozenset(df["starttime"])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
-    assert df["sum_tripduration_inp"].sum() == df["sum_tripduration_out"].sum()
+    assert df["source_agg_value"].sum() == df["target_agg_value"].sum()
 
     for _, row in rows:
-        assert row["count_inp"] > 0
-        assert row["count_inp"] == row["count_out"]
+        assert float(row["source_agg_value"]) > 0
+        assert row["source_agg_value"] == row["target_agg_value"]

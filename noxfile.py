@@ -129,12 +129,39 @@ def integration_bigquery(session):
     """Run BigQuery integration tests.
     Ensure BigQuery validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["black==19.10b0"])
+    _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_bigquery.py"
-    expected_env_vars = []
+    expected_env_vars = ["PROJECT_ID"]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", test_path, *session.posargs)
+
+
+@nox.session(python=PYTHON_VERSION, venv_backend="venv")
+def integration_bigquery_cli(session):
+    """Run BigQuery integration tests.
+    Ensure BigQuery validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=[])
+
+    expected_env_vars = ["PROJECT_ID"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    connection_string = f'{{"project_id":"{os.environ["PROJECT_ID"]}","source_type":"BigQuery"}}'
+    cli_args = [
+        "python", "-m", "data_validation", "store",
+        "-t", "Column",
+        "-sc", connection_string,
+        "-tc", connection_string,
+        "-tbls", '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
+        "--sum", '["tripduration","start_station_name"]',
+        "--count", '["tripduration","start_station_name"]',
+        "-c", "example_test.yaml"
+    ]
+    session.run(*cli_args, *session.posargs)
+
