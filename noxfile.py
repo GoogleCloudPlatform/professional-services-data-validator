@@ -152,6 +152,7 @@ def integration_bigquery_cli(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
+    yaml_file_path = "example_test.yaml"
     connection_string = f'{{"project_id":"{os.environ["PROJECT_ID"]}","source_type":"BigQuery"}}'
     cli_args = [
         "python", "-m", "data_validation", "store",
@@ -161,7 +162,11 @@ def integration_bigquery_cli(session):
         "-tbls", '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
         "--sum", '["tripduration","start_station_name"]',
         "--count", '["tripduration","start_station_name"]',
-        "-c", "example_test.yaml"
+        "-c", yaml_file_path
     ]
     session.run(*cli_args, *session.posargs)
+
+    with open(yaml_file_path, "r") as yaml_file:
+        assert len(yaml_file.readlines()) == 25
+    os.remove(yaml_file_path)
 
