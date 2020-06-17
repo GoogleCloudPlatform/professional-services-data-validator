@@ -167,7 +167,7 @@ def convert_config_to_yaml(config_managers):
 def run_validation(config_manager, verbose=False):
     """Run a single validation."""
     validator = DataValidation(
-        config_manager, validation_builder=None, result_handler=None, verbose=verbose
+        config_manager.config, validation_builder=None, result_handler=None, verbose=verbose
     )
     validator.execute()
 
@@ -175,7 +175,7 @@ def run_validation(config_manager, verbose=False):
 def run_validations(args, config_managers):
     """Run and manage a series of validations."""
     for config_manager in config_managers:
-        run_validation(config_manager.config, verbose=args.verbose)
+        run_validation(config_manager, verbose=args.verbose)
 
 def store_yaml_config_file(args, config_managers):
     """Build a YAML config file fromt he supplied configs."""
