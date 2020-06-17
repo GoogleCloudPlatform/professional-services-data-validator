@@ -19,8 +19,8 @@ from data_validation import consts
 
 SAMPLE_CONFIG = {
     # BigQuery Specific Connection Config
-    "source_conn": None,
-    "target_conn": None,
+    consts.CONFIG_SOURCE_CONN: {"type": "DNE source"},
+    consts.CONFIG_TARGET_CONN: {"type": "DNE target"},
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
@@ -71,10 +71,41 @@ def test_import(module_under_test):
     assert module_under_test is not None
 
 
+def test_config_property(module_under_test):
+    """Test getting config copy."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    config = config_manager.config
+    assert config == config_manager._config
+
+    config["new_key"] = "I am a copy not a reference."
+    assert config != config_manager._config
+
+
+def test_source_connection_property(module_under_test):
+    """Test getting config copy."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    source_connection = config_manager.source_connection
+    assert source_connection == SAMPLE_CONFIG[consts.CONFIG_SOURCE_CONN]
+
+
+def test_target_connection_property(module_under_test):
+    """Test getting config copy."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    target_connection = config_manager.target_connection
+    assert target_connection == SAMPLE_CONFIG[consts.CONFIG_TARGET_CONN]
+
+
 def test_get_table_info(module_under_test):
     """Test basic handler executes """
     config_manager = module_under_test.ConfigManager(
-        SAMPLE_CONFIG, None, None, verbose=False
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     source_table_spec = "{}.{}".format(
@@ -119,3 +150,12 @@ def test_build_config_aggregates_no_match(module_under_test):
         "sum", ["a"], ["float64"]
     )
     assert not aggregate_configs
+
+
+def test_get_yaml_validation_block(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    yaml_config = config_manager.get_yaml_validation_block()
+    assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]
+

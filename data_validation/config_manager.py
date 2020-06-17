@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import logging
 
 from data_validation import consts
@@ -43,7 +44,17 @@ class ConfigManager(object):
     @property
     def config(self):
         """Return config object."""
-        return self._config
+        return copy.deepcopy(self._config)
+
+    @property
+    def source_connection(self):
+        """return source connection object."""
+        return self._config.get(consts.CONFIG_SOURCE_CONN)
+
+    @property
+    def target_connection(self):
+        """return source connection object."""
+        return self._config.get(consts.CONFIG_TARGET_CONN)
 
     @property
     def validation_type(self):
@@ -116,6 +127,15 @@ class ConfigManager(object):
             )
 
         return self._target_ibis_table
+
+    def get_yaml_validation_block(self):
+        """Return Dict object formatted for a Yaml file."""
+        config = self.config
+
+        config.pop(consts.CONFIG_SOURCE_CONN)
+        config.pop(consts.CONFIG_TARGET_CONN)
+
+        return config
 
     @staticmethod
     def build_config_manager(
