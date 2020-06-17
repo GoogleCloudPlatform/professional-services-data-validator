@@ -158,4 +158,3 @@ def test_get_yaml_validation_block(module_under_test):
     )
     yaml_config = config_manager.get_yaml_validation_block()
     assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]
-
