@@ -93,7 +93,11 @@ def configure_arg_parser():
 
 
 def get_aggregate_config(args, config_manager):
-    """Return list of formated aggregation objects."""
+    """Return list of formated aggregation objects.
+
+    Args:
+        config_manager (ConfigManager): Validation config manager instance.
+    """
     aggregate_configs = []
     if args.count:
         col_args = None if args.count == "*" else json.loads(args.count)
@@ -110,7 +114,11 @@ def get_aggregate_config(args, config_manager):
 
 
 def build_config_from_args(args, config_manager):
-    """Return config manager object ready to execute."""
+    """Return config manager object ready to execute.
+
+    Args:
+        config_manager (ConfigManager): Validation config manager instance.
+    """
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if config_manager.validation_type == "GroupedColumn":
         grouped_columns = json.loads(args.grouped_columns)
@@ -150,7 +158,11 @@ def build_config_managers_from_args(args):
 
 
 def convert_config_to_yaml(config_managers):
-    """Return list[dict] objects formatted for yaml."""
+    """Return list[dict] objects formatted for yaml.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
     yaml_config = {
         "source": config_managers[0].source_connection,
         "target": config_managers[0].target_connection,
@@ -165,7 +177,12 @@ def convert_config_to_yaml(config_managers):
 
 
 def run_validation(config_manager, verbose=False):
-    """Run a single validation."""
+    """Run a single validation.
+
+    Args:
+        config_manager (ConfigManager): Validation config manager instance.
+        verbose (bool): Validation setting to log queries run.
+    """
     validator = DataValidation(
         config_manager.config,
         validation_builder=None,
@@ -176,13 +193,21 @@ def run_validation(config_manager, verbose=False):
 
 
 def run_validations(args, config_managers):
-    """Run and manage a series of validations."""
+    """Run and manage a series of validations.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
     for config_manager in config_managers:
         run_validation(config_manager, verbose=args.verbose)
 
 
 def store_yaml_config_file(args, config_managers):
-    """Build a YAML config file fromt he supplied configs."""
+    """Build a YAML config file fromt he supplied configs.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
     if not args.config_file:
         raise ValueError("YAML Config File was not supplied.")
 
