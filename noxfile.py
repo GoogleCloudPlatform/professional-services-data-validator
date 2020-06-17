@@ -138,35 +138,3 @@ def integration_bigquery(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", test_path, *session.posargs)
-
-
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
-def integration_bigquery_cli(session):
-    """Run BigQuery integration tests.
-    Ensure BigQuery validation is running as expected.
-    """
-    _setup_session_requirements(session, extra_packages=[])
-
-    expected_env_vars = ["PROJECT_ID"]
-    for env_var in expected_env_vars:
-        if not os.environ.get(env_var, ""):
-            raise Exception("Expected Env Var: %s" % env_var)
-
-    yaml_file_path = "example_test.yaml"
-    connection_string = f'{{"project_id":"{os.environ["PROJECT_ID"]}","source_type":"BigQuery"}}'
-    cli_args = [
-        "python", "-m", "data_validation", "store",
-        "-t", "Column",
-        "-sc", connection_string,
-        "-tc", connection_string,
-        "-tbls", '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
-        "--sum", '["tripduration","start_station_name"]',
-        "--count", '["tripduration","start_station_name"]',
-        "-c", yaml_file_path
-    ]
-    session.run(*cli_args, *session.posargs)
-
-    with open(yaml_file_path, "r") as yaml_file:
-        assert len(yaml_file.readlines()) == 25
-    os.remove(yaml_file_path)
-
