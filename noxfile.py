@@ -129,10 +129,10 @@ def integration_bigquery(session):
     """Run BigQuery integration tests.
     Ensure BigQuery validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["black==19.10b0"])
+    _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_bigquery.py"
-    expected_env_vars = []
+    expected_env_vars = ["PROJECT_ID"]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)

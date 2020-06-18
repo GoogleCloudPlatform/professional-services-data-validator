@@ -32,10 +32,18 @@ python -m data_validation run -t GroupedColumn \
 -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' \
 --grouped-columns '["starttime"]' \
 --sum '["tripduration"]' --count '["tripduration"]'
+
+data-validation store -t Column \
+-sc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
+-tc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
+-tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
+--sum '["tripduration","start_station_name"]' --count '["tripduration","start_station_name"]' \
+-c ex_yaml.yaml
 """
 
 import argparse
 import json
+from yaml import dump, Dumper
 
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
@@ -47,7 +55,7 @@ def configure_arg_parser():
         usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("command", help="Command to Run (run, build)")
+    parser.add_argument("command", help="Command to Run (run, store)")
 
     parser.add_argument(
         "--type", "-t", help="Type of Data Validation (Column, GroupedColumn)"
@@ -74,13 +82,22 @@ def configure_arg_parser():
         "-gc",
         help="JSON List of columns to use in group by '[\"col_a\"]'",
     )
+    parser.add_argument(
+        "--config-file",
+        "-c",
+        help="YAML Config File Path to be used for building or running validations.",
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
     return parser.parse_args()
 
 
 def get_aggregate_config(args, config_manager):
-    """Return list of formated aggregation objects."""
+    """Return list of formated aggregation objects.
+
+    Args:
+        config_manager (ConfigManager): Validation config manager instance.
+    """
     aggregate_configs = [
         config_manager.build_config_count_aggregate()
     ]
@@ -100,7 +117,11 @@ def get_aggregate_config(args, config_manager):
 
 
 def build_config_from_args(args, config_manager):
-    """Return config object ready to execute."""
+    """Return config manager object ready to execute.
+
+    Args:
+        config_manager (ConfigManager): Validation config manager instance.
+    """
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if config_manager.validation_type == "GroupedColumn":
         grouped_columns = json.loads(args.grouped_columns)
@@ -109,11 +130,11 @@ def build_config_from_args(args, config_manager):
         )
     # TODO(GH#18): Add query filter config logic
 
-    return config_manager.config
+    return config_manager
 
 
-def build_configs_from_args(args):
-    """Return a list of config dicts ready to execute."""
+def build_config_managers_from_args(args):
+    """Return a list of config managers ready to execute."""
     configs = []
 
     config_type = args.type
@@ -139,18 +160,65 @@ def build_configs_from_args(args):
     return configs
 
 
-def run_validation(config, verbose=False):
-    """Run a single validation."""
+def convert_config_to_yaml(config_managers):
+    """Return list[dict] objects formatted for yaml.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
+    yaml_config = {
+        "source": config_managers[0].source_connection,
+        "target": config_managers[0].target_connection,
+        "validations": [],
+    }
+
+    for config_manager in config_managers:
+        yaml_config["validations"].append(config_manager.get_yaml_validation_block())
+
+    return yaml_config
+
+
+def run_validation(config_manager, verbose=False):
+    """Run a single validation.
+
+    Args:
+        config_manager (ConfigManager): Validation config manager instance.
+        verbose (bool): Validation setting to log queries run.
+    """
     validator = DataValidation(
-        config, validation_builder=None, result_handler=None, verbose=verbose
+        config_manager.config,
+        validation_builder=None,
+        result_handler=None,
+        verbose=verbose,
     )
     validator.execute()
 
 
-def run_validations(args, configs):
-    """Run and manage a series of validations."""
-    for config in configs:
-        run_validation(config, verbose=args.verbose)
+def run_validations(args, config_managers):
+    """Run and manage a series of validations.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
+    for config_manager in config_managers:
+        run_validation(config_manager, verbose=args.verbose)
+
+
+def store_yaml_config_file(args, config_managers):
+    """Build a YAML config file fromt he supplied configs.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
+    if not args.config_file:
+        raise ValueError("YAML Config File was not supplied.")
+
+    config_file_path = args.config_file
+    yaml_configs = convert_config_to_yaml(config_managers)
+    yaml_config_str = dump(yaml_configs, Dumper=Dumper)
+
+    with open(config_file_path, "w") as yaml_file:
+        yaml_file.write(yaml_config_str)
 
 
 def main():
@@ -158,8 +226,11 @@ def main():
     args = configure_arg_parser()
 
     if args.command == "run":
-        configs = build_configs_from_args(args)
-        run_validations(args, configs)
+        config_managers = build_config_managers_from_args(args)
+        run_validations(args, config_managers)
+    elif args.command == "store":
+        config_managers = build_config_managers_from_args(args)
+        store_yaml_config_file(args, config_managers)
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 

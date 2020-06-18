@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import logging
 
 from data_validation import consts
@@ -25,7 +26,7 @@ class ConfigManager(object):
 
     def __init__(self, config, source_client, target_client, verbose=False):
         """ Initialize a ValidationBuilder client which supplies the
-            source and target queries tto run.
+            source and target queries to run.
 
         Args:
             config (Dict): The Validation config supplied
@@ -44,6 +45,16 @@ class ConfigManager(object):
     def config(self):
         """Return config object."""
         return self._config
+
+    @property
+    def source_connection(self):
+        """return source connection object."""
+        return self._config.get(consts.CONFIG_SOURCE_CONN)
+
+    @property
+    def target_connection(self):
+        """return source connection object."""
+        return self._config.get(consts.CONFIG_TARGET_CONN)
 
     @property
     def validation_type(self):
@@ -116,6 +127,15 @@ class ConfigManager(object):
             )
 
         return self._target_ibis_table
+
+    def get_yaml_validation_block(self):
+        """Return Dict object formatted for a Yaml file."""
+        config = copy.deepcopy(self.config)
+
+        del config[consts.CONFIG_SOURCE_CONN]
+        del config[consts.CONFIG_TARGET_CONN]
+
+        return config
 
     @staticmethod
     def build_config_manager(
