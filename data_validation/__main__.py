@@ -81,15 +81,18 @@ def configure_arg_parser():
 
 def get_aggregate_config(args, config_manager):
     """Return list of formated aggregation objects."""
-    aggregate_configs = []
+    aggregate_configs = [
+        config_manager.build_config_count_aggregate()
+    ]
+
     if args.count:
         col_args = None if args.count == "*" else json.loads(args.count)
-        aggregate_configs += config_manager.build_config_aggregates(
+        aggregate_configs += config_manager.build_config_column_aggregates(
             "count", col_args, None
         )
     if args.sum:
         col_args = None if args.sum == "*" else json.loads(args.sum)
-        aggregate_configs += config_manager.build_config_aggregates(
+        aggregate_configs += config_manager.build_config_column_aggregates(
             "sum", col_args, ["int64", "float64"]
         )
 

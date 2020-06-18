@@ -166,7 +166,7 @@ class QueryBuilder(object):
     @staticmethod
     def build_count_validator(limit=None):
         """ Return a basic template builder for most validations """
-        aggregate_fields = [AggregateField.count(alias="count")]
+        aggregate_fields = []
         filters = []
         grouped_fields = []
 
