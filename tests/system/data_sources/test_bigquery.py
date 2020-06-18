@@ -135,6 +135,6 @@ def test_cli_store_yaml(mock_args):
 
     yaml_file_path = CLI_STORE_COLUMN_ARGS["config_file"]
     with open(yaml_file_path, "r") as yaml_file:
-        assert len(yaml_file.readlines()) == 25
+        assert len(yaml_file.readlines()) == 29
 
     os.remove(yaml_file_path)
