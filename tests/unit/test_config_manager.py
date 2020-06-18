@@ -137,7 +137,7 @@ def test_build_config_aggregates(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    aggregate_configs = config_manager.build_config_aggregates("sum", ["a"], [])
+    aggregate_configs = config_manager.build_config_column_aggregates("sum", ["a"], [])
     assert aggregate_configs[0] == AGGREGATE_CONFIG_A
 
 
@@ -146,10 +146,22 @@ def test_build_config_aggregates_no_match(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    aggregate_configs = config_manager.build_config_aggregates(
+    aggregate_configs = config_manager.build_config_column_aggregates(
         "sum", ["a"], ["float64"]
     )
     assert not aggregate_configs
+
+
+def test_build_config_count_aggregate(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    agg = config_manager.build_config_count_aggregate()
+    assert agg[consts.CONFIG_SOURCE_COLUMN] is None
+    assert agg[consts.CONFIG_TARGET_COLUMN] is None
+    assert agg[consts.CONFIG_FIELD_ALIAS] == "count"
+    assert agg[consts.CONFIG_TYPE] == "count"
 
 
 def test_get_yaml_validation_block(module_under_test):

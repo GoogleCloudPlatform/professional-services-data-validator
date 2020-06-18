@@ -183,7 +183,18 @@ class ConfigManager(object):
 
         return grouped_column_configs
 
-    def build_config_aggregates(self, agg_type, arg_value, supported_types):
+    def build_config_count_aggregate(self):
+        """Return dict aggregate for COUNT(*)."""
+        aggregate_config = {
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+            consts.CONFIG_TYPE: "count",
+        }
+
+        return aggregate_config
+
+    def build_config_column_aggregates(self, agg_type, arg_value, supported_types):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
         source_table = self.get_source_ibis_table()

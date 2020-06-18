@@ -34,6 +34,12 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_AGGREGATES: [
         {
             consts.CONFIG_TYPE: "count",
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+        },
+        {
+            consts.CONFIG_TYPE: "count",
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "count_tripduration",
@@ -57,6 +63,12 @@ CONFIG_GROUPED_COUNT_VALID = {
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+        },
         {
             consts.CONFIG_TYPE: "sum",
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
@@ -82,7 +94,7 @@ CLI_STORE_COLUMN_ARGS = {
     "tables_list": '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
     "sum": '["tripduration","start_station_name"]',
     "count": '["tripduration","start_station_name"]',
-    "config_file": "example_test.yaml"
+    "config_file": "example_test.yaml",
 }
 
 
@@ -90,22 +102,27 @@ def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
 
-    count_value = df[df["validation_name"]=="count"]["source_agg_value"].values[0]
-    count_tripduration_value = \
-        df[df["validation_name"]=="count_tripduration"]["source_agg_value"].values[0]
-    max_birth_year_value = \
-        df[df["validation_name"]=="max_birth_year"]["source_agg_value"].values[0]
+    count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
+    count_tripduration_value = df[df["validation_name"] == "count_tripduration"][
+        "source_agg_value"
+    ].values[0]
+    max_birth_year_value = df[df["validation_name"] == "max_birth_year"][
+        "source_agg_value"
+    ].values[0]
 
     assert float(count_value) > 0
     assert float(count_tripduration_value) > 0
     assert float(max_birth_year_value) > 0
-    assert df["source_agg_value"].astype(float).sum() == df["target_agg_value"].astype(float).sum()
+    assert (
+        df["source_agg_value"].astype(float).sum()
+        == df["target_agg_value"].astype(float).sum()
+    )
 
 
 def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
-    rows = list(df[df["validation_name"]=="count"].iterrows())
+    rows = list(df[df["validation_name"] == "count"].iterrows())
 
     # Check that all partitions are unique.
     partitions = frozenset(df["starttime"])
@@ -117,12 +134,16 @@ def test_grouped_count_validator():
         assert float(row["source_agg_value"]) > 0
         assert row["source_agg_value"] == row["target_agg_value"]
 
-@mock.patch('argparse.ArgumentParser.parse_args', return_value=argparse.Namespace(**CLI_STORE_COLUMN_ARGS))
+
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_STORE_COLUMN_ARGS),
+)
 def test_cli_store_yaml(mock_args):
     main.main()
 
     yaml_file_path = CLI_STORE_COLUMN_ARGS["config_file"]
     with open(yaml_file_path, "r") as yaml_file:
-        assert len(yaml_file.readlines()) == 25
+        assert len(yaml_file.readlines()) == 29
 
     os.remove(yaml_file_path)
