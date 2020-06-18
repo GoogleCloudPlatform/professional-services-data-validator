@@ -159,7 +159,7 @@ def build_config_managers_from_args(args):
 
 
 def convert_config_to_yaml(config_managers):
-    """Return list[dict] objects formatted for yaml.
+    """Return dict objects formatted for yaml validations.
 
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
@@ -198,6 +198,7 @@ def run_validations(args, config_managers):
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
     """
+    # TODO(issue/31): Add parallel execution logic
     for config_manager in config_managers:
         run_validation(config_manager, verbose=args.verbose)
 

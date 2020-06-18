@@ -25,7 +25,7 @@ class ConfigManager(object):
     target_client = None
 
     def __init__(self, config, source_client, target_client, verbose=False):
-        """ Initialize a ValidationBuilder client which supplies the
+        """ Initialize a ConfigManager client which supplies the
             source and target queries to run.
 
         Args:
