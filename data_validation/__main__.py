@@ -158,7 +158,7 @@ def build_config_managers_from_args(args):
 
 
 def convert_config_to_yaml(config_managers):
-    """Return list[dict] objects formatted for yaml.
+    """Return dict objects formatted for yaml validations.
 
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
