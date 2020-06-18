@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
+import json
 import os
+from unittest import mock
 
-from data_validation import data_validation, consts
-
+from data_validation import consts, data_validation
+from data_validation import __main__ as main
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
 CONFIG_COUNT_VALID = {
@@ -71,28 +74,55 @@ CONFIG_GROUPED_COUNT_VALID = {
     ],
 }
 
+CLI_STORE_COLUMN_ARGS = {
+    "command": "store",
+    "type": "Column",
+    "source_conn": json.dumps(BQ_CONN),
+    "target_conn": json.dumps(BQ_CONN),
+    "tables_list": '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
+    "sum": '["tripduration","start_station_name"]',
+    "count": '["tripduration","start_station_name"]',
+    "config_file": "example_test.yaml"
+}
+
 
 def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
 
-    assert df["count_inp"][0] > 0
-    assert df["count_inp"][0] == df["count_out"][0]
-    assert df["count_tripduration_inp"][0] > 0
-    assert df["max_birth_year_inp"][0] >= 2002
+    count_value = df[df["validation_name"]=="count"]["source_agg_value"].values[0]
+    count_tripduration_value = \
+        df[df["validation_name"]=="count_tripduration"]["source_agg_value"].values[0]
+    max_birth_year_value = \
+        df[df["validation_name"]=="max_birth_year"]["source_agg_value"].values[0]
+
+    assert float(count_value) > 0
+    assert float(count_tripduration_value) > 0
+    assert float(max_birth_year_value) > 0
+    assert df["source_agg_value"].astype(float).sum() == df["target_agg_value"].astype(float).sum()
 
 
 def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
-    rows = list(df.iterrows())
+    rows = list(df[df["validation_name"]=="count"].iterrows())
 
     # Check that all partitions are unique.
     partitions = frozenset(df["starttime"])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
-    assert df["sum_tripduration_inp"].sum() == df["sum_tripduration_out"].sum()
+    assert df["source_agg_value"].sum() == df["target_agg_value"].sum()
 
     for _, row in rows:
-        assert row["count_inp"] > 0
-        assert row["count_inp"] == row["count_out"]
+        assert float(row["source_agg_value"]) > 0
+        assert row["source_agg_value"] == row["target_agg_value"]
+
+@mock.patch('argparse.ArgumentParser.parse_args', return_value=argparse.Namespace(**CLI_STORE_COLUMN_ARGS))
+def test_cli_store_yaml(mock_args):
+    main.main()
+
+    yaml_file_path = CLI_STORE_COLUMN_ARGS["config_file"]
+    with open(yaml_file_path, "r") as yaml_file:
+        assert len(yaml_file.readlines()) == 25
+
+    os.remove(yaml_file_path)
