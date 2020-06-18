@@ -98,9 +98,7 @@ def get_aggregate_config(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
-    aggregate_configs = [
-        config_manager.build_config_count_aggregate()
-    ]
+    aggregate_configs = [config_manager.build_config_count_aggregate()]
 
     if args.count:
         col_args = None if args.count == "*" else json.loads(args.count)
