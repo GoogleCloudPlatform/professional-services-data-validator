@@ -17,8 +17,7 @@
 
 set -eo pipefail
 
-cd ${KOKORO_ARTIFACTS_DIR}/git/pso-data-validator
-#cd ${KOKORO_ARTIFACTS_DIR}/github/pso-data-validator
+cd ${KOKORO_ARTIFACTS_DIR}/github/pso-data-validator
 
 pyenv global 3.6.1
 
