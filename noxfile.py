@@ -25,8 +25,10 @@ import os
 
 import nox
 
+# Python version needs to match version on Kokoro VM.
+# See ./kokoro/setup.sh for current version.
+PYTHON_VERSION = "3.6"
 
-PYTHON_VERSION = "3.5"  # Needs to match version on Kokoro VM.
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 
 
