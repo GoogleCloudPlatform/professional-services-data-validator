@@ -43,8 +43,9 @@ data-validation store -t Column \
 
 import argparse
 import json
-from yaml import dump, Dumper
+from yaml import dump, load, Dumper, Loader
 
+from data_validation import consts
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
@@ -55,7 +56,7 @@ def configure_arg_parser():
         usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("command", help="Command to Run (run, store)")
+    parser.add_argument("command", help="Command to Run (run, store, run-config)")
 
     parser.add_argument(
         "--type", "-t", help="Type of Data Validation (Column, GroupedColumn)"
@@ -90,6 +91,23 @@ def configure_arg_parser():
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
     return parser.parse_args()
+
+
+def _get_arg_config_file(args):
+    """Return String yaml config file path."""
+    if not args.config_file:
+        raise ValueError("YAML Config File was not supplied.")
+
+    return args.config_file
+
+
+def _get_yaml_config_from_file(config_file_path):
+    """Return Dict of yaml validation data."""
+    with open(config_file_path, "r") as yaml_file:
+        yaml_configs = load(yaml_file.read(), Loader=Loader)
+
+    print(yaml_configs)
+    return yaml_configs
 
 
 def get_aggregate_config(args, config_manager):
@@ -151,11 +169,33 @@ def build_config_managers_from_args(args):
             source_client,
             target_client,
             table_obj,
-            verbose=False,
+            verbose=args.verbose,
         )
         configs.append(build_config_from_args(args, config_manager))
 
     return configs
+
+
+def build_config_managers_from_yaml(args):
+    """Returns List[ConfigManager] instances ready to be executed."""
+    config_managers = []
+
+    config_file_path = _get_arg_config_file(args)
+    yaml_configs = _get_yaml_config_from_file(config_file_path)
+
+    source_client = DataValidation.get_data_client(yaml_configs[consts.YAML_SOURCE])
+    target_client = DataValidation.get_data_client(yaml_configs[consts.YAML_TARGET])
+
+    for config in yaml_configs[consts.YAML_VALIDATIONS]:
+        config[consts.CONFIG_SOURCE_CONN] = yaml_configs[consts.YAML_SOURCE]
+        config[consts.CONFIG_TARGET_CONN] = yaml_configs[consts.YAML_TARGET]
+        config_manager = ConfigManager(
+            config, source_client, target_client, verbose=args.verbose
+        )
+
+        config_managers.append(config_manager)
+
+    return config_managers
 
 
 def convert_config_to_yaml(config_managers):
@@ -165,13 +205,15 @@ def convert_config_to_yaml(config_managers):
         config_managers (list[ConfigManager]): List of config manager instances.
     """
     yaml_config = {
-        "source": config_managers[0].source_connection,
-        "target": config_managers[0].target_connection,
-        "validations": [],
+        consts.YAML_SOURCE: config_managers[0].source_connection,
+        consts.YAML_TARGET: config_managers[0].target_connection,
+        consts.YAML_VALIDATIONS: [],
     }
 
     for config_manager in config_managers:
-        yaml_config["validations"].append(config_manager.get_yaml_validation_block())
+        yaml_config[consts.YAML_VALIDATIONS].append(
+            config_manager.get_yaml_validation_block()
+        )
 
     return yaml_config
 
@@ -209,10 +251,7 @@ def store_yaml_config_file(args, config_managers):
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
     """
-    if not args.config_file:
-        raise ValueError("YAML Config File was not supplied.")
-
-    config_file_path = args.config_file
+    config_file_path = _get_arg_config_file(args)
     yaml_configs = convert_config_to_yaml(config_managers)
     yaml_config_str = dump(yaml_configs, Dumper=Dumper)
 
@@ -230,6 +269,9 @@ def main():
     elif args.command == "store":
         config_managers = build_config_managers_from_args(args)
         store_yaml_config_file(args, config_managers)
+    elif args.command == "run-config":
+        config_managers = build_config_managers_from_yaml(args)
+        run_validations(args, config_managers)
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 

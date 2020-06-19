@@ -32,6 +32,11 @@ CONFIG_TARGET_COLUMN = "target_column"
 CONFIG_CAST = "cast"
 CONFIG_LIMIT = "limit"
 
+# Yaml File Config Fields
+YAML_SOURCE = "source"
+YAML_TARGET = "target"
+YAML_VALIDATIONS = "validations"
+
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
 COUNT_STAR = "{count_star}"
