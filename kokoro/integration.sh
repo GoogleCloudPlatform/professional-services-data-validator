@@ -25,4 +25,4 @@ python -m nox -s integration_mysql
 
 # Run BigQuery Integration Tests
 export PROJECT_ID=pso-kokoro-resources
-python -m nox -s integration_bigquery
+python -m nox --error-on-missing-interpreters -s integration_bigquery

@@ -19,4 +19,4 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source "${DIR}/setup.sh"
 
 # TODO: add cover session to check test coverage.
-python -m nox -s unit
+python -m nox --error-on-missing-interpreters -s unit
