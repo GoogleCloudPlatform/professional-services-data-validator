@@ -106,6 +106,7 @@ def _get_yaml_config_from_file(config_file_path):
     with open(config_file_path, "r") as yaml_file:
         yaml_configs = load(yaml_file.read(), Loader=Loader)
 
+    print(yaml_configs)
     return yaml_configs
 
 
@@ -168,7 +169,7 @@ def build_config_managers_from_args(args):
             source_client,
             target_client,
             table_obj,
-            verbose=False,
+            verbose=args.verbose,
         )
         configs.append(build_config_from_args(args, config_manager))
 
@@ -189,7 +190,7 @@ def build_config_managers_from_yaml(args):
         config[consts.CONFIG_SOURCE_CONN] = yaml_configs[consts.YAML_SOURCE]
         config[consts.CONFIG_TARGET_CONN] = yaml_configs[consts.YAML_TARGET]
         config_manager = ConfigManager(
-            config, source_client, target_client, verbose=False
+            config, source_client, target_client, verbose=args.verbose
         )
 
         config_managers.append(config_manager)
