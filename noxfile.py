@@ -26,7 +26,7 @@ import os
 import nox
 
 
-PYTHON_VERSION = "3.7"
+PYTHON_VERSION = "3.5"  # Needs to match version on Kokoro VM.
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 
 
