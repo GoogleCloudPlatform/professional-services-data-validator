@@ -34,8 +34,7 @@ CLI_ARGS = {
 
 
 @mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CLI_ARGS),
+    "argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(**CLI_ARGS),
 )
 def test_configure_arg_parser(mock_args):
     """Test arg parser values."""
