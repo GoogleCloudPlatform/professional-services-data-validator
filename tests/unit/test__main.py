@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-import pytest
 from unittest import mock
 
 from data_validation import __main__ as main
