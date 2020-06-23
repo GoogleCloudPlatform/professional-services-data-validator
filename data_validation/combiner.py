@@ -19,6 +19,7 @@ original data type is used.
 """
 
 import functools
+import json
 
 import ibis
 
@@ -76,10 +77,10 @@ def generate_report(
                 (
                     ibis.literal(field).name("validation_name"),
                     ibis.literal(validation_metadata.validation_type).name(
-                        "validation_type"
+                        "source_validation_type"
                     ),
                     ibis.literal(validation_metadata.aggregation_type).name(
-                        "aggregation_type"
+                        "source_aggregation_type"
                     ),
                     ibis.literal(validation_metadata.source_table_name).name(
                         "source_table_name"
@@ -97,6 +98,12 @@ def generate_report(
             target.projection(
                 (
                     ibis.literal(field).name("validation_name"),
+                    ibis.literal(validation_metadata.validation_type).name(
+                        "target_validation_type"
+                    ),
+                    ibis.literal(validation_metadata.aggregation_type).name(
+                        "target_aggregation_type"
+                    ),
                     ibis.literal(validation_metadata.target_table_name).name(
                         "target_table_name"
                     ),
@@ -127,25 +134,48 @@ def _add_metadata(joined, run_metadata):
     return joined
 
 
+def _as_json(expr):
+    """Make field value into valid string.
+
+    https://stackoverflow.com/a/3020108/101923
+    """
+    return expr.cast("string").re_replace(r"\\", r"\\\\").re_replace('"', '\\"')
+
+
 def _join_pivots(source, target, join_on_fields):
+    if join_on_fields:
+        join_values = []
+        for field in join_on_fields:
+            join_values.append(
+                ibis.literal(json.dumps(field))
+                + ibis.literal(': "')
+                + _as_json(source[field])
+                + ibis.literal('"')
+            )
+
+        group_by_columns = (
+            ibis.literal("{") + ibis.literal(", ").join(join_values) + ibis.literal("}")
+        ).name("group_by_columns")
+    else:
+        group_by_columns = ibis.literal(None).cast("string").name("group_by_columns")
+
     joined = source.join(target, ("validation_name",) + join_on_fields, how="outer")[
         [
             source["validation_name"],
-            source["validation_type"],
-            source["aggregation_type"],
+            source["source_validation_type"]
+            .fillna(target["target_validation_type"])
+            .name("validation_type"),
+            source["source_aggregation_type"]
+            .fillna(target["target_aggregation_type"])
+            .name("aggregation_type"),
             source["source_table_name"],
             source["source_column_name"],
             source["source_agg_value"],
             target["target_table_name"],
             target["target_column_name"],
             target["target_agg_value"],
+            group_by_columns,
         ]
-        + [source[key] for key in join_on_fields]
     ]
-
-    # TODO(GH#14): remove group-by key columns and write into an array of
-    #              key-value structs
-    joined = joined[joined, ibis.literal([]).name("source_group_by_columns")]
-    joined = joined[joined, ibis.literal([]).name("target_group_by_columns")]
 
     return joined
