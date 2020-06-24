@@ -111,9 +111,6 @@ class DataValidation(object):
 
         run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
         run_metadata.validations = self.validation_builder.get_metadata()
-        # DEBUG
-        print(self.validation_builder.aggregate_aliases)
-        print(self.validation_builder.group_aliases)
         result_df = combiner.generate_report(
             pandas_client, run_metadata, join_on_fields=join_on_fields
         )
