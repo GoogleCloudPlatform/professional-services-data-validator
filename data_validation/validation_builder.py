@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from data_validation import consts
+from data_validation import consts, metadata
 from data_validation.query_builder.query_builder import (
     QueryBuilder,
     GroupedField,
@@ -23,7 +23,7 @@ from data_validation.query_builder.query_builder import (
 class ValidationBuilder(object):
     def __init__(self, config_manager):
         """ Initialize a ValidationBuilder client which supplies the
-            source and target queries tto run.
+            source and target queries to run.
 
         Args:
             config_manager (ConfigManager): A validation ConfigManager instance
@@ -31,6 +31,7 @@ class ValidationBuilder(object):
             target_client (IbisClient): The Ibis client for the target DB
             verbose (Bool): If verbose, the Data Validation client will print queries run
         """
+        self._metadata = {}
         self.config_manager = config_manager
         self.verbose = self.config_manager.verbose
         self.validation_type = self.config_manager.validation_type
@@ -41,7 +42,6 @@ class ValidationBuilder(object):
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
 
-        self.aggregate_aliases = []
         self.group_aliases = []
 
         self.add_config_aggregates()
@@ -59,9 +59,17 @@ class ValidationBuilder(object):
 
         return builder
 
-    def get_aggregate_aliases(self):
-        """ Return List of String Aliases """
-        return self.aggregate_aliases
+    def get_metadata(self):
+        """Metadata about the run and any validations it contains.
+
+        The validation metadata is populated as validations are added to this
+        builder.
+
+        Returns:
+            Dict[str, ValidationMetadata]:
+                A dictionary of validation name to ValidationMetadata.
+        """
+        return self._metadata
 
     def get_group_aliases(self):
         """ Return List of String Aliases """
@@ -102,7 +110,14 @@ class ValidationBuilder(object):
 
         self.source_builder.add_aggregate_field(source_agg)
         self.target_builder.add_aggregate_field(target_agg)
-        self.aggregate_aliases.append(alias)
+        self._metadata[alias] = metadata.ValidationMetadata(
+            validation_type=self.validation_type,
+            aggregation_type=aggregate_type,
+            source_table_name=self.config_manager.source_table,
+            target_table_name=self.config_manager.target_table,
+            source_column_name=source_field_name,
+            target_column_name=target_field_name,
+        )
 
     def add_query_group(self, grouped_field):
         """ Add Grouped Field to Query

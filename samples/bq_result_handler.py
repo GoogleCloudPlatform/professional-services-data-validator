@@ -29,6 +29,32 @@ CONFIG_COUNT_VALID = {
     # Configuration Required Depending on Validator Type
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
+    "aggregates": [
+        {
+            "field_alias": "count",
+            "source_column": None,
+            "target_column": None,
+            "type": "count",
+        },
+        {
+            "field_alias": "count__tripduration",
+            "source_column": "tripduration",
+            "target_column": "tripduration",
+            "type": "count",
+        },
+        {
+            "field_alias": "count__start_station_name",
+            "source_column": "start_station_name",
+            "target_column": "start_station_name",
+            "type": "count",
+        },
+        {
+            "field_alias": "sum__tripduration",
+            "source_column": "tripduration",
+            "target_column": "tripduration",
+            "type": "sum",
+        },
+    ],
 }
 
 bqclient = bigquery.Client()

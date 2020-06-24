@@ -28,12 +28,18 @@ DEFAULT_TARGET = "target"
 
 
 def generate_report(
-    client, source_table=DEFAULT_SOURCE, target_table=DEFAULT_TARGET, join_on_fields=()
+    client,
+    run_metadata,
+    source_table=DEFAULT_SOURCE,
+    target_table=DEFAULT_TARGET,
+    join_on_fields=(),
 ):
     """Combine results into a report.
 
     Args:
         client (ibis.client.Client): Ibis client used to combine results.
+        run_metadata (data_validation.metadata.RunMetadata):
+            Metadata about the run and validations.
         source_table (str): Name of source results table in client system.
         target_table (str): Name of target results table in client system.
         join_on_fields (Sequence[str]):
@@ -58,18 +64,30 @@ def generate_report(
             f"source: {source_names} target: {target_names}"
         )
 
-    all_fields = frozenset(target_names)
+    all_fields = frozenset(source_names)
     validation_fields = all_fields - frozenset(join_on_fields)
     source_pivots = []
     target_pivots = []
 
     for field in validation_fields:
+        validation_metadata = run_metadata.validations[field]
         source_pivots.append(
             source.projection(
                 (
-                    # TODO(GH#2): send config so that original source &
-                    #             target name can be added as literals
                     ibis.literal(field).name("validation_name"),
+                    ibis.literal(validation_metadata.validation_type).name(
+                        "validation_type"
+                    ),
+                    ibis.literal(validation_metadata.aggregation_type).name(
+                        "aggregation_type"
+                    ),
+                    ibis.literal(validation_metadata.source_table_name).name(
+                        "source_table_name"
+                    ),
+                    # Cast to string to ensure types match, even when column name is NULL.
+                    ibis.literal(validation_metadata.source_column_name)
+                    .cast("string")
+                    .name("source_column_name"),
                     source[field].cast("string").name("source_agg_value"),
                 )
                 + join_on_fields
@@ -78,9 +96,14 @@ def generate_report(
         target_pivots.append(
             target.projection(
                 (
-                    # TODO(GH#2): send config so that original source &
-                    #             target name can be added as literals
                     ibis.literal(field).name("validation_name"),
+                    ibis.literal(validation_metadata.target_table_name).name(
+                        "target_table_name"
+                    ),
+                    # Cast to string to ensure types match, even when column name is NULL.
+                    ibis.literal(validation_metadata.target_column_name)
+                    .cast("string")
+                    .name("target_column_name"),
                     target[field].cast("string").name("target_agg_value"),
                 )
                 + join_on_fields
@@ -94,17 +117,27 @@ def generate_report(
         lambda pivot1, pivot2: pivot1.union(pivot2), target_pivots
     )
     joined = _join_pivots(source_pivot, target_pivot, join_on_fields)
-
-    # TODO(GH#2): generate run ID
-    # TODO(GH#2): add validation timing values
+    joined = _add_metadata(joined, run_metadata)
     return client.execute(joined)
+
+
+def _add_metadata(joined, run_metadata):
+    joined = joined[joined, ibis.literal(run_metadata.start_time).name("start_time")]
+    joined = joined[joined, ibis.literal(run_metadata.end_time).name("end_time")]
+    return joined
 
 
 def _join_pivots(source, target, join_on_fields):
     joined = source.join(target, ("validation_name",) + join_on_fields, how="outer")[
         [
             source["validation_name"],
+            source["validation_type"],
+            source["aggregation_type"],
+            source["source_table_name"],
+            source["source_column_name"],
             source["source_agg_value"],
+            target["target_table_name"],
+            target["target_column_name"],
             target["target_agg_value"],
         ]
         + [source[key] for key in join_on_fields]
