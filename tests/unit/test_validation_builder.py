@@ -89,7 +89,7 @@ def test_column_validation_aggregates(module_under_test):
     mock_config_manager.append_aggregates(AGGREGATES_TEST)
     builder.add_config_aggregates()
 
-    assert builder.aggregate_aliases == ["sum_starttime"]
+    assert list(builder.get_metadata().keys()) == ["sum_starttime"]
 
 
 def test_validation_add_groups(module_under_test):

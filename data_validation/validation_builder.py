@@ -42,7 +42,6 @@ class ValidationBuilder(object):
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
 
-        self.aggregate_aliases = []
         self.group_aliases = []
 
         self.add_config_aggregates()
@@ -71,10 +70,6 @@ class ValidationBuilder(object):
                 A dictionary of validation name to ValidationMetadata.
         """
         return self._metadata
-
-    def get_aggregate_aliases(self):
-        """ Return List of String Aliases """
-        return self.aggregate_aliases
 
     def get_group_aliases(self):
         """ Return List of String Aliases """
@@ -115,7 +110,6 @@ class ValidationBuilder(object):
 
         self.source_builder.add_aggregate_field(source_agg)
         self.target_builder.add_aggregate_field(target_agg)
-        self.aggregate_aliases.append(alias)
         self._metadata[alias] = metadata.ValidationMetadata(
             validation_type=self.validation_type,
             aggregation_type=aggregate_type,
