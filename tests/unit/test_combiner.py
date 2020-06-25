@@ -216,8 +216,8 @@ def test_generate_report_without_group_by(
             ),
         ),
         (
-            pandas.DataFrame({"count": [1, 2], "grp": ['"', "\\"],}),
-            pandas.DataFrame({"count": [3, 4], "grp": ['"', "\\"],}),
+            pandas.DataFrame({"count": [1, 2], "grp": ['"', "\\"]}),
+            pandas.DataFrame({"count": [3, 4], "grp": ['"', "\\"]}),
             ("grp",),
             metadata.RunMetadata(
                 validations={
@@ -246,7 +246,7 @@ def test_generate_report_without_group_by(
                     "validation_name": ["count"] * 2,
                     "source_agg_value": ["1", "2"],
                     "target_agg_value": ["3", "4"],
-                    "group_by_columns": ['{"grp": "\\""}', '{"grp": "\\\\"}',],
+                    "group_by_columns": ['{"grp": "\\""}', '{"grp": "\\\\"}'],
                 }
             ),
         ),
