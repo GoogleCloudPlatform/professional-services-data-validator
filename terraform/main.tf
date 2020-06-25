@@ -21,6 +21,7 @@ resource "google_bigquery_dataset" "default" {
 }
 
 resource "google_bigquery_table" "default" {
+  project = var.project_id
   dataset_id = google_bigquery_dataset.default.dataset_id
   table_id = "results"
   schema = file("${path.module}/results_schema.json")
@@ -28,4 +29,8 @@ resource "google_bigquery_table" "default" {
       field = "start_time"
       type = "DAY"
   }
+  clustering = [
+    "validation_name",
+    "run_id",
+  ]
 }
