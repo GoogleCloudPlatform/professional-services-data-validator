@@ -85,12 +85,14 @@ def test_generate_report_with_different_columns(module_under_test):
                     "source_agg_value": ["1"],
                     "target_agg_value": ["2"],
                     "group_by_columns": [None],
+                    "difference": [1.0],
+                    "pct_difference": [100.0],
                 }
             ),
         ),
         (
-            pandas.DataFrame({"count": [12], "sum__ttteeesssttt": [-1]}),
-            pandas.DataFrame({"count": [13], "sum__ttteeesssttt": [1]}),
+            pandas.DataFrame({"count": [8], "sum__ttteeesssttt": [-1]}),
+            pandas.DataFrame({"count": [9], "sum__ttteeesssttt": [1]}),
             metadata.RunMetadata(
                 validations={
                     "count": metadata.ValidationMetadata(
@@ -124,9 +126,11 @@ def test_generate_report_with_different_columns(module_under_test):
                     "validation_type": ["Column", "Column"],
                     "aggregation_type": ["count", "sum"],
                     "validation_name": ["count", "sum__ttteeesssttt"],
-                    "source_agg_value": ["12", "-1"],
-                    "target_agg_value": ["13", "1"],
+                    "source_agg_value": ["8", "-1"],
+                    "target_agg_value": ["9", "1"],
                     "group_by_columns": [None, None],
+                    "difference": [1.0, 2.0],
+                    "pct_difference": [12.5, -200.0],
                 }
             ),
         ),
@@ -166,14 +170,14 @@ def test_generate_report_without_group_by(
         (
             pandas.DataFrame(
                 {
-                    "count": [1, 3, 5, 7],
+                    "count": [2, 4, 8, 16],
                     "grp_a": ["a", "a", "b", "b"],
                     "grp_i": [0, 1, 0, 1],
                 }
             ),
             pandas.DataFrame(
                 {
-                    "count": [2, 4, 6, 8],
+                    "count": [1, 3, 7, 17],
                     "grp_a": ["a", "a", "b", "b"],
                     "grp_i": [0, 1, 0, 1],
                 }
@@ -204,14 +208,16 @@ def test_generate_report_without_group_by(
                     "validation_type": ["GroupedColumn"] * 4,
                     "aggregation_type": ["count"] * 4,
                     "validation_name": ["count"] * 4,
-                    "source_agg_value": ["1", "3", "5", "7"],
-                    "target_agg_value": ["2", "4", "6", "8"],
+                    "source_agg_value": ["2", "4", "8", "16"],
+                    "target_agg_value": ["1", "3", "7", "17"],
                     "group_by_columns": [
                         '{"grp_a": "a", "grp_i": "0"}',
                         '{"grp_a": "a", "grp_i": "1"}',
                         '{"grp_a": "b", "grp_i": "0"}',
                         '{"grp_a": "b", "grp_i": "1"}',
                     ],
+                    "difference": [-1.0, -1.0, -1.0, 1.0],
+                    "pct_difference": [-50.0, -25.0, -12.5, 6.25],
                 }
             ),
         ),
@@ -247,20 +253,22 @@ def test_generate_report_without_group_by(
                     "source_agg_value": ["1", "2"],
                     "target_agg_value": ["3", "4"],
                     "group_by_columns": ['{"grp": "\\""}', '{"grp": "\\\\"}'],
+                    "difference": [2.0, 2.0],
+                    "pct_difference": [200.0, 100.0],
                 }
             ),
         ),
         (
             pandas.DataFrame(
                 {
-                    "count": [1, 3, 5, 7],
+                    "count": [2, 4, 6, 8],
                     "grp_a": ["a", "a", "c", "c"],
                     "grp_i": [0, 1, 0, 1],
                 }
             ),
             pandas.DataFrame(
                 {
-                    "count": [2, 4, 6, 8],
+                    "count": [1, 3, 5, 7],
                     "grp_a": ["a", "a", "b", "b"],
                     "grp_i": [0, 1, 0, 1],
                 }
@@ -305,8 +313,8 @@ def test_generate_report_without_group_by(
                     "validation_type": ["GroupedColumn"] * 6,
                     "aggregation_type": ["count"] * 6,
                     "validation_name": ["count"] * 6,
-                    "source_agg_value": ["1", "3", _NAN, _NAN, "5", "7"],
-                    "target_agg_value": ["2", "4", "6", "8", _NAN, _NAN],
+                    "source_agg_value": ["2", "4", _NAN, _NAN, "6", "8"],
+                    "target_agg_value": ["1", "3", "5", "7", _NAN, _NAN],
                     "group_by_columns": [
                         '{"grp_a": "a", "grp_i": "0"}',
                         '{"grp_a": "a", "grp_i": "1"}',
@@ -314,6 +322,22 @@ def test_generate_report_without_group_by(
                         '{"grp_a": "b", "grp_i": "1"}',
                         '{"grp_a": "c", "grp_i": "0"}',
                         '{"grp_a": "c", "grp_i": "1"}',
+                    ],
+                    "difference": [
+                        -1.0,
+                        -1.0,
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
+                    ],
+                    "pct_difference": [
+                        -50.0,
+                        -25.0,
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
                     ],
                 }
             ),

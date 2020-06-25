@@ -65,13 +65,58 @@ def generate_report(
             f"source: {source_names} target: {target_names}"
         )
 
-    all_fields = frozenset(source_names)
+    source_pivot, target_pivot, differences_pivot = _pivot_results(
+        source, target, join_on_fields, run_metadata
+    )
+    joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
+    documented = _add_metadata(joined, run_metadata)
+    return client.execute(documented)
+
+
+def _pivot_results(source, target, join_on_fields, run_metadata):
+    all_fields = frozenset(source.schema().names)
     validation_fields = all_fields - frozenset(join_on_fields)
     source_pivots = []
     target_pivots = []
+    differences_pivots = []
+    if join_on_fields:
+        differences_joined = source.join(target, join_on_fields, how="inner")
+    else:
+        differences_joined = source.cross_join(target)
 
     for field in validation_fields:
         validation_metadata = run_metadata.validations[field]
+        field_differences = differences_joined.projection(
+            [
+                source[field].name("differences_source_agg_value"),
+                target[field].name("differences_target_agg_value"),
+            ]
+            + [source[join_field] for join_field in join_on_fields]
+        )
+        differences_pivots.append(
+            field_differences[
+                (
+                    ibis.literal(field).name("validation_name"),
+                    (
+                        field_differences["differences_target_agg_value"]
+                        - field_differences["differences_source_agg_value"]
+                    )
+                    .cast("double")
+                    .name("difference"),
+                    (
+                        ibis.literal(100.0)
+                        * (
+                            field_differences["differences_target_agg_value"]
+                            - field_differences["differences_source_agg_value"]
+                        )
+                        / field_differences["differences_source_agg_value"]
+                    )
+                    .cast("double")
+                    .name("pct_difference"),
+                )
+                + join_on_fields
+            ]
+        )
         source_pivots.append(
             source.projection(
                 (
@@ -116,22 +161,16 @@ def generate_report(
                 + join_on_fields
             )
         )
-
     source_pivot = functools.reduce(
         lambda pivot1, pivot2: pivot1.union(pivot2), source_pivots
     )
     target_pivot = functools.reduce(
         lambda pivot1, pivot2: pivot1.union(pivot2), target_pivots
     )
-    joined = _join_pivots(source_pivot, target_pivot, join_on_fields)
-    joined = _add_metadata(joined, run_metadata)
-    return client.execute(joined)
-
-
-def _add_metadata(joined, run_metadata):
-    joined = joined[joined, ibis.literal(run_metadata.start_time).name("start_time")]
-    joined = joined[joined, ibis.literal(run_metadata.end_time).name("end_time")]
-    return joined
+    differences_pivot = functools.reduce(
+        lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots
+    )
+    return source_pivot, target_pivot, differences_pivot
 
 
 def _as_json(expr):
@@ -142,14 +181,14 @@ def _as_json(expr):
     return expr.cast("string").re_replace(r"\\", r"\\\\").re_replace('"', '\\"')
 
 
-def _join_pivots(source, target, join_on_fields):
+def _join_pivots(source, target, differences, join_on_fields):
     if join_on_fields:
         join_values = []
         for field in join_on_fields:
             join_values.append(
                 ibis.literal(json.dumps(field))
                 + ibis.literal(': "')
-                + _as_json(source[field])
+                + _as_json(target[field])
                 + ibis.literal('"')
             )
 
@@ -159,23 +198,41 @@ def _join_pivots(source, target, join_on_fields):
     else:
         group_by_columns = ibis.literal(None).cast("string").name("group_by_columns")
 
-    joined = source.join(target, ("validation_name",) + join_on_fields, how="outer")[
-        [
-            source["validation_name"],
-            source["source_validation_type"]
-            .fillna(target["target_validation_type"])
-            .name("validation_type"),
-            source["source_aggregation_type"]
-            .fillna(target["target_aggregation_type"])
-            .name("aggregation_type"),
+    join_keys = ("validation_name",) + join_on_fields
+    source_difference = source.join(differences, join_keys, how="outer")[
+        [source[field] for field in join_keys]
+        + [
+            source["source_validation_type"],
+            source["source_aggregation_type"],
             source["source_table_name"],
             source["source_column_name"],
             source["source_agg_value"],
-            target["target_table_name"],
-            target["target_column_name"],
-            target["target_agg_value"],
-            group_by_columns,
+            differences["difference"],
+            differences["pct_difference"],
         ]
     ]
+    joined = source_difference.join(target, join_keys, how="outer")[
+        source_difference["validation_name"],
+        source_difference["source_validation_type"]
+        .fillna(target["target_validation_type"])
+        .name("validation_type"),
+        source_difference["source_aggregation_type"]
+        .fillna(target["target_aggregation_type"])
+        .name("aggregation_type"),
+        source_difference["source_table_name"],
+        source_difference["source_column_name"],
+        source_difference["source_agg_value"],
+        target["target_table_name"],
+        target["target_column_name"],
+        target["target_agg_value"],
+        group_by_columns,
+        source_difference["difference"],
+        source_difference["pct_difference"],
+    ]
+    return joined
 
+
+def _add_metadata(joined, run_metadata):
+    joined = joined[joined, ibis.literal(run_metadata.start_time).name("start_time")]
+    joined = joined[joined, ibis.literal(run_metadata.end_time).name("end_time")]
     return joined
