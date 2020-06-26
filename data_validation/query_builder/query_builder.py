@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from data_validation.query_builder import ibis_expr
+
 import ibis
 
 
@@ -60,6 +62,11 @@ class AggregateField(object):
 
 
 class FilterField(object):
+
+    COMPARATOR_LOOKUP = {
+        "greater_than": ibis.expr.types.ColumnExpr.__gt__,
+        "less_than": ibis.expr.types.ColumnExpr.__lt__,
+    }
     def __init__(
         self, ibis_expr, left=None, right=None, left_field=None, right_field=None
     ):
@@ -68,7 +75,7 @@ class FilterField(object):
             (right or right_field).
 
         Args:
-            ibis_expr (ColumnExpr): A column expression to be used for comparisons
+            ibis_expr (ColumnExpr): A column expression to be used for comparisons (None represents a custom filter).
             left (Object): A value to compare on the left side of the expression
             left_field (String): A column name to be used to filter against
             right (Object): A value to compare on the right side of the expression
@@ -85,17 +92,30 @@ class FilterField(object):
     def greater_than(field_name, value):
         # Build Left and Right Objects
         return FilterField(
-            ibis.expr.types.ColumnExpr.__gt__, left_field=field_name, right=value
+            self.COMPARATOR_LOOKUP["greater_than"], left_field=field_name, right=value
         )
 
     @staticmethod
     def less_than(field_name, value):
         # Build Left and Right Objects
         return FilterField(
-            ibis.expr.types.ColumnExpr.__lt__, left_field=field_name, right=value
+            self.COMPARATOR_LOOKUP["less_than"], left_field=field_name, right=value
         )
 
+    @staticmethod
+    def custom(expr):
+        """ Returns a FilterField instance built for any custom SQL using a supported operator.
+
+        Args:
+            expr (Str): A custom SQL expression used to filter a query.
+        """
+        return FilterField(None, left=expr)
+
     def compile(self, ibis_table):
+        if self.expr is None:
+            print("compile summary")
+            return ibis_expr.compile_raw_sql(ibis_table, self.left)
+
         if self.left_field:
             self.left = ibis_table[self.left_field]
             # Cast All Datetime to Date (TODO this may be a bug in BQ)

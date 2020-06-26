@@ -17,6 +17,7 @@ from data_validation.query_builder.query_builder import (
     QueryBuilder,
     GroupedField,
     AggregateField,
+    FilterField,
 )
 
 
@@ -46,6 +47,7 @@ class ValidationBuilder(object):
 
         self.add_config_aggregates()
         self.add_config_query_groups()
+        self.add_config_filters()
         self.add_query_limit()
 
     @staticmethod
@@ -78,6 +80,12 @@ class ValidationBuilder(object):
         grouped_fields = self.config_manager.query_groups
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
+
+    def add_config_filters(self):
+        """ Add Filters to Query """
+        filter_fields = self.config_manager.filters
+        for filter_field in filter_fields:
+            self.add_filter(filter_field)
 
     def add_aggregate(self, aggregate_field):
         """ Add Aggregate Field to Queries
@@ -125,6 +133,21 @@ class ValidationBuilder(object):
         self.source_builder.add_grouped_field(source_field)
         self.target_builder.add_grouped_field(target_field)
         self.group_aliases.append(alias)
+
+    def add_filter(self, filter_field):
+        """ Add FilterField to Queries
+
+        Args:
+            filter_field (Dict): An object with source and target filter details
+        """
+        # TODO(dhercher): add tests
+        if filter_field[consts.CONFIG_TYPE] == "custom": # TODO(dhercher): add consts for filter fields
+            source_field = FilterField.custom(filter_field["source"])
+            target_field = FilterField.custom(filter_field["target"])
+
+        # TODO(dhercher): add metadata once PR26 is merged
+        self.source_builder.add_filter_field(source_field)
+        self.target_builder.add_filter_field(target_field)
 
     def get_source_query(self):
         """ Return query for source validation """
