@@ -144,7 +144,7 @@ class ValidationBuilder(object):
             source_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_SOURCE])
             target_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_TARGET])
 
-        # TODO(dhercher): add metadata once PR26 is merged
+        # TODO(issues/40): Add metadata around filters
         self.source_builder.add_filter_field(source_field)
         self.target_builder.add_filter_field(target_field)
 

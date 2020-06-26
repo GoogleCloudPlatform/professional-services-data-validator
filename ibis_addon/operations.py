@@ -12,6 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" The Ibis Addons Operations are intended to help facilitate new expressions
+when required before they can be pushed upstream to Ibis.
+
+Raw SQL Filters:
+The ability to inject RawSQL into a query DNE in Ibis.  It must be built out
+and applied to each Ibis Data Source directly as each has
+extended it's own registry.  Eventually this can potentially be pushed to
+Ibis as an override, though it would not apply for Pandas and other
+non-textual languages.
+"""
+
 import ibis
 
 from ibis.expr import datatypes
