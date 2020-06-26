@@ -12,25 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-provider "google" {}
+# Terraform backend to manage state for test environment. Delete this file to
+# use local Terraform state (for example in a development environment).
 
-resource "google_bigquery_dataset" "default" {
-  project = var.project_id
-  dataset_id = "pso_data_validator"
-  location = "US"
-}
-
-resource "google_bigquery_table" "default" {
-  project = var.project_id
-  dataset_id = google_bigquery_dataset.default.dataset_id
-  table_id = "results"
-  schema = file("${path.module}/results_schema.json")
-  time_partitioning {
-      field = "start_time"
-      type = "DAY"
+terraform {
+  backend "gcs" {
+    bucket  = "pso-kokoro-resources-terraform"
+    prefix  = "github/GoogleCloudPlatform/professional-services-data-validator"
   }
-  clustering = [
-    "validation_name",
-    "run_id",
-  ]
 }
