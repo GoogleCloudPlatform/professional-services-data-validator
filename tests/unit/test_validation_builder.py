@@ -18,7 +18,6 @@ import pytest
 
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
-from data_validation.query_builder.query_builder import FilterField
 
 
 COLUMN_VALIDATION_CONFIG = {
