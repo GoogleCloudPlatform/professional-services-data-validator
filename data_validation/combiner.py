@@ -108,8 +108,10 @@ def _pivot_results(source, target, join_on_fields, run_metadata):
                         * (
                             field_differences["differences_target_agg_value"]
                             - field_differences["differences_source_agg_value"]
+                        ).cast("double")
+                        / field_differences["differences_source_agg_value"].cast(
+                            "double"
                         )
-                        / field_differences["differences_source_agg_value"]
                     )
                     .cast("double")
                     .name("pct_difference"),
