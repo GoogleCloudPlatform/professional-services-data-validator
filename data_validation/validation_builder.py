@@ -140,10 +140,9 @@ class ValidationBuilder(object):
         Args:
             filter_field (Dict): An object with source and target filter details
         """
-        # TODO(dhercher): add tests
-        if filter_field[consts.CONFIG_TYPE] == "custom": # TODO(dhercher): add consts for filter fields
-            source_field = FilterField.custom(filter_field["source"])
-            target_field = FilterField.custom(filter_field["target"])
+        if filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_CUSTOM:
+            source_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_SOURCE])
+            target_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_TARGET])
 
         # TODO(dhercher): add metadata once PR26 is merged
         self.source_builder.add_filter_field(source_field)

@@ -62,7 +62,6 @@ class AggregateField(object):
 
 
 class FilterField(object):
-
     def __init__(
         self, ibis_expr, left=None, right=None, left_field=None, right_field=None
     ):

@@ -26,11 +26,16 @@ CONFIG_TARGET_TABLE_NAME = "target_table_name"
 CONFIG_FIELD_ALIAS = "field_alias"
 CONFIG_AGGREGATES = "aggregates"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
-CONFIG_FILTERS = "filters"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
 CONFIG_CAST = "cast"
 CONFIG_LIMIT = "limit"
+CONFIG_FILTERS = "filters"
+CONFIG_FILTER_SOURCE = "source"
+CONFIG_FILTER_TARGET = "target"
+
+# Filter Type Options
+FILTER_TYPE_CUSTOM = "custom"
 
 # Yaml File Config Fields
 YAML_SOURCE = "source"

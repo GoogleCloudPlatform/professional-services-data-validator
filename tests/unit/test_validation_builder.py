@@ -18,6 +18,7 @@ import pytest
 
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
+from data_validation.query_builder.query_builder import FilterField
 
 
 COLUMN_VALIDATION_CONFIG = {
@@ -30,6 +31,13 @@ COLUMN_VALIDATION_CONFIG = {
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_FILTERS: [
+        {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_CUSTOM,
+            consts.CONFIG_FILTER_SOURCE: "column_name > 100",
+            consts.CONFIG_FILTER_TARGET: "column_name_target > 100",
+        }
+    ]
 }
 
 QUERY_LIMIT = 100
@@ -115,3 +123,15 @@ def test_column_validation_limit(module_under_test):
     builder.add_query_limit()
 
     assert builder.source_builder.limit == QUERY_LIMIT
+
+
+def test_validation_add_filters(module_under_test):
+    mock_config_manager = ConfigManager(
+        COLUMN_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+
+    builder.add_config_filters()
+    filter_field = builder.source_builder.filters[0]
+
+    assert filter_field.left == "column_name > 100"
