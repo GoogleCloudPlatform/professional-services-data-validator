@@ -36,7 +36,7 @@ COLUMN_VALIDATION_CONFIG = {
             consts.CONFIG_FILTER_SOURCE: "column_name > 100",
             consts.CONFIG_FILTER_TARGET: "column_name_target > 100",
         }
-    ]
+    ],
 }
 
 QUERY_LIMIT = 100
