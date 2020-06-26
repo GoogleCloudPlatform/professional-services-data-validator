@@ -126,7 +126,7 @@ def test_grouped_count_validator():
     rows = list(df[df["validation_name"] == "count"].iterrows())
 
     # Check that all partitions are unique.
-    partitions = frozenset(df["starttime"])
+    partitions = frozenset(df["group_by_columns"])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
     assert df["source_agg_value"].sum() == df["target_agg_value"].sum()
