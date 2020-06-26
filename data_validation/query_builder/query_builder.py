@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from data_validation.query_builder import ibis_expr
-
 import ibis
+from ibis_teradata import operations
 
 
 class AggregateField(object):
@@ -108,7 +107,7 @@ class FilterField(object):
 
     def compile(self, ibis_table):
         if self.expr is None:
-            return ibis_expr.compile_raw_sql(ibis_table, self.left)
+            return operations.compile_raw_sql(ibis_table, self.left)
 
         if self.left_field:
             self.left = ibis_table[self.left_field]
