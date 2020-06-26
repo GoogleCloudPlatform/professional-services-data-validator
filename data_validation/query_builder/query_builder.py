@@ -63,10 +63,6 @@ class AggregateField(object):
 
 class FilterField(object):
 
-    COMPARATOR_LOOKUP = {
-        "greater_than": ibis.expr.types.ColumnExpr.__gt__,
-        "less_than": ibis.expr.types.ColumnExpr.__lt__,
-    }
     def __init__(
         self, ibis_expr, left=None, right=None, left_field=None, right_field=None
     ):
@@ -92,14 +88,14 @@ class FilterField(object):
     def greater_than(field_name, value):
         # Build Left and Right Objects
         return FilterField(
-            self.COMPARATOR_LOOKUP["greater_than"], left_field=field_name, right=value
+            ibis.expr.types.ColumnExpr.__gt__, left_field=field_name, right=value
         )
 
     @staticmethod
     def less_than(field_name, value):
         # Build Left and Right Objects
         return FilterField(
-            self.COMPARATOR_LOOKUP["less_than"], left_field=field_name, right=value
+            ibis.expr.types.ColumnExpr.__lt__, left_field=field_name, right=value
         )
 
     @staticmethod
@@ -113,7 +109,6 @@ class FilterField(object):
 
     def compile(self, ibis_table):
         if self.expr is None:
-            print("compile summary")
             return ibis_expr.compile_raw_sql(ibis_table, self.left)
 
         if self.left_field:
