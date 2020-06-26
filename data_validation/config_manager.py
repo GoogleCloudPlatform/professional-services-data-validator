@@ -66,6 +66,11 @@ class ConfigManager(object):
         """Return Aggregates from Config """
         return self._config.get(consts.CONFIG_AGGREGATES, [])
 
+    @property
+    def filters(self):
+        """Return Filters from Config """
+        return self._config.get(consts.CONFIG_FILTERS, [])
+
     def append_aggregates(self, aggregate_configs):
         """Append aggregate configs to existing config."""
         self._config[consts.CONFIG_AGGREGATES] = self.aggregates + aggregate_configs

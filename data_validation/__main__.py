@@ -106,7 +106,6 @@ def _get_yaml_config_from_file(config_file_path):
     with open(config_file_path, "r") as yaml_file:
         yaml_configs = load(yaml_file.read(), Loader=Loader)
 
-    print(yaml_configs)
     return yaml_configs
 
 
