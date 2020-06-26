@@ -29,6 +29,7 @@ packages = [
     "data_validation",
     "data_validation.query_builder",
     "data_validation.result_handlers",
+    "ibis_addon",
 ]
 packages += setuptools.find_packages(where=os.path.join("third_party", "ibis"))
 
