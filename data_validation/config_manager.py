@@ -82,6 +82,11 @@ class ConfigManager(object):
         )
 
     @property
+    def filters(self):
+        """Return Filters from Config """
+        return self._config.get(consts.CONFIG_FILTERS, [])
+
+    @property
     def source_schema(self):
         """Return string value of source schema."""
         return self._config[consts.CONFIG_SCHEMA_NAME]

@@ -84,6 +84,13 @@ def test_config_property(module_under_test):
     assert config == config_manager._config
 
 
+def test_filters_property(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    assert config_manager.filters == []
+
+
 def test_source_connection_property(module_under_test):
     """Test getting config copy."""
     config_manager = module_under_test.ConfigManager(

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import ibis
+from ibis_addon import operations
 
 
 class AggregateField(object):
@@ -68,7 +69,7 @@ class FilterField(object):
             (right or right_field).
 
         Args:
-            ibis_expr (ColumnExpr): A column expression to be used for comparisons
+            ibis_expr (ColumnExpr): A column expression to be used for comparisons (None represents a custom filter).
             left (Object): A value to compare on the left side of the expression
             left_field (String): A column name to be used to filter against
             right (Object): A value to compare on the right side of the expression
@@ -95,7 +96,19 @@ class FilterField(object):
             ibis.expr.types.ColumnExpr.__lt__, left_field=field_name, right=value
         )
 
+    @staticmethod
+    def custom(expr):
+        """ Returns a FilterField instance built for any custom SQL using a supported operator.
+
+        Args:
+            expr (Str): A custom SQL expression used to filter a query.
+        """
+        return FilterField(None, left=expr)
+
     def compile(self, ibis_table):
+        if self.expr is None:
+            return operations.compile_raw_sql(ibis_table, self.left)
+
         if self.left_field:
             self.left = ibis_table[self.left_field]
             # Cast All Datetime to Date (TODO this may be a bug in BQ)
