@@ -20,6 +20,8 @@ import datetime
 import typing
 import uuid
 
+from data_validation import consts
+
 
 @dataclasses.dataclass
 class ValidationMetadata(object):
@@ -29,6 +31,22 @@ class ValidationMetadata(object):
     target_table_name: str
     source_column_name: str
     target_column_name: str
+
+    def get_table_name(self, result_type):
+        if result_type == consts.RESULT_TYPE_SOURCE:
+            return self.source_table_name
+        elif result_type == consts.RESULT_TYPE_TARGET:
+            return self.target_table_name
+        else:
+            raise ValueError(f"Unexpected result_type: {result_type}")
+
+    def get_column_name(self, result_type):
+        if result_type == consts.RESULT_TYPE_SOURCE:
+            return self.source_column_name
+        elif result_type == consts.RESULT_TYPE_TARGET:
+            return self.target_column_name
+        else:
+            raise ValueError(f"Unexpected result_type: {result_type}")
 
 
 @dataclasses.dataclass

@@ -40,3 +40,7 @@ YAML_VALIDATIONS = "validations"
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
 COUNT_STAR = "{count_star}"
+
+# Validation metadata
+RESULT_TYPE_SOURCE = "source"
+RESULT_TYPE_TARGET = "target"

@@ -51,6 +51,23 @@ def test_generate_report_with_different_columns(module_under_test):
         )
 
 
+def test_generate_report_with_too_many_rows(module_under_test):
+    source = pandas.DataFrame({"count": [1, 1]})
+    target = pandas.DataFrame({"count": [2, 2]})
+    pandas_client = ibis.pandas.connect(
+        {
+            module_under_test.DEFAULT_SOURCE: source,
+            module_under_test.DEFAULT_TARGET: target,
+        }
+    )
+    with pytest.raises(ValueError, match="Expected 1 row per result table"):
+        module_under_test.generate_report(
+            pandas_client,
+            # Validation occurs before run_metadata is needed.
+            None,
+        )
+
+
 @pytest.mark.parametrize(
     ("source_df", "target_df", "run_metadata", "expected"),
     (
