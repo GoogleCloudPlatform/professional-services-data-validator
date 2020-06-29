@@ -23,6 +23,7 @@ TABLE_DF = pandas.DataFrame([{"column": "value"}])
 CLIENT = ibis.pandas.connect({"table": TABLE_DF})
 WHERE_FILTER = "id > 100"
 
+
 @pytest.fixture
 def module_under_test():
     from ibis_addon import operations
@@ -36,7 +37,7 @@ def test_import(module_under_test):
 
 def test_format_raw_sql_expr(module_under_test):
     ibis_table = CLIENT.table("table")
-    
+
     filters = [operations.compile_raw_sql(ibis_table, WHERE_FILTER)]
     query = ibis_table.filter(filters)
 
