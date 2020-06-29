@@ -22,6 +22,7 @@ import functools
 import json
 
 import ibis
+import ibis.expr.datatypes
 
 from data_validation import consts
 
@@ -87,6 +88,26 @@ def generate_report(
     return client.execute(documented)
 
 
+def _calculate_difference(field_differences, datatype):
+    if isinstance(datatype, ibis.expr.datatypes.Timestamp):
+        difference = ibis.literal(float("nan")).cast("double")
+        pct_difference = ibis.literal(float("nan")).cast("double")
+    else:
+        difference = (
+            field_differences["differences_target_agg_value"]
+            - field_differences["differences_source_agg_value"]
+        ).cast("double")
+        pct_difference = (
+            ibis.literal(100.0)
+            * difference
+            / field_differences["differences_source_agg_value"].cast(
+                "double"
+            )
+        ).cast("double")
+
+    return difference.name("difference"), pct_difference.name("pct_difference")
+
+
 def _calculate_differences(source, target, join_on_fields):
     """Calculate differences between source and target fields.
 
@@ -95,7 +116,8 @@ def _calculate_differences(source, target, join_on_fields):
     floating point value. The pivot casts all values to string, so the
     difference calculation would fail if done after that step.
     """
-    all_fields = frozenset(source.schema().names)
+    schema = source.schema()
+    all_fields = frozenset(schema.names)
     validation_fields = all_fields - frozenset(join_on_fields)
 
     if join_on_fields:
@@ -109,7 +131,10 @@ def _calculate_differences(source, target, join_on_fields):
 
     differences_pivots = []
 
-    for field in validation_fields:
+    for field, field_type in schema.items():
+        if field not in validation_fields:
+            continue
+
         field_differences = differences_joined.projection(
             [
                 source[field].name("differences_source_agg_value"),
@@ -117,32 +142,11 @@ def _calculate_differences(source, target, join_on_fields):
             ]
             + [source[join_field] for join_field in join_on_fields]
         )
-        differences_pivots.append(
-            field_differences[
-                (
-                    ibis.literal(field).name("validation_name"),
-                    (
-                        field_differences["differences_target_agg_value"]
-                        - field_differences["differences_source_agg_value"]
-                    )
-                    .cast("double")
-                    .name("difference"),
-                    (
-                        ibis.literal(100.0)
-                        * (
-                            field_differences["differences_target_agg_value"]
-                            - field_differences["differences_source_agg_value"]
-                        ).cast("double")
-                        / field_differences["differences_source_agg_value"].cast(
-                            "double"
-                        )
-                    )
-                    .cast("double")
-                    .name("pct_difference"),
-                )
-                + join_on_fields
-            ]
-        )
+        differences_pivots.append(field_differences[
+            (ibis.literal(field).name("validation_name"),)
+            + join_on_fields
+            + _calculate_difference(field_differences, field_type)
+        ])
 
     differences_pivot = functools.reduce(
         lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots

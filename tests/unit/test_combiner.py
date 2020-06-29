@@ -108,6 +108,42 @@ def test_generate_report_with_too_many_rows(module_under_test):
             ),
         ),
         (
+            pandas.DataFrame({"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}),
+            pandas.DataFrame({"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}),
+            metadata.RunMetadata(
+                validations={
+                    "timecol__max": metadata.ValidationMetadata(
+                        source_table_name="test_source",
+                        source_column_name="timecol",
+                        target_table_name="test_target",
+                        target_column_name="timecol",
+                        validation_type="Column",
+                        aggregation_type="max",
+                    ),
+                },
+                start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+            ),
+            pandas.DataFrame(
+                {
+                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "source_table_name": ["test_source"],
+                    "source_column_name": ["timecol"],
+                    "target_table_name": ["test_target"],
+                    "target_column_name": ["timecol"],
+                    "validation_type": ["Column"],
+                    "aggregation_type": ["max"],
+                    "validation_name": ["timecol__max"],
+                    "source_agg_value": ["2020-07-01 16:00:00+00:00"],
+                    "target_agg_value": ["2020-07-01 16:00:00+00:00"],
+                    "group_by_columns": [None],
+                    "difference": [float("nan")],
+                    "pct_difference": [float("nan")],
+                }
+            ),
+        ),
+        (
             pandas.DataFrame({"count": [8], "sum__ttteeesssttt": [-1]}),
             pandas.DataFrame({"count": [9], "sum__ttteeesssttt": [1]}),
             metadata.RunMetadata(
