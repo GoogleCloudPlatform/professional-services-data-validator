@@ -100,9 +100,7 @@ def _calculate_difference(field_differences, datatype):
         pct_difference = (
             ibis.literal(100.0)
             * difference
-            / field_differences["differences_source_agg_value"].cast(
-                "double"
-            )
+            / field_differences["differences_source_agg_value"].cast("double")
         ).cast("double")
 
     return difference.name("difference"), pct_difference.name("pct_difference")
@@ -142,11 +140,13 @@ def _calculate_differences(source, target, join_on_fields):
             ]
             + [source[join_field] for join_field in join_on_fields]
         )
-        differences_pivots.append(field_differences[
-            (ibis.literal(field).name("validation_name"),)
-            + join_on_fields
-            + _calculate_difference(field_differences, field_type)
-        ])
+        differences_pivots.append(
+            field_differences[
+                (ibis.literal(field).name("validation_name"),)
+                + join_on_fields
+                + _calculate_difference(field_differences, field_type)
+            ]
+        )
 
     differences_pivot = functools.reduce(
         lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots

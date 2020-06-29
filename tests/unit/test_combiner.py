@@ -108,8 +108,12 @@ def test_generate_report_with_too_many_rows(module_under_test):
             ),
         ),
         (
-            pandas.DataFrame({"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}),
-            pandas.DataFrame({"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}),
+            pandas.DataFrame(
+                {"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}
+            ),
+            pandas.DataFrame(
+                {"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}
+            ),
             metadata.RunMetadata(
                 validations={
                     "timecol__max": metadata.ValidationMetadata(
