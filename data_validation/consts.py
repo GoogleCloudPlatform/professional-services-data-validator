@@ -39,6 +39,7 @@ CONFIG_RESULT_HANDLER = "result_handler"
 FILTER_TYPE_CUSTOM = "custom"
 
 # Yaml File Config Fields
+YAML_RESULT_HANDLER = "result_handler"
 YAML_SOURCE = "source"
 YAML_TARGET = "target"
 YAML_VALIDATIONS = "validations"

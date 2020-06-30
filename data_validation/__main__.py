@@ -197,6 +197,7 @@ def build_config_managers_from_yaml(args):
     for config in yaml_configs[consts.YAML_VALIDATIONS]:
         config[consts.CONFIG_SOURCE_CONN] = yaml_configs[consts.YAML_SOURCE]
         config[consts.CONFIG_TARGET_CONN] = yaml_configs[consts.YAML_TARGET]
+        config[consts.CONFIG_RESULT_HANDLER] = yaml_configs[consts.YAML_RESULT_HANDLER]
         config_manager = ConfigManager(
             config, source_client, target_client, verbose=args.verbose
         )
@@ -215,6 +216,7 @@ def convert_config_to_yaml(config_managers):
     yaml_config = {
         consts.YAML_SOURCE: config_managers[0].source_connection,
         consts.YAML_TARGET: config_managers[0].target_connection,
+        consts.YAML_RESULT_HANDLER: config_managers[0].result_handler_config,
         consts.YAML_VALIDATIONS: [],
     }
 
