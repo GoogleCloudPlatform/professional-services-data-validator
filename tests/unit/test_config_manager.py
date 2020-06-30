@@ -27,6 +27,11 @@ SAMPLE_CONFIG = {
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_RESULT_HANDLER: {
+        consts.CONFIG_TYPE: "BigQuery",
+        consts.PROJECT_ID: "my-project",
+        consts.TABLE_ID: "dataset.table_name",
+    }
 }
 
 AGGREGATE_CONFIG_A = {
@@ -78,9 +83,6 @@ def test_config_property(module_under_test):
     )
 
     config = config_manager.config
-    assert config == config_manager._config
-
-    config["new_key"] = "I am a reference to the config."
     assert config == config_manager._config
 
 
@@ -176,4 +178,18 @@ def test_get_yaml_validation_block(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
     yaml_config = config_manager.get_yaml_validation_block()
+    expected_validation_keys = [
+        consts.CONFIG_TYPE, consts.CONFIG_SCHEMA_NAME,
+        consts.CONFIG_TABLE_NAME, consts.CONFIG_GROUPED_COLUMNS,
+    ]
     assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]
+    assert list(yaml_config.keys()) == expected_validation_keys
+
+
+def test_get_result_handler(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    handler = config_manager.get_result_handler()
+
+    assert handler._table_id == "dataset.table_name"

@@ -146,6 +146,8 @@ class ConfigManager(object):
 
         del config[consts.CONFIG_SOURCE_CONN]
         del config[consts.CONFIG_TARGET_CONN]
+        if consts.CONFIG_RESULT_HANDLER in config:
+            del config[consts.CONFIG_RESULT_HANDLER]
 
         return config
 
@@ -162,7 +164,6 @@ class ConfigManager(object):
                 project_id, table_id=table_id)
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")
-
 
 
     @staticmethod
