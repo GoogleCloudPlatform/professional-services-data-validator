@@ -95,6 +95,7 @@ CLI_STORE_COLUMN_ARGS = {
     "sum": '["tripduration","start_station_name"]',
     "count": '["tripduration","start_station_name"]',
     "config_file": "example_test.yaml",
+    "result_handler_config": None,
     "verbose": False,
 }
 
