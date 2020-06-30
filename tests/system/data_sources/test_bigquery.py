@@ -146,7 +146,7 @@ def test_cli_store_yaml_then_run(mock_args):
 
     yaml_file_path = CLI_STORE_COLUMN_ARGS["config_file"]
     with open(yaml_file_path, "r") as yaml_file:
-        assert len(yaml_file.readlines()) == 29
+        assert len(yaml_file.readlines()) == 30
 
     args = main.configure_arg_parser()
     config_managers = main.build_config_managers_from_yaml(args)
