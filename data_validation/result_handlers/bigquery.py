@@ -14,6 +14,8 @@
 
 """Output validation report to BigQuery tables"""
 
+from google.cloud.bigquery.client import Client
+
 
 class BigQueryResultHandler(object):
     """Write results of data validation to BigQuery.
@@ -29,6 +31,17 @@ class BigQueryResultHandler(object):
     def __init__(self, bigquery_client, table_id="pso_data_validator.results"):
         self._bigquery_client = bigquery_client
         self._table_id = table_id
+
+    @staticmethod
+    def get_handler_for_project(project_id, table_id="pso_data_validator.results"):
+        """Return BigQueryResultHandler instance for given project.
+
+        Args:
+            project_id (str): Project ID used for validation results.
+            table_id (str): Table ID used for validation results.
+        """
+        client = Client(project_id)
+        return BigQueryResultHandler(client, table_id=table_id)
 
     def execute(self, config, result_df):
         table = self._bigquery_client.get_table(self._table_id)

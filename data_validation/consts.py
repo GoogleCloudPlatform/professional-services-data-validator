@@ -33,6 +33,7 @@ CONFIG_LIMIT = "limit"
 CONFIG_FILTERS = "filters"
 CONFIG_FILTER_SOURCE = "source"
 CONFIG_FILTER_TARGET = "target"
+CONFIG_RESULT_HANDLER = "result_handler"
 
 # Filter Type Options
 FILTER_TYPE_CUSTOM = "custom"
@@ -41,6 +42,10 @@ FILTER_TYPE_CUSTOM = "custom"
 YAML_SOURCE = "source"
 YAML_TARGET = "target"
 YAML_VALIDATIONS = "validations"
+
+# BigQuery Result Handler Configs
+PROJECT_ID = "project_id"
+TABLE_ID = "table_id"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?

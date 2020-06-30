@@ -38,6 +38,7 @@ data-validation store -t Column \
 -tc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
 --sum '["tripduration","start_station_name"]' --count '["tripduration","start_station_name"]' \
+-rc '{"project_id":"pso-kokoro-resources","type":"BigQuery","table_id":"pso_data_validator.results"}'
 -c ex_yaml.yaml
 """
 
@@ -48,6 +49,7 @@ from yaml import dump, load, Dumper, Loader
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
+from data_validation.result_handlers.bigquery import BigQueryResultHandler
 
 
 def configure_arg_parser():
@@ -83,6 +85,7 @@ def configure_arg_parser():
         "-gc",
         help="JSON List of columns to use in group by '[\"col_a\"]'",
     )
+    parser.add_argument("--result-handler-config", "-rc", help="Result handler config details")
     parser.add_argument(
         "--config-file",
         "-c",
@@ -156,6 +159,10 @@ def build_config_managers_from_args(args):
     source_conn = json.loads(args.source_conn)
     target_conn = json.loads(args.target_conn)
 
+    result_handler_config = None
+    if args.result_handler_config:
+        result_handler_config = json.loads(args.result_handler_config)
+
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
 
@@ -168,6 +175,7 @@ def build_config_managers_from_args(args):
             source_client,
             target_client,
             table_obj,
+            result_handler_config=result_handler_config,
             verbose=args.verbose,
         )
         configs.append(build_config_from_args(args, config_manager))
