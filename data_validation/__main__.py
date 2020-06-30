@@ -49,7 +49,6 @@ from yaml import dump, load, Dumper, Loader
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
-from data_validation.result_handlers.bigquery import BigQueryResultHandler
 
 
 def configure_arg_parser():
@@ -85,7 +84,9 @@ def configure_arg_parser():
         "-gc",
         help="JSON List of columns to use in group by '[\"col_a\"]'",
     )
-    parser.add_argument("--result-handler-config", "-rc", help="Result handler config details")
+    parser.add_argument(
+        "--result-handler-config", "-rc", help="Result handler config details"
+    )
     parser.add_argument(
         "--config-file",
         "-c",

@@ -31,7 +31,7 @@ SAMPLE_CONFIG = {
         consts.CONFIG_TYPE: "BigQuery",
         consts.PROJECT_ID: "my-project",
         consts.TABLE_ID: "dataset.table_name",
-    }
+    },
 }
 
 AGGREGATE_CONFIG_A = {
@@ -179,8 +179,10 @@ def test_get_yaml_validation_block(module_under_test):
     )
     yaml_config = config_manager.get_yaml_validation_block()
     expected_validation_keys = [
-        consts.CONFIG_TYPE, consts.CONFIG_SCHEMA_NAME,
-        consts.CONFIG_TABLE_NAME, consts.CONFIG_GROUPED_COLUMNS,
+        consts.CONFIG_TYPE,
+        consts.CONFIG_SCHEMA_NAME,
+        consts.CONFIG_TABLE_NAME,
+        consts.CONFIG_GROUPED_COLUMNS,
     ]
     assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]
     assert list(yaml_config.keys()) == expected_validation_keys

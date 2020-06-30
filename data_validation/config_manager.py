@@ -161,10 +161,10 @@ class ConfigManager(object):
             project_id = self.result_handler_config[consts.PROJECT_ID]
             table_id = self.result_handler_config[consts.TABLE_ID]
             return BigQueryResultHandler.get_handler_for_project(
-                project_id, table_id=table_id)
+                project_id, table_id=table_id
+            )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")
-
 
     @staticmethod
     def build_config_manager(
