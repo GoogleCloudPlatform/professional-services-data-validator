@@ -16,6 +16,8 @@ import copy
 import logging
 
 from data_validation import consts
+from data_validation.result_handlers.bigquery import BigQueryResultHandler
+from data_validation.result_handlers.text import TextResultHandler
 
 
 class ConfigManager(object):
@@ -111,6 +113,11 @@ class ConfigManager(object):
         )
 
     @property
+    def result_handler_config(self):
+        """Return int limit for query executions."""
+        return self._config.get(consts.CONFIG_RESULT_HANDLER) or {}
+
+    @property
     def query_limit(self):
         """Return int limit for query executions."""
         return self._config.get(consts.CONFIG_LIMIT)
@@ -139,8 +146,25 @@ class ConfigManager(object):
 
         del config[consts.CONFIG_SOURCE_CONN]
         del config[consts.CONFIG_TARGET_CONN]
+        if consts.CONFIG_RESULT_HANDLER in config:
+            del config[consts.CONFIG_RESULT_HANDLER]
 
         return config
+
+    def get_result_handler(self):
+        """Return ResultHandler instance from supplied config."""
+        if not self.result_handler_config:
+            return TextResultHandler()
+
+        result_type = self.result_handler_config[consts.CONFIG_TYPE]
+        if result_type == "BigQuery":
+            project_id = self.result_handler_config[consts.PROJECT_ID]
+            table_id = self.result_handler_config[consts.TABLE_ID]
+            return BigQueryResultHandler.get_handler_for_project(
+                project_id, table_id=table_id
+            )
+        else:
+            raise ValueError(f"Unknown ResultHandler Class: {result_type}")
 
     @staticmethod
     def build_config_manager(
@@ -150,6 +174,7 @@ class ConfigManager(object):
         source_client,
         target_client,
         table_obj,
+        result_handler_config=None,
         verbose=False,
     ):
         """Return a ConfigManager instance with available config."""
@@ -165,6 +190,7 @@ class ConfigManager(object):
             consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(
                 consts.CONFIG_TARGET_TABLE_NAME, table_obj[consts.CONFIG_TABLE_NAME]
             ),
+            consts.CONFIG_RESULT_HANDLER: result_handler_config,
         }
 
         return ConfigManager(config, source_client, target_client, verbose=verbose)

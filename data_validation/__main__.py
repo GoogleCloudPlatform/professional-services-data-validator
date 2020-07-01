@@ -38,6 +38,7 @@ data-validation store -t Column \
 -tc '{"project_id":"pso-kokoro-resources","source_type":"BigQuery"}' \
 -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
 --sum '["tripduration","start_station_name"]' --count '["tripduration","start_station_name"]' \
+-rc '{"project_id":"pso-kokoro-resources","type":"BigQuery","table_id":"pso_data_validator.results"}'
 -c ex_yaml.yaml
 """
 
@@ -82,6 +83,9 @@ def configure_arg_parser():
         "--grouped-columns",
         "-gc",
         help="JSON List of columns to use in group by '[\"col_a\"]'",
+    )
+    parser.add_argument(
+        "--result-handler-config", "-rc", help="Result handler config details"
     )
     parser.add_argument(
         "--config-file",
@@ -156,6 +160,10 @@ def build_config_managers_from_args(args):
     source_conn = json.loads(args.source_conn)
     target_conn = json.loads(args.target_conn)
 
+    result_handler_config = None
+    if args.result_handler_config:
+        result_handler_config = json.loads(args.result_handler_config)
+
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
 
@@ -168,6 +176,7 @@ def build_config_managers_from_args(args):
             source_client,
             target_client,
             table_obj,
+            result_handler_config=result_handler_config,
             verbose=args.verbose,
         )
         configs.append(build_config_from_args(args, config_manager))
@@ -188,6 +197,7 @@ def build_config_managers_from_yaml(args):
     for config in yaml_configs[consts.YAML_VALIDATIONS]:
         config[consts.CONFIG_SOURCE_CONN] = yaml_configs[consts.YAML_SOURCE]
         config[consts.CONFIG_TARGET_CONN] = yaml_configs[consts.YAML_TARGET]
+        config[consts.CONFIG_RESULT_HANDLER] = yaml_configs[consts.YAML_RESULT_HANDLER]
         config_manager = ConfigManager(
             config, source_client, target_client, verbose=args.verbose
         )
@@ -206,6 +216,7 @@ def convert_config_to_yaml(config_managers):
     yaml_config = {
         consts.YAML_SOURCE: config_managers[0].source_connection,
         consts.YAML_TARGET: config_managers[0].target_connection,
+        consts.YAML_RESULT_HANDLER: config_managers[0].result_handler_config,
         consts.YAML_VALIDATIONS: [],
     }
 

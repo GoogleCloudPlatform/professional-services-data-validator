@@ -24,7 +24,6 @@ from ibis.sql.postgres.client import PostgreSQLClient
 from data_validation import consts, combiner, exceptions, metadata
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
-from data_validation.result_handlers.text import TextResultHandler
 
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
@@ -90,7 +89,7 @@ class DataValidation(object):
         )
 
         # Initialize the default Result Handler if None was supplied
-        self.result_handler = result_handler or TextResultHandler()
+        self.result_handler = result_handler or self.config_manager.get_result_handler()
 
     # TODO(dhercher) we planned on shifting this to use an Execution Handler.
     # Leaving to to swast on the design of how this should look.
