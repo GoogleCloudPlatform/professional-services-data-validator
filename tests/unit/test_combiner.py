@@ -51,6 +51,23 @@ def test_generate_report_with_different_columns(module_under_test):
         )
 
 
+def test_generate_report_with_too_many_rows(module_under_test):
+    source = pandas.DataFrame({"count": [1, 1]})
+    target = pandas.DataFrame({"count": [2, 2]})
+    pandas_client = ibis.pandas.connect(
+        {
+            module_under_test.DEFAULT_SOURCE: source,
+            module_under_test.DEFAULT_TARGET: target,
+        }
+    )
+    with pytest.raises(ValueError, match="Expected 1 row per result table"):
+        module_under_test.generate_report(
+            pandas_client,
+            # Validation occurs before run_metadata is needed.
+            None,
+        )
+
+
 @pytest.mark.parametrize(
     ("source_df", "target_df", "run_metadata", "expected"),
     (
@@ -85,12 +102,54 @@ def test_generate_report_with_different_columns(module_under_test):
                     "source_agg_value": ["1"],
                     "target_agg_value": ["2"],
                     "group_by_columns": [None],
+                    "difference": [1.0],
+                    "pct_difference": [100.0],
                 }
             ),
         ),
         (
-            pandas.DataFrame({"count": [12], "sum__ttteeesssttt": [-1]}),
-            pandas.DataFrame({"count": [13], "sum__ttteeesssttt": [1]}),
+            pandas.DataFrame(
+                {"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}
+            ),
+            pandas.DataFrame(
+                {"timecol__max": [pandas.Timestamp("2020-07-01T16:00:00Z")]}
+            ),
+            metadata.RunMetadata(
+                validations={
+                    "timecol__max": metadata.ValidationMetadata(
+                        source_table_name="test_source",
+                        source_column_name="timecol",
+                        target_table_name="test_target",
+                        target_column_name="timecol",
+                        validation_type="Column",
+                        aggregation_type="max",
+                    ),
+                },
+                start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+            ),
+            pandas.DataFrame(
+                {
+                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "source_table_name": ["test_source"],
+                    "source_column_name": ["timecol"],
+                    "target_table_name": ["test_target"],
+                    "target_column_name": ["timecol"],
+                    "validation_type": ["Column"],
+                    "aggregation_type": ["max"],
+                    "validation_name": ["timecol__max"],
+                    "source_agg_value": ["2020-07-01 16:00:00+00:00"],
+                    "target_agg_value": ["2020-07-01 16:00:00+00:00"],
+                    "group_by_columns": [None],
+                    "difference": [float("nan")],
+                    "pct_difference": [float("nan")],
+                }
+            ),
+        ),
+        (
+            pandas.DataFrame({"count": [8], "sum__ttteeesssttt": [-1]}),
+            pandas.DataFrame({"count": [9], "sum__ttteeesssttt": [1]}),
             metadata.RunMetadata(
                 validations={
                     "count": metadata.ValidationMetadata(
@@ -124,9 +183,11 @@ def test_generate_report_with_different_columns(module_under_test):
                     "validation_type": ["Column", "Column"],
                     "aggregation_type": ["count", "sum"],
                     "validation_name": ["count", "sum__ttteeesssttt"],
-                    "source_agg_value": ["12", "-1"],
-                    "target_agg_value": ["13", "1"],
+                    "source_agg_value": ["8", "-1"],
+                    "target_agg_value": ["9", "1"],
                     "group_by_columns": [None, None],
+                    "difference": [1.0, 2.0],
+                    "pct_difference": [12.5, -200.0],
                 }
             ),
         ),
@@ -166,14 +227,14 @@ def test_generate_report_without_group_by(
         (
             pandas.DataFrame(
                 {
-                    "count": [1, 3, 5, 7],
+                    "count": [2, 4, 8, 16],
                     "grp_a": ["a", "a", "b", "b"],
                     "grp_i": [0, 1, 0, 1],
                 }
             ),
             pandas.DataFrame(
                 {
-                    "count": [2, 4, 6, 8],
+                    "count": [1, 3, 7, 17],
                     "grp_a": ["a", "a", "b", "b"],
                     "grp_i": [0, 1, 0, 1],
                 }
@@ -204,14 +265,16 @@ def test_generate_report_without_group_by(
                     "validation_type": ["GroupedColumn"] * 4,
                     "aggregation_type": ["count"] * 4,
                     "validation_name": ["count"] * 4,
-                    "source_agg_value": ["1", "3", "5", "7"],
-                    "target_agg_value": ["2", "4", "6", "8"],
+                    "source_agg_value": ["2", "4", "8", "16"],
+                    "target_agg_value": ["1", "3", "7", "17"],
                     "group_by_columns": [
                         '{"grp_a": "a", "grp_i": "0"}',
                         '{"grp_a": "a", "grp_i": "1"}',
                         '{"grp_a": "b", "grp_i": "0"}',
                         '{"grp_a": "b", "grp_i": "1"}',
                     ],
+                    "difference": [-1.0, -1.0, -1.0, 1.0],
+                    "pct_difference": [-50.0, -25.0, -12.5, 6.25],
                 }
             ),
         ),
@@ -247,20 +310,22 @@ def test_generate_report_without_group_by(
                     "source_agg_value": ["1", "2"],
                     "target_agg_value": ["3", "4"],
                     "group_by_columns": ['{"grp": "\\""}', '{"grp": "\\\\"}'],
+                    "difference": [2.0, 2.0],
+                    "pct_difference": [200.0, 100.0],
                 }
             ),
         ),
         (
             pandas.DataFrame(
                 {
-                    "count": [1, 3, 5, 7],
+                    "count": [2, 4, 6, 8],
                     "grp_a": ["a", "a", "c", "c"],
                     "grp_i": [0, 1, 0, 1],
                 }
             ),
             pandas.DataFrame(
                 {
-                    "count": [2, 4, 6, 8],
+                    "count": [1, 3, 5, 7],
                     "grp_a": ["a", "a", "b", "b"],
                     "grp_i": [0, 1, 0, 1],
                 }
@@ -305,8 +370,8 @@ def test_generate_report_without_group_by(
                     "validation_type": ["GroupedColumn"] * 6,
                     "aggregation_type": ["count"] * 6,
                     "validation_name": ["count"] * 6,
-                    "source_agg_value": ["1", "3", _NAN, _NAN, "5", "7"],
-                    "target_agg_value": ["2", "4", "6", "8", _NAN, _NAN],
+                    "source_agg_value": ["2", "4", _NAN, _NAN, "6", "8"],
+                    "target_agg_value": ["1", "3", "5", "7", _NAN, _NAN],
                     "group_by_columns": [
                         '{"grp_a": "a", "grp_i": "0"}',
                         '{"grp_a": "a", "grp_i": "1"}',
@@ -314,6 +379,22 @@ def test_generate_report_without_group_by(
                         '{"grp_a": "b", "grp_i": "1"}',
                         '{"grp_a": "c", "grp_i": "0"}',
                         '{"grp_a": "c", "grp_i": "1"}',
+                    ],
+                    "difference": [
+                        -1.0,
+                        -1.0,
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
+                    ],
+                    "pct_difference": [
+                        -50.0,
+                        -25.0,
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
+                        float("nan"),
                     ],
                 }
             ),

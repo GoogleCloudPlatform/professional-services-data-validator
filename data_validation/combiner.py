@@ -22,6 +22,9 @@ import functools
 import json
 
 import ibis
+import ibis.expr.datatypes
+
+from data_validation import consts
 
 
 DEFAULT_SOURCE = "source"
@@ -65,73 +68,120 @@ def generate_report(
             f"source: {source_names} target: {target_names}"
         )
 
-    all_fields = frozenset(source_names)
+    source_count = source.count().execute()
+    target_count = target.count().execute()
+    if not join_on_fields and (source_count > 1 or target_count > 1):
+        raise ValueError(
+            "Expected 1 row per result table when receiving no join_on_fields. "
+            f"Got source: {source_count} rows, target: {target_count} rows"
+        )
+
+    differences_pivot = _calculate_differences(source, target, join_on_fields)
+    source_pivot = _pivot_result(
+        source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
+    )
+    target_pivot = _pivot_result(
+        target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
+    )
+    joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
+    documented = _add_metadata(joined, run_metadata)
+    return client.execute(documented)
+
+
+def _calculate_difference(field_differences, datatype):
+    if isinstance(datatype, ibis.expr.datatypes.Timestamp):
+        difference = ibis.literal(float("nan")).cast("double")
+        pct_difference = ibis.literal(float("nan")).cast("double")
+    else:
+        difference = (
+            field_differences["differences_target_agg_value"]
+            - field_differences["differences_source_agg_value"]
+        ).cast("double")
+        pct_difference = (
+            ibis.literal(100.0)
+            * difference
+            / field_differences["differences_source_agg_value"].cast("double")
+        ).cast("double")
+
+    return difference.name("difference"), pct_difference.name("pct_difference")
+
+
+def _calculate_differences(source, target, join_on_fields):
+    """Calculate differences between source and target fields.
+
+    This function is separate from the "pivot" logic because we want to
+    calculate the differences with the original data type before casting to a
+    floating point value. The pivot casts all values to string, so the
+    difference calculation would fail if done after that step.
+    """
+    schema = source.schema()
+    all_fields = frozenset(schema.names)
     validation_fields = all_fields - frozenset(join_on_fields)
-    source_pivots = []
-    target_pivots = []
+
+    if join_on_fields:
+        # Use an inner join because a row must be present in source and target
+        # for the difference to be well defined.
+        differences_joined = source.join(target, join_on_fields, how="inner")
+    else:
+        # When no join_on_fields are present, we expect only one row per table.
+        # This is validated in generate_report before this function is called.
+        differences_joined = source.cross_join(target)
+
+    differences_pivots = []
+
+    for field, field_type in schema.items():
+        if field not in validation_fields:
+            continue
+
+        field_differences = differences_joined.projection(
+            [
+                source[field].name("differences_source_agg_value"),
+                target[field].name("differences_target_agg_value"),
+            ]
+            + [source[join_field] for join_field in join_on_fields]
+        )
+        differences_pivots.append(
+            field_differences[
+                (ibis.literal(field).name("validation_name"),)
+                + join_on_fields
+                + _calculate_difference(field_differences, field_type)
+            ]
+        )
+
+    differences_pivot = functools.reduce(
+        lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots
+    )
+    return differences_pivot
+
+
+def _pivot_result(result, join_on_fields, validations, result_type):
+    all_fields = frozenset(result.schema().names)
+    validation_fields = all_fields - frozenset(join_on_fields)
+    pivots = []
 
     for field in validation_fields:
-        validation_metadata = run_metadata.validations[field]
-        source_pivots.append(
-            source.projection(
+        validation = validations[field]
+        pivots.append(
+            result.projection(
                 (
                     ibis.literal(field).name("validation_name"),
-                    ibis.literal(validation_metadata.validation_type).name(
-                        "source_validation_type"
+                    ibis.literal(validation.validation_type).name("validation_type"),
+                    ibis.literal(validation.aggregation_type).name("aggregation_type"),
+                    ibis.literal(validation.get_table_name(result_type)).name(
+                        "table_name"
                     ),
-                    ibis.literal(validation_metadata.aggregation_type).name(
-                        "source_aggregation_type"
-                    ),
-                    ibis.literal(validation_metadata.source_table_name).name(
-                        "source_table_name"
-                    ),
-                    # Cast to string to ensure types match, even when column name is NULL.
-                    ibis.literal(validation_metadata.source_column_name)
+                    # Cast to string to ensure types match, even when column
+                    # name is NULL (such as for count aggregations).
+                    ibis.literal(validation.get_column_name(result_type))
                     .cast("string")
-                    .name("source_column_name"),
-                    source[field].cast("string").name("source_agg_value"),
+                    .name("column_name"),
+                    result[field].cast("string").name("agg_value"),
                 )
                 + join_on_fields
             )
         )
-        target_pivots.append(
-            target.projection(
-                (
-                    ibis.literal(field).name("validation_name"),
-                    ibis.literal(validation_metadata.validation_type).name(
-                        "target_validation_type"
-                    ),
-                    ibis.literal(validation_metadata.aggregation_type).name(
-                        "target_aggregation_type"
-                    ),
-                    ibis.literal(validation_metadata.target_table_name).name(
-                        "target_table_name"
-                    ),
-                    # Cast to string to ensure types match, even when column name is NULL.
-                    ibis.literal(validation_metadata.target_column_name)
-                    .cast("string")
-                    .name("target_column_name"),
-                    target[field].cast("string").name("target_agg_value"),
-                )
-                + join_on_fields
-            )
-        )
-
-    source_pivot = functools.reduce(
-        lambda pivot1, pivot2: pivot1.union(pivot2), source_pivots
-    )
-    target_pivot = functools.reduce(
-        lambda pivot1, pivot2: pivot1.union(pivot2), target_pivots
-    )
-    joined = _join_pivots(source_pivot, target_pivot, join_on_fields)
-    joined = _add_metadata(joined, run_metadata)
-    return client.execute(joined)
-
-
-def _add_metadata(joined, run_metadata):
-    joined = joined[joined, ibis.literal(run_metadata.start_time).name("start_time")]
-    joined = joined[joined, ibis.literal(run_metadata.end_time).name("end_time")]
-    return joined
+    pivot = functools.reduce(lambda pivot1, pivot2: pivot1.union(pivot2), pivots)
+    return pivot
 
 
 def _as_json(expr):
@@ -142,14 +192,14 @@ def _as_json(expr):
     return expr.cast("string").re_replace(r"\\", r"\\\\").re_replace('"', '\\"')
 
 
-def _join_pivots(source, target, join_on_fields):
+def _join_pivots(source, target, differences, join_on_fields):
     if join_on_fields:
         join_values = []
         for field in join_on_fields:
             join_values.append(
                 ibis.literal(json.dumps(field))
                 + ibis.literal(': "')
-                + _as_json(source[field])
+                + _as_json(target[field])
                 + ibis.literal('"')
             )
 
@@ -159,23 +209,41 @@ def _join_pivots(source, target, join_on_fields):
     else:
         group_by_columns = ibis.literal(None).cast("string").name("group_by_columns")
 
-    joined = source.join(target, ("validation_name",) + join_on_fields, how="outer")[
-        [
-            source["validation_name"],
-            source["source_validation_type"]
-            .fillna(target["target_validation_type"])
-            .name("validation_type"),
-            source["source_aggregation_type"]
-            .fillna(target["target_aggregation_type"])
-            .name("aggregation_type"),
-            source["source_table_name"],
-            source["source_column_name"],
-            source["source_agg_value"],
-            target["target_table_name"],
-            target["target_column_name"],
-            target["target_agg_value"],
-            group_by_columns,
+    join_keys = ("validation_name",) + join_on_fields
+    source_difference = source.join(differences, join_keys, how="outer")[
+        [source[field] for field in join_keys]
+        + [
+            source["validation_type"],
+            source["aggregation_type"],
+            source["table_name"],
+            source["column_name"],
+            source["agg_value"],
+            differences["difference"],
+            differences["pct_difference"],
         ]
     ]
+    joined = source_difference.join(target, join_keys, how="outer")[
+        source_difference["validation_name"],
+        source_difference["validation_type"]
+        .fillna(target["validation_type"])
+        .name("validation_type"),
+        source_difference["aggregation_type"]
+        .fillna(target["aggregation_type"])
+        .name("aggregation_type"),
+        source_difference["table_name"].name("source_table_name"),
+        source_difference["column_name"].name("source_column_name"),
+        source_difference["agg_value"].name("source_agg_value"),
+        target["table_name"].name("target_table_name"),
+        target["column_name"].name("target_column_name"),
+        target["agg_value"].name("target_agg_value"),
+        group_by_columns,
+        source_difference["difference"],
+        source_difference["pct_difference"],
+    ]
+    return joined
 
+
+def _add_metadata(joined, run_metadata):
+    joined = joined[joined, ibis.literal(run_metadata.start_time).name("start_time")]
+    joined = joined[joined, ibis.literal(run_metadata.end_time).name("end_time")]
     return joined
