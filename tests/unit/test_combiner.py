@@ -87,9 +87,11 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                run_id="test-run",
             ),
             pandas.DataFrame(
                 {
+                    "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
                     "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
                     "source_table_name": ["test_source"],
@@ -127,9 +129,11 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                run_id="test-run",
             ),
             pandas.DataFrame(
                 {
+                    "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
                     "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
                     "source_table_name": ["test_source"],
@@ -171,9 +175,11 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                run_id="test-run",
             ),
             pandas.DataFrame(
                 {
+                    "run_id": ["test-run"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
                     "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 2,
                     "source_table_name": ["test_source", "test_source"],
@@ -253,9 +259,11 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                run_id="grouped-test",
             ),
             pandas.DataFrame(
                 {
+                    "run_id": ["grouped-test"] * 4,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 4,
                     "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 4,
                     "source_table_name": ["test_source"] * 4,
@@ -295,9 +303,11 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                run_id="grouped-test",
             ),
             pandas.DataFrame(
                 {
+                    "run_id": ["grouped-test"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
                     "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 2,
                     "source_table_name": ["test_source"] * 2,
@@ -344,9 +354,11 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                run_id="grouped-test",
             ),
             pandas.DataFrame(
                 {
+                    "run_id": ["grouped-test"] * 6,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 6,
                     "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 6,
                     "source_table_name": [

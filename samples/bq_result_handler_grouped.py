@@ -20,9 +20,8 @@ from data_validation import data_validation
 from data_validation.result_handlers import bigquery as bqhandler
 
 
-BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
-
-
+PROJECT_ID = os.environ["PROJECT_ID"]
+BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
 GROUPED_CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Config
     "source_conn": BQ_CONN,
@@ -50,7 +49,7 @@ GROUPED_CONFIG_COUNT_VALID = {
     ],
 }
 
-bqclient = bigquery.Client()
+bqclient = bigquery.Client(project=PROJECT_ID)
 result_handler = bqhandler.BigQueryResultHandler(bqclient)
 validator = data_validation.DataValidation(
     GROUPED_CONFIG_COUNT_VALID, verbose=True, result_handler=result_handler

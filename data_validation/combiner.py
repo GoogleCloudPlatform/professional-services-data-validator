@@ -244,6 +244,10 @@ def _join_pivots(source, target, differences, join_on_fields):
 
 
 def _add_metadata(joined, run_metadata):
-    joined = joined[joined, ibis.literal(run_metadata.start_time).name("start_time")]
-    joined = joined[joined, ibis.literal(run_metadata.end_time).name("end_time")]
+    joined = joined[
+        joined,
+        ibis.literal(run_metadata.run_id).name("run_id"),
+        ibis.literal(run_metadata.start_time).name("start_time"),
+        ibis.literal(run_metadata.end_time).name("end_time"),
+    ]
     return joined
