@@ -34,7 +34,7 @@ packages = [
 packages += setuptools.find_packages(where=os.path.join("third_party", "ibis"))
 
 setuptools.setup(
-    name="data-validator",
+    name="google-pso-data-validator",
     version="0.0.1",
     author="Dylan Hercher",
     author_email="dhercher@google.com",

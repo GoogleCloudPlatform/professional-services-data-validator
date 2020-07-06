@@ -9,3 +9,4 @@ pyspark==2.4.5
 apache-airflow==1.10.9
 pandas==0.25.3
 google-cloud-bigquery==1.22.0
+setuptools>=34.0.0

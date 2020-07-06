@@ -14,8 +14,6 @@
 
 import os
 
-from google.cloud import bigquery
-
 from data_validation import data_validation
 from data_validation.result_handlers import bigquery as bqhandler
 
@@ -49,8 +47,7 @@ GROUPED_CONFIG_COUNT_VALID = {
     ],
 }
 
-bqclient = bigquery.Client(project=PROJECT_ID)
-result_handler = bqhandler.BigQueryResultHandler(bqclient)
+result_handler = bqhandler.BigQueryResultHandler.get_handler_for_project(PROJECT_ID)
 validator = data_validation.DataValidation(
     GROUPED_CONFIG_COUNT_VALID, verbose=True, result_handler=result_handler
 )

@@ -14,7 +14,9 @@
 
 """Output validation report to BigQuery tables"""
 
-from google.cloud.bigquery.client import Client
+from google.cloud import bigquery
+
+from data_validation import client_info
 
 
 class BigQueryResultHandler(object):
@@ -40,7 +42,8 @@ class BigQueryResultHandler(object):
             project_id (str): Project ID used for validation results.
             table_id (str): Table ID used for validation results.
         """
-        client = Client(project_id)
+        info = client_info.get_http_client_info()
+        client = bigquery.Client(project=project_id, client_info=info)
         return BigQueryResultHandler(client, table_id=table_id)
 
     def execute(self, config, result_df):
