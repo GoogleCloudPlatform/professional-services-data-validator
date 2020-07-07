@@ -33,7 +33,7 @@ def module_under_test():
 
 def test_import(module_under_test):
     """Test import cleanly """
-    assert True
+    assert module_under_test is not None
 
 
 def test_basic_result_handler(module_under_test):
