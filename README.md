@@ -145,13 +145,15 @@ via `pip install teradatasql` if you have a license.
 }
 ```
 
-## Output Handler Configurations
+## Validation Reports
+
+The data validation tool can write the results of a validation run to Google
+BigQuery or print to Std Out.
 
 The output handlers tell the data validation where to store the results of each validation.
 By default the handler will print to stdout.
 
 ### Configure tool to output to BigQuery
-
 ```
 {
     # Configuration Required for All Data Soures
@@ -234,11 +236,6 @@ out_config = {
 builder = query_builder.QueryBuilder.build_partition_count_validator()
 data_validation.process_data(builder, inp_config, out_config)
 ```
-
-## Validation Reports
-
-The data validation tool can write the results of a validation run to Google
-BigQuery.
 
 ## Contributing
 
