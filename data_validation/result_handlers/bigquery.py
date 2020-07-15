@@ -35,15 +35,20 @@ class BigQueryResultHandler(object):
         self._table_id = table_id
 
     @staticmethod
-    def get_handler_for_project(project_id, table_id="pso_data_validator.results"):
+    def get_handler_for_project(
+        project_id, table_id="pso_data_validator.results", credentials=None
+    ):
         """Return BigQueryResultHandler instance for given project.
 
         Args:
             project_id (str): Project ID used for validation results.
             table_id (str): Table ID used for validation results.
+            credentials (google.auth.credentials.Credentials):
+                Explicit credentials to use in case default credentials
+                aren't working properly.
         """
         info = client_info.get_http_client_info()
-        client = bigquery.Client(project=project_id, client_info=info)
+        client = bigquery.Client(project=project_id, client_info=info, credentials=credentials)
         return BigQueryResultHandler(client, table_id=table_id)
 
     def execute(self, config, result_df):

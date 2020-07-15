@@ -15,6 +15,8 @@
 import copy
 import logging
 
+import google.oauth2.service_account
+
 from data_validation import consts
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
@@ -35,6 +37,9 @@ class ConfigManager(object):
             source_client (IbisClient): The Ibis client for the source DB
             target_client (IbisClient): The Ibis client for the target DB
             verbose (Bool): If verbose, the Data Validation client will print queries run
+            google_credentials (google.auth.credentials.Credentials):
+                Explicit credentials to use in case default credentials
+                aren't working properly.
         """
         self._config = config
 
@@ -160,8 +165,13 @@ class ConfigManager(object):
         if result_type == "BigQuery":
             project_id = self.result_handler_config[consts.PROJECT_ID]
             table_id = self.result_handler_config[consts.TABLE_ID]
+            key_path = self.result_handler_config.get(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
+            if key_path:
+                credentials = google.oauth2.service_account.Credentials.from_service_account_file(key_path)
+            else:
+                credentials = None
             return BigQueryResultHandler.get_handler_for_project(
-                project_id, table_id=table_id
+                project_id, table_id=table_id, credentials=credentials
             )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")

@@ -40,6 +40,8 @@ data-validation store -t Column \
 --sum '["tripduration","start_station_name"]' --count '["tripduration","start_station_name"]' \
 -rc '{"project_id":"pso-kokoro-resources","type":"BigQuery","table_id":"pso_data_validator.results"}'
 -c ex_yaml.yaml
+
+data-validation run-config -c ex_yaml.yaml
 """
 
 import argparse
