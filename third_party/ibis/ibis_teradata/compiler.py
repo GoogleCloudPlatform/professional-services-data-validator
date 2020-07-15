@@ -168,7 +168,6 @@ class TeradataSelectBuilder(comp.SelectBuilder):
         op = expr.op()
 
         method = "_visit_select_{0}".format(type(op).__name__)
-        print("VISIT METHOD: %s" % method)
         return super()._visit_select_expr(expr)
 
 
