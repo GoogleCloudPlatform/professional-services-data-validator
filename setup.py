@@ -31,7 +31,10 @@ packages = [
     "data_validation.result_handlers",
     "ibis_addon",
 ]
-packages += setuptools.find_packages(where=os.path.join("third_party", "ibis"))
+packages += [
+    "third_party.ibis.{}".format(path)
+    for path in setuptools.find_packages(where=os.path.join("third_party", "ibis"))
+]
 
 setuptools.setup(
     name="google-pso-data-validator",
@@ -43,7 +46,6 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/pypa/sampleproject",
     packages=packages,
-    package_dir={"ibis_teradata": os.path.join("third_party", "ibis")},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

@@ -33,7 +33,7 @@ warnings.filterwarnings(
 
 # If you have a Teradata License there is an optional teradatasql import
 try:
-    from ibis_teradata.client import TeradataClient
+    from third_party.ibis.ibis_teradata.client import TeradataClient
 except Exception:
     TeradataClient = None
 
