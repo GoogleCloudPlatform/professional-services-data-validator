@@ -48,7 +48,9 @@ class BigQueryResultHandler(object):
                 aren't working properly.
         """
         info = client_info.get_http_client_info()
-        client = bigquery.Client(project=project_id, client_info=info, credentials=credentials)
+        client = bigquery.Client(
+            project=project_id, client_info=info, credentials=credentials
+        )
         return BigQueryResultHandler(client, table_id=table_id)
 
     def execute(self, config, result_df):
