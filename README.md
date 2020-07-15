@@ -53,7 +53,7 @@ bq mk --table \
 
 ### Deploy Data Validation CLI
 
-The Data Validation tooling requires Python 3.6+ and Terraform installed.
+The Data Validation tooling requires Python 3.6+.
 
 ```
 # Clone repo locally or install via pip
