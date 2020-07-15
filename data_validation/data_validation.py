@@ -101,7 +101,7 @@ class DataValidation(object):
         source_df = self.source_client.execute(
             self.validation_builder.get_source_query()
         )
-        target_df = self.source_client.execute(
+        target_df = self.target_client.execute(
             self.validation_builder.get_target_query()
         )
         join_on_fields = self.validation_builder.get_group_aliases()
