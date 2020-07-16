@@ -16,13 +16,17 @@ import os
 
 import setuptools
 
+name = 'google-pso-data-validator'
+description = "A package to enable easy data validation"
+version = '0.1.0'
+release_status = 'Development Status :: 3 - Alpha'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-install_requires = open("requirements.txt").read().strip().split("\n")
-install_requires = [
-    v for v in install_requires if not v.startswith("#")
+dependencies = open("requirements.txt").read().strip().split("\n")
+dependencies = [
+    v for v in dependencies if not v.startswith("#")
 ]  # Remove comments
 
 packages = [
@@ -37,22 +41,24 @@ packages += [
 ]
 
 setuptools.setup(
-    name="google-pso-data-validator",
-    version="0.0.1",
+    name=name,
+    description=description,
+    version=version,
     author="Dylan Hercher",
     author_email="dhercher@google.com",
-    description="A package to enable easy data validation",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pypa/sampleproject",
     packages=packages,
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        release_status,
+        'License :: OSI Approved :: Apache Software License',
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.6",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=install_requires,
+    install_requires=dependencies,
     entry_points={
         "console_scripts": ["data-validation=data_validation.__main__:main",]
     },
