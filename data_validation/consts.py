@@ -47,6 +47,7 @@ YAML_VALIDATIONS = "validations"
 # BigQuery Result Handler Configs
 PROJECT_ID = "project_id"
 TABLE_ID = "table_id"
+GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?

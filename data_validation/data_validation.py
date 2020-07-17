@@ -16,6 +16,7 @@ import copy
 import datetime
 import warnings
 
+import google.oauth2.service_account
 from ibis.bigquery.client import BigQueryClient
 import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
@@ -100,7 +101,7 @@ class DataValidation(object):
         source_df = self.source_client.execute(
             self.validation_builder.get_source_query()
         )
-        target_df = self.source_client.execute(
+        target_df = self.target_client.execute(
             self.validation_builder.get_target_query()
         )
         join_on_fields = self.validation_builder.get_group_aliases()
@@ -122,6 +123,16 @@ class DataValidation(object):
         """ Return DataClient client from given configuration """
         connection_config = copy.deepcopy(connection_config)
         source_type = connection_config.pop(consts.SOURCE_TYPE)
+
+        # The BigQueryClient expects a credentials object, not a string.
+        if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
+            key_path = connection_config[consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH]
+            del connection_config[consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH]
+            connection_config[
+                "credentials"
+            ] = google.oauth2.service_account.Credentials.from_service_account_file(
+                key_path
+            )
 
         if source_type not in CLIENT_LOOKUP:
             msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
