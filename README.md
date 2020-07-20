@@ -162,7 +162,7 @@ Currently the only form of filter supported is a custom filter written by you in
 }
 ```
 
-Note that you are writing the query to execute, which does not have to match between source and target as long as the reuslts can be expected to align.
+Note that you are writing the query to execute, which does not have to match between source and target as long as the results can be expected to align.
 
 
 ## Validation Reports
