@@ -145,6 +145,26 @@ via `pip install teradatasql` if you have a license.
 }
 ```
 
+## Query Configurations
+
+It is possible to customize the configuration for a given validation.  The CLI expects that you are trying to compare two identical tables; however, you can customize each query (sour or target) either by running the validation with a custom configuration in Python or editing a save YAML configuration file.
+
+### Filters
+
+Currently the only form of filter supported is a custom filter written by you in the syntax of the given source.  In future we will also release pre-built filters to cover certain usecases (ie. `SELECT * FROM table WHERE created_at > 30 days ago;`).
+
+#### Custom Filters
+```
+{
+    "type": "custom",
+    "source": "created_at > '2020-01-01 00:00:00'::TIMESTAMP",
+    "target": "created_at > '2020-01-01 00:00:00'",
+}
+```
+
+Note that you are writing the query to execute, which does not have to match between source and target as long as the reuslts can be expected to align.
+
+
 ## Validation Reports
 
 The data validation tool can write the results of a validation run to Google
