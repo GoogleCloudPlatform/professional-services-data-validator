@@ -190,6 +190,20 @@ By default the handler will print to stdout.
 }
 ```
 
+## Add Support for an existing Ibis Data Source
+
+If you want to add an Ibis Data Source which exists, but was not yet supported in the Data Validation tool, it is a simple process.
+
+1. In data_validation/data_validation.py
+    - Import the extened Client for the given source (ie. from ibis.sql.mysql.client import MySQLClient).
+    - Add the "<RefName>": Client to the global CLIENT_LOOKUP dictionary.
+
+2. In ibis_addon/operations.py
+    - Add the RawSQL operator to the data source registry (for custom filter support).
+
+3. You are done, you can reference the data source via the config.
+    - Config: {"source_type": "<RefName>", ...KV Values required in Client...}
+
 ## Deploy to Composer
 ```
 #!/bin/bash
