@@ -145,6 +145,26 @@ via `pip install teradatasql` if you have a license.
 }
 ```
 
+## Query Configurations
+
+It is possible to customize the configuration for a given validation.  The CLI expects that you are trying to compare two identical tables; however, you can customize each query (sour or target) either by running the validation with a custom configuration in Python or editing a saved YAML configuration file.
+
+### Filters
+
+Currently the only form of filter supported is a custom filter written by you in the syntax of the given source.  In future we will also release pre-built filters to cover certain usecases (ie. `SELECT * FROM table WHERE created_at > 30 days ago;`).
+
+#### Custom Filters
+```
+{
+    "type": "custom",
+    "source": "created_at > '2020-01-01 00:00:00'::TIMESTAMP",
+    "target": "created_at > '2020-01-01 00:00:00'",
+}
+```
+
+Note that you are writing the query to execute, which does not have to match between source and target as long as the results can be expected to align.
+
+
 ## Validation Reports
 
 The data validation tool can write the results of a validation run to Google
@@ -169,6 +189,20 @@ By default the handler will print to stdout.
     "table_id": "dataset_name.table_name"
 }
 ```
+
+## Add Support for an existing Ibis Data Source
+
+If you want to add an Ibis Data Source which exists, but was not yet supported in the Data Validation tool, it is a simple process.
+
+1. In data_validation/data_validation.py
+    - Import the extened Client for the given source (ie. from ibis.sql.mysql.client import MySQLClient).
+    - Add the "<RefName>": Client to the global CLIENT_LOOKUP dictionary.
+
+2. In ibis_addon/operations.py
+    - Add the RawSQL operator to the data source registry (for custom filter support).
+
+3. You are done, you can reference the data source via the config.
+    - Config: {"source_type": "<RefName>", ...KV Values required in Client...}
 
 ## Deploy to Composer
 ```
