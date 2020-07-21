@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import ibis
-from ibis_addon import operations
+from third_party.ibis.ibis_addon import operations
 
 
 class AggregateField(object):
