@@ -211,7 +211,7 @@ If you want to add an Ibis Data Source which exists, but was not yet supported i
     - Import the extened Client for the given source (ie. from ibis.sql.mysql.client import MySQLClient).
     - Add the "<RefName>": Client to the global CLIENT_LOOKUP dictionary.
 
-2. In ibis_addon/operations.py
+2. In third_partty/ibis/ibis_addon/operations.py
     - Add the RawSQL operator to the data source registry (for custom filter support).
 
 3. You are done, you can reference the data source via the config.

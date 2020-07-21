@@ -16,7 +16,7 @@ import pandas
 import pytest
 import ibis.pandas
 
-from ibis_addon import operations
+from third_party.ibis.ibis_addon import operations
 
 
 TABLE_DF = pandas.DataFrame([{"column": "value"}])
