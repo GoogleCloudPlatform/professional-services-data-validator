@@ -55,19 +55,32 @@ bq mk --table \
 
 The Data Validation tooling requires Python 3.6+.
 
-```
-# Clone repo locally or install via pip
-git clone git@github.com:GoogleCloudPlatform/professional-services-data-validator.git
-cd professional-services-data-validator/
-python -m pip install --upgrade pip
-python -m pip install .
+Create and activate a new virtual environment to sandbox the tool and its
+dependencies from your system installation of Python.
 
-# NOTE: If you require Teradata and have a license.
+```
+python3.6 -m venv venv
+source venv/bin/activate
+```
+
+Download and install the Python Wheel package file corresponding to the
+latest release from
+[GitHub](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases)
+or Google Drive.
+
+```
+python -m pip install ~/Downloads/pso_data_validator-0.1.0-py3-none-any.whl
+```
+
+If you require Teradata and have a license, install the `teradatasql` package.
+
+```
 python -m pip install teradatasql
 ```
 
 After installing the Data Validation package you will
-have access to the `data-validation -h` tool on your CLI.
+have access to the `data-validation -h` or `python -m data_validation -h`
+tool on your CLI.
 
 #### Running CLI Validations
 

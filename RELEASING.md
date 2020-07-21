@@ -63,4 +63,5 @@
   - Copy the release notes there.
   - Upload both files from the `dist/` directory.
 
-- Upload to Google Drive (just the `.whl` wheel file).
+- Upload the `.whl` wheel file, README, and CHANGELOG to [Google
+  Drive](https://drive.google.com/corp/drive/folders/1C387pJKyqOCTN0I7sIm0SP6pfHu0PrLG).
