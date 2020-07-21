@@ -26,7 +26,7 @@ WHERE_FILTER = "id > 100"
 
 @pytest.fixture
 def module_under_test():
-    from ibis_addon import operations
+    from third_party.ibis.ibis_addon import operations
 
     return operations
 
