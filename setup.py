@@ -31,7 +31,6 @@ packages = [
     "data_validation",
     "data_validation.query_builder",
     "data_validation.result_handlers",
-    "ibis_addon",
 ]
 packages += [
     "third_party.ibis.{}".format(path)
