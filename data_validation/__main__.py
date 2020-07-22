@@ -59,7 +59,7 @@ def configure_arg_parser():
         usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("command", help="Command to Run (run, store, run-config)")
+    parser.add_argument("command", help="Command to Run (run, store, run-config, find-tables)")
 
     parser.add_argument(
         "--type", "-t", help="Type of Data Validation (Column, GroupedColumn)"
@@ -209,6 +209,55 @@ def build_config_managers_from_yaml(args):
     return config_managers
 
 
+def _get_all_tables_from_client(client):
+    """Return a Dict of Dict objects with table info."""
+    table_map = {}
+    for database_name in client.list_databases():
+        for table_name in client.list_tables(database=database_name):
+            table_obj = {
+                consts.CONFIG_SCHEMA_NAME: database_name,
+                consts.CONFIG_TABLE_NAME: table_name,
+            }
+            table_key = "{}__{}".format(database_name, table_name)
+            table_map[table_key] = table_obj
+
+    return table_map
+
+
+def _compare_match_tables(source_table_map, target_table_map):
+    """Return dict config object from matching tables."""
+    from fuzzywuzzy import process
+    table_configs = []
+
+    target_keys = target_table_map.keys()
+    for source_key in source_table_map:
+        target_key, score = process.extractOne(source_key, target_keys, score_cutoff=0)
+        table_config = {
+            consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
+            consts.CONFIG_TABLE_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
+            consts.CONFIG_TARGET_SCHEMA_NAME: target_table_map[target_key][consts.CONFIG_SCHEMA_NAME],
+            consts.CONFIG_TARGET_TABLE_NAME: target_table_map[target_key][consts.CONFIG_SCHEMA_NAME],
+        }
+        table_configs.append(table_config)
+
+    return table_configs
+
+
+def find_tables_using_fuzzy(args):
+    """Return JSON String with matched tables for use in validations."""
+    source_conn = json.loads(args.source_conn)
+    target_conn = json.loads(args.target_conn)
+
+    source_client = DataValidation.get_data_client(source_conn)
+    target_client = DataValidation.get_data_client(target_conn)
+
+    source_table_map = _get_all_tables_from_client(source_client)
+    target_table_map = _get_all_tables_from_client(target_client)
+
+    table_configs = _compare_match_tables(source_table_map, target_table_map)
+    return json.dumps(table_configs)
+
+
 def convert_config_to_yaml(config_managers):
     """Return dict objects formatted for yaml validations.
 
@@ -284,6 +333,8 @@ def main():
     elif args.command == "run-config":
         config_managers = build_config_managers_from_yaml(args)
         run_validations(args, config_managers)
+    elif args.command == "find-tables":
+        return find_tables_using_fuzzy(args)
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
