@@ -99,6 +99,12 @@ CLI_STORE_COLUMN_ARGS = {
     "verbose": False,
 }
 
+CLI_FIND_TABLES_ARGS = {
+    "command": "find-tables",
+    "source_conn": json.dumps(BQ_CONN),
+    "target_conn": json.dumps(BQ_CONN),
+}
+
 
 def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
@@ -156,3 +162,12 @@ def test_cli_store_yaml_then_run(mock_args):
     main.run_validations(args, config_managers)
 
     os.remove(yaml_file_path)
+
+
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_FIND_TABLES_ARGS),
+)
+def test_cli_find_tables(mock_args):
+    tables_json = main.main()
+    assert isinstance(tables_json, str)
