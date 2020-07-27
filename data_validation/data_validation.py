@@ -21,6 +21,7 @@ from ibis.bigquery.client import BigQueryClient
 import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
+from ibis.impala.client import ImpalaClient
 
 from data_validation import consts, combiner, exceptions, metadata
 from data_validation.config_manager import ConfigManager
@@ -44,6 +45,7 @@ CLIENT_LOOKUP = {
     "MySQL": MySQLClient,
     "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
+    "Impala": ImpalaClient,
 }
 
 
