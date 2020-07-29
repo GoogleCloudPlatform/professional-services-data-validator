@@ -48,7 +48,7 @@ import argparse
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation import consts
+from data_validation import consts, jellyfish_distance
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
@@ -226,12 +226,12 @@ def _get_all_tables_from_client(client):
 
 def _compare_match_tables(source_table_map, target_table_map):
     """Return dict config object from matching tables."""
-    from fuzzywuzzy import process
+    # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
     table_configs = []
 
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
-        target_key, score = process.extractOne(source_key, target_keys, score_cutoff=0)
+        target_key, score = jellyfish_distance.extractClosestMatch(source_key, target_keys, score_cutoff=0)
         table_config = {
             consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
             consts.CONFIG_TABLE_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
