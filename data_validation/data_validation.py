@@ -18,7 +18,7 @@ import warnings
 
 import google.oauth2.service_account
 from ibis.bigquery.client import BigQueryClient
-from ibis.impala.client import ImpalaClient
+import ibis.impala
 import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
@@ -42,7 +42,7 @@ except Exception:
 
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
-    "Impala": ImpalaClient,
+    "Impala": ibis.impala.connect,
     "MySQL": MySQLClient,
     "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
