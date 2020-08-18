@@ -27,6 +27,7 @@ import ibis
 
 from ibis.expr import datatypes
 from ibis.expr.operations import Comparison
+from ibis.impala.compiler import ImpalaExprTranslator
 
 
 class RawSQL(Comparison):
@@ -45,6 +46,7 @@ def format_raw_sql(translator, expr):
 
 
 ibis.bigquery.compiler.BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
+ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 try:
     # Try to add Teradata and pass if error (not imported)
     from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
