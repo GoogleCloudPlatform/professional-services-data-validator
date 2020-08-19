@@ -220,7 +220,7 @@ def run_connections(args):
 
 def main():
     # Create Parser and Get Deployment Info
-    args = cli_tools.configure_arg_parser()
+    args = cli_tools.get_parsed_args()
 
     if args.command == "run":
         run(args)

@@ -16,7 +16,6 @@ import argparse
 from unittest import mock
 
 from data_validation import cli_tools
-from data_validation import __main__ as main
 
 
 TEST_CONN = '{"source_type":"Example"}'
@@ -36,9 +35,37 @@ CLI_ARGS = {
 @mock.patch(
     "argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(**CLI_ARGS),
 )
-def test_configure_arg_parser(mock_args):
+def test_get_parsed_args(mock_args):
     """Test arg parser values."""
     args = cli_tools.get_parsed_args()
-    file_path = main._get_arg_config_file(args)
+    assert args.command == "run"
+    assert args.verbose
 
-    assert file_path == "example_test.yaml"
+
+def test_configure_arg_parser_list_connections():
+    """Test configuring arg parse in different ways."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(["connections", "list"])
+
+    assert args.command == "connections"
+    assert args.connect_cmd == "list"
+
+
+def test_get_connection_config_from_args():
+    """Test configuring arg parse in different ways."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "connections",
+            "store",
+            "--type",
+            "BigQuery",
+            "--project-id",
+            "example-project",
+            "--connection-name",
+            "test",
+        ]
+    )
+    conn = cli_tools.get_connection_config_from_args(args)
+
+    assert conn["project_id"] == "example-project"

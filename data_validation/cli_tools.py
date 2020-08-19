@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-""" TODO: The Data Validation CLI tool is intended to help to build and execute
+""" The Data Validation CLI tool is intended to help to build and execute
 data validation runs with ease.
 
 The Data Validator can be called either using:
@@ -25,13 +25,11 @@ Step 1) Store Connection to be used in validation
 data-validation connections store -c my_bq_conn -t BigQuery -p pso-kokoro-resources
 
 Step 2) Run Validation using supplied connections
-data-validation run -t Column \
--sc my_bq_conn -tc my_bq_conn \
+data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
 -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
 --sum '*' --count '*'
 
-python -m data_validation run -t GroupedColumn \
--sc my_bq_conn -tc my_bq_conn \
+python -m data_validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn \
 -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' \
 --grouped-columns '["starttime"]' \
 --sum '["tripduration"]' --count '["tripduration"]'
@@ -59,6 +57,13 @@ CONNECTION_SOURCE_FIELDS = {
     "Teradata": ["host", "port", "user", "password"],
 }
 
+
+def get_parsed_args():
+    """ Return ArgParser with configured CLI arguments."""
+    parser = configure_arg_parser()
+    return parser.parse_args()
+
+
 def configure_arg_parser():
     """Extract Args for Run."""
     parser = argparse.ArgumentParser(
@@ -67,16 +72,22 @@ def configure_arg_parser():
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
     subparsers = parser.add_subparsers(dest="command")
-    
-    run_parser = subparsers.add_parser("run", help="Manually run a validation and optionally store to config")
-    run_config_parser = subparsers.add_parser("run-config", help="Run validations stored in a YAML config file")
-    connection_parser = subparsers.add_parser("connections", help="Manage & Store connections to your Databases")
+
+    run_parser = subparsers.add_parser(
+        "run", help="Manually run a validation and optionally store to config"
+    )
+    run_config_parser = subparsers.add_parser(
+        "run-config", help="Run validations stored in a YAML config file"
+    )
+    connection_parser = subparsers.add_parser(
+        "connections", help="Manage & Store connections to your Databases"
+    )
 
     _configure_run_parser(run_parser)
     _configure_run_config_parser(run_config_parser)
     _configure_connection_parser(connection_parser)
 
-    return parser.parse_args()
+    return parser
 
 
 def _configure_run_config_parser(run_config_parser):
@@ -128,11 +139,15 @@ def _configure_run_parser(run_parser):
 def _configure_connection_parser(connection_parser):
     """ Configure the Parser for Connection Management. """
     subparsers = connection_parser.add_subparsers(dest="connect_cmd")
-    list_parser = subparsers.add_parser("list", help="List your connections")
+    _ = subparsers.add_parser("list", help="List your connections")
     store_parser = subparsers.add_parser("store", help="Store a new connection")
 
-    store_parser.add_argument("--connection-name", "-c", help="Name of connection used as reference")
-    store_parser.add_argument("--type", "-t", help="Source Type (BigQuery, Teradata, MySQL)")
+    store_parser.add_argument(
+        "--connection-name", "-c", help="Name of connection used as reference"
+    )
+    store_parser.add_argument(
+        "--type", "-t", help="Source Type (BigQuery, Teradata, MySQL)"
+    )
     store_parser.add_argument("--project-id", "-p", help="GCP Project ID")
     store_parser.add_argument("--json", "-j", help="(Optional) Json string config")
 
