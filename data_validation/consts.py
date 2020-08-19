@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+from os.path import expanduser
+
 # Configuration Fields
 SOURCE_TYPE = "source_type"
 CONFIG = "config"
@@ -39,6 +41,9 @@ CONFIG_RESULT_HANDLER = "result_handler"
 FILTER_TYPE_CUSTOM = "custom"
 
 # Yaml File Config Fields
+HOME_DIR = expanduser("~")
+ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+DEFAULT_ENV_DIRECTORY = f"{HOME_DIR}/.config/google-pso-data-validator/"
 YAML_RESULT_HANDLER = "result_handler"
 YAML_SOURCE = "source"
 YAML_TARGET = "target"
