@@ -81,25 +81,22 @@ def configure_arg_parser():
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
     subparsers = parser.add_subparsers(dest="command")
 
-    run_parser = subparsers.add_parser(
-        "run", help="Manually run a validation and optionally store to config"
-    )
-    run_config_parser = subparsers.add_parser(
-        "run-config", help="Run validations stored in a YAML config file"
-    )
     connection_parser = subparsers.add_parser(
         "connections", help="Manage & Store connections to your Databases"
     )
 
-    _configure_run_parser(run_parser)
-    _configure_run_config_parser(run_config_parser)
-    _configure_connection_parser(connection_parser)
+    _configure_run_parser(subparsers)
+    _configure_run_config_parser(subparsers)
+    _configure_connection_parser(subparsers)
 
     return parser
 
 
-def _configure_run_config_parser(run_config_parser):
+def _configure_run_config_parser(subparsers):
     """ Configure arguments to run a data validation YAML config."""
+    run_config_parser = subparsers.add_parser(
+        "run-config", help="Run validations stored in a YAML config file"
+    )
     run_config_parser.add_argument(
         "--config-file",
         "-c",
@@ -107,8 +104,12 @@ def _configure_run_config_parser(run_config_parser):
     )
 
 
-def _configure_run_parser(run_parser):
+def _configure_run_parser(subparsers):
     """ Configure arguments to run a data validation."""
+    run_parser = subparsers.add_parser(
+        "run", help="Manually run a validation and optionally store to config"
+    )
+
     run_parser.add_argument(
         "--type", "-t", help="Type of Data Validation (Column, GroupedColumn)"
     )
@@ -144,12 +145,15 @@ def _configure_run_parser(run_parser):
     )
 
 
-def _configure_connection_parser(connection_parser):
+def _configure_connection_parser(subparsers):
     """ Configure the Parser for Connection Management. """
-    subparsers = connection_parser.add_subparsers(dest="connect_cmd")
-    _ = subparsers.add_parser("list", help="List your connections")
+    connection_parser = subparsers.add_parser(
+        "connections", help="Manage & Store connections to your Databases"
+    )
+    connect_subparsers = connection_parser.add_subparsers(dest="connect_cmd")
+    _ = connect_subparsers.add_parser("list", help="List your connections")
 
-    add_parser = subparsers.add_parser("add", help="Store a new connection")
+    add_parser = connect_subparsers.add_parser("add", help="Store a new connection")
     add_parser.add_argument(
         "--connection-name", "-c", help="Name of connection used as reference"
     )
