@@ -196,12 +196,16 @@ def get_connection_config_from_args(args):
 
 def _get_data_validation_directory():
     dir_path = os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
-    if not dir_path.endswith("/"):
-        dir_path = dir_path + "/"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
     return dir_path
+
+def _get_connection_file(connection_name):
+    dir_path = _get_data_validation_directory()
+    file_name = f"{connection_name}.connection.json"
+
+    return os.path.join(dir_path, file_name)
 
 
 def _generate_random_name(conn):
@@ -211,9 +215,8 @@ def _generate_random_name(conn):
 
 def store_connection(connection_name, conn):
     """ Store the connection config under the given name."""
-    dir_path = _get_data_validation_directory()
     connection_name = connection_name or _generate_random_name(conn)
-    file_path = f"{dir_path}{connection_name}.connection.json"
+    file_path = _get_connection_file(connection_name)
 
     with open(file_path, "w") as file:
         file.write(json.dumps(conn))
@@ -232,9 +235,7 @@ def list_connections(args):
 
 def get_connection(connection_name):
     """ Return dict connection details for a specific connection."""
-    dir_path = _get_data_validation_directory()
-    file_path = f"{dir_path}{connection_name}.connection.json"
-
+    file_path = _get_connection_file(connection_name)
     with open(file_path, "r") as file:
         conn_str = file.read()
 
