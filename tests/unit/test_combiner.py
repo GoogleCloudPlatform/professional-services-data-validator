@@ -392,8 +392,8 @@ def test_generate_report_without_group_by(
                         '{"grp_a": "c", "grp_i": "0"}',
                         '{"grp_a": "c", "grp_i": "1"}',
                     ],
-                    "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN,],
-                    "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN,],
+                    "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
+                    "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
                 }
             ),
         ),
