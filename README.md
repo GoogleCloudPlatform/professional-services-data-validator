@@ -85,12 +85,26 @@ tool on your CLI.
 
 The CLI has several different commands which can be used to create and re-run validations.
 
+The first step is to establish connections to your source and target databases.  You can save
+and list connections.  They will be saved either to `~/.config/google-pso-data-validator/` or 
+a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
+You can manage connections via the CLI:
+```
+data-validation connections
+  store 
+    --connection-name my-conn-name
+    --type BigQuery
+    --project-id my-gcp-project
+
+data-validation connections list
+```
+
 To manually run a validation, use the `run` command and to save the validation to a yaml
-file switch to `store` and add a config file path.  Below details the configurations you
-will use for both `run` and `store`.
+file add the flag `--config-file`.  Below details the configurations you
+will use to run and to store validations.
 
 ```
-data-validation {run|store}
+data-validation run
   --type TYPE, -t TYPE  Type of Data Validation (Column, GroupedColumn)
   --source-conn SOURCE_CONN
                         Source connection details.
@@ -110,7 +124,7 @@ data-validation {run|store}
                         Result handler config details.
                         See: *Output Handler Configurations* section
   --config-file CONFIG_FILE
-                        YAML Config File Path to be used for building or running validations.
+                        YAML Config File Path to be used for storing validations.
   --verbose, -v         Verbose logging will print queries executed
 ```
 
@@ -119,7 +133,7 @@ very easily via:
 ```
 data-validation run-config
   --config-file CONFIG_FILE
-                        YAML Config File Path to be used for building or running validations.
+                        YAML Config File Path to be used for executing validations.
   --verbose, -v         Verbose logging will print queries executed
 
 ```
