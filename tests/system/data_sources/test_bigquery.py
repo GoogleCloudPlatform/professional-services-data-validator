@@ -17,12 +17,13 @@ import json
 import os
 from unittest import mock
 
-from data_validation import consts, data_validation
+from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
+
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
 CONFIG_COUNT_VALID = {
-    # BigQuery Specific Connection Config
+    # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
     consts.CONFIG_TARGET_CONN: BQ_CONN,
     # Validation Type
@@ -86,18 +87,12 @@ CONFIG_GROUPED_COUNT_VALID = {
     ],
 }
 
-CLI_STORE_COLUMN_ARGS = {
-    "command": "store",
-    "type": "Column",
-    "source_conn": json.dumps(BQ_CONN),
-    "target_conn": json.dumps(BQ_CONN),
-    "tables_list": '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
-    "sum": '["tripduration","start_station_name"]',
-    "count": '["tripduration","start_station_name"]',
-    "config_file": "example_test.yaml",
-    "result_handler_config": None,
-    "verbose": False,
-}
+BQ_CONN_NAME = "bq-integration-test"
+CLI_CONFIG_FILE = "example_test.yaml"
+
+BQ_CONN_ARGS = ["connections", "add", "--connection-name", BQ_CONN_NAME, "BigQuery", "--project-id", os.environ["PROJECT_ID"]]
+CLI_STORE_COLUMN_ARGS = ["run", "--type", "Column", "--source-conn", BQ_CONN_NAME, "--target-conn", BQ_CONN_NAME, "--tables-list", '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]', "--sum", '["tripduration","start_station_name"]', "--count", '["tripduration","start_station_name"]', "--config-file", CLI_CONFIG_FILE]
+CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 
 
 def test_count_validator():
@@ -137,22 +132,31 @@ def test_grouped_count_validator():
         assert row["source_agg_value"] == row["target_agg_value"]
 
 
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CLI_STORE_COLUMN_ARGS),
-)
-def test_cli_store_yaml_then_run(mock_args):
-    main.main()
+def test_cli_store_yaml_then_run():
+    # Store BQ Connection
+    _store_bq_conn()
 
-    yaml_file_path = CLI_STORE_COLUMN_ARGS["config_file"]
+    # Build validation and store to file
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(CLI_STORE_COLUMN_ARGS)
+    main.run(mock_args)
+
+    yaml_file_path = CLI_CONFIG_FILE
     with open(yaml_file_path, "r") as yaml_file:
         # The number of lines is not significant, except that it represents
         # the exact file expected to be created.  Any change to this value
         # is likely to be a breaking change and must be assessed.
-        assert len(yaml_file.readlines()) == 30
+        assert len(yaml_file.readlines()) == 26
 
-    args = main.configure_arg_parser()
-    config_managers = main.build_config_managers_from_yaml(args)
-    main.run_validations(args, config_managers)
+    # Run generated config
+    run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
+
+
+def _store_bq_conn():
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(BQ_CONN_ARGS)
+    main.run_connections(mock_args)

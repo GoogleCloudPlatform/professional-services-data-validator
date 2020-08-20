@@ -156,16 +156,6 @@ def _configure_connection_parser(connection_parser):
     )
     _configure_database_specific_parsers(add_parser)
 
-    # store_parser = subparsers.add_parser("add", help="Store a new connection")
-    # store_parser.add_argument(
-    #     "--connection-name", "-c", help="Name of connection used as reference"
-    # )
-    # store_parser.add_argument(
-    #     "--type", "-t", help="Source Type (BigQuery, Teradata, MySQL)"
-    # )
-    # store_parser.add_argument("--project-id", "-p", help="GCP Project ID")
-    # store_parser.add_argument("--json", "-j", help="(Optional) Json string config")
-
 
 def _configure_database_specific_parsers(parser):
     """Configure a separate subparser for each supported DB."""
