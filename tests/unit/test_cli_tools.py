@@ -57,13 +57,12 @@ def test_get_connection_config_from_args():
     args = parser.parse_args(
         [
             "connections",
-            "store",
-            "--type",
+            "add",
+            "--connection-name",
+            "test",
             "BigQuery",
             "--project-id",
             "example-project",
-            "--connection-name",
-            "test",
         ]
     )
     conn = cli_tools.get_connection_config_from_args(args)
