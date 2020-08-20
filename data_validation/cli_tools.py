@@ -22,7 +22,7 @@ The Data Validator can be called either using:
 
 ex.
 Step 1) Store Connection to be used in validation
-data-validation connections store -c my_bq_conn -t BigQuery -p pso-kokoro-resources
+data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-resources
 
 Step 2) Run Validation using supplied connections
 data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
@@ -53,8 +53,16 @@ from data_validation import consts
 
 
 CONNECTION_SOURCE_FIELDS = {
-    "BigQuery": ["project_id"],
-    "Teradata": ["host", "port", "user", "password"],
+    "BigQuery": [
+        ["project_id", "GCP Project to use for BigQuery"],
+        ["google_service_account_key_path", "(Optional) GCP SA Key Path"]
+    ],
+    "Teradata": [
+        ["host", "Desired Teradata host"],
+        ["port", "Teradata port to connect on"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+    ],
 }
 
 
@@ -140,26 +148,50 @@ def _configure_connection_parser(connection_parser):
     """ Configure the Parser for Connection Management. """
     subparsers = connection_parser.add_subparsers(dest="connect_cmd")
     _ = subparsers.add_parser("list", help="List your connections")
-    store_parser = subparsers.add_parser("store", help="Store a new connection")
 
-    store_parser.add_argument(
+    
+    add_parser = subparsers.add_parser("add", help="Store a new connection")
+    add_parser.add_argument(
         "--connection-name", "-c", help="Name of connection used as reference"
     )
-    store_parser.add_argument(
-        "--type", "-t", help="Source Type (BigQuery, Teradata, MySQL)"
-    )
-    store_parser.add_argument("--project-id", "-p", help="GCP Project ID")
-    store_parser.add_argument("--json", "-j", help="(Optional) Json string config")
+    _configure_database_specific_parsers(add_parser)
+
+    # store_parser = subparsers.add_parser("add", help="Store a new connection")
+    # store_parser.add_argument(
+    #     "--connection-name", "-c", help="Name of connection used as reference"
+    # )
+    # store_parser.add_argument(
+    #     "--type", "-t", help="Source Type (BigQuery, Teradata, MySQL)"
+    # )
+    # store_parser.add_argument("--project-id", "-p", help="GCP Project ID")
+    # store_parser.add_argument("--json", "-j", help="(Optional) Json string config")
+
+
+def _configure_database_specific_parsers(parser):
+    """Configure a separate subparser for each supported DB."""
+    subparsers = parser.add_subparsers(dest="connect_type")
+
+    raw_parser = subparsers.add_parser("Raw", help=f"Supply Raw JSON config for a connection")
+    raw_parser.add_argument("--json", "-j", help="Json string config")
+
+    for database in CONNECTION_SOURCE_FIELDS:
+        db_parser = subparsers.add_parser(database, help=f"Store a {database} connection")
+
+        for field_obj in CONNECTION_SOURCE_FIELDS[database]:
+            arg_field = "--" + field_obj[0].replace("_", "-")
+            help_txt = field_obj[1]
+            db_parser.add_argument(arg_field, help=help_txt)
 
 
 def get_connection_config_from_args(args):
     """ Return dict with connection config supplied."""
-    config = {consts.SOURCE_TYPE: args.type}
+    config = {consts.SOURCE_TYPE: args.connect_type}
 
-    if args.json:
+    if args.connect_type == "Raw":
         return json.loads(args.json)
 
-    for field in CONNECTION_SOURCE_FIELDS[args.type]:
+    for field_obj in CONNECTION_SOURCE_FIELDS[args.connect_type]:
+        field = field_obj[0]
         config[field] = getattr(args, field)
 
     return config

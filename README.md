@@ -91,9 +91,8 @@ a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
 You can manage connections via the CLI:
 ```
 data-validation connections
-  store 
-    --connection-name my-conn-name
-    --type BigQuery
+  add --connection-name my-conn-name
+  BigQuery
     --project-id my-gcp-project
 
 data-validation connections list
