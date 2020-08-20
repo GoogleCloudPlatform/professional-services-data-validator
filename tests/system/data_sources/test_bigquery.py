@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
-import json
 import os
-from unittest import mock
 
 from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
@@ -90,8 +87,32 @@ CONFIG_GROUPED_COUNT_VALID = {
 BQ_CONN_NAME = "bq-integration-test"
 CLI_CONFIG_FILE = "example_test.yaml"
 
-BQ_CONN_ARGS = ["connections", "add", "--connection-name", BQ_CONN_NAME, "BigQuery", "--project-id", os.environ["PROJECT_ID"]]
-CLI_STORE_COLUMN_ARGS = ["run", "--type", "Column", "--source-conn", BQ_CONN_NAME, "--target-conn", BQ_CONN_NAME, "--tables-list", '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]', "--sum", '["tripduration","start_station_name"]', "--count", '["tripduration","start_station_name"]', "--config-file", CLI_CONFIG_FILE]
+BQ_CONN_ARGS = [
+    "connections",
+    "add",
+    "--connection-name",
+    BQ_CONN_NAME,
+    "BigQuery",
+    "--project-id",
+    os.environ["PROJECT_ID"],
+]
+CLI_STORE_COLUMN_ARGS = [
+    "run",
+    "--type",
+    "Column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
+    "--sum",
+    '["tripduration","start_station_name"]',
+    "--count",
+    '["tripduration","start_station_name"]',
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 
 

@@ -55,7 +55,7 @@ from data_validation import consts
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
         ["project_id", "GCP Project to use for BigQuery"],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"]
+        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
     ],
     "Teradata": [
         ["host", "Desired Teradata host"],
@@ -149,7 +149,6 @@ def _configure_connection_parser(connection_parser):
     subparsers = connection_parser.add_subparsers(dest="connect_cmd")
     _ = subparsers.add_parser("list", help="List your connections")
 
-    
     add_parser = subparsers.add_parser("add", help="Store a new connection")
     add_parser.add_argument(
         "--connection-name", "-c", help="Name of connection used as reference"
@@ -161,11 +160,15 @@ def _configure_database_specific_parsers(parser):
     """Configure a separate subparser for each supported DB."""
     subparsers = parser.add_subparsers(dest="connect_type")
 
-    raw_parser = subparsers.add_parser("Raw", help=f"Supply Raw JSON config for a connection")
+    raw_parser = subparsers.add_parser(
+        "Raw", help="Supply Raw JSON config for a connection"
+    )
     raw_parser.add_argument("--json", "-j", help="Json string config")
 
     for database in CONNECTION_SOURCE_FIELDS:
-        db_parser = subparsers.add_parser(database, help=f"Store a {database} connection")
+        db_parser = subparsers.add_parser(
+            database, help=f"Store a {database} connection"
+        )
 
         for field_obj in CONNECTION_SOURCE_FIELDS[database]:
             arg_field = "--" + field_obj[0].replace("_", "-")
