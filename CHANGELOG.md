@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 (Release date TBD)
+## 0.1.1 (release date TBD)
 
 ### Bug Fixes
 
