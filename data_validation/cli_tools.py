@@ -195,11 +195,15 @@ def get_connection_config_from_args(args):
 
 
 def _get_data_validation_directory():
-    dir_path = os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
+    raw_dir_path = (
+        os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
+    )
+    dir_path = os.path.expanduser(raw_dir_path)
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
     return dir_path
+
 
 def _get_connection_file(connection_name):
     dir_path = _get_data_validation_directory()
@@ -229,8 +233,9 @@ def list_connections(args):
 
     for config_file in all_config_files:
         if config_file.endswith(".connection.json"):
+            config_file_path = os.path.join(dir_path, config_file)
             conn_name = config_file.split(".")[0]
-            print(f"Connection Name: {conn_name}")
+            print(f"Connection Name: {conn_name} :: File Path {config_file_path}")
 
 
 def get_connection(connection_name):
