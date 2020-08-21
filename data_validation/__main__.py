@@ -212,7 +212,8 @@ def run_connections(args):
         cli_tools.list_connections()
     elif args.connect_cmd == "add":
         conn = cli_tools.get_connection_config_from_args(args)
-        DataValidation.get_data_client(conn)
+        # Test getting a client to validate connection details
+        _ = DataValidation.get_data_client(conn)
         cli_tools.store_connection(args.connection_name, conn)
     else:
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
