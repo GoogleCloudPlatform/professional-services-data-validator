@@ -156,7 +156,7 @@ def _compare_match_tables(source_table_map, target_table_map):
 
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
-        target_key, _ = jellyfish_distance.extractClosestMatch(source_key, target_keys, score_cutoff=0)
+        target_key = jellyfish_distance.extract_closest_match(source_key, target_keys, score_cutoff=0)
         table_config = {
             consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
             consts.CONFIG_TABLE_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
@@ -170,8 +170,8 @@ def _compare_match_tables(source_table_map, target_table_map):
 
 def find_tables_using_fuzzy(args):
     """Return JSON String with matched tables for use in validations."""
-    source_conn = json.loads(args.source_conn)
-    target_conn = json.loads(args.target_conn)
+    source_conn = cli_tools.get_connection(args.source_conn)
+    target_conn = cli_tools.get_connection(args.target_conn)
 
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)

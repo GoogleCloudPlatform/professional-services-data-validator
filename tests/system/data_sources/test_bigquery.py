@@ -115,11 +115,15 @@ CLI_STORE_COLUMN_ARGS = [
 ]
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 
-CLI_FIND_TABLES_ARGS = {
-    "command": "find-tables",
-    "source_conn": BQ_CONN_NAME,
-    "target_conn": BQ_CONN_NAME,
-}
+CLI_FIND_TABLES_ARGS = [
+    "find-tables",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+]
+
+STRING_MATCH_RESULT = '[{"schema_name": "pso_data_validator", "table_name": "pso_data_validator", "target_schema_name": "pso_data_validator", "target_table_name": "pso_data_validator"}]'
 
 
 def test_count_validator():
@@ -184,15 +188,14 @@ def test_cli_store_yaml_then_run():
     _remove_bq_conn()
 
 
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CLI_FIND_TABLES_ARGS),
-)
-def test_cli_find_tables(mock_args):
+def test_cli_find_tables():
     _store_bq_conn()
 
-    tables_json = main.main()
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_FIND_TABLES_ARGS)
+    tables_json = main.find_tables_using_fuzzy(args)
     assert isinstance(tables_json, str)
+    assert tables_json == STRING_MATCH_RESULT
 
     _remove_bq_conn()
 
