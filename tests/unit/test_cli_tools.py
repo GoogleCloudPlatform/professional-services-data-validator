@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+from pyfakefs.fake_filesystem_unittest import patchfs
 from unittest import mock
 
 from data_validation import cli_tools
@@ -30,6 +31,16 @@ CLI_ARGS = {
     "config_file": "example_test.yaml",
     "verbose": True,
 }
+
+CLI_ADD_CONNECTION_ARGS = [
+    "connections",
+    "add",
+    "--connection-name",
+    "test",
+    "BigQuery",
+    "--project-id",
+    "example-project",
+]
 
 
 @mock.patch(
@@ -54,27 +65,22 @@ def test_configure_arg_parser_list_connections():
 def test_get_connection_config_from_args():
     """Test configuring arg parse in different ways."""
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "connections",
-            "add",
-            "--connection-name",
-            "test",
-            "BigQuery",
-            "--project-id",
-            "example-project",
-        ]
-    )
+    args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
     conn = cli_tools.get_connection_config_from_args(args)
 
     assert conn["project_id"] == "example-project"
 
+@patchfs
+def test_create_and_list_connections(capsys, fs):
+    # Create Connection
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
 
-def test_list_connections(capsys):
-    connections = cli_tools.get_connections()
+    conn = cli_tools.get_connection_config_from_args(args)
+    cli_tools.store_connection(args.connection_name, conn)
+
+    # List Connection
     cli_tools.list_connections()
-
     captured = capsys.readouterr()
-    result = "".join(["Connection Name: %s\n" % c for c in connections])
 
-    assert captured.out == result
+    assert captured.out == "Connection Name: test\n"

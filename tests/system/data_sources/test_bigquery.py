@@ -175,9 +175,15 @@ def test_cli_store_yaml_then_run():
     main.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
+    _remove_bq_conn()
 
 
 def _store_bq_conn():
     parser = cli_tools.configure_arg_parser()
     mock_args = parser.parse_args(BQ_CONN_ARGS)
     main.run_connections(mock_args)
+
+
+def _remove_bq_conn():
+    file_path = cli_tools._get_connection_file(BQ_CONN_NAME)
+    os.remove(file_path)
