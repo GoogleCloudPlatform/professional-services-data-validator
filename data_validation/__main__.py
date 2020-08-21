@@ -209,7 +209,7 @@ def run(args):
 def run_connections(args):
     """ Run commands related to connection management."""
     if args.connect_cmd == "list":
-        cli_tools.list_connections(args)
+        cli_tools.list_connections()
     elif args.connect_cmd == "add":
         conn = cli_tools.get_connection_config_from_args(args)
         DataValidation.get_data_client(conn)

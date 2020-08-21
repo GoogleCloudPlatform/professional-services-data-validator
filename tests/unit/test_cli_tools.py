@@ -69,18 +69,12 @@ def test_get_connection_config_from_args():
 
     assert conn["project_id"] == "example-project"
 
+
 def test_list_connections(capsys):
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "connections",
-            "list",
-        ]
-    )
-    connections = cli_tools.get_connections(args)
-    cli_tools.list_connections(args)
+    connections = cli_tools.get_connections()
+    cli_tools.list_connections()
 
     captured = capsys.readouterr()
     result = "".join(["Connection Name: %s\n" % c for c in connections])
-    assert captured.out == result
 
+    assert captured.out == result

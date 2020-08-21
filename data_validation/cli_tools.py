@@ -222,7 +222,7 @@ def store_connection(connection_name, conn):
         file.write(json.dumps(conn))
 
 
-def get_connections(args):
+def get_connections():
     """ Return dict with connection name and path key pairs."""
     connections = {}
 
@@ -238,9 +238,9 @@ def get_connections(args):
     return connections
 
 
-def list_connections(args):
+def list_connections():
     """ List all saved connections."""
-    connections = get_connections(args)
+    connections = get_connections()
 
     for conn_name in connections:
         print(f"Connection Name: {conn_name}")
