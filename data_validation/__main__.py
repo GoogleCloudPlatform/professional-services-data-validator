@@ -231,7 +231,7 @@ def _compare_match_tables(source_table_map, target_table_map):
 
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
-        target_key, score = jellyfish_distance.extractClosestMatch(source_key, target_keys, score_cutoff=0)
+        target_key, _ = jellyfish_distance.extractClosestMatch(source_key, target_keys, score_cutoff=0)
         table_config = {
             consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
             consts.CONFIG_TABLE_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
