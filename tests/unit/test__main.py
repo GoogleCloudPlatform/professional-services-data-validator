@@ -15,12 +15,13 @@
 import argparse
 from unittest import mock
 
+from data_validation import cli_tools
 from data_validation import __main__ as main
 
 
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
-    "command": "store",
+    "command": "run",
     "type": "Column",
     "source_conn": TEST_CONN,
     "target_conn": TEST_CONN,
@@ -37,6 +38,7 @@ CLI_ARGS = {
 )
 def test_configure_arg_parser(mock_args):
     """Test arg parser values."""
-    args = main.configure_arg_parser()
-    assert args.command == "store"
-    assert args.verbose
+    args = cli_tools.get_parsed_args()
+    file_path = main._get_arg_config_file(args)
+
+    assert file_path == "example_test.yaml"

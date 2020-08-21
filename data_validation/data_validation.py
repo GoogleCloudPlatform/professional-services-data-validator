@@ -18,6 +18,7 @@ import warnings
 
 import google.oauth2.service_account
 from ibis.bigquery.client import BigQueryClient
+import ibis.impala
 import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
@@ -41,6 +42,7 @@ except Exception:
 
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
+    "Impala": ibis.impala.connect,
     "MySQL": MySQLClient,
     "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
@@ -126,13 +128,13 @@ class DataValidation(object):
 
         # The BigQueryClient expects a credentials object, not a string.
         if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
-            key_path = connection_config[consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH]
-            del connection_config[consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH]
-            connection_config[
-                "credentials"
-            ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                key_path
-            )
+            key_path = connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
+            if key_path:
+                connection_config[
+                    "credentials"
+                ] = google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
+                )
 
         if source_type not in CLIENT_LOOKUP:
             msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(

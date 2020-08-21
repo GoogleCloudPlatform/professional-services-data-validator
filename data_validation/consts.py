@@ -39,6 +39,8 @@ CONFIG_RESULT_HANDLER = "result_handler"
 FILTER_TYPE_CUSTOM = "custom"
 
 # Yaml File Config Fields
+ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
 YAML_RESULT_HANDLER = "result_handler"
 YAML_SOURCE = "source"
 YAML_TARGET = "target"

@@ -4,6 +4,20 @@
 
 - Update [CHANGELOG.md](CHANGELOG.md) based on git commit history since last
   release.
+
+  Template (include only those sections that apply):
+
+  ```
+  ### Features
+
+  ### Bug Fixes
+
+  ### Dependencies
+
+  ### Documentation
+
+  ### Internal / Testing Changes
+  ```
 - Update the version string in [setup.py](setup.py).
 - Send a pull request with your changes.
 
