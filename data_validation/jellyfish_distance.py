@@ -14,7 +14,7 @@
 
 import jellyfish
 
-def extractClosestMatch(search_key, target_list, score_cutoff=0):
+def extract_closest_match(search_key, target_list, score_cutoff=0):
     """Return str value from target list with highest score using Jaro
        for String distance.
 
