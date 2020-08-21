@@ -81,10 +81,6 @@ def configure_arg_parser():
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
     subparsers = parser.add_subparsers(dest="command")
 
-    connection_parser = subparsers.add_parser(
-        "connections", help="Manage & Store connections to your Databases"
-    )
-
     _configure_run_parser(subparsers)
     _configure_run_config_parser(subparsers)
     _configure_connection_parser(subparsers)
