@@ -193,7 +193,7 @@ def test_cli_find_tables():
 
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
-    tables_json = main.find_tables_using_fuzzy(args)
+    tables_json = main.find_tables_using_string_matching(args)
     assert isinstance(tables_json, str)
     assert tables_json == STRING_MATCH_RESULT
 

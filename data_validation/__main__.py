@@ -168,7 +168,7 @@ def _compare_match_tables(source_table_map, target_table_map):
     return table_configs
 
 
-def find_tables_using_fuzzy(args):
+def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
@@ -280,7 +280,7 @@ def main():
         config_managers = build_config_managers_from_yaml(args)
         run_validations(args, config_managers)
     elif args.command == "find-tables":
-        print(find_tables_using_fuzzy(args))
+        print(find_tables_using_string_matching(args))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
