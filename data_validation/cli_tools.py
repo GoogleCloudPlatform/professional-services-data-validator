@@ -222,16 +222,28 @@ def store_connection(connection_name, conn):
         file.write(json.dumps(conn))
 
 
-def list_connections(args):
-    """ List all saved connections."""
+def get_connections(args):
+    """ Return dict with connection name and path key pairs."""
+    connections = {}
+
     dir_path = _get_data_validation_directory()
     all_config_files = os.listdir(dir_path)
-
     for config_file in all_config_files:
         if config_file.endswith(".connection.json"):
             config_file_path = os.path.join(dir_path, config_file)
             conn_name = config_file.split(".")[0]
-            print(f"Connection Name: {conn_name} :: File Path {config_file_path}")
+
+            connections[conn_name] = config_file_path
+
+    return connections
+
+
+def list_connections(args):
+    """ List all saved connections."""
+    connections = get_connections(args)
+
+    for conn_name in connections:
+        print(f"Connection Name: {conn_name}")
 
 
 def get_connection(connection_name):
