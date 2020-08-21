@@ -84,16 +84,10 @@ def lint(session):
     """
 
     _setup_session_requirements(session, extra_packages=["flake8", "black==19.10b0"])
+    session.install("--upgrade", "pip", "wheel")
     session.run("flake8", "data_validation")
     session.run("flake8", "tests")
     session.run("black", "--check", *BLACK_PATHS)
-
-
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
-def lint_setup_py(session):
-    """Verify that setup.py is valid."""
-
-    session.install("--upgrade", "pip", "wheel")
     session.run("python", "setup.py", "check", "--strict")
 
 
