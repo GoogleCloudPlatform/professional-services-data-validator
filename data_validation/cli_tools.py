@@ -94,8 +94,12 @@ def _configure_find_tables(subparsers):
     find_tables_parser = subparsers.add_parser(
         "find-tables", help="Build tables list using approx string matching"
     )
-    find_tables_parser.add_argument("--source-conn", "-sc", help="Source connection name")
-    find_tables_parser.add_argument("--target-conn", "-tc", help="Target connection name")
+    find_tables_parser.add_argument(
+        "--source-conn", "-sc", help="Source connection name"
+    )
+    find_tables_parser.add_argument(
+        "--target-conn", "-tc", help="Target connection name"
+    )
 
 
 def _configure_run_config_parser(subparsers):
