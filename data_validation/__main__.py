@@ -156,7 +156,7 @@ def _compare_match_tables(source_table_map, target_table_map):
 
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
-        target_key, score = jellyfish_distance.extractClosestMatch(source_key, target_keys, score_cutoff=0)
+        target_key, _ = jellyfish_distance.extractClosestMatch(source_key, target_keys, score_cutoff=0)
         table_config = {
             consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
             consts.CONFIG_TABLE_NAME: source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
@@ -280,7 +280,7 @@ def main():
         config_managers = build_config_managers_from_yaml(args)
         run_validations(args, config_managers)
     elif args.command == "find-tables":
-        return find_tables_using_fuzzy(args)
+        print(find_tables_using_fuzzy(args))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
