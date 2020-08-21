@@ -334,7 +334,7 @@ def main():
         config_managers = build_config_managers_from_yaml(args)
         run_validations(args, config_managers)
     elif args.command == "find-tables":
-        return find_tables_using_fuzzy(args)
+        print(find_tables_using_fuzzy(args))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
