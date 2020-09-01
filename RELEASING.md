@@ -56,7 +56,6 @@
 
   ```
   data-validation -h
-  python -m data_validation -h
   ```
 
 ## Publish the package
@@ -80,23 +79,3 @@
 
 - Upload the `.whl` wheel file, README, and CHANGELOG to [Google
   Drive](https://drive.google.com/corp/drive/folders/1C387pJKyqOCTN0I7sIm0SP6pfHu0PrLG).
-
-- Release Version to GCS
-
-
-```
-export PACKAGE_VERSION=X.X.X
-gsutil cp README.md CHANGELOG.md dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/${PACKAGE_VERSION}/
-```
-
-- Release Latest to GCS
-
-```
-export PACKAGE_VERSION=X.X.X
-
-gsutil cp README.md CHANGELOG.md gs://professional-services-data-validator/releases/latest/
-gsutil cp dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/google_pso_data_validator-latest-py3-none-any.whl
-gsutil cp dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/google-pso-data-validator-latest.tar.gz
-```
-
-gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/**
