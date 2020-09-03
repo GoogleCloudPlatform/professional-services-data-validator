@@ -14,6 +14,8 @@
 
 import copy
 import datetime
+import json
+import pandas
 import warnings
 
 import google.oauth2.service_account
@@ -98,27 +100,73 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
+        result_df = self._execute_validation(self.validation_builder)
+        
+        results_list = [] # [result_df]
+        if self.config_manager.validation_type == "Row":
+            for row in result_df.to_dict(orient="row"):
+                if row["source_agg_value"] == row["target_agg_value"]:
+                    continue
+                elif not self.config_manager.primary_keys:
+                    continue
+                
+                if self.verbose:
+                    print(row)
+                validation_builder = self._get_recursive_validation_builder(row)
+                recurse_result_df = self._execute_validation(validation_builder)
+                results_list.append(recurse_result_df)
+
+        # Call Result Handler to Manage Results
+        result_df = pandas.concat(results_list)
+        return self.result_handler.execute(self.config, result_df)
+
+    def _get_recursive_validation_builder(self, row):
+        """ Return ValidationBuilder Configured for Next Recursive Search """
+        validation_builder = ValidationBuilder(self.config_manager) # TODO should be self.validation.CLONE()
+        validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+        
+        # TODO: Group By is using the alias instead of source/target column name
+        # TODO should add a separate filter field using Ibis native equals
+        group_by_columns = json.loads(row["group_by_columns"])
+        # group_by_columns_sql = " AND ".join([f"{key}='{value}'" for key,value in group_by_columns.items()])
+        for alias, value in group_by_columns.items():
+            filter_field = {
+                consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,
+
+                consts.CONFIG_FILTER_SOURCE_COLUMN: alias,
+                consts.CONFIG_FILTER_SOURCE_VALUE: value,
+                consts.CONFIG_FILTER_TARGET_COLUMN: alias,
+                consts.CONFIG_FILTER_TARGET_VALUE: value,
+
+                # consts.CONFIG_FILTER_SOURCE: group_by_columns_sql,
+                # consts.CONFIG_FILTER_TARGET: group_by_columns_sql,
+            }
+            validation_builder.add_filter(filter_field)
+
+        return validation_builder
+
+    def _execute_validation(self, validation_builder):
+        """ Execute Against a Supplied Validation Builder """
         run_metadata = metadata.RunMetadata()
 
         source_df = self.source_client.execute(
-            self.validation_builder.get_source_query()
+            validation_builder.get_source_query()
         )
         target_df = self.target_client.execute(
-            self.validation_builder.get_target_query()
+            validation_builder.get_target_query()
         )
-        join_on_fields = self.validation_builder.get_group_aliases()
+        join_on_fields = validation_builder.get_group_aliases()
         pandas_client = ibis.pandas.connect(
             {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
         )
 
         run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
-        run_metadata.validations = self.validation_builder.get_metadata()
+        run_metadata.validations = validation_builder.get_metadata()
         result_df = combiner.generate_report(
             pandas_client, run_metadata, join_on_fields=join_on_fields
         )
 
-        # Call Result Handler to Manage Results
-        return self.result_handler.execute(self.config, result_df)
+        return result_df
 
     @staticmethod
     def get_data_client(connection_config):

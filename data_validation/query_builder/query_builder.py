@@ -97,6 +97,13 @@ class FilterField(object):
         )
 
     @staticmethod
+    def equal_to(field_name, value):
+        # Build Left and Right Objects
+        return FilterField(
+            ibis.expr.types.ColumnExpr.__eq__, left_field=field_name, right=value
+        )
+
+    @staticmethod
     def custom(expr):
         """ Returns a FilterField instance built for any custom SQL using a supported operator.
 

@@ -53,7 +53,7 @@ class ValidationBuilder(object):
     @staticmethod
     def get_query_builder(validation_type):
         """ Return Query Builder object given validation type """
-        if validation_type in ["Column", "GroupedColumn"]:
+        if validation_type in ["Column", "GroupedColumn", "Row"]:
             builder = QueryBuilder.build_count_validator()
         else:
             msg = "Validation Builder supplied unknown type: %s" % validation_type
@@ -83,9 +83,9 @@ class ValidationBuilder(object):
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
-    def add_config_query_groups(self):
+    def add_config_query_groups(self, query_groups=None):
         """ Add Grouped Columns to Query """
-        grouped_fields = self.config_manager.query_groups
+        grouped_fields = query_groups or self.config_manager.query_groups
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
 
@@ -156,12 +156,15 @@ class ValidationBuilder(object):
             filter_field (Dict): An object with source and target filter details
         """
         if filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_CUSTOM:
-            source_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_SOURCE])
-            target_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_TARGET])
+            source_filter = FilterField.custom(filter_field[consts.CONFIG_FILTER_SOURCE])
+            target_filter = FilterField.custom(filter_field[consts.CONFIG_FILTER_TARGET])
+        elif filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_EQUALS:
+            source_filter = FilterField.equal_to(filter_field[consts.CONFIG_FILTER_SOURCE_COLUMN], filter_field[consts.CONFIG_FILTER_SOURCE_VALUE])
+            target_filter = FilterField.equal_to(filter_field[consts.CONFIG_FILTER_TARGET_COLUMN], filter_field[consts.CONFIG_FILTER_TARGET_VALUE])
 
         # TODO(issues/40): Add metadata around filters
-        self.source_builder.add_filter_field(source_field)
-        self.target_builder.add_filter_field(target_field)
+        self.source_builder.add_filter_field(source_filter)
+        self.target_builder.add_filter_field(target_filter)
 
     def get_source_query(self):
         """ Return query for source validation """

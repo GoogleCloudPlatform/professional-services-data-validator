@@ -65,7 +65,7 @@ class ConfigManager(object):
 
     @property
     def validation_type(self):
-        """Return string validation type (Column|GroupedColumn)."""
+        """Return string validation type (Column|GroupedColumn|Row)."""
         return self._config[consts.CONFIG_TYPE]
 
     @property
@@ -83,9 +83,20 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
 
     def append_query_groups(self, grouped_column_configs):
-        """Append aggregate configs to existing config."""
+        """Append grouped configs to existing config."""
         self._config[consts.CONFIG_GROUPED_COLUMNS] = (
             self.query_groups + grouped_column_configs
+        )
+
+    @property
+    def primary_keys(self):
+        """ Return Query Groups from Config """
+        return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
+
+    def append_primary_keys(self, primary_key_configs):
+        """Append primary key configs to existing config."""
+        self._config[consts.CONFIG_PRIMARY_KEYS] = (
+            self.primary_keys + primary_key_configs
         )
 
     @property
