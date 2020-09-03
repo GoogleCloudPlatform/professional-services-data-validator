@@ -131,10 +131,6 @@ def test_simple_datetime_operations(con, func, expected, translate):
         ("select Extract(hour from TO_TIMESTAMP(:p1,:p2)) from dual", 14),
         ("select Extract(minute from TO_TIMESTAMP(:p1,:p2)) from dual", 10),
         (
-            "select Extract(second from TO_TIMESTAMP(:p1,:p2)) from dual",
-            10.123,
-        ),
-        (
             "select to_number(to_char(TO_TIMESTAMP(:p1, :p2),'FF3'))from dual",
             123,
         ),
@@ -283,13 +279,8 @@ def test_repeat(con):
 
 
 def test_re_replace(con):
-    expr = L(
-        'This linecontains    more  than one   spacing  between words'
-    ).re_replace('( ){2,}', ' ')
-    assert (
-        con.execute(expr)
-        == 'This line contains more than one spacing between words'
-    )
+    expr = L('HI  HOW  ARE  YOU').re_replace('( ){2,}', ' ')
+    assert con.execute(expr) == 'HI HOW ARE YOU'
 
 
 def test_translate(con):

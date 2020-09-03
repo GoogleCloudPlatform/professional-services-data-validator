@@ -1,12 +1,13 @@
 import contextlib
 import getpass
+import os
 from typing import Optional
 
 import sqlalchemy as sa
+from third_party.ibis.ibis_oracle.compiler import OracleDialect
+from third_party.ibis.ibis_oracle.udf.api import udf
 
 import ibis.sql.alchemy as alch
-from ibis.sql.oracle.compiler import OracleDialect
-from ibis.sql.oracle.udf.api import udf
 
 import cx_Oracle  # NOQA fail early if the driver is missing
 
@@ -33,6 +34,7 @@ class OracleClient(alch.AlchemyClient):
     dialect = OracleDialect
     database_class = OracleDatabase
     table_class = OracleTable
+    os.environ['TNS_ADMIN'] = 'Wallet_Location_Path'
 
     def __init__(
         self,
@@ -81,7 +83,7 @@ class OracleClient(alch.AlchemyClient):
         Returns
         -------
         db : OracleDatabase
-            An :class:`ibis.sql.oracle.client.OracleDatabase` instance.
+        class:`third_party.ibis.ibis_oracle.client.OracleDatabase`
         Notes
         -----
         This creates a new connection if `name` is both not ``None`` and not
@@ -107,7 +109,7 @@ class OracleClient(alch.AlchemyClient):
         Returns
         -------
         schema : OracleSchema
-            An :class:`ibis.sql.oracle.client.OracleSchema` instance.
+        An :class:`third_party.ibis.ibis_oracle.client.OracleSchema` instance.
         """
         return self.database().schema(name)
 

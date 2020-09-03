@@ -14,27 +14,21 @@
 
 import os
 
-import numpy as np
 import pandas as pd
 import pytest
 
 import ibis
-import ibis.expr.datatypes as dt
-import ibis.sql.oracle.expr.datatypes as dts
 import ibis.expr.types as ir
-import ibis.sql.alchemy as alch  # noqa: E402
+from third_party.ibis.ibis_oracle.api import compile
 from ibis.tests.util import assert_equal
-from ibis.sql.oracle.api import compile
 
 sa = pytest.importorskip('sqlalchemy')
 pytest.importorskip('cx_Oracle')
 
 pytestmark = pytest.mark.oracle
 
-ORACLE_TEST_DB = os.environ.get(
-    'IBIS_TEST_ORACLE_DATABASE', 'oracle_database'
-)
-IBIS_ORACLE_USER = os.environ.get('IBIS_TEST_ORACLE_USER', 'user')
+ORACLE_TEST_DB = os.environ.get('IBIS_TEST_ORACLE_DATABASE', 'database')
+IBIS_ORACLE_USER = os.environ.get('IBIS_TEST_ORACLE_USER', 'username')
 IBIS_ORACLE_PASS = os.environ.get('IBIS_TEST_ORACLE_PASSWORD', 'password')
 
 
@@ -91,7 +85,7 @@ def test_compile_toplevel():
     t = ibis.table([('foo', 'double')], name='t0')
 
     expr = t.foo.sum()
-    result = ibis.sql.oracle.api.compile(expr)
+    result = third_party.ibis.ibis_oracle.api.compile(expr)
     expected = "SELECT sum(t0.foo) AS sum \nFROM t0 AS t0"  # noqa
 
     assert str(result) == expected
@@ -108,7 +102,7 @@ def test_list_schemas(con):
 
 
 def test_metadata_is_per_table():
-    con = ibis.sql.oracle.api.connect(
+    con = third_party.ibis.ibis_oracle.api.connect(
         user=IBIS_ORACLE_USER,
         password=IBIS_ORACLE_PASS,
         database=ORACLE_TEST_DB,
@@ -122,7 +116,7 @@ def test_metadata_is_per_table():
 
 
 def test_schema_table():
-    con = ibis.sql.oracle.api.connect(
+    con = third_party.ibis.ibis_oracle.api.connect(
         user=IBIS_ORACLE_USER,
         password=IBIS_ORACLE_PASS,
         database=ORACLE_TEST_DB,
@@ -133,7 +127,3 @@ def test_schema_table():
     schema = con.schema('admin')
 
     assert isinstance(schema['students'], ir.TableExpr)
-
-
-
-

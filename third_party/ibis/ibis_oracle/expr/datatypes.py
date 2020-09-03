@@ -1,43 +1,64 @@
 import collections
+import numbers
 import re
 import typing
-from typing import Tuple, TypeVar, Union
+
+import third_party.ibis.ibis_oracle.expr.types as ir
 from multipledispatch import Dispatcher
+
 import ibis.expr.datatypes as dt
-import ibis.sql.oracle.expr.types as ir
-import numbers
+
+Token = collections.namedtuple('Token', ('type', 'value'))
+
+_token_names = dict(
+    (getattr(dt.Tokens, n), n)
+    for n in dir(dt.Tokens)
+    if n.isalpha() and n.isupper()
+)
+
 
 class CLOB(dt.String):
     scalar = ir.CLOBScalar
     column = ir.CLOBColumn
     __slots__ = ()
+
+
 class NCLOB(dt.String):
     scalar = ir.NCLOBScalar
     column = ir.NCLOBColumn
     __slots__ = ()
+
+
 class LONG(dt.String):
     scalar = ir.LONGScalar
     column = ir.LONGColumn
     __slots__ = ()
+
+
 class BFILE(dt.Binary):
     scalar = ir.BFILEScalar
     column = ir.BFILEColumn
     __slots__ = ()
+
+
 class RAW(dt.Binary):
     scalar = ir.RAWScalar
     column = ir.RAWColumn
     __slots__ = ()
+
+
 class LONGRAW(dt.Binary):
     scalar = ir.LONGRAWScalar
     column = ir.LONGRAWColumn
     __slots__ = ()
-    
+
+
 class Number(dt.DataType):
     scalar = ir.NumberScalar
     column = ir.NumberColumn
-    
+
     __slots__ = 'precision', 'scale'
-	
+
     def __init__(
         self, precision: int, scale: int, nullable: bool = True
     ) -> None:
@@ -62,21 +83,25 @@ class Number(dt.DataType):
         super().__init__(nullable=nullable)
         self.precision = precision  # type: int
         self.scale = scale  # type: int
-        
+
     def __str__(self) -> str:
         return '{}({:d}, {:d})'.format(
             self.name.lower(), self.precision, self.scale
         )
+
     @property
     def largest(self) -> 'Number':
         return Number(38, self.scale)
-		
+
+
 clob = CLOB()
 nclob = NCLOB()
 long = LONG()
 bfile = BFILE()
 raw = RAW()
 longraw = LONGRAW()
+
+
 class Token_Oracle(dt.Tokens):
     __slots__ = ()
     CLOB = 1
@@ -88,12 +113,13 @@ class Token_Oracle(dt.Tokens):
     LONGRAW = 7
     VARCHAR = 8
     CHAR = 9
-	
+
     @staticmethod
     def name(value):
         return _token_names[value]
-        
-_TYPE_RULES =collections.OrderedDict(
+
+
+_TYPE_RULES = collections.OrderedDict(
     [
         # decimal + complex types
         (
@@ -103,12 +129,7 @@ _TYPE_RULES =collections.OrderedDict(
             ),
         )
         for token, toktype in zip(
-            (
-                'varchar',
-                'char',
-                'number',
-                'time',
-            ),
+            ('varchar', 'char', 'number', 'time',),
             (
                 Token_Oracle.VARCHAR,
                 Token_Oracle.CHAR,
@@ -121,6 +142,8 @@ _TYPE_RULES =collections.OrderedDict(
 _TYPE_RULES.update(dt._TYPE_RULES)
 _TYPE_KEYS = tuple(_TYPE_RULES.keys())
 _TYPE_PATTERN = re.compile('|'.join(_TYPE_KEYS), flags=re.IGNORECASE)
+
+
 class TypeParser_Oracle(dt.TypeParser):
     def type(self) -> dt.DataType:
         if self._accept(Token_Oracle.CLOB):
@@ -150,10 +173,13 @@ class TypeParser_Oracle(dt.TypeParser):
             return LONGRAW()
         else:
             raise SyntaxError('Type cannot be parsed: {}'.format(self.text))
+
+
 dtype = Dispatcher('dtype')
 validate_type = dtype
 
 castable = Dispatcher('castable')
+
 
 @castable.register(CLOB, CLOB)
 def can_cast_clob(source, target, **kwargs):
@@ -190,5 +216,3 @@ def can_cast_numbers(source: Number, target: Number, **kwargs) -> bool:
     return (
         target.precision >= source.precision and target.scale >= source.scale
     )
-
-

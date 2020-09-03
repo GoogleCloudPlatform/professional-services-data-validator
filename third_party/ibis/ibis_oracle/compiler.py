@@ -8,6 +8,7 @@ import warnings
 
 import sqlalchemy as sa
 import sqlalchemy.dialects.oracle as ol
+import third_party.ibis.ibis_oracle.alchemy as ol_alch
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql import expression
 from sqlalchemy.sql.functions import GenericFunction
@@ -19,7 +20,6 @@ import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
 import ibis.sql.alchemy as alch
-import ibis.sql.oracle.alchemy as ol_alch
 
 # used for literal translate
 from ibis.sql.alchemy import (

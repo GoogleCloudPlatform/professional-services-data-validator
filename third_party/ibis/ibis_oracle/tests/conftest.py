@@ -18,15 +18,16 @@ import os
 import pytest
 
 import ibis
-import ibis.sql.oracle.api
+import third_party.ibis.ibis_oracle.api
+
 OL_USER = os.environ.get(
-    'IBIS_TEST_ORACLE_USER', os.environ.get('OLUSER', 'ADMIN')
+    'IBIS_TEST_ORACLE_USER', os.environ.get('OLUSER', 'username')
 )
 OL_PASS = os.environ.get(
     'IBIS_TEST_ORACLE_PASSWORD', os.environ.get('OLPASSWORD', 'password')
 )
 IBIS_TEST_ORACLE_DB = os.environ.get(
-    'IBIS_TEST_ORACLE_DATABASE', os.environ.get('OLDATABASE', 'ibis_testing')
+    'IBIS_TEST_ORACLE_DATABASE', os.environ.get('OLDATABASE', 'database_name')
 )
 
 
@@ -36,12 +37,9 @@ def _random_identifier(suffix):
 
 @pytest.fixture(scope='session')
 def con():
-    return ibis.sql.oracle.api.connect(
-        user=OL_USER,
-        password=OL_PASS,
-        database=IBIS_TEST_ORACLE_DB,
+    return third_party.ibis.ibis_oracle.api.connect(
+        user=OL_USER, password=OL_PASS, database=IBIS_TEST_ORACLE_DB,
     )
-    
 
 
 @pytest.fixture(scope='module')
@@ -81,7 +79,7 @@ def intervals(con):
 
 @pytest.fixture
 def translate():
-    from ibis.sql.oracle.compiler import OracleDialect
+    from third_party.ibis.ibis_oracle.compiler import OracleDialect
 
     dialect = OracleDialect()
     context = dialect.make_context()
@@ -95,7 +93,7 @@ def temp_table(con) -> str:
 
     Parameters
     ----------
-    con : ibis.oracle.OracleDialect
+    con : third_party.ibis.ibis_oracle.compiler.OracleDialect
 
     Yields
     ------
