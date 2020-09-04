@@ -101,52 +101,54 @@ class DataValidation(object):
     def execute(self):
         """ Execute Queries and Store Results """
         if self.config_manager.validation_type == "Row":
-            result_df = self._execute_validation(self.validation_builder, process_in_memory=False)
-
-            results_list = [] # [result_df]
-            for row in result_df.to_dict(orient="row"):
-                if row["source_agg_value"] == row["target_agg_value"]:
-                    continue
-                elif not self.config_manager.primary_keys:
-                    continue
-                
-                if self.verbose:
-                    print(row)
-                validation_builder = self._get_recursive_validation_builder(row)
-                recurse_result_df = self._execute_validation(validation_builder, process_in_memory=False)
-                results_list.append(recurse_result_df)
-
-            result_df = pandas.concat(results_list)
+            grouped_fields = self.validation_builder.pop_grouped_fields()
+            result_df = self.execute_recursive_validation(self.validation_builder, grouped_fields)
         else:
             result_df = self._execute_validation(self.validation_builder, process_in_memory=True)
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
 
-    def _get_recursive_validation_builder(self, row):
+    def execute_recursive_validation(self, validation_builder, grouped_fields):
+        """ Recursive execution for Row validations. """
+        process_in_memory = self.config_manager.process_in_memory()
+        past_results = []
+
+        if len(grouped_fields) > 0:
+            validation_builder.add_query_group(grouped_fields[0])
+            result_df = self._execute_validation(validation_builder, process_in_memory=process_in_memory)
+
+            for row in result_df.to_dict(orient="row"):
+                if row["source_agg_value"] == row["target_agg_value"]:
+                    past_results.append(pandas.DataFrame([row]))
+                    continue
+                else:
+                    recursive_validation_builder = validation_builder.clone()
+                    self._add_recursive_validation_filter(recursive_validation_builder, row)
+                    past_results.append(
+                        self.execute_recursive_validation(recursive_validation_builder, grouped_fields[1:]))
+        elif self.config_manager.primary_keys:
+            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+            past_results.append(
+                self._execute_validation(validation_builder, process_in_memory=process_in_memory))
+        else:
+            print("WARNING: No Primary Keys Suppplied in Row Validation") # TODO move to log
+
+        return pandas.concat(past_results)
+
+    def _add_recursive_validation_filter(self, validation_builder, row):
         """ Return ValidationBuilder Configured for Next Recursive Search """
-        validation_builder = ValidationBuilder(self.config_manager) # TODO should be self.validation.CLONE()
-        validation_builder.add_config_query_groups(self.config_manager.primary_keys)
-        
         # TODO: Group By is using the alias instead of source/target column name
-        # TODO should add a separate filter field using Ibis native equals
         group_by_columns = json.loads(row["group_by_columns"])
-        # group_by_columns_sql = " AND ".join([f"{key}='{value}'" for key,value in group_by_columns.items()])
         for alias, value in group_by_columns.items():
             filter_field = {
                 consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,
-
                 consts.CONFIG_FILTER_SOURCE_COLUMN: alias,
                 consts.CONFIG_FILTER_SOURCE_VALUE: value,
                 consts.CONFIG_FILTER_TARGET_COLUMN: alias,
                 consts.CONFIG_FILTER_TARGET_VALUE: value,
-
-                # consts.CONFIG_FILTER_SOURCE: group_by_columns_sql,
-                # consts.CONFIG_FILTER_TARGET: group_by_columns_sql,
             }
             validation_builder.add_filter(filter_field)
-
-        return validation_builder
 
     def _execute_validation(self, validation_builder, process_in_memory=True):
         """ Execute Against a Supplied Validation Builder """
@@ -171,13 +173,15 @@ class DataValidation(object):
                 pandas_client, run_metadata,
                 pandas_client.table(combiner.DEFAULT_SOURCE),
                 pandas_client.table(combiner.DEFAULT_TARGET),
-                join_on_fields=join_on_fields
+                join_on_fields=join_on_fields,
+                verbose=self.verbose
             )
         else:
             result_df = combiner.generate_report(
                 self.source_client, run_metadata,
                 source_query, target_query,
-                join_on_fields=join_on_fields
+                join_on_fields=join_on_fields,
+                verbose=self.verbose
             )
 
         return result_df

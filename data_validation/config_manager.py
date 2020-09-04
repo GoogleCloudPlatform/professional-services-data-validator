@@ -45,8 +45,8 @@ class ConfigManager(object):
 
         self.source_client = source_client
         self.target_client = target_client
-        if self.validation_type == "Row" and self.source_connection == self.target_connection:
-            print("Row Based Validation Using DB Resources")
+        if not self.process_in_memory():
+            print("INFO: Row Based Validation Using DB Resources") # TODO: move to log
             self.target_client = source_client
 
         self.verbose = verbose
@@ -70,6 +70,12 @@ class ConfigManager(object):
     def validation_type(self):
         """Return string validation type (Column|GroupedColumn|Row)."""
         return self._config[consts.CONFIG_TYPE]
+
+    def process_in_memory(self):
+        if self.validation_type == "Row" and self.source_connection == self.target_connection:
+            return False
+
+        return True
 
     @property
     def aggregates(self):

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 from data_validation import consts, metadata
 from data_validation.query_builder.query_builder import (
     QueryBuilder,
@@ -49,6 +50,16 @@ class ValidationBuilder(object):
         self.add_config_query_groups()
         self.add_config_filters()
         self.add_query_limit()
+
+    def clone(self):
+        cloned_builder = ValidationBuilder(self.config_manager)
+
+        cloned_builder.source_builder = deepcopy(self.source_builder)
+        cloned_builder.target_builder = deepcopy(self.target_builder)
+        cloned_builder.group_aliases = deepcopy(self.group_aliases)
+        cloned_builder._metadata = deepcopy(self._metadata)
+
+        return cloned_builder
 
     @staticmethod
     def get_query_builder(validation_type):
@@ -127,6 +138,14 @@ class ValidationBuilder(object):
             source_column_name=source_field_name,
             target_column_name=target_field_name,
         )
+
+    def pop_grouped_fields(self):
+        """ Return grouped fields and reset configs."""
+        self.source_builder.grouped_fields = []
+        self.target_builder.grouped_fields = []
+        self.group_aliases = []
+
+        return self.config_manager.query_groups
 
     def add_query_group(self, grouped_field):
         """ Add Grouped Field to Query

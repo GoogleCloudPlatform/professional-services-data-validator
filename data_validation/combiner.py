@@ -37,6 +37,7 @@ def generate_report(
     source,
     target,
     join_on_fields=(),
+    verbose=False,
 ):
     """Combine results into a report.
 
@@ -86,7 +87,11 @@ def generate_report(
     )
     joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
     documented = _add_metadata(joined, run_metadata)
-    print(documented.compile())
+
+    if verbose:
+        print("-- ** Combiner Query ** --")
+        print(documented.compile())
+
     return client.execute(documented)
 
 
