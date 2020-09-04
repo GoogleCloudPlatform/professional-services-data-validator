@@ -100,10 +100,10 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
-        result_df = self._execute_validation(self.validation_builder)
-        
-        results_list = [] # [result_df]
         if self.config_manager.validation_type == "Row":
+            result_df = self._execute_validation(self.validation_builder, process_in_memory=False)
+
+            results_list = [] # [result_df]
             for row in result_df.to_dict(orient="row"):
                 if row["source_agg_value"] == row["target_agg_value"]:
                     continue
@@ -113,11 +113,14 @@ class DataValidation(object):
                 if self.verbose:
                     print(row)
                 validation_builder = self._get_recursive_validation_builder(row)
-                recurse_result_df = self._execute_validation(validation_builder)
+                recurse_result_df = self._execute_validation(validation_builder, process_in_memory=False)
                 results_list.append(recurse_result_df)
 
+            result_df = pandas.concat(results_list)
+        else:
+            result_df = self._execute_validation(self.validation_builder, process_in_memory=True)
+
         # Call Result Handler to Manage Results
-        result_df = pandas.concat(results_list)
         return self.result_handler.execute(self.config, result_df)
 
     def _get_recursive_validation_builder(self, row):
@@ -145,26 +148,37 @@ class DataValidation(object):
 
         return validation_builder
 
-    def _execute_validation(self, validation_builder):
+    def _execute_validation(self, validation_builder, process_in_memory=True):
         """ Execute Against a Supplied Validation Builder """
         run_metadata = metadata.RunMetadata()
-
-        source_df = self.source_client.execute(
-            validation_builder.get_source_query()
-        )
-        target_df = self.target_client.execute(
-            validation_builder.get_target_query()
-        )
-        join_on_fields = validation_builder.get_group_aliases()
-        pandas_client = ibis.pandas.connect(
-            {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
-        )
-
         run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
         run_metadata.validations = validation_builder.get_metadata()
-        result_df = combiner.generate_report(
-            pandas_client, run_metadata, join_on_fields=join_on_fields
-        )
+
+        source_query = validation_builder.get_source_query()
+        target_query = validation_builder.get_target_query()
+
+        join_on_fields = validation_builder.get_group_aliases()
+
+        if process_in_memory:
+            source_df = self.source_client.execute(source_query)
+            target_df = self.target_client.execute(target_query)
+
+            pandas_client = ibis.pandas.connect(
+                {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
+            )
+
+            result_df = combiner.generate_report(
+                pandas_client, run_metadata,
+                pandas_client.table(combiner.DEFAULT_SOURCE),
+                pandas_client.table(combiner.DEFAULT_TARGET),
+                join_on_fields=join_on_fields
+            )
+        else:
+            result_df = combiner.generate_report(
+                self.source_client, run_metadata,
+                source_query, target_query,
+                join_on_fields=join_on_fields
+            )
 
         return result_df
 

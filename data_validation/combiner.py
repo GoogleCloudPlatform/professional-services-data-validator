@@ -34,8 +34,8 @@ DEFAULT_TARGET = "target"
 def generate_report(
     client,
     run_metadata,
-    source_table=DEFAULT_SOURCE,
-    target_table=DEFAULT_TARGET,
+    source,
+    target,
     join_on_fields=(),
 ):
     """Combine results into a report.
@@ -44,8 +44,8 @@ def generate_report(
         client (ibis.client.Client): Ibis client used to combine results.
         run_metadata (data_validation.metadata.RunMetadata):
             Metadata about the run and validations.
-        source_table (str): Name of source results table in client system.
-        target_table (str): Name of target results table in client system.
+        source (ibis.QUERY): Ibis query / table object.
+        target (ibis.QUERY): Ibis query / table object.
         join_on_fields (Sequence[str]):
             A collection of column names to use to join source and target.
             These are the columns that both the source and target queries
@@ -57,8 +57,8 @@ def generate_report(
             schema as the report table.
     """
     join_on_fields = tuple(join_on_fields)
-    source = client.table(source_table)
-    target = client.table(target_table)
+    # source = client.table(source_table)
+    # target = client.table(target_table)
     source_names = source.schema().names
     target_names = target.schema().names
 
@@ -68,6 +68,7 @@ def generate_report(
             f"source: {source_names} target: {target_names}"
         )
 
+    # TODO: remove this
     source_count = source.count().execute()
     target_count = target.count().execute()
     if not join_on_fields and (source_count > 1 or target_count > 1):
@@ -85,6 +86,7 @@ def generate_report(
     )
     joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
     documented = _add_metadata(joined, run_metadata)
+    print(documented.compile())
     return client.execute(documented)
 
 

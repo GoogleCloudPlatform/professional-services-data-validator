@@ -27,6 +27,9 @@ import ibis
 
 from ibis.expr import datatypes
 from ibis.expr.operations import Comparison
+import ibis.expr.rules as rlz
+
+from ibis.expr.signature import Argument as Arg
 from ibis.impala.compiler import ImpalaExprTranslator
 
 
@@ -53,4 +56,15 @@ try:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 except Exception:
     pass
+
+# The Hash Operator needs to support given hash types
+ibis.bigquery.compiler.ops.Hash.signature.update(
+    arg=ibis.bigquery.compiler.ops.Hash.signature.get("arg"),
+    how=Arg(rlz.isin({'fnv', 'MD5'})))
+
+def _hash(translator, expr):
+    arg, field = expr.op().args
+    return '{}({})'.format(field, translator.translate(arg))
+
+ibis.bigquery.compiler._operation_registry[ibis.bigquery.compiler.ops.Hash] = _hash
 

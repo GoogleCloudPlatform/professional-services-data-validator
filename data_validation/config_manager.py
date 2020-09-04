@@ -45,6 +45,9 @@ class ConfigManager(object):
 
         self.source_client = source_client
         self.target_client = target_client
+        if self.validation_type == "Row" and self.source_connection == self.target_connection:
+            print("Row Based Validation Using DB Resources")
+            self.target_client = source_client
 
         self.verbose = verbose
 

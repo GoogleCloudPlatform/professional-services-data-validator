@@ -105,15 +105,16 @@ class ValidationBuilder(object):
         source_field_name = aggregate_field[consts.CONFIG_SOURCE_COLUMN]
         target_field_name = aggregate_field[consts.CONFIG_TARGET_COLUMN]
         aggregate_type = aggregate_field.get(consts.CONFIG_TYPE)
+        hash_type = aggregate_field.get(consts.CONFIG_HASH_TYPE)
 
         if not hasattr(AggregateField, aggregate_type):
             raise Exception("Unknown Aggregation Type: {}".format(aggregate_type))
 
         source_agg = getattr(AggregateField, aggregate_type)(
-            field_name=source_field_name, alias=alias
+            field_name=source_field_name, alias=alias, hash_type=hash_type
         )
         target_agg = getattr(AggregateField, aggregate_type)(
-            field_name=target_field_name, alias=alias
+            field_name=target_field_name, alias=alias, hash_type=hash_type
         )
 
         self.source_builder.add_aggregate_field(source_agg)
