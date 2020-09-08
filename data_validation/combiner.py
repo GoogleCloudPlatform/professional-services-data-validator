@@ -58,8 +58,7 @@ def generate_report(
             schema as the report table.
     """
     join_on_fields = tuple(join_on_fields)
-    # source = client.table(source_table)
-    # target = client.table(target_table)
+
     source_names = source.schema().names
     target_names = target.schema().names
 
