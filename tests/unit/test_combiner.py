@@ -48,6 +48,8 @@ def test_generate_report_with_different_columns(module_under_test):
             pandas_client,
             # Schema validation occurs before run_metadata is needed.
             None,
+            source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
+            target=pandas_client.table(module_under_test.DEFAULT_TARGET),
         )
 
 
@@ -65,6 +67,8 @@ def test_generate_report_with_too_many_rows(module_under_test):
             pandas_client,
             # Validation occurs before run_metadata is needed.
             None,
+            source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
+            target=pandas_client.table(module_under_test.DEFAULT_TARGET),
         )
 
 
@@ -208,8 +212,8 @@ def test_generate_report_without_group_by(
     report = module_under_test.generate_report(
         pandas_client,
         run_metadata,
-        source_table="test_source",
-        target_table="test_target",
+        source=pandas_client.table("test_source"),
+        target=pandas_client.table("test_target"),
     )
     # Sort columns by name to order in the comparison.
     # https://stackoverflow.com/a/11067072/101923
@@ -409,8 +413,8 @@ def test_generate_report_with_group_by(
         pandas_client,
         run_metadata,
         join_on_fields=join_on_fields,
-        source_table="test_source",
-        target_table="test_target",
+        source=pandas_client.table("test_source"),
+        target=pandas_client.table("test_target"),
     )
     # Sort columns by name to order in the comparison.
     # https://stackoverflow.com/a/11067072/101923
