@@ -34,25 +34,36 @@ class AggregateField(object):
     @staticmethod
     def count(field_name=None, alias=None, hash_type=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias, hash_type=hash_type
+            ibis.expr.types.ColumnExpr.count,
+            field_name=field_name,
+            alias=alias,
+            hash_type=hash_type,
         )
 
     @staticmethod
     def max(field_name=None, alias=None, hash_type=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias, hash_type=hash_type
+            ibis.expr.types.ColumnExpr.max,
+            field_name=field_name,
+            alias=alias,
+            hash_type=hash_type,
         )
 
     @staticmethod
     def sum(field_name=None, alias=None, hash_type=None):
         return AggregateField(
-            ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias, hash_type=hash_type
+            ibis.expr.api.NumericColumn.sum,
+            field_name=field_name,
+            alias=alias,
+            hash_type=hash_type,
         )
 
     def compile(self, ibis_table):
         if self.field_name:
             if self.hash_type:
-                agg_field = self.expr(ibis_table[self.field_name].hash(how=self.hash_type))
+                agg_field = self.expr(
+                    ibis_table[self.field_name].hash(how=self.hash_type)
+                )
             else:
                 agg_field = self.expr(ibis_table[self.field_name])
         else:

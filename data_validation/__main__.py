@@ -72,7 +72,7 @@ def build_config_from_args(args, config_manager):
             config_manager.build_config_grouped_columns(grouped_columns)
         )
     if config_manager.validation_type in ["Row"]:
-        # Primary Keys are 
+        # Primary Keys are
         primary_keys = json.loads(args.primary_keys or "[]")
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)

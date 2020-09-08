@@ -102,9 +102,13 @@ class DataValidation(object):
         """ Execute Queries and Store Results """
         if self.config_manager.validation_type == "Row":
             grouped_fields = self.validation_builder.pop_grouped_fields()
-            result_df = self.execute_recursive_validation(self.validation_builder, grouped_fields)
+            result_df = self.execute_recursive_validation(
+                self.validation_builder, grouped_fields
+            )
         else:
-            result_df = self._execute_validation(self.validation_builder, process_in_memory=True)
+            result_df = self._execute_validation(
+                self.validation_builder, process_in_memory=True
+            )
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
@@ -116,7 +120,9 @@ class DataValidation(object):
 
         if len(grouped_fields) > 0:
             validation_builder.add_query_group(grouped_fields[0])
-            result_df = self._execute_validation(validation_builder, process_in_memory=process_in_memory)
+            result_df = self._execute_validation(
+                validation_builder, process_in_memory=process_in_memory
+            )
 
             for row in result_df.to_dict(orient="row"):
                 if row["source_agg_value"] == row["target_agg_value"]:
@@ -124,15 +130,25 @@ class DataValidation(object):
                     continue
                 else:
                     recursive_validation_builder = validation_builder.clone()
-                    self._add_recursive_validation_filter(recursive_validation_builder, row)
+                    self._add_recursive_validation_filter(
+                        recursive_validation_builder, row
+                    )
                     past_results.append(
-                        self.execute_recursive_validation(recursive_validation_builder, grouped_fields[1:]))
+                        self.execute_recursive_validation(
+                            recursive_validation_builder, grouped_fields[1:]
+                        )
+                    )
         elif self.config_manager.primary_keys:
             validation_builder.add_config_query_groups(self.config_manager.primary_keys)
             past_results.append(
-                self._execute_validation(validation_builder, process_in_memory=process_in_memory))
+                self._execute_validation(
+                    validation_builder, process_in_memory=process_in_memory
+                )
+            )
         else:
-            print("WARNING: No Primary Keys Suppplied in Row Validation") # TODO move to log
+            print(
+                "WARNING: No Primary Keys Suppplied in Row Validation"
+            )  # TODO move to log
 
         return pandas.concat(past_results)
 
@@ -170,18 +186,21 @@ class DataValidation(object):
             )
 
             result_df = combiner.generate_report(
-                pandas_client, run_metadata,
+                pandas_client,
+                run_metadata,
                 pandas_client.table(combiner.DEFAULT_SOURCE),
                 pandas_client.table(combiner.DEFAULT_TARGET),
                 join_on_fields=join_on_fields,
-                verbose=self.verbose
+                verbose=self.verbose,
             )
         else:
             result_df = combiner.generate_report(
-                self.source_client, run_metadata,
-                source_query, target_query,
+                self.source_client,
+                run_metadata,
+                source_query,
+                target_query,
                 join_on_fields=join_on_fields,
-                verbose=self.verbose
+                verbose=self.verbose,
             )
 
         return result_df

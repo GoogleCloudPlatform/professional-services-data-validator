@@ -46,7 +46,7 @@ class ConfigManager(object):
         self.source_client = source_client
         self.target_client = target_client
         if not self.process_in_memory():
-            print("INFO: Row Based Validation Using DB Resources") # TODO: move to log
+            print("INFO: Row Based Validation Using DB Resources")  # TODO: move to log
             self.target_client = source_client
 
         self.verbose = verbose
@@ -72,7 +72,10 @@ class ConfigManager(object):
         return self._config[consts.CONFIG_TYPE]
 
     def process_in_memory(self):
-        if self.validation_type == "Row" and self.source_connection == self.target_connection:
+        if (
+            self.validation_type == "Row"
+            and self.source_connection == self.target_connection
+        ):
             return False
 
         return True
