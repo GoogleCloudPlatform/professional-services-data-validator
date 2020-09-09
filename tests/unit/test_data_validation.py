@@ -26,12 +26,14 @@ SAMPLE_CONFIG = {
         consts.SOURCE_TYPE: "Pandas",
         "table_name": "my_table",
         "file_path": TABLE_FILE_PATH,
-        "file_type": "json"},
+        "file_type": "json",
+    },
     consts.CONFIG_TARGET_CONN: {
         consts.SOURCE_TYPE: "Pandas",
         "table_name": "my_table",
         "file_path": TABLE_FILE_PATH,
-        "file_type": "json"},
+        "file_type": "json",
+    },
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
@@ -70,4 +72,4 @@ def _create_table_file():
 def test_data_validation_client(module_under_test, fs):
     """ Test getting a Data Validation Client """
     _create_table_file()
-    data_validation = module_under_test.DataValidation(SAMPLE_CONFIG)
+    module_under_test.DataValidation(SAMPLE_CONFIG)

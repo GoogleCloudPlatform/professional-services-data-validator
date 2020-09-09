@@ -50,11 +50,10 @@ def get_pandas_client(table_name, file_path, file_type):
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
-    pandas_client = ibis.pandas.connect(
-        {table_name: df}
-    )
+    pandas_client = ibis.pandas.connect({table_name: df})
 
     return pandas_client
+
 
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,

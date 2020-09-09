@@ -118,12 +118,11 @@ def test_process_in_memory(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    assert config_manager.process_in_memory() == True
+    assert config_manager.process_in_memory() is True
 
     config_manager._config = copy.deepcopy(config_manager._config)
     config_manager._config[consts.CONFIG_TYPE] = "Row"
-    assert config_manager.process_in_memory() == False
-
+    assert config_manager.process_in_memory() is False
 
 
 def test_get_table_info(module_under_test):
