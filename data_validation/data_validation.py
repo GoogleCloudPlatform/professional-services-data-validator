@@ -42,12 +42,27 @@ except Exception:
     TeradataClient = None
 
 
+def get_pandas_client(table_name, file_path, file_type):
+    if file_type == "csv":
+        df = pandas.read_csv(file_path)
+    elif file_type == "json":
+        df = pandas.read_json(file_path)
+    else:
+        raise ValueError(f"Unknown Pandas File Type: {file_type}")
+
+    pandas_client = ibis.pandas.connect(
+        {table_name: df}
+    )
+
+    return pandas_client
+
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
     "Impala": impala_connect,
     "MySQL": MySQLClient,
     "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
+    "Pandas": get_pandas_client,
 }
 
 

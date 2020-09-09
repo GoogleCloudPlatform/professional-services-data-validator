@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import pytest
 
 from data_validation import consts
@@ -19,8 +20,8 @@ from data_validation import consts
 
 SAMPLE_CONFIG = {
     # BigQuery Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: {"type": "DNE source"},
-    consts.CONFIG_TARGET_CONN: {"type": "DNE target"},
+    consts.CONFIG_SOURCE_CONN: {"type": "DNE connection"},
+    consts.CONFIG_TARGET_CONN: {"type": "DNE connection"},
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
@@ -109,6 +110,20 @@ def test_target_connection_property(module_under_test):
     )
     target_connection = config_manager.target_connection
     assert target_connection == SAMPLE_CONFIG[consts.CONFIG_TARGET_CONN]
+
+
+def test_process_in_memory(module_under_test):
+    """Test getting config copy."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    assert config_manager.process_in_memory() == True
+
+    config_manager._config = copy.deepcopy(config_manager._config)
+    config_manager._config[consts.CONFIG_TYPE] = "Row"
+    assert config_manager.process_in_memory() == False
+
 
 
 def test_get_table_info(module_under_test):
