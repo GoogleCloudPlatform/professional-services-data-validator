@@ -124,9 +124,9 @@ class DataValidation(object):
 
         try:
             data_client = clients.CLIENT_LOOKUP[source_type](**connection_config)
-        except Exception:
-            msg = 'Connection Type "{source_type}" could not connect'.format(
-                source_type=source_type
+        except Exception as e:
+            msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
+                source_type=source_type, error=str(e)
             )
             raise exceptions.DataClientConnectionFailure(msg)
 
