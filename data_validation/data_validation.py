@@ -16,6 +16,7 @@ import copy
 import datetime
 import json
 import pandas
+import warnings
 
 import google.oauth2.service_account
 import ibis.pandas
@@ -119,15 +120,17 @@ class DataValidation(object):
                 )
             )
         else:
-            print(
-                "WARNING: No Primary Keys Suppplied in Row Validation"
-            )  # TODO move to log
+            warnings.warn(
+                "WARNING: No Primary Keys Suppplied in Row Validation", UserWarning
+            )
 
         return pandas.concat(past_results)
 
     def _add_recursive_validation_filter(self, validation_builder, row):
         """ Return ValidationBuilder Configured for Next Recursive Search """
         # TODO: Group By is using the alias instead of source/target column name
+        # if the alias!=column, this will cause an error.  Need to
+        # lookup the value of the column name here from ?config manager?
         group_by_columns = json.loads(row["group_by_columns"])
         for alias, value in group_by_columns.items():
             filter_field = {

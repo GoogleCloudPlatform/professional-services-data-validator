@@ -63,15 +63,6 @@ def generate_report(
             f"source: {source_names} target: {target_names}"
         )
 
-    # TODO: remove this
-    source_count = source.count().execute()
-    target_count = target.count().execute()
-    if not join_on_fields and (source_count > 1 or target_count > 1):
-        raise ValueError(
-            "Expected 1 row per result table when receiving no join_on_fields. "
-            f"Got source: {source_count} rows, target: {target_count} rows"
-        )
-
     differences_pivot = _calculate_differences(source, target, join_on_fields)
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
@@ -245,6 +236,7 @@ def _join_pivots(source, target, differences, join_on_fields):
 
 
 def _add_metadata(joined, run_metadata):
+    # TODO: Add source and target queries to metadata
     joined = joined[
         joined,
         ibis.literal(run_metadata.run_id).name("run_id"),
