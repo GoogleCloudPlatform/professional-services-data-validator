@@ -21,8 +21,6 @@ import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
-# from data_validation import consts, combiner, exceptions, metadata
-
 from third_party.ibis.ibis_impala.api import impala_connect
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
