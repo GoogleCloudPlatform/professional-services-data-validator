@@ -36,7 +36,12 @@ except Exception:
 
 
 def get_pandas_client(table_name, file_path, file_type):
-    # TODO: support gs:// or s3:// file paths
+    """ Return pandas client and env with file loaded into DataFrame
+
+        table_name (str): Table name to use as reference for file data
+        file_path (str): The local, s3, or GCS file path to the data
+        file_type (str): The file type of the file (csv or json)
+    """
     if file_type == "csv":
         df = pandas.read_csv(file_path)
     elif file_type == "json":
