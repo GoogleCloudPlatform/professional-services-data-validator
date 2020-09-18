@@ -44,7 +44,7 @@ class ValidationBuilder(object):
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
 
-        self.group_aliases = []
+        self.group_aliases = {}
 
         self.add_config_aggregates()
         self.add_config_query_groups()
@@ -86,7 +86,13 @@ class ValidationBuilder(object):
 
     def get_group_aliases(self):
         """ Return List of String Aliases """
-        return self.group_aliases
+        return self.group_aliases.keys()
+
+    def get_grouped_alias_source_column(self, alias):
+        return self.group_aliases[alias][consts.CONFIG_SOURCE_COLUMN]
+
+    def get_grouped_alias_target_column(self, alias):
+        return self.group_aliases[alias][consts.CONFIG_TARGET_COLUMN]
 
     def add_config_aggregates(self):
         """ Add Aggregations to Query """
@@ -142,7 +148,7 @@ class ValidationBuilder(object):
         """ Return grouped fields and reset configs."""
         self.source_builder.grouped_fields = []
         self.target_builder.grouped_fields = []
-        self.group_aliases = []
+        self.group_aliases = {}
 
         return self.config_manager.query_groups
 
@@ -166,7 +172,7 @@ class ValidationBuilder(object):
 
         self.source_builder.add_grouped_field(source_field)
         self.target_builder.add_grouped_field(target_field)
-        self.group_aliases.append(alias)
+        self.group_aliases[alias] = grouped_field
 
     def add_filter(self, filter_field):
         """ Add FilterField to Queries

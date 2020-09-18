@@ -128,16 +128,15 @@ class DataValidation(object):
 
     def _add_recursive_validation_filter(self, validation_builder, row):
         """ Return ValidationBuilder Configured for Next Recursive Search """
-        # TODO: Group By is using the alias instead of source/target column name
-        # if the alias!=column, this will cause an error.  Need to
-        # lookup the value of the column name here from ?config manager?
         group_by_columns = json.loads(row["group_by_columns"])
         for alias, value in group_by_columns.items():
             filter_field = {
                 consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,
-                consts.CONFIG_FILTER_SOURCE_COLUMN: alias,
+                consts.CONFIG_FILTER_SOURCE_COLUMN:
+                    validation_builder.get_grouped_alias_source_column(alias),
                 consts.CONFIG_FILTER_SOURCE_VALUE: value,
-                consts.CONFIG_FILTER_TARGET_COLUMN: alias,
+                consts.CONFIG_FILTER_TARGET_COLUMN:
+                    validation_builder.get_grouped_alias_target_column(alias),
                 consts.CONFIG_FILTER_TARGET_VALUE: value,
             }
             validation_builder.add_filter(filter_field)
