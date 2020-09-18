@@ -17,36 +17,16 @@ import datetime
 import warnings
 
 import google.oauth2.service_account
-from ibis.bigquery.client import BigQueryClient
 import ibis.pandas
-from ibis.sql.mysql.client import MySQLClient
-from ibis.sql.postgres.client import PostgreSQLClient
 
-from data_validation import consts, combiner, exceptions, metadata
+from data_validation import consts, combiner, exceptions, metadata, clients
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
-
-from third_party.ibis.ibis_impala.api import impala_connect
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
 warnings.filterwarnings(
     "ignore", "Your application has authenticated using end user credentials"
 )
-
-# If you have a Teradata License there is an optional teradatasql import
-try:
-    from third_party.ibis.ibis_teradata.client import TeradataClient
-except Exception:
-    TeradataClient = None
-
-
-CLIENT_LOOKUP = {
-    "BigQuery": BigQueryClient,
-    "Impala": impala_connect,
-    "MySQL": MySQLClient,
-    "Postgres": PostgreSQLClient,
-    "Teradata": TeradataClient,
-}
 
 
 """ The DataValidation class is where the code becomes source/target aware
@@ -136,17 +116,17 @@ class DataValidation(object):
                     key_path
                 )
 
-        if source_type not in CLIENT_LOOKUP:
+        if source_type not in clients.CLIENT_LOOKUP:
             msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
                 source_type=source_type
             )
             raise Exception(msg)
 
         try:
-            data_client = CLIENT_LOOKUP[source_type](**connection_config)
-        except Exception:
-            msg = 'Connection Type "{source_type}" could not connect'.format(
-                source_type=source_type
+            data_client = clients.CLIENT_LOOKUP[source_type](**connection_config)
+        except Exception as e:
+            msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
+                source_type=source_type, error=str(e)
             )
             raise exceptions.DataClientConnectionFailure(msg)
 
