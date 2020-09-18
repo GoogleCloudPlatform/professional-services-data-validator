@@ -1,5 +1,19 @@
 # Release steps
 
+## Prerequisites
+
+First, prepare a development environment. Follow the instructions in the
+[contributing guide](CONTRIBUTING.md) to setup your virtual environment,
+install the package locally, and add any dependencies needed for testing such
+as nox or pytest.
+
+In order to build packages for distribution, also install `setuptools` and
+`wheel` into your development virtual environment.
+
+```
+pip install setuptools wheel
+```
+
 ## Prepare a release
 
 - Update [CHANGELOG.md](CHANGELOG.md) based on git commit history since last
