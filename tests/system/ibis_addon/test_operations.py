@@ -28,22 +28,41 @@ def bigquery_client():
 
 
 def test_hashbytes_bigquery_string(bigquery_client):
-    tbl = bigquery_client.table("citibike_trips", database="bigquery-public-data.new_york_citibike")
+    tbl = bigquery_client.table(
+        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+    )
     expr = tbl[tbl["start_station_name"].hashbytes(how="sha256").name("station_hash")]
     sql = expr.compile()
-    assert sql == textwrap.dedent("""
+    assert (
+        sql
+        == textwrap.dedent(
+            """
     SELECT SHA256(`start_station_name`) AS `station_hash`
     FROM `bigquery-public-data.new_york_citibike.citibike_trips`
-    """).strip()
+    """
+        ).strip()
+    )
 
 
 def test_hashbytes_bigquery_binary(bigquery_client):
-    tbl = bigquery_client.table("citibike_trips", database="bigquery-public-data.new_york_citibike")
-    expr = tbl[tbl["start_station_name"].cast(dt.binary).hashbytes(how="sha256").name("station_hash")]
+    tbl = bigquery_client.table(
+        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+    )
+    expr = tbl[
+        tbl["start_station_name"]
+        .cast(dt.binary)
+        .hashbytes(how="sha256")
+        .name("station_hash")
+    ]
     sql = expr.compile()
     # TODO: Update the expected SQL to be a valid query once
     #       https://github.com/ibis-project/ibis/issues/2354 is fixed.
-    assert sql == textwrap.dedent("""
+    assert (
+        sql
+        == textwrap.dedent(
+            """
     SELECT SHA256(CAST(`start_station_name` AS BINARY)) AS `station_hash`
     FROM `bigquery-public-data.new_york_citibike.citibike_trips`
-    """).strip()
+    """
+        ).strip()
+    )
