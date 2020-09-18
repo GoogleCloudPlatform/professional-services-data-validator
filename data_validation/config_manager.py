@@ -46,7 +46,6 @@ class ConfigManager(object):
         self.source_client = source_client
         self.target_client = target_client
         if not self.process_in_memory():
-            print("INFO: Row Based Validation Using DB Resources")  # TODO: move to log
             self.target_client = source_client
 
         self.verbose = verbose
