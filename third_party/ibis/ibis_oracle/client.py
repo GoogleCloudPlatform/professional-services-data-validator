@@ -1,3 +1,19 @@
+# Copyright 2020 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+
 import contextlib
 import getpass
 import os
@@ -5,7 +21,6 @@ from typing import Optional
 
 import sqlalchemy as sa
 from third_party.ibis.ibis_oracle.compiler import OracleDialect
-from third_party.ibis.ibis_oracle.udf.api import udf
 
 import ibis.sql.alchemy as alch
 
@@ -171,34 +186,3 @@ class OracleClient(alch.AlchemyClient):
             parent = super(OracleClient, self)
             return parent.list_tables(like=like, schema=schema)
 
-    def udf(
-        self, pyfunc, in_types, out_type, schema=None, replace=False, name=None
-    ):
-        """Decorator that defines a PL/Python UDF in-database based on the
-        wrapped function and turns it into an ibis function expression.
-        Parameters
-        ----------
-        pyfunc : function
-        in_types : List[ibis.expr.datatypes.DataType]
-        out_type : ibis.expr.datatypes.DataType
-        schema : str
-            optionally specify the schema in which to define the UDF
-        replace : bool
-            replace UDF in database if already exists
-        name: str
-            name for the UDF to be defined in database
-        Returns
-        -------
-        Callable
-        Function that takes in ColumnExpr arguments and returns an instance
-        inheriting from OracleUDFNode
-        """
-        return udf(
-            client=self,
-            python_func=pyfunc,
-            in_types=in_types,
-            out_type=out_type,
-            schema=schema,
-            replace=replace,
-            name=name,
-        )

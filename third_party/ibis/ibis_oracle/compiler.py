@@ -1,3 +1,17 @@
+# Copyright 2020 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import functools
 import itertools
 import locale
@@ -120,19 +134,6 @@ def _interval_from_integer(t, expr):
 def _timestamp_add(t, expr):
     sa_args = list(map(t.translate, expr.op().args))
     return sa_args[0] + sa_args[1]
-
-
-def _is_nan(t, expr):
-    (arg,) = expr.op().args
-    sa_arg = t.translate(arg)
-    return sa_arg == float('None')
-
-
-def _is_inf(t, expr):
-    (arg,) = expr.op().args
-    sa_arg = t.translate(arg)
-    inf = float('inf')
-    return sa.or_(sa_arg == inf, sa_arg == -inf)
 
 
 def _cast(t, expr):
@@ -324,31 +325,6 @@ def _strftime(t, expr):
     return result
 
 
-class array_search(expression.FunctionElement):
-    type = sa.INTEGER()
-    name = 'array_search'
-
-
-@compiles(array_search)
-def oracle_array_search(element, compiler, **kw):
-    needle, haystack = element.clauses
-    i = sa.func.generate_subscripts(haystack, 1).alias('i')
-    c0 = sa.column('i', type_=sa.INTEGER(), _selectable=i)
-    result = (
-        sa.func.coalesce(
-            sa.select([c0])
-            .where(haystack[c0].op('IS NOT DISTINCT FROM')(needle))
-            .order_by(c0)
-            .limit(1)
-            .as_scalar(),
-            0,
-        )
-        - 1
-    )
-    string_result = compiler.process(result, **kw)
-    return string_result
-
-
 def _regex_replace(t, expr):
     string, pattern, replacement = map(t.translate, expr.op().args)
 
@@ -407,13 +383,6 @@ def _regex_extract(t, expr):
     string, pattern, index = map(t.translate, expr.op().args)
     result = sa.func.regex_extract(string, pattern, index + 1)
     return result
-
-
-def _cardinality(array):
-    return sa.case(
-        [(array.is_(None), None)],  # noqa: E711
-        else_=sa.func.coalesce(sa.func.array_length(array, 1), 0),
-    )
 
 
 def _table_column(t, expr):
@@ -511,9 +480,6 @@ _operation_registry.update(
         # types
         ops.Cast: _cast,
         ops.TypeOf: _typeof,
-        # Floating
-        ops.IsNan: _is_nan,
-        ops.IsInf: _is_inf,
         # null handling
         ops.IfNull: fixed_arity(sa.func.coalesce, 2),
         # boolean reductions
@@ -530,7 +496,6 @@ _operation_registry.update(
         ops.RegexReplace: _regex_replace,
         ops.Translate: fixed_arity('translate', 3),
         ops.RegexExtract: _regex_extract,
-        ops.StringSplit: fixed_arity(sa.func.string_to_array, 2),
         ops.StringJoin: _string_join,
         # math
         ops.Log: _log,
@@ -571,8 +536,6 @@ _operation_registry.update(
         ops.RandomScalar: _random,
         # now is in the timezone of the server, but we want UTC
         ops.TimestampNow: lambda *args: sa.func.timezone('UTC', sa.func.now()),
-        ops.CumulativeAll: unary(sa.func.bool_and),
-        ops.CumulativeAny: unary(sa.func.bool_or),
     }
 )
 
