@@ -24,6 +24,22 @@ from data_validation import metadata
 
 _NAN = float("nan")
 
+EXAMPLE_RUN_METADATA = metadata.RunMetadata(
+                validations={
+                    "count": metadata.ValidationMetadata(
+                        source_table_name="test_source",
+                        source_column_name="timecol",
+                        target_table_name="test_target",
+                        target_column_name="timecol",
+                        validation_type="Column",
+                        aggregation_type="count",
+                    ),
+                },
+                start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                run_id="test-run",
+            )
+
 
 @pytest.fixture
 def module_under_test():
@@ -62,14 +78,17 @@ def test_generate_report_with_too_many_rows(module_under_test):
             module_under_test.DEFAULT_TARGET: target,
         }
     )
-    with pytest.raises(ValueError, match="Expected 1 row per result table"):
-        module_under_test.generate_report(
-            pandas_client,
-            # Validation occurs before run_metadata is needed.
-            None,
-            source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
-            target=pandas_client.table(module_under_test.DEFAULT_TARGET),
-        )
+
+    report = module_under_test.generate_report(
+        pandas_client,
+        # Validation occurs before run_metadata is needed.
+        EXAMPLE_RUN_METADATA,
+        source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
+        target=pandas_client.table(module_under_test.DEFAULT_TARGET),
+    )
+
+    # TODO: how do we want to handle this going forward?
+    assert len(report) == 16
 
 
 @pytest.mark.parametrize(
