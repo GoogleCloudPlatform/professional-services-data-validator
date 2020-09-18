@@ -17,7 +17,7 @@ from third_party.ibis.ibis_addon import operations
 
 
 class AggregateField(object):
-    def __init__(self, ibis_expr, field_name=None, alias=None, hash_type=None):
+    def __init__(self, ibis_expr, field_name=None, alias=None):
         """ A representation of a table or column aggregate in Ibis
 
         Args:
@@ -29,43 +29,34 @@ class AggregateField(object):
         self.expr = ibis_expr
         self.field_name = field_name
         self.alias = alias
-        self.hash_type = hash_type
 
     @staticmethod
-    def count(field_name=None, alias=None, hash_type=None):
+    def count(field_name=None, alias=None):
         return AggregateField(
             ibis.expr.types.ColumnExpr.count,
             field_name=field_name,
             alias=alias,
-            hash_type=hash_type,
         )
 
     @staticmethod
-    def max(field_name=None, alias=None, hash_type=None):
+    def max(field_name=None, alias=None):
         return AggregateField(
             ibis.expr.types.ColumnExpr.max,
             field_name=field_name,
             alias=alias,
-            hash_type=hash_type,
         )
 
     @staticmethod
-    def sum(field_name=None, alias=None, hash_type=None):
+    def sum(field_name=None, alias=None):
         return AggregateField(
             ibis.expr.api.NumericColumn.sum,
             field_name=field_name,
             alias=alias,
-            hash_type=hash_type,
         )
 
     def compile(self, ibis_table):
         if self.field_name:
-            if self.hash_type:
-                agg_field = self.expr(
-                    ibis_table[self.field_name].hash(how=self.hash_type)
-                )
-            else:
-                agg_field = self.expr(ibis_table[self.field_name])
+            agg_field = self.expr(ibis_table[self.field_name])
         else:
             agg_field = self.expr(ibis_table)
 
