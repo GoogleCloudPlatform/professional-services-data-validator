@@ -25,20 +25,20 @@ from data_validation import metadata
 _NAN = float("nan")
 
 EXAMPLE_RUN_METADATA = metadata.RunMetadata(
-                validations={
-                    "count": metadata.ValidationMetadata(
-                        source_table_name="test_source",
-                        source_column_name="timecol",
-                        target_table_name="test_target",
-                        target_column_name="timecol",
-                        validation_type="Column",
-                        aggregation_type="count",
-                    ),
-                },
-                start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-                run_id="test-run",
-            )
+    validations={
+        "count": metadata.ValidationMetadata(
+            source_table_name="test_source",
+            source_column_name="timecol",
+            target_table_name="test_target",
+            target_column_name="timecol",
+            validation_type="Column",
+            aggregation_type="count",
+        ),
+    },
+    start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+    end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+    run_id="test-run",
+)
 
 
 @pytest.fixture

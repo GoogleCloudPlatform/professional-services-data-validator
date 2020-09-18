@@ -28,7 +28,8 @@ warnings.filterwarnings(
     "ignore", "Your application has authenticated using end user credentials"
 )
 warnings.filterwarnings(
-    "ignore", "Cannot create BigQuery Storage client, the dependency google-cloud-bigquery-storage is not installed"
+    "ignore",
+    "Cannot create BigQuery Storage client, the dependency google-cloud-bigquery-storage is not installed",
 )
 
 # If you have a Teradata License there is an optional teradatasql import
