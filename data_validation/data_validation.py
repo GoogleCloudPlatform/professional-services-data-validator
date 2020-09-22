@@ -132,11 +132,13 @@ class DataValidation(object):
         for alias, value in group_by_columns.items():
             filter_field = {
                 consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,
-                consts.CONFIG_FILTER_SOURCE_COLUMN:
-                    validation_builder.get_grouped_alias_source_column(alias),
+                consts.CONFIG_FILTER_SOURCE_COLUMN: validation_builder.get_grouped_alias_source_column(
+                    alias
+                ),
                 consts.CONFIG_FILTER_SOURCE_VALUE: value,
-                consts.CONFIG_FILTER_TARGET_COLUMN:
-                    validation_builder.get_grouped_alias_target_column(alias),
+                consts.CONFIG_FILTER_TARGET_COLUMN: validation_builder.get_grouped_alias_target_column(
+                    alias
+                ),
                 consts.CONFIG_FILTER_TARGET_VALUE: value,
             }
             validation_builder.add_filter(filter_field)
