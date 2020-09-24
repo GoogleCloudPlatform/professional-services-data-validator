@@ -32,11 +32,7 @@ DEFAULT_TARGET = "target"
 
 
 def generate_report(
-    client,
-    run_metadata,
-    source_table=DEFAULT_SOURCE,
-    target_table=DEFAULT_TARGET,
-    join_on_fields=(),
+    client, run_metadata, source, target, join_on_fields=(), verbose=False,
 ):
     """Combine results into a report.
 
@@ -44,8 +40,8 @@ def generate_report(
         client (ibis.client.Client): Ibis client used to combine results.
         run_metadata (data_validation.metadata.RunMetadata):
             Metadata about the run and validations.
-        source_table (str): Name of source results table in client system.
-        target_table (str): Name of target results table in client system.
+        source (ibis.QUERY): Ibis query / table object.
+        target (ibis.QUERY): Ibis query / table object.
         join_on_fields (Sequence[str]):
             A collection of column names to use to join source and target.
             These are the columns that both the source and target queries
@@ -57,8 +53,7 @@ def generate_report(
             schema as the report table.
     """
     join_on_fields = tuple(join_on_fields)
-    source = client.table(source_table)
-    target = client.table(target_table)
+
     source_names = source.schema().names
     target_names = target.schema().names
 
@@ -66,14 +61,6 @@ def generate_report(
         raise ValueError(
             "Expected source and target to have same schema, got "
             f"source: {source_names} target: {target_names}"
-        )
-
-    source_count = source.count().execute()
-    target_count = target.count().execute()
-    if not join_on_fields and (source_count > 1 or target_count > 1):
-        raise ValueError(
-            "Expected 1 row per result table when receiving no join_on_fields. "
-            f"Got source: {source_count} rows, target: {target_count} rows"
         )
 
     differences_pivot = _calculate_differences(source, target, join_on_fields)
@@ -85,6 +72,11 @@ def generate_report(
     )
     joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
     documented = _add_metadata(joined, run_metadata)
+
+    if verbose:
+        print("-- ** Combiner Query ** --")
+        print(documented.compile())
+
     return client.execute(documented)
 
 
@@ -244,6 +236,7 @@ def _join_pivots(source, target, differences, join_on_fields):
 
 
 def _add_metadata(joined, run_metadata):
+    # TODO: Add source and target queries to metadata
     joined = joined[
         joined,
         ibis.literal(run_metadata.run_id).name("run_id"),

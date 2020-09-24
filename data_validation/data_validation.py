@@ -14,20 +14,16 @@
 
 import copy
 import datetime
+import json
 import warnings
 
 import google.oauth2.service_account
 import ibis.pandas
+import pandas
 
 from data_validation import consts, combiner, exceptions, metadata, clients
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
-
-# TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
-warnings.filterwarnings(
-    "ignore", "Your application has authenticated using end user credentials"
-)
-
 
 """ The DataValidation class is where the code becomes source/target aware
 
@@ -78,27 +74,119 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
-        run_metadata = metadata.RunMetadata()
-
-        source_df = self.source_client.execute(
-            self.validation_builder.get_source_query()
-        )
-        target_df = self.target_client.execute(
-            self.validation_builder.get_target_query()
-        )
-        join_on_fields = self.validation_builder.get_group_aliases()
-        pandas_client = ibis.pandas.connect(
-            {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
-        )
-
-        run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
-        run_metadata.validations = self.validation_builder.get_metadata()
-        result_df = combiner.generate_report(
-            pandas_client, run_metadata, join_on_fields=join_on_fields
-        )
+        if self.config_manager.validation_type == "Row":
+            grouped_fields = self.validation_builder.pop_grouped_fields()
+            result_df = self.execute_recursive_validation(
+                self.validation_builder, grouped_fields
+            )
+        else:
+            result_df = self._execute_validation(
+                self.validation_builder, process_in_memory=True
+            )
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
+
+    def execute_recursive_validation(self, validation_builder, grouped_fields):
+        """ Recursive execution for Row validations.
+
+        This method executes aggregate queries, such as sum-of-hashes, on the
+        source and target tables. Where they differ, add to the GROUP BY
+        clause recursively until the individual row differences can be
+        identified.
+        """
+        process_in_memory = self.config_manager.process_in_memory()
+        past_results = []
+
+        if len(grouped_fields) > 0:
+            validation_builder.add_query_group(grouped_fields[0])
+            result_df = self._execute_validation(
+                validation_builder, process_in_memory=process_in_memory
+            )
+
+            for row in result_df.to_dict(orient="row"):
+                if row["source_agg_value"] == row["target_agg_value"]:
+                    past_results.append(pandas.DataFrame([row]))
+                    continue
+                else:
+                    recursive_validation_builder = validation_builder.clone()
+                    self._add_recursive_validation_filter(
+                        recursive_validation_builder, row
+                    )
+                    past_results.append(
+                        self.execute_recursive_validation(
+                            recursive_validation_builder, grouped_fields[1:]
+                        )
+                    )
+        elif self.config_manager.primary_keys:
+            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+            past_results.append(
+                self._execute_validation(
+                    validation_builder, process_in_memory=process_in_memory
+                )
+            )
+        else:
+            warnings.warn(
+                "WARNING: No Primary Keys Suppplied in Row Validation", UserWarning
+            )
+
+        return pandas.concat(past_results)
+
+    def _add_recursive_validation_filter(self, validation_builder, row):
+        """ Return ValidationBuilder Configured for Next Recursive Search """
+        group_by_columns = json.loads(row["group_by_columns"])
+        for alias, value in group_by_columns.items():
+            filter_field = {
+                consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,
+                consts.CONFIG_FILTER_SOURCE_COLUMN: validation_builder.get_grouped_alias_source_column(
+                    alias
+                ),
+                consts.CONFIG_FILTER_SOURCE_VALUE: value,
+                consts.CONFIG_FILTER_TARGET_COLUMN: validation_builder.get_grouped_alias_target_column(
+                    alias
+                ),
+                consts.CONFIG_FILTER_TARGET_VALUE: value,
+            }
+            validation_builder.add_filter(filter_field)
+
+    def _execute_validation(self, validation_builder, process_in_memory=True):
+        """ Execute Against a Supplied Validation Builder """
+        run_metadata = metadata.RunMetadata()
+        run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
+        run_metadata.validations = validation_builder.get_metadata()
+
+        source_query = validation_builder.get_source_query()
+        target_query = validation_builder.get_target_query()
+
+        join_on_fields = validation_builder.get_group_aliases()
+
+        if process_in_memory:
+            source_df = self.source_client.execute(source_query)
+            target_df = self.target_client.execute(target_query)
+
+            pandas_client = ibis.pandas.connect(
+                {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
+            )
+
+            result_df = combiner.generate_report(
+                pandas_client,
+                run_metadata,
+                pandas_client.table(combiner.DEFAULT_SOURCE),
+                pandas_client.table(combiner.DEFAULT_TARGET),
+                join_on_fields=join_on_fields,
+                verbose=self.verbose,
+            )
+        else:
+            result_df = combiner.generate_report(
+                self.source_client,
+                run_metadata,
+                source_query,
+                target_query,
+                join_on_fields=join_on_fields,
+                verbose=self.verbose,
+            )
+
+        return result_df
 
     @staticmethod
     def get_data_client(connection_config):
