@@ -88,7 +88,13 @@ class DataValidation(object):
         return self.result_handler.execute(self.config, result_df)
 
     def execute_recursive_validation(self, validation_builder, grouped_fields):
-        """ Recursive execution for Row validations. """
+        """ Recursive execution for Row validations.
+        
+        This method executes aggregate queries, such as sum-of-hashes, on the
+        source and target tables. Where they differ, add to the GROUP BY
+        clause recursively until the individual row differences can be
+        identified.
+        """
         process_in_memory = self.config_manager.process_in_memory()
         past_results = []
 
