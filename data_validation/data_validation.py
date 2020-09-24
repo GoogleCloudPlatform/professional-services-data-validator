@@ -15,11 +15,11 @@
 import copy
 import datetime
 import json
-import pandas
 import warnings
 
 import google.oauth2.service_account
 import ibis.pandas
+import pandas
 
 from data_validation import consts, combiner, exceptions, metadata, clients
 from data_validation.config_manager import ConfigManager
