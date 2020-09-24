@@ -37,6 +37,18 @@ class AggregateField(object):
         )
 
     @staticmethod
+    def min(field_name=None, alias=None):
+        return AggregateField(
+            ibis.expr.types.ColumnExpr.min, field_name=field_name, alias=alias
+        )
+
+    @staticmethod
+    def avg(field_name=None, alias=None):
+        return AggregateField(
+            ibis.expr.types.NumericColumn.avg, field_name=field_name, alias=alias
+        )
+
+    @staticmethod
     def max(field_name=None, alias=None):
         return AggregateField(
             ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias
