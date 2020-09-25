@@ -50,7 +50,6 @@ bigquery/docs/generated
 # Virtual environment
 env/
 coverage.xml
-venv
 
 # System test environment variables.
 system_tests/local_test_setup
