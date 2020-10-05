@@ -213,8 +213,9 @@ class ConfigManager(object):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
         source_table = self.get_source_ibis_table()
+        casefold_source_columns = [x.casefold() for x in source_table.columns]
         for column in grouped_columns:
-            if column not in source_table.columns:
+            if column.casefold() not in casefold_source_columns:
                 raise ValueError(
                     f"GroupedColumn DNE: {source_table.op().name}.{column}"
                 )
