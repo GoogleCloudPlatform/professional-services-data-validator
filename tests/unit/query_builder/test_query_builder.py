@@ -16,9 +16,16 @@ from unittest import mock
 
 import pytest
 
+VALID_AGGREGATES = ['sum', 'min', 'avg', 'max']
 
 @pytest.fixture
 def module_under_test():
     from data_validation.query_builder import query_builder
 
     return query_builder
+
+def test_import(module_under_test):
+    """Test import cleanly """
+    assert module_under_test is not None
+
+def test_valid_aggregate_types(module_under_test):
