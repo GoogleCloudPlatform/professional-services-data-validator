@@ -213,15 +213,23 @@ class ConfigManager(object):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
         source_table = self.get_source_ibis_table()
-        casefold_source_columns = [x.casefold() for x in source_table.columns]
+        target_table = self.get_target_ibis_table()
+        casefold_source_columns = {x.casefold():x for x in source_table.columns}
+        casefold_target_columns = {x.casefold():x for x in target_table.columns}
+
         for column in grouped_columns:
+
             if column.casefold() not in casefold_source_columns:
                 raise ValueError(
-                    f"GroupedColumn DNE: {source_table.op().name}.{column}"
+                    f"GroupedColumn DNE in source: {source_table.op().name}.{column}"
+                )
+            if column.casefold() not in casefold_target_columns:
+                raise ValueError(
+                    f"GroupedColumn DNE in target: {target_table.op().name}.{column}"
                 )
             column_config = {
-                consts.CONFIG_SOURCE_COLUMN: column,
-                consts.CONFIG_TARGET_COLUMN: column,
+                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
+                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
                 consts.CONFIG_FIELD_ALIAS: column,
                 consts.CONFIG_CAST: None,
             }
