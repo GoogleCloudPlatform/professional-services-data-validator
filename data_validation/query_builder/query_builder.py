@@ -33,7 +33,7 @@ class AggregateField(object):
     @staticmethod
     def count(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias
+            ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias,
         )
 
     @staticmethod
@@ -51,13 +51,13 @@ class AggregateField(object):
     @staticmethod
     def max(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias
+            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias,
         )
 
     @staticmethod
     def sum(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias
+            ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias,
         )
 
     def compile(self, ibis_table):
@@ -106,6 +106,13 @@ class FilterField(object):
         # Build Left and Right Objects
         return FilterField(
             ibis.expr.types.ColumnExpr.__lt__, left_field=field_name, right=value
+        )
+
+    @staticmethod
+    def equal_to(field_name, value):
+        # Build Left and Right Objects
+        return FilterField(
+            ibis.expr.types.ColumnExpr.__eq__, left_field=field_name, right=value
         )
 
     @staticmethod

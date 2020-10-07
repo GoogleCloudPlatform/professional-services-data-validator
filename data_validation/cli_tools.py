@@ -107,7 +107,7 @@ def _configure_run_parser(subparsers):
     )
 
     run_parser.add_argument(
-        "--type", "-t", help="Type of Data Validation (Column, GroupedColumn)"
+        "--type", "-t", help="Type of Data Validation (Column, GroupedColumn, Row)"
     )
     run_parser.add_argument("--source-conn", "-sc", help="Source connection name")
     run_parser.add_argument("--target-conn", "-tc", help="Target connection name")
@@ -146,6 +146,11 @@ def _configure_run_parser(subparsers):
         "--grouped-columns",
         "-gc",
         help="JSON List of columns to use in group by '[\"col_a\"]'",
+    )
+    run_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="JSON List of columns to use as primary keys '[\"id\"]'",
     )
     run_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"
