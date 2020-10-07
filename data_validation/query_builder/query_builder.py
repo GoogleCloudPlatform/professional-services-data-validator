@@ -45,7 +45,7 @@ class AggregateField(object):
     @staticmethod
     def avg(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.NumericColumn.avg, field_name=field_name, alias=alias
+            ibis.expr.types.NumericColumn.mean, field_name=field_name, alias=alias
         )
 
     @staticmethod
