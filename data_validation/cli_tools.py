@@ -119,13 +119,29 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--count",
         "-count",
-        help="JSON List of columns sum '[\"col_a\"]' or * for all columns",
+        help="JSON List of columns count '[\"col_a\"]' or * for all columns",
     )
     run_parser.add_argument(
         "--sum",
         "-sum",
         help="JSON List of columns sum '[\"col_a\"]' or * for all numeric",
     )
+    run_parser.add_argument(
+        "--avg",
+        "-avg",
+        help="JSON List of columns average '[\"col_a\"]' or * for all numeric",
+    )
+    run_parser.add_argument(
+        "--min",
+        "-min",
+        help="JSON List of columns min '[\"col_a\"]' or * for all numeric",
+    )
+    run_parser.add_argument(
+        "--max",
+        "-max",
+        help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
+    )
+
     run_parser.add_argument(
         "--grouped-columns",
         "-gc",
