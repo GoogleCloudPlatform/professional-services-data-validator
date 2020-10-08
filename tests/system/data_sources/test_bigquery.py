@@ -43,13 +43,18 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_FIELD_ALIAS: "count_tripduration",
         },
         {
+            consts.CONFIG_TYPE: "avg",
+            consts.CONFIG_SOURCE_COLUMN: "tripduration",
+            consts.CONFIG_TARGET_COLUMN: "tripduration",
+            consts.CONFIG_FIELD_ALIAS: "avg_tripduration",
+        },
+        {
             consts.CONFIG_TYPE: "max",
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "max_birth_year",
         },
         {
-
             consts.CONFIG_TYPE: "min",
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
@@ -131,13 +136,21 @@ def test_count_validator():
     count_tripduration_value = df[df["validation_name"] == "count_tripduration"][
         "source_agg_value"
     ].values[0]
+    avg_tripduration_value = df[df["validation_name"] == "count_tripduration"][
+        "source_agg_value"
+    ].values[0]
     max_birth_year_value = df[df["validation_name"] == "max_birth_year"][
+        "source_agg_value"
+    ].values[0]
+    min_birth_year_value = df[df["validation_name"] == "min_birth_year"][
         "source_agg_value"
     ].values[0]
 
     assert float(count_value) > 0
     assert float(count_tripduration_value) > 0
+    assert float(avg_tripduration_value) > 0
     assert float(max_birth_year_value) > 0
+    assert float(min_birth_year_value) > 0
     assert (
         df["source_agg_value"].astype(float).sum()
         == df["target_agg_value"].astype(float).sum()
