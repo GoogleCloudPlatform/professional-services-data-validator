@@ -229,6 +229,22 @@ If you want to add an Ibis Data Source which exists, but was not yet supported i
 3. You are done, you can reference the data source via the config.
     - Config: {"source_type": "<RefName>", ...KV Values required in Client...}
 
+## Examples
+
+### Example of Comparing BigQuery to BigQuery
+```
+# Store BigQuery Connection
+data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-resources
+
+# Run Validation (optionally use -c file_path.yaml to store the validation)
+data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
+  -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' \
+  --sum '*' --count '*'
+
+# Run a Stored Validations File
+data-validation run-config -c ex_yaml.yaml
+```
+
 ## Deploy to Composer
 ```
 #!/bin/bash
@@ -255,45 +271,6 @@ gsutil cp -r data_validation $GCS_BUCKET_PATH/data_validation
 # Deploy Test DAG to Composer
 echo "Pushing Data Validation Test Operator to GCS"
 gsutil cp tests/test_data_validation_operators.py $GCS_BUCKET_PATH/
-```
-
-## Examples
-
-### Example of Comparing BigQuery to BigQuery
-```
-from data_validation import data_validation, consts
-from data_validation.data_sources import data_client, example_client, bigquery
-from data_validation.query_builder import query_builder
-
-inp_config = {
-    # Configuration Required for All Data Soures
-    "source_type": "BigQuery",
-
-    # BigQuery Specific Connection Config
-    "project_id": os.environ["PROJECT_ID"],
-
-    # Configuration Required Depending on Validator Type
-    "schema_name": "bigquery-public-data.new_york_citibike",
-    "table_name": "citibike_trips",
-    consts.PARTITION_COLUMN: "starttime",
-    consts.PARTITION_COLUMN_TYPE: "DATE",
-}
-out_config = {
-    # Configuration Required for All Data Soures
-    "source_type": "BigQuery",
-
-    # BigQuery Specific Connection Config
-    "project_id": os.environ["PROJECT_ID"],
-
-    # Configuration Required Depending on Validator Type
-    "schema_name": "bigquery-public-data.new_york_citibike",
-    "table_name": "citibike_trips",
-    consts.PARTITION_COLUMN: "starttime",
-    consts.PARTITION_COLUMN_TYPE: "DATE",
-}
-
-builder = query_builder.QueryBuilder.build_partition_count_validator()
-data_validation.process_data(builder, inp_config, out_config)
 ```
 
 ## Contributing
