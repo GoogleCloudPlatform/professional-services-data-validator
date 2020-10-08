@@ -53,7 +53,7 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_TYPE: "min",
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
-            consts.CONFIG_FIELD_ALIAS: "max_birth_year",
+            consts.CONFIG_FIELD_ALIAS: "min_birth_year",
         },
     ],
 }
