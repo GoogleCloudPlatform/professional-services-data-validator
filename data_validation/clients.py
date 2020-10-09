@@ -58,6 +58,20 @@ def get_pandas_client(table_name, file_path, file_type):
     return pandas_client
 
 
+def get_ibis_table(client, schema_name, table_name, database_name=None):
+    """ Return Ibis Table for Supplied Client.
+
+        client (IbisClient): Client to use for table
+        schema_name (str): Schema name of table object
+        table_name (str): Table name of table object
+        database_name (str): Database name (generally default is used)
+    """
+    if type(client) in [PostgreSQLClient]:
+        return client.table(table_name, database=database_name, schema=schema_name)
+    else:
+        return client.table(table_name, database=schema_name)
+
+
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
     "Impala": impala_connect,

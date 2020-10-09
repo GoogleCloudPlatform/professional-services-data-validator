@@ -17,7 +17,7 @@ import logging
 
 import google.oauth2.service_account
 
-from data_validation import consts
+from data_validation import consts, clients
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 
@@ -152,18 +152,14 @@ class ConfigManager(object):
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
-            self._source_ibis_table = self.source_client.table(
-                self.source_table, database=self.source_schema
-            )
+            self._source_ibis_table = clients.get_ibis_table(self.source_client, self.source_schema, self.source_table)
 
         return self._source_ibis_table
 
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
-            self._target_ibis_table = self.target_client.table(
-                self.target_table, database=self.target_schema
-            )
+            self._target_ibis_table = clients.get_ibis_table(self.target_client, self.target_schema, self.target_table)
 
         return self._target_ibis_table
 
