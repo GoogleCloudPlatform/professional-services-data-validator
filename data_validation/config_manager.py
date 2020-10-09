@@ -282,8 +282,8 @@ class ConfigManager(object):
                 continue
 
             aggregate_config = {
-                consts.CONFIG_SOURCE_COLUMN: column,
-                consts.CONFIG_TARGET_COLUMN: column,
+                consts.CONFIG_SOURCE_COLUMN: str(column),
+                consts.CONFIG_TARGET_COLUMN: str(column),
                 consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
                 consts.CONFIG_TYPE: agg_type,
             }
