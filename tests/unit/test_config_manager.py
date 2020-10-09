@@ -152,7 +152,12 @@ def test_build_config_grouped_columns(module_under_test):
     )
 
     column_configs = config_manager.build_config_grouped_columns(["a"])
+    lazy_column_configs = config_manager.build_config_grouped_columns(["A"])
     assert column_configs[0] == GROUPED_COLUMN_CONFIG_A
+    assert (
+        lazy_column_configs[0][consts.CONFIG_SOURCE_COLUMN]
+        == GROUPED_COLUMN_CONFIG_A[consts.CONFIG_SOURCE_COLUMN]
+    )
 
 
 def test_build_config_aggregates(module_under_test):
