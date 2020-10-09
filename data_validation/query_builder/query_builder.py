@@ -229,11 +229,6 @@ class QueryBuilder(object):
         query = query.groupby(groups)
         query = query.aggregate(aggs)
 
-        # if groups:
-        #     query = table.groupby(groups).aggregate(aggs)
-        # else:
-        #     query = table.aggregate(aggs)
-
         if self.limit:
             query = query.limit(self.limit)
 
