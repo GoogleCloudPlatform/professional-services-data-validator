@@ -180,6 +180,36 @@ class GroupedField(object):
         return group_field
 
 
+class CalculatedField(object):
+    def __init__(self, fields, alias=None, cast=None)
+    """ A representation of an calculated field to build a query.
+
+    Args:
+        fields (list(String)): A list of fields to perform the function on
+        alias (String): An alias to use for the group
+        cast (String): A cast on the input if required 
+    """
+    self.fields = fields
+    self.alias = alias
+    self.cast = cast
+
+    @staticmethod
+    def hash()
+        pass
+
+    def custom(expr):
+        """ Returns a ScalarField instance built for any custom SQL using a supported operator.
+        
+        Args:
+            expr (Str): A custom SQL expression used to filter a query
+        """
+        return CalculatedField(None)
+
+    def compile(self, ibis_table):
+        hash_field = ibis_table[self.fields]
+        pass
+
+
 class QueryBuilder(object):
     def __init__(self, aggregate_fields, filters, grouped_fields, limit=None):
         """ Build a QueryBuilder object which can be used to build queries easily
@@ -201,6 +231,7 @@ class QueryBuilder(object):
         aggregate_fields = []
         filters = []
         grouped_fields = []
+        calculated_fields = []
 
         return QueryBuilder(
             aggregate_fields,
@@ -220,6 +251,9 @@ class QueryBuilder(object):
     def compile_group_fields(self, table):
         return [field.compile(table) for field in self.grouped_fields]
 
+    def compile_calculated_fields(self, table):
+        return [field.compile(table) for field in self.calculated_fields]
+
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
 
@@ -234,6 +268,7 @@ class QueryBuilder(object):
         aggs = self.compile_aggregate_fields(table)
         filters = self.compile_filter_fields(table)
         groups = self.compile_group_fields(table)
+        calcs = self.compile_calculated_fields(table)
 
         query = table.filter(filters)
         query = query.groupby(groups)
@@ -277,3 +312,12 @@ class QueryBuilder(object):
             filter_obj (FilterField): A FilterField instance
         """
         self.filters.append(filter_obj)
+
+    def add_scalar_field(self, calculated_field):
+        """ Add a CalculatedField instance to your query which
+            will add the desired scalar function to your compiled
+            query (ie. CONCAT(field_a, field_b))
+        Args:
+            calculated_field (CalculatedField): A CalculatedField instance
+        """
+        self.calculated_fields.append(calculated_field)
