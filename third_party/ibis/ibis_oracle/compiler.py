@@ -519,6 +519,7 @@ _operation_registry.update(
         ops.ExtractYear: _extract('year'),
         ops.ExtractMonth: _extract('month'),
         ops.ExtractDay: _extract('day'),
+        # TODO: Enable after next Ibis release (currently 1.3.0)
         # ops.ExtractDayOfYear: _extract('doy'),
         # ops.ExtractQuarter: _extract('quarter'),
         # ops.ExtractEpochSeconds: _extract('epoch', sa.BigInteger),
