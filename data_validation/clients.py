@@ -38,6 +38,12 @@ try:
 except Exception:
     TeradataClient = None
 
+# If you have an cx_Oracle driver installed
+try:
+    from third_party.ibis.ibis_oracle.client import OracleClient
+except Exception:
+  OracleClient = None
+
 
 def get_pandas_client(table_name, file_path, file_type):
     """ Return pandas client and env with file loaded into DataFrame
@@ -76,7 +82,8 @@ CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
     "Impala": impala_connect,
     "MySQL": MySQLClient,
+    "Oracle": OracleClient,
+    "Pandas": get_pandas_client,
     "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
-    "Pandas": get_pandas_client,
 }
