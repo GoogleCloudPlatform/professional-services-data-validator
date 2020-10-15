@@ -17,7 +17,7 @@ import logging
 
 import google.oauth2.service_account
 
-from data_validation import consts
+from data_validation import consts, clients
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 
@@ -45,6 +45,8 @@ class ConfigManager(object):
 
         self.source_client = source_client
         self.target_client = target_client
+        if not self.process_in_memory():
+            self.target_client = source_client
 
         self.verbose = verbose
 
@@ -65,8 +67,17 @@ class ConfigManager(object):
 
     @property
     def validation_type(self):
-        """Return string validation type (Column|GroupedColumn)."""
+        """Return string validation type (Column|GroupedColumn|Row)."""
         return self._config[consts.CONFIG_TYPE]
+
+    def process_in_memory(self):
+        if (
+            self.validation_type == "Row"
+            and self.source_connection == self.target_connection
+        ):
+            return False
+
+        return True
 
     @property
     def aggregates(self):
@@ -83,9 +94,20 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
 
     def append_query_groups(self, grouped_column_configs):
-        """Append aggregate configs to existing config."""
+        """Append grouped configs to existing config."""
         self._config[consts.CONFIG_GROUPED_COLUMNS] = (
             self.query_groups + grouped_column_configs
+        )
+
+    @property
+    def primary_keys(self):
+        """ Return Query Groups from Config """
+        return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
+
+    def append_primary_keys(self, primary_key_configs):
+        """Append primary key configs to existing config."""
+        self._config[consts.CONFIG_PRIMARY_KEYS] = (
+            self.primary_keys + primary_key_configs
         )
 
     @property
@@ -130,8 +152,8 @@ class ConfigManager(object):
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
-            self._source_ibis_table = self.source_client.table(
-                self.source_table, database=self.source_schema
+            self._source_ibis_table = clients.get_ibis_table(
+                self.source_client, self.source_schema, self.source_table
             )
 
         return self._source_ibis_table
@@ -139,8 +161,8 @@ class ConfigManager(object):
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
-            self._target_ibis_table = self.target_client.table(
-                self.target_table, database=self.target_schema
+            self._target_ibis_table = clients.get_ibis_table(
+                self.target_client, self.target_schema, self.target_table
             )
 
         return self._target_ibis_table
@@ -213,14 +235,23 @@ class ConfigManager(object):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
         source_table = self.get_source_ibis_table()
+        target_table = self.get_target_ibis_table()
+        casefold_source_columns = {x.casefold(): x for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): x for x in target_table.columns}
+
         for column in grouped_columns:
-            if column not in source_table.columns:
+
+            if column.casefold() not in casefold_source_columns:
                 raise ValueError(
-                    f"GroupedColumn DNE: {source_table.op().name}.{column}"
+                    f"GroupedColumn DNE in source: {source_table.op().name}.{column}"
+                )
+            if column.casefold() not in casefold_target_columns:
+                raise ValueError(
+                    f"GroupedColumn DNE in target: {target_table.op().name}.{column}"
                 )
             column_config = {
-                consts.CONFIG_SOURCE_COLUMN: column,
-                consts.CONFIG_TARGET_COLUMN: column,
+                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
+                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
                 consts.CONFIG_FIELD_ALIAS: column,
                 consts.CONFIG_CAST: None,
             }
@@ -260,8 +291,8 @@ class ConfigManager(object):
                 continue
 
             aggregate_config = {
-                consts.CONFIG_SOURCE_COLUMN: column,
-                consts.CONFIG_TARGET_COLUMN: column,
+                consts.CONFIG_SOURCE_COLUMN: str(column),
+                consts.CONFIG_TARGET_COLUMN: str(column),
                 consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
                 consts.CONFIG_TYPE: agg_type,
             }

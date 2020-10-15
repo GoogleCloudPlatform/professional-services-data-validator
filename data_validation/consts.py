@@ -26,6 +26,7 @@ CONFIG_TARGET_TABLE_NAME = "target_table_name"
 CONFIG_FIELD_ALIAS = "field_alias"
 CONFIG_AGGREGATES = "aggregates"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
+CONFIG_PRIMARY_KEYS = "primary_keys"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
 CONFIG_CAST = "cast"
@@ -33,10 +34,17 @@ CONFIG_LIMIT = "limit"
 CONFIG_FILTERS = "filters"
 CONFIG_FILTER_SOURCE = "source"
 CONFIG_FILTER_TARGET = "target"
+
+CONFIG_FILTER_SOURCE_COLUMN = "source_column"
+CONFIG_FILTER_SOURCE_VALUE = "source_value"
+CONFIG_FILTER_TARGET_COLUMN = "target_column"
+CONFIG_FILTER_TARGET_VALUE = "target_value"
+
 CONFIG_RESULT_HANDLER = "result_handler"
 
 # Filter Type Options
 FILTER_TYPE_CUSTOM = "custom"
+FILTER_TYPE_EQUALS = "equals"
 
 # Yaml File Config Fields
 ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"

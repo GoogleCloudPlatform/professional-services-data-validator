@@ -108,7 +108,7 @@ def test_validation_add_groups(module_under_test):
     mock_config_manager.append_query_groups(QUERY_GROUPS_TEST)
     builder.add_config_query_groups()
 
-    assert builder.group_aliases == ["start_alias"]
+    assert list(builder.get_group_aliases()) == ["start_alias"]
 
 
 def test_column_validation_limit(module_under_test):

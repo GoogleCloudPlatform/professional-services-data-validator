@@ -107,7 +107,7 @@ def _configure_run_parser(subparsers):
     )
 
     run_parser.add_argument(
-        "--type", "-t", help="Type of Data Validation (Column, GroupedColumn)"
+        "--type", "-t", help="Type of Data Validation (Column, GroupedColumn, Row)"
     )
     run_parser.add_argument("--source-conn", "-sc", help="Source connection name")
     run_parser.add_argument("--target-conn", "-tc", help="Target connection name")
@@ -119,7 +119,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--count",
         "-count",
-        help="JSON List of columns sum '[\"col_a\"]' or * for all columns",
+        help="JSON List of columns count '[\"col_a\"]' or * for all columns",
     )
     run_parser.add_argument(
         "--sum",
@@ -127,9 +127,30 @@ def _configure_run_parser(subparsers):
         help="JSON List of columns sum '[\"col_a\"]' or * for all numeric",
     )
     run_parser.add_argument(
+        "--avg",
+        "-avg",
+        help="JSON List of columns average '[\"col_a\"]' or * for all numeric",
+    )
+    run_parser.add_argument(
+        "--min",
+        "-min",
+        help="JSON List of columns min '[\"col_a\"]' or * for all numeric",
+    )
+    run_parser.add_argument(
+        "--max",
+        "-max",
+        help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
+    )
+
+    run_parser.add_argument(
         "--grouped-columns",
         "-gc",
         help="JSON List of columns to use in group by '[\"col_a\"]'",
+    )
+    run_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="JSON List of columns to use as primary keys '[\"id\"]'",
     )
     run_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"

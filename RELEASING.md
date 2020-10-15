@@ -1,5 +1,19 @@
 # Release steps
 
+## Prerequisites
+
+First, prepare a development environment. Follow the instructions in the
+[contributing guide](CONTRIBUTING.md) to setup your virtual environment,
+install the package locally, and add any dependencies needed for testing such
+as nox or pytest.
+
+In order to build packages for distribution, also install `setuptools` and
+`wheel` into your development virtual environment.
+
+```
+pip install setuptools wheel
+```
+
 ## Prepare a release
 
 - Update [CHANGELOG.md](CHANGELOG.md) based on git commit history since last
@@ -56,6 +70,7 @@
 
   ```
   data-validation -h
+  python -m data_validation -h
   ```
 
 ## Publish the package
@@ -79,3 +94,23 @@
 
 - Upload the `.whl` wheel file, README, and CHANGELOG to [Google
   Drive](https://drive.google.com/corp/drive/folders/1C387pJKyqOCTN0I7sIm0SP6pfHu0PrLG).
+
+- Release Version to GCS
+
+  ```
+  export PACKAGE_VERSION=X.X.X
+  gsutil cp README.md CHANGELOG.md dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/${PACKAGE_VERSION}/
+  gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/${PACKAGE_VERSION}/**
+  ```
+
+- Release Latest to GCS
+
+  ```
+  export PACKAGE_VERSION=X.X.X
+
+  gsutil cp README.md CHANGELOG.md gs://professional-services-data-validator/releases/latest/
+  gsutil cp dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/google_pso_data_validator-latest-py3-none-any.whl
+  gsutil cp dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/google-pso-data-validator-latest.tar.gz
+
+  gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/latest/**
+  ```

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 from data_validation import consts, metadata
 from data_validation.query_builder.query_builder import (
     QueryBuilder,
@@ -43,17 +44,27 @@ class ValidationBuilder(object):
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
 
-        self.group_aliases = []
+        self.group_aliases = {}
 
         self.add_config_aggregates()
         self.add_config_query_groups()
         self.add_config_filters()
         self.add_query_limit()
 
+    def clone(self):
+        cloned_builder = ValidationBuilder(self.config_manager)
+
+        cloned_builder.source_builder = deepcopy(self.source_builder)
+        cloned_builder.target_builder = deepcopy(self.target_builder)
+        cloned_builder.group_aliases = deepcopy(self.group_aliases)
+        cloned_builder._metadata = deepcopy(self._metadata)
+
+        return cloned_builder
+
     @staticmethod
     def get_query_builder(validation_type):
         """ Return Query Builder object given validation type """
-        if validation_type in ["Column", "GroupedColumn"]:
+        if validation_type in ["Column", "GroupedColumn", "Row"]:
             builder = QueryBuilder.build_count_validator()
         else:
             msg = "Validation Builder supplied unknown type: %s" % validation_type
@@ -75,7 +86,13 @@ class ValidationBuilder(object):
 
     def get_group_aliases(self):
         """ Return List of String Aliases """
-        return self.group_aliases
+        return self.group_aliases.keys()
+
+    def get_grouped_alias_source_column(self, alias):
+        return self.group_aliases[alias][consts.CONFIG_SOURCE_COLUMN]
+
+    def get_grouped_alias_target_column(self, alias):
+        return self.group_aliases[alias][consts.CONFIG_TARGET_COLUMN]
 
     def add_config_aggregates(self):
         """ Add Aggregations to Query """
@@ -83,9 +100,9 @@ class ValidationBuilder(object):
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
-    def add_config_query_groups(self):
+    def add_config_query_groups(self, query_groups=None):
         """ Add Grouped Columns to Query """
-        grouped_fields = self.config_manager.query_groups
+        grouped_fields = query_groups or self.config_manager.query_groups
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
 
@@ -127,6 +144,14 @@ class ValidationBuilder(object):
             target_column_name=target_field_name,
         )
 
+    def pop_grouped_fields(self):
+        """ Return grouped fields and reset configs."""
+        self.source_builder.grouped_fields = []
+        self.target_builder.grouped_fields = []
+        self.group_aliases = {}
+
+        return self.config_manager.query_groups
+
     def add_query_group(self, grouped_field):
         """ Add Grouped Field to Query
 
@@ -147,7 +172,7 @@ class ValidationBuilder(object):
 
         self.source_builder.add_grouped_field(source_field)
         self.target_builder.add_grouped_field(target_field)
-        self.group_aliases.append(alias)
+        self.group_aliases[alias] = grouped_field
 
     def add_filter(self, filter_field):
         """ Add FilterField to Queries
@@ -156,12 +181,25 @@ class ValidationBuilder(object):
             filter_field (Dict): An object with source and target filter details
         """
         if filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_CUSTOM:
-            source_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_SOURCE])
-            target_field = FilterField.custom(filter_field[consts.CONFIG_FILTER_TARGET])
+            source_filter = FilterField.custom(
+                filter_field[consts.CONFIG_FILTER_SOURCE]
+            )
+            target_filter = FilterField.custom(
+                filter_field[consts.CONFIG_FILTER_TARGET]
+            )
+        elif filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_EQUALS:
+            source_filter = FilterField.equal_to(
+                filter_field[consts.CONFIG_FILTER_SOURCE_COLUMN],
+                filter_field[consts.CONFIG_FILTER_SOURCE_VALUE],
+            )
+            target_filter = FilterField.equal_to(
+                filter_field[consts.CONFIG_FILTER_TARGET_COLUMN],
+                filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
+            )
 
         # TODO(issues/40): Add metadata around filters
-        self.source_builder.add_filter_field(source_field)
-        self.target_builder.add_filter_field(target_field)
+        self.source_builder.add_filter_field(source_filter)
+        self.target_builder.add_filter_field(target_filter)
 
     def get_source_query(self):
         """ Return query for source validation """
