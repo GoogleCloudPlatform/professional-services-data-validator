@@ -42,7 +42,7 @@ except Exception:
 try:
     from third_party.ibis.ibis_oracle.client import OracleClient
 except Exception:
-  OracleClient = None
+    OracleClient = None
 
 
 def get_pandas_client(table_name, file_path, file_type):
