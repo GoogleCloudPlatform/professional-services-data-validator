@@ -53,22 +53,22 @@ def get_aggregate_config(args, config_manager):
     if args.sum:
         col_args = None if args.sum == "*" else json.loads(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, ["int64", "float64"]
+            "sum", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.avg:
         col_args = None if args.avg == "*" else json.loads(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, ["int64", "float64"]
+            "avg", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.min:
         col_args = None if args.min == "*" else json.loads(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, ["int64", "float64"]
+            "min", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.max:
         col_args = None if args.max == "*" else json.loads(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, ["int64", "float64"]
+            "max", col_args, consts.NUMERIC_DATA_TYPES
         )
 
     return aggregate_configs
