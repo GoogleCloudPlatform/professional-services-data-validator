@@ -166,8 +166,44 @@ via `pip install teradatasql` if you have a license.
     # Connection Details
     "host": "127.0.0.1",
     "port":1025,
-    "user_name":"my_user",
-    "password":"my_password"
+    "user_name":"my-user",
+    "password":"my-password"
+}
+```
+
+### Oracle
+Please note the Oracle package is not installed by default.  You will need to follow [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
+Then `pip install cx_Oracle`.
+```
+{
+    # Configuration Required for All Data Soures
+    "source_type": "Oracle",
+
+    # Connection Details
+    "host": "127.0.0.1",
+    "port":1521,
+    "user_name":"my-user",
+    "password":"my-password",
+    "database": "XE",
+
+}
+```
+
+### MSSQL Server
+Please note the MSSQL Server package is not installed by default.  You will need to follow [SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server) installation steps.
+Then `pip install pyodbc`.
+```
+{
+    # Configuration Required for All Data Soures
+    "source_type": "MSSQL",
+
+    # Connection Details
+    "host": "127.0.0.1",
+    "port":1521,
+    "user_name":"my-user",
+    "password":"my-password",
+    "database": "my-db",
+
 }
 ```
 
