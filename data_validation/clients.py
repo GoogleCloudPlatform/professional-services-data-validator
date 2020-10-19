@@ -44,6 +44,11 @@ try:
 except Exception:
     OracleClient = None
 
+try:
+    from third_party.ibis.ibis_mssql import connect as mssql_connect
+except Exception:
+    mssql_connect = None
+
 
 def get_pandas_client(table_name, file_path, file_type):
     """ Return pandas client and env with file loaded into DataFrame
@@ -86,4 +91,5 @@ CLIENT_LOOKUP = {
     "Pandas": get_pandas_client,
     "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
+    "MSSQL": mssql_connect,
 }
