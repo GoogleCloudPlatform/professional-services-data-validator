@@ -285,9 +285,7 @@ class ConfigManager(object):
                     f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
                 )
                 continue
-            elif (
-                supported_types and column_type not in supported_types
-            ):
+            elif supported_types and column_type not in supported_types:
                 continue
 
             aggregate_config = {
