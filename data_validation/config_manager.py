@@ -277,6 +277,7 @@ class ConfigManager(object):
         target_table = self.get_target_ibis_table()
         allowlist_columns = arg_value or source_table.columns
         for column in source_table.columns:
+            column_type = str(source_table[column].type())
             if column not in allowlist_columns:
                 continue
             elif column not in target_table.columns:
@@ -284,10 +285,7 @@ class ConfigManager(object):
                     f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
                 )
                 continue
-            elif (
-                supported_types
-                and str(source_table[column].type()) not in supported_types
-            ):
+            elif supported_types and column_type not in supported_types:
                 continue
 
             aggregate_config = {

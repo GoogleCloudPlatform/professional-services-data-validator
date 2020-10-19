@@ -53,10 +53,10 @@ class OracleClient(alch.AlchemyClient):
 
     def __init__(
         self,
-        # host: str = 'localhost',
+        host: str = 'localhost',
+        port: int = 1521,
         user: str = getpass.getuser(),
         password: Optional[str] = None,
-        # port: int = 1521,
         database: str = None,
         url: Optional[str] = None,
         driver: str = 'cx_Oracle',
@@ -67,7 +67,7 @@ class OracleClient(alch.AlchemyClient):
                     'cx_Oracle is currently the only supported driver'
                 )
             sa_url = sa.engine.url.URL(
-                'oracle+cx_oracle', user, password, database,
+                'oracle+cx_oracle', host=host, port=port, username=user, password=password, database=database,
             )
         else:
             sa_url = sa.engine.url.make_url(url)

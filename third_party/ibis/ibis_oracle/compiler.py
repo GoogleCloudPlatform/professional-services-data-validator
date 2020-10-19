@@ -519,9 +519,10 @@ _operation_registry.update(
         ops.ExtractYear: _extract('year'),
         ops.ExtractMonth: _extract('month'),
         ops.ExtractDay: _extract('day'),
-        ops.ExtractDayOfYear: _extract('doy'),
-        ops.ExtractQuarter: _extract('quarter'),
-        ops.ExtractEpochSeconds: _extract('epoch', sa.BigInteger),
+        # TODO: Enable after next Ibis release (currently 1.3.0)
+        # ops.ExtractDayOfYear: _extract('doy'),
+        # ops.ExtractQuarter: _extract('quarter'),
+        # ops.ExtractEpochSeconds: _extract('epoch', sa.BigInteger),
         ops.ExtractHour: _extract('hour'),
         ops.ExtractMinute: _extract('minute'),
         ops.ExtractSecond: _second,
@@ -533,7 +534,7 @@ _operation_registry.update(
         ops.Max: _reduction('max'),
         ops.Variance: _variance_reduction('var'),
         ops.StandardDev: _variance_reduction('stddev'),
-        ops.RandomScalar: _random,
+        # ops.RandomScalar: _random,
         # now is in the timezone of the server, but we want UTC
         ops.TimestampNow: lambda *args: sa.func.timezone('UTC', sa.func.now()),
     }
