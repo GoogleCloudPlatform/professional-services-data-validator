@@ -236,8 +236,8 @@ class ConfigManager(object):
         grouped_column_configs = []
         source_table = self.get_source_ibis_table()
         target_table = self.get_target_ibis_table()
-        casefold_source_columns = {x.casefold(): x for x in source_table.columns}
-        casefold_target_columns = {x.casefold(): x for x in target_table.columns}
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for column in grouped_columns:
 
