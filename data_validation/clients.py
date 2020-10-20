@@ -31,6 +31,9 @@ warnings.filterwarnings(
     "ignore",
     "Cannot create BigQuery Storage client, the dependency google-cloud-bigquery-storage is not installed",
 )
+warnings.filterwarnings(
+    "ignore", "The GenericFunction 'regex_extract' is already registered"
+)
 
 # If you have a Teradata License there is an optional teradatasql import
 try:
