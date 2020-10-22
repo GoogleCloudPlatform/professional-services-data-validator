@@ -141,6 +141,11 @@ def _configure_run_parser(subparsers):
         "-max",
         help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
     )
+    run_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="JSON List of columns hash '[\"col_a\"]' or * for all columns",
+    )
 
     run_parser.add_argument(
         "--grouped-columns",

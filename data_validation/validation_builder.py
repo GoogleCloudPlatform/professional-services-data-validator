@@ -100,6 +100,12 @@ class ValidationBuilder(object):
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
+    def add_config_calculated_fields(self):
+        """ Add calculated fields to Query """
+        calc_fields = self.config_manager.calculated_fields
+        for calc_field in calc_fields:
+            self.add_calc(calc_field)
+
     def add_config_query_groups(self, query_groups=None):
         """ Add Grouped Columns to Query """
         grouped_fields = query_groups or self.config_manager.query_groups
@@ -200,6 +206,18 @@ class ValidationBuilder(object):
         # TODO(issues/40): Add metadata around filters
         self.source_builder.add_filter_field(source_filter)
         self.target_builder.add_filter_field(target_filter)
+
+    def add_calc(self, calc_field):
+        """ Add CalculatedField to Queries
+
+        Args:
+            calc_field (Dict): An object with source, target, and cast info
+        """
+        source_field = CalculatedField()
+        target_field = CalculatedField()
+
+        self.source_builder.add_calculated_field(source_field)
+        self.target_builder.add_calculated_field(target_field)
 
     def get_source_query(self):
         """ Return query for source validation """

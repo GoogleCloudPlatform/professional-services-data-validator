@@ -195,7 +195,7 @@ class CalculatedField(object):
 
     @staticmethod
     def hash()
-        pass
+        return CalculatedField(None)
 
     def custom(expr):
         """ Returns a ScalarField instance built for any custom SQL using a supported operator.
@@ -216,11 +216,13 @@ class QueryBuilder(object):
 
         Args:
             aggregate_fields (list[AggregateField]): AggregateField instances with Ibis expressions
+            calculated_fields (list[CalculatedField]): A list of CalculatedField instances
             filters (list[FilterField]): A list of FilterField instances
             grouped_fields (list[GroupedField]): A list of GroupedField instances
             limit (int): A limit value for the number of records to pull (used for testing)
         """
         self.aggregate_fields = aggregate_fields
+        self.calcuated_fields = calculated_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
         self.limit = limit
@@ -313,7 +315,7 @@ class QueryBuilder(object):
         """
         self.filters.append(filter_obj)
 
-    def add_scalar_field(self, calculated_field):
+    def add_calculated_field(self, calculated_field):
         """ Add a CalculatedField instance to your query which
             will add the desired scalar function to your compiled
             query (ie. CONCAT(field_a, field_b))
