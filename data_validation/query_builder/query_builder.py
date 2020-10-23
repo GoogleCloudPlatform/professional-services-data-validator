@@ -60,6 +60,10 @@ class AggregateField(object):
             ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias,
         )
 
+    @staticmethod
+    def xor(field_name=None, alias=None):
+        return AggregateField(None)
+
     def compile(self, ibis_table):
         if self.field_name:
             agg_field = self.expr(ibis_table[self.field_name])
@@ -181,29 +185,33 @@ class GroupedField(object):
 
 
 class CalculatedField(object):
-    def __init__(self, fields, alias=None, cast=None)
+    def __init__(self, fields, alias=None):
     """ A representation of an calculated field to build a query.
 
     Args:
         fields (list(String)): A list of fields to perform the function on
         alias (String): An alias to use for the group
-        cast (String): A cast on the input if required 
     """
     self.fields = fields
     self.alias = alias
-    self.cast = cast
 
     @staticmethod
     def hash()
-        return CalculatedField(None)
+        return CalculatedField(fields)
+
+    def concat()
+        return CalculatedField(fields)
+
+    def coalesce()
+        return CalculatedField(fields)
 
     def custom(expr):
-        """ Returns a ScalarField instance built for any custom SQL using a supported operator.
+        """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
         
         Args:
             expr (Str): A custom SQL expression used to filter a query
         """
-        return CalculatedField(None)
+        return CalculatedField(expr)
 
     def compile(self, ibis_table):
         hash_field = ibis_table[self.fields]
