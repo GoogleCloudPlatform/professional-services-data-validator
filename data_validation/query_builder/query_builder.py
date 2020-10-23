@@ -15,6 +15,8 @@
 import ibis
 from third_party.ibis.ibis_addon import operations
 
+from data_validation import clients
+
 
 class AggregateField(object):
     def __init__(self, ibis_expr, field_name=None, alias=None):
@@ -272,7 +274,7 @@ class QueryBuilder(object):
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
         """
-        table = data_client.table(table_name, database=schema_name)
+        table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
         aggs = self.compile_aggregate_fields(table)
@@ -283,11 +285,6 @@ class QueryBuilder(object):
         query = table.filter(filters)
         query = query.groupby(groups)
         query = query.aggregate(aggs)
-
-        # if groups:
-        #     query = table.groupby(groups).aggregate(aggs)
-        # else:
-        #     query = table.aggregate(aggs)
 
         if self.limit:
             query = query.limit(self.limit)

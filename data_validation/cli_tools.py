@@ -63,6 +63,20 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
     ],
+    "Oracle": [
+        ["host", "Desired Oracle host"],
+        ["port", "Oracle port to connect on"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["database", "Database to connect to"],
+    ],
+    "MSSQL": [
+        ["host", "Desired SQL Server host (default localhost)"],
+        ["port", "SQL Server port to connect on (default 1433)"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["database", "Database to connect to (default master)"],
+    ],
 }
 
 
