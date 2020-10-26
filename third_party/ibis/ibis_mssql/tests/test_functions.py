@@ -1,17 +1,3 @@
-# Copyright 2020 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import operator
 import warnings
 
@@ -23,9 +9,8 @@ from pytest import param
 
 import ibis
 import ibis.expr.types as ir
-import ibis.ibis_mssql
+import third_party.ibis.ibis_mssql
 from ibis import literal as L
-from ibis.expr.window import rows_with_max_lookback
 
 sa = pytest.importorskip('sqlalchemy')
 
@@ -417,14 +402,10 @@ def test_ifelse(alltypes, df, op, pandas_op):
 )
 def test_bucket(alltypes, df, func, pandas_func):
     expr = func(alltypes.double_col)
-    result = expr.execute()
-    expected = pandas_func(df.double_col).astype('category')
+    result = expr.execute().astype('float64')
+    expected = pandas_func(df.double_col).astype('category').astype('float64')
     tm.assert_series_equal(
-        result,
-        expected,
-        check_index_type=False,
-        check_names=False,
-        check_dtype=False,
+        result, expected, check_names=False, check_dtype=False
     )
 
 
@@ -443,15 +424,13 @@ def test_category_label(alltypes, df):
     result = pd.Series(pd.Categorical(result, ordered=True))
 
     result.name = 'double_col'
+    result = result.astype('float64')
 
     expected = pd.cut(df.double_col, bins, labels=labels, right=False)
+    expected = expected.astype('float64')
 
     tm.assert_series_equal(
-        result,
-        expected,
-        check_index_type=False,
-        check_names=False,
-        check_dtype=False,
+        result, expected, check_names=False, check_dtype=False
     )
 
 
@@ -623,16 +602,16 @@ def test_aggregations(alltypes, df, func, pandas_func):
     result = expr.execute()
     expected = pandas_func(df, df.string_col.isin(['1234.56', '7']))
 
-    np.testing.assert_allclose(result, expected)
+    np.testing.assert_allclose(result, expected, atol=0.001, rtol=1e-06)
 
 
 def test_not_contains(alltypes, df):
     n = 100
     table = alltypes.limit(n)
     expr = table.string_col.notin(['1234.56', '7'])
-    result = table[(expr)].execute()
-    expected = df[~df.head(n).string_col.isin(['1234.56', '7'])]
-    tm.assert_series_equal(result, expected, check_names=False)
+    result = table[expr].double_col.execute()
+    expected = df[~df.head(n).string_col.isin(['1234.56', '7'])].double_col
+    np.testing.assert_allclose(result, expected)
 
 
 def test_distinct_aggregates(alltypes, df):
@@ -678,139 +657,17 @@ def test_subquery(alltypes, df):
     tm.assert_frame_equal(result, expected)
 
 
-@pytest.mark.parametrize('func', ['mean', 'sum', 'min', 'max'])
-def test_simple_window(alltypes, func, df):
-    t = alltypes
-    f = getattr(t.double_col, func)
-    df_f = getattr(df.double_col, func)
-    result = (
-        t.projection([(t.double_col - f()).name('double_col')])
-        .execute()
-        .double_col
-    )
-    expected = df.double_col - df_f()
-    tm.assert_series_equal(result, expected, check_dtype=False)
-
-
-@pytest.mark.parametrize('func', ['mean', 'sum', 'min', 'max'])
-def test_rolling_window(alltypes, func, df):
-    t = alltypes
-    df = (
-        df[['double_col', 'timestamp_col']]
-        .sort_values('timestamp_col')
-        .reset_index(drop=True)
-    )
-    window = ibis.window(order_by=t.timestamp_col, preceding=1, following=0)
-    f = getattr(t.double_col, func)
-    df_f = getattr(df.double_col.rolling(2, min_periods=0), func)
-    result = (
-        t.projection([f().over(window).name('double_col')])
-        .execute()
-        .double_col
-    )
-    expected = df_f()
-    tm.assert_series_equal(result, expected, check_dtype=False)
-
-
-def test_rolling_window_with_mlb(alltypes):
-    t = alltypes
-    window = ibis.trailing_window(
-        preceding=rows_with_max_lookback(3, ibis.interval(days=5)),
-        order_by=t.timestamp_col,
-    )
-    expr = t['double_col'].sum().over(window)
-    with pytest.raises(NotImplementedError):
-        expr.execute()
-
-
-@pytest.mark.parametrize('func', ['mean', 'sum', 'min', 'max'])
-def test_partitioned_window(alltypes, func, df):
-    t = alltypes
-    window = ibis.window(
-        group_by=t.string_col,
-        order_by=t.timestamp_col,
-        preceding=1,
-        following=0,
-    )
-
-    def roller(func):
-        def rolled(df):
-            torder = df.sort_values('timestamp_col')
-            rolling = torder.double_col.rolling(2, min_periods=0)
-            return getattr(rolling, func)()
-
-        return rolled
-
-    f = getattr(t.double_col, func)
-    expr = f().over(window).name('double_col')
-    result = t.projection([expr]).execute().double_col
-    expected = (
-        df.groupby('string_col').apply(roller(func)).reset_index(drop=True)
-    )
-    tm.assert_series_equal(result, expected, check_dtype=False)
-
-
-@pytest.mark.parametrize('func', ['sum', 'min', 'max'])
-def test_cumulative_simple_window(alltypes, func, df):
-    t = alltypes
-    f = getattr(t.double_col, func)
-    col = t.double_col - f().over(ibis.cumulative_window())
-    expr = t.projection([col.name('double_col')])
-    result = expr.execute().double_col
-    expected = df.double_col - getattr(df.double_col, 'cum%s' % func)()
-    tm.assert_series_equal(result, expected, check_dtype=False)
-
-
-@pytest.mark.parametrize('func', ['sum', 'min', 'max'])
-def test_cumulative_partitioned_window(alltypes, func, df):
-    t = alltypes
-    df = df.sort_values('string_col').reset_index(drop=True)
-    window = ibis.cumulative_window(group_by=t.string_col)
-    f = getattr(t.double_col, func)
-    expr = t.projection([(t.double_col - f().over(window)).name('double_col')])
-    result = expr.execute().double_col
-    expected = df.groupby(df.string_col).double_col.transform(
-        lambda c: c - getattr(c, 'cum%s' % func)()
-    )
-    tm.assert_series_equal(result, expected, check_dtype=False)
-
-
-@pytest.mark.parametrize('func', ['sum', 'min', 'max'])
-def test_cumulative_ordered_window(alltypes, func, df):
-    t = alltypes
-    df = df.sort_values('timestamp_col').reset_index(drop=True)
-    window = ibis.cumulative_window(order_by=t.timestamp_col)
-    f = getattr(t.double_col, func)
-    expr = t.projection([(t.double_col - f().over(window)).name('double_col')])
-    result = expr.execute().double_col
-    expected = df.double_col - getattr(df.double_col, 'cum%s' % func)()
-    tm.assert_series_equal(result, expected, check_dtype=False)
-
-
-@pytest.mark.parametrize('func', ['sum', 'min', 'max'])
-def test_cumulative_partitioned_ordered_window(alltypes, func, df):
-    t = alltypes
-    df = df.sort_values(['string_col', 'timestamp_col']).reset_index(drop=True)
-    window = ibis.cumulative_window(
-        order_by=t.timestamp_col, group_by=t.string_col
-    )
-    f = getattr(t.double_col, func)
-    expr = t.projection([(t.double_col - f().over(window)).name('double_col')])
-    result = expr.execute().double_col
-    method = operator.methodcaller('cum{}'.format(func))
-    expected = df.groupby(df.string_col).double_col.transform(
-        lambda c: c - method(c)
-    )
-    tm.assert_series_equal(result, expected, check_dtype=False)
-
-
 @pytest.mark.parametrize(('func', 'shift_amount'), [('lead', -1), ('lag', 1)])
 def test_analytic_shift_functions(alltypes, df, func, shift_amount):
-    col = alltypes.sort_by(ibis.desc(alltypes.string_col)).double_col
+    col = alltypes.sort_by(alltypes.double_col).double_col
     method = getattr(col, func)
     expr = method(1)
     result = expr.execute().rename('double_col')
-    expected = df.double_col.shift(shift_amount)
+    expected = (
+        df.sort_values('double_col')
+        .reset_index(drop=True)
+        .double_col.shift(shift_amount)
+    )
     tm.assert_series_equal(result, expected)
 
 
@@ -818,7 +675,7 @@ def test_analytic_shift_functions(alltypes, df, func, shift_amount):
     ('func', 'expected_index'), [('first', 0), ('last', -1)]
 )
 def test_first_last_value(alltypes, df, func, expected_index):
-    col = alltypes.sort_by(ibis.desc(alltypes.string_col)).double_col
+    col = alltypes.sort_by(alltypes.double_col).double_col
     method = getattr(col, func)
     expr = method()
     result = expr.execute().rename('double_col')
@@ -888,7 +745,7 @@ def test_anonymous_aggregate(alltypes, df):
 def t(con, guid):
     con.raw_sql(
         """CREATE TABLE "{}" (
-          id INT, name TEXT)""".format(
+        id INT,name TEXT)""".format(
             guid
         )
     )
@@ -911,7 +768,12 @@ def s(con, t, guid, guid2):
 
 @pytest.fixture
 def trunc(con, guid):
-    con.raw_sql("""CREATE TABLE "{}" (id INT, name TEXT)""".format(guid))
+    con.raw_sql(
+        """CREATE TABLE "{}" (
+        id INT, name TEXT)""".format(
+            guid
+        )
+    )
     con.raw_sql(
         """INSERT INTO "{}" (name) VALUES ('a'), ('b'), ('c')""".format(guid)
     )
