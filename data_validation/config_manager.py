@@ -17,7 +17,7 @@ import logging
 
 import google.oauth2.service_account
 
-from data_validation import consts
+from data_validation import consts, clients
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 
@@ -152,8 +152,8 @@ class ConfigManager(object):
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
-            self._source_ibis_table = self.source_client.table(
-                self.source_table, database=self.source_schema
+            self._source_ibis_table = clients.get_ibis_table(
+                self.source_client, self.source_schema, self.source_table
             )
 
         return self._source_ibis_table
@@ -161,8 +161,8 @@ class ConfigManager(object):
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
-            self._target_ibis_table = self.target_client.table(
-                self.target_table, database=self.target_schema
+            self._target_ibis_table = clients.get_ibis_table(
+                self.target_client, self.target_schema, self.target_table
             )
 
         return self._target_ibis_table
@@ -235,14 +235,23 @@ class ConfigManager(object):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
         source_table = self.get_source_ibis_table()
+        target_table = self.get_target_ibis_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
         for column in grouped_columns:
-            if column not in source_table.columns:
+
+            if column.casefold() not in casefold_source_columns:
                 raise ValueError(
-                    f"GroupedColumn DNE: {source_table.op().name}.{column}"
+                    f"GroupedColumn DNE in source: {source_table.op().name}.{column}"
+                )
+            if column.casefold() not in casefold_target_columns:
+                raise ValueError(
+                    f"GroupedColumn DNE in target: {target_table.op().name}.{column}"
                 )
             column_config = {
-                consts.CONFIG_SOURCE_COLUMN: column,
-                consts.CONFIG_TARGET_COLUMN: column,
+                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
+                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
                 consts.CONFIG_FIELD_ALIAS: column,
                 consts.CONFIG_CAST: None,
             }
@@ -268,6 +277,7 @@ class ConfigManager(object):
         target_table = self.get_target_ibis_table()
         allowlist_columns = arg_value or source_table.columns
         for column in source_table.columns:
+            column_type = str(source_table[column].type())
             if column not in allowlist_columns:
                 continue
             elif column not in target_table.columns:
@@ -275,15 +285,12 @@ class ConfigManager(object):
                     f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
                 )
                 continue
-            elif (
-                supported_types
-                and str(source_table[column].type()) not in supported_types
-            ):
+            elif supported_types and column_type not in supported_types:
                 continue
 
             aggregate_config = {
-                consts.CONFIG_SOURCE_COLUMN: column,
-                consts.CONFIG_TARGET_COLUMN: column,
+                consts.CONFIG_SOURCE_COLUMN: str(column),
+                consts.CONFIG_TARGET_COLUMN: str(column),
                 consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
                 consts.CONFIG_TYPE: agg_type,
             }

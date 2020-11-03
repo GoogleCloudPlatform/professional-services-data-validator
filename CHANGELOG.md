@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0
+
+- Added Row validations for cell level validation with primary keys
+- Client support for Oracle, SQL Server, Postgres, and GCS files
+## 1.0
+
+- Support for Column and GroupedColumn validations
+- Allow custom filter via YAML config
+- BigQuery result handlers supported
+- Client support for BigQuery, MySQL, and Teradata
+
 ## 0.1.1 (release date TBD)
 
 ### Bug Fixes

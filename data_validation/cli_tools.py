@@ -63,6 +63,20 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
     ],
+    "Oracle": [
+        ["host", "Desired Oracle host"],
+        ["port", "Oracle port to connect on"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["database", "Database to connect to"],
+    ],
+    "MSSQL": [
+        ["host", "Desired SQL Server host (default localhost)"],
+        ["port", "SQL Server port to connect on (default 1433)"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["database", "Database to connect to (default master)"],
+    ],
 }
 
 
@@ -119,13 +133,29 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--count",
         "-count",
-        help="JSON List of columns sum '[\"col_a\"]' or * for all columns",
+        help="JSON List of columns count '[\"col_a\"]' or * for all columns",
     )
     run_parser.add_argument(
         "--sum",
         "-sum",
         help="JSON List of columns sum '[\"col_a\"]' or * for all numeric",
     )
+    run_parser.add_argument(
+        "--avg",
+        "-avg",
+        help="JSON List of columns average '[\"col_a\"]' or * for all numeric",
+    )
+    run_parser.add_argument(
+        "--min",
+        "-min",
+        help="JSON List of columns min '[\"col_a\"]' or * for all numeric",
+    )
+    run_parser.add_argument(
+        "--max",
+        "-max",
+        help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
+    )
+
     run_parser.add_argument(
         "--grouped-columns",
         "-gc",

@@ -54,6 +54,24 @@ CONFIG_COUNT_VALID = {
             "target_column": "tripduration",
             "type": "sum",
         },
+        {
+            "field_alias": "max__tripduration",
+            "source_column": "tripduration",
+            "target_column": "tripduration",
+            "type": "max",
+        },
+        {
+            "field_alias": "min__tripduration",
+            "source_column": "tripduration",
+            "target_column": "tripduration",
+            "type": "min",
+        },
+        {
+            "field_alias": "avg__tripduration",
+            "source_column": "tripduration",
+            "target_column": "tripduration",
+            "type": "avg",
+        },
     ],
 }
 
