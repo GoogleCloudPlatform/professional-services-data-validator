@@ -20,6 +20,13 @@ import pytest
 import ibis
 import third_party.ibis.ibis_oracle.api
 
+
+OL_HOST= os.environ.get(
+    'IBIS_TEST_ORACLE_HOST', os.environ.get('OLHOST','host')
+)
+OL_PORT= os.environ.get(
+    'IBIS_TEST_ORACLE_PORT', os.environ.get('OLPORT','port')
+)
 OL_USER = os.environ.get(
     'IBIS_TEST_ORACLE_USER', os.environ.get('OLUSER', 'username')
 )
@@ -28,6 +35,9 @@ OL_PASS = os.environ.get(
 )
 IBIS_TEST_ORACLE_DB = os.environ.get(
     'IBIS_TEST_ORACLE_DATABASE', os.environ.get('OLDATABASE', 'database_name')
+)
+IBIS_TEST_ORACLE_protocol = os.environ.get(
+    'IBIS_TEST_ORACLE_PROTOCOL', os.environ.get('OLPROTOCOL', 'protocol')
 )
 
 
@@ -38,7 +48,12 @@ def _random_identifier(suffix):
 @pytest.fixture(scope='session')
 def con():
     return third_party.ibis.ibis_oracle.api.connect(
-        user=OL_USER, password=OL_PASS, database=IBIS_TEST_ORACLE_DB,
+        host=OL_HOST,
+        port=OL_PORT,
+        user=OL_USER,
+        password=OL_PASS,
+        database=IBIS_TEST_ORACLE_DB,
+        protocol=IBIS_TEST_ORACLE_protocol,
     )
 
 
