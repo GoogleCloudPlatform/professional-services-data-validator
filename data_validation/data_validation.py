@@ -129,6 +129,7 @@ class DataValidation(object):
             warnings.warn(
                 "WARNING: No Primary Keys Suppplied in Row Validation", UserWarning
             )
+            return None
 
         return pandas.concat(past_results)
 
