@@ -275,12 +275,16 @@ class ConfigManager(object):
         aggregate_configs = []
         source_table = self.get_source_ibis_table()
         target_table = self.get_target_ibis_table()
-        allowlist_columns = arg_value or source_table.columns
-        for column in source_table.columns:
-            column_type = str(source_table[column].type())
+
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        allowlist_columns = arg_value or casefold_source_columns
+        for column in casefold_source_columns:
+            column_type = str(source_table[casefold_source_columns[column]].type())
             if column not in allowlist_columns:
                 continue
-            elif column not in target_table.columns:
+            elif column not in casefold_target_columns:
                 logging.info(
                     f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
                 )
@@ -289,8 +293,8 @@ class ConfigManager(object):
                 continue
 
             aggregate_config = {
-                consts.CONFIG_SOURCE_COLUMN: str(column),
-                consts.CONFIG_TARGET_COLUMN: str(column),
+                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
+                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
                 consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
                 consts.CONFIG_TYPE: agg_type,
             }

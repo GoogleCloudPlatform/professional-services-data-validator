@@ -32,3 +32,7 @@ gsutil cp dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz ${GCS_DIRECTO
 gsutil -m acl ch -u AllUsers:R ${GCS_DIRECTORY}**
 deactivate
 rm -rf rel_venv/
+
+# Push New Release to Latest
+
+gsutil cp ${GCS_DIRECTORY}* gs://professional-services-data-validator/releases/latest/
