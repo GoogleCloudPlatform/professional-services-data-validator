@@ -279,7 +279,7 @@ class ConfigManager(object):
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
-        allowlist_columns = arg_value or casefold_source_columns 
+        allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
             column_type = str(source_table[casefold_source_columns[column]].type())
             if column not in allowlist_columns:
