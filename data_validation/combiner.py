@@ -181,7 +181,7 @@ def _as_json(expr):
 
     https://stackoverflow.com/a/3020108/101923
     """
-    return expr.cast("string").re_replace(r"\\", r"\\\\").re_replace('"', '\\"')
+    return expr.cast("string").fillna("null").re_replace(r"\\", r"\\\\").re_replace('"', '\\"')
 
 
 def _join_pivots(source, target, differences, join_on_fields):
