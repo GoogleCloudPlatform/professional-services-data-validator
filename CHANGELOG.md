@@ -1,9 +1,16 @@
 # Changelog
 
+## 1.1.1
+
+- Bug fixes to support case insensitivity
+- Allow null values to be handled in grouped columns
+- Oracle client improvements
+
 ## 1.1.0
 
 - Added Row validations for cell level validation with primary keys
 - Client support for Oracle, SQL Server, Postgres, and GCS files
+
 ## 1.0
 
 - Support for Column and GroupedColumn validations
