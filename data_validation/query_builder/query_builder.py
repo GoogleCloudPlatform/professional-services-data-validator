@@ -239,7 +239,9 @@ class QueryBuilder(object):
 
         # Build Query Expressions
         filtered_table = table.filter(self.compile_filter_fields(table))
-        grouped_table = filtered_table.groupby(self.compile_group_fields(filtered_table))
+        grouped_table = filtered_table.groupby(
+            self.compile_group_fields(filtered_table)
+        )
         query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
 
         if self.limit:
