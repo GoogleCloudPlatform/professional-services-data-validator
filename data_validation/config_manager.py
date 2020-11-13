@@ -281,7 +281,10 @@ class ConfigManager(object):
 
         allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
-            column_type = str(source_table[casefold_source_columns[column]].type())
+            # Get column type and remove precision/scale attributes
+            column_type_str = str(source_table[casefold_source_columns[column]].type())
+            column_type = column_type_str.split("(")[0]
+
             if column not in allowlist_columns:
                 continue
             elif column not in casefold_target_columns:
@@ -290,6 +293,9 @@ class ConfigManager(object):
                 )
                 continue
             elif supported_types and column_type not in supported_types:
+                if self.verbose:
+                    msg = f"Skipping Agg {agg_type}: {source_table.op().name}.{column} {column_type}"
+                    print(msg)
                 continue
 
             aggregate_config = {

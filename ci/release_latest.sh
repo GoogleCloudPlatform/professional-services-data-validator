@@ -36,3 +36,4 @@ rm -rf rel_venv/
 # Push New Release to Latest
 
 gsutil cp ${GCS_DIRECTORY}* gs://professional-services-data-validator/releases/latest/
+gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/latest/*
