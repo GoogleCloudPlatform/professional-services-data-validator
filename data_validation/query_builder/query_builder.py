@@ -34,9 +34,14 @@ class AggregateField(object):
 
     @staticmethod
     def count(field_name=None, alias=None):
-        return AggregateField(
-            ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias,
-        )
+        if field_name:
+            return AggregateField(
+                ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias,
+            )
+        else:
+            return AggregateField(
+                ibis.expr.types.TableExpr.count, field_name=field_name, alias=alias,
+            )
 
     @staticmethod
     def min(field_name=None, alias=None):
@@ -233,13 +238,11 @@ class QueryBuilder(object):
         table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
-        aggs = self.compile_aggregate_fields(table)
-        filters = self.compile_filter_fields(table)
-        groups = self.compile_group_fields(table)
-
-        query = table.filter(filters)
-        query = query.groupby(groups)
-        query = query.aggregate(aggs)
+        filtered_table = table.filter(self.compile_filter_fields(table))
+        grouped_table = filtered_table.groupby(
+            self.compile_group_fields(filtered_table)
+        )
+        query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
 
         if self.limit:
             query = query.limit(self.limit)
