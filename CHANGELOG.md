@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2
+
+- Teradata numeric column and general bug fixes
+- Fix Ibis query compliation order causing cross join
+
 ## 1.1.1
 
 - Bug fixes to support case insensitivity
