@@ -26,13 +26,16 @@ def compile(expr, params=None):
 
 
 def connect(
-    user=None, password=None, database=None, url=None, driver='cx_Oracle',
+    host=None, port=None, user=None, password=None, database=None, protocol='TCP', url=None, driver='cx_Oracle',
 ):
 
     return OracleClient(
+        host=host,
+        port=port,
         user=user,
         password=password,
         database=database,
+        protocol=protocol,
         url=url,
         driver=driver,
     )

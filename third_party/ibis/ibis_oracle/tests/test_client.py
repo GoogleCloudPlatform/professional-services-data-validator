@@ -27,6 +27,9 @@ pytest.importorskip('cx_Oracle')
 
 pytestmark = pytest.mark.oracle
 
+ORACLE_TEST_HOST = os.environ.get('IBIS_TEST_ORACLE_HOST', 'host')
+ORACLE_TEST_PORT = os.environ.get('IBIS_TEST_ORACLE_PORT', 'port')
+ORACLE_TEST_PROTOCOL = os.environ.get('IBIS_TEST_ORACLE_PROTOCOL', 'PROTOCOL')
 ORACLE_TEST_DB = os.environ.get('IBIS_TEST_ORACLE_DATABASE', 'database')
 IBIS_ORACLE_USER = os.environ.get('IBIS_TEST_ORACLE_USER', 'username')
 IBIS_ORACLE_PASS = os.environ.get('IBIS_TEST_ORACLE_PASSWORD', 'password')
@@ -103,9 +106,12 @@ def test_list_schemas(con):
 
 def test_metadata_is_per_table():
     con = third_party.ibis.ibis_oracle.api.connect(
+        host=ORACLE_TEST_HOST,
+	port=ORACLE_TEST_PORT,
         user=IBIS_ORACLE_USER,
         password=IBIS_ORACLE_PASS,
         database=ORACLE_TEST_DB,
+        protocol=ORACLE_TEST_PROTOCOL,
     )
     assert len(con.meta.tables) == 0
 
@@ -117,9 +123,12 @@ def test_metadata_is_per_table():
 
 def test_schema_table():
     con = third_party.ibis.ibis_oracle.api.connect(
+        host=ORACLE_TEST_HOST,
+        port=ORACLE_TEST_PORT,
         user=IBIS_ORACLE_USER,
         password=IBIS_ORACLE_PASS,
         database=ORACLE_TEST_DB,
+        protocol=ORACLE_TEST_PROTOCOL,
     )
 
     # ensure that we can reflect the information schema (which is guaranteed

@@ -62,15 +62,27 @@ python3.6 -m venv venv
 source venv/bin/activate
 ```
 
-Download and install the Python Wheel package file corresponding to the
-latest release from
-[GitHub](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases)
-on [GCS](gs://professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl)
-or in Google Drive.
+You can [pip install this package directly from git](https://pip.pypa.io/en/stable/reference/pip_install/#git)
+for any tag (or branch or commit). We suggest installing from latest [GitHub Release]([GitHub](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases).
+
+install from tag 1.1.0
+```bash
+python -m pip install -e git+https://github.com/GoogleCloudPlatform/professional-services-data-validator.git@1.1.0#egg=google_pso_data_validator
+```
+
+install from HEAD of default branch
+```bash
+python -m pip install -e git+https://github.com/GoogleCloudPlatform/professional-services-data-validator.git#egg=google_pso_data_validator
+```
+
+
+Alternatively, you can install from [Python Wheel](https://pythonwheels.com/) on [GCS](
+https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl).
 
 ```
-python -m pip install ~/Downloads/google_pso_data_validator-1.0-py3-none-any.whl
+python -m pip install -e https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl
 ```
+
 
 If you require Teradata and have a license, install the `teradatasql` package.
 

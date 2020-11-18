@@ -54,10 +54,11 @@ class OracleClient(alch.AlchemyClient):
     def __init__(
         self,
         host: str = 'localhost',
-        port: int = 1521,
         user: str = getpass.getuser(),
         password: Optional[str] = None,
+        port: int = 1521,
         database: str = None,
+        protocol: str ='TCP',
         url: Optional[str] = None,
         driver: str = 'cx_Oracle',
     ):
@@ -66,8 +67,10 @@ class OracleClient(alch.AlchemyClient):
                 raise NotImplementedError(
                     'cx_Oracle is currently the only supported driver'
                 )
+            dsn='''(description= (address=(protocol={})(host={})(port={}))
+            (connect_data=(service_name={})))'''.format(protocol, host, port, database)
             sa_url = sa.engine.url.URL(
-                'oracle+cx_oracle', host=host, port=port, username=user, password=password, database=database,
+                'oracle+cx_oracle', user, password, dsn,
             )
         else:
             sa_url = sa.engine.url.make_url(url)
