@@ -20,6 +20,7 @@ import warnings
 import google.oauth2.service_account
 import ibis.pandas
 import pandas
+import numpy
 
 from data_validation import consts, combiner, exceptions, metadata, clients
 from data_validation.config_manager import ConfigManager
@@ -164,6 +165,9 @@ class DataValidation(object):
         if process_in_memory:
             source_df = self.source_client.execute(source_query)
             target_df = self.target_client.execute(target_query)
+            pd_schema = source_df.dtypes[
+                [i for i,v in source_df.dtypes.iteritems() 
+                if v not in [numpy.dtype('O')]]]
 
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
@@ -172,8 +176,8 @@ class DataValidation(object):
             result_df = combiner.generate_report(
                 pandas_client,
                 run_metadata,
-                pandas_client.table(combiner.DEFAULT_SOURCE),
-                pandas_client.table(combiner.DEFAULT_TARGET),
+                pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
+                pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
                 join_on_fields=join_on_fields,
                 verbose=self.verbose,
             )
