@@ -55,12 +55,19 @@ bq mk --table \
 The Data Validation tooling requires Python 3.6+.
 
 Create and activate a new virtual environment to sandbox the tool and its
-dependencies from your system installation of Python.
+dependencies from your system installation of Python. 
 
 ```
 python3.6 -m venv venv
 source venv/bin/activate
 ```
+
+Update pip and make sure gcc is installed in your environment.
+```
+apt-get update  && apt-get install gcc -y && apt-get clean
+pip install --upgrade pip
+```
+
 
 You can [pip install this package directly from git](https://pip.pypa.io/en/stable/reference/pip_install/#git)
 for any tag (or branch or commit). We suggest installing from latest [GitHub Release]([GitHub](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases).
