@@ -166,8 +166,12 @@ class DataValidation(object):
             source_df = self.source_client.execute(source_query)
             target_df = self.target_client.execute(target_query)
             pd_schema = source_df.dtypes[
-                [i for i,v in source_df.dtypes.iteritems() 
-                if v not in [numpy.dtype('O')]]]
+                [
+                    i
+                    for i, v in source_df.dtypes.iteritems()
+                    if v not in [numpy.dtype("O")]
+                ]
+            ]
 
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
