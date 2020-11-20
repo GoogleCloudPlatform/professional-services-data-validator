@@ -69,7 +69,9 @@ class AggregateField(object):
 
     @staticmethod
     def xor(field_name=None, alias=None):
-        return AggregateField(None)
+        return AggregateField(
+            ibis.expr.api.NumericColumn.xor, field_name=field_name, alias=alias,
+        )
 
     def compile(self, ibis_table):
         if self.field_name:
@@ -203,26 +205,58 @@ class CalculatedField(object):
     self.alias = alias
 
     @staticmethod
-    def hash()
-        return CalculatedField(fields)
+    def hash():
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.hash, fields=fields, alias=alias
+        )
 
-    def concat()
-        return CalculatedField(fields)
+    def cast():
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.hash, fields=fields, alias=alias
+        )
 
-    def coalesce()
-        return CalculatedField(fields)
+    def coalesce():
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.cast, fields=fields, alias=alias
+        )
+
+    def concat():
+        return CalculatedField(
+            ibis.expr.api.StringValue.join, fields=fields, alias=alias)
+
+    def ifnull():
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.fillna, fields=fields, alias=alias)
+
+    def length():
+        return CalculatedField(
+            ibis.expr.api.StringValue.length, fields=fields, alias=alias
+        )
+
+    def rstrip():
+        return CalculatedField(
+            ibis.expr.api.StringValue.length, fields=fields, alias=alias
+        )
+
+    def upper():
+        return CalculatedField(
+            ibis.expr.api.StringValue.upper, fields=fields, alias=alias
+        )
 
     def custom(expr):
         """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
-        
+
         Args:
             expr (Str): A custom SQL expression used to filter a query
         """
         return CalculatedField(expr)
 
     def compile(self, ibis_table):
-        hash_field = ibis_table[self.fields]
-        pass
+        calculated_field = []
+        for field in self.fields:
+            calculated_field.append(ibis_table[field])
+
+        return calculated_field
 
 
 class QueryBuilder(object):
@@ -254,6 +288,7 @@ class QueryBuilder(object):
             aggregate_fields,
             filters=filters,
             grouped_fields=grouped_fields,
+            calculated_fields=calculated_fields
             limit=limit,
         )
 
@@ -282,7 +317,8 @@ class QueryBuilder(object):
         table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
-        filtered_table = table.filter(self.compile_filter_fields(table))
+        calculated_table =  table.mutate(self.compile_calculated_fields(table))
+        filtered_table = calculated_table.filter(self.compile_filter_fields(table))
         grouped_table = filtered_table.groupby(
             self.compile_group_fields(filtered_table)
         )
