@@ -35,5 +35,9 @@ rm -rf rel_venv/
 
 # Push New Release to Latest
 
-gsutil cp ${GCS_DIRECTORY}* gs://professional-services-data-validator/releases/latest/
+gsutil cp ${GCS_DIRECTORY}CHANGELOG.md gs://professional-services-data-validator/releases/latest/
+gsutil cp ${GCS_DIRECTORY}README.md gs://professional-services-data-validator/releases/latest/
+gsutil cp ${GCS_DIRECTORY}google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/
+gsutil cp ${GCS_DIRECTORY}google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/
+
 gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/latest/*
