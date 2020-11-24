@@ -135,7 +135,7 @@ CLI_FIND_TABLES_ARGS = [
     BQ_CONN_NAME,
 ]
 
-STRING_MATCH_RESULT = '[{"schema_name": "pso_data_validator", "table_name": "pso_data_validator", "target_schema_name": "pso_data_validator", "target_table_name": "pso_data_validator"}]'
+STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "pso_data_validator", "target_schema_name": "pso_data_validator", "target_table_name": "pso_data_validator"}'
 
 
 def test_count_validator():
@@ -215,7 +215,7 @@ def test_cli_find_tables():
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
     tables_json = main.find_tables_using_string_matching(args)
     assert isinstance(tables_json, str)
-    assert tables_json == STRING_MATCH_RESULT
+    assert STRING_MATCH_RESULT in tables_json
 
     _remove_bq_conn()
 
