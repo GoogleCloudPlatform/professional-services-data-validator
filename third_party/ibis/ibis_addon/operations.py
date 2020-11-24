@@ -25,17 +25,40 @@ non-textual languages.
 
 import ibis
 
-from ibis.expr import datatypes
-from ibis.expr.operations import Comparison
+from ibis.bigquery.compiler import BigQueryExprTranslator
+import ibis.expr.datatypes as dt
+from ibis.expr.operations import Arg, Comparison, ValueOp
+import ibis.expr.rules as rlz
+from ibis.expr.types import BinaryValue, StringValue
 from ibis.impala.compiler import ImpalaExprTranslator
+from ibis.pandas import client as _pandas_client
+
+
+class HashBytes(ValueOp):
+    arg = Arg(rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)]))
+    how = Arg(rlz.isin({'sha256'}))
+    output_type = rlz.shape_like('arg', 'binary')
 
 
 class RawSQL(Comparison):
     pass
 
 
+def compile_hashbytes(binary_value, how):
+    return HashBytes(binary_value, how=how).to_expr()
+
+
+def format_hashbytes_bigquery(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    if how == "sha256":
+        return f"SHA256({compiled_arg})"
+    else:
+        raise ValueError(f"unexpected value for 'how': {how}")
+
+
 def compile_raw_sql(table, sql):
-    op = RawSQL(table[table.columns[0]].cast(datatypes.string), ibis.literal(sql))
+    op = RawSQL(table[table.columns[0]].cast(dt.string), ibis.literal(sql))
     return op.to_expr()
 
 
@@ -45,7 +68,11 @@ def format_raw_sql(translator, expr):
     return raw_sql.op().args[0]
 
 
-ibis.bigquery.compiler.BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
+_pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
+BinaryValue.hashbytes = compile_hashbytes
+StringValue.hashbytes = compile_hashbytes
+BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
+BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 try:
     # Try to add Teradata and pass if error (not imported)

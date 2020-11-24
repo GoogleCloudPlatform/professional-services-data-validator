@@ -25,9 +25,12 @@ import os
 
 import nox
 
-# Python version needs to match version on Kokoro VM.
-# See ./kokoro/setup.sh for current version.
-PYTHON_VERSION = "3.6"
+
+# Python version used for linting.
+DEFAULT_PYTHON_VERSION = "3.6"
+
+# Python versions used for testing.
+PYTHON_VERSIONS = ["3.6", "3.7", "3.8"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 
@@ -42,7 +45,7 @@ def _setup_session_requirements(session, extra_packages=[]):
         session.install(*extra_packages)
 
 
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
     _setup_session_requirements(session, extra_packages=["pyfakefs==4.1.0"])
@@ -61,7 +64,7 @@ def unit(session):
     )
 
 
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def samples(session):
     """Run the snippets test suite."""
 
@@ -76,7 +79,7 @@ def samples(session):
     session.run("pytest", "samples", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
 def lint(session):
     """Run linters.
     Returns a failure if the linters find linting errors or sufficiently
@@ -91,7 +94,7 @@ def lint(session):
     session.run("python", "setup.py", "check", "--strict")
 
 
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
 def blacken(session):
     """Run black.
     Format code to uniform standard.
@@ -102,7 +105,7 @@ def blacken(session):
     session.run("black", *BLACK_PATHS)
 
 
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def integration_mysql(session):
     """Run MySQL integration tests.
     Ensure MySQL validation is running as expected.
@@ -120,7 +123,7 @@ def integration_mysql(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def integration_bigquery(session):
     """Run BigQuery integration tests.
     Ensure BigQuery validation is running as expected.
