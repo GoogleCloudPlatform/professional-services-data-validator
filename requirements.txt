@@ -1,3 +1,8 @@
+# Dependency corrections from our requirements
+attrs==20.3.0
+grpcio==1.33.2
+marshmallow>=3.9.1
+# Core dependencies
 dataclasses==0.6
 google-api-python-client==1.12.5
 ibis-framework==1.3.0
@@ -7,7 +12,7 @@ pymysql==0.10.0
 psycopg2-binary==2.8.5
 PyYAML==5.3.1
 # pyspark==3.0.0
-apache-airflow==1.10.11
+# apache-airflow>=1.10.11
 pandas==1.0.5
 pyarrow==0.17.1
 google-cloud-bigquery==1.26.1
