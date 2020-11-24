@@ -11,8 +11,6 @@ sqlalchemy==1.3.18
 pymysql==0.10.0
 psycopg2-binary==2.8.5
 PyYAML==5.3.1
-pyspark==3.0.0
-apache-airflow>=1.10.11
 pandas==1.0.5
 pyarrow==0.17.1
 google-cloud-bigquery==1.26.1
