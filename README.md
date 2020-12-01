@@ -80,7 +80,7 @@ Alternatively, you can install from [Python Wheel](https://pythonwheels.com/) on
 https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl).
 
 ```
-python -m pip install -e https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl
+python -m pip install https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl
 ```
 
 
