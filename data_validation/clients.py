@@ -53,7 +53,9 @@ except Exception:
     mssql_connect = None
 
 try:
-    from third_party.ibis.ibis_snowflake.client import SnowflakeClient as snowflake_connect
+    from third_party.ibis.ibis_snowflake.client import (
+        SnowflakeClient as snowflake_connect,
+    )
 except Exception:
     snowflake_connect = None
 
