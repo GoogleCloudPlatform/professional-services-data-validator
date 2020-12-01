@@ -109,8 +109,9 @@ class ValidationBuilder(object):
     def add_config_filters(self):
         """ Add Filters to Query """
         filter_fields = self.config_manager.filters
-        for filter_field in filter_fields:
-            self.add_filter(filter_field)
+        if filter_fields is not None:
+            for filter_field in filter_fields:
+                self.add_filter(filter_field)
 
     def add_aggregate(self, aggregate_field):
         """ Add Aggregate Field to Queries

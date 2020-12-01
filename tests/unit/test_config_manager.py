@@ -33,6 +33,11 @@ SAMPLE_CONFIG = {
         consts.PROJECT_ID: "my-project",
         consts.TABLE_ID: "dataset.table_name",
     },
+    consts.CONFIG_FILTERS: {
+        consts.CONFIG_FILTER_SOURCE: "1=1",
+        consts.CONFIG_FILTER_TARGET: "1=1",
+        "type": "custom"
+    }
 }
 
 AGGREGATE_CONFIG_A = {
@@ -91,7 +96,8 @@ def test_filters_property(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
-    assert config_manager.filters == []
+    print(config_manager.filters)
+    assert config_manager.filters == {"source": "1=1", "target": "1=1", "type": "custom"}
 
 
 def test_source_connection_property(module_under_test):
@@ -202,6 +208,7 @@ def test_get_yaml_validation_block(module_under_test):
         consts.CONFIG_SCHEMA_NAME,
         consts.CONFIG_TABLE_NAME,
         consts.CONFIG_GROUPED_COLUMNS,
+        consts.CONFIG_FILTERS
     ]
     assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]
     assert list(yaml_config.keys()) == expected_validation_keys

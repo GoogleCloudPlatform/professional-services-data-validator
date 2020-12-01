@@ -115,6 +115,9 @@ class ConfigManager(object):
         """Return Filters from Config """
         return self._config.get(consts.CONFIG_FILTERS, [])
 
+    def append_filters(self, filter_configs):
+        self._config[consts.CONFIG_FILTERS] = self.filters + filter_configs
+
     @property
     def source_schema(self):
         """Return string value of source schema."""
@@ -211,6 +214,7 @@ class ConfigManager(object):
         target_client,
         table_obj,
         result_handler_config=None,
+        filter_config=None,
         verbose=False,
     ):
         """Return a ConfigManager instance with available config."""
@@ -227,6 +231,7 @@ class ConfigManager(object):
                 consts.CONFIG_TARGET_TABLE_NAME, table_obj[consts.CONFIG_TABLE_NAME]
             ),
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
+            consts.CONFIG_FILTERS: filter_config,
         }
 
         return ConfigManager(config, source_client, target_client, verbose=verbose)

@@ -135,6 +135,7 @@ data-validation run
   --result-handler-config RESULT_HANDLER_CONFIG
                         Result handler config details.
                         See: *Output Handler Configurations* section
+  --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
   --config-file CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
   --verbose, -v         Verbose logging will print queries executed

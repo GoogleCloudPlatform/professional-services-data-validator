@@ -60,7 +60,7 @@ CONNECTION_SOURCE_FIELDS = {
     "Teradata": [
         ["host", "Desired Teradata host"],
         ["port", "Teradata port to connect on"],
-        ["user", "User used to connect"],
+        ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
     ],
     "Oracle": [
@@ -173,6 +173,12 @@ def _configure_run_parser(subparsers):
         "--config-file",
         "-c",
         help="Store the validation in the YAML Config File Path specified.",
+    )
+
+    run_parser.add_argument(
+        "--filters",
+        "-filters",
+        help="Filter config details {\"type\":\"custom\",\"source\":\"xyz=xyz\",\"target\":\"XYZ=XYZ\"}",
     )
 
 
