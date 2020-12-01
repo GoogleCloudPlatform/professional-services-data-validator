@@ -96,7 +96,6 @@ def test_filters_property(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
-    print(config_manager.filters)
     assert config_manager.filters == {"source": "1=1", "target": "1=1", "type": "custom"}
 
 
