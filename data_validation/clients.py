@@ -52,6 +52,13 @@ try:
 except Exception:
     mssql_connect = None
 
+try:
+    from third_party.ibis.ibis_snowflake.client import (
+        SnowflakeClient as snowflake_connect,
+    )
+except Exception:
+    snowflake_connect = None
+
 
 def get_pandas_client(table_name, file_path, file_type):
     """ Return pandas client and env with file loaded into DataFrame
@@ -95,4 +102,5 @@ CLIENT_LOOKUP = {
     "Postgres": PostgreSQLClient,
     "Teradata": TeradataClient,
     "MSSQL": mssql_connect,
+    "Snowflake": snowflake_connect,
 }
