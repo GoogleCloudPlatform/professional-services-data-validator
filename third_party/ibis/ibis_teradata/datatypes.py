@@ -107,14 +107,11 @@ class TeradataTypeTranslator(object):
 
     @classmethod
     def to_ibis_from_D(cls, col_data, return_ibis_type=True):
+        precision = int(col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 20)))
+        scale = int(col_data.get("DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 4)))
         if return_ibis_type:
-            return dt.Decimal(
-                col_data["DecimalTotalDigits"], col_data["DecimalFractionalDigits"]
-            )  # TODO more detail here
-        value_type = "DECIMAL(%d, %d)" % (
-            col_data["DecimalTotalDigits"],
-            col_data["DecimalFractionalDigits"],
-        )
+            return dt.Decimal(precision, scale)
+        value_type = "DECIMAL(%d, %d)" % (precision, scale)
         return value_type
 
     @classmethod
@@ -124,23 +121,34 @@ class TeradataTypeTranslator(object):
 
         return "DATE"
 
+    @classmethod
+    def to_ibis_from_TS(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Timestamp
 
-# TODO all below here is likely not needed
+        return "TIMESTAMP"
+
+    @classmethod
+    def to_ibis_from_SZ(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Timestamp
+
+        return "TIMESTAMP"
+
+
 ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")
 
-# TODO
+
 @ibis_type_to_teradata_type.register(str)
 def trans_string_default(datatype):
     return ibis_type_to_teradata_type(dt.dtype(datatype))
 
 
-# TODO
 @ibis_type_to_teradata_type.register(dt.DataType)
 def trans_default(t):
     return ibis_type_to_teradata_type(t, TypeTranslationContext())
 
 
-# TODO
 @ibis_type_to_teradata_type.register(str, TypeTranslationContext)
 def trans_string_context(datatype, context):
     return ibis_type_to_teradata_type(dt.dtype(datatype), context)
@@ -156,29 +164,9 @@ def trans_integer(t, context):
     return "INT64"
 
 
-# TODO
 @ibis_type_to_teradata_type.register(dt.UInt64, (TypeTranslationContext, UDFContext))
 def trans_lossy_integer(t, context):
     raise TypeError("Conversion from uint64 to BigQuery integer type (int64) is lossy")
-
-
-# @ibis_type_to_teradata_type.register(dt.Array, TypeTranslationContext)
-# def trans_array(t, context):
-#     return 'ARRAY<{}>'.format(
-#         ibis_type_to_teradata_type(t.value_type, context)
-#     )
-
-
-# @ibis_type_to_teradata_type.register(dt.Struct, TypeTranslationContext)
-# def trans_struct(t, context):
-#     return 'STRUCT<{}>'.format(
-#         ', '.join(
-#             '{} {}'.format(
-#                 name, ibis_type_to_teradata_type(dt.dtype(type), context)
-#             )
-#             for name, type in zip(t.names, t.types)
-#         )
-#     )
 
 
 @ibis_type_to_teradata_type.register(dt.Date, TypeTranslationContext)
@@ -186,7 +174,6 @@ def trans_date(t, context):
     return "DATE"
 
 
-# TODO
 @ibis_type_to_teradata_type.register(dt.Timestamp, TypeTranslationContext)
 def trans_timestamp(t, context):
     if t.timezone is not None:
@@ -199,29 +186,6 @@ def trans_type(t, context):
     return str(t).upper()
 
 
-# TODO
-# @ibis_type_to_teradata_type.register(dt.Integer, UDFContext)
-# def trans_integer_udf(t, context):
-#     # JavaScript does not have integers, only a Number class. BigQuery doesn't
-#     # behave as expected with INT64 inputs or outputs
-#     raise TypeError(
-#         'BigQuery does not support INT64 as an argument type or a return type '
-#         'for UDFs. Replace INT64 with FLOAT64 in your UDF signature and '
-#         'cast all INT64 inputs to FLOAT64.'
-#     )
-
-# TODO
 @ibis_type_to_teradata_type.register(dt.Decimal, TypeTranslationContext)
 def trans_numeric(t, context):
-    if (t.precision, t.scale) != (38, 9):
-        raise TypeError(
-            "BigQuery only supports decimal types with precision of 38 and "
-            "scale of 9"
-        )
     return "NUMERIC"
-
-
-# TODO
-@ibis_type_to_teradata_type.register(dt.Decimal, TypeTranslationContext)
-def trans_numeric_udf(t, context):
-    raise TypeError("Decimal types are not supported in BigQuery UDFs")

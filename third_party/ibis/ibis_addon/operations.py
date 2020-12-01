@@ -31,6 +31,7 @@ from ibis.expr.operations import Arg, Comparison, ValueOp
 import ibis.expr.rules as rlz
 from ibis.expr.types import BinaryValue, StringValue
 from ibis.impala.compiler import ImpalaExprTranslator
+from ibis.pandas import client as _pandas_client
 
 
 class HashBytes(ValueOp):
@@ -67,6 +68,7 @@ def format_raw_sql(translator, expr):
     return raw_sql.op().args[0]
 
 
+_pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
 BinaryValue.hashbytes = compile_hashbytes
 StringValue.hashbytes = compile_hashbytes
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery

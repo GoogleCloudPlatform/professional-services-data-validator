@@ -60,7 +60,7 @@ CONNECTION_SOURCE_FIELDS = {
     "Teradata": [
         ["host", "Desired Teradata host"],
         ["port", "Teradata port to connect on"],
-        ["user", "User used to connect"],
+        ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
     ],
     "Oracle": [

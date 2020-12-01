@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "1.1.0"
+version = "1.1.2"
 release_status = "Development Status :: 3 - Alpha"
 
 with open("README.md", "r") as fh:
@@ -26,6 +26,11 @@ with open("README.md", "r") as fh:
 
 dependencies = open("requirements.txt").read().strip().split("\n")
 dependencies = [v for v in dependencies if not v.startswith("#")]  # Remove comments
+
+extras_require = {
+    "apache-airflow": "1.10.11",
+    "pyspark": "3.0.0",
+}
 
 packages = [
     "data_validation",
