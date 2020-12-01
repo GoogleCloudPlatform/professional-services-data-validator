@@ -55,7 +55,7 @@ bq mk --table \
 The Data Validation tooling requires Python 3.6+.
 
 Create and activate a new virtual environment to sandbox the tool and its
-dependencies from your system installation of Python. 
+dependencies from your system installation of Python.
 
 ```
 python3.6 -m venv venv
