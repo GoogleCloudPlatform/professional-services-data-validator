@@ -178,7 +178,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--filters",
         "-filters",
-        help="Filter config details {\"type\":\"custom\",\"source\":\"xyz=xyz\",\"target\":\"XYZ=XYZ\"}",
+        help="Filter config details {[\"type\":\"custom\",\"source\":\"xyz=xyz\",\"target\":\"XYZ=XYZ\"}]",
     )
 
 

@@ -109,7 +109,7 @@ def build_config_managers_from_args(args):
     if args.result_handler_config:
         result_handler_config = json.loads(args.result_handler_config)
 
-    filter_config = None
+    filter_config = []
     if args.filters:
         filter_config = json.loads(args.filters)
 

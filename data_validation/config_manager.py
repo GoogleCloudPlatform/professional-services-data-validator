@@ -115,9 +115,6 @@ class ConfigManager(object):
         """Return Filters from Config """
         return self._config.get(consts.CONFIG_FILTERS, [])
 
-    def append_filters(self, filter_configs):
-        self._config[consts.CONFIG_FILTERS] = self.filters + filter_configs
-
     @property
     def source_schema(self):
         """Return string value of source schema."""
