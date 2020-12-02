@@ -16,7 +16,7 @@
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation import cli_tools, consts, jellyfish_distance
+from data_validation import cli_tools, clients, consts, jellyfish_distance
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
@@ -155,21 +155,6 @@ def build_config_managers_from_yaml(args):
     return config_managers
 
 
-def _get_all_tables_from_client(client):
-    """Return a Dict of Dict objects with table info."""
-    table_map = {}
-    for database_name in client.list_databases():
-        for table_name in client.list_tables(database=database_name):
-            table_obj = {
-                consts.CONFIG_SCHEMA_NAME: database_name,
-                consts.CONFIG_TABLE_NAME: table_name,
-            }
-            table_key = "{}__{}".format(database_name, table_name)
-            table_map[table_key] = table_obj
-
-    return table_map
-
-
 def _compare_match_tables(source_table_map, target_table_map):
     """Return dict config object from matching tables."""
     # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
@@ -185,13 +170,13 @@ def _compare_match_tables(source_table_map, target_table_map):
                 consts.CONFIG_SCHEMA_NAME
             ],
             consts.CONFIG_TABLE_NAME: source_table_map[source_key][
-                consts.CONFIG_SCHEMA_NAME
+                consts.CONFIG_TABLE_NAME
             ],
             consts.CONFIG_TARGET_SCHEMA_NAME: target_table_map[target_key][
                 consts.CONFIG_SCHEMA_NAME
             ],
             consts.CONFIG_TARGET_TABLE_NAME: target_table_map[target_key][
-                consts.CONFIG_SCHEMA_NAME
+                consts.CONFIG_TABLE_NAME
             ],
         }
         table_configs.append(table_config)
@@ -207,8 +192,8 @@ def find_tables_using_string_matching(args):
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
 
-    source_table_map = _get_all_tables_from_client(source_client)
-    target_table_map = _get_all_tables_from_client(target_client)
+    source_table_map = clients.get_all_tables(source_client)
+    target_table_map = clients.get_all_tables(target_client)
 
     table_configs = _compare_match_tables(source_table_map, target_table_map)
     return json.dumps(table_configs)

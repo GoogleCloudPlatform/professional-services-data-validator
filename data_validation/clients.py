@@ -21,6 +21,7 @@ import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
+from data_validation import consts
 from third_party.ibis.ibis_impala.api import impala_connect
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
@@ -91,6 +92,34 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=database_name, schema=schema_name)
     else:
         return client.table(table_name, database=schema_name)
+
+
+def get_all_tables(client):
+    """Return a Dict of Dict objects with table info.
+
+        client (IbisClient): Client to use for tables
+    """
+    table_map = {}
+    if hasattr(client, "list_databases"):
+        databases = client.list_databases()
+    else:
+        databases = [None]
+
+    for database_name in databases:
+        if database_name:
+            tables = client.list_tables(database=database_name)
+        else:
+            tables = client.list_tables()
+
+        for table_name in tables:
+            table_obj = {
+                consts.CONFIG_SCHEMA_NAME: database_name,
+                consts.CONFIG_TABLE_NAME: table_name,
+            }
+            table_key = "{}.{}".format(database_name or "", table_name)
+            table_map[table_key] = table_obj
+
+    return table_map
 
 
 CLIENT_LOOKUP = {

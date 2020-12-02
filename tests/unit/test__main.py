@@ -15,7 +15,7 @@
 import argparse
 from unittest import mock
 
-from data_validation import cli_tools
+from data_validation import cli_tools, consts
 from data_validation import __main__ as main
 
 
@@ -32,6 +32,26 @@ CLI_ARGS = {
     "verbose": True,
 }
 
+SCHEMA_TABLE_OBJ = {
+    consts.CONFIG_SCHEMA_NAME: "schema",
+    consts.CONFIG_TABLE_NAME: "table"
+}
+OTHER_SCHEMA_TABLE_OBJ = {
+    consts.CONFIG_SCHEMA_NAME: "schema",
+    consts.CONFIG_TABLE_NAME: "other_table"
+}
+SOURCE_TABLE_MAP = {
+    "schema_table": SCHEMA_TABLE_OBJ,
+}
+TARGET_TABLE_MAP = {
+    "schema_table": SCHEMA_TABLE_OBJ,
+    "schema_other_table": OTHER_SCHEMA_TABLE_OBJ,
+}
+RESULT_TABLE_CONFIGS = [
+    {"schema_name": "schema", "table_name": "table",
+    "target_schema_name": "schema", "target_table_name": "table"}
+]
+
 
 @mock.patch(
     "argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(**CLI_ARGS),
@@ -42,3 +62,10 @@ def test_configure_arg_parser(mock_args):
     file_path = main._get_arg_config_file(args)
 
     assert file_path == "example_test.yaml"
+
+
+def test__compare_match_tables():
+    """Test matching tables from source and target."""
+    table_configs = main._compare_match_tables(SOURCE_TABLE_MAP, TARGET_TABLE_MAP)
+
+    assert table_configs == RESULT_TABLE_CONFIGS
