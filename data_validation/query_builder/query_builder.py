@@ -195,14 +195,14 @@ class GroupedField(object):
 
 class CalculatedField(object):
     def __init__(self, fields, alias=None):
-    """ A representation of an calculated field to build a query.
+        """ A representation of an calculated field to build a query.
 
-    Args:
-        fields (list(String)): A list of fields to perform the function on
-        alias (String): An alias to use for the group
-    """
-    self.fields = fields
-    self.alias = alias
+        Args:
+            fields (list(String)): A list of fields to perform the function on
+            alias (String): An alias to use for the group
+        """
+        self.fields = fields
+        self.alias = alias
 
     @staticmethod
     def hash():
@@ -288,8 +288,8 @@ class QueryBuilder(object):
             aggregate_fields,
             filters=filters,
             grouped_fields=grouped_fields,
-            calculated_fields=calculated_fields
-            limit=limit,
+            calculated_fields=calculated_fields,
+            limit=limit
         )
 
     def compile_aggregate_fields(self, table):

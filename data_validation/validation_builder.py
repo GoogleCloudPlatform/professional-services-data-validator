@@ -18,6 +18,7 @@ from data_validation.query_builder.query_builder import (
     QueryBuilder,
     GroupedField,
     AggregateField,
+    CalculatedField,
     FilterField,
 )
 
@@ -48,6 +49,7 @@ class ValidationBuilder(object):
 
         self.add_config_aggregates()
         self.add_config_query_groups()
+        self.add_config_calculated_fields()
         self.add_config_filters()
         self.add_query_limit()
 
