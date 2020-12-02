@@ -34,11 +34,11 @@ CLI_ARGS = {
 
 SCHEMA_TABLE_OBJ = {
     consts.CONFIG_SCHEMA_NAME: "schema",
-    consts.CONFIG_TABLE_NAME: "table"
+    consts.CONFIG_TABLE_NAME: "table",
 }
 OTHER_SCHEMA_TABLE_OBJ = {
     consts.CONFIG_SCHEMA_NAME: "schema",
-    consts.CONFIG_TABLE_NAME: "other_table"
+    consts.CONFIG_TABLE_NAME: "other_table",
 }
 SOURCE_TABLE_MAP = {
     "schema_table": SCHEMA_TABLE_OBJ,
@@ -48,8 +48,12 @@ TARGET_TABLE_MAP = {
     "schema_other_table": OTHER_SCHEMA_TABLE_OBJ,
 }
 RESULT_TABLE_CONFIGS = [
-    {"schema_name": "schema", "table_name": "table",
-    "target_schema_name": "schema", "target_table_name": "table"}
+    {
+        "schema_name": "schema",
+        "table_name": "table",
+        "target_schema_name": "schema",
+        "target_table_name": "table",
+    }
 ]
 
 
