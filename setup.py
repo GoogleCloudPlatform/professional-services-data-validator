@@ -27,6 +27,11 @@ with open("README.md", "r") as fh:
 dependencies = open("requirements.txt").read().strip().split("\n")
 dependencies = [v for v in dependencies if not v.startswith("#")]  # Remove comments
 
+extras_require = {
+    "apache-airflow": "1.10.11",
+    "pyspark": "3.0.0",
+}
+
 packages = [
     "data_validation",
     "data_validation.query_builder",

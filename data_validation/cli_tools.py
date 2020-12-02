@@ -60,7 +60,7 @@ CONNECTION_SOURCE_FIELDS = {
     "Teradata": [
         ["host", "Desired Teradata host"],
         ["port", "Teradata port to connect on"],
-        ["user", "User used to connect"],
+        ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
     ],
     "Oracle": [
@@ -76,6 +76,13 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
+    ],
+    "Snowflake": [
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["account", "Snowflake account to connect to"],
+        ["database", "Database in snowflake to connect to"],
+        ["schema", "Schema in the database to connect to"],
     ],
 }
 
