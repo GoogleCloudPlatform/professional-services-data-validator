@@ -135,7 +135,7 @@ CLI_FIND_TABLES_ARGS = [
     BQ_CONN_NAME,
 ]
 
-STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "pso_data_validator", "target_schema_name": "pso_data_validator", "target_table_name": "pso_data_validator"}'
+STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'
 
 
 def test_count_validator():
