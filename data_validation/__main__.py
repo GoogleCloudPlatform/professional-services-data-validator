@@ -184,6 +184,19 @@ def _compare_match_tables(source_table_map, target_table_map):
     return table_configs
 
 
+def get_table_map(client):
+    """Return dict with searchable keys for table matching."""
+    table_map = {}
+    table_objs = clients.get_all_tables(client)
+    for table_obj in table_objs:
+        table_key = ".".join([t for t in table_obj if t])
+        table_map[table_key] = {
+            consts.CONFIG_SCHEMA_NAME: table_obj[0],
+            consts.CONFIG_TABLE_NAME: table_obj[1],
+        }
+
+    return table_map
+
 def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
     source_conn = cli_tools.get_connection(args.source_conn)
@@ -192,8 +205,8 @@ def find_tables_using_string_matching(args):
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
 
-    source_table_map = clients.get_all_tables(source_client)
-    target_table_map = clients.get_all_tables(target_client)
+    source_table_map = get_table_map(source_client)
+    target_table_map = get_table_map(target_client)
 
     table_configs = _compare_match_tables(source_table_map, target_table_map)
     return json.dumps(table_configs)

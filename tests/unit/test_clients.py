@@ -20,7 +20,7 @@ from data_validation import clients
 
 TABLE_NAME = "my_table"
 DATA = [{"a": 1, "b": 2}]
-TABLES_RESULT = {".my_table": {"schema_name": None, "table_name": "my_table"}}
+TABLES_RESULT = [(None, TABLE_NAME)]
 
 
 def _get_pandas_client():
