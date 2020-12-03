@@ -61,6 +61,7 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=dependencies,
+    extras_require=extras_require,
     entry_points={
         "console_scripts": ["data-validation=data_validation.__main__:main",]
     },
