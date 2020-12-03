@@ -197,6 +197,7 @@ def get_table_map(client):
 
     return table_map
 
+
 def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
     source_conn = cli_tools.get_connection(args.source_conn)
