@@ -105,8 +105,9 @@ class ValidationBuilder(object):
     def add_config_calculated_fields(self):
         """ Add calculated fields to Query """
         calc_fields = self.config_manager.calculated_fields
-        for calc_field in calc_fields:
-            self.add_calc(calc_field)
+        if calc_fields is not None:
+            for calc_field in calc_fields:
+                self.add_calc(calc_field)
 
     def add_config_query_groups(self, query_groups=None):
         """ Add Grouped Columns to Query """
@@ -215,8 +216,13 @@ class ValidationBuilder(object):
         Args:
             calc_field (Dict): An object with source, target, and cast info
         """
-        source_field = CalculatedField()
-        target_field = CalculatedField()
+        alias = calc_field[consts.CONFIG_FIELD_ALIAS]
+        sourc_cols = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
+        target_cols = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
+        source_field = CalculatedField(
+            fields=source_cols, alias=alias)
+        target_field = CalculatedField(
+            fields=target_cols, alias=alias)
 
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)

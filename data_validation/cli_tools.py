@@ -167,6 +167,10 @@ def _configure_run_parser(subparsers):
         "-hash",
         help="JSON List of columns hash '[\"col_a\"]' or * for all columns",
     )
+    run_parser.add_argument(
+        "--concat",
+        "-concat",
+        help="JSON List of columns to concatenate '[\"col_a\"]' or * for all columns")
 
     run_parser.add_argument(
         "--grouped-columns",

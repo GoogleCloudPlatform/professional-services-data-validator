@@ -260,7 +260,7 @@ class CalculatedField(object):
 
 
 class QueryBuilder(object):
-    def __init__(self, aggregate_fields, filters, grouped_fields, limit=None):
+    def __init__(self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None):
         """ Build a QueryBuilder object which can be used to build queries easily
 
         Args:
@@ -271,7 +271,7 @@ class QueryBuilder(object):
             limit (int): A limit value for the number of records to pull (used for testing)
         """
         self.aggregate_fields = aggregate_fields
-        self.calcuated_fields = calculated_fields
+        self.calculated_fields = calculated_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
         self.limit = limit

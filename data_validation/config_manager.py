@@ -20,6 +20,7 @@ import google.oauth2.service_account
 from data_validation import consts, clients
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
+from data_validation.query_builder.query_builder import QueryBuilder
 
 
 class ConfigManager(object):
@@ -89,6 +90,13 @@ class ConfigManager(object):
         self._config[consts.CONFIG_AGGREGATES] = self.aggregates + aggregate_configs
 
     @property
+    def calculated_fields(self):
+        return self._config.get(consts.CONFIG_CALCULATED_FIELDS)
+
+    def append_calculated_fields(self, calculated_configs):
+        self._config[consts.CONFIG_CALCULATED_FIELDS] = self.calculated_fields + calculated_configs
+
+    @property
     def query_groups(self):
         """ Return Query Groups from Config """
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
@@ -153,18 +161,16 @@ class ConfigManager(object):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
             self._source_ibis_table = clients.get_ibis_table(
-                self.source_client, self.source_schema, self.source_table
-            )
-
+                self.source_client, self.source_schema, self.source_table)
+            # self._source_ibis_table = self._source_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._source_ibis_table))
         return self._source_ibis_table
 
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
             self._target_ibis_table = clients.get_ibis_table(
-                self.target_client, self.target_schema, self.target_table
-            )
-
+                self.target_client, self.target_schema, self.target_table)
+            # self._target_ibis_table = self._target_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._target_ibis_table))
         return self._target_ibis_table
 
     def get_yaml_validation_block(self):
