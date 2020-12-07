@@ -214,6 +214,9 @@ class ConfigManager(object):
         filter_config=None,
         verbose=False,
     ):
+        if isinstance(filter_config, dict):
+            filter_config = [filter_config]
+
         """Return a ConfigManager instance with available config."""
         config = {
             consts.CONFIG_TYPE: config_type,
