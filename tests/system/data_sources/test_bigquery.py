@@ -127,6 +127,16 @@ CLI_STORE_COLUMN_ARGS = [
 ]
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 
+CLI_FIND_TABLES_ARGS = [
+    "find-tables",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+]
+
+STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'
+
 
 def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
@@ -195,6 +205,18 @@ def test_cli_store_yaml_then_run():
     main.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
+    _remove_bq_conn()
+
+
+def test_cli_find_tables():
+    _store_bq_conn()
+
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_FIND_TABLES_ARGS)
+    tables_json = main.find_tables_using_string_matching(args)
+    assert isinstance(tables_json, str)
+    assert STRING_MATCH_RESULT in tables_json
+
     _remove_bq_conn()
 
 

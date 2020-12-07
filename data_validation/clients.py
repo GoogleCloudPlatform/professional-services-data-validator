@@ -93,6 +93,29 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=schema_name)
 
 
+def get_all_tables(client):
+    """Return a list of tuples with database and table names.
+
+        client (IbisClient): Client to use for tables
+    """
+    table_objs = []
+    if hasattr(client, "list_databases"):
+        databases = client.list_databases()
+    else:
+        databases = [None]
+
+    for database_name in databases:
+        if database_name:
+            tables = client.list_tables(database=database_name)
+        else:
+            tables = client.list_tables()
+
+        for table_name in tables:
+            table_objs.append((database_name, table_name))
+
+    return table_objs
+
+
 CLIENT_LOOKUP = {
     "BigQuery": BigQueryClient,
     "Impala": impala_connect,
