@@ -97,7 +97,7 @@ def list_schemas(client):
     """Return a list of schemas in the DB."""
     if type(client) in [OracleClient, PostgreSQLClient]:
         return client.list_schemas()
-    elif hasattr(client, "database"):
+    elif hasattr(client, "list_databases"):
         return client.list_databases()
     else:
         return [None]
