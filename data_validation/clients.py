@@ -93,25 +93,43 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=schema_name)
 
 
+def list_schemas(client):
+    """Return a list of schemas in the DB."""
+    if type(client) in [OracleClient, PostgreSQLClient]:
+        return client.list_schemas()
+    elif hasattr(client, "list_databases"):
+        return client.list_databases()
+    else:
+        return [None]
+
+
+def list_tables(client, schema_name):
+    """Return a list of tables in the DB schema."""
+    if type(client) in [OracleClient, PostgreSQLClient]:
+        return client.list_tables(schema=schema_name)
+    elif schema_name:
+        return client.list_tables(database=schema_name)
+    else:
+        return client.list_tables()
+
+
 def get_all_tables(client):
     """Return a list of tuples with database and table names.
 
         client (IbisClient): Client to use for tables
     """
     table_objs = []
-    if hasattr(client, "list_databases"):
-        databases = client.list_databases()
-    else:
-        databases = [None]
+    schemas = list_schemas(client)
 
-    for database_name in databases:
-        if database_name:
-            tables = client.list_tables(database=database_name)
-        else:
-            tables = client.list_tables()
+    for schema_name in schemas:
+        try:
+            tables = list_tables(client, schema_name)
+        except Exception as e:
+            print(f"List Tables Error: {schema_name} -> {e}")
+            continue
 
         for table_name in tables:
-            table_objs.append((database_name, table_name))
+            table_objs.append((schema_name, table_name))
 
     return table_objs
 
