@@ -163,8 +163,11 @@ def _compare_match_tables(source_table_map, target_table_map):
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
         target_key = jellyfish_distance.extract_closest_match(
-            source_key, target_keys, score_cutoff=0
+            source_key, target_keys, score_cutoff=0.8
         )
+        if target_key is None:
+            continue
+
         table_config = {
             consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][
                 consts.CONFIG_SCHEMA_NAME
