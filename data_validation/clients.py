@@ -102,6 +102,7 @@ def list_schemas(client):
     else:
         return [None]
 
+
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
     if type(client) in [OracleClient, PostgreSQLClient]:
@@ -110,6 +111,7 @@ def list_tables(client, schema_name):
         return client.list_tables(database=schema_name)
     else:
         return client.list_tables()
+
 
 def get_all_tables(client):
     """Return a list of tuples with database and table names.
