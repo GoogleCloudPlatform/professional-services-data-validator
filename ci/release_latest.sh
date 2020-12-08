@@ -37,7 +37,7 @@ rm -rf rel_venv/
 
 gsutil cp ${GCS_DIRECTORY}CHANGELOG.md gs://professional-services-data-validator/releases/latest/
 gsutil cp ${GCS_DIRECTORY}README.md gs://professional-services-data-validator/releases/latest/
-gsutil cp ${GCS_DIRECTORY}google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/
-gsutil cp ${GCS_DIRECTORY}google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/
+gsutil cp ${GCS_DIRECTORY}google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/google-pso-data-validator-latest.tar.gz
+gsutil cp ${GCS_DIRECTORY}google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/google_pso_data_validator-latest-py3-none-any.whl
 
 gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/latest/*

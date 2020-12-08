@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3
+
+- Release find-tables logic too help build table lists
+- Teradata client improvements
+- Remove rarely used dependencies into extras
+
 ## 1.1.2
 
 - Teradata numeric column and general bug fixes
