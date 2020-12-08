@@ -35,11 +35,11 @@ SAMPLE_CONFIG = {
     },
     consts.CONFIG_FILTERS: [
         {
-        consts.CONFIG_FILTER_SOURCE: "1=1",
-        consts.CONFIG_FILTER_TARGET: "1=1",
-        "type": "custom"
-    }
-    ]
+            consts.CONFIG_FILTER_SOURCE: "1=1",
+            consts.CONFIG_FILTER_TARGET: "1=1",
+            "type": "custom",
+        }
+    ],
 }
 
 AGGREGATE_CONFIG_A = {
@@ -98,7 +98,9 @@ def test_filters_property(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
-    assert config_manager.filters == [{"source": "1=1", "target": "1=1", "type": "custom"}]
+    assert config_manager.filters == [
+        {"source": "1=1", "target": "1=1", "type": "custom"}
+    ]
 
 
 def test_source_connection_property(module_under_test):
