@@ -196,6 +196,12 @@ def _configure_run_parser(subparsers):
         help="Store the validation in the YAML Config File Path specified.",
     )
 
+    run_parser.add_argument(
+        "--filters",
+        "-filters",
+        help='Filter config details {["type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
+    )
+
 
 def _configure_connection_parser(subparsers):
     """ Configure the Parser for Connection Management. """

@@ -211,8 +211,12 @@ class ConfigManager(object):
         target_client,
         table_obj,
         result_handler_config=None,
+        filter_config=None,
         verbose=False,
     ):
+        if isinstance(filter_config, dict):
+            filter_config = [filter_config]
+
         """Return a ConfigManager instance with available config."""
         config = {
             consts.CONFIG_TYPE: config_type,
@@ -227,6 +231,7 @@ class ConfigManager(object):
                 consts.CONFIG_TARGET_TABLE_NAME, table_obj[consts.CONFIG_TABLE_NAME]
             ),
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
+            consts.CONFIG_FILTERS: filter_config,
         }
 
         return ConfigManager(config, source_client, target_client, verbose=verbose)

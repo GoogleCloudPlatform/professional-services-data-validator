@@ -109,6 +109,10 @@ def build_config_managers_from_args(args):
     if args.result_handler_config:
         result_handler_config = json.loads(args.result_handler_config)
 
+    filter_config = []
+    if args.filters:
+        filter_config = json.loads(args.filters)
+
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
 
@@ -122,6 +126,7 @@ def build_config_managers_from_args(args):
             target_client,
             table_obj,
             result_handler_config=result_handler_config,
+            filter_config=filter_config,
             verbose=args.verbose,
         )
         configs.append(build_config_from_args(args, config_manager))
@@ -233,7 +238,6 @@ def convert_config_to_yaml(args, config_managers):
         yaml_config[consts.YAML_VALIDATIONS].append(
             config_manager.get_yaml_validation_block()
         )
-
     return yaml_config
 
 
