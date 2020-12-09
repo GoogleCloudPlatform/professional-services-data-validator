@@ -212,12 +212,12 @@ class CalculatedField(object):
 
     def cast():
         return CalculatedField(
-            ibis.expr.api.ValueExpr.hash, fields=fields, alias=alias
+            ibis.expr.api.ValueExpr.cast, fields=fields, alias=alias
         )
 
     def coalesce():
         return CalculatedField(
-            ibis.expr.api.ValueExpr.cast, fields=fields, alias=alias
+            ibis.expr.api.ValueExpr.coalesce, fields=fields, alias=alias
         )
 
     def concat():
@@ -235,7 +235,7 @@ class CalculatedField(object):
 
     def rstrip():
         return CalculatedField(
-            ibis.expr.api.StringValue.length, fields=fields, alias=alias
+            ibis.expr.api.StringValue.rstrip, fields=fields, alias=alias
         )
 
     def upper():
@@ -317,8 +317,7 @@ class QueryBuilder(object):
         table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
-        calculated_table =  table.mutate(self.compile_calculated_fields(table))
-        filtered_table = calculated_table.filter(self.compile_filter_fields(table))
+        filtered_table = table.filter(self.compile_filter_fields(table))
         grouped_table = filtered_table.groupby(
             self.compile_group_fields(filtered_table)
         )

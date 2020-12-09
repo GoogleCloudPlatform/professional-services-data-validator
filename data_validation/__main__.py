@@ -70,8 +70,15 @@ def get_aggregate_config(args, config_manager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, consts.NUMERIC_DATA_TYPES
         )
-
     return aggregate_configs
+
+def get_calculated_config(args, config_manager):
+    """Return list of formatted aggregation objects.
+
+    Args:
+        config_manager (ConfigManager): Validation config manager instance.
+    """
+    calculated_configs = [config_manager.build_config]
 
 
 def build_config_from_args(args, config_manager):

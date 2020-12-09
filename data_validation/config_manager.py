@@ -20,7 +20,7 @@ import google.oauth2.service_account
 from data_validation import consts, clients
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
-from data_validation.query_builder.query_builder import QueryBuilder
+from data_validation.validation_builder import ValidationBuilder
 
 
 class ConfigManager(object):
@@ -165,6 +165,14 @@ class ConfigManager(object):
             # self._source_ibis_table = self._source_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._source_ibis_table))
         return self._source_ibis_table
 
+    def get_source_ibis_calculated_table(self):
+        """Return mutated IbisTable from source"""
+        table = self.get_source_ibis_table()
+        vb = ValidationBuilder(self)
+        calculated_table = table.mutate(vb.source_builder.compile_calculated_fields(table))
+
+        return calculated_table
+
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
@@ -172,6 +180,14 @@ class ConfigManager(object):
                 self.target_client, self.target_schema, self.target_table)
             # self._target_ibis_table = self._target_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._target_ibis_table))
         return self._target_ibis_table
+
+    def get_target_ibis_calculated_table(self):
+        """Return mutated IbisTable from target"""
+        table = self.get_target_ibis_table()
+        vb = ValidationBuilder(self)
+        calculated_table = table.mutate(vb.target_builder.compile_calculated_fields(table))
+
+        return calculated_table
 
     def get_yaml_validation_block(self):
         """Return Dict object formatted for a Yaml file."""
@@ -240,8 +256,8 @@ class ConfigManager(object):
     def build_config_grouped_columns(self, grouped_columns):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
-        source_table = self.get_source_ibis_table()
-        target_table = self.get_target_ibis_table()
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -279,8 +295,8 @@ class ConfigManager(object):
     def build_config_column_aggregates(self, agg_type, arg_value, supported_types):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
-        source_table = self.get_source_ibis_table()
-        target_table = self.get_target_ibis_table()
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
