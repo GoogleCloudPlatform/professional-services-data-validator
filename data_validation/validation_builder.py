@@ -217,7 +217,7 @@ class ValidationBuilder(object):
             calc_field (Dict): An object with source, target, and cast info
         """
         alias = calc_field[consts.CONFIG_FIELD_ALIAS]
-        sourc_cols = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
+        source_cols = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
         target_cols = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
         source_field = CalculatedField(
             fields=source_cols, alias=alias)

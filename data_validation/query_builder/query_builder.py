@@ -222,7 +222,7 @@ class CalculatedField(object):
 
     def concat():
         return CalculatedField(
-            ibis.expr.api.StringValue.join, fields=fields, alias=alias)
+            ibis.expr.api.ColumnExpr.group_concat, fields=fields, alias=alias)
 
     def ifnull():
         return CalculatedField(
