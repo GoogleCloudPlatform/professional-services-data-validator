@@ -16,7 +16,7 @@
 import pandas
 import warnings
 
-from ibis.bigquery.client import BigQueryClient
+from ibis.bigquery.client import BigQueryClient, _DTYPE_TO_IBIS_TYPE
 import ibis.expr.datatypes as dt
 import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
