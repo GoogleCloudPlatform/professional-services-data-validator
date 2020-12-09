@@ -99,12 +99,14 @@ class ValidationBuilder(object):
     def add_config_aggregates(self):
         """ Add Aggregations to Query """
         aggregate_fields = self.config_manager.aggregates
+        print('we have da aggs! {}'.format(aggregate_fields))
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
     def add_config_calculated_fields(self):
         """ Add calculated fields to Query """
         calc_fields = self.config_manager.calculated_fields
+        print('we have da calcs! {}'.format(calc_fields))
         if calc_fields is not None:
             for calc_field in calc_fields:
                 self.add_calc(calc_field)
@@ -223,7 +225,7 @@ class ValidationBuilder(object):
             fields=source_cols, alias=alias)
         target_field = CalculatedField(
             fields=target_cols, alias=alias)
-
+        print('adding da calc {}'.format(alias))
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
 

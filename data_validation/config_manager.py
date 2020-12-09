@@ -297,6 +297,46 @@ class ConfigManager(object):
 
         return aggregate_config
 
+    def build_config_calculated_columns(self, calc_type, alias, calculated_columns):
+        """Return list of calculated column config objects."""
+        grouped_column_configs = []
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        for column_group in calculated_columns:
+            for column in column_group:
+
+                if column.casefold() not in casefold_source_columns:
+                    raise ValueError(
+                        f"GroupedColumn DNE in source: {source_table.op().name}.{column}"
+                    )
+                if column.casefold() not in casefold_target_columns:
+                    raise ValueError(
+                        f"GroupedColumn DNE in target: {target_table.op().name}.{column}"
+                    )
+            column_config = {
+                consts.CONFIG_SOURCE_CALCULATED_COLUMNS: column_group,
+                consts.CONFIG_TARGET_CALCULATED_COLUMNS: column_group,
+                consts.CONFIG_FIELD_ALIAS: alias,
+                consts.CONFIG_TYPE: calc_type,
+                }
+            calculated_column_configs.append(column_config)
+
+        return calculated_column_configs
+
+    def build_config_count_aggregate(self):
+        """Return dict aggregate for COUNT(*)."""
+        aggregate_config = {
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+            consts.CONFIG_TYPE: "count",
+        }
+
+        return aggregate_config
+
     def build_config_column_aggregates(self, agg_type, arg_value, supported_types):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []

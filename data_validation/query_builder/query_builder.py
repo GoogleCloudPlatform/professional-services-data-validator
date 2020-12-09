@@ -304,6 +304,7 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.grouped_fields]
 
     def compile_calculated_fields(self, table):
+        print('compiling da fields!')
         return [field.compile(table) for field in self.calculated_fields]
 
     def compile(self, data_client, schema_name, table_name):
