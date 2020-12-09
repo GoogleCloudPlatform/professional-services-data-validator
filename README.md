@@ -142,19 +142,19 @@ data-validation run
   --result-handler-config RESULT_HANDLER_CONFIG
                         Result handler config details.
                         See: *Output Handler Configurations* section
+  --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
   --config-file CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
   --verbose, -v         Verbose logging will print queries executed
 ```
 
-Once a validation YAML file has been saved via `data-validation store ...`, the validations can be run
+Once a validation YAML file has been saved via `data-validation run ... --config-file my-validations.yaml`, the validations can be run
 very easily via:
 ```
 data-validation run-config
   --config-file CONFIG_FILE
                         YAML Config File Path to be used for executing validations.
   --verbose, -v         Verbose logging will print queries executed
-
 ```
 
 ## Data Source Configurations

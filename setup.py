@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "1.1.2"
+version = "1.1.3"
 release_status = "Development Status :: 3 - Alpha"
 
 with open("README.md", "r") as fh:
@@ -61,6 +61,7 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=dependencies,
+    extras_require=extras_require,
     entry_points={
         "console_scripts": ["data-validation=data_validation.__main__:main",]
     },

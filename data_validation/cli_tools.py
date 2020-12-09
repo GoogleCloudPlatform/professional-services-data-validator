@@ -105,8 +105,22 @@ def configure_arg_parser():
     _configure_run_parser(subparsers)
     _configure_run_config_parser(subparsers)
     _configure_connection_parser(subparsers)
+    _configure_find_tables(subparsers)
 
     return parser
+
+
+def _configure_find_tables(subparsers):
+    """Configure arguments for text search table matching."""
+    find_tables_parser = subparsers.add_parser(
+        "find-tables", help="Build tables list using approx string matching"
+    )
+    find_tables_parser.add_argument(
+        "--source-conn", "-sc", help="Source connection name"
+    )
+    find_tables_parser.add_argument(
+        "--target-conn", "-tc", help="Target connection name"
+    )
 
 
 def _configure_run_config_parser(subparsers):
@@ -189,6 +203,12 @@ def _configure_run_parser(subparsers):
         "--config-file",
         "-c",
         help="Store the validation in the YAML Config File Path specified.",
+    )
+
+    run_parser.add_argument(
+        "--filters",
+        "-filters",
+        help='Filter config details {["type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
     )
 
 

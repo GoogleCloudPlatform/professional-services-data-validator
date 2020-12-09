@@ -124,14 +124,14 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_TS(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.Timestamp
+            return dt.timestamp
 
         return "TIMESTAMP"
 
     @classmethod
     def to_ibis_from_SZ(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.Timestamp
+            return dt.timestamp
 
         return "TIMESTAMP"
 
