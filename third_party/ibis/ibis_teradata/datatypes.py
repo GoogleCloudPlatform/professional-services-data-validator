@@ -110,7 +110,7 @@ class TeradataTypeTranslator(object):
         precision = int(col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 20)))
         scale = int(col_data.get("DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 4)))
         if return_ibis_type:
-            return dt.Decimal(precision, scale)
+            return dt.float64
         value_type = "DECIMAL(%d, %d)" % (precision, scale)
         return value_type
 

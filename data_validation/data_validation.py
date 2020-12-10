@@ -172,6 +172,9 @@ class DataValidation(object):
                     if v not in [numpy.dtype("O")]
                 ]
             ]
+            if self.verbose:
+                print("-- ** Pandas Schema ** --")
+                print(pd_schema)
 
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
