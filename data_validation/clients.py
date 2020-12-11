@@ -16,16 +16,13 @@
 import pandas
 import warnings
 
-from google.cloud import bigquery
-from ibis.bigquery.client import BigQueryClient, _DTYPE_TO_IBIS_TYPE
-import ibis.expr.datatypes as dt
+from ibis.bigquery.client import BigQueryClient
 import ibis.pandas
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
-import pyarrow
-
 
 from third_party.ibis.ibis_impala.api import impala_connect
+import third_party.ibis_addons.datatypes
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
 warnings.filterwarnings(
@@ -63,11 +60,6 @@ try:
 except Exception:
     snowflake_connect = None
 
-
-# BigQuery BIGNUMERIC support needs to be pushed to Ibis
-bigquery._pandas_helpers.BQ_TO_ARROW_SCALARS["BIGNUMERIC"] = pyarrow.string
-_DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.string
-_DTYPE_TO_IBIS_TYPE["NUMERIC"] = dt.float64
 
 def get_pandas_client(table_name, file_path, file_type):
     """ Return pandas client and env with file loaded into DataFrame

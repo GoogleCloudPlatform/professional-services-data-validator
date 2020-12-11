@@ -151,6 +151,21 @@ class DataValidation(object):
             }
             validation_builder.add_filter(filter_field)
 
+    def _get_pandas_schema(self, source_df, target_df, join_on_fields):
+        """Return a pandas schema which aligns source and targe for joins."""
+        pd_schema = source_df.dtypes[
+            [
+                i
+                for i, v in source_df.dtypes.iteritems()
+                if v not in [numpy.dtype("O")]
+            ]
+        ]
+        if self.verbose:
+            print("-- ** Pandas Schema ** --")
+            print(pd_schema)
+
+        return pd_schema
+
     def _execute_validation(self, validation_builder, process_in_memory=True):
         """ Execute Against a Supplied Validation Builder """
         run_metadata = metadata.RunMetadata()
@@ -165,16 +180,7 @@ class DataValidation(object):
         if process_in_memory:
             source_df = self.source_client.execute(source_query)
             target_df = self.target_client.execute(target_query)
-            pd_schema = source_df.dtypes[
-                [
-                    i
-                    for i, v in source_df.dtypes.iteritems()
-                    if v not in [numpy.dtype("O")]
-                ]
-            ]
-            if self.verbose:
-                print("-- ** Pandas Schema ** --")
-                print(pd_schema)
+            pd_schema = self._get_pandas_schema(source_df, target_df, join_on_fields)
 
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
