@@ -154,11 +154,7 @@ class DataValidation(object):
     def _get_pandas_schema(self, source_df, target_df, join_on_fields):
         """Return a pandas schema which aligns source and targe for joins."""
         pd_schema = source_df.dtypes[
-            [
-                i
-                for i, v in source_df.dtypes.iteritems()
-                if v not in [numpy.dtype("O")]
-            ]
+            [i for i, v in source_df.dtypes.iteritems() if v not in [numpy.dtype("O")]]
         ]
         if self.verbose:
             print("-- ** Pandas Schema ** --")
