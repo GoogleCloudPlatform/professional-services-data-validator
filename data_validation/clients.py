@@ -22,7 +22,8 @@ from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
 from third_party.ibis.ibis_impala.api import impala_connect
-import third_party.ibis_addons.datatypes
+import third_party.ibis.ibis_addon.datatypes
+
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
 warnings.filterwarnings(
