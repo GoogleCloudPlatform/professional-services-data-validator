@@ -61,6 +61,15 @@ AGGREGATES_TEST = [
     }
 ]
 
+CALCULATED_MULTIPLE_TEST = [
+    {
+        consts.CONFIG_FIELD_ALIAS: "concat_start_station_name_end_station_name",
+        consts.CONFIG_SOURCE_CALCULATED_COLUMNS: ["start_station_name", "end_station_name"],
+        consts.CONFIG_TARGET_CALCULATED_COLUMNS: ["start_station_name", "end_station_name"],
+        consts.CONFIG_TYPE: "concat",
+    },
+]
+
 
 class MockIbisClient(object):
     pass
@@ -109,6 +118,16 @@ def test_validation_add_groups(module_under_test):
     builder.add_config_query_groups()
 
     assert list(builder.get_group_aliases()) == ["start_alias"]
+
+def test_column_validation_calculate(module_under_test):
+    mock_config_manager = ConfigManager(
+        )
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+
+    mock_config_manager.append_calculated_fields(CALCULATED_MULTIPLE_TEST)
+    builder.add_config_calculated_fields()
+
+    assert list(builder.get_metadata().keys()) == ["concat_start_station_name_end_station_name"]
 
 
 def test_column_validation_limit(module_under_test):
