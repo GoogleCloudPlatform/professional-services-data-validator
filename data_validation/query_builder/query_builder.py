@@ -194,13 +194,14 @@ class GroupedField(object):
 
 
 class CalculatedField(object):
-    def __init__(self, fields, alias=None):
+    def __init__(self, ibis_expr, fields, alias=None):
         """ A representation of an calculated field to build a query.
 
         Args:
             fields (list(String)): A list of fields to perform the function on
             alias (String): An alias to use for the group
         """
+        self.expr = ibis_expr
         self.fields = fields
         self.alias = alias
 
@@ -210,39 +211,40 @@ class CalculatedField(object):
             ibis.expr.api.ValueExpr.hash, fields=fields, alias=alias
         )
 
-    def cast():
+    @staticmethod
+    def cast(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.ValueExpr.cast, fields=fields, alias=alias
         )
-
-    def coalesce():
+    @staticmethod
+    def coalesce(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.ValueExpr.coalesce, fields=fields, alias=alias
         )
-
-    def concat():
+    @staticmethod
+    def concat(fields=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ColumnExpr.group_concat, fields=fields, alias=alias)
-
-    def ifnull():
+            ibis.expr.api.StringValue.join, fields=fields, alias=alias)
+    @staticmethod
+    def ifnull(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.ValueExpr.fillna, fields=fields, alias=alias)
-
-    def length():
+    @staticmethod
+    def length(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.StringValue.length, fields=fields, alias=alias
         )
-
-    def rstrip():
+    @staticmethod
+    def rstrip(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.StringValue.rstrip, fields=fields, alias=alias
         )
-
-    def upper():
+    @staticmethod
+    def upper(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.StringValue.upper, fields=fields, alias=alias
         )
-
+    @staticmethod
     def custom(expr):
         """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
 
@@ -252,12 +254,13 @@ class CalculatedField(object):
         return CalculatedField(expr)
 
     def compile(self, ibis_table):
-        calculated_field = []
-        for field in self.fields:
-            calculated_field.append(ibis_table[field])
-
-        return calculated_field
-
+        calc_field = []
+        for f in self.fields:
+            calc_field.append(ibis_table[f])
+        # if self.expr == 'concat':
+        calc_field = self.expr(ibis.literal(','), calc_field)
+        calc_field = calc_field.name(self.alias)
+        return calc_field
 
 class QueryBuilder(object):
     def __init__(self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None):
@@ -304,8 +307,8 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.grouped_fields]
 
     def compile_calculated_fields(self, table):
-        print('compiling da fields!')
         return [field.compile(table) for field in self.calculated_fields]
+
 
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
@@ -318,7 +321,8 @@ class QueryBuilder(object):
         table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
-        filtered_table = table.filter(self.compile_filter_fields(table))
+        calc_table = table.mutate(self.compile_calculated_fields(table))
+        filtered_table = calc_table.filter(self.compile_filter_fields(table))
         grouped_table = filtered_table.groupby(
             self.compile_group_fields(filtered_table)
         )

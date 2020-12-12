@@ -88,8 +88,8 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
-    config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     config.manager.append_calculated_fields(get_calculated_config(args, config_manager))
+    config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if config_manager.validation_type in ["GroupedColumn"]:
         grouped_columns = json.loads(args.grouped_columns)
         config_manager.append_query_groups(

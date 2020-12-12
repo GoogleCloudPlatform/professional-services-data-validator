@@ -99,14 +99,12 @@ class ValidationBuilder(object):
     def add_config_aggregates(self):
         """ Add Aggregations to Query """
         aggregate_fields = self.config_manager.aggregates
-        print('we have da aggs! {}'.format(aggregate_fields))
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
     def add_config_calculated_fields(self):
         """ Add calculated fields to Query """
         calc_fields = self.config_manager.calculated_fields
-        print('we have da calcs! {}'.format(calc_fields))
         if calc_fields is not None:
             for calc_field in calc_fields:
                 self.add_calc(calc_field)
@@ -133,7 +131,6 @@ class ValidationBuilder(object):
         source_field_name = aggregate_field[consts.CONFIG_SOURCE_COLUMN]
         target_field_name = aggregate_field[consts.CONFIG_TARGET_COLUMN]
         aggregate_type = aggregate_field.get(consts.CONFIG_TYPE)
-
         if not hasattr(AggregateField, aggregate_type):
             raise Exception("Unknown Aggregation Type: {}".format(aggregate_type))
 
@@ -221,11 +218,13 @@ class ValidationBuilder(object):
         alias = calc_field[consts.CONFIG_FIELD_ALIAS]
         source_cols = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
         target_cols = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
-        source_field = CalculatedField(
+        calc_type = calc_field[consts.CONFIG_TYPE]
+        if not hasattr(CalculatedField, calc_type):
+            raise Exception("Unknown Calculation Type: {}".format(calc_type))
+        source_field = getattr(CalculatedField, calc_type)(
             fields=source_cols, alias=alias)
-        target_field = CalculatedField(
+        target_field = getattr(CalculatedField, calc_type)(
             fields=target_cols, alias=alias)
-        print('adding da calc {}'.format(alias))
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
 
