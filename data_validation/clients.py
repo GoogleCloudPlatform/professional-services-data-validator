@@ -25,7 +25,7 @@ from third_party.ibis.ibis_impala.api import impala_connect
 import third_party.ibis.ibis_addon.datatypes
 
 
-# Our customized Ibis Datatype logic add support foor new types
+# Our customized Ibis Datatype logic add support for new types
 third_party.ibis.ibis_addon.datatypes
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
