@@ -17,4 +17,3 @@ omit =
   */proto/*.py
   */core/*.py
   */site-packages/*.py
-  */airflow/*.py
