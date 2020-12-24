@@ -162,8 +162,7 @@ class DataValidation(object):
             target_df[join_on_field] = target_df[join_on_field].astype(str)
 
         pd_schema = source_df.dtypes[
-            [i for i, v in source_df.dtypes.iteritems() 
-            if v not in [numpy.dtype("O")]]
+            [i for i, v in source_df.dtypes.iteritems() if v not in [numpy.dtype("O")]]
         ]
         if self.verbose:
             print("-- ** Pandas Schema ** --")
@@ -208,7 +207,7 @@ class DataValidation(object):
                     print("-- ** Logging Target DF ** --")
                     print(target_df.dtypes)
                     print(target_df)
-                raise(e)
+                raise e
         else:
             result_df = combiner.generate_report(
                 self.source_client,
