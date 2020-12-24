@@ -20,7 +20,6 @@ from ibis.pandas.client import _inferable_pandas_dtypes
 import pyarrow
 
 
-# TODO(dhercher): DataType customizations shoould be moved to Ibis/third_party
 # BigQuery BIGNUMERIC support needs to be pushed to Ibis
 bigquery._pandas_helpers.BQ_TO_ARROW_SCALARS["BIGNUMERIC"] = pyarrow.string
 _DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.string
