@@ -174,6 +174,17 @@ Every source type requires its own configuration for connectivity.  Below is an 
 }
 ```
 
+#### User/Service account needs following BigQuery permissions to run this validator tool:
+* bigquery.jobs.create (BigQuery JobUser role)
+* bigquery.readsessions.create (BigQuery Read Session User)
+* bigquery.tables.get (BigQuery Data Viewer)
+* bigquery.tables.getData (BigQuery Data Viewer)
+
+#### If you plan to store validation results in BigQuery:
+* bigquery.tables.update (BigQuery Data Editor)
+* bigquery.tables.updateData(BigQuery Data Editor)
+
+
 ### Teradata
 Please note the Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
