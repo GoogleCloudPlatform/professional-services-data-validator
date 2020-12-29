@@ -50,7 +50,9 @@ SAMPLE_CONFIG = {
 
 JSON_DATA = """[{"col_a":0,"col_b":"b"}]"""
 
-SOURCE_QUERY_DATA = [{"date": "2020-01-01", "int_val": 1, "double_val": 2.3, "text_val": "hello"}]
+SOURCE_QUERY_DATA = [
+    {"date": "2020-01-01", "int_val": 1, "double_val": 2.3, "text_val": "hello"}
+]
 SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
 JOIN_ON_FIELDS = ["date"]
 NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
@@ -86,6 +88,8 @@ def test_get_pandas_schema(module_under_test, fs):
     """ Test extracting pandas schema from dataframes for Ibis Pandas."""
     _create_table_file()
     data_validation = module_under_test.DataValidation(SAMPLE_CONFIG)
-    pandas_schema = data_validation._get_pandas_schema(SOURCE_DF, SOURCE_DF, JOIN_ON_FIELDS)
+    pandas_schema = data_validation._get_pandas_schema(
+        SOURCE_DF, SOURCE_DF, JOIN_ON_FIELDS
+    )
 
     assert (pandas_schema.index == NON_OBJECT_FIELDS).all()
