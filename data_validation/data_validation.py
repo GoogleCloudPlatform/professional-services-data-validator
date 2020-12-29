@@ -153,7 +153,7 @@ class DataValidation(object):
 
     def _get_pandas_schema(self, source_df, target_df, join_on_fields):
         """Return a pandas schema which aligns source and targe for joins."""
-        # We are experiencing issues around datetime coming as sring and not matching
+        # TODO(dhercher): We are experiencing issues around datetime coming as sring and not matching
         # currently the hack to cast it to string works, but is not ideal.
         # We should look at both types, and if 1 is
         # date-like than use pandas.to_datetime on the other.
