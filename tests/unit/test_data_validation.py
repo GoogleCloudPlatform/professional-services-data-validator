@@ -23,14 +23,14 @@ from data_validation import consts
 TABLE_FILE_PATH = "table_data.json"
 SAMPLE_CONFIG = {
     # BigQuery Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: {
-        consts.SOURCE_TYPE: "Pandas",
+    "source_conn": {
+        "source_type": "Pandas",
         "table_name": "my_table",
         "file_path": TABLE_FILE_PATH,
         "file_type": "json",
     },
-    consts.CONFIG_TARGET_CONN: {
-        consts.SOURCE_TYPE: "Pandas",
+    "target_conn": {
+        "source_type": "Pandas",
         "table_name": "my_table",
         "file_path": TABLE_FILE_PATH,
         "file_type": "json",
@@ -38,14 +38,14 @@ SAMPLE_CONFIG = {
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
-    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+
     consts.CONFIG_GROUPED_COLUMNS: [],
-    consts.CONFIG_RESULT_HANDLER: {
-        consts.CONFIG_TYPE: "BigQuery",
-        consts.PROJECT_ID: "my-project",
-        consts.TABLE_ID: "dataset.table_name",
-    },
+    consts.CONFIG_AGGREGATES: [{'source_column': None, 'target_column': None, 'field_alias': 'count', 'type': 'count'}],
+    consts.CONFIG_RESULT_HANDLER: None,
 }
 
 JSON_DATA = """[{"col_a":0,"col_b":"b"}]"""
@@ -80,7 +80,10 @@ def _create_table_file():
 def test_data_validation_client(module_under_test, fs):
     """ Test getting a Data Validation Client """
     _create_table_file()
-    module_under_test.DataValidation(SAMPLE_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_CONFIG)
+    result_df = client.execute()
+
+    assert int(result_df.source_agg_value[0]) == 1
 
 
 def test_get_pandas_schema(module_under_test):
