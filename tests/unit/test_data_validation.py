@@ -42,9 +42,15 @@ SAMPLE_CONFIG = {
     "table_name": "my_table",
     "target_schema_name": None,
     "target_table_name": "my_table",
-
     consts.CONFIG_GROUPED_COLUMNS: [],
-    consts.CONFIG_AGGREGATES: [{'source_column': None, 'target_column': None, 'field_alias': 'count', 'type': 'count'}],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": None,
+            "target_column": None,
+            "field_alias": "count",
+            "type": "count",
+        }
+    ],
     consts.CONFIG_RESULT_HANDLER: None,
 }
 
