@@ -151,7 +151,8 @@ class DataValidation(object):
             }
             validation_builder.add_filter(filter_field)
 
-    def _get_pandas_schema(self, source_df, target_df, join_on_fields):
+    @classmethod
+    def _get_pandas_schema(self, source_df, target_df, join_on_fields, verbose=False):
         """Return a pandas schema which aligns source and targe for joins."""
         # TODO(dhercher): We are experiencing issues around datetime coming as sring and not matching
         # currently the hack to cast it to string works, but is not ideal.
@@ -164,7 +165,7 @@ class DataValidation(object):
         pd_schema = source_df.dtypes[
             [i for i, v in source_df.dtypes.iteritems() if v not in [numpy.dtype("O")]]
         ]
-        if self.verbose:
+        if verbose:
             print("-- ** Pandas Schema ** --")
             print(pd_schema)
 
@@ -184,7 +185,7 @@ class DataValidation(object):
         if process_in_memory:
             source_df = self.source_client.execute(source_query)
             target_df = self.target_client.execute(target_query)
-            pd_schema = self._get_pandas_schema(source_df, target_df, join_on_fields)
+            pd_schema = self._get_pandas_schema(source_df, target_df, join_on_fields, verbose=self.verbose)
 
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}

@@ -83,12 +83,9 @@ def test_data_validation_client(module_under_test, fs):
     module_under_test.DataValidation(SAMPLE_CONFIG)
 
 
-@patchfs
-def test_get_pandas_schema(module_under_test, fs):
+def test_get_pandas_schema(module_under_test):
     """ Test extracting pandas schema from dataframes for Ibis Pandas."""
-    _create_table_file()
-    data_validation = module_under_test.DataValidation(SAMPLE_CONFIG)
-    pandas_schema = data_validation._get_pandas_schema(
+    pandas_schema = module_under_test.DataValidation._get_pandas_schema(
         SOURCE_DF, SOURCE_DF, JOIN_ON_FIELDS
     )
 
