@@ -13,11 +13,21 @@
 # limitations under the License.
 
 import os
+import pandas
 import json
 from yaml import dump, load, Dumper, Loader
 
 from data_validation.data_validation import DataValidation
 
+
+def _clean_dataframe(df):
+	rows = df.to_dict(orient="record")
+	for row in rows:
+		for key in row:
+			if type(row[key]) in [pandas.Timestamp]:
+				row[key] = str(row[key])
+
+	return json.dumps(rows)
 
 def main(request):
     """ Handle incoming Data Validation requests.
@@ -27,6 +37,8 @@ def main(request):
     try:
         config = request.json["config"]
         validator = DataValidation(config)
-        return validator.execute()
+        df = validator.execute()
+
+        return _clean_dataframe(df)
     except Exception as e:
         return "Unknown Error: {}".format(e)

@@ -26,5 +26,7 @@ rm requirements.txt
 cd ../../
 
 # Run Test
-export TEST_DATA='{"cmd":"ls"}'
+export TEST_DATA='{"config":{"type":"Column","source_conn":{"source_type":"BigQuery","project_id":"pso-kokoro-resources","google_service_account_key_path":null},"target_conn":{"source_type":"BigQuery","project_id":"pso-kokoro-resources","google_service_account_key_path":null},"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips","target_schema_name":"bigquery-public-data.new_york_citibike","target_table_name":"citibike_trips","result_handler":null,"filters":[],"aggregates":[{"source_column":null,"target_column":null,"field_alias":"count","type":"count"}]}}'
 gcloud functions call data-validation --region=${REGION} --data=${TEST_DATA} --project=${PROJECT_ID}
+
+
