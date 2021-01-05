@@ -8,42 +8,18 @@ export REGION=us-central1
 zip -r data_validation.zip .
 gsutil cp data_validation.zip gs://${BUCKET}/
 
+gsutil iam ch serviceAccount:service-38376331460@gcf-admin-robot.iam.gserviceaccount.com:objectAdmin gs://artifacts.${PROJECT_ID}.appspot.com/
+gsutil iam ch serviceAccount:service-38376331460@gcf-admin-robot.iam.gserviceaccount.com:objectAdmin gs://us.artifacts.${PROJECT_ID}.appspot.com/
+
 gcloud functions deploy data-validation --region=${REGION} \
 	--entry-point=main \
 	--runtime=python38 --trigger-http \
 	--source=gs://${BUCKET}/data_validation.zip \
+	--service-account=pso-kokoro-resources@appspot.gserviceaccount.com \
 	--project=${PROJECT_ID}
 
 rm data_validation.zip
 
-
-
-
-
-
-# gcloud functions deploy data-validation --region=REGION \
-# 	--entry-point=main \
-# 	--runtime=python38 --trigger-http \
-# 	--source=gs://${BUCKET}/data_validation.zip \
-# 	--project=${PROJECT_ID}
-        # [--egress-settings=EGRESS_SETTINGS]
-        # [--ignore-file=IGNORE_FILE] [--ingress-settings=INGRESS_SETTINGS]
-        # [--memory=MEMORY] [--retry] [--runtime=RUNTIME]
-
-        # [--service-account=SERVICE_ACCOUNT] [--source=SOURCE]
-        # [--stage-bucket=STAGE_BUCKET] [--timeout=TIMEOUT]
-        # [--update-labels=[KEY=VALUE,...]]
-        # [--build-env-vars-file=FILE_PATH | --clear-build-env-vars
-        #   | --set-build-env-vars=[KEY=VALUE,...]
-        #   | --remove-build-env-vars=[KEY,...]
-        #   --update-build-env-vars=[KEY=VALUE,...]]
-        # [--clear-env-vars | --env-vars-file=FILE_PATH
-        #   | --set-env-vars=[KEY=VALUE,...]
-        #   | --remove-env-vars=[KEY,...] --update-env-vars=[KEY=VALUE,...]]
-        # [--clear-labels | --remove-labels=[KEY,...]]
-        # [--clear-max-instances | --max-instances=MAX_INSTANCES]
-        # [--clear-vpc-connector | --vpc-connector=VPC_CONNECTOR]
-        # [--trigger-bucket=TRIGGER_BUCKET | --trigger-http
-        #   | --trigger-topic=TRIGGER_TOPIC
-        #   | --trigger-event=EVENT_TYPE --trigger-resource=RESOURCE]
-        # [GCLOUD_WIDE_FLAG ...]
+# Run Test
+export TEST_DATA='{"cmd":"ls"}'
+gcloud functions call data-validation --region=${REGION} --data=${TEST_DATA} --project=${PROJECT_ID}

