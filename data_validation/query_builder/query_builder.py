@@ -194,7 +194,7 @@ class GroupedField(object):
 
 
 class CalculatedField(object):
-    def __init__(self, ibis_expr, fields, alias=None):
+    def __init__(self, ibis_expr, fields, operation, alias=None):
         """ A representation of an calculated field to build a query.
 
         Args:
@@ -202,55 +202,56 @@ class CalculatedField(object):
             alias (String): An alias to use for the group
         """
         self.expr = ibis_expr
+        self.operation = operation
         self.fields = fields
         self.alias = alias
 
     @staticmethod
     def hash():
         return CalculatedField(
-            ibis.expr.api.ValueExpr.hash, fields=fields, alias=alias
+            ibis.expr.api.ValueExpr.hash, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
-    def cast(fields=None, alias=None):
+    def cast(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.cast, fields=fields, alias=alias
+            ibis.expr.api.ValueExpr.cast, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
-    def coalesce(fields=None, alias=None):
+    def coalesce(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.coalesce, fields=fields, alias=alias
+            ibis.expr.api.ValueExpr.coalesce, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
-    def concat(fields=None, alias=None):
+    def concat(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.join, fields=fields, alias=alias
+            ibis.expr.api.StringValue.join, fields=fields, operation=operation, alias=alias
         )
 
     @staticmethod
-    def ifnull(fields=None, alias=None):
+    def ifnull(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.fillna, fields=fields, alias=alias
+            ibis.expr.api.ValueExpr.fillna, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
-    def length(fields=None, alias=None):
+    def length(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.length, fields=fields, alias=alias
+            ibis.expr.api.StringValue.length, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
-    def rstrip(fields=None, alias=None):
+    def rstrip(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.rstrip, fields=fields, alias=alias
+            ibis.expr.api.StringValue.rstrip, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
-    def upper(fields=None, alias=None):
+    def upper(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.upper, fields=fields, alias=alias
+            ibis.expr.api.StringValue.upper, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
@@ -268,6 +269,8 @@ class CalculatedField(object):
         print(self.expr)
         if self.operation == 'concat':
             calc_field = self.expr(ibis.literal(','), calc_field)
+        elif self.operation == 'length':
+            calc_field = self.expr(ibis.literal(calc_field))
         calc_field = calc_field.name(self.alias)
         return calc_field
 
