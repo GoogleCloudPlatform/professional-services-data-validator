@@ -5,6 +5,7 @@ export BUCKET=pso-kokoro-resources
 export REGION=us-central1
 
 
+cp ../requirements.txt
 zip -r data_validation.zip .
 gsutil cp data_validation.zip gs://${BUCKET}/
 

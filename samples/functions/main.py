@@ -16,23 +16,17 @@ import os
 import json
 from yaml import dump, load, Dumper, Loader
 
-# from data_validation import cli_tools, clients, consts, jellyfish_distance
-# from data_validation.config_manager import ConfigManager
-# from data_validation.data_validation import DataValidation
+from data_validation.data_validation import DataValidation
+
 
 def main(request):
-	""" Handle incoming Data Validation requests.
+    """ Handle incoming Data Validation requests.
 
-		request (flask.Request): HTTP request object.
-	"""
-	if "cmd" in request.json:
-		cmd = request.json["cmd"]
-		res = os.popen(cmd).read()
-
-		return res
-
-	response = {
-		"data": request.data,
-		"json": request.json,
-	}
-	return str(response)
+        request (flask.Request): HTTP request object.
+    """
+    try:
+        config = request.json["config"]
+        validator = DataValidation(config)
+        return validator.execute()
+    except Exception as e:
+        return "Unknown Error: {}".format(e)
