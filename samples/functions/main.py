@@ -21,13 +21,14 @@ from data_validation.data_validation import DataValidation
 
 
 def _clean_dataframe(df):
-	rows = df.to_dict(orient="record")
-	for row in rows:
-		for key in row:
-			if type(row[key]) in [pandas.Timestamp]:
-				row[key] = str(row[key])
+    rows = df.to_dict(orient="record")
+    for row in rows:
+        for key in row:
+            if type(row[key]) in [pandas.Timestamp]:
+                row[key] = str(row[key])
 
-	return json.dumps(rows)
+    return json.dumps(rows)
+
 
 def main(request):
     """ Handle incoming Data Validation requests.
