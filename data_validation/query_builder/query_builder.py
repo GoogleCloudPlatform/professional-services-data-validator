@@ -216,38 +216,46 @@ class CalculatedField(object):
         return CalculatedField(
             ibis.expr.api.ValueExpr.cast, fields=fields, alias=alias
         )
+
     @staticmethod
     def coalesce(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.ValueExpr.coalesce, fields=fields, alias=alias
         )
+
     @staticmethod
     def concat(fields=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.join, fields=fields, alias=alias)
+            ibis.expr.api.StringValue.join, fields=fields, alias=alias
+        )
+
     @staticmethod
     def ifnull(fields=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.fillna, fields=fields, alias=alias)
+            ibis.expr.api.ValueExpr.fillna, fields=fields, alias=alias
+        )
+
     @staticmethod
     def length(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.StringValue.length, fields=fields, alias=alias
         )
+
     @staticmethod
     def rstrip(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.StringValue.rstrip, fields=fields, alias=alias
         )
+
     @staticmethod
     def upper(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.StringValue.upper, fields=fields, alias=alias
         )
+
     @staticmethod
     def custom(expr):
         """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
-
         Args:
             expr (Str): A custom SQL expression used to filter a query
         """
@@ -257,8 +265,9 @@ class CalculatedField(object):
         calc_field = []
         for f in self.fields:
             calc_field.append(ibis_table[f])
-        # if self.expr == 'concat':
-        calc_field = self.expr(ibis.literal(','), calc_field)
+        print(self.expr)
+        if self.operation == 'concat':
+            calc_field = self.expr(ibis.literal(','), calc_field)
         calc_field = calc_field.name(self.alias)
         return calc_field
 
