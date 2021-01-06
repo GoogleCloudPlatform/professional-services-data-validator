@@ -58,7 +58,7 @@ def unit(session):
         "--cov=tests.unit",
         "--cov-append",
         "--cov-config=.coveragerc",
-        "--cov-report=",
+        "--cov-report=term",
         os.path.join("tests", "unit"),
         *session.posargs,
     )
