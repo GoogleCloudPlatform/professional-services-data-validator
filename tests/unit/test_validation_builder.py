@@ -143,12 +143,12 @@ def test_column_validation_calculate(module_under_test):
     mock_config_manager.append_calculated_fields(CALCULATED_MULTIPLE_TEST)
     builder.add_config_calculated_fields()
 
-    assert list(builder.get_metadata().keys()) == ["concat_start_station_name_end_station_name",
+    assert sorted(list(builder.get_metadata().keys())) == sorted(["concat_start_station_name_end_station_name",
                                                    "length_start_station_name",
                                                    "ifnull_start_station_name",
                                                    "rstrip_start_station_name",
                                                    "upper_start_station_name",
-                                                  ]
+                                                  ])
 
 
 def test_column_validation_limit(module_under_test):
