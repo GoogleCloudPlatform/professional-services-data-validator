@@ -46,6 +46,7 @@ class ValidationBuilder(object):
         self.target_builder = self.get_query_builder(self.validation_type)
 
         self.group_aliases = {}
+        self.calculated_aliases = {}
 
         self.add_config_aggregates()
         self.add_config_query_groups()
@@ -59,6 +60,7 @@ class ValidationBuilder(object):
         cloned_builder.source_builder = deepcopy(self.source_builder)
         cloned_builder.target_builder = deepcopy(self.target_builder)
         cloned_builder.group_aliases = deepcopy(self.group_aliases)
+        cloned_builder.calculated_aliases = deepcopy(self.calculated_aliases)
         cloned_builder._metadata = deepcopy(self._metadata)
 
         return cloned_builder
@@ -89,6 +91,10 @@ class ValidationBuilder(object):
     def get_group_aliases(self):
         """ Return List of String Aliases """
         return self.group_aliases.keys()
+
+    def get_calculated_aliases(self):
+        """ Return List of String Aliases """
+        return self.calculated_aliases.keys()
 
     def get_grouped_alias_source_column(self, alias):
         return self.group_aliases[alias][consts.CONFIG_SOURCE_COLUMN]
@@ -227,6 +233,7 @@ class ValidationBuilder(object):
             fields=target_cols, operation=calc_type, alias=alias)
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
+        self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):
         """ Return query for source validation """
