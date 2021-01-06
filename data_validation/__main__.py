@@ -72,15 +72,6 @@ def get_aggregate_config(args, config_manager):
         )
     return aggregate_configs
 
-def get_calculated_config(args, config_manager):
-    """Return list of formatted aggregation objects.
-
-    Args:
-        config_manager (ConfigManager): Validation config manager instance.
-    """
-    calculated_configs = [config_manager.build_config]
-
-    return calculated_configs
 
 def build_config_from_args(args, config_manager):
     """Return config manager object ready to execute.
@@ -88,7 +79,6 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
-    config.manager.append_calculated_fields(get_calculated_config(args, config_manager))
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if config_manager.validation_type in ["GroupedColumn", "Row"]:
         grouped_columns = json.loads(args.grouped_columns)

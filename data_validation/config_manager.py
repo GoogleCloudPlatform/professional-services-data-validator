@@ -94,7 +94,9 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_CALCULATED_FIELDS)
 
     def append_calculated_fields(self, calculated_configs):
-        self._config[consts.CONFIG_CALCULATED_FIELDS] = self.calculated_fields + calculated_configs
+        self._config[consts.CONFIG_CALCULATED_FIELDS] = (
+            self.calculated_fields + calculated_configs
+        )
 
     @property
     def query_groups(self):
@@ -161,7 +163,8 @@ class ConfigManager(object):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
             self._source_ibis_table = clients.get_ibis_table(
-                self.source_client, self.source_schema, self.source_table)
+                self.source_client, self.source_schema, self.source_table
+            )
             # self._source_ibis_table = self._source_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._source_ibis_table))
         return self._source_ibis_table
 
@@ -169,7 +172,9 @@ class ConfigManager(object):
         """Return mutated IbisTable from source"""
         table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
-        calculated_table = table.mutate(vb.source_builder.compile_calculated_fields(table))
+        calculated_table = table.mutate(
+            vb.source_builder.compile_calculated_fields(table)
+        )
 
         return calculated_table
 
@@ -177,7 +182,8 @@ class ConfigManager(object):
         """Return IbisTable from target."""
         if not hasattr(self, "_target_ibis_table"):
             self._target_ibis_table = clients.get_ibis_table(
-                self.target_client, self.target_schema, self.target_table)
+                self.target_client, self.target_schema, self.target_table
+            )
             # self._target_ibis_table = self._target_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._target_ibis_table))
         return self._target_ibis_table
 
@@ -185,7 +191,9 @@ class ConfigManager(object):
         """Return mutated IbisTable from target"""
         table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
-        calculated_table = table.mutate(vb.target_builder.compile_calculated_fields(table))
+        calculated_table = table.mutate(
+            vb.target_builder.compile_calculated_fields(table)
+        )
 
         return calculated_table
 
@@ -285,17 +293,6 @@ class ConfigManager(object):
             grouped_column_configs.append(column_config)
 
         return grouped_column_configs
-
-    def build_config_count_aggregate(self):
-        """Return dict aggregate for COUNT(*)."""
-        aggregate_config = {
-            consts.CONFIG_SOURCE_COLUMN: None,
-            consts.CONFIG_TARGET_COLUMN: None,
-            consts.CONFIG_FIELD_ALIAS: "count",
-            consts.CONFIG_TYPE: "count",
-        }
-
-        return aggregate_config
 
     def build_config_count_aggregate(self):
         """Return dict aggregate for COUNT(*)."""

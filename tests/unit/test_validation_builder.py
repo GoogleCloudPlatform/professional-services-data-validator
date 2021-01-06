@@ -65,8 +65,14 @@ AGGREGATES_TEST = [
 CALCULATED_MULTIPLE_TEST = [
     {
         consts.CONFIG_FIELD_ALIAS: "concat_start_station_name_end_station_name",
-        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name", "end_station_name"],
-        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name", "end_station_name"],
+        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [
+            "start_station_name",
+            "end_station_name",
+        ],
+        consts.CONFIG_CALCULATED_TARGET_COLUMNS: [
+            "start_station_name",
+            "end_station_name",
+        ],
         consts.CONFIG_TYPE: "concat",
     },
     # {
@@ -144,6 +150,7 @@ def test_validation_add_groups(module_under_test):
 
     assert list(builder.get_group_aliases()) == ["start_alias"]
 
+
 def test_column_validation_calculate(module_under_test):
     mock_config_manager = ConfigManager(
         COLUMN_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
@@ -153,7 +160,9 @@ def test_column_validation_calculate(module_under_test):
     mock_config_manager.append_calculated_fields(CALCULATED_MULTIPLE_TEST)
     builder.add_config_calculated_fields()
 
-    assert sorted(list(builder.get_calculated_aliases())) == ["concat_start_station_name_end_station_name"]
+    assert sorted(list(builder.get_calculated_aliases())) == [
+        "concat_start_station_name_end_station_name"
+    ]
 
 
 def test_column_validation_limit(module_under_test):

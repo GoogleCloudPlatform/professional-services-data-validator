@@ -209,37 +209,55 @@ class CalculatedField(object):
     @staticmethod
     def hash(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.hash, fields=fields, operation=operation,  alias=alias
+            ibis.expr.api.ValueExpr.hash,
+            fields=fields,
+            operation=operation,
+            alias=alias,
         )
 
     @staticmethod
     def concat(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.join, fields=fields, operation=operation, alias=alias
+            ibis.expr.api.StringValue.join,
+            fields=fields,
+            operation=operation,
+            alias=alias,
         )
 
     @staticmethod
     def ifnull(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.fillna, fields=fields, operation=operation,  alias=alias
+            ibis.expr.api.ValueExpr.fillna,
+            fields=fields,
+            operation=operation,
+            alias=alias,
         )
 
     @staticmethod
     def length(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.length, fields=fields, operation=operation,  alias=alias
+            ibis.expr.api.StringValue.length,
+            fields=fields,
+            operation=operation,
+            alias=alias,
         )
 
     @staticmethod
     def rstrip(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.rstrip, fields=fields, operation=operation,  alias=alias
+            ibis.expr.api.StringValue.rstrip,
+            fields=fields,
+            operation=operation,
+            alias=alias,
         )
 
     @staticmethod
     def upper(fields=None, operation=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.upper, fields=fields, operation=operation,  alias=alias
+            ibis.expr.api.StringValue.upper,
+            fields=fields,
+            operation=operation,
+            alias=alias,
         )
 
     @staticmethod
@@ -256,19 +274,22 @@ class CalculatedField(object):
             calc_field.append(ibis_table[f])
         if len(calc_field) == 1:
             calc_field = calc_field[0]
-        if self.operation == 'concat':
-            calc_field = self.expr(ibis.literal(','), calc_field)
-        elif self.operation == 'ifnull':
-            calc_field = self.expr(ibis.literal('NULL_REPLACEMENT'), calc_field)
-        elif self.operation in['length', 'rstrip', 'upper']:
-            calc_field = self.expr(calc_field.cast('string'))
+        if self.operation == "concat":
+            calc_field = self.expr(ibis.literal(","), calc_field)
+        elif self.operation == "ifnull":
+            calc_field = self.expr(ibis.literal("NULL_REPLACEMENT"), calc_field)
+        elif self.operation in ["length", "rstrip", "upper"]:
+            calc_field = self.expr(calc_field.cast("string"))
         else:
             calc_field = self.expr(calc_field)
         calc_field = calc_field.name(self.alias)
         return calc_field
 
+
 class QueryBuilder(object):
-    def __init__(self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None):
+    def __init__(
+        self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None
+    ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
         Args:
@@ -297,7 +318,7 @@ class QueryBuilder(object):
             filters=filters,
             grouped_fields=grouped_fields,
             calculated_fields=calculated_fields,
-            limit=limit
+            limit=limit,
         )
 
     def compile_aggregate_fields(self, table):
@@ -313,7 +334,6 @@ class QueryBuilder(object):
 
     def compile_calculated_fields(self, table):
         return [field.compile(table) for field in self.calculated_fields]
-
 
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
