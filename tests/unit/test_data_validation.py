@@ -68,7 +68,6 @@ def _create_table_file():
         f.write(JSON_DATA)
 
 
-@patchfs
 def test_data_validation_client(module_under_test, fs):
     """ Test getting a Data Validation Client """
     _create_table_file()

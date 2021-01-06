@@ -71,7 +71,6 @@ def test_get_connection_config_from_args():
     assert conn["project_id"] == "example-project"
 
 
-@patchfs
 def test_create_and_list_connections(capsys, fs):
     # Create Connection
     parser = cli_tools.configure_arg_parser()
