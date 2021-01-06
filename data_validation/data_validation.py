@@ -151,6 +151,26 @@ class DataValidation(object):
             }
             validation_builder.add_filter(filter_field)
 
+    @classmethod
+    def _get_pandas_schema(self, source_df, target_df, join_on_fields, verbose=False):
+        """Return a pandas schema which aligns source and targe for joins."""
+        # TODO(dhercher): We are experiencing issues around datetime coming as sring and not matching
+        # currently the hack to cast it to string works, but is not ideal.
+        # We should look at both types, and if 1 is
+        # date-like than use pandas.to_datetime on the other.
+        for join_on_field in join_on_fields:
+            source_df[join_on_field] = source_df[join_on_field].astype(str)
+            target_df[join_on_field] = target_df[join_on_field].astype(str)
+
+        pd_schema = source_df.dtypes[
+            [i for i, v in source_df.dtypes.iteritems() if v not in [numpy.dtype("O")]]
+        ]
+        if verbose:
+            print("-- ** Pandas Schema ** --")
+            print(pd_schema)
+
+        return pd_schema
+
     def _execute_validation(self, validation_builder, process_in_memory=True):
         """ Execute Against a Supplied Validation Builder """
         run_metadata = metadata.RunMetadata()
@@ -165,26 +185,32 @@ class DataValidation(object):
         if process_in_memory:
             source_df = self.source_client.execute(source_query)
             target_df = self.target_client.execute(target_query)
-            pd_schema = source_df.dtypes[
-                [
-                    i
-                    for i, v in source_df.dtypes.iteritems()
-                    if v not in [numpy.dtype("O")]
-                ]
-            ]
+            pd_schema = self._get_pandas_schema(
+                source_df, target_df, join_on_fields, verbose=self.verbose
+            )
 
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )
 
-            result_df = combiner.generate_report(
-                pandas_client,
-                run_metadata,
-                pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
-                pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
-                join_on_fields=join_on_fields,
-                verbose=self.verbose,
-            )
+            try:
+                result_df = combiner.generate_report(
+                    pandas_client,
+                    run_metadata,
+                    pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
+                    pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
+                    join_on_fields=join_on_fields,
+                    verbose=self.verbose,
+                )
+            except Exception as e:
+                if self.verbose:
+                    print("-- ** Logging Source DF ** --")
+                    print(source_df.dtypes)
+                    print(source_df)
+                    print("-- ** Logging Target DF ** --")
+                    print(target_df.dtypes)
+                    print(target_df)
+                raise e
         else:
             result_df = combiner.generate_report(
                 self.source_client,

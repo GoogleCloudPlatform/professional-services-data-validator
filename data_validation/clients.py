@@ -18,10 +18,16 @@ import warnings
 
 from ibis.bigquery.client import BigQueryClient
 import ibis.pandas
+from ibis.pandas.client import PandasClient
 from ibis.sql.mysql.client import MySQLClient
 from ibis.sql.postgres.client import PostgreSQLClient
 
 from third_party.ibis.ibis_impala.api import impala_connect
+import third_party.ibis.ibis_addon.datatypes
+
+
+# Our customized Ibis Datatype logic add support for new types
+third_party.ibis.ibis_addon.datatypes
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
 warnings.filterwarnings(
@@ -89,6 +95,8 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     """
     if type(client) in [OracleClient, PostgreSQLClient]:
         return client.table(table_name, database=database_name, schema=schema_name)
+    elif type(client) in [PandasClient]:
+        return client.table(table_name, schema=schema_name)
     else:
         return client.table(table_name, database=schema_name)
 
