@@ -207,21 +207,9 @@ class CalculatedField(object):
         self.alias = alias
 
     @staticmethod
-    def hash():
+    def hash(fields=None, operation=None, alias=None):
         return CalculatedField(
             ibis.expr.api.ValueExpr.hash, fields=fields, operation=operation,  alias=alias
-        )
-
-    @staticmethod
-    def cast(fields=None, operation=None, alias=None):
-        return CalculatedField(
-            ibis.expr.api.ValueExpr.cast, fields=fields, operation=operation,  alias=alias
-        )
-
-    @staticmethod
-    def coalesce(fields=None, operation=None, alias=None):
-        return CalculatedField(
-            ibis.expr.api.ValueExpr.coalesce, fields=fields, operation=operation,  alias=alias
         )
 
     @staticmethod
@@ -266,11 +254,16 @@ class CalculatedField(object):
         calc_field = []
         for f in self.fields:
             calc_field.append(ibis_table[f])
-        print(self.expr)
+        if len(calc_field) == 1:
+            calc_field = calc_field[0]
         if self.operation == 'concat':
             calc_field = self.expr(ibis.literal(','), calc_field)
-        elif self.operation == 'length':
-            calc_field = self.expr(ibis.literal(calc_field))
+        elif self.operation == 'ifnull':
+            calc_field = self.expr(ibis.literal('NULL_REPLACEMENT'), calc_field)
+        elif self.operation in['length', 'rstrip', 'upper']:
+            calc_field = self.expr(calc_field.cast('string'))
+        else:
+            calc_field = self.expr(calc_field)
         calc_field = calc_field.name(self.alias)
         return calc_field
 

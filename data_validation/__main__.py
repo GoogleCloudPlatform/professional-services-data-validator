@@ -90,7 +90,7 @@ def build_config_from_args(args, config_manager):
     """
     config.manager.append_calculated_fields(get_calculated_config(args, config_manager))
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if config_manager.validation_type in ["GroupedColumn"]:
+    if config_manager.validation_type in ["GroupedColumn", "Row"]:
         grouped_columns = json.loads(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
