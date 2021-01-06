@@ -14,8 +14,6 @@
 
 import pytest
 
-from pyfakefs.fake_filesystem_unittest import patchfs
-
 from data_validation import consts
 
 

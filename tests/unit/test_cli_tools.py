@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-from pyfakefs.fake_filesystem_unittest import patchfs
 from unittest import mock
 
 from data_validation import cli_tools
