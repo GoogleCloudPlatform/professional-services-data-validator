@@ -79,7 +79,7 @@ def generate_report(
         print(documented.compile())
 
     result_df = client.execute(documented)
-    
+
     # Fix null values (which occur when source and target are null) to 0 diff
     # result_df.pct_difference.fillna(0, inplace=True)
 
