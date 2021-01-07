@@ -20,6 +20,7 @@ original data type is used.
 
 import functools
 import json
+import numpy
 
 import ibis
 import ibis.expr.datatypes
@@ -77,7 +78,15 @@ def generate_report(
         print("-- ** Combiner Query ** --")
         print(documented.compile())
 
-    return client.execute(documented)
+    result_df = client.execute(documented)
+    
+    # Fix null values (which occur when source and target are null) to 0 diff
+    # result_df.pct_difference.fillna(0, inplace=True)
+
+    # Insert 100pct diff for case when source is 0 and target is not
+    result_df.pct_difference.replace(numpy.inf, 100, inplace=True)
+
+    return result_df
 
 
 def _calculate_difference(field_differences, datatype):
