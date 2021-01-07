@@ -156,6 +156,7 @@ class DataValidation(object):
         run_metadata = metadata.RunMetadata()
         run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
         run_metadata.validations = validation_builder.get_metadata()
+        run_metadata.label = self.config_manager.label
 
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()

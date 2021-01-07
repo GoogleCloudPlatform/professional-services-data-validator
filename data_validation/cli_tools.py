@@ -176,7 +176,6 @@ def _configure_run_parser(subparsers):
         "-max",
         help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
     )
-
     run_parser.add_argument(
         "--grouped-columns",
         "-gc",
@@ -195,7 +194,11 @@ def _configure_run_parser(subparsers):
         "-c",
         help="Store the validation in the YAML Config File Path specified.",
     )
-
+    run_parser.add_argument(
+        "--label",
+        "-l",
+        help="Label for validation run.",
+    )
     run_parser.add_argument(
         "--filters",
         "-filters",
