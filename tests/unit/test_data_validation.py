@@ -132,4 +132,4 @@ def test_zero_both_values(module_under_test, fs):
     col_a_result_df = result_df[result_df.validation_name=="count_col_a"]
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
 
-    assert col_a_pct_diff is numpy.nan
+    assert numpy.isnan(col_a_pct_diff)
