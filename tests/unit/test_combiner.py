@@ -131,7 +131,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "group_by_columns": [None],
                     "difference": [1.0],
                     "pct_difference": [100.0],
-                    "label": ["test_label"]
+                    "label": ["test_label"],
                 }
             ),
         ),
@@ -175,7 +175,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "group_by_columns": [None],
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
-                    "label": ["test_label"]
+                    "label": ["test_label"],
                 }
             ),
         ),
@@ -223,7 +223,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "group_by_columns": [None, None],
                     "difference": [1.0, 2.0],
                     "pct_difference": [12.5, -200.0],
-                    "label": ["test_label"] * 2
+                    "label": ["test_label"] * 2,
                 }
             ),
         ),
@@ -314,7 +314,7 @@ def test_generate_report_without_group_by(
                     ],
                     "difference": [-1.0, -1.0, -1.0, 1.0],
                     "pct_difference": [-50.0, -25.0, -12.5, 6.25],
-                    "label": ["group_label"] * 4
+                    "label": ["group_label"] * 4,
                 }
             ),
         ),
@@ -355,7 +355,7 @@ def test_generate_report_without_group_by(
                     "group_by_columns": ['{"grp": "\\""}', '{"grp": "\\\\"}'],
                     "difference": [2.0, 2.0],
                     "pct_difference": [200.0, 100.0],
-                    "label": ["group_label"] * 2
+                    "label": ["group_label"] * 2,
                 }
             ),
         ),
@@ -429,7 +429,7 @@ def test_generate_report_without_group_by(
                     ],
                     "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
-                    "label": ["group_label"] * 6
+                    "label": ["group_label"] * 6,
                 }
             ),
         ),

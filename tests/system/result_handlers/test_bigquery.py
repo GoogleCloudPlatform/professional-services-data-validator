@@ -133,7 +133,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             ],
             "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
             "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
-            "label": ["grouped_label"] * 6
+            "label": ["grouped_label"] * 6,
         }
     )
     object_under_test.execute(None, df)

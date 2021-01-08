@@ -121,6 +121,7 @@ def test_target_connection_property(module_under_test):
     target_connection = config_manager.target_connection
     assert target_connection == SAMPLE_CONFIG[consts.CONFIG_TARGET_CONN]
 
+
 def test_get_label_property(module_under_test):
     """Test label property."""
     config_manager = module_under_test.ConfigManager(
@@ -128,6 +129,7 @@ def test_get_label_property(module_under_test):
     )
     label = config_manager.label
     assert label == SAMPLE_CONFIG[consts.CONFIG_LABEL]
+
 
 def test_process_in_memory(module_under_test):
     """Test getting config copy."""
@@ -220,7 +222,7 @@ def test_get_yaml_validation_block(module_under_test):
         consts.CONFIG_TABLE_NAME,
         consts.CONFIG_GROUPED_COLUMNS,
         consts.CONFIG_LABEL,
-        consts.CONFIG_FILTERS
+        consts.CONFIG_FILTERS,
     ]
     assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]
     assert list(yaml_config.keys()) == expected_validation_keys
