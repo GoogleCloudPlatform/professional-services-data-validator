@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest import mock
+
+from google.auth import credentials
 import pandas
 import ibis.pandas
 
@@ -36,3 +39,12 @@ def test_get_all_tables():
     all_tables = clients.get_all_tables(client)
 
     assert all_tables == TABLES_RESULT
+
+
+def test_get_bigquery_client_sets_user_agent():
+    mock_credentials = mock.create_autospec(credentials.Credentials)
+    ibis_client = clients.get_bigquery_client(
+        "test-project", dataset_id="some_dataset", credentials=mock_credentials
+    )
+    user_agent = ibis_client.client._connection._client_info.to_user_agent()
+    assert "google-pso-tool/data-validator" in user_agent

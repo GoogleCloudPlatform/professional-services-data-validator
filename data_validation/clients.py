@@ -16,6 +16,7 @@
 import pandas
 import warnings
 
+from google.cloud import bigquery
 from ibis.bigquery.client import BigQueryClient
 import ibis.pandas
 from ibis.pandas.client import PandasClient
@@ -24,6 +25,7 @@ from ibis.sql.postgres.client import PostgreSQLClient
 
 from third_party.ibis.ibis_impala.api import impala_connect
 import third_party.ibis.ibis_addon.datatypes
+from data_validation import client_info
 
 
 # Our customized Ibis Datatype logic add support for new types
@@ -64,6 +66,19 @@ try:
     )
 except Exception:
     snowflake_connect = None
+
+
+def get_bigquery_client(project_id, dataset_id=None, credentials=None):
+    info = client_info.get_http_client_info()
+    google_client = bigquery.Client(
+        project=project_id, client_info=info, credentials=credentials
+    )
+    ibis_client = BigQueryClient(project_id, dataset_id=dataset_id, credentials=credentials)
+
+    # Override the BigQuery client object to ensure the correct user agent is
+    # included.
+    ibis_client.client = google_client
+    return ibis_client
 
 
 def get_pandas_client(table_name, file_path, file_type):
@@ -143,7 +158,7 @@ def get_all_tables(client):
 
 
 CLIENT_LOOKUP = {
-    "BigQuery": BigQueryClient,
+    "BigQuery": get_bigquery_client,
     "Impala": impala_connect,
     "MySQL": MySQLClient,
     "Oracle": OracleClient,
