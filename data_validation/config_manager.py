@@ -143,7 +143,7 @@ class ConfigManager(object):
     def label(self):
         """Return label."""
         return self._config.get(consts.CONFIG_LABEL)
-    
+
     @property
     def result_handler_config(self):
         """Return int limit for query executions."""
