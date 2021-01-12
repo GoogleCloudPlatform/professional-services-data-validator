@@ -182,7 +182,7 @@ Every source type requires its own configuration for connectivity.  Below is an 
 
 #### If you plan to store validation results in BigQuery:
 * bigquery.tables.update (BigQuery Data Editor)
-* bigquery.tables.updateData(BigQuery Data Editor)
+* bigquery.tables.updateData (BigQuery Data Editor)
 
 
 ### Teradata
