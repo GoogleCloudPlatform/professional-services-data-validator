@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pandas
 import pytest
-
-from pyfakefs.fake_filesystem_unittest import patchfs
 
 from data_validation import consts
 
@@ -22,14 +21,14 @@ from data_validation import consts
 TABLE_FILE_PATH = "table_data.json"
 SAMPLE_CONFIG = {
     # BigQuery Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: {
-        consts.SOURCE_TYPE: "Pandas",
+    "source_conn": {
+        "source_type": "Pandas",
         "table_name": "my_table",
         "file_path": TABLE_FILE_PATH,
         "file_type": "json",
     },
-    consts.CONFIG_TARGET_CONN: {
-        consts.SOURCE_TYPE: "Pandas",
+    "target_conn": {
+        "source_type": "Pandas",
         "table_name": "my_table",
         "file_path": TABLE_FILE_PATH,
         "file_type": "json",
@@ -37,17 +36,30 @@ SAMPLE_CONFIG = {
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
-    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
     consts.CONFIG_GROUPED_COLUMNS: [],
-    consts.CONFIG_RESULT_HANDLER: {
-        consts.CONFIG_TYPE: "BigQuery",
-        consts.PROJECT_ID: "my-project",
-        consts.TABLE_ID: "dataset.table_name",
-    },
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": None,
+            "target_column": None,
+            "field_alias": "count",
+            "type": "count",
+        }
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
 }
 
 JSON_DATA = """[{"col_a":0,"col_b":"b"}]"""
+
+SOURCE_QUERY_DATA = [
+    {"date": "2020-01-01", "int_val": 1, "double_val": 2.3, "text_val": "hello"}
+]
+SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
+JOIN_ON_FIELDS = ["date"]
+NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
 
 
 @pytest.fixture
@@ -68,8 +80,19 @@ def _create_table_file():
         f.write(JSON_DATA)
 
 
-@patchfs
 def test_data_validation_client(module_under_test, fs):
     """ Test getting a Data Validation Client """
     _create_table_file()
-    module_under_test.DataValidation(SAMPLE_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_CONFIG)
+    result_df = client.execute()
+
+    assert int(result_df.source_agg_value[0]) == 1
+
+
+def test_get_pandas_schema(module_under_test):
+    """ Test extracting pandas schema from dataframes for Ibis Pandas."""
+    pandas_schema = module_under_test.DataValidation._get_pandas_schema(
+        SOURCE_DF, SOURCE_DF, JOIN_ON_FIELDS
+    )
+
+    assert (pandas_schema.index == NON_OBJECT_FIELDS).all()

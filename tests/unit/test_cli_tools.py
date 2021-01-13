@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-from pyfakefs.fake_filesystem_unittest import patchfs
 from unittest import mock
 
 from data_validation import cli_tools
@@ -71,7 +70,6 @@ def test_get_connection_config_from_args():
     assert conn["project_id"] == "example-project"
 
 
-@patchfs
 def test_create_and_list_connections(capsys, fs):
     # Create Connection
     parser = cli_tools.configure_arg_parser()
