@@ -20,7 +20,6 @@ original data type is used.
 
 import functools
 import json
-import numpy
 
 import ibis
 import ibis.expr.datatypes
@@ -97,10 +96,12 @@ def _calculate_difference(field_differences, datatype):
             * difference
             / (
                 field_differences["differences_source_agg_value"]
-                    .case()
-                    .when(ibis.literal(0), field_differences["differences_target_agg_value"])
-                    .else_(field_differences["differences_source_agg_value"])
-                    .end()
+                .case()
+                .when(
+                    ibis.literal(0), field_differences["differences_target_agg_value"]
+                )
+                .else_(field_differences["differences_source_agg_value"])
+                .end()
             ).cast("double")
         ).cast("double")
 
