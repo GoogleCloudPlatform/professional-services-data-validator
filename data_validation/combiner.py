@@ -80,12 +80,6 @@ def generate_report(
 
     result_df = client.execute(documented)
 
-    # Fix null values (which occur when source and target are null) to 0 diff
-    # result_df.pct_difference.fillna(0, inplace=True)
-
-    # Insert 100pct diff for case when source is 0 and target is not
-    result_df.pct_difference.replace(numpy.inf, 100, inplace=True)
-
     return result_df
 
 
@@ -101,7 +95,13 @@ def _calculate_difference(field_differences, datatype):
         pct_difference = (
             ibis.literal(100.0)
             * difference
-            / field_differences["differences_source_agg_value"].cast("double")
+            / (
+                field_differences["differences_source_agg_value"]
+                    .case()
+                    .when(ibis.literal(0), field_differences["differences_target_agg_value"])
+                    .else_(field_differences["differences_source_agg_value"])
+                    .end()
+            ).cast("double")
         ).cast("double")
 
     return difference.name("difference"), pct_difference.name("pct_difference")
