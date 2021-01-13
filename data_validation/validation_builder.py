@@ -242,7 +242,7 @@ class ValidationBuilder(object):
         source_config = {
             "data_client": self.source_client,
             "schema_name": self.config_manager.source_schema,
-            "table_name": self.config_manager.source_table,
+            "table_name": self.config_manager.get_source_ibis_calculated_table(),
         }
         query = self.source_builder.compile(**source_config)
         if self.verbose:
@@ -256,7 +256,7 @@ class ValidationBuilder(object):
         target_config = {
             "data_client": self.target_client,
             "schema_name": self.config_manager.target_schema,
-            "table_name": self.config_manager.target_table,
+            "table_name": self.config_manager.get_target_ibis_calculated_table(),
         }
         query = self.target_builder.compile(**target_config)
         if self.verbose:

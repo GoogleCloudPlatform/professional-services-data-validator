@@ -343,7 +343,7 @@ class QueryBuilder(object):
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
         """
-        table = clients.get_ibis_table(data_client, schema_name, table_name)
+        table = clients.get_calculated_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
         calc_table = table.mutate(self.compile_calculated_fields(table))
@@ -372,7 +372,7 @@ class QueryBuilder(object):
             represents adding a column to group by in the
             query being built.
 
-        Args:
+        Args:n
             grouped_field (GroupedField): A GroupedField instance
         """
         self.grouped_fields.append(grouped_field)

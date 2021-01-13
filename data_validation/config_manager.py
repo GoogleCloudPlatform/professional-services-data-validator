@@ -165,7 +165,6 @@ class ConfigManager(object):
             self._source_ibis_table = clients.get_ibis_table(
                 self.source_client, self.source_schema, self.source_table
             )
-            # self._source_ibis_table = self._source_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._source_ibis_table))
         return self._source_ibis_table
 
     def get_source_ibis_calculated_table(self):
@@ -184,7 +183,6 @@ class ConfigManager(object):
             self._target_ibis_table = clients.get_ibis_table(
                 self.target_client, self.target_schema, self.target_table
             )
-            # self._target_ibis_table = self._target_ibis_table.mutate(QueryBuilder.compile_calculated_fields(table=self._target_ibis_table))
         return self._target_ibis_table
 
     def get_target_ibis_calculated_table(self):
