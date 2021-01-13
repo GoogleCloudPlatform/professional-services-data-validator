@@ -122,6 +122,19 @@ def test_zero_source_value(module_under_test, fs):
     assert col_a_pct_diff == 100
 
 
+def test_zero_target_value(module_under_test, fs):
+    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
+    _create_table_file(TARGET_TABLE_FILE_PATH, JSON_COLA_ZERO_DATA)
+
+    client = module_under_test.DataValidation(SAMPLE_CONFIG)
+    result_df = client.execute()
+
+    col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
+    col_a_pct_diff = col_a_result_df.pct_difference.values[0]
+
+    assert col_a_pct_diff == -100
+
+
 def test_zero_both_values(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_COLA_ZERO_DATA)
     _create_table_file(TARGET_TABLE_FILE_PATH, JSON_COLA_ZERO_DATA)
