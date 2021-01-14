@@ -141,14 +141,15 @@ data-validation run
   --sum SUM             JSON List of columns sum '["col_a"]' or * for all numeric
   --min MIN             JSON List of columns min '[\"col_a\"]' or * for all numeric
   --max MAX             JSON List of columns max '[\"col_a\"]' or * for all numeric
+  --avg AVG             JSON List of columns avg '[\"col_a\"]' or * for all numeric
   --result-handler-config RESULT_HANDLER_CONFIG, -rc RESULT_HANDLER_CONFIG
                         (Optional) JSON Result handler config details. Defaults to stdout
                         See: *Validation Reports* section
   --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
   --config-file CONFIG_FILE, -c CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
-  --label LABEL, -l LABEL
-                        (Optional) Label for the run.
+  --labels KEY=VALUE, -l KEY1=VALUE1,KEY2=VALUE2
+                        (Optional) Comma-separated key value pair labels for the run.
   --verbose, -v         Verbose logging will print queries executed
 ```
 

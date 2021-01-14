@@ -140,9 +140,9 @@ class ConfigManager(object):
         )
 
     @property
-    def label(self):
-        """Return label."""
-        return self._config.get(consts.CONFIG_LABEL)
+    def labels(self):
+        """Return labels."""
+        return self._config.get(consts.CONFIG_LABELS, None)
 
     @property
     def result_handler_config(self):
@@ -215,7 +215,7 @@ class ConfigManager(object):
         source_client,
         target_client,
         table_obj,
-        label,
+        labels=None,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
@@ -236,7 +236,7 @@ class ConfigManager(object):
             consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(
                 consts.CONFIG_TARGET_TABLE_NAME, table_obj[consts.CONFIG_TABLE_NAME]
             ),
-            consts.CONFIG_LABEL: label,
+            consts.CONFIG_LABELS: labels,
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
             consts.CONFIG_FILTERS: filter_config,
         }

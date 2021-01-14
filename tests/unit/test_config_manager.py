@@ -33,7 +33,7 @@ SAMPLE_CONFIG = {
         consts.PROJECT_ID: "my-project",
         consts.TABLE_ID: "dataset.table_name",
     },
-    consts.CONFIG_LABEL: "test_label",
+    consts.CONFIG_LABELS: [("name", "test_label")],
     consts.CONFIG_FILTERS: [
         {
             consts.CONFIG_FILTER_SOURCE: "1=1",
@@ -127,8 +127,8 @@ def test_get_label_property(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
-    label = config_manager.label
-    assert label == SAMPLE_CONFIG[consts.CONFIG_LABEL]
+    label = config_manager.labels
+    assert label == SAMPLE_CONFIG[consts.CONFIG_LABELS]
 
 
 def test_process_in_memory(module_under_test):
@@ -221,7 +221,7 @@ def test_get_yaml_validation_block(module_under_test):
         consts.CONFIG_SCHEMA_NAME,
         consts.CONFIG_TABLE_NAME,
         consts.CONFIG_GROUPED_COLUMNS,
-        consts.CONFIG_LABEL,
+        consts.CONFIG_LABELS,
         consts.CONFIG_FILTERS,
     ]
     assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]

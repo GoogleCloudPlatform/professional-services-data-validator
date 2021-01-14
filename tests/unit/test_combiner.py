@@ -37,7 +37,7 @@ EXAMPLE_RUN_METADATA = metadata.RunMetadata(
     },
     start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
     end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-    label="test_label",
+    labels=[("name", "test_label")],
     run_id="test-run",
 )
 
@@ -111,7 +111,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-                label="test_label",
+                labels=[("name", "test_label")],
                 run_id="test-run",
             ),
             pandas.DataFrame(
@@ -131,7 +131,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "group_by_columns": [None],
                     "difference": [1.0],
                     "pct_difference": [100.0],
-                    "label": ["test_label"],
+                    "labels": [[("name", "test_label")]],
                 }
             ),
         ),
@@ -155,7 +155,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-                label="test_label",
+                labels=[("name", "test_label")],
                 run_id="test-run",
             ),
             pandas.DataFrame(
@@ -175,7 +175,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "group_by_columns": [None],
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
-                    "label": ["test_label"],
+                    "labels": [[("name", "test_label")]],
                 }
             ),
         ),
@@ -203,7 +203,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-                label="test_label",
+                labels=[("name", "test_label")],
                 run_id="test-run",
             ),
             pandas.DataFrame(
@@ -223,7 +223,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "group_by_columns": [None, None],
                     "difference": [1.0, 2.0],
                     "pct_difference": [12.5, -200.0],
-                    "label": ["test_label"] * 2,
+                    "labels": [[("name", "test_label")]] * 2,
                 }
             ),
         ),
@@ -289,7 +289,7 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-                label="group_label",
+                labels=[("name", "group_label")],
                 run_id="grouped-test",
             ),
             pandas.DataFrame(
@@ -314,7 +314,7 @@ def test_generate_report_without_group_by(
                     ],
                     "difference": [-1.0, -1.0, -1.0, 1.0],
                     "pct_difference": [-50.0, -25.0, -12.5, 6.25],
-                    "label": ["group_label"] * 4,
+                    "labels": [[("name", "group_label")]] * 4,
                 }
             ),
         ),
@@ -335,7 +335,7 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-                label="group_label",
+                labels=[("name", "group_label")],
                 run_id="grouped-test",
             ),
             pandas.DataFrame(
@@ -355,7 +355,7 @@ def test_generate_report_without_group_by(
                     "group_by_columns": ['{"grp": "\\""}', '{"grp": "\\\\"}'],
                     "difference": [2.0, 2.0],
                     "pct_difference": [200.0, 100.0],
-                    "label": ["group_label"] * 2,
+                    "labels": [[("name", "group_label")]] * 2,
                 }
             ),
         ),
@@ -388,7 +388,7 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-                label="group_label",
+                labels=[("name", "group_label")],
                 run_id="grouped-test",
             ),
             pandas.DataFrame(
@@ -429,7 +429,7 @@ def test_generate_report_without_group_by(
                     ],
                     "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
-                    "label": ["group_label"] * 6,
+                    "labels": [[("name", "group_label")]] * 6,
                 }
             ),
         ),

@@ -122,8 +122,8 @@ CLI_STORE_COLUMN_ARGS = [
     '["tripduration","start_station_name"]',
     "--count",
     '["tripduration","start_station_name"]',
-    "--label",
-    "test_label",
+    "--labels",
+    "name=test_label",
     "--config-file",
     CLI_CONFIG_FILE,
 ]
@@ -199,7 +199,7 @@ def test_cli_store_yaml_then_run():
         # The number of lines is not significant, except that it represents
         # the exact file expected to be created.  Any change to this value
         # is likely to be a breaking change and must be assessed.
-        assert len(yaml_file.readlines()) == 28
+        assert len(yaml_file.readlines()) == 31
 
     # Run generated config
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)

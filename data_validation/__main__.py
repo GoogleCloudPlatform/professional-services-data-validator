@@ -104,7 +104,17 @@ def build_config_managers_from_args(args):
     config_type = args.type
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
-    label = args.label
+
+    labels = None
+    if args.labels:
+        labels = []
+        pairs = args.labels.split(",")
+        for pair in pairs:
+            kv = pair.split("=")
+            if len(kv) == 2:
+                labels.append((kv[0], kv[1]))
+            else:
+                raise ValueError("Labels must be comma-separated key-value pairs.")
 
     result_handler_config = None
     if args.result_handler_config:
@@ -126,7 +136,7 @@ def build_config_managers_from_args(args):
             source_client,
             target_client,
             table_obj,
-            label,
+            labels=labels,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,

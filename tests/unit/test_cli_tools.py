@@ -28,7 +28,7 @@ CLI_ARGS = {
     "sum": '["col_a","col_b"]',
     "count": '["col_a","col_b"]',
     "config_file": "example_test.yaml",
-    "label": "test_run",
+    "labels": "name=test_run",
     "verbose": True,
 }
 
@@ -50,7 +50,7 @@ def test_get_parsed_args(mock_args):
     """Test arg parser values."""
     args = cli_tools.get_parsed_args()
     assert args.command == "run"
-    assert args.label == "test_run"
+    assert args.labels == "name=test_run"
     assert args.verbose
 
 
