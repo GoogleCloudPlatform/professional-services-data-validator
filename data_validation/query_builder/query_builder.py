@@ -238,10 +238,16 @@ class QueryBuilder(object):
         table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
-        filtered_table = table.filter(self.compile_filter_fields(table))
-        grouped_table = filtered_table.groupby(
-            self.compile_group_fields(filtered_table)
+        compiled_filters = self.compile_filter_fields(table)
+        filtered_table = table.filter(compiled_filters) if compiled_filters else table
+
+        compiled_groups = self.compile_group_fields(filtered_table)
+        grouped_table = (
+            filtered_table.groupby(compiled_groups)
+            if compiled_groups
+            else filtered_table
         )
+
         query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
 
         if self.limit:
