@@ -73,7 +73,9 @@ def get_bigquery_client(project_id, dataset_id=None, credentials=None):
     google_client = bigquery.Client(
         project=project_id, client_info=info, credentials=credentials
     )
-    ibis_client = BigQueryClient(project_id, dataset_id=dataset_id, credentials=credentials)
+    ibis_client = BigQueryClient(
+        project_id, dataset_id=dataset_id, credentials=credentials
+    )
 
     # Override the BigQuery client object to ensure the correct user agent is
     # included.
