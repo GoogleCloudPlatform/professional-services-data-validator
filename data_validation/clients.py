@@ -149,6 +149,7 @@ CLIENT_LOOKUP = {
     "Oracle": OracleClient,
     "Pandas": get_pandas_client,
     "Postgres": PostgreSQLClient,
+    "Redshift": PostgreSQLClient,
     "Teradata": TeradataClient,
     "MSSQL": mssql_connect,
     "Snowflake": snowflake_connect,
