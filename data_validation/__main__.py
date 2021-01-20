@@ -105,16 +105,7 @@ def build_config_managers_from_args(args):
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
 
-    labels = None
-    if args.labels:
-        labels = []
-        pairs = args.labels.split(",")
-        for pair in pairs:
-            kv = pair.split("=")
-            if len(kv) == 2:
-                labels.append((kv[0], kv[1]))
-            else:
-                raise ValueError("Labels must be comma-separated key-value pairs.")
+    labels = cli_tools.get_labels(args.labels)
 
     result_handler_config = None
     if args.result_handler_config:

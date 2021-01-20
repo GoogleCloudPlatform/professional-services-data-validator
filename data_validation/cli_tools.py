@@ -330,3 +330,18 @@ def get_connection(connection_name):
         conn_str = file.read()
 
     return json.loads(conn_str)
+
+
+def get_labels(arg_labels):
+    """ Return list of tuples representing key-value label pairs. """
+    if arg_labels:
+        labels = []
+        pairs = arg_labels.split(",")
+        for pair in pairs:
+            kv = pair.split("=")
+            if len(kv) == 2:
+                labels.append((kv[0], kv[1]))
+            else:
+                raise ValueError("Labels must be comma-separated key-value pairs.")
+        return labels
+    return None
