@@ -252,9 +252,12 @@ def _join_pivots(source, target, differences, join_on_fields):
 
 def _add_metadata(joined, run_metadata):
     # TODO: Add source and target queries to metadata
-    labels_column = ibis.literal(
-        run_metadata.labels, type="array<struct<key:string,value:string>>"
-    ).name("labels")
+    if run_metadata.labels:
+        labels_column = ibis.literal(
+            run_metadata.labels, type="array<struct<key:string,value:string>>"
+        ).name("labels")
+    else:
+        labels_column = ibis.literal(None).cast("string").name("labels")
 
     joined = joined[
         joined,
