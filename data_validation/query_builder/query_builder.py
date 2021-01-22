@@ -245,7 +245,7 @@ class CalculatedField(object):
     def ifnull(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.ValueExpr.fillna,
-            fields=fields,
+            fields=[ibis.literal("REPLACEMENT_STRING"), fields[0]],
             alias=alias,
         )
 
@@ -298,7 +298,7 @@ class CalculatedField(object):
         calc_fields = []
         compiled_fields = self._compile_fields(ibis_table, self.fields)
 
-        calc_field = self.expr(**compiled_fields)
+        calc_field = self.expr(*compiled_fields)
         if self.alias:
             calc_field = calc_field.name(self.alias)
 
