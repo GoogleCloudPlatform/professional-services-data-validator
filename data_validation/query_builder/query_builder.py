@@ -232,6 +232,9 @@ class CalculatedField(object):
 
     @staticmethod
     def concat(fields=None, alias=None):
+        # TODO(mike): if the fields above are also calculations
+        # we should create CalculatedField objects either here
+        # or in the recursive buildout...
         return CalculatedField(
             ibis.expr.api.StringValue.join,
             fields=[ibis.literal(","), fields],
