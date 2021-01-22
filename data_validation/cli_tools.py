@@ -334,8 +334,8 @@ def get_connection(connection_name):
 
 def get_labels(arg_labels):
     """ Return list of tuples representing key-value label pairs. """
+    labels = []
     if arg_labels:
-        labels = []
         pairs = arg_labels.split(",")
         for pair in pairs:
             kv = pair.split("=")
@@ -343,5 +343,4 @@ def get_labels(arg_labels):
                 labels.append((kv[0], kv[1]))
             else:
                 raise ValueError("Labels must be comma-separated key-value pairs.")
-        return labels
-    return None
+    return labels

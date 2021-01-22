@@ -127,7 +127,7 @@ def build_config_managers_from_args(args):
             source_client,
             target_client,
             table_obj,
-            labels=labels,
+            labels,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,

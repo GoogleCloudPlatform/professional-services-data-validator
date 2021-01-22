@@ -142,7 +142,7 @@ class ConfigManager(object):
     @property
     def labels(self):
         """Return labels."""
-        return self._config.get(consts.CONFIG_LABELS, None)
+        return self._config.get(consts.CONFIG_LABELS, [])
 
     @property
     def result_handler_config(self):
@@ -215,7 +215,7 @@ class ConfigManager(object):
         source_client,
         target_client,
         table_obj,
-        labels=None,
+        labels,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
