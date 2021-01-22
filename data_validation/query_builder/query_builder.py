@@ -193,6 +193,23 @@ class GroupedField(object):
         return group_field
 
 
+class ColumnReference(object):
+    def __init__(self, column_name):
+        """ A representation of an calculated field to build a query.
+
+        Args:
+            column_name (String): The column name used in a complex expr
+        """
+        self.column_name = column_name
+
+    def compile(self, ibis_table):
+        """ Return an ibis object referencing the column.
+
+        Args:
+            ibis_table (IbisTable): The table obj reference
+        """
+        return ibis_table[self.column_name]
+
 class CalculatedField(object):
     def __init__(self, ibis_expr, fields, alias=None):
         """ A representation of an calculated field to build a query.
@@ -217,7 +234,7 @@ class CalculatedField(object):
     def concat(fields=None, alias=None):
         return CalculatedField(
             ibis.expr.api.StringValue.join,
-            fields=fields,
+            fields=[ibis.literal(","), fields],
             alias=alias,
         )
 
@@ -261,24 +278,43 @@ class CalculatedField(object):
         """
         return CalculatedField(expr)
 
+    def _compile_fields(self, ibis_table, fields):
+        compiled_fields = []
+
+        for field in fields:
+            if type(field) in [CalculatedField, ColumnReference]:
+                compiled_fields.append(field.compile(ibis_table))
+            elif isinstance(field, list):
+                compiled_fields.append(self._compile_fields(ibis_table, field))
+            else:
+                compiled_fields.append(field)
+
+        return compiled_fields
+
     def compile(self, ibis_table):
-        calc_field = []
-        for f in self.fields:
-            calc_field.append(ibis_table[f])
-        if len(calc_field) == 1:
-            calc_field = calc_field[0]
-        if self.expr == ibis.expr.api.StringValue.join:
-            calc_field = self.expr(ibis.literal(","), calc_field)
-        elif self.expr == ibis.expr.api.ValueExpr.fillna:
-            calc_field = self.expr(ibis.literal("NULL_REPLACEMENT"), calc_field)
-        elif self.expr in [ibis.expr.api.StringValue.length,
-                           ibis.expr.api.StringValue.rstrip,
-                           ibis.expr.api.StringValue.upper]:
-            calc_field = self.expr(calc_field.cast("string"))
-        else:
-            calc_field = self.expr(calc_field)
-        calc_field = calc_field.name(self.alias)
+        calc_fields = []
+        compiled_fields = self._compile_fields(ibis_table, self.fields)
+
+        calc_field = self.expr(**compiled_fields)
+        if self.alias:
+            calc_field = calc_field.name(self.alias)
+
         return calc_field
+
+        # if len(calc_field) == 1:
+        #     calc_field = calc_field[0]
+        # if self.expr == ibis.expr.api.StringValue.join:
+        #     calc_field = self.expr(ibis.literal(","), calc_field)
+        # elif self.expr == ibis.expr.api.ValueExpr.fillna:
+        #     calc_field = self.expr(ibis.literal("NULL_REPLACEMENT"), calc_field)
+        # elif self.expr in [ibis.expr.api.StringValue.length,
+        #                    ibis.expr.api.StringValue.rstrip,
+        #                    ibis.expr.api.StringValue.upper]:
+        #     calc_field = self.expr(calc_field.cast("string"))
+        # else:
+        #     calc_field = self.expr(calc_field)
+        # calc_field = calc_field.name(self.alias)
+        # return calc_field
 
 
 class QueryBuilder(object):
