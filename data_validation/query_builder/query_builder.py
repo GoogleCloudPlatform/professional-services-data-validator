@@ -226,9 +226,7 @@ class CalculatedField(object):
     @staticmethod
     def hash(fields=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.hash,
-            fields=fields,
-            alias=alias,
+            ibis.expr.api.ValueExpr.hash, fields=fields, alias=alias,
         )
 
     @staticmethod
@@ -253,25 +251,19 @@ class CalculatedField(object):
     @staticmethod
     def length(fields=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.length,
-            fields=fields,
-            alias=alias,
+            ibis.expr.api.StringValue.length, fields=fields, alias=alias,
         )
 
     @staticmethod
     def rstrip(fields=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.rstrip,
-            fields=fields,
-            alias=alias,
+            ibis.expr.api.StringValue.rstrip, fields=fields, alias=alias,
         )
 
     @staticmethod
     def upper(fields=None, alias=None):
         return CalculatedField(
-            ibis.expr.api.StringValue.upper,
-            fields=fields,
-            alias=alias,
+            ibis.expr.api.StringValue.upper, fields=fields, alias=alias,
         )
 
     @staticmethod
@@ -367,7 +359,9 @@ class QueryBuilder(object):
         # Build Query Expressions
         calc_table = table.mutate(self.compile_calculated_fields(table))
         compiled_filters = self.compile_filter_fields(table)
-        filtered_table = calc_table.filter(compiled_filters) if compiled_filters else calc_table
+        filtered_table = (
+            calc_table.filter(compiled_filters) if compiled_filters else calc_table
+        )
 
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
