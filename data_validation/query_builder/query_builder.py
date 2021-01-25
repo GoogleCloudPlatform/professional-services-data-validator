@@ -368,7 +368,7 @@ class QueryBuilder(object):
         # Build Query Expressions
         calc_table = table.mutate(self.compile_calculated_fields(table))
         compiled_filters = self.compile_filter_fields(table)
-        filtered_table = table.filter(compiled_filters) if compiled_filters else table
+        filtered_table = calc_table.filter(compiled_filters) if compiled_filters else calc_table
 
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
