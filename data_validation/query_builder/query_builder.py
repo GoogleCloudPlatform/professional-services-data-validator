@@ -210,6 +210,7 @@ class ColumnReference(object):
         """
         return ibis_table[self.column_name]
 
+
 class CalculatedField(object):
     def __init__(self, ibis_expr, fields, alias=None):
         """ A representation of an calculated field to build a query.
@@ -295,7 +296,6 @@ class CalculatedField(object):
         return compiled_fields
 
     def compile(self, ibis_table):
-        calc_fields = []
         compiled_fields = self._compile_fields(ibis_table, self.fields)
 
         calc_field = self.expr(*compiled_fields)
@@ -303,7 +303,6 @@ class CalculatedField(object):
             calc_field = calc_field.name(self.alias)
 
         return calc_field
-
 
 
 class QueryBuilder(object):
