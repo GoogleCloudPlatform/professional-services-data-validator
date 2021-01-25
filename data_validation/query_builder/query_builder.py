@@ -304,20 +304,6 @@ class CalculatedField(object):
 
         return calc_field
 
-        # if len(calc_field) == 1:
-        #     calc_field = calc_field[0]
-        # if self.expr == ibis.expr.api.StringValue.join:
-        #     calc_field = self.expr(ibis.literal(","), calc_field)
-        # elif self.expr == ibis.expr.api.ValueExpr.fillna:
-        #     calc_field = self.expr(ibis.literal("NULL_REPLACEMENT"), calc_field)
-        # elif self.expr in [ibis.expr.api.StringValue.length,
-        #                    ibis.expr.api.StringValue.rstrip,
-        #                    ibis.expr.api.StringValue.upper]:
-        #     calc_field = self.expr(calc_field.cast("string"))
-        # else:
-        #     calc_field = self.expr(calc_field)
-        # calc_field = calc_field.name(self.alias)
-        # return calc_field
 
 
 class QueryBuilder(object):
@@ -381,10 +367,16 @@ class QueryBuilder(object):
 
         # Build Query Expressions
         calc_table = table.mutate(self.compile_calculated_fields(table))
-        filtered_table = calc_table.filter(self.compile_filter_fields(table))
-        grouped_table = filtered_table.groupby(
-            self.compile_group_fields(filtered_table)
+        compiled_filters = self.compile_filter_fields(table)
+        filtered_table = table.filter(compiled_filters) if compiled_filters else table
+
+        compiled_groups = self.compile_group_fields(filtered_table)
+        grouped_table = (
+            filtered_table.groupby(compiled_groups)
+            if compiled_groups
+            else filtered_table
         )
+
         query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
 
         if self.limit:

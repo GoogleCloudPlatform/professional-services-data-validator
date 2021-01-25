@@ -84,6 +84,20 @@ CONNECTION_SOURCE_FIELDS = {
         ["database", "Database in snowflake to connect to"],
         ["schema", "Schema in the database to connect to"],
     ],
+    "Postgres": [
+        ["host", "Desired Postgres host."],
+        ["port", "Postgres port to connect on (ie. 5432)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in postgres to connect to (default postgres)"],
+    ],
+    "Redshift": [
+        ["host", "Desired Postgres host."],
+        ["port", "Postgres port to connect on (ie. 5439)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in postgres to connect to (default postgres)"],
+    ],
 }
 
 
