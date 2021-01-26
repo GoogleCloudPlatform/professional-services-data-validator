@@ -222,16 +222,18 @@ class ValidationBuilder(object):
             calc_field (Dict): An object with source, target, and cast info
         """
         alias = calc_field[consts.CONFIG_FIELD_ALIAS]
-        source_cols = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
-        target_cols = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
+        source_config = deepcopy(calc_field)
+        source_config['fields'] = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
+        target_config = deepcopy(calc_field)
+        target_config['fields'] = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
         calc_type = calc_field[consts.CONFIG_TYPE]
         if not hasattr(CalculatedField, calc_type):
             raise Exception("Unknown Calculation Type: {}".format(calc_type))
         source_field = getattr(CalculatedField, calc_type)(
-            fields=source_cols, alias=alias
+            config=source_config
         )
         target_field = getattr(CalculatedField, calc_type)(
-            fields=target_cols, alias=alias
+            config=target_config
         )
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)

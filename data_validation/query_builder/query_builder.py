@@ -67,12 +67,6 @@ class AggregateField(object):
             ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias,
         )
 
-    @staticmethod
-    def xor(field_name=None, alias=None):
-        return AggregateField(
-            ibis.expr.api.NumericColumn.xor, field_name=field_name, alias=alias,
-        )
-
     def compile(self, ibis_table):
         if self.field_name:
             agg_field = self.expr(ibis_table[self.field_name])
@@ -212,58 +206,58 @@ class ColumnReference(object):
 
 
 class CalculatedField(object):
-    def __init__(self, ibis_expr, fields, alias=None):
+    def __init__(self, ibis_expr, config):
         """ A representation of an calculated field to build a query.
 
         Args:
-            fields (list(String)): A list of fields to perform the function on
-            alias (String): An alias to use for the group
+            config dict: Nothing makes sense anymore
         """
         self.expr = ibis_expr
-        self.fields = fields
-        self.alias = alias
+        self.config = config
 
     @staticmethod
-    def hash(fields=None, alias=None):
+    def hash(config):
         return CalculatedField(
-            ibis.expr.api.ValueExpr.hash, fields=fields, alias=alias,
+            ibis.expr.api.ValueExpr.hash, config,
         )
 
     @staticmethod
-    def concat(fields=None, alias=None):
+    def concat(config):
         # TODO(mike): if the fields above are also calculations
         # we should create CalculatedField objects either here
         # or in the recursive buildout...
+        if config.get('default_concat_separator') is None:
+            config['default_concat_separator'] = ibis.literal(",")
+        config['fields'].insert(0, config['default_concat_separator'])
         return CalculatedField(
-            ibis.expr.api.StringValue.join,
-            fields=[ibis.literal(","), fields],
-            alias=alias,
+            ibis.expr.api.StringValue.join, config,
         )
 
     @staticmethod
-    def ifnull(fields=None, alias=None):
+    def ifnull(config):
+        if config.get('default_null_string') is None:
+            config['default_string'] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
+        config['fields'] = [config['default_string'], config['fields'][0]]
         return CalculatedField(
-            ibis.expr.api.ValueExpr.fillna,
-            fields=[ibis.literal("REPLACEMENT_STRING"), fields[0]],
-            alias=alias,
+            ibis.expr.api.ValueExpr.fillna, config,
         )
 
     @staticmethod
-    def length(fields=None, alias=None):
+    def length(config):
         return CalculatedField(
-            ibis.expr.api.StringValue.length, fields=fields, alias=alias,
+            ibis.expr.api.StringValue.length, config,
         )
 
     @staticmethod
-    def rstrip(fields=None, alias=None):
+    def rstrip(config):
         return CalculatedField(
-            ibis.expr.api.StringValue.rstrip, fields=fields, alias=alias,
+            ibis.expr.api.StringValue.rstrip, config,
         )
 
     @staticmethod
-    def upper(fields=None, alias=None):
+    def upper(config):
         return CalculatedField(
-            ibis.expr.api.StringValue.upper, fields=fields, alias=alias,
+            ibis.expr.api.StringValue.upper, config,
         )
 
     @staticmethod
@@ -288,11 +282,11 @@ class CalculatedField(object):
         return compiled_fields
 
     def compile(self, ibis_table):
-        compiled_fields = self._compile_fields(ibis_table, self.fields)
+        compiled_fields = self._compile_fields(ibis_table, self.config['fields'])
 
         calc_field = self.expr(*compiled_fields)
-        if self.alias:
-            calc_field = calc_field.name(self.alias)
+        if self.config['field_alias']:
+            calc_field = calc_field.name(self.config['field_alias'])
 
         return calc_field
 
