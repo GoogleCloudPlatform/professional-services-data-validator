@@ -150,6 +150,11 @@ class ConfigManager(object):
         )
 
     @property
+    def labels(self):
+        """Return labels."""
+        return self._config.get(consts.CONFIG_LABELS, [])
+
+    @property
     def result_handler_config(self):
         """Return int limit for query executions."""
         return self._config.get(consts.CONFIG_RESULT_HANDLER) or {}
@@ -238,6 +243,7 @@ class ConfigManager(object):
         source_client,
         target_client,
         table_obj,
+        labels,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
@@ -258,6 +264,7 @@ class ConfigManager(object):
             consts.CONFIG_TARGET_TABLE_NAME: table_obj.get(
                 consts.CONFIG_TARGET_TABLE_NAME, table_obj[consts.CONFIG_TABLE_NAME]
             ),
+            consts.CONFIG_LABELS: labels,
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
             consts.CONFIG_FILTERS: filter_config,
         }

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+import pytest
 from unittest import mock
 
 from data_validation import cli_tools
@@ -28,6 +29,7 @@ CLI_ARGS = {
     "sum": '["col_a","col_b"]',
     "count": '["col_a","col_b"]',
     "config_file": "example_test.yaml",
+    "labels": "name=test_run",
     "verbose": True,
 }
 
@@ -49,6 +51,7 @@ def test_get_parsed_args(mock_args):
     """Test arg parser values."""
     args = cli_tools.get_parsed_args()
     assert args.command == "run"
+    assert args.labels == "name=test_run"
     assert args.verbose
 
 
@@ -83,3 +86,38 @@ def test_create_and_list_connections(capsys, fs):
     captured = capsys.readouterr()
 
     assert captured.out == "Connection Name: test\n"
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        ("key=value", [("key", "value")]),
+        ("key1=value1,key2=value2", [("key1", "value1"), ("key2", "value2")]),
+        (
+            "key='longer value',key1='hyphen-value'",
+            [("key", "'longer value'"), ("key1", "'hyphen-value'")],
+        ),
+        ("name=", [("name", "")]),
+    ],
+)
+def test_get_labels(test_input, expected):
+    """Test get labels."""
+    res = cli_tools.get_labels(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        ("key==value"),
+        ("key1=value1,badkey"),
+        ("key"),
+        (","),
+        ("key=value,key"),
+        ("key:value"),
+    ],
+)
+def test_get_labels_err(test_input):
+    """Ensure that Value Error is raised when incorrect label argument is provided. """
+    with pytest.raises(ValueError):
+        cli_tools.get_labels(test_input)

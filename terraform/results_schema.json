@@ -85,6 +85,24 @@
     "description": "Status of the validation, if the pct_difference is less than pc_threshold, it is considered as success. [validation_success, validation_fail, incomplete, warning, error]"
   },
   {
+    "name": "labels",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "description": "Validation run labels.",
+    "fields": [
+      {
+        "name": "key",
+        "type": "STRING",
+        "description": "Label key."
+      },
+      {
+        "name": "value",
+        "type": "STRING",
+        "description": "Label value."
+      }
+    ]  
+  },
+  {
     "name": "configuration_json",
     "type": "STRING",
     "description": "JSON representation of the validation metadata"

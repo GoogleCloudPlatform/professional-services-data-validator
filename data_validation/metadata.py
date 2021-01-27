@@ -53,6 +53,7 @@ class ValidationMetadata(object):
 class RunMetadata(object):
     run_id: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()))
     validations: dict = dataclasses.field(default_factory=dict)
+    labels: list = dataclasses.field(default_factory=list)
     start_time: typing.Optional[datetime.datetime] = dataclasses.field(
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
