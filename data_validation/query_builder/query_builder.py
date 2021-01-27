@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import ibis
+from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import operations
 
 from data_validation import clients
@@ -217,48 +218,36 @@ class CalculatedField(object):
 
     @staticmethod
     def hash(config):
-        return CalculatedField(
-            ibis.expr.api.ValueExpr.hash, config,
-        )
+        return CalculatedField(ibis.expr.api.ValueExpr.hash, config,)
 
     @staticmethod
     def concat(config):
         # TODO(mike): if the fields above are also calculations
         # we should create CalculatedField objects either here
         # or in the recursive buildout...
-        if config.get('default_concat_separator') is None:
-            config['default_concat_separator'] = ibis.literal(",")
-        config['fields'].insert(0, config['default_concat_separator'])
-        return CalculatedField(
-            ibis.expr.api.StringValue.join, config,
-        )
+        if config.get("default_concat_separator") is None:
+            config["default_concat_separator"] = ibis.literal(",")
+        config["fields"] = [config["default_concat_separator"], config["fields"]]
+        return CalculatedField(ibis.expr.api.StringValue.join, config,)
 
     @staticmethod
     def ifnull(config):
-        if config.get('default_null_string') is None:
-            config['default_string'] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
-        config['fields'] = [config['default_string'], config['fields'][0]]
-        return CalculatedField(
-            ibis.expr.api.ValueExpr.fillna, config,
-        )
+        if config.get("default_null_string") is None:
+            config["default_string"] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
+        config["fields"] = [config["default_string"], config["fields"][0]]
+        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config,)
 
     @staticmethod
     def length(config):
-        return CalculatedField(
-            ibis.expr.api.StringValue.length, config,
-        )
+        return CalculatedField(ibis.expr.api.StringValue.length, config,)
 
     @staticmethod
     def rstrip(config):
-        return CalculatedField(
-            ibis.expr.api.StringValue.rstrip, config,
-        )
+        return CalculatedField(ibis.expr.api.StringValue.rstrip, config,)
 
     @staticmethod
     def upper(config):
-        return CalculatedField(
-            ibis.expr.api.StringValue.upper, config,
-        )
+        return CalculatedField(ibis.expr.api.StringValue.upper, config,)
 
     @staticmethod
     def custom(expr):
@@ -272,21 +261,21 @@ class CalculatedField(object):
         compiled_fields = []
 
         for field in fields:
-            if type(field) in [CalculatedField, ColumnReference]:
-                compiled_fields.append(field.compile(ibis_table))
+            if type(field) in [StringScalar]:
+                compiled_fields.append(field)
             elif isinstance(field, list):
                 compiled_fields.append(self._compile_fields(ibis_table, field))
             else:
-                compiled_fields.append(field)
+                compiled_fields.append(ibis_table[field])
 
         return compiled_fields
 
     def compile(self, ibis_table):
-        compiled_fields = self._compile_fields(ibis_table, self.config['fields'])
+        compiled_fields = self._compile_fields(ibis_table, self.config["fields"])
 
         calc_field = self.expr(*compiled_fields)
-        if self.config['field_alias']:
-            calc_field = calc_field.name(self.config['field_alias'])
+        if self.config["field_alias"]:
+            calc_field = calc_field.name(self.config["field_alias"])
 
         return calc_field
 

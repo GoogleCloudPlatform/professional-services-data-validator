@@ -223,18 +223,14 @@ class ValidationBuilder(object):
         """
         alias = calc_field[consts.CONFIG_FIELD_ALIAS]
         source_config = deepcopy(calc_field)
-        source_config['fields'] = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
+        source_config["fields"] = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
         target_config = deepcopy(calc_field)
-        target_config['fields'] = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
+        target_config["fields"] = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
         calc_type = calc_field[consts.CONFIG_TYPE]
         if not hasattr(CalculatedField, calc_type):
             raise Exception("Unknown Calculation Type: {}".format(calc_type))
-        source_field = getattr(CalculatedField, calc_type)(
-            config=source_config
-        )
-        target_field = getattr(CalculatedField, calc_type)(
-            config=target_config
-        )
+        source_field = getattr(CalculatedField, calc_type)(config=source_config)
+        target_field = getattr(CalculatedField, calc_type)(config=target_config)
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
         self.calculated_aliases[alias] = calc_field
