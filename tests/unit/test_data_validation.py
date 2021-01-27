@@ -16,7 +16,9 @@ import numpy
 import pandas
 import pytest
 
-from data_validation import consts
+from ibis.pandas.client import PandasClient
+
+from data_validation import consts, exceptions
 
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
@@ -69,6 +71,12 @@ SOURCE_QUERY_DATA = [
 SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
 JOIN_ON_FIELDS = ["date"]
 NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
+
+ORACLE_CONN_CONFIG = {
+    "source_type": "Oracle",
+    "host": "127.0.0.1",
+    "port": 1521,
+}
 
 
 @pytest.fixture
@@ -146,3 +154,16 @@ def test_zero_both_values(module_under_test, fs):
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
 
     assert numpy.isnan(col_a_pct_diff)
+
+
+def test_get_pandas_data_client(module_under_test, fs):
+    conn_config = SAMPLE_CONFIG["source_conn"]
+    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
+    ibis_client = module_under_test.DataValidation.get_data_client(conn_config)
+
+    assert isinstance(ibis_client, PandasClient)
+
+
+def test_get_oracle_data_client(module_under_test):
+    with pytest.raises(exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"):
+        ibis_client = module_under_test.DataValidation.get_data_client(ORACLE_CONN_CONFIG)

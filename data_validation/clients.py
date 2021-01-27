@@ -41,6 +41,11 @@ warnings.filterwarnings(
     "ignore", "The GenericFunction 'regex_extract' is already registered"
 )
 
+def _raise_missing_client_error(msg):
+    def get_client_call(*args, **kwargs):
+        raise Exception(msg)
+    return get_client_call
+
 # If you have a Teradata License there is an optional teradatasql import
 try:
     from third_party.ibis.ibis_teradata.client import TeradataClient
@@ -51,19 +56,19 @@ except Exception:
 try:
     from third_party.ibis.ibis_oracle.client import OracleClient
 except Exception:
-    OracleClient = None
+    OracleClient = _raise_missing_client_error("pip install cx_Oracle")
 
 try:
     from third_party.ibis.ibis_mssql import connect as mssql_connect
 except Exception:
-    mssql_connect = None
+    mssql_connect = _raise_missing_client_error("pip install pymssql")
 
 try:
     from third_party.ibis.ibis_snowflake.client import (
         SnowflakeClient as snowflake_connect,
     )
 except Exception:
-    snowflake_connect = None
+    snowflake_connect = _raise_missing_client_error("pip install snowflake-connector-python")
 
 
 def get_pandas_client(table_name, file_path, file_type):
