@@ -95,6 +95,14 @@ SAMPLE_ROW_CONFIG = {
             consts.CONFIG_CAST: "date",
         },
     ],
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
     consts.CONFIG_AGGREGATES: [
         {
             "source_column": "text_value",
@@ -116,6 +124,9 @@ SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
 JOIN_ON_FIELDS = ["date"]
 NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
 
+RANDOM_STRINGS = ["a", "b", "c", "d", None]
+RANDOM_STRINGS = ["a", "b", "c", "d"]
+
 
 @pytest.fixture
 def module_under_test():
@@ -130,9 +141,36 @@ def _create_table_file(table_path, data):
         f.write(data)
 
 
-def _generate_fake_json_data(rows=10, initial_id=0, second_range=60*60*24, int_range=100, random_strings=None):
-    data = _generate_fake_data(rows=rows, initial_id=initial_id, second_range=second_range, int_range=int_range, random_strings=random_strings)
+def _generate_fake_data(rows=10, initial_id=0, second_range=60*60*24, int_range=100, random_strings=None):
+    """ Return a list of dicts with given number of rows.
 
+        Data Keys:
+            id: a unique int per row
+            timestamp_value: a random timestamp in the past {second_range} back
+            date_value: a random date in the past {second_range} back
+            int_value: a random int value inside 0 to {int_range}
+            text_value: a random string from supplied list
+    """
+    data = []
+    random_strings = random_strings or RANDOM_STRINGS
+    for i in range(initial_id, initial_id+rows):
+        rand_seconds = random.randint(0, second_range)
+        rand_timestamp = datetime.now() - timedelta(seconds=rand_seconds)
+        rand_date = rand_timestamp.date()
+
+        row = {
+            "id": i,
+            "date_value": rand_date,
+            "timestamp_value": rand_timestamp,
+            "int_value": random.randint(0, int_range),
+            "text_value": random.choice(random_strings),
+        }
+        data.append(row)
+
+    return data
+
+
+def _get_fake_json_data(data):
     for row in data:
         row["date_value"] = str(row["date_value"])
         row["timestamp_value"] = str(row["timestamp_value"])
@@ -218,37 +256,10 @@ def test_get_oracle_data_client(module_under_test):
         module_under_test.DataValidation.get_data_client(ORACLE_CONN_CONFIG)
 
 
-def _generate_fake_data(rows=10, initial_id=0, second_range=60*60*24, int_range=100, random_strings=None):
-    """ Return a list of dicts with given number of rows.
+def test_row_level_validation_perfect_match(module_under_test, fs):
+    data = _generate_fake_data(second_range=60*60*12)
+    json_data = _get_fake_json_data(data)
 
-        Data Keys:
-            id: a unique int per row
-            timestamp_value: a random timestamp in the past {second_range} back
-            date_value: a random date in the past {second_range} back
-            int_value: a random int value inside 0 to {int_range}
-            text_value: a random string from supplied list
-    """
-    data = []
-    random_strings = random_strings or ["a", "b", "c", "d", None]
-    for i in range(initial_id, initial_id+rows):
-        rand_seconds = random.randint(0, second_range)
-        rand_timestamp = datetime.now() - timedelta(seconds=rand_seconds)
-        rand_date = rand_timestamp.date()
-
-        row = {
-            "id": i,
-            "date_value": rand_date,
-            "timestamp_value": rand_timestamp,
-            "int_value": random.randint(0, int_range),
-            "text_value": random.choice(random_strings),
-        }
-        data.append(row)
-
-    return data
-
-
-def test_row_level_validation(module_under_test, fs):
-    json_data = _generate_fake_json_data(second_range=60*60*12)
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
@@ -256,6 +267,28 @@ def test_row_level_validation(module_under_test, fs):
     result_df = client.execute()
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
+    assert expected_date_result == result_df["group_by_columns"].max()
 
     assert result_df["difference"].sum() == 0
-    assert expected_date_result == result_df["group_by_columns"].max()
+
+
+def test_row_level_validation_non_matching(module_under_test, fs):
+    data = _generate_fake_data(rows=10, second_range=0)
+    trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
+
+    source_json_data = _get_fake_json_data(data + trg_data)
+    target_json_data = _get_fake_json_data(data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG, verbose=True)
+    result_df = client.execute()
+
+    # TODO: this value is 0 because a COUNT() on now rows returns Null.
+    # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
+    assert result_df["difference"].sum() == 0
+
+    expected_date_result = '{"date_value": "%s", "id": "11"}' % str(datetime.now().date())
+    grouped_column = result_df[result_df["difference"].isnull()]["group_by_columns"].max()
+    assert expected_date_result == grouped_column
