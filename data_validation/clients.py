@@ -50,7 +50,8 @@ def _raise_missing_client_error(msg):
 try:
     from third_party.ibis.ibis_teradata.client import TeradataClient
 except Exception:
-    TeradataClient = None
+    msg = "pip install teradatasql (requires Teradata licensing)"
+    TeradataClient = _raise_missing_client_error(msg)
 
 # If you have an cx_Oracle driver installed
 try:
