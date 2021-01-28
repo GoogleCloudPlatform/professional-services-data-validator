@@ -168,6 +168,4 @@ def test_get_oracle_data_client(module_under_test):
     with pytest.raises(
         exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
     ):
-        ibis_client = module_under_test.DataValidation.get_data_client(
-            ORACLE_CONN_CONFIG
-        )
+        module_under_test.DataValidation.get_data_client(ORACLE_CONN_CONFIG)
