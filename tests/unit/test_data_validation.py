@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import numpy
 import pandas
 import pytest
+import random
+from datetime import datetime, timedelta
 
 from ibis.pandas.client import PandasClient
 
@@ -23,20 +26,31 @@ from data_validation import consts, exceptions
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
+
+SOURCE_CONN_CONFIG = {
+    "source_type": "Pandas",
+    "table_name": "my_table",
+    "file_path": SOURCE_TABLE_FILE_PATH,
+    "file_type": "json",
+}
+
+TARGET_CONN_CONFIG = {
+    "source_type": "Pandas",
+    "table_name": "my_table",
+    "file_path": TARGET_TABLE_FILE_PATH,
+    "file_type": "json",
+}
+
+ORACLE_CONN_CONFIG = {
+    "source_type": "Oracle",
+    "host": "127.0.0.1",
+    "port": 1521,
+}
+
 SAMPLE_CONFIG = {
     # BigQuery Specific Connection Config
-    "source_conn": {
-        "source_type": "Pandas",
-        "table_name": "my_table",
-        "file_path": SOURCE_TABLE_FILE_PATH,
-        "file_type": "json",
-    },
-    "target_conn": {
-        "source_type": "Pandas",
-        "table_name": "my_table",
-        "file_path": TARGET_TABLE_FILE_PATH,
-        "file_type": "json",
-    },
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
@@ -62,6 +76,36 @@ SAMPLE_CONFIG = {
     consts.CONFIG_RESULT_HANDLER: None,
 }
 
+SAMPLE_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: "Row",
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "date_value",
+            consts.CONFIG_SOURCE_COLUMN: "date_value",
+            consts.CONFIG_TARGET_COLUMN: "date_value",
+            consts.CONFIG_CAST: "date",
+        },
+    ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": "text_value",
+            "target_column": "text_value",
+            "field_alias": "count_text_value",
+            "type": "count",
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
+}
+
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 
@@ -72,12 +116,6 @@ SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
 JOIN_ON_FIELDS = ["date"]
 NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
 
-ORACLE_CONN_CONFIG = {
-    "source_type": "Oracle",
-    "host": "127.0.0.1",
-    "port": 1521,
-}
-
 
 @pytest.fixture
 def module_under_test():
@@ -86,15 +124,24 @@ def module_under_test():
     return data_validation.data_validation
 
 
-def test_import(module_under_test):
-    # TODO: make better tests than just verifying import
-    assert True
-
-
 def _create_table_file(table_path, data):
     """ Create JSON File """
     with open(table_path, "w") as f:
         f.write(data)
+
+
+def _generate_fake_json_data(rows=10, initial_id=0, second_range=60*60*24, int_range=100, random_strings=None):
+    data = _generate_fake_data(rows=rows, initial_id=initial_id, second_range=second_range, int_range=int_range, random_strings=random_strings)
+
+    for row in data:
+        row["date_value"] = str(row["date_value"])
+        row["timestamp_value"] = str(row["timestamp_value"])
+
+    return json.dumps(data)
+
+
+def test_import(module_under_test):
+    assert True
 
 
 def test_data_validation_client(module_under_test, fs):
@@ -169,3 +216,46 @@ def test_get_oracle_data_client(module_under_test):
         exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
     ):
         module_under_test.DataValidation.get_data_client(ORACLE_CONN_CONFIG)
+
+
+def _generate_fake_data(rows=10, initial_id=0, second_range=60*60*24, int_range=100, random_strings=None):
+    """ Return a list of dicts with given number of rows.
+
+        Data Keys:
+            id: a unique int per row
+            timestamp_value: a random timestamp in the past {second_range} back
+            date_value: a random date in the past {second_range} back
+            int_value: a random int value inside 0 to {int_range}
+            text_value: a random string from supplied list
+    """
+    data = []
+    random_strings = random_strings or ["a", "b", "c", "d", None]
+    for i in range(initial_id, initial_id+rows):
+        rand_seconds = random.randint(0, second_range)
+        rand_timestamp = datetime.now() - timedelta(seconds=rand_seconds)
+        rand_date = rand_timestamp.date()
+
+        row = {
+            "id": i,
+            "date_value": rand_date,
+            "timestamp_value": rand_timestamp,
+            "int_value": random.randint(0, int_range),
+            "text_value": random.choice(random_strings),
+        }
+        data.append(row)
+
+    return data
+
+
+def test_row_level_validation(module_under_test, fs):
+    json_data = _generate_fake_json_data(second_range=60*60*12)
+    _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    result_df = client.execute()
+
+    expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
+
+    assert result_df["difference"].sum() == 0
+    assert expected_date_result == result_df["group_by_columns"].max()
