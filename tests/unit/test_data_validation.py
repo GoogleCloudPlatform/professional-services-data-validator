@@ -141,7 +141,9 @@ def _create_table_file(table_path, data):
         f.write(data)
 
 
-def _generate_fake_data(rows=10, initial_id=0, second_range=60*60*24, int_range=100, random_strings=None):
+def _generate_fake_data(
+    rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
+):
     """ Return a list of dicts with given number of rows.
 
         Data Keys:
@@ -153,7 +155,7 @@ def _generate_fake_data(rows=10, initial_id=0, second_range=60*60*24, int_range=
     """
     data = []
     random_strings = random_strings or RANDOM_STRINGS
-    for i in range(initial_id, initial_id+rows):
+    for i in range(initial_id, initial_id + rows):
         rand_seconds = random.randint(0, second_range)
         rand_timestamp = datetime.now() - timedelta(seconds=rand_seconds)
         rand_date = rand_timestamp.date()
@@ -257,7 +259,7 @@ def test_get_oracle_data_client(module_under_test):
 
 
 def test_row_level_validation_perfect_match(module_under_test, fs):
-    data = _generate_fake_data(second_range=60*60*12)
+    data = _generate_fake_data(second_range=60 * 60 * 12)
     json_data = _get_fake_json_data(data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
@@ -276,8 +278,8 @@ def test_row_level_validation_non_matching(module_under_test, fs):
     data = _generate_fake_data(rows=10, second_range=0)
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
 
-    source_json_data = _get_fake_json_data(data + trg_data)
-    target_json_data = _get_fake_json_data(data)
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data + trg_data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
@@ -289,6 +291,10 @@ def test_row_level_validation_non_matching(module_under_test, fs):
     # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
     assert result_df["difference"].sum() == 0
 
-    expected_date_result = '{"date_value": "%s", "id": "11"}' % str(datetime.now().date())
-    grouped_column = result_df[result_df["difference"].isnull()]["group_by_columns"].max()
+    expected_date_result = '{"date_value": "%s", "id": "11"}' % str(
+        datetime.now().date()
+    )
+    grouped_column = result_df[result_df["difference"].isnull()][
+        "group_by_columns"
+    ].max()
     assert expected_date_result == grouped_column
