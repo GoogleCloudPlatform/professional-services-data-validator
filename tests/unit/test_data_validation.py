@@ -16,7 +16,7 @@ import numpy
 import pandas
 import pytest
 
-from ibis.pandas.client import PandasClient
+from ibis.backends.pandas.client import PandasClient
 
 from data_validation import consts, exceptions
 

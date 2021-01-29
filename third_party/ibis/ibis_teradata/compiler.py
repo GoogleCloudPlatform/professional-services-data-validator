@@ -12,9 +12,9 @@ import ibis.expr.operations as ops
 import ibis.expr.types as ir
 import ibis.sql.compiler as comp
 from ibis.common.exceptions import UnsupportedOperationError
-from ibis.bigquery.datatypes import ibis_type_to_bigquery_type
-from ibis.impala import compiler as impala_compiler
-from ibis.impala.compiler import (
+from ibis.backends.bigquery.datatypes import ibis_type_to_bigquery_type
+from ibis.backends.impala import compiler as impala_compiler
+from ibis.backends.impala.compiler import (
     ImpalaSelect,
     ImpalaTableSetFormatter,
     _reduction,

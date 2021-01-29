@@ -25,13 +25,13 @@ non-textual languages.
 
 import ibis
 
-from ibis.bigquery.compiler import BigQueryExprTranslator
+from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 import ibis.expr.datatypes as dt
 from ibis.expr.operations import Arg, Comparison, ValueOp
 import ibis.expr.rules as rlz
 from ibis.expr.types import BinaryValue, StringValue
-from ibis.impala.compiler import ImpalaExprTranslator
-from ibis.pandas import client as _pandas_client
+from ibis.backends.impala.compiler import ImpalaExprTranslator
+from ibis.backends.pandas import client as _pandas_client
 
 
 class HashBytes(ValueOp):

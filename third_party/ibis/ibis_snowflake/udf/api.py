@@ -22,7 +22,7 @@ import ibis.expr.rules as rlz
 import ibis.expr.datatypes as dt
 from ibis.expr.signature import Argument as Arg
 from ibis.snowflake.datatypes import UDFContext, ibis_type_to_snowflake_type
-from ibis.bigquery.udf.core import PythonToJavaScriptTranslator
+from ibis.backends.bigquery.udf.core import PythonToJavaScriptTranslator
 
 import ibis.expr.operations as ops
 
@@ -94,7 +94,7 @@ def udf(input_type, output_type, ):
         )
 
         udf_node = create_udf_node(f.__name__, udf_node_fields)
-        source = PythonToJavaScriptTranslator(f).compile() # Uses function translator implemented in ibis.bigquery.udf
+        source = PythonToJavaScriptTranslator(f).compile() # Uses function translator implemented in ibis.backends.bigquery.udf
 
         javascript_template = """\
 CREATE {to_replace} FUNCTION {external_name}({signature})
