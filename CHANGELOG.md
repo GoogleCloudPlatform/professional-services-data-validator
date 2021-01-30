@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4
+
+- Added an options to add key:value labels to validation runs
+- Oracle and SQL Alchemy now support RawSql filters
+- Add support for Cloud Functions in samples
+
 ## 1.1.3
 
 - Release find-tables logic too help build table lists
