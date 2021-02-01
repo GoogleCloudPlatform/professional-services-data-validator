@@ -32,6 +32,10 @@ import ibis.expr.rules as rlz
 from ibis.expr.types import BinaryValue, NumericValue, StringValue
 from ibis.impala.compiler import ImpalaExprTranslator
 from ibis.pandas import client as _pandas_client
+from ibis.sql.alchemy import AlchemyExprTranslator
+
+from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
+from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 
 class Hash(ValueOp):
     arg = Arg(rlz.any)
@@ -89,12 +93,8 @@ BinaryValue.hashbytes = compile_hashbytes
 StringValue.hashbytes = compile_hashbytes
 BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
+AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
-try:
-    # Try to add Teradata and pass if error (not imported)
-    from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
-    TeradataExprTranslator._registry[RawSQL] = format_raw_sql
-except Exception:
-    pass
-
+OracleExprTranslator._registry[RawSQL] = format_raw_sql
+TeradataExprTranslator._registry[RawSQL] = format_raw_sql
