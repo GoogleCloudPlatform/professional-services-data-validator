@@ -36,9 +36,17 @@ class ValidationMetadata(object):
 
     def get_table_name(self, result_type):
         if result_type == consts.RESULT_TYPE_SOURCE:
-            return self.source_table_schema + "." + self.source_table_name
+            return (
+                self.source_table_schema + "." + self.source_table_name
+                if self.source_table_schema
+                else self.source_table_name
+            )
         elif result_type == consts.RESULT_TYPE_TARGET:
-            return self.target_table_schema + "." + self.target_table_name
+            return (
+                self.target_table_schema + "." + self.target_table_name
+                if self.target_table_schema
+                else self.target_table_name
+            )
         else:
             raise ValueError(f"Unexpected result_type: {result_type}")
 
