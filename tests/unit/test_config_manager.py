@@ -22,6 +22,8 @@ SAMPLE_CONFIG = {
     # BigQuery Specific Connection Config
     consts.CONFIG_SOURCE_CONN: {"type": "DNE connection"},
     consts.CONFIG_TARGET_CONN: {"type": "DNE connection"},
+    consts.CONFIG_SOURCE_CONN_NAME: "source_conn",
+    consts.CONFIG_TARGET_CONN_NAME: "target_conn",
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
@@ -129,6 +131,24 @@ def test_get_label_property(module_under_test):
     )
     label = config_manager.labels
     assert label == SAMPLE_CONFIG[consts.CONFIG_LABELS]
+
+
+def test_get_source_conn_name_property(module_under_test):
+    """Test source connection name property."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    source_conn_name = config_manager.source_conn_name
+    assert source_conn_name == SAMPLE_CONFIG[consts.CONFIG_SOURCE_CONN_NAME]
+
+
+def test_get_target_conn_name_property(module_under_test):
+    """Test source connection name property."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    target_conn_name = config_manager.target_conn_name
+    assert target_conn_name == SAMPLE_CONFIG[consts.CONFIG_TARGET_CONN_NAME]
 
 
 def test_process_in_memory(module_under_test):

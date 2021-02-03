@@ -56,8 +56,8 @@ def get_dataframe(bigquery_client, table_id):
         # the streaming buffer.
         result = bigquery_client.query(
             "SELECT run_id, start_time, end_time, source_table_name, "
-            "source_column_name, target_table_name, target_column_name, "
-            "validation_type, aggregation_type, validation_name, "
+            "source_column_name, source_connection, target_table_name, target_column_name, "
+            "target_connection, validation_type, aggregation_type, validation_name, "
             "source_agg_value, target_agg_value, group_by_columns, "
             "difference, pct_difference, labels "
             f" FROM `{table_id}` ORDER BY target_agg_value ASC"
@@ -87,12 +87,12 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             "start_time": [start] * 6,
             "end_time": [end] * 6,
             "source_table_name": [
-                "test_source",
-                "test_source",
+                "schema.test_source",
+                "schema.test_source",
                 _NAN,
                 _NAN,
-                "test_source",
-                "test_source",
+                "schema.test_source",
+                "schema.test_source",
             ],
             "source_column_name": [
                 "source_column",
@@ -102,11 +102,12 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 "source_column",
                 "source_column",
             ],
+            "source_connection": ["source_connection"] * 6,
             "target_table_name": [
-                "test_target",
-                "test_target",
-                "test_target",
-                "test_target",
+                "schema.test_target",
+                "schema.test_target",
+                "schema.test_target",
+                "schema.test_target",
                 _NAN,
                 _NAN,
             ],
@@ -118,6 +119,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 _NAN,
                 _NAN,
             ],
+            "target_connection": ["target_connection"] * 6,
             "validation_type": ["GroupedColumn"] * 6,
             "aggregation_type": ["count"] * 6,
             "validation_name": ["count"] * 6,
