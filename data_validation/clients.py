@@ -16,6 +16,7 @@
 import pandas
 import warnings
 
+from google.cloud import bigquery
 from ibis.bigquery.client import BigQueryClient
 import ibis.pandas
 from ibis.pandas.client import PandasClient
@@ -24,6 +25,7 @@ from ibis.sql.postgres.client import PostgreSQLClient
 
 from third_party.ibis.ibis_impala.api import impala_connect
 import third_party.ibis.ibis_addon.datatypes
+from data_validation import client_info
 
 
 # Our customized Ibis Datatype logic add support for new types
@@ -41,29 +43,55 @@ warnings.filterwarnings(
     "ignore", "The GenericFunction 'regex_extract' is already registered"
 )
 
+
+def _raise_missing_client_error(msg):
+    def get_client_call(*args, **kwargs):
+        raise Exception(msg)
+
+    return get_client_call
+
+
 # If you have a Teradata License there is an optional teradatasql import
 try:
     from third_party.ibis.ibis_teradata.client import TeradataClient
 except Exception:
-    TeradataClient = None
+    msg = "pip install teradatasql (requires Teradata licensing)"
+    TeradataClient = _raise_missing_client_error(msg)
 
 # If you have an cx_Oracle driver installed
 try:
     from third_party.ibis.ibis_oracle.client import OracleClient
 except Exception:
-    OracleClient = None
+    OracleClient = _raise_missing_client_error("pip install cx_Oracle")
 
 try:
     from third_party.ibis.ibis_mssql import connect as mssql_connect
 except Exception:
-    mssql_connect = None
+    mssql_connect = _raise_missing_client_error("pip install pymssql")
 
 try:
     from third_party.ibis.ibis_snowflake.client import (
         SnowflakeClient as snowflake_connect,
     )
 except Exception:
-    snowflake_connect = None
+    snowflake_connect = _raise_missing_client_error(
+        "pip install snowflake-connector-python"
+    )
+
+
+def get_bigquery_client(project_id, dataset_id=None, credentials=None):
+    info = client_info.get_http_client_info()
+    google_client = bigquery.Client(
+        project=project_id, client_info=info, credentials=credentials
+    )
+    ibis_client = BigQueryClient(
+        project_id, dataset_id=dataset_id, credentials=credentials
+    )
+
+    # Override the BigQuery client object to ensure the correct user agent is
+    # included.
+    ibis_client.client = google_client
+    return ibis_client
 
 
 def get_pandas_client(table_name, file_path, file_type):
@@ -143,7 +171,7 @@ def get_all_tables(client):
 
 
 CLIENT_LOOKUP = {
-    "BigQuery": BigQueryClient,
+    "BigQuery": get_bigquery_client,
     "Impala": impala_connect,
     "MySQL": MySQLClient,
     "Oracle": OracleClient,
