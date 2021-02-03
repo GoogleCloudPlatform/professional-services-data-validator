@@ -108,7 +108,6 @@ class DataValidation(object):
             for row in result_df.to_dict(orient="row"):
                 if row["source_agg_value"] == row["target_agg_value"]:
                     past_results.append(pandas.DataFrame([row]))
-                    continue
                 else:
                     recursive_validation_builder = validation_builder.clone()
                     self._add_recursive_validation_filter(
