@@ -13,7 +13,7 @@
 # the License.
 
 
-import ibis.sql.alchemy as alch
+import ibis.backends.base_sqlalchemy.alchemy as alch
 import sqlalchemy as sa
 import snowflake.sqlalchemy.snowdialect as sf
 import snowflake.sqlalchemy as sf_sa
@@ -33,13 +33,8 @@ import platform
 import string
 import functools
 
-from ibis.sql.alchemy import (
-    _get_sqla_table,
-    _variance_reduction,
-    fixed_arity,
-    infix_op,
-    unary,
-)
+from ibis.backends.base_sql import fixed_arity, unary
+
 
 # todo add more operations to registry
 _operation_registry = alch._operation_registry.copy()
@@ -78,7 +73,7 @@ def _table_column(t, expr):
     ctx = t.context
     table = op.table
 
-    sa_table = _get_sqla_table(ctx, table)
+    sa_table = alch._get_sqla_table(ctx, table)
     out_expr = getattr(sa_table.c, op.name)
 
     expr_type = expr.type()
@@ -531,12 +526,12 @@ _operation_registry.update(
         ops.DateTruncate: _timestamp_truncate,
         ops.TimestampTruncate: _timestamp_truncate,
         ops.IntervalFromInteger: _interval_from_integer,
-        ops.DateAdd: infix_op('+'),
-        ops.DateSub: infix_op('-'),
-        ops.DateDiff: infix_op('-'),
-        ops.TimestampAdd: infix_op('+'),
-        ops.TimestampSub: infix_op('-'),
-        ops.TimestampDiff: infix_op('-'),
+        ops.DateAdd: alch.infix_op('+'),
+        ops.DateSub: alch.infix_op('-'),
+        ops.DateDiff: alch.infix_op('-'),
+        ops.TimestampAdd: alch.infix_op('+'),
+        ops.TimestampSub: alch.infix_op('-'),
+        ops.TimestampDiff: alch.infix_op('-'),
         ops.Strftime: _strftime,
         ops.ExtractYear: _extract('year'),
         ops.ExtractMonth: _extract('month'),
@@ -553,8 +548,8 @@ _operation_registry.update(
         ops.Mean: _reduction('avg'),
         ops.Min: _reduction('min'),
         ops.Max: _reduction('max'),
-        ops.Variance: _variance_reduction('var'),
-        ops.StandardDev: _variance_reduction('stddev'),
+        ops.Variance: alch._variance_reduction('var'),
+        ops.StandardDev: alch._variance_reduction('stddev'),
 #        ops.RandomScalar: _random,
         # now is in the timezone of the server, but we want UTC
         ops.TimestampNow: lambda *args: sa.func.convert_timezone('UTC', sa.func.now()),
