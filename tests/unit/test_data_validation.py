@@ -103,6 +103,14 @@ SAMPLE_ROW_CONFIG = {
             consts.CONFIG_CAST: None,
         },
     ],
+    consts.CONFIG_CALCULATED_FIELDS: [
+        {
+            "source_calculated_columns": ["text_value", "text_value_two"],
+            "target_calculated_columns": ["text_value", "text_value_two"],
+            "field_alias": "concat_text_value_text_value_two",
+            "type": "concat",
+        },
+    ],
     consts.CONFIG_AGGREGATES: [
         {
             "source_column": "text_value",
@@ -118,7 +126,13 @@ JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 
 SOURCE_QUERY_DATA = [
-    {"date": "2020-01-01", "int_val": 1, "double_val": 2.3, "text_val": "hello"}
+    {
+        "date": "2020-01-01",
+        "int_val": 1,
+        "double_val": 2.3,
+        "text_val": "hello",
+        "text_val_two": "goodbye",
+    }
 ]
 SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
 JOIN_ON_FIELDS = ["date"]
@@ -166,6 +180,7 @@ def _generate_fake_data(
             "timestamp_value": rand_timestamp,
             "int_value": random.randint(0, int_range),
             "text_value": random.choice(random_strings),
+            "text_value_two": random.choice(random_strings),
         }
         data.append(row)
 
@@ -176,6 +191,8 @@ def _get_fake_json_data(data):
     for row in data:
         row["date_value"] = str(row["date_value"])
         row["timestamp_value"] = str(row["timestamp_value"])
+        row["text_value"] = str(row["text_value"])
+        row["text_value_two"] = str(row["text_value_two"])
 
     return json.dumps(data)
 
@@ -191,7 +208,6 @@ def test_data_validation_client(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
-
     assert int(result_df.source_agg_value[0]) == 2
 
 
