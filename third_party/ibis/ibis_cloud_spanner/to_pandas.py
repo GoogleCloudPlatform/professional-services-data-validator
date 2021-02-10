@@ -66,7 +66,7 @@ class pandas_df():
         'INT64':'int64',
         'STRING':'object',
         'BOOL':'bool',
-		'BYTES':'object', 
+	'BYTES':'object', 
         'ARRAY':'object',
         'DATE':'datetime64[ns, UTC]',
         'FLOAT64':'float64', 

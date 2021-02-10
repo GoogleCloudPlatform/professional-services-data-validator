@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import
 from google.api_core.page_iterator import HTTPIterator
+from google.cloud.spanner_v1 import TypeCode
 from third_party.ibis.ibis_cloud_spanner import dataset as dataset_class
 
 import copy
@@ -261,7 +262,7 @@ class Table(object):
         db_id = self.dataset_id
         database = instance.database(db_id)
         with database.snapshot() as snapshot:
-            query="select * from {} limit 1".format(self.table_id)
+            query="select * from {} limit 0".format(self.table_id)
             results=snapshot.execute_sql(query)
             for row in results:
                 records_list.append(row)
@@ -272,8 +273,8 @@ class Table(object):
 
         for item in schema_list:
             field_name = item.name
-            if(item.type_.code == 8):
-                field_type = 'array<{}>'.format(code_to_spanner_dtype_dict[item.type.array_element_type.code])
+            if(item.type_.code == TypeCode.ARRAY):
+                field_type = 'array<{}>'.format(code_to_spanner_dtype_dict[item.type_.array_element_type.code])
             else :
                 field_type = code_to_spanner_dtype_dict[item.type_.code]
             final_item = ( field_name , field_type )
