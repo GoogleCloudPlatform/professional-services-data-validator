@@ -104,8 +104,6 @@ def build_config_managers_from_args(args):
     config_type = args.type
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
-    source_conn_name = args.source_conn
-    target_conn_name = args.target_conn
 
     labels = cli_tools.get_labels(args.labels)
 
@@ -126,8 +124,6 @@ def build_config_managers_from_args(args):
             config_type,
             source_conn,
             target_conn,
-            source_conn_name,
-            target_conn_name,
             source_client,
             target_client,
             table_obj,
@@ -150,8 +146,6 @@ def build_config_managers_from_yaml(args):
 
     source_conn = cli_tools.get_connection(yaml_configs[consts.YAML_SOURCE])
     target_conn = cli_tools.get_connection(yaml_configs[consts.YAML_TARGET])
-    source_conn_name = yaml_configs[consts.YAML_SOURCE]
-    target_conn_name = yaml_configs[consts.YAML_TARGET]
 
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
@@ -159,8 +153,6 @@ def build_config_managers_from_yaml(args):
     for config in yaml_configs[consts.YAML_VALIDATIONS]:
         config[consts.CONFIG_SOURCE_CONN] = source_conn
         config[consts.CONFIG_TARGET_CONN] = target_conn
-        config[consts.CONFIG_SOURCE_CONN_NAME] = source_conn_name
-        config[consts.CONFIG_TARGET_CONN_NAME] = target_conn_name
         config[consts.CONFIG_RESULT_HANDLER] = yaml_configs[consts.YAML_RESULT_HANDLER]
         config_manager = ConfigManager(
             config, source_client, target_client, verbose=args.verbose

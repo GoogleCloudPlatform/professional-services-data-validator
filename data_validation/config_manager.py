@@ -66,16 +66,6 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_TARGET_CONN)
 
     @property
-    def source_conn_name(self):
-        """return source connection name."""
-        return self._config.get(consts.CONFIG_SOURCE_CONN_NAME)
-
-    @property
-    def target_conn_name(self):
-        """return source connection name."""
-        return self._config.get(consts.CONFIG_TARGET_CONN_NAME)
-
-    @property
     def validation_type(self):
         """Return string validation type (Column|GroupedColumn|Row)."""
         return self._config[consts.CONFIG_TYPE]
@@ -188,8 +178,6 @@ class ConfigManager(object):
 
         del config[consts.CONFIG_SOURCE_CONN]
         del config[consts.CONFIG_TARGET_CONN]
-        del config[consts.CONFIG_SOURCE_CONN_NAME]
-        del config[consts.CONFIG_TARGET_CONN_NAME]
         if consts.CONFIG_RESULT_HANDLER in config:
             del config[consts.CONFIG_RESULT_HANDLER]
 
@@ -224,8 +212,6 @@ class ConfigManager(object):
         config_type,
         source_conn,
         target_conn,
-        source_conn_name,
-        target_conn_name,
         source_client,
         target_client,
         table_obj,
@@ -242,8 +228,6 @@ class ConfigManager(object):
             consts.CONFIG_TYPE: config_type,
             consts.CONFIG_SOURCE_CONN: source_conn,
             consts.CONFIG_TARGET_CONN: target_conn,
-            consts.CONFIG_SOURCE_CONN_NAME: source_conn_name,
-            consts.CONFIG_TARGET_CONN_NAME: target_conn_name,
             consts.CONFIG_SCHEMA_NAME: table_obj[consts.CONFIG_SCHEMA_NAME],
             consts.CONFIG_TABLE_NAME: table_obj[consts.CONFIG_TABLE_NAME],
             consts.CONFIG_TARGET_SCHEMA_NAME: table_obj.get(

@@ -260,7 +260,5 @@ def _add_metadata(joined, run_metadata):
         ).name("labels"),
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),
-        ibis.literal(run_metadata.source_conn).name("source_connection"),
-        ibis.literal(run_metadata.target_conn).name("target_connection"),
     ]
     return joined

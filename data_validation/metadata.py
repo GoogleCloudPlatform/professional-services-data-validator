@@ -68,5 +68,3 @@ class RunMetadata(object):
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
     end_time: typing.Optional[datetime.datetime] = None
-    source_conn: str = dataclasses.field(default_factory=str)
-    target_conn: str = dataclasses.field(default_factory=str)

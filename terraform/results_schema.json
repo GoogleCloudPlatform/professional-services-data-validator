@@ -45,16 +45,6 @@
     "description": "Target column name"
   },
   {
-    "name": "source_connection",
-    "type": "STRING",
-    "description": "Source connection name"
-  },
-  {
-    "name": "target_connection",
-    "type": "STRING",
-    "description": "Target connection name"
-  },
-  {
     "name": "aggregation_type",
     "type": "STRING",
     "description": "Aggregation type: count, min, max, avg, sum"
