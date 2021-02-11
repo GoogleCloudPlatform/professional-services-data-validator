@@ -143,12 +143,8 @@ def _configure_raw_query(subparsers):
     find_tables_parser = subparsers.add_parser(
         "query", help="Run an adhoc query against the supplied connection"
     )
-    find_tables_parser.add_argument(
-        "--conn", "-c", help="Connection name to query"
-    )
-    find_tables_parser.add_argument(
-        "--query", "-q", help="Raw query to execute"
-    )
+    find_tables_parser.add_argument("--conn", "-c", help="Connection name to query")
+    find_tables_parser.add_argument("--query", "-q", help="Raw query to execute")
 
 
 def _configure_run_config_parser(subparsers):
