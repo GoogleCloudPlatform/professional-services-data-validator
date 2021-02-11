@@ -5,6 +5,7 @@
 - Added an options to add key:value labels to validation runs
 - Oracle and SQL Alchemy now support RawSql filters
 - Add support for Cloud Functions in samples
+- Added schema information to result set
 
 ## 1.1.3
 
