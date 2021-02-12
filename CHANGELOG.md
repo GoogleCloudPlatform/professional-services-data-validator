@@ -1,5 +1,9 @@
 # Changelog
 
+## Untagged
+
+- Add support for running raw queries against a connection
+
 ## 1.1.4
 
 - Added an options to add key:value labels to validation runs
