@@ -4,165 +4,25 @@ The goal of this tool is to allow easy comparison and validation between differe
     - Count Validation: Total counts and other aggregates match between source and destination
     - Partitioned Count: Partitioned counts and other aggregations between source and destination
         - Grouped values ie SELECT updated_at::DATE, COUNT(1) matches for each date
+    - Filters: Count or Partitioned Count WHERE FILTER_CONDITION
 
-## Setup
+## Installation
+[Installation](docs/Installation.md) page describes pre-requisites and setup steps needed to install and use this Data Validation tool.
 
-To write results to BigQuery, you'll need to setup the required cloud
-resources, local authentication, and configure the tool.
+## Running validations
+In order to run validations, Data Validation tool needs to create connections to the source and target. Once the connections are created,
+the data validation tool can run validations on those connections.
 
-### Prerequisites
+### Connections
+[Connections.md](docs/connections.md) provides details about how to create and review connections for the validation tool.
 
-A Google Cloud Platform with the BigQuery API enabled is required.
-
-Confirm which Google user account is used to execute the tool. If running in
-production, it's recommended that you create a service account specifically
-for running the tool.
-
-#### Create cloud resources - Terraform
-
-You can use Terraform to create the necessary BigQuery resources. (See next
-section for manually creating resources with `gcloud`.)
-
-```
-cd terraform
-terraform init
-terraform apply
-```
-
-You should see a dataset named `pso_data_validator` and a table named
-`results`.
-
-#### Create cloud resources - Cloud SDK (gcloud)
-
-Create a dataset for validation results.
-
-```
-bq mk pso_data_validator
-```
-
-Create a table.
-
-```
-bq mk --table \
-  --time_partitioning_field start_time \
-  --clustering_fields validation_name,run_id \
-  pso_data_validator.results \
-  terraform/results_schema.json
-```
-
-### Deploy Data Validation CLI
-
-The Data Validation tooling requires Python 3.6+.
-
-Create and activate a new virtual environment to sandbox the tool and its
-dependencies from your system installation of Python.
-
-```
-python3.6 -m venv venv
-source venv/bin/activate
-```
-
-Update pip and make sure gcc is installed in your environment.
-```
-apt-get update  && apt-get install gcc -y && apt-get clean
-pip install --upgrade pip
-```
-
-
-You can [pip install this package directly from git](https://pip.pypa.io/en/stable/reference/pip_install/#git)
-for any tag (or branch or commit). We suggest installing from latest [GitHub Release]([GitHub](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases).
-
-install from tag 1.1.0
-```bash
-python -m pip install -e git+https://github.com/GoogleCloudPlatform/professional-services-data-validator.git@1.1.0#egg=google_pso_data_validator
-```
-
-install from HEAD of default branch
-```bash
-python -m pip install -e git+https://github.com/GoogleCloudPlatform/professional-services-data-validator.git#egg=google_pso_data_validator
-```
-
-
-Alternatively, you can install from [Python Wheel](https://pythonwheels.com/) on [GCS](
-https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl).
-
-```
-python -m pip install https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl
-```
-
-
-If you require Teradata and have a license, install the `teradatasql` package.
-
-```
-python -m pip install teradatasql
-```
-
-After installing the Data Validation package you will
-have access to the `data-validation -h` or `python -m data_validation -h`
-tool on your CLI.
-
-#### Running CLI Validations
+### Running CLI Validations
 
 The CLI has several different commands which can be used to create and re-run validations.
+[validation_cli.md](docs/validation_cli.md) provides many examples of how a tool can used to run powerful validations without writing any queries.
 
-The first step is to establish connections to your source and target databases.  You can save
-and list connections.  They will be saved either to `~/.config/google-pso-data-validator/` or 
-a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
-You can manage connections via the CLI:
-```
-data-validation connections
-  add --connection-name my-conn-name
-  BigQuery
-    --project-id my-gcp-project
 
-data-validation connections list
-```
-
-To manually run a validation, use the `run` command and to save the validation to a yaml
-file add the flag `--config-file`.  Below details the configurations you
-will use to run and to store validations.
-
-```
-data-validation run
-  --type TYPE, -t TYPE  Type of Data Validation (Column, GroupedColumn)
-  --source-conn SOURCE_CONN, -sc SOURCE_CONN
-                        Source connection details.
-                        See: *Data Source Configurations* section for each data source
-  --target-conn TARGET_CONN, -tc TARGET_CONN
-                        Target connection details
-                        See: *Data Source Configurations* section for each data source
-  --tables-list TABLES, -tbls TABLES 
-                        JSON List of tables 
-                        '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips","target_table_name":"citibike_trips"}]'
-  --grouped-columns GROUPED_COLUMNS, -gc GROUPED_COLUMNS
-                        JSON List of columns to use in group by '["col_a"]'
-                        (Optional) Only used in GroupedColumn type validations
-  --count COUNT         JSON List of columns count '["col_a"]' or * for all columns
-  --sum SUM             JSON List of columns sum '["col_a"]' or * for all numeric
-  --min MIN             JSON List of columns min '[\"col_a\"]' or * for all numeric
-  --max MAX             JSON List of columns max '[\"col_a\"]' or * for all numeric
-  --avg AVG             JSON List of columns avg '[\"col_a\"]' or * for all numeric
-  --result-handler-config RESULT_HANDLER_CONFIG, -rc RESULT_HANDLER_CONFIG
-                        (Optional) JSON Result handler config details. Defaults to stdout
-                        See: *Validation Reports* section
-  --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
-  --config-file CONFIG_FILE, -c CONFIG_FILE
-                        YAML Config File Path to be used for storing validations.
-  --labels KEY=VALUE, -l KEY1=VALUE1,KEY2=VALUE2
-                        (Optional) Comma-separated key value pair labels for the run.
-  --verbose, -v         Verbose logging will print queries executed
-```
-
-Once a validation YAML file has been saved via `data-validation run ... --config-file my-validations.yaml`, the validations can be run
-very easily via:
-```
-data-validation run-config
-  --config-file CONFIG_FILE
-                        YAML Config File Path to be used for executing validations.
-  --verbose, -v         Verbose logging will print queries executed
-```
-
-#### Running Custom SQL Exploration
+### Running Custom SQL Exploration
 There are many occasions where you need to exmplore a data source while running
 validations.  To avoid the need to open and install a new client, the CLI allows
 you to run custom queries.
@@ -170,86 +30,6 @@ you to run custom queries.
 data-validation query
   --conn connection-name The named connection to be queried.
   --query, -q The Raw query to run against the supplied connection
-```
-
-## Data Source Configurations
-Every source type requires its own configuration for connectivity.  Below is an example of the expected configuration for each source type.
-
-### BigQuery
-```
-{
-    # Configuration Required for All Data Soures
-    "source_type": "BigQuery",
-
-    # BigQuery Specific Connection Config
-    "project_id": "my-project-name",
-
-    # (Optional) BigQuery JSON Config File for On-Prem usecases
-    "google_service_account_key_path": "/path/to/key.json"
-}
-```
-
-#### User/Service account needs following BigQuery permissions to run this validator tool:
-* bigquery.jobs.create (BigQuery JobUser role)
-* bigquery.readsessions.create (BigQuery Read Session User)
-* bigquery.tables.get (BigQuery Data Viewer)
-* bigquery.tables.getData (BigQuery Data Viewer)
-
-#### If you plan to store validation results in BigQuery:
-* bigquery.tables.update (BigQuery Data Editor)
-* bigquery.tables.updateData (BigQuery Data Editor)
-
-
-### Teradata
-Please note the Teradata is not-native to this package and must be installed
-via `pip install teradatasql` if you have a license.
-```
-{
-    # Configuration Required for All Data Soures
-    "source_type": "Teradata",
-
-    # Connection Details
-    "host": "127.0.0.1",
-    "port":1025,
-    "user_name":"my-user",
-    "password":"my-password"
-}
-```
-
-### Oracle
-Please note the Oracle package is not installed by default.  You will need to follow [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
-Then `pip install cx_Oracle`.
-```
-{
-    # Configuration Required for All Data Soures
-    "source_type": "Oracle",
-
-    # Connection Details
-    "host": "127.0.0.1",
-    "port":1521,
-    "user_name":"my-user",
-    "password":"my-password",
-    "database": "XE",
-
-}
-```
-
-### MSSQL Server
-Please note the MSSQL Server package is not installed by default.  You will need to follow [SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server) installation steps.
-Then `pip install pyodbc`.
-```
-{
-    # Configuration Required for All Data Soures
-    "source_type": "MSSQL",
-
-    # Connection Details
-    "host": "127.0.0.1",
-    "port":1521,
-    "user_name":"my-user",
-    "password":"my-password",
-    "database": "my-db",
-
-}
 ```
 
 ## Query Configurations
