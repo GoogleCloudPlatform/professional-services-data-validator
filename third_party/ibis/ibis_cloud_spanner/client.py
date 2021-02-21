@@ -264,7 +264,6 @@ class CloudSpannerClient(SQLClient):
     query_class = CloudSpannerQuery
     database_class = CloudSpannerDatabase
     table_class = CloudSpannerTable
-    dialect = comp.CloudSpannerDialect
 
     def __init__(self, instance_id, database_id=None, credentials=None):
         """Construct a CloudSpannerClient.
