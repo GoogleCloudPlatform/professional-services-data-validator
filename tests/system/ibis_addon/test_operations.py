@@ -31,7 +31,9 @@ def test_hash_bigquery_string(bigquery_client):
     tbl = bigquery_client.table(
         "citibike_trips", database="bigquery-public-data.new_york_citibike"
     )
-    expr = tbl[tbl["start_station_name"].hash(how="farm_fingerprint").name("station_hash")]
+    expr = tbl[
+        tbl["start_station_name"].hash(how="farm_fingerprint").name("station_hash")
+    ]
     sql = expr.compile()
     assert (
         sql
