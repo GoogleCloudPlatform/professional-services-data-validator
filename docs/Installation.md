@@ -21,7 +21,7 @@ A Google Cloud Platform project with the BigQuery API enabled is required.
 Confirm which Google user account will be used to execute the tool. If you plan to run this tool in
 production, it's recommended that you create a service account specifically
 for running the tool.
-
+There are two methods of creating the Cloud resources necessary for the tool: via Terraform or the Cloud SDK.
 ### Create cloud resources - Terraform
 
 You can use Terraform to create the necessary BigQuery resources. (See next
