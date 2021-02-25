@@ -1,4 +1,4 @@
-Data validation tool needs connections created beforehand to be able to run validations. The tool allows users to 
+You will need to create connections before running any validations with the data validation tool. The tool allows users to 
 create these connections using CLI. 
 
 These connections will be saved either to `~/.config/google-pso-data-validator/` or 
