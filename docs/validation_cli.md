@@ -89,7 +89,7 @@ data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_nam
 ````shell script
 data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' --count '["tripduration","start_station_name"]' -rc '{"project_id":"$YOUR-PROJECT-ID","type":"BigQuery","table_id":"pso_data_validator.results"}'
 ````
-Please replace $YOUR-PROJECT-ID with the correct project-id where you created your results datasets as mentioned in [Installation](Installation.md#setup) section.
+Please replace $YOUR-PROJECT-ID with the correct project-id where you created your results datasets as mentioned in the [Installation](Installation.md#setup) section.
 
 
 #### Preview results from a results BigQuery Table
