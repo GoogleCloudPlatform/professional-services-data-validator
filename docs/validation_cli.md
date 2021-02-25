@@ -118,7 +118,7 @@ ORDER BY
 data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' --grouped-columns '["bikeid"]'
 ````
 
-#### Run Multi column GroupBy validation
+#### Run a multi-column GroupBy validation
 ````shell script
 data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' --grouped-columns '["bikeid","usertype"]'
 ````
