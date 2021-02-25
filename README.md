@@ -10,7 +10,7 @@ The goal of this tool is to allow easy comparison and validation between differe
 [Installation](docs/Installation.md) page describes pre-requisites and setup steps needed to install and use this Data Validation tool.
 
 ## Running validations
-In order to run validations, Data Validation tool needs to create connections to the source and target. Once the connections are created,
+In order to run validations, Data Validation tool needs to create connections to the source and target. Once the connections are created, the tool can run validations on those connections.
 the data validation tool can run validations on those connections.
 
 ### Connections
