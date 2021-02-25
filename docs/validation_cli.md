@@ -113,7 +113,7 @@ ORDER BY
   start_time DESC
 ````
 
-#### Run Single column GroupBy validation
+#### Run a single column GroupBy validation
 ````shell script
 data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' --grouped-columns '["bikeid"]'
 ````
@@ -160,4 +160,3 @@ data-validation query
   --conn connection-name The named connection to be queried.
   --query, -q The Raw query to run against the supplied connection
 ````
-
