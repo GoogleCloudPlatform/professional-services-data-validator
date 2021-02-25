@@ -34,7 +34,7 @@ data-validation query
 
 ## Query Configurations
 
-It is possible to customize the configuration for a given validation.  The CLI expects that you are trying to compare two identical tables; however, you can customize each query (sour or target) either by running the validation with a custom configuration in Python or editing a saved YAML configuration file.
+It is possible to customize the configuration for a given validation.  The CLI expects that you are trying to compare two identical tables; however, you can customize each query (source or target) either by running the validation with a custom configuration in Python or editing a saved YAML configuration file.
 
 ### Filters
 
