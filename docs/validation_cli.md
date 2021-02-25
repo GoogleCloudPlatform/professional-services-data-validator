@@ -62,7 +62,7 @@ data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_nam
 ````
 Above command creates a YAML file named citibike.yaml that can be used to run validations in the future. 
 
-**Please note:** When config-file(-c) option is provided, only a file gets created. Validation doesn’t execute.
+**Please note:** When the config-file (-c) option is provided, only the YAML file gets created. The validation doesn’t execute. 
  
  
 #### Run validations from a configuration file
