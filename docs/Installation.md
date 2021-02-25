@@ -8,7 +8,7 @@ This tool can be natively installed on your machine or can be containerized and 
 
 
 ## Pre-requisites
-Data validation tool can be configured to store the results of validation runs into BigQuery tables. To allow tool to 
+The data validation tool can be configured to store the results of validation runs into BigQuery tables. To allow tool to 
 do that, we need to do following:
 
 ## Setup
