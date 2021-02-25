@@ -1,5 +1,5 @@
 # Data Validation Tool Installation Guide
-Data validation tool can be installed on any machine that has Python 3.6+ installed. 
+The data validation tool can be installed on any machine that has Python 3.6+ installed. 
 
 Core utility comes with the library for BigQuery. However, if you are planning to use this tool for Teradata or
 some other database validation. 
