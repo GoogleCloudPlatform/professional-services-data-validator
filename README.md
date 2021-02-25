@@ -19,7 +19,7 @@ The [Connections](docs/connections.md) page provides details about how to create
 ### Running CLI Validations
 
 The CLI has several different commands which can be used to create and re-run validations.
-[validation_cli.md](docs/validation_cli.md) provides many examples of how a tool can used to run powerful validations without writing any queries.
+The [Validation CLI](docs/validation_cli.md) page provides many examples of how a tool can used to run powerful validations without writing any queries.
 
 
 ### Running Custom SQL Exploration
