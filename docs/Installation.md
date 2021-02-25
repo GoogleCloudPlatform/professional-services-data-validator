@@ -7,7 +7,7 @@ some other database validation.
 This tool can be natively installed on your machine or can be containerized and run with Docker.
 
 
-## Pre-requisites
+## Prerequisites
 The data validation tool can be configured to store the results of validation runs into BigQuery tables. To allow tool to 
 do that, we need to do following:
 
