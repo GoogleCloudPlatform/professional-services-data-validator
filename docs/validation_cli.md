@@ -92,7 +92,7 @@ data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_nam
 Please replace $YOUR-PROJECT-ID with the correct project-id where you created your results datasets as mentioned in the [Installation](Installation.md#setup) section.
 
 
-#### Preview results from a results BigQuery Table
+#### Query results from a BigQuery results table
 
 ````shell script
 SELECT
