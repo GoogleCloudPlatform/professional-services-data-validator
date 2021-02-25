@@ -9,9 +9,8 @@ The goal of this tool is to allow easy comparison and validation between differe
 ## Installation
 The [Installation](docs/Installation.md) page describes the prerequisites and setup steps needed to install and use the data validation tool.
 
-## Running validations
-In order to run validations, Data Validation tool needs to create connections to the source and target. Once the connections are created, the tool can run validations on those connections.
-the data validation tool can run validations on those connections.
+## Usage
+In order to run validations using this tool a user needs to create connections to the source and target. Once the connections are created, the tool can run validations on those connections. To store data validation results in BigQuery, results handler should be configured as mentioned in the section below.
 
 ### Connections
 The [Connections](docs/connections.md) page provides details about how to create and list connections for the validation tool.
@@ -35,6 +34,38 @@ data-validation query
 ## Query Configurations
 
 It is possible to customize the configuration for a given validation.  The CLI expects that you are trying to compare two identical tables; however, you can customize each query (source or target) either by running the validation with a custom configuration in Python or editing a saved YAML configuration file.
+
+For Example following command creates YAML file for the validation of new_york_citibike table
+```
+data-validation run -t Column -sc bq -tc bq -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' -c citibike.yaml
+```
+
+Following is the layout of the YAML file:
+```
+result_handler: {}
+source: bq
+target: bq
+validations:
+- aggregates:
+  - field_alias: count
+    source_column: null
+    target_column: null
+    type: count
+  filters: []
+  labels: []
+  schema_name: bigquery-public-data.new_york_citibike
+  table_name: citibike_trips
+  target_schema_name: bigquery-public-data.new_york_citibike
+  target_table_name: citibike_trips
+  type: Column
+
+```
+
+User can change above YAML file if new_york_citibike table is stored in datasets that have different names in the source and target systems. Once the file is changed and stored, following command executes the configuration stored in a file:
+```
+data-validation run-config -c citibike.yaml
+```
+
 
 ### Filters
 
