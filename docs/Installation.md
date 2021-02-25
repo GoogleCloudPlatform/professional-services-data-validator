@@ -18,7 +18,7 @@ resources, local authentication, and configure the tool.
 
 A Google Cloud Platform project with the BigQuery API enabled is required.
 
-Confirm which Google user account is used to execute the tool. If running in
+Confirm which Google user account will be used to execute the tool. If you plan to run this tool in
 production, it's recommended that you create a service account specifically
 for running the tool.
 
