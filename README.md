@@ -23,7 +23,7 @@ The [Validation CLI](docs/validation_cli.md) page provides many examples of how 
 
 
 ### Running Custom SQL Exploration
-There are many occasions where you need to exmplore a data source while running
+There are many occasions where you need to explore a data source while running
 validations.  To avoid the need to open and install a new client, the CLI allows
 you to run custom queries.
 ```
