@@ -1,8 +1,7 @@
 # Data Validation Tool Installation Guide
 The data validation tool can be installed on any machine that has Python 3.6+ installed. 
 
-Core utility comes with the library for BigQuery. However, if you are planning to use this tool for Teradata or
-some other database validation. 
+Core utility comes with the library installed already for the BigQuery connections. When using this tool with other databases like Teradata, Oracle etc., their appropriate connection libraries need to be installed(For example Teradatasql for Teradata).
 
 This tool can be natively installed on your machine or can be containerized and run with Docker.
 
@@ -109,7 +108,7 @@ have access to the `data-validation -h` or `python -m data_validation -h`
 tool on your CLI.
 
 
-## Build a docker container 
-If native installation is not an option for you, dockerizing this tool is another option for you. 
+## Build a Docker container 
+If native installation is not an option for you, you can create a Docker image for this tool.  
 
 Here's an [example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/README.md) on how you can create a sample docker image for this tool.
