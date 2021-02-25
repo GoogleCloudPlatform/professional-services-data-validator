@@ -16,7 +16,7 @@ do that, we need to do following:
 To write results to BigQuery, you'll need to setup the required cloud
 resources, local authentication, and configure the tool.
 
-A Google Cloud Platform with the BigQuery API enabled is required.
+A Google Cloud Platform project with the BigQuery API enabled is required.
 
 Confirm which Google user account is used to execute the tool. If running in
 production, it's recommended that you create a service account specifically
