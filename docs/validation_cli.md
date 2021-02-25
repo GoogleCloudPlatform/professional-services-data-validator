@@ -4,7 +4,7 @@ The CLI has several different commands which can be used to create and re-run va
 
 The validation tool first expects connections to be created before running validations. To create connections please review the [Connections](connections.md) page.
 
-Once you have connections setup, you are ready to run the validations:
+Once you have your connections set up, you are ready to run the validations.
 
 ### Validation command syntax and options
 
