@@ -14,7 +14,7 @@ In order to run validations, Data Validation tool needs to create connections to
 the data validation tool can run validations on those connections.
 
 ### Connections
-[Connections.md](docs/connections.md) provides details about how to create and review connections for the validation tool.
+The [Connections](docs/connections.md) page provides details about how to create and list connections for the validation tool.
 
 ### Running CLI Validations
 
