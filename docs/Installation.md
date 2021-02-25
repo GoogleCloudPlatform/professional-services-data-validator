@@ -4,7 +4,7 @@ The data validation tool can be installed on any machine that has Python 3.6+ in
 Core utility comes with the library for BigQuery. However, if you are planning to use this tool for Teradata or
 some other database validation. 
 
-This tool can be natively installed on your machine or can be containerized in a docker container and run using docker.
+This tool can be natively installed on your machine or can be containerized and run with Docker.
 
 
 ## Pre-requisites
