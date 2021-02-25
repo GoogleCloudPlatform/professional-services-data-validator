@@ -1,4 +1,4 @@
-Data Validation CLI is a main interface to use this tool.
+The data validation CLI is a main interface to use this tool.
 
 The CLI has several different commands which can be used to create and re-run validations.
 
