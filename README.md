@@ -7,7 +7,7 @@ The goal of this tool is to allow easy comparison and validation between differe
     - Filters: Count or Partitioned Count WHERE FILTER_CONDITION
 
 ## Installation
-[Installation](docs/Installation.md) page describes pre-requisites and setup steps needed to install and use this Data Validation tool.
+The [Installation](docs/Installation.md) page describes the prerequisites and setup steps needed to install and use the data validation tool.
 
 ## Running validations
 In order to run validations, Data Validation tool needs to create connections to the source and target. Once the connections are created, the tool can run validations on those connections.
