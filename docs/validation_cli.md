@@ -2,7 +2,7 @@ The data validation CLI is a main interface to use this tool.
 
 The CLI has several different commands which can be used to create and re-run validations.
 
-Validation tool first expects connections to be created before running validations. To create connections please review [connections.md](connections.md) page.
+The validation tool first expects connections to be created before running validations. To create connections please review the [Connections](connections.md) page.
 
 Once you have connections setup, you are ready to run the validations:
 
