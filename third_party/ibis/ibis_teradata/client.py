@@ -49,7 +49,7 @@ class TeradataQuery(Query):
 
     def execute(self):
         sql = self.compiled_sql
-        if self.client.use_no_lock_tables:
+        if self.client.use_no_lock_tables and sql.strip().startswith("SELECT"):
             sql = self.NO_LOCK_SQL + self.compiled_sql
 
         return pandas.read_sql(sql, self.client.client)
