@@ -153,4 +153,3 @@ def integration_spanner(session):
 
     # TODO: Add tests for DVT data sources. See integration_bigquery.
     session.run("pytest", "third_party/ibis/ibis_cloud_spanner/tests", *session.posargs)
-
