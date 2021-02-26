@@ -47,10 +47,7 @@ def test_no_ambiguities():
         (dt.Array(dt.string), "ARRAY<STRING>"),
         (dt.date, "DATE"),
         (dt.timestamp, "TIMESTAMP"),
-        param(
-            dt.Timestamp(timezone="US/Eastern"),
-            "TIMESTAMP",
-        ),
+        param(dt.Timestamp(timezone="US/Eastern"), "TIMESTAMP",),
     ],
 )
 def test_simple(datatype, expected):

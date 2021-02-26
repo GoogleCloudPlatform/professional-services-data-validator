@@ -51,10 +51,7 @@ def verify(expr, params=None):
         return False
 
 
-def connect(
-    instance_id,
-    database_id,
-) -> CloudSpannerClient:
+def connect(instance_id, database_id,) -> CloudSpannerClient:
     """Create a CloudSpannerClient for use with Ibis.
 
     Parameters
