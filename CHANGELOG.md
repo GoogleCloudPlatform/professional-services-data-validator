@@ -2,6 +2,8 @@
 
 ## Untagged
 
+## 1.1.5
+
 - Add support for running raw queries against a connection
 - Upgraded Ibis to v1.4 with large client organizational and design changes
 - Added support for "use_no_lock_tables" Teradata config to optionally avoid
