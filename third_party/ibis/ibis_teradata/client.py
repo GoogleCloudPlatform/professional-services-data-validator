@@ -34,18 +34,11 @@ def _find_scalar_parameter(expr):
 
 
 class TeradataQuery(Query):
+
     NO_LOCK_SQL = "LOCKING ROW FOR ACCESS "
+
     def __init__(self, client, ddl):
         super().__init__(client, ddl)
-
-        # self.expr comes from the parent class
-        # query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
-        # self.query_parameters = [
-        #     teradata_param(
-        #         param.to_expr().name(query_parameter_names[param]), value
-        #     )
-        #     for param, value in (query_parameters or {}).items()
-        # ]
 
     def execute(self):
         sql = self.compiled_sql
