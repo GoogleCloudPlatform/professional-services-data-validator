@@ -212,7 +212,10 @@ via `pip install teradatasql` if you have a license.
     "host": "127.0.0.1",
     "port":1025,
     "user_name":"my-user",
-    "password":"my-password"
+    "password":"my-password",
+
+    # Use this config to avoid locking tables (true is do not lock)
+    "use_no_lock_tables": True
 }
 ```
 
