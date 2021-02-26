@@ -19,7 +19,7 @@ import ibis.expr.datatypes as dt_i
 from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
 
 import ibis.expr.datatypes as dt11
-import ibis.sql.alchemy as s_al
+import ibis.backends.base_sqlalchemy.alchemy as s_al
 from snowflake.sqlalchemy.base import dialect as snowdialect
 import snowflake.sqlalchemy.snowdialect as dd
 

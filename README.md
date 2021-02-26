@@ -162,6 +162,16 @@ data-validation run-config
   --verbose, -v         Verbose logging will print queries executed
 ```
 
+#### Running Custom SQL Exploration
+There are many occasions where you need to exmplore a data source while running
+validations.  To avoid the need to open and install a new client, the CLI allows
+you to run custom queries.
+```
+data-validation query
+  --conn connection-name The named connection to be queried.
+  --query, -q The Raw query to run against the supplied connection
+```
+
 ## Data Source Configurations
 Every source type requires its own configuration for connectivity.  Below is an example of the expected configuration for each source type.
 

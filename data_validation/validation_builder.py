@@ -138,7 +138,9 @@ class ValidationBuilder(object):
         self._metadata[alias] = metadata.ValidationMetadata(
             validation_type=self.validation_type,
             aggregation_type=aggregate_type,
+            source_table_schema=self.config_manager.source_schema,
             source_table_name=self.config_manager.source_table,
+            target_table_schema=self.config_manager.target_schema,
             target_table_name=self.config_manager.target_table,
             source_column_name=source_field_name,
             target_column_name=target_field_name,

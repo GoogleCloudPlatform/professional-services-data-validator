@@ -35,36 +35,70 @@ def test_get_column_name(
     module_under_test, source_column, target_column, result_type, expected
 ):
     validation = module_under_test.ValidationMetadata(
-        "", "", "", "", source_column, target_column
+        "", "", "", "", "", "", source_column, target_column
     )
     column_name = validation.get_column_name(result_type)
     assert column_name == expected
 
 
 def test_get_column_name_with_unexpected_result_type(module_under_test):
-    validation = module_under_test.ValidationMetadata("", "", "", "", "", "",)
+    validation = module_under_test.ValidationMetadata("", "", "", "", "", "", "", "",)
     with pytest.raises(ValueError, match="Unexpected result_type"):
         validation.get_column_name("oops_i_goofed")
 
 
 @pytest.mark.parametrize(
-    ("source_table", "target_table", "result_type", "expected"),
     (
-        ("source_tbl", "target_tbl", "source", "source_tbl"),
-        ("source_tbl", "target_tbl", "target", "target_tbl"),
+        "source_table_schema",
+        "source_table",
+        "target_table_schema",
+        "target_table",
+        "result_type",
+        "expected",
+    ),
+    (
+        (
+            "source_table_schema",
+            "source_tbl",
+            "target_table_schema",
+            "target_tbl",
+            "source",
+            "source_table_schema.source_tbl",
+        ),
+        (
+            "source_table_schema",
+            "source_tbl",
+            "target_table_schema",
+            "target_tbl",
+            "target",
+            "target_table_schema.target_tbl",
+        ),
     ),
 )
 def test_get_table_name(
-    module_under_test, source_table, target_table, result_type, expected
+    module_under_test,
+    source_table_schema,
+    source_table,
+    target_table_schema,
+    target_table,
+    result_type,
+    expected,
 ):
     validation = module_under_test.ValidationMetadata(
-        "", "", source_table, target_table, None, None
+        "",
+        "",
+        source_table_schema,
+        source_table,
+        target_table_schema,
+        target_table,
+        None,
+        None,
     )
     table_name = validation.get_table_name(result_type)
     assert table_name == expected
 
 
 def test_get_table_name_with_unexpected_result_type(module_under_test):
-    validation = module_under_test.ValidationMetadata("", "", "", "", "", "",)
+    validation = module_under_test.ValidationMetadata("", "", "", "", "", "", "", "",)
     with pytest.raises(ValueError, match="Unexpected result_type"):
         validation.get_table_name("oops_i_goofed")

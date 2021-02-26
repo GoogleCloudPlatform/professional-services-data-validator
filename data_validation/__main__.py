@@ -224,6 +224,15 @@ def find_tables_using_string_matching(args):
     return json.dumps(table_configs)
 
 
+def run_raw_query_against_connection(args):
+    """Return results of raw query for adhoc usage."""
+    conn = cli_tools.get_connection(args.conn)
+    client = DataValidation.get_data_client(conn)
+
+    with client.raw_sql(args.query, results=True) as cur:
+        return cur.fetchall()
+
+
 def convert_config_to_yaml(args, config_managers):
     """Return dict objects formatted for yaml validations.
 
@@ -321,6 +330,8 @@ def main():
         run_validations(args, config_managers)
     elif args.command == "find-tables":
         print(find_tables_using_string_matching(args))
+    elif args.command == "query":
+        print(run_raw_query_against_connection(args))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 

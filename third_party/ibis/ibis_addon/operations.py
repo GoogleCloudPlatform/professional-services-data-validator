@@ -25,18 +25,29 @@ non-textual languages.
 
 import ibis
 
-from ibis.bigquery.compiler import BigQueryExprTranslator
+from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 import ibis.expr.datatypes as dt
-from ibis.expr.operations import Arg, Comparison, ValueOp
+from ibis.expr.operations import (
+    Arg, Comparison, Hash, ValueOp
+)
 import ibis.expr.rules as rlz
 from ibis.expr.types import BinaryValue, StringValue
-from ibis.impala.compiler import ImpalaExprTranslator
-from ibis.pandas import client as _pandas_client
-from ibis.sql.alchemy import AlchemyExprTranslator
+from ibis.backends.impala.compiler import ImpalaExprTranslator
+from ibis.backends.pandas import client as _pandas_client
+from ibis.backends.base_sqlalchemy.alchemy import AlchemyExprTranslator
 
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 
+# from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator # TODO figure how to add RAWSQL
+# from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
+# from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
+
+
+class Hash(ValueOp):
+    arg = Arg(rlz.any)
+    how = Arg(rlz.isin({'fnv', 'farm_fingerprint'}))
+    output_type = rlz.shape_like('arg', dt.int64)
 
 class HashBytes(ValueOp):
     arg = Arg(rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)]))
@@ -46,6 +57,22 @@ class HashBytes(ValueOp):
 
 class RawSQL(Comparison):
     pass
+
+
+def compile_hash(binary_value, how):
+    return Hash(binary_value, how=how).to_expr()
+
+
+def format_hash_bigquery(translator, expr):
+    op = expr.op()
+    arg, how = op.args
+
+    arg_formatted = translator.translate(arg)
+
+    if how == 'farm_fingerprint':
+        return f'farm_fingerprint({arg_formatted})'
+    else:
+        raise NotImplementedError(how)
 
 
 def compile_hashbytes(binary_value, how):
@@ -73,8 +100,11 @@ def format_raw_sql(translator, expr):
 
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
+BinaryValue.hash = compile_hash
+StringValue.hash = compile_hash
 BinaryValue.hashbytes = compile_hashbytes
 StringValue.hashbytes = compile_hashbytes
+BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
