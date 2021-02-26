@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.impala import udf
-from ibis.impala.api import connect as impala_connect
+from ibis.backends.impala import udf
+from ibis.backends.impala import connect as impala_connect
 
 
 def parse_type(t):

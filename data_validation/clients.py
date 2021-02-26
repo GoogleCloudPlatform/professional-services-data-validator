@@ -17,11 +17,11 @@ import pandas
 import warnings
 
 from google.cloud import bigquery
-from ibis.bigquery.client import BigQueryClient
-import ibis.pandas
-from ibis.pandas.client import PandasClient
-from ibis.sql.mysql.client import MySQLClient
-from ibis.sql.postgres.client import PostgreSQLClient
+from ibis.backends.bigquery.client import BigQueryClient
+import ibis.backends.pandas
+from ibis.backends.pandas.client import PandasClient
+from ibis.backends.mysql.client import MySQLClient
+from ibis.backends.postgres.client import PostgreSQLClient
 
 from third_party.ibis.ibis_impala.api import impala_connect
 import third_party.ibis.ibis_addon.datatypes
@@ -108,7 +108,7 @@ def get_pandas_client(table_name, file_path, file_type):
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
-    pandas_client = ibis.pandas.connect({table_name: df})
+    pandas_client = ibis.backends.pandas.connect({table_name: df})
 
     return pandas_client
 

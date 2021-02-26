@@ -19,7 +19,7 @@ import pytest
 import random
 from datetime import datetime, timedelta
 
-from ibis.pandas.client import PandasClient
+from ibis.backends.pandas.client import PandasClient
 
 from data_validation import consts, exceptions
 
@@ -259,7 +259,7 @@ def test_get_oracle_data_client(module_under_test):
 
 
 def test_row_level_validation_perfect_match(module_under_test, fs):
-    data = _generate_fake_data(second_range=60 * 60 * 12)
+    data = _generate_fake_data(second_range=0)
     json_data = _get_fake_json_data(data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
