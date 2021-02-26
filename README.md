@@ -125,26 +125,31 @@ will use to run and to store validations.
 ```
 data-validation run
   --type TYPE, -t TYPE  Type of Data Validation (Column, GroupedColumn)
-  --source-conn SOURCE_CONN
+  --source-conn SOURCE_CONN, -sc SOURCE_CONN
                         Source connection details.
                         See: *Data Source Configurations* section for each data source
-  --target-conn TARGET_CONN
+  --target-conn TARGET_CONN, -tc TARGET_CONN
                         Target connection details
                         See: *Data Source Configurations* section for each data source
-
-  --tables-list TABLES  JSON List of dict {schema:schema_name, table:table_name}
-  --grouped-columns GROUPED_COLUMNS
+  --tables-list TABLES, -tbls TABLES 
+                        JSON List of tables 
+                        '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips","target_table_name":"citibike_trips"}]'
+  --grouped-columns GROUPED_COLUMNS, -gc GROUPED_COLUMNS
                         JSON List of columns to use in group by '["col_a"]'
-                        (Optional) Only used in GroupedColumn tyoe validagtions
-
-  --count COUNT         JSON List of columns sum '["col_a"]' or * for all columns
+                        (Optional) Only used in GroupedColumn type validations
+  --count COUNT         JSON List of columns count '["col_a"]' or * for all columns
   --sum SUM             JSON List of columns sum '["col_a"]' or * for all numeric
-  --result-handler-config RESULT_HANDLER_CONFIG
-                        Result handler config details.
-                        See: *Output Handler Configurations* section
+  --min MIN             JSON List of columns min '[\"col_a\"]' or * for all numeric
+  --max MAX             JSON List of columns max '[\"col_a\"]' or * for all numeric
+  --avg AVG             JSON List of columns avg '[\"col_a\"]' or * for all numeric
+  --result-handler-config RESULT_HANDLER_CONFIG, -rc RESULT_HANDLER_CONFIG
+                        (Optional) JSON Result handler config details. Defaults to stdout
+                        See: *Validation Reports* section
   --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
-  --config-file CONFIG_FILE
+  --config-file CONFIG_FILE, -c CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
+  --labels KEY=VALUE, -l KEY1=VALUE1,KEY2=VALUE2
+                        (Optional) Comma-separated key value pair labels for the run.
   --verbose, -v         Verbose logging will print queries executed
 ```
 
@@ -155,6 +160,16 @@ data-validation run-config
   --config-file CONFIG_FILE
                         YAML Config File Path to be used for executing validations.
   --verbose, -v         Verbose logging will print queries executed
+```
+
+#### Running Custom SQL Exploration
+There are many occasions where you need to exmplore a data source while running
+validations.  To avoid the need to open and install a new client, the CLI allows
+you to run custom queries.
+```
+data-validation query
+  --conn connection-name The named connection to be queried.
+  --query, -q The Raw query to run against the supplied connection
 ```
 
 ## Data Source Configurations

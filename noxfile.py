@@ -27,10 +27,10 @@ import nox
 
 
 # Python version used for linting.
-DEFAULT_PYTHON_VERSION = "3.6"
+DEFAULT_PYTHON_VERSION = "3.7"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.6", "3.7", "3.8"]
+PYTHON_VERSIONS = ["3.7", "3.8", "3.9"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 
@@ -48,7 +48,7 @@ def _setup_session_requirements(session, extra_packages=[]):
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
-    _setup_session_requirements(session, extra_packages=["pyfakefs==4.1.0"])
+    _setup_session_requirements(session, extra_packages=["pyfakefs==4.3.3"])
 
     # Run py.test against the unit tests.
     session.run(
@@ -101,7 +101,7 @@ def blacken(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
-    _setup_session_requirements(session, extra_packages=["black==19.10b0"])
+    session.install("black==19.10b0")
     session.run("black", *BLACK_PATHS)
 
 

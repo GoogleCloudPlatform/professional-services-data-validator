@@ -120,6 +120,7 @@ def configure_arg_parser():
     _configure_run_config_parser(subparsers)
     _configure_connection_parser(subparsers)
     _configure_find_tables(subparsers)
+    _configure_raw_query(subparsers)
 
     return parser
 
@@ -135,6 +136,15 @@ def _configure_find_tables(subparsers):
     find_tables_parser.add_argument(
         "--target-conn", "-tc", help="Target connection name"
     )
+
+
+def _configure_raw_query(subparsers):
+    """Configure arguments for text search table matching."""
+    find_tables_parser = subparsers.add_parser(
+        "query", help="Run an adhoc query against the supplied connection"
+    )
+    find_tables_parser.add_argument("--conn", "-c", help="Connection name to query")
+    find_tables_parser.add_argument("--query", "-q", help="Raw query to execute")
 
 
 def _configure_run_config_parser(subparsers):
@@ -190,7 +200,6 @@ def _configure_run_parser(subparsers):
         "-max",
         help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
     )
-
     run_parser.add_argument(
         "--grouped-columns",
         "-gc",
@@ -209,7 +218,9 @@ def _configure_run_parser(subparsers):
         "-c",
         help="Store the validation in the YAML Config File Path specified.",
     )
-
+    run_parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run.",
+    )
     run_parser.add_argument(
         "--filters",
         "-filters",
@@ -329,3 +340,17 @@ def get_connection(connection_name):
         conn_str = file.read()
 
     return json.loads(conn_str)
+
+
+def get_labels(arg_labels):
+    """ Return list of tuples representing key-value label pairs. """
+    labels = []
+    if arg_labels:
+        pairs = arg_labels.split(",")
+        for pair in pairs:
+            kv = pair.split("=")
+            if len(kv) == 2:
+                labels.append((kv[0], kv[1]))
+            else:
+                raise ValueError("Labels must be comma-separated key-value pairs.")
+    return labels
