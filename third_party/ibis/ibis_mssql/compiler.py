@@ -24,9 +24,10 @@ import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.window as W
 import third_party.ibis.ibis_mssql.expr.operations as ms_ops
-import ibis.sql.alchemy as alch
+import ibis.backends.base_sqlalchemy.alchemy as alch
+
 from ibis import literal as L
-from ibis.sql.alchemy import _cumulative_to_reduction, fixed_arity, unary
+from ibis.backends.base_sql import _cumulative_to_reduction, fixed_arity, unary
 
 
 def raise_unsupported_op_error(translator, expr, *args):

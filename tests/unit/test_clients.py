@@ -16,7 +16,7 @@ from unittest import mock
 
 from google.auth import credentials
 import pandas
-import ibis.pandas
+import ibis.backends.pandas
 
 from data_validation import clients
 
@@ -28,7 +28,7 @@ TABLES_RESULT = [(None, TABLE_NAME)]
 
 def _get_pandas_client():
     df = pandas.DataFrame(DATA)
-    pandas_client = ibis.pandas.connect({TABLE_NAME: df})
+    pandas_client = ibis.backends.pandas.connect({TABLE_NAME: df})
 
     return pandas_client
 
