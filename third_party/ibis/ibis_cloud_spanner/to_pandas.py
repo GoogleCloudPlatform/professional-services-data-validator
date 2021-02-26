@@ -13,70 +13,55 @@
 # limitations under the License.
 
 from pandas import DataFrame
-from google.cloud import spanner
 
-code_to_spanner_dtype_dict = {
-    1 : 'BOOL',
-    2 : 'INT64',
-    3 : 'FLOAT64',
-    4 : 'TIMESTAMP',
-    5 : 'DATE',
-    6 : 'STRING',
-    7 : 'BYTES',
-    8 : 'ARRAY',
-    10 : 'NUMERIC'
-}
 
-class pandas_df():
-
+class pandas_df:
     def to_pandas(snapshot, sql, query_parameters):
-        
-        if(query_parameters):
-            param={}
-            param_type={}
+
+        if query_parameters:
+            param = {}
+            param_type = {}
             for i in query_parameters:
-                param.update(i['params'])
-                param_type.update(i['param_types'])
+                param.update(i["params"])
+                param_type.update(i["param_types"])
 
-
-            data_qry=snapshot.execute_sql(sql, params=param, param_types=param_type)
+            data_qry = snapshot.execute_sql(sql, params=param, param_types=param_type)
 
         else:
-            data_qry=snapshot.execute_sql(sql)
+            data_qry = snapshot.execute_sql(sql)
 
-        data=[]
+        data = []
         for row in data_qry:
             data.append(row)
-        
 
-        columns_dict={}
-        
-        for item in data_qry.fields :
-            columns_dict[item.name]=code_to_spanner_dtype_dict[item.type_.code]
+        columns_dict = {}
 
-        #Creating list of columns to be mapped with the data
-        column_list=[k for k,v in columns_dict.items()]
+        for item in data_qry.fields:
+            columns_dict[item.name] = item.type_.code.name
 
-        #Creating pandas dataframe from data and columns_list
-        df = DataFrame(data,columns=column_list)
+        # Creating list of columns to be mapped with the data
+        column_list = [k for k, v in columns_dict.items()]
 
+        # Creating pandas dataframe from data and columns_list
+        df = DataFrame(data, columns=column_list)
 
-        #Mapping dictionary to map every spanner datatype to a pandas compatible datatype
-        mapping_dict={
-        'INT64':'int64',
-        'STRING':'object',
-        'BOOL':'bool',
-	'BYTES':'object', 
-        'ARRAY':'object',
-        'DATE':'datetime64[ns, UTC]',
-        'FLOAT64':'float64', 
-        'NUMERIC':'object', 
-        'TIMESTAMP':'datetime64[ns, UTC]'
+        # Dictionary to map spanner datatype to a pandas compatible datatype
+        SPANNER_TO_PANDAS_DTYPE = {
+            "INT64": "int64",
+            "STRING": "object",
+            "BOOL": "bool",
+            "BYTES": "object",
+            "ARRAY": "object",
+            "DATE": "datetime64[ns, UTC]",
+            "FLOAT64": "float64",
+            "NUMERIC": "object",
+            "TIMESTAMP": "datetime64[ns, UTC]",
         }
-        for k,v in columns_dict.items() :
+
+        for k, v in columns_dict.items():
             try:
-                df[k]= df[k].astype(mapping_dict[v])
+                df[k] = df[k].astype(SPANNER_TO_PANDAS_DTYPE[v])
             except KeyError:
-                print("Spanner Datatype not present in datatype mapping dictionary")
-    
+                print("Spanner Datatype is not present in datatype mapping dictionary")
+
         return df

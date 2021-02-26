@@ -19,10 +19,11 @@ from pytest import param
 import ibis.expr.datatypes as dt
 from third_party.ibis.ibis_cloud_spanner.datatypes import (
     TypeTranslationContext,
-    ibis_type_to_cloud_spanner_type
+    ibis_type_to_cloud_spanner_type,
 )
 
 pytestmark = pytest.mark.cloud_spanner
+
 
 def test_no_ambiguities():
     ambs = ambiguities(ibis_type_to_cloud_spanner_type.funcs)
@@ -30,33 +31,34 @@ def test_no_ambiguities():
 
 
 @pytest.mark.parametrize(
-    ('datatype', 'expected'),
+    ("datatype", "expected"),
     [
-        (dt.float32, 'FLOAT64'),
-        (dt.float64, 'FLOAT64'),
-        (dt.uint8, 'INT64'),
-        (dt.uint16, 'INT64'),
-        (dt.uint32, 'INT64'),
-        (dt.int8, 'INT64'),
-        (dt.int16, 'INT64'),
-        (dt.int32, 'INT64'),
-        (dt.int64, 'INT64'),
-        (dt.string, 'STRING'),
-        (dt.Array(dt.int64), 'ARRAY<INT64>'),
-        (dt.Array(dt.string), 'ARRAY<STRING>'),
-        (dt.date, 'DATE'),
-        (dt.timestamp, 'TIMESTAMP'),
+        (dt.float32, "FLOAT64"),
+        (dt.float64, "FLOAT64"),
+        (dt.uint8, "INT64"),
+        (dt.uint16, "INT64"),
+        (dt.uint32, "INT64"),
+        (dt.int8, "INT64"),
+        (dt.int16, "INT64"),
+        (dt.int32, "INT64"),
+        (dt.int64, "INT64"),
+        (dt.string, "STRING"),
+        (dt.Array(dt.int64), "ARRAY<INT64>"),
+        (dt.Array(dt.string), "ARRAY<STRING>"),
+        (dt.date, "DATE"),
+        (dt.timestamp, "TIMESTAMP"),
         param(
-            dt.Timestamp(timezone='US/Eastern'),
-            'TIMESTAMP',
-        )
-    ]
+            dt.Timestamp(timezone="US/Eastern"),
+            "TIMESTAMP",
+        ),
+    ],
 )
 def test_simple(datatype, expected):
     context = TypeTranslationContext()
     assert ibis_type_to_cloud_spanner_type(datatype, context) == expected
 
-@pytest.mark.parametrize('datatype', [dt.uint64, dt.Decimal(8, 3)])
+
+@pytest.mark.parametrize("datatype", [dt.uint64, dt.Decimal(8, 3)])
 def test_simple_failure_mode(datatype):
     with pytest.raises(TypeError):
         ibis_type_to_cloud_spanner_type(datatype)

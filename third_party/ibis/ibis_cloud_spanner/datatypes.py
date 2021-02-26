@@ -24,7 +24,7 @@ class TypeTranslationContext:
     __slots__ = ()
 
 
-ibis_type_to_cloud_spanner_type = Dispatcher('ibis_type_to_cloud_spanner_type')
+ibis_type_to_cloud_spanner_type = Dispatcher("ibis_type_to_cloud_spanner_type")
 
 
 @ibis_type_to_cloud_spanner_type.register(str)
@@ -44,55 +44,46 @@ def trans_string_context(datatype, context):
 
 @ibis_type_to_cloud_spanner_type.register(dt.Floating, TypeTranslationContext)
 def trans_float64(t, context):
-    return 'FLOAT64'
+    return "FLOAT64"
 
 
 @ibis_type_to_cloud_spanner_type.register(dt.Integer, TypeTranslationContext)
 def trans_integer(t, context):
-    return 'INT64'
+    return "INT64"
 
 
 @ibis_type_to_cloud_spanner_type.register(dt.Array, TypeTranslationContext)
 def trans_array(t, context):
-    return 'ARRAY<{}>'.format(
-        ibis_type_to_cloud_spanner_type(t.value_type, context)
-    )
-
+    return "ARRAY<{}>".format(ibis_type_to_cloud_spanner_type(t.value_type, context))
 
 
 @ibis_type_to_cloud_spanner_type.register(dt.Date, TypeTranslationContext)
 def trans_date(t, context):
-    return 'DATE'
+    return "DATE"
 
 
 @ibis_type_to_cloud_spanner_type.register(dt.Timestamp, TypeTranslationContext)
 def trans_timestamp(t, context):
-    return 'TIMESTAMP'
+    return "TIMESTAMP"
 
 
 @ibis_type_to_cloud_spanner_type.register(dt.DataType, TypeTranslationContext)
 def trans_type(t, context):
     return str(t).upper()
 
-@ibis_type_to_cloud_spanner_type.register(
-    dt.UInt64, TypeTranslationContext
-)
+
+@ibis_type_to_cloud_spanner_type.register(dt.UInt64, TypeTranslationContext)
 def trans_lossy_integer(t, context):
     raise TypeError(
-        'Conversion from uint64 to Cloud Spanner integer type (int64) is lossy'
+        "Conversion from uint64 to Cloud Spanner integer type (int64) is lossy"
     )
-
 
 
 @ibis_type_to_cloud_spanner_type.register(dt.Decimal, TypeTranslationContext)
 def trans_numeric(t, context):
     if (t.precision, t.scale) != (38, 9):
         raise TypeError(
-            'Cloud Spanner only supports decimal types with precision of 38 and '
-            'scale of 9'
+            "Cloud Spanner only supports decimal types with precision of 38 and "
+            "scale of 9"
         )
-    return 'NUMERIC'
-
-
-
-
+    return "NUMERIC"

@@ -26,9 +26,10 @@ from ibis.expr.types import TableExpr
 
 pytestmark = pytest.mark.cloud_spanner
 
+
 def test_timestamp_accepts_date_literals(alltypes):
-    date_string = '2009-03-01'
-    param = ibis.param(dt.timestamp).name('param_0')
+    date_string = "2009-03-01"
+    param = ibis.param(dt.timestamp).name("param_0")
     expr = alltypes.mutate(param=param)
     params = {param: date_string}
     result = expr.compile(params=params)
@@ -37,8 +38,9 @@ SELECT *, @param AS `param`
 FROM functional_alltypes"""
     assert result == expected
 
+
 @pytest.mark.parametrize(
-    ('distinct', 'expected_keyword'), [(True, 'DISTINCT'), (False, 'ALL')]
+    ("distinct", "expected_keyword"), [(True, "DISTINCT"), (False, "ALL")]
 )
 def test_union(alltypes, distinct, expected_keyword):
     expr = alltypes.union(alltypes, distinct=distinct)
@@ -61,10 +63,9 @@ FROM functional_alltypes"""
     assert result == expected
 
 
-
 def test_identical_to(alltypes):
     t = alltypes
-    pred = t.string_col.identical_to('a') & t.date_string_col.identical_to('b')
+    pred = t.string_col.identical_to("a") & t.date_string_col.identical_to("b")
     expr = t[pred]
     result = cs_compile.compile(expr)
     expected = f"""\
@@ -75,10 +76,9 @@ WHERE (((`string_col` IS NULL) AND ('a' IS NULL)) OR (`string_col` = 'a')) AND
     assert result == expected
 
 
-
-@pytest.mark.parametrize('timezone', [None, 'America/New_York'])
+@pytest.mark.parametrize("timezone", [None, "America/New_York"])
 def test_to_timestamp(alltypes, timezone):
-    expr = alltypes.date_string_col.to_timestamp('%F', timezone)
+    expr = alltypes.date_string_col.to_timestamp("%F", timezone)
     result = cs_compile.compile(expr)
     if timezone:
         expected = f"""\
@@ -91,25 +91,28 @@ FROM functional_alltypes"""
     assert result == expected
 
 
-
 @pytest.mark.parametrize(
-    ('case', 'expected', 'dtype'),
+    ("case", "expected", "dtype"),
     [
         (datetime.date(2017, 1, 1), "DATE '2017-01-01'", dt.date),
-        (pd.Timestamp('2017-01-01'), "DATE '2017-01-01'", dt.date,),
-        ('2017-01-01', "DATE '2017-01-01'", dt.date),
+        (
+            pd.Timestamp("2017-01-01"),
+            "DATE '2017-01-01'",
+            dt.date,
+        ),
+        ("2017-01-01", "DATE '2017-01-01'", dt.date),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
         (
-            '2017-01-01 04:55:59',
+            "2017-01-01 04:55:59",
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
         (
-            pd.Timestamp('2017-01-01 04:55:59'),
+            pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
@@ -122,38 +125,43 @@ def test_literal_date(case, expected, dtype):
 
 
 @pytest.mark.parametrize(
-    ('case', 'expected', 'dtype', 'strftime_func'),
+    ("case", "expected", "dtype", "strftime_func"),
     [
         (
             datetime.date(2017, 1, 1),
             "DATE '2017-01-01'",
             dt.date,
-            'FORMAT_DATE',
+            "FORMAT_DATE",
         ),
         (
-            pd.Timestamp('2017-01-01'),
+            pd.Timestamp("2017-01-01"),
             "DATE '2017-01-01'",
             dt.date,
-            'FORMAT_DATE',
+            "FORMAT_DATE",
         ),
-        ('2017-01-01', "DATE '2017-01-01'", dt.date, 'FORMAT_DATE',),
+        (
+            "2017-01-01",
+            "DATE '2017-01-01'",
+            dt.date,
+            "FORMAT_DATE",
+        ),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
-            'FORMAT_TIMESTAMP',
+            "FORMAT_TIMESTAMP",
         ),
         (
-            '2017-01-01 04:55:59',
+            "2017-01-01 04:55:59",
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
-            'FORMAT_TIMESTAMP',
+            "FORMAT_TIMESTAMP",
         ),
         (
-            pd.Timestamp('2017-01-01 04:55:59'),
+            pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
-            'FORMAT_TIMESTAMP',
+            "FORMAT_TIMESTAMP",
         ),
     ],
 )
@@ -161,24 +169,18 @@ def test_day_of_week(case, expected, dtype, strftime_func):
     date_var = ibis.literal(case, type=dtype)
     expr_index = date_var.day_of_week.index()
     result = cs_compile.compile(expr_index)
-    assert (
-        result
-        == f"SELECT MOD(EXTRACT(DAYOFWEEK FROM {expected}) + 5, 7) AS `tmp`"
-    )
+    assert result == f"SELECT MOD(EXTRACT(DAYOFWEEK FROM {expected}) + 5, 7) AS `tmp`"
 
     expr_name = date_var.day_of_week.full_name()
     result = cs_compile.compile(expr_name)
-    if strftime_func == 'FORMAT_TIMESTAMP':
-        assert (
-            result
-            == f"SELECT {strftime_func}('%A', {expected}, 'UTC') AS `tmp`"
-        )
+    if strftime_func == "FORMAT_TIMESTAMP":
+        assert result == f"SELECT {strftime_func}('%A', {expected}, 'UTC') AS `tmp`"
     else:
         assert result == f"SELECT {strftime_func}('%A', {expected}) AS `tmp`"
 
 
 @pytest.mark.parametrize(
-    ('case', 'expected', 'dtype'),
+    ("case", "expected", "dtype"),
     [
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
@@ -186,17 +188,17 @@ def test_day_of_week(case, expected, dtype, strftime_func):
             dt.timestamp,
         ),
         (
-            '2017-01-01 04:55:59',
+            "2017-01-01 04:55:59",
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
         (
-            pd.Timestamp('2017-01-01 04:55:59'),
+            pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
         (datetime.time(4, 55, 59), "TIME '04:55:59'", dt.time),
-        ('04:55:59', "TIME '04:55:59'", dt.time),
+        ("04:55:59", "TIME '04:55:59'", dt.time),
     ],
 )
 def test_literal_timestamp_or_time(case, expected, dtype):
@@ -208,7 +210,7 @@ def test_literal_timestamp_or_time(case, expected, dtype):
 def test_window_function(alltypes):
     t = alltypes
     w1 = ibis.window(
-        preceding=1, following=0, group_by='year', order_by='timestamp_col'
+        preceding=1, following=0, group_by="year", order_by="timestamp_col"
     )
     expr = t.mutate(win_avg=t.float_col.mean().over(w1))
     result = cs_compile.compile(expr)
@@ -219,7 +221,7 @@ FROM functional_alltypes"""  # noqa: E501
     assert result == expected
 
     w2 = ibis.window(
-        preceding=0, following=2, group_by='year', order_by='timestamp_col'
+        preceding=0, following=2, group_by="year", order_by="timestamp_col"
     )
     expr = t.mutate(win_avg=t.float_col.mean().over(w2))
     result = cs_compile.compile(expr)
@@ -229,9 +231,7 @@ SELECT *,
 FROM functional_alltypes"""  # noqa: E501
     assert result == expected
 
-    w3 = ibis.window(
-        preceding=(4, 2), group_by='year', order_by='timestamp_col'
-    )
+    w3 = ibis.window(preceding=(4, 2), group_by="year", order_by="timestamp_col")
     expr = t.mutate(win_avg=t.float_col.mean().over(w3))
     result = cs_compile.compile(expr)
     expected = f"""\
@@ -243,9 +243,7 @@ FROM functional_alltypes"""  # noqa: E501
 
 def test_range_window_function(alltypes):
     t = alltypes
-    w = ibis.range_window(
-        preceding=1, following=0, group_by='year', order_by='month'
-    )
+    w = ibis.range_window(preceding=1, following=0, group_by="year", order_by="month")
     expr = t.mutate(two_month_avg=t.float_col.mean().over(w))
     result = cs_compile.compile(expr)
     expected = f"""\
@@ -254,9 +252,7 @@ SELECT *,
 FROM functional_alltypes"""  # noqa: E501
     assert result == expected
 
-    w3 = ibis.range_window(
-        preceding=(4, 2), group_by='year', order_by='timestamp_col'
-    )
+    w3 = ibis.range_window(preceding=(4, 2), group_by="year", order_by="timestamp_col")
     expr = t.mutate(win_avg=t.float_col.mean().over(w3))
     result = cs_compile.compile(expr)
     expected = f"""\
@@ -267,7 +263,7 @@ FROM functional_alltypes"""  # noqa: E501
 
 
 @pytest.mark.parametrize(
-    ('preceding', 'value'),
+    ("preceding", "value"),
     [
         (5, 5),
         (ibis.interval(nanoseconds=1), 0.001),
@@ -282,9 +278,7 @@ FROM functional_alltypes"""  # noqa: E501
 )
 def test_trailing_range_window(alltypes, preceding, value):
     t = alltypes
-    w = ibis.trailing_range_window(
-        preceding=preceding, order_by=t.timestamp_col
-    )
+    w = ibis.trailing_range_window(preceding=preceding, order_by=t.timestamp_col)
     expr = t.mutate(win_avg=t.float_col.mean().over(w))
     result = cs_compile.compile(expr)
     expected = f"""\
@@ -294,38 +288,30 @@ FROM functional_alltypes"""  # noqa: E501
     assert result == expected
 
 
-@pytest.mark.parametrize(
-    ('preceding', 'value'), [(ibis.interval(years=1), None)]
-)
+@pytest.mark.parametrize(("preceding", "value"), [(ibis.interval(years=1), None)])
 def test_trailing_range_window_unsupported(alltypes, preceding, value):
     t = alltypes
-    w = ibis.trailing_range_window(
-        preceding=preceding, order_by=t.timestamp_col
-    )
+    w = ibis.trailing_range_window(preceding=preceding, order_by=t.timestamp_col)
     expr = t.mutate(win_avg=t.float_col.mean().over(w))
     with pytest.raises(ValueError):
         cs_compile.compile(expr)
 
 
 @pytest.mark.parametrize(
-    ('distinct1', 'distinct2', 'expected1', 'expected2'),
+    ("distinct1", "distinct2", "expected1", "expected2"),
     [
-        (True, True, 'UNION DISTINCT', 'UNION DISTINCT'),
-        (True, False, 'UNION DISTINCT', 'UNION ALL'),
-        (False, True, 'UNION ALL', 'UNION DISTINCT'),
-        (False, False, 'UNION ALL', 'UNION ALL'),
+        (True, True, "UNION DISTINCT", "UNION DISTINCT"),
+        (True, False, "UNION DISTINCT", "UNION ALL"),
+        (False, True, "UNION ALL", "UNION DISTINCT"),
+        (False, False, "UNION ALL", "UNION ALL"),
     ],
 )
-def test_union_cte(
-    alltypes, distinct1, distinct2, expected1, expected2
-):
+def test_union_cte(alltypes, distinct1, distinct2, expected1, expected2):
     t = alltypes
     expr1 = t.group_by(t.string_col).aggregate(metric=t.double_col.sum())
     expr2 = expr1.view()
     expr3 = expr1.view()
-    expr = expr1.union(expr2, distinct=distinct1).union(
-        expr3, distinct=distinct2
-    )
+    expr = expr1.union(expr2, distinct=distinct1).union(expr3, distinct=distinct2)
     result = cs_compile.compile(expr)
     expected = f"""\
 WITH t0 AS (
@@ -348,14 +334,14 @@ GROUP BY 1"""
 
 def test_projection_fusion_only_peeks_at_immediate_parent():
     schema = [
-        ('file_date', 'timestamp'),
-        ('PARTITIONTIME', 'date'),
-        ('val', 'int64'),
+        ("file_date", "timestamp"),
+        ("PARTITIONTIME", "date"),
+        ("val", "int64"),
     ]
-    table = ibis.table(schema, name='unbound_table')
-    table = table[table.PARTITIONTIME < ibis.date('2017-01-01')]
-    table = table.mutate(file_date=table.file_date.cast('date'))
-    table = table[table.file_date < ibis.date('2017-01-01')]
+    table = ibis.table(schema, name="unbound_table")
+    table = table[table.PARTITIONTIME < ibis.date("2017-01-01")]
+    table = table.mutate(file_date=table.file_date.cast("date"))
+    table = table[table.file_date < ibis.date("2017-01-01")]
     table = table.mutate(XYZ=table.val * 2)
     expr = table.join(table.view())[table]
     result = cs_compile.compile(expr)
@@ -510,7 +496,7 @@ SELECT
 FROM functional_alltypes"""
     assert result == expected
 
-    expr = d.cov(d, how='pop')
+    expr = d.cov(d, how="pop")
     result = cs_compile.compile(expr)
     expected = f"""\
 SELECT
@@ -564,32 +550,32 @@ FROM functional_alltypes"""
 
 
 @pytest.mark.parametrize(
-    ('unit', 'expected_unit', 'expected_func'),
+    ("unit", "expected_unit", "expected_func"),
     [
-        ('Y', 'YEAR', 'TIMESTAMP'),
-        ('Q', 'QUARTER', 'TIMESTAMP'),
-        ('M', 'MONTH', 'TIMESTAMP'),
-        ('W', 'WEEK', 'TIMESTAMP'),
-        ('D', 'DAY', 'TIMESTAMP'),
-        ('h', 'HOUR', 'TIMESTAMP'),
-        ('m', 'MINUTE', 'TIMESTAMP'),
-        ('s', 'SECOND', 'TIMESTAMP'),
-        ('ms', 'MILLISECOND', 'TIMESTAMP'),
-        ('us', 'MICROSECOND', 'TIMESTAMP'),
-        ('Y', 'YEAR', 'DATE'),
-        ('Q', 'QUARTER', 'DATE'),
-        ('M', 'MONTH', 'DATE'),
-        ('W', 'WEEK', 'DATE'),
-        ('D', 'DAY', 'DATE'),
-        ('h', 'HOUR', 'TIME'),
-        ('m', 'MINUTE', 'TIME'),
-        ('s', 'SECOND', 'TIME'),
-        ('ms', 'MILLISECOND', 'TIME'),
-        ('us', 'MICROSECOND', 'TIME'),
+        ("Y", "YEAR", "TIMESTAMP"),
+        ("Q", "QUARTER", "TIMESTAMP"),
+        ("M", "MONTH", "TIMESTAMP"),
+        ("W", "WEEK", "TIMESTAMP"),
+        ("D", "DAY", "TIMESTAMP"),
+        ("h", "HOUR", "TIMESTAMP"),
+        ("m", "MINUTE", "TIMESTAMP"),
+        ("s", "SECOND", "TIMESTAMP"),
+        ("ms", "MILLISECOND", "TIMESTAMP"),
+        ("us", "MICROSECOND", "TIMESTAMP"),
+        ("Y", "YEAR", "DATE"),
+        ("Q", "QUARTER", "DATE"),
+        ("M", "MONTH", "DATE"),
+        ("W", "WEEK", "DATE"),
+        ("D", "DAY", "DATE"),
+        ("h", "HOUR", "TIME"),
+        ("m", "MINUTE", "TIME"),
+        ("s", "SECOND", "TIME"),
+        ("ms", "MILLISECOND", "TIME"),
+        ("us", "MICROSECOND", "TIME"),
     ],
 )
 def test_temporal_truncate(unit, expected_unit, expected_func):
-    t = ibis.table([('a', getattr(dt, expected_func.lower()))], name='t')
+    t = ibis.table([("a", getattr(dt, expected_func.lower()))], name="t")
     expr = t.a.truncate(unit)
     result = cs_compile.compile(expr)
     expected = f"""\
@@ -598,9 +584,9 @@ FROM t"""
     assert result == expected
 
 
-@pytest.mark.parametrize('kind', ['date', 'time'])
+@pytest.mark.parametrize("kind", ["date", "time"])
 def test_extract_temporal_from_timestamp(kind):
-    t = ibis.table([('ts', dt.timestamp)], name='t')
+    t = ibis.table([("ts", dt.timestamp)], name="t")
     expr = getattr(t.ts, kind)()
     result = cs_compile.compile(expr)
     expected = f"""\
@@ -612,14 +598,14 @@ FROM t"""
 def test_now():
     expr = ibis.now()
     result = cs_compile.compile(expr)
-    expected = 'SELECT CURRENT_TIMESTAMP() AS `tmp`'
+    expected = "SELECT CURRENT_TIMESTAMP() AS `tmp`"
     assert result == expected
 
 
 def test_bucket():
-    t = ibis.table([('value', 'double')], name='t')
+    t = ibis.table([("value", "double")], name="t")
     buckets = [0, 1, 3]
-    expr = t.value.bucket(buckets).name('foo')
+    expr = t.value.bucket(buckets).name("foo")
     result = cs_compile.compile(expr)
     expected = """\
 SELECT
@@ -633,14 +619,14 @@ FROM t"""
 
 
 @pytest.mark.parametrize(
-    ('kind', 'begin', 'end', 'expected'),
+    ("kind", "begin", "end", "expected"),
     [
-        ('preceding', None, 1, 'UNBOUNDED PRECEDING AND 1 PRECEDING'),
-        ('following', 1, None, '1 FOLLOWING AND UNBOUNDED FOLLOWING'),
+        ("preceding", None, 1, "UNBOUNDED PRECEDING AND 1 PRECEDING"),
+        ("following", 1, None, "1 FOLLOWING AND UNBOUNDED FOLLOWING"),
     ],
 )
 def test_window_unbounded(kind, begin, end, expected):
-    t = ibis.table([('a', 'int64')], name='t')
+    t = ibis.table([("a", "int64")], name="t")
     kwargs = {kind: (begin, end)}
     expr = t.a.sum().over(ibis.window(**kwargs))
     result = cs_compile.compile(expr)
@@ -665,11 +651,9 @@ def test_large_compile():
             pass
 
     names = [f"col_{i}" for i in range(num_columns)]
-    schema = ibis.Schema(names, ['string'] * num_columns)
+    schema = ibis.Schema(names, ["string"] * num_columns)
     ibis_client = MockCloudSpannerClient()
-    table = TableExpr(
-        ops.SQLQueryResult("select * from t", schema, ibis_client)
-    )
+    table = TableExpr(ops.SQLQueryResult("select * from t", schema, ibis_client))
     for _ in range(num_joins):
         table = table.mutate(dummy=ibis.literal(""))
         table = table.left_join(table, ["dummy"])[[table]]
@@ -678,4 +662,3 @@ def test_large_compile():
     cs_compile.compile(table)
     delta = datetime.datetime.now() - start
     assert delta.total_seconds() < 10
-

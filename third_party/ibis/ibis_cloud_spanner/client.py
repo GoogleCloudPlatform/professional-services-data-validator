@@ -15,41 +15,37 @@
 """Cloud Spanner ibis client implementation."""
 
 import datetime
-from collections import OrderedDict
 from typing import Optional, Tuple
 
 import google.cloud.spanner as cs
 from google.cloud import spanner
 import pandas as pd
-import regex as re
-from google.api_core.exceptions import NotFound
+import re
 from multipledispatch import Dispatcher
-from pkg_resources import parse_version
 
 import ibis
 import ibis.common.exceptions as com
 import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
-import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from third_party.ibis.ibis_cloud_spanner import compiler as comp
-from third_party.ibis.ibis_cloud_spanner.datatypes import ibis_type_to_cloud_spanner_type
+from third_party.ibis.ibis_cloud_spanner.datatypes import (
+    ibis_type_to_cloud_spanner_type,
+)
 from ibis.client import Database, Query, SQLClient
-from third_party.ibis.ibis_cloud_spanner import dataset as dataset_class
+
 from third_party.ibis.ibis_cloud_spanner import table
 
-from google.cloud import spanner
-from google.cloud import spanner
-from pandas import DataFrame
-from third_party.ibis.ibis_cloud_spanner.to_pandas  import pandas_df
+from google.cloud.spanner_v1 import TypeCode
+from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
 
 
 def parse_instance_and_dataset(
     instance: str, dataset: Optional[str] = None
 ) -> Tuple[str, str, Optional[str]]:
     try:
-        data_instance, dataset = dataset.split('.')
+        data_instance, dataset = dataset.split(".")
     except (ValueError, AttributeError):
         billing_instance = data_instance = instance
     else:
@@ -57,8 +53,10 @@ def parse_instance_and_dataset(
 
     return data_instance, billing_instance, dataset
 
+
 class CloudSpannerTable(ops.DatabaseTable):
     pass
+
 
 def _find_scalar_parameter(expr):
     """Find all :class:`~ibis.expr.types.ScalarParameter` instances.
@@ -81,23 +79,25 @@ def _find_scalar_parameter(expr):
         result = None
     return lin.proceed, result
 
+
 def convert_to_cs_type(dtype):
-    if (dtype == 'FLOAT64'):
+    if dtype == "FLOAT64":
         return spanner.param_types.FLOAT64
-    elif (dtype == 'INT64'):
+    elif dtype == "INT64":
         return spanner.param_types.INT64
-    elif (dtype == 'DATE'):
+    elif dtype == "DATE":
         return spanner.param_types.DATE
-    elif (dtype == 'TIMESTAMP'):
+    elif dtype == "TIMESTAMP":
         return spanner.param_types.TIMESTAMP
-    elif (dtype == 'NUMERIC'):
+    elif dtype == "NUMERIC":
         return spanner.param_types.NUMERIC
-    elif (dtype == 'INT64'):
+    elif dtype == "INT64":
         return spanner.param_types.INT64
     else:
         return spanner.param_types.STRING
 
-cloud_spanner_param = Dispatcher('cloud_spanner_param')
+
+cloud_spanner_param = Dispatcher("cloud_spanner_param")
 
 
 @cloud_spanner_param.register(ir.ArrayValue, list)
@@ -111,18 +111,15 @@ def cs_param_array(param, value):
         raise com.UnsupportedBackendType(param_type)
     else:
         if isinstance(param_type.value_type, dt.Struct):
-            raise TypeError('ARRAY<STRUCT<T>> is not supported in Cloud Spanner')
+            raise TypeError("ARRAY<STRUCT<T>> is not supported in Cloud Spanner")
         elif isinstance(param_type.value_type, dt.Array):
-            raise TypeError('ARRAY<ARRAY<T>> is not supported in Cloud Spanner')
+            raise TypeError("ARRAY<ARRAY<T>> is not supported in Cloud Spanner")
         else:
             query_value = value
 
-        params={param.get_name(): query_value},
-        param_types={param.get_name(): convert_to_cs_type(spanner_type)}
-        final_dict={
-        'params':params,
-        'param_types':param_types
-        }
+        params = ({param.get_name(): query_value},)
+        param_types = {param.get_name(): convert_to_cs_type(spanner_type)}
+        final_dict = {"params": params, "param_types": param_types}
 
         return final_dict
 
@@ -133,102 +130,66 @@ def cs_param_array(param, value):
 def cs_param_timestamp(param, value):
     assert isinstance(param.type(), dt.Timestamp), str(param.type())
 
-    timestamp_value = pd.Timestamp(value, tz='UTC').to_pydatetime()
-    params={param.get_name(): timestamp_value},
-    param_types={param.get_name(): spanner.param_types.TIMESTAMP}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    timestamp_value = pd.Timestamp(value, tz="UTC").to_pydatetime()
+    params = ({param.get_name(): timestamp_value},)
+    param_types = {param.get_name(): spanner.param_types.TIMESTAMP}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
 
 
 @cloud_spanner_param.register(ir.StringScalar, str)
 def cs_param_string(param, value):
-    params={param.get_name(): value},
-    param_types={param.get_name(): spanner.param_types.STRING}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    params = ({param.get_name(): value},)
+    param_types = {param.get_name(): spanner.param_types.STRING}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
-
 
 
 @cloud_spanner_param.register(ir.IntegerScalar, int)
 def cs_param_integer(param, value):
-    params={param.get_name(): value},
-    param_types={param.get_name(): spanner.param_types.INT64}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    params = ({param.get_name(): value},)
+    param_types = {param.get_name(): spanner.param_types.INT64}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
-
 
 
 @cloud_spanner_param.register(ir.FloatingScalar, float)
 def cs_param_double(param, value):
-    params={param.get_name(): value},
-    param_types={param.get_name(): spanner.param_types.FLOAT64}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    params = ({param.get_name(): value},)
+    param_types = {param.get_name(): spanner.param_types.FLOAT64}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
 
 
 @cloud_spanner_param.register(ir.BooleanScalar, bool)
 def cs_param_boolean(param, value):
-    params={param.get_name(): value},
-    param_types={param.get_name(): spanner.param_types.BOOL}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    params = ({param.get_name(): value},)
+    param_types = {param.get_name(): spanner.param_types.BOOL}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
-
-
 
 
 @cloud_spanner_param.register(ir.DateScalar, str)
 def cs_param_date_string(param, value):
-    params={param.get_name(): pd.Timestamp(value).to_pydatetime().date()},
-    param_types={param.get_name(): spanner.param_types.DATE}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    params = ({param.get_name(): pd.Timestamp(value).to_pydatetime().date()},)
+    param_types = {param.get_name(): spanner.param_types.DATE}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
 
 
 @cloud_spanner_param.register(ir.DateScalar, datetime.datetime)
 def cs_param_date_datetime(param, value):
-    params={param.get_name(): value.date()},
-    param_types={param.get_name(): spanner.param_types.DATE}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    params = ({param.get_name(): value.date()},)
+    param_types = {param.get_name(): spanner.param_types.DATE}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
 
 
 @cloud_spanner_param.register(ir.DateScalar, datetime.date)
 def cs_param_date(param, value):
-    params={param.get_name(): value},
-    param_types={param.get_name(): spanner.param_types.DATE}
-    final_dict={
-        'params':params[0],
-        'param_types':param_types
-
-    }
+    params = ({param.get_name(): value},)
+    param_types = {param.get_name(): spanner.param_types.DATE}
+    final_dict = {"params": params[0], "param_types": param_types}
     return final_dict
 
 
@@ -237,9 +198,7 @@ class CloudSpannerQuery(Query):
         super().__init__(client, ddl)
 
         # self.expr comes from the parent class
-        query_parameter_names = dict(
-            lin.traverse(_find_scalar_parameter, self.expr)
-        )
+        query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
 
         self.query_parameters = [
             cloud_spanner_param(
@@ -248,14 +207,16 @@ class CloudSpannerQuery(Query):
             for param, value in (query_parameters or {}).items()
         ]
 
-
     def execute(self):
-        dataframe_output = self.client._execute(self.compiled_sql,results=True,query_parameters=self.query_parameters) 
+        dataframe_output = self.client._execute(
+            self.compiled_sql, results=True, query_parameters=self.query_parameters
+        )
 
         return dataframe_output
 
+
 class CloudSpannerDatabase(Database):
-    """A Cloud scanner dataset.""" 
+    """A Cloud scanner dataset."""
 
 
 class CloudSpannerClient(SQLClient):
@@ -287,17 +248,15 @@ class CloudSpannerClient(SQLClient):
         ) = parse_instance_and_dataset(instance_id, database_id)
         self.client = cs.Client()
 
-
-    
     def _parse_instance_and_dataset(self, dataset):
         if not dataset and not self.dataset:
             raise ValueError("Unable to determine Cloud Spanner dataset.")
         instance, _, dataset = parse_instance_and_dataset(
             self.billing_instance,
-            dataset or '{}.{}'.format(self.data_instance, self.dataset),
+            dataset or "{}.{}".format(self.data_instance, self.dataset),
         )
         return instance, dataset
-     
+
     def get_data_using_query(self, query, results=False):
         return self._execute(query, results=results)
 
@@ -309,14 +268,8 @@ class CloudSpannerClient(SQLClient):
     def dataset_id(self):
         return self.dataset
 
-    def table(self,name,database=None):
+    def table(self, name, database=None):
         t = super().table(name, database=database)
-        name = t.op().name
-        instance = self.instance_id
-        dataset = self.dataset_id
-        dataset_ref = dataset_class.DatasetReference(instance,dataset)
-        table_ref = dataset_ref.table(name)
-        cs_table = table.Table(table_ref)
         return t
 
     def _build_ast(self, expr, context):
@@ -338,26 +291,24 @@ class CloudSpannerClient(SQLClient):
 
     @property
     def current_database(self):
-        return self.database(self.dataset)    
-        
+        return self.database(self.dataset)
+
     def list_databases(self, like=None):
-        databases=self.instance.list_databases()
-        list_db=[]
+        databases = self.instance.list_databases()
+        list_db = []
         for row in databases:
-            list_db.append((row.name).rsplit('/', 1)[1])
+            list_db.append((row.name).rsplit("/", 1)[1])
         return list_db
 
-
-
-    def list_tables(self,like=None,database=None):
+    def list_tables(self, like=None, database=None):
         if database is None:
             db_value = self.dataset_id
         else:
             db_value = database
         db = self.instance.database(db_value)
-        tables=[]
+        tables = []
         with db.snapshot() as snapshot:
-            query="SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES where SPANNER_STATE = 'COMMITTED' "
+            query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES where SPANNER_STATE = 'COMMITTED' "
             results = snapshot.execute_sql(query)
             for row in results:
                 tables.append(row[0])
@@ -377,27 +328,42 @@ class CloudSpannerClient(SQLClient):
             db_value = database
         db = self.instance.database(db_value)
         with db.snapshot() as snapshot:
-            query = "SELECT EXISTS(SELECT * FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = '{}' )".format(name)
+            query = "SELECT EXISTS(SELECT * FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = '{}' )".format(
+                name
+            )
             output = snapshot.execute_sql(query)
-            result = ''
+            result = ""
             for row in output:
                 result = row[0]
         return result
 
-
-    def get_schema(self, name, database=None):
+    def get_schema(self, table_id, database=None):
         if database is None:
             database = self.dataset_id
-        instance, dataset = self._parse_instance_and_dataset(database)
-        dataset_ref = dataset_class.DatasetReference(instance,dataset)
-        table_ref = dataset_ref.table(name)
-        cs_table = table.Table(table_ref).schema
-        return (ibis.schema(cs_table))
+        db_value = self.instance.database(database)
+        table_schema = table.Table(table_id, db_value).schema
 
+        t_schema = []
+        for item in table_schema:
+            field_name = item.name
+
+            if item.type_.code == TypeCode.ARRAY:
+                field_type = "array<{}>".format(item.type_.array_element_type.code.name)
+            elif item.type_.code == TypeCode.BYTES:
+                field_type = "binary"
+            elif item.type_.code == TypeCode.NUMERIC:
+                field_type = "decimal"
+            else:
+                field_type = item.type_.code.name
+
+            final_item = (field_name, field_type)
+
+            t_schema.append(final_item)
+
+        return ibis.schema(t_schema)
 
     def _execute(self, stmt, results=True, query_parameters=None):
 
-        from google.cloud import spanner
         spanner_client = spanner.Client()
         instance_id = self.instance_id
         instance = spanner_client.instance(instance_id)
@@ -405,10 +371,8 @@ class CloudSpannerClient(SQLClient):
         database_1 = instance.database(database_id)
 
         with database_1.snapshot() as snapshot:
-            data_qry = pandas_df.to_pandas(snapshot,stmt,query_parameters)
+            data_qry = pandas_df.to_pandas(snapshot, stmt, query_parameters)
         return data_qry
-
-
 
     def database(self, name=None):
         if name is None and self.dataset is None:
@@ -422,17 +386,10 @@ class CloudSpannerClient(SQLClient):
     def set_database(self, name):
         self.data_instance, self.dataset = self._parse_instance_and_dataset(name)
 
-    def dataset(self,database):
+    def dataset(self, database):
+        spanner_client = spanner.Client()
         instance = spanner_client.instance(self.data_instance)
         database = instance.database(database)
 
-
     def exists_database(self, name):
         return self.instance.database(name).exists()
-
-
-    
-
-
-
-

@@ -12,53 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
-from functools import partial
-
-import numpy as np
-import regex as re
-import toolz
-from multipledispatch import Dispatcher
-
-import ibis
-import ibis.common.exceptions as com
-import ibis.expr.datatypes as dt
-import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
-import ibis.expr.types as ir
-import ibis.sql.compiler as comp
 from ibis.bigquery import compiler as bigquery_compiler
-
-
 
 
 def build_ast(expr, context):
     builder = bigquery_compiler.BigQueryQueryBuilder(expr, context=context)
     return builder.get_result()
 
+
 def to_sql(expr, context):
     query_ast = build_ast(expr, context)
     compiled = query_ast.compile()
     return compiled
 
+
 def _array_index(translator, expr):
     # SAFE_OFFSET returns NULL if out of bounds
-    return '{}[OFFSET({})]'.format(
-        *map(translator.translate, expr.op().args)
-    )
-		
-def _translate_pattern(translator, pattern):	
-    # add 'r' to string literals to indicate to Cloud Spanner this is a raw string	
-    return 'r' * isinstance(pattern.op(), ops.Literal) + translator.translate(	
-        pattern	
-    )	
+    return "{}[OFFSET({})]".format(*map(translator.translate, expr.op().args))
+
+
+def _translate_pattern(translator, pattern):
+    # add 'r' to string literals to indicate to Cloud Spanner this is a raw string
+    return "r" * isinstance(pattern.op(), ops.Literal) + translator.translate(pattern)
+
 
 def _regex_extract(translator, expr):
     arg, pattern, index = expr.op().args
     regex = _translate_pattern(translator, pattern)
-    result = 'REGEXP_EXTRACT({}, {})'.format(
-        translator.translate(arg), regex
-    )
+    result = "REGEXP_EXTRACT({}, {})".format(translator.translate(arg), regex)
     return result
 
 
@@ -76,7 +58,3 @@ rewrites = bigquery_compiler.BigQueryExprTranslator.rewrites
 
 
 dialect = bigquery_compiler.BigQueryDialect
-
-
-
-

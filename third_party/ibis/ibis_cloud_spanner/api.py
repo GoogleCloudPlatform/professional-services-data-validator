@@ -13,29 +13,16 @@
 # limitations under the License.
 
 
-
 """CloudScanner public API."""
 
 
 from third_party.ibis.ibis_cloud_spanner.client import CloudSpannerClient
 from third_party.ibis.ibis_cloud_spanner.compiler import dialect
-from ibis.config import options 
-from typing import Optional 
 
 import google.cloud.spanner  # noqa: F401, fail early if spanner is missing
 import ibis.common.exceptions as com
-import pydata_google_auth
 
-
-
-
-
-__all__ = ('compile', 'connect', 'verify', ''
-                                           ''
-                                           ''
-                                           ''
-                                           ''
-                                           '')
+__all__ = ("compile", "connect", "verify")
 
 
 def compile(expr, params=None):
@@ -64,12 +51,9 @@ def verify(expr, params=None):
         return False
 
 
-
-
 def connect(
-    instance_id: Optional[str] = None,
-    database_id: Optional[str] = None,
-    
+    instance_id,
+    database_id,
 ) -> CloudSpannerClient:
     """Create a CloudSpannerClient for use with Ibis.
 
@@ -78,8 +62,7 @@ def connect(
     instance_id : str
         A Cloud Spanner Instance id.
     database_id : str
-        A database id that lives inside of the Cloud Spanner Instance indicated by
-        `instance_id`.
+        A database id inside of the Cloud Spanner Instance
 
     Returns
     -------
@@ -87,7 +70,4 @@ def connect(
 
     """
 
-    return CloudSpannerClient(
-        instance_id=instance_id, database_id=database_id
-    )
-
+    return CloudSpannerClient(instance_id=instance_id, database_id=database_id)
