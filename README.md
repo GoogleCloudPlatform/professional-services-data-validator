@@ -10,7 +10,7 @@ The goal of this tool is to allow easy comparison and validation between differe
 The [Installation](docs/installation.md) page describes the prerequisites and setup steps needed to install and use the data validation tool.
 
 ## Usage
-In order to run validations using this tool a user needs to create connections to the source and target. Once the connections are created, the tool can run validations on those connections. To store data validation results in BigQuery, results handler should be configured as mentioned in the section below.
+Before using this tool, you will need to create connections to the source and target tables. Once the connections are created, you can run validations on those tables. Validation results can be printed to stdout (default) or outputted to BigQuery. The validation tool also allows you to save or edit validation configurations in a YAML file. This is useful for running common validations or updating the configuration.
 
 ### Connections
 The [Connections](docs/connections.md) page provides details about how to create and list connections for the validation tool.
