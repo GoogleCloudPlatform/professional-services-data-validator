@@ -471,4 +471,4 @@ def test_large_compile():
     start = datetime.datetime.now()
     cs_compile.compile(table)
     delta = datetime.datetime.now() - start
-    assert delta.total_seconds() < 10
+    assert delta.total_seconds() < 60
