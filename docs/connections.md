@@ -1,14 +1,14 @@
 You will need to create connections before running any validations with the data validation tool. The tool allows users to 
-create these connections using CLI. 
+create these connections using the CLI. 
 
-These connections will be saved either to `~/.config/google-pso-data-validator/` or 
+These connections will automatically be saved either to `~/.config/google-pso-data-validator/` or 
 a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
 
-Below commands can be used to create these connections:
+These commands can be used to create connections:
 
 #### Command template to create a connection:
 ```
-data-validation connections add --connection-name my-conn-name
+data-validation connections add --connection-name my-conn-name source_type 
 ```
 
 #### Create a sample BigQuery connection:
@@ -27,9 +27,10 @@ data-validation connections add --connection-name MY-TD-CONNECTION Teradata --ho
 data-validation connections list
 ````
 
-As you see above, Teradata and BigQuery has a different set of custom arguments(for example project_id for BQ vs host for Teradata). 
+As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).  
 
-Every source type requires its own configuration for connectivity.  Below is an example of the expected configuration for each source type.
+Every source type requires its own configuration for connectivity.  Below is the expected configuration for each source type.
+Every source type requires its own configuration for connectivity.  Below is the expected configuration for each source type.
 
 ##### BigQuery
 ```

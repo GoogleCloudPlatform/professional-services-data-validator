@@ -1,5 +1,5 @@
 # Data Validation Tooling
-The goal of this tool is to allow easy comparison and validation between different tables.  The repository supports several types of comparison:
+The goal of Data Validation Tool is to allow easy comparison and validation between different tables.  This Python CLI tool supports several types of comparison:
 
     - Count Validation: Total counts and other aggregates match between source and destination
     - Partitioned Count: Partitioned counts and other aggregations between source and destination
@@ -7,7 +7,7 @@ The goal of this tool is to allow easy comparison and validation between differe
     - Filters: Count or Partitioned Count WHERE FILTER_CONDITION
 
 ## Installation
-The [Installation](docs/installation.md) page describes the prerequisites and setup steps needed to install and use the data validation tool.
+The [installation](docs/installation.md) page describes the prerequisites and setup steps needed to install and use the data validation tool.
 
 ## Usage
 Before using this tool, you will need to create connections to the source and target tables. Once the connections are created, you can run validations on those tables. Validation results can be printed to stdout (default) or outputted to BigQuery. The validation tool also allows you to save or edit validation configurations in a YAML file. This is useful for running common validations or updating the configuration.
@@ -17,8 +17,48 @@ The [Connections](docs/connections.md) page provides details about how to create
 
 ### Running CLI Validations
 
+The data validation CLI is a main interface to use this tool.
+
 The CLI has several different commands which can be used to create and re-run validations.
-The [Validation CLI](docs/validation_cli.md) page provides many examples of how a tool can used to run powerful validations without writing any queries.
+
+The validation tool first expects connections to be created before running validations. To create connections please review the [Connections](connections.md) page.
+
+Once you have your connections set up, you are ready to run the validations.
+
+### Validation command syntax and options
+
+```
+data-validation run
+  --type TYPE, -t TYPE  Type of Data Validation (Column, GroupedColumn)
+  --source-conn SOURCE_CONN, -sc SOURCE_CONN
+                        Source connection details.
+                        See: *Data Source Configurations* section for each data source
+  --target-conn TARGET_CONN, -tc TARGET_CONN
+                        Target connection details
+                        See: *Data Source Configurations* section for each data source
+  --tables-list TABLES, -tbls TABLES 
+                        JSON List of tables 
+                        '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips","target_table_name":"citibike_trips"}]'
+  --grouped-columns GROUPED_COLUMNS, -gc GROUPED_COLUMNS
+                        JSON List of columns to use in group by '["col_a"]'
+                        (Optional) Only used in GroupedColumn type validations
+  --count COUNT         JSON List of columns count '["col_a"]' or * for all columns
+  --sum SUM             JSON List of columns sum '["col_a"]' or * for all numeric
+  --min MIN             JSON List of columns min '[\"col_a\"]' or * for all numeric
+  --max MAX             JSON List of columns max '[\"col_a\"]' or * for all numeric
+  --avg AVG             JSON List of columns avg '[\"col_a\"]' or * for all numeric
+  --result-handler-config RESULT_HANDLER_CONFIG, -rc RESULT_HANDLER_CONFIG
+                        (Optional) JSON Result handler config details. Defaults to stdout
+                        See: *Validation Reports* section
+  --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
+  --config-file CONFIG_FILE, -c CONFIG_FILE
+                        YAML Config File Path to be used for storing validations.
+  --labels KEY=VALUE, -l KEY1=VALUE1,KEY2=VALUE2
+                        (Optional) Comma-separated key value pair labels for the run.
+  --verbose, -v         Verbose logging will print queries executed
+```
+
+The [Examples](docs/examples.md) page provides many examples of how a tool can used to run powerful validations without writing any queries.
 
 
 ### Running Custom SQL Exploration
@@ -33,14 +73,14 @@ data-validation query
 
 ## Query Configurations
 
-It is possible to customize the configuration for a given validation.  The CLI expects that you are trying to compare two identical tables; however, you can customize each query (source or target) either by running the validation with a custom configuration in Python or editing a saved YAML configuration file.
+You can customize the configuration for any given validation by providing use case specific CLI arguments or editing the saved YAML configuration file.
 
-For Example following command creates YAML file for the validation of new_york_citibike table
+For example, the following command creates a YAML file for the validation of  the `new_york_citibike` table.
 ```
 data-validation run -t Column -sc bq -tc bq -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' -c citibike.yaml
 ```
 
-Following is the layout of the YAML file:
+Here is the generated YAML file named `citibike.yaml`:
 ```
 result_handler: {}
 source: bq
@@ -61,7 +101,7 @@ validations:
 
 ```
 
-User can change above YAML file if new_york_citibike table is stored in datasets that have different names in the source and target systems. Once the file is changed and stored, following command executes the configuration stored in a file:
+You can now edit the YAML file if, for example, the `new_york_citibike` table is stored in datasets that have different names in the source and target systems. Once the file is updated and saved, the following command runs the new validation:
 ```
 data-validation run-config -c citibike.yaml
 ```
@@ -116,27 +156,12 @@ If you want to add an Ibis Data Source which exists, but was not yet supported i
     - Import the extened Client for the given source (ie. from ibis.sql.mysql.client import MySQLClient).
     - Add the "<RefName>": Client to the global CLIENT_LOOKUP dictionary.
 
-2. In third_partty/ibis/ibis_addon/operations.py
+2. In third_party/ibis/ibis_addon/operations.py
     - Add the RawSQL operator to the data source registry (for custom filter support).
 
 3. You are done, you can reference the data source via the config.
     - Config: {"source_type": "<RefName>", ...KV Values required in Client...}
 
-## Examples
-
-### Example of Comparing BigQuery to BigQuery
-```
-# Store BigQuery Connection
-data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-resources
-
-# Run Validation (optionally use -c file_path.yaml to store the validation)
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
-  -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' \
-  --sum '*' --count '*'
-
-# Run a Stored Validations File
-data-validation run-config -c ex_yaml.yaml
-```
 
 ## Deploy to Composer
 ```

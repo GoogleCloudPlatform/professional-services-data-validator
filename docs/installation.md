@@ -1,7 +1,7 @@
 # Data Validation Tool Installation Guide
 The data validation tool can be installed on any machine that has Python 3.6+ installed. 
 
-Core utility comes with the library installed already for the BigQuery connections. When using this tool with other databases like Teradata, Oracle etc., their appropriate connection libraries need to be installed(For example Teradatasql for Teradata).
+The tool natively supports BigQuery connections. If you need to connect to other databases such as Teradata or Oracle, you will need to install the appropriate connection libraries. (See the [Connections](connections.md) page for details)
 
 This tool can be natively installed on your machine or can be containerized and run with Docker.
 
