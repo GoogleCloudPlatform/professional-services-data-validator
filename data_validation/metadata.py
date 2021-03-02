@@ -27,16 +27,26 @@ from data_validation import consts
 class ValidationMetadata(object):
     validation_type: str
     aggregation_type: str
+    source_table_schema: str
     source_table_name: str
+    target_table_schema: str
     target_table_name: str
     source_column_name: str
     target_column_name: str
 
     def get_table_name(self, result_type):
         if result_type == consts.RESULT_TYPE_SOURCE:
-            return self.source_table_name
+            return (
+                self.source_table_schema + "." + self.source_table_name
+                if self.source_table_schema
+                else self.source_table_name
+            )
         elif result_type == consts.RESULT_TYPE_TARGET:
-            return self.target_table_name
+            return (
+                self.target_table_schema + "." + self.target_table_name
+                if self.target_table_schema
+                else self.target_table_name
+            )
         else:
             raise ValueError(f"Unexpected result_type: {result_type}")
 
@@ -53,6 +63,7 @@ class ValidationMetadata(object):
 class RunMetadata(object):
     run_id: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()))
     validations: dict = dataclasses.field(default_factory=dict)
+    labels: list = dataclasses.field(default_factory=list)
     start_time: typing.Optional[datetime.datetime] = dataclasses.field(
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
     )

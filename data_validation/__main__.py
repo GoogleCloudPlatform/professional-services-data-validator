@@ -105,6 +105,8 @@ def build_config_managers_from_args(args):
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
 
+    labels = cli_tools.get_labels(args.labels)
+
     result_handler_config = None
     if args.result_handler_config:
         result_handler_config = json.loads(args.result_handler_config)
@@ -125,6 +127,7 @@ def build_config_managers_from_args(args):
             source_client,
             target_client,
             table_obj,
+            labels,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,
@@ -219,6 +222,15 @@ def find_tables_using_string_matching(args):
 
     table_configs = _compare_match_tables(source_table_map, target_table_map)
     return json.dumps(table_configs)
+
+
+def run_raw_query_against_connection(args):
+    """Return results of raw query for adhoc usage."""
+    conn = cli_tools.get_connection(args.conn)
+    client = DataValidation.get_data_client(conn)
+
+    with client.raw_sql(args.query, results=True) as cur:
+        return cur.fetchall()
 
 
 def convert_config_to_yaml(args, config_managers):
@@ -318,6 +330,8 @@ def main():
         run_validations(args, config_managers)
     elif args.command == "find-tables":
         print(find_tables_using_string_matching(args))
+    elif args.command == "query":
+        print(run_raw_query_against_connection(args))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 

@@ -18,7 +18,7 @@ import json
 import warnings
 
 import google.oauth2.service_account
-import ibis.pandas
+import ibis.backends.pandas
 import pandas
 import numpy
 
@@ -108,7 +108,6 @@ class DataValidation(object):
             for row in result_df.to_dict(orient="row"):
                 if row["source_agg_value"] == row["target_agg_value"]:
                     past_results.append(pandas.DataFrame([row]))
-                    continue
                 else:
                     recursive_validation_builder = validation_builder.clone()
                     self._add_recursive_validation_filter(
@@ -176,6 +175,7 @@ class DataValidation(object):
         run_metadata = metadata.RunMetadata()
         run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
         run_metadata.validations = validation_builder.get_metadata()
+        run_metadata.labels = self.config_manager.labels
 
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()
@@ -189,7 +189,7 @@ class DataValidation(object):
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
 
-            pandas_client = ibis.pandas.connect(
+            pandas_client = ibis.backends.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )
 

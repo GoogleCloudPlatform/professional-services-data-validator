@@ -6,21 +6,24 @@ import toolz
 from multipledispatch import Dispatcher
 
 import ibis
+import ibis.backends.base_sqlalchemy.compiler as comp
 import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
-import ibis.sql.compiler as comp
+from ibis.backends import base_sql
+
+from ibis.backends.base_sql.identifiers import base_identifiers
+
 from ibis.common.exceptions import UnsupportedOperationError
-from ibis.bigquery.datatypes import ibis_type_to_bigquery_type
-from ibis.impala import compiler as impala_compiler
-from ibis.impala.compiler import (
-    ImpalaSelect,
-    ImpalaTableSetFormatter,
-    _reduction,
-    fixed_arity,
-    unary,
+from ibis.backends.bigquery.datatypes import ibis_type_to_bigquery_type
+from ibis.backends.base_sql import fixed_arity, literal, reduction, unary
+from ibis.backends.base_sql.compiler import (
+    BaseExprTranslator,
+    BaseSelect,
+    BaseTableSetFormatter,
 )
+
 
 """ *Extending Compilers for a new Data Source*
 
@@ -95,7 +98,10 @@ Depedancy Design of Classes
 
 """
 
-_operation_registry = impala_compiler._operation_registry.copy()
+
+_operation_registry = {
+    **base_sql.operation_registry,
+}
 
 
 def build_ast(expr, context):
@@ -112,16 +118,20 @@ class TeradataUDFDefinition(comp.DDL):
         return self.expr.op().js
 
 
-class TeradataTableSetFormatter(ImpalaTableSetFormatter):
-
-    identifiers = impala_compiler.identifiers.impala_identifiers
-
+class TeradataTableSetFormatter(BaseTableSetFormatter):
     @classmethod
     def _quote_identifier(self, name, quotechar='"', force=False):
-        if force or name.count(" ") or name in self.identifiers:
+        if force or name.count(" ") or name in base_identifiers:
             return "{0}{1}{0}".format(quotechar, name)
         else:
             return name
+
+
+class BigQueryTableSetFormatter(BaseTableSetFormatter):
+    def _quote_identifier(self, name):
+        if re.match(r'^[A-Za-z][A-Za-z_0-9]*$', name):
+            return name
+        return '`{}`'.format(name)
 
 
 class TeradataUDFNode(ops.ValueOp):
@@ -143,7 +153,7 @@ class TeradataExprTranslator(comp.ExprTranslator):
         return _name_expr(translated, quoted_name)
 
 
-class TeradataSelect(ImpalaSelect):
+class TeradataSelect(BaseSelect):
 
     translator = TeradataExprTranslator
 
@@ -397,7 +407,7 @@ def _literal(translator, expr):
             return "TIME '{}'".format(value)
 
     try:
-        return impala_compiler._literal(translator, expr)
+        return literal(translator, expr)
     except NotImplementedError:
         if isinstance(expr, ir.ArrayValue):
             return _array_literal_format(expr)
@@ -499,7 +509,7 @@ _operation_registry.update(
         ops.RegexSearch: _regex_search,
         ops.RegexExtract: _regex_extract,
         ops.RegexReplace: _regex_replace,
-        ops.GroupConcat: _reduction("STRING_AGG"),
+        ops.GroupConcat: reduction("STRING_AGG"),
         ops.IfNull: fixed_arity("IFNULL", 2),
         ops.Cast: _cast,
         ops.StructField: _struct_field,
@@ -507,7 +517,7 @@ _operation_registry.update(
         ops.ArrayConcat: _array_concat,
         ops.ArrayIndex: _array_index,
         ops.ArrayLength: unary("ARRAY_LENGTH"),
-        ops.HLLCardinality: _reduction("APPROX_COUNT_DISTINCT"),
+        ops.HLLCardinality: reduction("APPROX_COUNT_DISTINCT"),
         ops.Log: _log,
         ops.Sign: unary("SIGN"),
         ops.Modulus: fixed_arity("MOD", 2),
@@ -704,7 +714,7 @@ def bigquery_compile_notall(translator, expr):
     return "LOGICAL_OR(NOT ({}))".format(*map(translator.translate, expr.op().args))
 
 
-class TeradataDialect(impala_compiler.ImpalaDialect):
+class TeradataDialect(comp.Dialect):
     translator = TeradataExprTranslator
 
 

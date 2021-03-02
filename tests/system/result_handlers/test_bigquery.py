@@ -59,7 +59,7 @@ def get_dataframe(bigquery_client, table_id):
             "source_column_name, target_table_name, target_column_name, "
             "validation_type, aggregation_type, validation_name, "
             "source_agg_value, target_agg_value, group_by_columns, "
-            "difference, pct_difference "
+            "difference, pct_difference, labels "
             f" FROM `{table_id}` ORDER BY target_agg_value ASC"
         ).to_dataframe()
 
@@ -87,12 +87,12 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             "start_time": [start] * 6,
             "end_time": [end] * 6,
             "source_table_name": [
-                "test_source",
-                "test_source",
+                "schema.test_source",
+                "schema.test_source",
                 _NAN,
                 _NAN,
-                "test_source",
-                "test_source",
+                "schema.test_source",
+                "schema.test_source",
             ],
             "source_column_name": [
                 "source_column",
@@ -103,10 +103,10 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 "source_column",
             ],
             "target_table_name": [
-                "test_target",
-                "test_target",
-                "test_target",
-                "test_target",
+                "schema.test_target",
+                "schema.test_target",
+                "schema.test_target",
+                "schema.test_target",
                 _NAN,
                 _NAN,
             ],
@@ -133,6 +133,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             ],
             "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
             "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
+            "labels": [[{"key": "name", "value": "test_label"}]] * 6,
         }
     )
     object_under_test.execute(None, df)

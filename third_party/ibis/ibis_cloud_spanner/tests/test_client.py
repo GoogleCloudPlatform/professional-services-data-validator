@@ -66,8 +66,8 @@ def test_list_tables(client):
     assert set(tables) == {"functional_alltypes"}
 
 
-def test_current_database(client):
-    assert client.current_database.name == "spanner_dev_db"
+def test_current_database(client, database_id):
+    assert client.current_database.name == database_id
     assert client.current_database.name == client.dataset_id
     assert client.current_database.tables == client.list_tables()
 
@@ -81,7 +81,7 @@ def test_compile_toplevel():
     t = ibis.table([("foo", "double")], name="t0")
 
     expr = t.foo.sum()
-    result = third_party.ibis.ibis_cloud_spanner.compile(expr)
+    result = cs_compile.compile(expr)
 
     expected = """\
 SELECT sum(`foo`) AS `sum`
@@ -219,8 +219,7 @@ def test_scalar_param_boolean(alltypes, df):
 
 
 @pytest.mark.parametrize(
-    "timestamp_value",
-    ["2019-04-12 12:09:00+00:00"],
+    "timestamp_value", ["2019-04-12 12:09:00+00:00"],
 )
 def test_scalar_param_timestamp(alltypes, df, timestamp_value):
     param = ibis.param("timestamp")
@@ -293,13 +292,13 @@ def test_exists_table(client):
     assert not client.exists_table("footable")
 
 
-def test_exists_database(client):
-    assert client.exists_database("spanner_dev_db")
+def test_exists_database(client, database_id):
+    assert client.exists_database(database_id)
     assert not client.exists_database("foodataset")
 
 
-def test_set_database(client2):
-    client2.set_database("demo-db")
+def test_set_database(client2, database_id2):
+    client2.set_database(database_id2)
     tables = client2.list_tables()
     assert "awards" in tables
 
@@ -310,19 +309,8 @@ def test_exists_table_different_project(client):
     assert not client.exists_table("foobar")
 
 
-@pytest.mark.parametrize(
-    ("name", "expected"),
-    [
-        ("spanner_dev_db", True),
-        ("database_one", False),
-    ],
-)
-def test_exists_databases(client, name, expected):
-    assert client.exists_database(name) is expected
-
-
-def test_repeated_project_name(inst_id):
-    con = connect(inst_id, "spanner_dev_db")
+def test_repeated_project_name(instance_id, database_id):
+    con = connect(instance_id, database_id)
     assert "functional_alltypes" in con.list_tables()
 
 
@@ -348,8 +336,7 @@ def test_string_to_timestamp(client):
     assert result == timestamp
 
     timestamp_tz = pd.Timestamp(
-        datetime.datetime(year=2017, month=2, day=6, hour=5),
-        tz=pytz.timezone("UTC"),
+        datetime.datetime(year=2017, month=2, day=6, hour=5), tz=pytz.timezone("UTC"),
     )
     expr_tz = ibis.literal("2017-02-06").to_timestamp("%F", "America/New_York")
     result_tz = client.execute(expr_tz)
@@ -465,8 +452,7 @@ def test_struct_field_access(array_table):
     result = expr.execute()
     result = result.iloc[:, 0]
     expected = pd.Series(
-        [["Peter", "David"], ["Raj", "Dev", "Neil"]],
-        name="string_col",
+        [["Peter", "David"], ["Raj", "Dev", "Neil"]], name="string_col",
     )
 
     tm.assert_series_equal(result, expected)
@@ -476,13 +462,7 @@ def test_array_index(array_table):
     expr = array_table.string_col[1]
     result = expr.execute()
     result = result.iloc[:, 0]
-    expected = pd.Series(
-        [
-            "David",
-            "Dev",
-        ],
-        name="tmp",
-    )
+    expected = pd.Series(["David", "Dev",], name="tmp",)
     tm.assert_series_equal(result, expected)
 
 

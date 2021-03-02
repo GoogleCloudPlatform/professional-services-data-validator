@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import ibis.expr.operations as ops
-from ibis.bigquery import compiler as bigquery_compiler
+from ibis.backends.bigquery import compiler as bigquery_compiler
 
 
 def build_ast(expr, context):
@@ -46,10 +46,7 @@ def _regex_extract(translator, expr):
 
 _operation_registry = bigquery_compiler._operation_registry.copy()
 _operation_registry.update(
-    {
-        ops.RegexExtract: _regex_extract,
-        ops.ArrayIndex: _array_index,
-    }
+    {ops.RegexExtract: _regex_extract, ops.ArrayIndex: _array_index,}
 )
 
 

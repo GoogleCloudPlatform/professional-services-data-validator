@@ -14,9 +14,9 @@
 
 
 from google.cloud import bigquery
-from ibis.bigquery.client import _DTYPE_TO_IBIS_TYPE
+from ibis.backends.bigquery.client import _DTYPE_TO_IBIS_TYPE
 import ibis.expr.datatypes as dt
-from ibis.pandas.client import _inferable_pandas_dtypes
+from ibis.backends.pandas.client import _inferable_pandas_dtypes
 import pyarrow
 
 
