@@ -261,6 +261,7 @@ class CalculatedField(object):
         compiled_fields = []
 
         for field in fields:
+            print(field)
             if type(field) in [StringScalar]:
                 compiled_fields.append(field)
             elif isinstance(field, list):
@@ -282,7 +283,7 @@ class CalculatedField(object):
 
 class QueryBuilder(object):
     def __init__(
-        self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None
+        self, aggregate_fields, calculated_fields, filters, grouped_fields,
     ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
@@ -297,7 +298,6 @@ class QueryBuilder(object):
         self.calculated_fields = calculated_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
-        self.limit = limit
 
     @staticmethod
     def build_count_validator(limit=None):
@@ -312,7 +312,6 @@ class QueryBuilder(object):
             filters=filters,
             grouped_fields=grouped_fields,
             calculated_fields=calculated_fields,
-            limit=limit,
         )
 
     def compile_aggregate_fields(self, table):
@@ -326,8 +325,14 @@ class QueryBuilder(object):
     def compile_group_fields(self, table):
         return [field.compile(table) for field in self.grouped_fields]
 
-    def compile_calculated_fields(self, table):
-        return [field.compile(table) for field in self.calculated_fields]
+    def compile_calculated_fields(self, table, n):
+    # def compile_calculated_fields(self, table):
+    #     compiled_fields = []
+    #     depth_limit = max(field.config['depth'] for field in self.calculated_fields)
+    #     for n in range(0, (depth_limit + 1)):
+    #         compiled_fields = compiled_fields + [field.compile(table) for field in self.calculated_fields if field.config['depth'] == n]
+    #     return compiled_fields
+        return [field.compile(table) for field in self.calculated_fields if field.config['depth'] == n]
 
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
@@ -340,7 +345,14 @@ class QueryBuilder(object):
         table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
-        calc_table = table.mutate(self.compile_calculated_fields(table))
+        calc_table = table
+        print('trying for depth limit!')
+        print(self.calculated_fields)
+        depth_limit = max(field.config['depth'] for field in self.calculated_fields)
+        print('depth limit iz {}'.format(depth_limit))
+        for n in range(0, (depth_limit + 1)):
+            print(n)
+            calc_table = calc_table.mutate(self.compile_calculated_fields(calc_table, n))
         compiled_filters = self.compile_filter_fields(table)
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
