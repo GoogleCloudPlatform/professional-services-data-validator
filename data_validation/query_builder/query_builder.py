@@ -346,13 +346,10 @@ class QueryBuilder(object):
 
         # Build Query Expressions
         calc_table = table
-        print('trying for depth limit!')
-        print(self.calculated_fields)
-        depth_limit = max(field.config['depth'] for field in self.calculated_fields)
-        print('depth limit iz {}'.format(depth_limit))
-        for n in range(0, (depth_limit + 1)):
-            print(n)
-            calc_table = calc_table.mutate(self.compile_calculated_fields(calc_table, n))
+        if self.calculated_fields:
+            depth_limit = max(field.config['depth'] for field in self.calculated_fields)
+            for n in range(0, (depth_limit + 1)):
+                calc_table = calc_table.mutate(self.compile_calculated_fields(calc_table, n))
         compiled_filters = self.compile_filter_fields(table)
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
