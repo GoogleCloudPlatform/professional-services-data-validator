@@ -90,7 +90,8 @@ class TeradataClient(SQLClient):
         self.use_no_lock_tables = use_no_lock_tables
 
     def _execute(self, dml, results=False, **kwargs):
-        df = self._execute_query(dml, **kwargs)
+        query = TeradataQuery(self, dml)
+        df = self._execute_query(query, **kwargs)
         if results:
             return df
 
