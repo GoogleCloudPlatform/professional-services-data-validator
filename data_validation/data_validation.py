@@ -18,7 +18,7 @@ import json
 import warnings
 
 import google.oauth2.service_account
-import ibis.pandas
+import ibis.backends.pandas
 import pandas
 import numpy
 
@@ -189,7 +189,7 @@ class DataValidation(object):
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
 
-            pandas_client = ibis.pandas.connect(
+            pandas_client = ibis.backends.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )
 

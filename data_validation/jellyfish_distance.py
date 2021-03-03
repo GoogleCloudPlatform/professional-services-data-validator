@@ -27,7 +27,7 @@ def extract_closest_match(search_key, target_list, score_cutoff=0):
     highest_value_key = None
 
     for target_key in target_list:
-        score = jellyfish.jaro_distance(search_key, target_key)
+        score = jellyfish.jaro_similarity(search_key, target_key)
         if score >= highest_score:
             highest_score = score
             highest_value_key = target_key

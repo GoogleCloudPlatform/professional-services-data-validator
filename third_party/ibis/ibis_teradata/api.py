@@ -11,7 +11,7 @@ from compiler import dialect  # TODO make non local
 from ibis.config import options  # noqa: F401
 
 try:
-    from ibis.bigquery.udf import udf  # noqa: F401 # TODO is this required?
+    from ibis.backends.bigquery.udf import udf  # noqa: F401 # TODO is this required?
 except ImportError:
     pass
 
