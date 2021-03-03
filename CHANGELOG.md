@@ -2,6 +2,10 @@
 
 ## Untagged
 
+## 1.1.6
+
+- Minor fix for Teradata client from breaking IBis changes
+
 ## 1.1.5
 
 - Add support for running raw queries against a connection
