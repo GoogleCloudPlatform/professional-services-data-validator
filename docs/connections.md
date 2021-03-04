@@ -1,3 +1,4 @@
+# Data Validation Connections
 You will need to create connections before running any validations with the data validation tool. The tool allows users to 
 create these connections using the CLI. 
 
