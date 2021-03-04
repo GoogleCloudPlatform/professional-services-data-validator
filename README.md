@@ -1,4 +1,4 @@
-# Data Validation Tooling
+# Data Validation Tool
 The goal of the data validation tool is to allow easy comparison and validation between different tables.  This Python CLI tool supports several types of comparison:
 
     - Count Validation: Total counts and other aggregates match between source and destination
