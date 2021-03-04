@@ -30,7 +30,6 @@ data-validation connections list
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).  
 
 Every source type requires its own configuration for connectivity.  Below is the expected configuration for each source type.
-Every source type requires its own configuration for connectivity.  Below is the expected configuration for each source type.
 
 ##### BigQuery
 ```
