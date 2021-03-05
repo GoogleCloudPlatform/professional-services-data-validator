@@ -34,20 +34,18 @@ def _find_scalar_parameter(expr):
 
 
 class TeradataQuery(Query):
+
+    NO_LOCK_SQL = "LOCKING ROW FOR ACCESS "
+
     def __init__(self, client, ddl):
         super().__init__(client, ddl)
 
-        # self.expr comes from the parent class
-        # query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
-        # self.query_parameters = [
-        #     teradata_param(
-        #         param.to_expr().name(query_parameter_names[param]), value
-        #     )
-        #     for param, value in (query_parameters or {}).items()
-        # ]
-
     def execute(self):
-        return pandas.read_sql(self.compiled_sql, self.client.client)
+        sql = self.compiled_sql
+        if self.client.use_no_lock_tables and sql.strip().startswith("SELECT"):
+            sql = self.NO_LOCK_SQL + self.compiled_sql
+
+        return pandas.read_sql(sql, self.client.client)
 
 
 class TeradataDatabase(Database):
@@ -68,7 +66,7 @@ class TeradataClient(SQLClient):
     table_class = TeradataTable
     dialect = compiler.TeradataDialect
 
-    def __init__(self, host, user_name, password, port=1025):
+    def __init__(self, host, user_name, password, port=1025, use_no_lock_tables=False):
         """Construct a BigQueryClient.
         Parameters
         ----------
@@ -89,9 +87,11 @@ class TeradataClient(SQLClient):
         }
 
         self.client = teradatasql.connect(**self.teradata_config)
+        self.use_no_lock_tables = use_no_lock_tables
 
     def _execute(self, dml, results=False, **kwargs):
-        df = self._execute_query(dml, **kwargs)
+        query = TeradataQuery(self, dml)
+        df = self._execute_query(query, **kwargs)
         if results:
             return df
 
