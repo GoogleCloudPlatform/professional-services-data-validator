@@ -77,15 +77,18 @@ CALCULATED_MULTIPLE_TEST = [
     },
     {
         consts.CONFIG_FIELD_ALIAS: "concat_calcs",
-        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["ifnull_start_station_name",
-                                                  "rstrip_start_station_name",
-                                                  "upper_start_station_name",],
-        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["ifnull_start_station_name",
-                                                  "rstrip_start_station_name",
-                                                  "upper_start_station_name",],
+        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [
+            "ifnull_start_station_name",
+            "rstrip_start_station_name",
+            "upper_start_station_name",
+        ],
+        consts.CONFIG_CALCULATED_TARGET_COLUMNS: [
+            "ifnull_start_station_name",
+            "rstrip_start_station_name",
+            "upper_start_station_name",
+        ],
         consts.CONFIG_TYPE: "concat",
         "depth": 1,
-
     },
     {
         consts.CONFIG_FIELD_ALIAS: "ifnull_start_station_name",
