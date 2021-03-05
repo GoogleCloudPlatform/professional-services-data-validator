@@ -187,10 +187,18 @@ def test_generate_report_with_too_many_rows(module_under_test):
         ),
         (
             pandas.DataFrame(
-                {"timecol__max": [pandas.Timestamp(1600000000, unit='s', tz=datetime.timezone.utc)]}
+                {
+                    "timecol__max": [
+                        pandas.Timestamp(1600000000, unit="s", tz=datetime.timezone.utc)
+                    ]
+                }
             ),
             pandas.DataFrame(
-                {"timecol__max": [pandas.Timestamp(2000000000, unit='s', tz=datetime.timezone.utc)]}
+                {
+                    "timecol__max": [
+                        pandas.Timestamp(2000000000, unit="s", tz=datetime.timezone.utc)
+                    ]
+                }
             ),
             metadata.RunMetadata(
                 validations={

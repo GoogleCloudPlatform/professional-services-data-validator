@@ -95,8 +95,7 @@ def _calculate_difference(field_differences, datatype):
         ibis.literal(100.0)
         * difference
         / (
-            source_value
-            .case()
+            source_value.case()
             .when(ibis.literal(0), target_value)
             .else_(source_value)
             .end()
