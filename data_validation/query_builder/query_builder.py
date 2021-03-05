@@ -325,14 +325,17 @@ class QueryBuilder(object):
     def compile_group_fields(self, table):
         return [field.compile(table) for field in self.grouped_fields]
 
-    def compile_calculated_fields(self, table, n):
+    def compile_calculated_fields(self, table, n=None):
     # def compile_calculated_fields(self, table):
     #     compiled_fields = []
     #     depth_limit = max(field.config['depth'] for field in self.calculated_fields)
     #     for n in range(0, (depth_limit + 1)):
     #         compiled_fields = compiled_fields + [field.compile(table) for field in self.calculated_fields if field.config['depth'] == n]
     #     return compiled_fields
-        return [field.compile(table) for field in self.calculated_fields if field.config['depth'] == n]
+        if n:
+            return [field.compile(table) for field in self.calculated_fields if field.config['depth'] == n]
+        else:
+            return [field.compile(table) for field in self.calculated_fields]
 
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
@@ -347,7 +350,7 @@ class QueryBuilder(object):
         # Build Query Expressions
         calc_table = table
         if self.calculated_fields:
-            depth_limit = max(field.config['depth'] for field in self.calculated_fields)
+            depth_limit = max(field.config.get('depth', 0) for field in self.calculated_fields)
             for n in range(0, (depth_limit + 1)):
                 calc_table = calc_table.mutate(self.compile_calculated_fields(calc_table, n))
         compiled_filters = self.compile_filter_fields(table)

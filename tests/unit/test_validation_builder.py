@@ -75,30 +75,42 @@ CALCULATED_MULTIPLE_TEST = [
         ],
         consts.CONFIG_TYPE: "concat",
     },
-    # {
-    #     consts.CONFIG_FIELD_ALIAS: "length_start_station_name",
-    #     consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_TYPE: "length",
-    # },
-    # {
-    #     consts.CONFIG_FIELD_ALIAS: "ifnull_start_station_name",
-    #     consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_TYPE: "ifnull",
-    # },
-    # {
-    #     consts.CONFIG_FIELD_ALIAS: "rstrip_start_station_name",
-    #     consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_TYPE: "rstrip",
-    # },
-    # {
-    #     consts.CONFIG_FIELD_ALIAS: "upper_start_station_name",
-    #     consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-    #     consts.CONFIG_TYPE: "upper",
-    # },
+    {
+        consts.CONFIG_FIELD_ALIAS: "concat_calcs",
+        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["ifnull_start_station_name",
+                                                  "rstrip_start_station_name",
+                                                  "upper_start_station_name",],
+        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["ifnull_start_station_name",
+                                                  "rstrip_start_station_name",
+                                                  "upper_start_station_name",],
+        consts.CONFIG_TYPE: "concat",
+        "depth": 1,
+
+    },
+    {
+        consts.CONFIG_FIELD_ALIAS: "ifnull_start_station_name",
+        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
+        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
+        consts.CONFIG_TYPE: "ifnull",
+    },
+    {
+        consts.CONFIG_FIELD_ALIAS: "length_start_station_name",
+        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
+        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
+        consts.CONFIG_TYPE: "length",
+    },
+    {
+        consts.CONFIG_FIELD_ALIAS: "rstrip_start_station_name",
+        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
+        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
+        consts.CONFIG_TYPE: "rstrip",
+    },
+    {
+        consts.CONFIG_FIELD_ALIAS: "upper_start_station_name",
+        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
+        consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
+        consts.CONFIG_TYPE: "upper",
+    },
 ]
 
 
@@ -159,9 +171,14 @@ def test_column_validation_calculate(module_under_test):
 
     mock_config_manager.append_calculated_fields(CALCULATED_MULTIPLE_TEST)
     builder.add_config_calculated_fields()
-
+    print(sorted(list(builder.get_calculated_aliases())))
     assert sorted(list(builder.get_calculated_aliases())) == [
-        "concat_start_station_name_end_station_name"
+        "concat_calcs",
+        "concat_start_station_name_end_station_name",
+        "ifnull_start_station_name",
+        "length_start_station_name",
+        "rstrip_start_station_name",
+        "upper_start_station_name",
     ]
 
 
