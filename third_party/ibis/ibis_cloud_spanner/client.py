@@ -44,14 +44,11 @@ from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
 def parse_instance_and_dataset(
     instance: str, dataset: Optional[str] = None
 ) -> Tuple[str, str, Optional[str]]:
-    try:
-        data_instance, dataset = dataset.split(".")
-    except (ValueError, AttributeError):
-        billing_instance = data_instance = instance
-    else:
-        billing_instance = instance
 
-    return data_instance, billing_instance, dataset
+    data_instance = instance
+    dataset = dataset
+
+    return data_instance, dataset
 
 
 class CloudSpannerTable(ops.DatabaseTable):
@@ -216,7 +213,7 @@ class CloudSpannerQuery(Query):
 
 
 class CloudSpannerDatabase(Database):
-    """A Cloud scanner dataset."""
+    """A Cloud spanner dataset."""
 
 
 class CloudSpannerClient(SQLClient):
@@ -226,7 +223,7 @@ class CloudSpannerClient(SQLClient):
     database_class = CloudSpannerDatabase
     table_class = CloudSpannerTable
 
-    def __init__(self, instance_id, database_id=None, credentials=None):
+    def __init__(self, instance_id, database_id, project=None, credentials=None):
         """Construct a CloudSpannerClient.
 
         Parameters
@@ -235,15 +232,16 @@ class CloudSpannerClient(SQLClient):
             A instance name
         database_id : Optional[str]
             A ``<instance_id>.<database_id>`` string or just a dataset name
+        project     : str (Optional) 
+            The ID of the project which owns the instances, tables and data.
 
 
         """
-        self.spanner_client = spanner.Client()
+        self.spanner_client = spanner.Client(project=project)
         self.instance = self.spanner_client.instance(instance_id)
         self.database_name = self.instance.database(database_id)
         (
             self.data_instance,
-            self.billing_instance,
             self.dataset,
         ) = parse_instance_and_dataset(instance_id, database_id)
         self.client = cs.Client()
@@ -251,10 +249,10 @@ class CloudSpannerClient(SQLClient):
     def _parse_instance_and_dataset(self, dataset):
         if not dataset and not self.dataset:
             raise ValueError("Unable to determine Cloud Spanner dataset.")
-        instance, _, dataset = parse_instance_and_dataset(
-            self.billing_instance,
-            dataset or "{}.{}".format(self.data_instance, self.dataset),
+        instance, dataset = parse_instance_and_dataset(
+                self.data_instance,(dataset or self.dataset)
         )
+
         return instance, dataset
 
     def get_data_using_query(self, query, results=False):
@@ -280,8 +278,7 @@ class CloudSpannerClient(SQLClient):
         return self.query_class(self, dml, query_parameters=dml.context.params)
 
     def _fully_qualified_name(self, name, database):
-        instance, dataset = self._parse_instance_and_dataset(database)
-        return "{}".format(name)
+        return name
 
     def _get_table_schema(self, qualified_name):
         table = qualified_name
@@ -301,6 +298,8 @@ class CloudSpannerClient(SQLClient):
         return list_db
 
     def list_tables(self, like=None, database=None):
+        # TODO:  use list_tables from the Database class when available.
+
         if database is None:
             db_value = self.dataset_id
         else:
@@ -322,19 +321,12 @@ class CloudSpannerClient(SQLClient):
         return tables
 
     def exists_table(self, name, database=None):
+
         if database is None:
-            db_value = self.dataset_id
-        else:
-            db_value = database
-        db = self.instance.database(db_value)
-        with db.snapshot() as snapshot:
-            query = "SELECT EXISTS(SELECT * FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = '{}' )".format(
-                name
-            )
-            output = snapshot.execute_sql(query)
-            result = ""
-            for row in output:
-                result = row[0]
+            database = self.dataset_id
+
+        db_value = self.instance.database(database)
+        result = table.Table(name, db_value).exists()
         return result
 
     def get_schema(self, table_id, database=None):
@@ -377,7 +369,7 @@ class CloudSpannerClient(SQLClient):
     def database(self, name=None):
         if name is None and self.dataset is None:
             raise ValueError(
-                "Unable to determine Cloud Scanner dataset. Call "
+                "Unable to determine Cloud Spanner dataset. Call "
                 "client.database('my_dataset') or set_database('my_dataset') "
                 "to assign your client a dataset."
             )
@@ -393,3 +385,5 @@ class CloudSpannerClient(SQLClient):
 
     def exists_database(self, name):
         return self.instance.database(name).exists()
+
+

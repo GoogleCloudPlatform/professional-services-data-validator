@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-"""CloudScanner public API."""
+"""CloudSpanner public API."""
 
 
 from third_party.ibis.ibis_cloud_spanner.client import CloudSpannerClient
@@ -51,7 +51,11 @@ def verify(expr, params=None):
         return False
 
 
-def connect(instance_id, database_id,) -> CloudSpannerClient:
+def connect(
+    instance_id,
+    database_id,
+    project=None
+) -> CloudSpannerClient:
     """Create a CloudSpannerClient for use with Ibis.
 
     Parameters
@@ -60,6 +64,8 @@ def connect(instance_id, database_id,) -> CloudSpannerClient:
         A Cloud Spanner Instance id.
     database_id : str
         A database id inside of the Cloud Spanner Instance
+    project     : str (Optional) 
+        The ID of the project which owns the instances, tables and data.
 
     Returns
     -------
@@ -67,4 +73,4 @@ def connect(instance_id, database_id,) -> CloudSpannerClient:
 
     """
 
-    return CloudSpannerClient(instance_id=instance_id, database_id=database_id)
+    return CloudSpannerClient(instance_id=instance_id, database_id=database_id, project=project)
