@@ -55,10 +55,10 @@ FROM functional_alltypes"""
 
 
 def test_ieee_divide(alltypes):
-    expr = alltypes.double_col / 0
+    expr = alltypes.numeric_col / 0
     result = cs_compile.compile(expr)
     expected = f"""\
-SELECT IEEE_DIVIDE(`double_col`, 0) AS `tmp`
+SELECT IEEE_DIVIDE(`numeric_col`, 0) AS `tmp`
 FROM functional_alltypes"""
     assert result == expected
 
@@ -225,25 +225,25 @@ FROM functional_alltypes"""  # noqa: E501
 )
 def test_union_cte(alltypes, distinct1, distinct2, expected1, expected2):
     t = alltypes
-    expr1 = t.group_by(t.string_col).aggregate(metric=t.double_col.sum())
+    expr1 = t.group_by(t.string_col).aggregate(metric=t.numeric_col.sum())
     expr2 = expr1.view()
     expr3 = expr1.view()
     expr = expr1.union(expr2, distinct=distinct1).union(expr3, distinct=distinct2)
     result = cs_compile.compile(expr)
     expected = f"""\
 WITH t0 AS (
-  SELECT `string_col`, sum(`double_col`) AS `metric`
+  SELECT `string_col`, sum(`numeric_col`) AS `metric`
   FROM functional_alltypes
   GROUP BY 1
 )
 SELECT *
 FROM t0
 {expected1}
-SELECT `string_col`, sum(`double_col`) AS `metric`
+SELECT `string_col`, sum(`numeric_col`) AS `metric`
 FROM functional_alltypes
 GROUP BY 1
 {expected2}
-SELECT `string_col`, sum(`double_col`) AS `metric`
+SELECT `string_col`, sum(`numeric_col`) AS `metric`
 FROM functional_alltypes
 GROUP BY 1"""
     assert result == expected
@@ -323,11 +323,11 @@ FROM functional_alltypes"""  # noqa: E501
 
 
 def test_approx_nunique(alltypes):
-    d = alltypes.double_col
+    d = alltypes.numeric_col
     expr = d.approx_nunique()
     result = cs_compile.compile(expr)
     expected = f"""\
-SELECT APPROX_COUNT_DISTINCT(`double_col`) AS `approx_nunique`
+SELECT APPROX_COUNT_DISTINCT(`numeric_col`) AS `approx_nunique`
 FROM functional_alltypes"""
     assert result == expected
 
@@ -342,11 +342,11 @@ FROM functional_alltypes"""  # noqa: E501
 
 
 def test_approx_median(alltypes):
-    d = alltypes.double_col
+    d = alltypes.numeric_col
     expr = d.approx_median()
     result = cs_compile.compile(expr)
     expected = f"""\
-SELECT APPROX_QUANTILES(`double_col`, 2)[OFFSET(1)] AS `approx_median`
+SELECT APPROX_QUANTILES(`numeric_col`, 2)[OFFSET(1)] AS `approx_median`
 FROM functional_alltypes"""
     assert result == expected
 
@@ -354,7 +354,7 @@ FROM functional_alltypes"""
     expr2 = d.approx_median(where=m > 6)
     result = cs_compile.compile(expr2)
     expected = f"""\
-SELECT APPROX_QUANTILES(CASE WHEN `month` > 6 THEN `double_col` ELSE NULL END, 2)[OFFSET(1)] AS `approx_median`
+SELECT APPROX_QUANTILES(CASE WHEN `month` > 6 THEN `numeric_col` ELSE NULL END, 2)[OFFSET(1)] AS `approx_median`
 FROM functional_alltypes"""  # noqa: E501
     assert result == expected
 

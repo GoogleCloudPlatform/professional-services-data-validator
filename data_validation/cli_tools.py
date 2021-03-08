@@ -98,6 +98,12 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["database", "Database in postgres to connect to (default postgres)"],
     ],
+    "Spanner": [
+        ["project_id", "GCP Project to use for Spanner"],
+        ["instance_id", "ID of Spanner instance to connect to"],
+        ["database_id", "ID of Spanner database (schema) to connect to"],
+        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
+    ],
 }
 
 

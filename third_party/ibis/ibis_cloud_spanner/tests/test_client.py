@@ -188,7 +188,7 @@ def test_scalar_param_int64(alltypes, df):
 
 def test_scalar_param_double(alltypes, df):
     param = ibis.param("double")
-    expr = alltypes[alltypes.double_col == param]
+    expr = alltypes[alltypes.numeric_col == param]
 
     double_value = 2.5
     result = (
@@ -197,7 +197,7 @@ def test_scalar_param_double(alltypes, df):
         .reset_index(drop=True)
     )
     expected = (
-        df.loc[df.double_col == double_value].sort_values("id").reset_index(drop=True)
+        df.loc[df.numeric_col == double_value].sort_values("id").reset_index(drop=True)
     )
     tm.assert_frame_equal(result, expected)
 
@@ -357,7 +357,7 @@ def test_prevent_rewrite(alltypes):
     t = alltypes
     expr = (
         t.groupby(t.string_col)
-        .aggregate(collected_double=t.double_col.collect())
+        .aggregate(collected_double=t.numeric_col.collect())
         .pipe(ibis.prevent_rewrite)
         .filter(lambda t: t.string_col != "wat")
     )
@@ -365,7 +365,7 @@ def test_prevent_rewrite(alltypes):
     expected = """\
 SELECT *
 FROM (
-  SELECT `string_col`, ARRAY_AGG(`double_col`) AS `collected_double`
+  SELECT `string_col`, ARRAY_AGG(`numeric_col`) AS `collected_double`
   FROM functional_alltypes
   GROUP BY 1
 ) t0
@@ -490,8 +490,8 @@ def test_array_length(array_table):
 
 
 def test_scalar_param_array(alltypes, df, client):
-    expr = alltypes.sort_by("id").limit(1).double_col.collect()
+    expr = alltypes.sort_by("id").limit(1).numeric_col.collect()
     result = client.get_data_using_query(cs_compile.compile(expr))
     result = result["tmp"][0]
-    expected = [df.sort_values("id").double_col.iat[0]]
+    expected = [df.sort_values("id").numeric_col.iat[0]]
     assert result == expected
