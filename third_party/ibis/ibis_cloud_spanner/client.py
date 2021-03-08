@@ -223,7 +223,7 @@ class CloudSpannerClient(SQLClient):
     database_class = CloudSpannerDatabase
     table_class = CloudSpannerTable
 
-    def __init__(self, instance_id, database_id, project=None, credentials=None):
+    def __init__(self, instance_id, database_id, project_id=None, credentials=None):
         """Construct a CloudSpannerClient.
 
         Parameters
@@ -232,12 +232,12 @@ class CloudSpannerClient(SQLClient):
             A instance name
         database_id : Optional[str]
             A ``<instance_id>.<database_id>`` string or just a dataset name
-        project     : str (Optional) 
+        project_id  : str (Optional)
             The ID of the project which owns the instances, tables and data.
 
 
         """
-        self.spanner_client = spanner.Client(project=project)
+        self.spanner_client = spanner.Client(project=project_id)
         self.instance = self.spanner_client.instance(instance_id)
         self.database_name = self.instance.database(database_id)
         (

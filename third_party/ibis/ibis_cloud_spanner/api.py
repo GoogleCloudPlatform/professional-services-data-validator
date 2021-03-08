@@ -54,7 +54,7 @@ def verify(expr, params=None):
 def connect(
     instance_id,
     database_id,
-    project=None
+    project_id=None,
 ) -> CloudSpannerClient:
     """Create a CloudSpannerClient for use with Ibis.
 
@@ -64,7 +64,7 @@ def connect(
         A Cloud Spanner Instance id.
     database_id : str
         A database id inside of the Cloud Spanner Instance
-    project     : str (Optional) 
+    project_id  : str (Optional)
         The ID of the project which owns the instances, tables and data.
 
     Returns
@@ -73,4 +73,8 @@ def connect(
 
     """
 
-    return CloudSpannerClient(instance_id=instance_id, database_id=database_id, project=project)
+    return CloudSpannerClient(
+        instance_id=instance_id,
+        database_id=database_id,
+        project_id=project_id,
+    )
