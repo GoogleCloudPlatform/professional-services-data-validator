@@ -203,10 +203,12 @@ def test_generate_report_with_too_many_rows(module_under_test):
             metadata.RunMetadata(
                 validations={
                     "timecol__max": metadata.ValidationMetadata(
-                        source_table_name="test_source",
                         source_column_name="timecol",
-                        target_table_name="test_target",
+                        source_table_name="test_source",
+                        source_table_schema="bq-public.source_dataset",
                         target_column_name="timecol",
+                        target_table_name="test_target",
+                        target_table_schema="bq-public.target_dataset",
                         validation_type="Column",
                         aggregation_type="max",
                     ),
@@ -221,9 +223,9 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
                     "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
-                    "source_table_name": ["test_source"],
+                    "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["timecol"],
-                    "target_table_name": ["test_target"],
+                    "target_table_name": ["bq-public.target_dataset.test_target"],
                     "target_column_name": ["timecol"],
                     "validation_type": ["Column"],
                     "aggregation_type": ["max"],
