@@ -45,23 +45,4 @@ class pandas_df:
         # Creating pandas dataframe from data and columns_list
         df = DataFrame(data, columns=column_list)
 
-        # Dictionary to map spanner datatype to a pandas compatible datatype
-        SPANNER_TO_PANDAS_DTYPE = {
-            "INT64": "int64",
-            "STRING": "object",
-            "BOOL": "bool",
-            "BYTES": "object",
-            "ARRAY": "object",
-            "DATE": "datetime64[ns, UTC]",
-            "FLOAT64": "float64",
-            "NUMERIC": "object",
-            "TIMESTAMP": "datetime64[ns, UTC]",
-        }
-
-        for k, v in columns_dict.items():
-            try:
-                df[k] = df[k].astype(SPANNER_TO_PANDAS_DTYPE[v])
-            except KeyError:
-                print("Spanner Datatype is not present in datatype mapping dictionary")
-
         return df
