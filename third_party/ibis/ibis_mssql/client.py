@@ -20,10 +20,10 @@ import getpass
 import sqlalchemy as sa
 from sqlalchemy.dialects.mssql.pyodbc import MSDialect_pyodbc
 
+import ibis.backends.base_sqlalchemy.alchemy as alch
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
-import ibis.sql.alchemy as alch
 from third_party.ibis.ibis_mssql.compiler import MSSQLDialect
 
 import pyodbc  # NOQA fail early if the driver is missing

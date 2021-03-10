@@ -14,7 +14,7 @@
 
 import datetime
 
-import ibis.pandas
+import ibis.backends.pandas
 import pandas
 import pandas.testing
 import pytest
@@ -54,7 +54,7 @@ def module_under_test():
 def test_generate_report_with_different_columns(module_under_test):
     source = pandas.DataFrame({"count": [1], "sum": [3]})
     target = pandas.DataFrame({"count": [2]})
-    pandas_client = ibis.pandas.connect(
+    pandas_client = ibis.backends.pandas.connect(
         {
             module_under_test.DEFAULT_SOURCE: source,
             module_under_test.DEFAULT_TARGET: target,
@@ -75,7 +75,7 @@ def test_generate_report_with_different_columns(module_under_test):
 def test_generate_report_with_too_many_rows(module_under_test):
     source = pandas.DataFrame({"count": [1, 1]})
     target = pandas.DataFrame({"count": [2, 2]})
-    pandas_client = ibis.pandas.connect(
+    pandas_client = ibis.backends.pandas.connect(
         {
             module_under_test.DEFAULT_SOURCE: source,
             module_under_test.DEFAULT_TARGET: target,
@@ -248,7 +248,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
 def test_generate_report_without_group_by(
     module_under_test, source_df, target_df, run_metadata, expected
 ):
-    pandas_client = ibis.pandas.connect(
+    pandas_client = ibis.backends.pandas.connect(
         {"test_source": source_df, "test_target": target_df}
     )
     report = module_under_test.generate_report(
@@ -460,7 +460,7 @@ def test_generate_report_without_group_by(
 def test_generate_report_with_group_by(
     module_under_test, source_df, target_df, join_on_fields, run_metadata, expected
 ):
-    pandas_client = ibis.pandas.connect(
+    pandas_client = ibis.backends.pandas.connect(
         {"test_source": source_df, "test_target": target_df}
     )
     report = module_under_test.generate_report(

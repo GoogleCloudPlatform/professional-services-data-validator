@@ -27,10 +27,10 @@ import nox
 
 
 # Python version used for linting.
-DEFAULT_PYTHON_VERSION = "3.6"
+DEFAULT_PYTHON_VERSION = "3.7"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.6", "3.7", "3.8"]
+PYTHON_VERSIONS = ["3.7", "3.8", "3.9"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 
@@ -48,7 +48,7 @@ def _setup_session_requirements(session, extra_packages=[]):
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
-    _setup_session_requirements(session, extra_packages=["pyfakefs==4.1.0"])
+    _setup_session_requirements(session, extra_packages=["pyfakefs==4.3.3"])
 
     # Run py.test against the unit tests.
     session.run(
@@ -137,3 +137,19 @@ def integration_bigquery(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", test_path, *session.posargs)
+
+
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+def integration_spanner(session):
+    """Run Spanner integration tests.
+    Ensure Spanner validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=[])
+
+    expected_env_vars = ["PROJECT_ID"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    # TODO: Add tests for DVT data sources. See integration_bigquery.
+    session.run("pytest", "third_party/ibis/ibis_cloud_spanner/tests", *session.posargs)
