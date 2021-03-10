@@ -137,3 +137,19 @@ def integration_bigquery(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", test_path, *session.posargs)
+
+
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+def integration_spanner(session):
+    """Run Spanner integration tests.
+    Ensure Spanner validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=[])
+
+    expected_env_vars = ["PROJECT_ID"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    # TODO: Add tests for DVT data sources. See integration_bigquery.
+    session.run("pytest", "third_party/ibis/ibis_cloud_spanner/tests", *session.posargs)
