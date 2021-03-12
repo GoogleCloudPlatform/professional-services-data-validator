@@ -167,7 +167,8 @@ class DataValidation(object):
         schema_index = []
         for key in source_df.dtypes.keys():
             dtype = source_df.dtypes[key]
-            # TODO: Explain why we need to skip over object dtypes.
+            # The Ibis pandas backend fails with `KeyError: dtype('O')` if
+            # object dtypes are passed in.
             if dtype in {numpy.dtype("O")}:
                 continue
             schema_data.append(dtype)
