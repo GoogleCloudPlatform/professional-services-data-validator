@@ -161,9 +161,18 @@ class DataValidation(object):
             source_df[join_on_field] = source_df[join_on_field].astype(str)
             target_df[join_on_field] = target_df[join_on_field].astype(str)
 
-        pd_schema = pandas.Series(
-            [v for v in source_df.dtypes if v not in {numpy.dtype("O")}]
-        )
+        # Loop over index keys() instead of iteritems() because pandas is
+        # failing with datetime64[ns, UTC] data type on Python 3.9.
+        schema_data = []
+        schema_index = []
+        for key in source_df.dtypes.keys():
+            dtype = source_df.dtypes[key]
+            # TODO: Explain why we need to skip over object dtypes.
+            if dtype in {numpy.dtype("O")}:
+                continue
+            schema_data.append(dtype)
+            schema_index.append(key)
+        pd_schema = pandas.Series(schema_data, index=schema_index)
         if verbose:
             print("-- ** Pandas Schema ** --")
             print(pd_schema)
