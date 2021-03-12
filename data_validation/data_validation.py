@@ -161,9 +161,9 @@ class DataValidation(object):
             source_df[join_on_field] = source_df[join_on_field].astype(str)
             target_df[join_on_field] = target_df[join_on_field].astype(str)
 
-        pd_schema = source_df.dtypes[
-            [i for i, v in source_df.dtypes.iteritems() if v not in [numpy.dtype("O")]]
-        ]
+        pd_schema = pandas.Series(
+            [v for v in source_df.dtypes if v not in {numpy.dtype("O")}]
+        )
         if verbose:
             print("-- ** Pandas Schema ** --")
             print(pd_schema)
