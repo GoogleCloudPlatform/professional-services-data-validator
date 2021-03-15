@@ -187,7 +187,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "difference": [0.0],
                     "pct_difference": [0.0],
                     "pct_threshold": [0.0],
-                    "status":["success"],
+                    "status": ["success"],
                     "labels": [[("name", "test_label")]],
                 }
             ),

@@ -113,7 +113,6 @@ def _calculate_difference(field_differences, datatype, validation):
 
     th_diff = (pct_difference.abs() - pct_threshold).cast("double")
     status = ibis.case().when(th_diff > 0.0, "fail").else_("success").end()
-    
 
     return (
         difference.name("difference"),
