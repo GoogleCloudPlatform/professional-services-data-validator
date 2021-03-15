@@ -220,9 +220,7 @@ def _configure_run_parser(subparsers):
         help="Store the validation in the YAML Config File Path specified.",
     )
     run_parser.add_argument(
-        "--labels",
-        "-l",
-        help="Key value pair labels for validation run.",
+        "--labels", "-l", help="Key value pair labels for validation run.",
     )
     run_parser.add_argument(
         "--threshold",
