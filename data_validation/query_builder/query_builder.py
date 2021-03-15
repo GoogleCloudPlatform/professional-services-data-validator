@@ -20,7 +20,7 @@ from data_validation import clients
 
 class AggregateField(object):
     def __init__(self, ibis_expr, field_name=None, alias=None):
-        """ A representation of a table or column aggregate in Ibis
+        """A representation of a table or column aggregate in Ibis
 
         Args:
             ibis_expr (ColumnExpr): A column aggregation to use from Ibis
@@ -36,11 +36,15 @@ class AggregateField(object):
     def count(field_name=None, alias=None):
         if field_name:
             return AggregateField(
-                ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.ColumnExpr.count,
+                field_name=field_name,
+                alias=alias,
             )
         else:
             return AggregateField(
-                ibis.expr.types.TableExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.TableExpr.count,
+                field_name=field_name,
+                alias=alias,
             )
 
     @staticmethod
@@ -58,13 +62,17 @@ class AggregateField(object):
     @staticmethod
     def max(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias,
+            ibis.expr.types.ColumnExpr.max,
+            field_name=field_name,
+            alias=alias,
         )
 
     @staticmethod
     def sum(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias,
+            ibis.expr.api.NumericColumn.sum,
+            field_name=field_name,
+            alias=alias,
         )
 
     def compile(self, ibis_table):
@@ -83,7 +91,7 @@ class FilterField(object):
     def __init__(
         self, ibis_expr, left=None, right=None, left_field=None, right_field=None
     ):
-        """ A representation of a query filter to be used while building a query.
+        """A representation of a query filter to be used while building a query.
             You can alternatively use either (left or left_field) and
             (right or right_field).
 
@@ -124,7 +132,7 @@ class FilterField(object):
 
     @staticmethod
     def custom(expr):
-        """ Returns a FilterField instance built for any custom SQL using a supported operator.
+        """Returns a FilterField instance built for any custom SQL using a supported operator.
 
         Args:
             expr (Str): A custom SQL expression used to filter a query.
@@ -155,7 +163,7 @@ class FilterField(object):
 
 class GroupedField(object):
     def __init__(self, field_name, alias=None, cast=None):
-        """ A representation of a group by field used to build a query.
+        """A representation of a group by field used to build a query.
 
         Args:
             field_name (String): A field to act on in the table
@@ -189,7 +197,7 @@ class GroupedField(object):
 
 class QueryBuilder(object):
     def __init__(self, aggregate_fields, filters, grouped_fields, limit=None):
-        """ Build a QueryBuilder object which can be used to build queries easily
+        """Build a QueryBuilder object which can be used to build queries easily
 
         Args:
             aggregate_fields (list[AggregateField]): AggregateField instances with Ibis expressions
@@ -228,7 +236,7 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.grouped_fields]
 
     def compile(self, data_client, schema_name, table_name):
-        """ Return an Ibis query object
+        """Return an Ibis query object
 
         Args:
             data_client (IbisClient): The client used to validate the query.
@@ -256,7 +264,7 @@ class QueryBuilder(object):
         return query
 
     def add_aggregate_field(self, aggregate_field):
-        """ Add an AggregateField instance to the query which
+        """Add an AggregateField instance to the query which
             will be used when compiling your query (ie. SUM(a))
 
         Args:
@@ -265,7 +273,7 @@ class QueryBuilder(object):
         self.aggregate_fields.append(aggregate_field)
 
     def add_grouped_field(self, grouped_field):
-        """ Add a GroupedField instance to the query which
+        """Add a GroupedField instance to the query which
             represents adding a column to group by in the
             query being built.
 
@@ -275,7 +283,7 @@ class QueryBuilder(object):
         self.grouped_fields.append(grouped_field)
 
     def add_filter_field(self, filter_obj):
-        """ Add a FilterField instance to your query which
+        """Add a FilterField instance to your query which
             will add the desired filter to your compiled
             query (ie. WHERE query_filter=True)
 

@@ -144,14 +144,14 @@ def _create_table_file(table_path, data):
 def _generate_fake_data(
     rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
 ):
-    """ Return a list of dicts with given number of rows.
+    """Return a list of dicts with given number of rows.
 
-        Data Keys:
-            id: a unique int per row
-            timestamp_value: a random timestamp in the past {second_range} back
-            date_value: a random date in the past {second_range} back
-            int_value: a random int value inside 0 to {int_range}
-            text_value: a random string from supplied list
+    Data Keys:
+        id: a unique int per row
+        timestamp_value: a random timestamp in the past {second_range} back
+        date_value: a random date in the past {second_range} back
+        int_value: a random int value inside 0 to {int_range}
+        text_value: a random string from supplied list
     """
     data = []
     random_strings = random_strings or RANDOM_STRINGS

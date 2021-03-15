@@ -29,7 +29,7 @@ class ConfigManager(object):
     target_client = None
 
     def __init__(self, config, source_client, target_client, verbose=False):
-        """ Initialize a ConfigManager client which supplies the
+        """Initialize a ConfigManager client which supplies the
             source and target queries to run.
 
         Args:
@@ -154,6 +154,11 @@ class ConfigManager(object):
         """Return int limit for query executions."""
         return self._config.get(consts.CONFIG_LIMIT)
 
+    @property
+    def threshold(self):
+        """Return threshold from Config """
+        return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
+
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
@@ -196,8 +201,10 @@ class ConfigManager(object):
                 consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
             )
             if key_path:
-                credentials = google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
+                credentials = (
+                    google.oauth2.service_account.Credentials.from_service_account_file(
+                        key_path
+                    )
                 )
             else:
                 credentials = None
@@ -216,6 +223,7 @@ class ConfigManager(object):
         target_client,
         table_obj,
         labels,
+        threshold,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
@@ -237,6 +245,7 @@ class ConfigManager(object):
                 consts.CONFIG_TARGET_TABLE_NAME, table_obj[consts.CONFIG_TABLE_NAME]
             ),
             consts.CONFIG_LABELS: labels,
+            consts.CONFIG_THRESHOLD: threshold,
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
             consts.CONFIG_FILTERS: filter_config,
         }
