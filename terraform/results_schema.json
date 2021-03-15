@@ -82,7 +82,7 @@
   {
     "name": "status",
     "type": "STRING",
-    "description": "Status of the validation. If the pct_difference is less than pc_threshold, it is considered as success. [success, fail, could_not_compute]"
+    "description": "Status of the validation. If the pct_difference is less than pc_threshold, it is considered as success. [success, fail]"
   },
   {
     "name": "labels",
