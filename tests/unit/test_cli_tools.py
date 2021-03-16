@@ -126,7 +126,7 @@ def test_get_labels_err(test_input):
 
 
 @pytest.mark.parametrize(
-    "test_input,expected", [(0, 0.0), (50, 50.0), (100, 100.0),],
+    "test_input,expected", [(0, 0.0), (50, 50.0), (100, 100.0)],
 )
 def test_threshold_float(test_input, expected):
     """Test threshold float function."""
@@ -135,7 +135,7 @@ def test_threshold_float(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "test_input", [(-4), (float("nan")), (float("inf")), ("string"),],
+    "test_input", [(-4), (float("nan")), (float("inf")), ("string")],
 )
 def test_threshold_float_err(test_input):
     """Test that threshold float only accepts positive floats."""
