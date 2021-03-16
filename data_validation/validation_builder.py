@@ -234,8 +234,12 @@ class ValidationBuilder(object):
         # check if valid calc field and return correct object
         if not hasattr(CalculatedField, calc_type):
             raise Exception("Unknown Calculation Type: {}".format(calc_type))
-        source_field = getattr(CalculatedField, calc_type)(config=source_config, fields=source_fields)
-        target_field = getattr(CalculatedField, calc_type)(config=target_config, fields=target_fields)
+        source_field = getattr(CalculatedField, calc_type)(
+            config=source_config, fields=source_fields
+        )
+        target_field = getattr(CalculatedField, calc_type)(
+            config=target_config, fields=target_fields
+        )
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
         # register calc field under alias
