@@ -109,6 +109,7 @@ SAMPLE_ROW_CONFIG = {
             "target_calculated_columns": ["text_value", "text_value_two"],
             "field_alias": "concat_text_value_text_value_two",
             "type": "concat",
+            "depth": 0,
         },
     ],
     consts.CONFIG_AGGREGATES: [
@@ -191,8 +192,8 @@ def _get_fake_json_data(data):
     for row in data:
         row["date_value"] = str(row["date_value"])
         row["timestamp_value"] = str(row["timestamp_value"])
-        row["text_value"] = str(row["text_value"])
-        row["text_value_two"] = str(row["text_value_two"])
+        row["text_value"] = row["text_value"]
+        row["text_value_two"] = row["text_value_two"]
 
     return json.dumps(data)
 

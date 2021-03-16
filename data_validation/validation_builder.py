@@ -223,18 +223,22 @@ class ValidationBuilder(object):
         Args:
             calc_field (Dict): An object with source, target, and cast info
         """
-        alias = calc_field[consts.CONFIG_FIELD_ALIAS]
+        # prepare source and target payloads
         source_config = deepcopy(calc_field)
-        source_config["fields"] = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
+        source_fields = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
         target_config = deepcopy(calc_field)
-        target_config["fields"] = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
+        target_fields = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
+        # grab calc field metadata
+        alias = calc_field[consts.CONFIG_FIELD_ALIAS]
         calc_type = calc_field[consts.CONFIG_TYPE]
+        # check if valid calc field and return correct object
         if not hasattr(CalculatedField, calc_type):
             raise Exception("Unknown Calculation Type: {}".format(calc_type))
-        source_field = getattr(CalculatedField, calc_type)(config=source_config)
-        target_field = getattr(CalculatedField, calc_type)(config=target_config)
+        source_field = getattr(CalculatedField, calc_type)(config=source_config, fields=source_fields)
+        target_field = getattr(CalculatedField, calc_type)(config=target_config, fields=target_fields)
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
+        # register calc field under alias
         self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):

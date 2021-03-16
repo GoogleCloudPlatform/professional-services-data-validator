@@ -207,7 +207,7 @@ class ColumnReference(object):
 
 
 class CalculatedField(object):
-    def __init__(self, ibis_expr, config):
+    def __init__(self, ibis_expr, config, fields):
         """ A representation of an calculated field to build a query.
 
         Args:
@@ -215,39 +215,37 @@ class CalculatedField(object):
         """
         self.expr = ibis_expr
         self.config = config
+        self.fields = fields
 
     @staticmethod
-    def hash(config):
-        return CalculatedField(ibis.expr.api.ValueExpr.hash, config,)
+    def hash(config, fields):
+        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields,)
 
     @staticmethod
-    def concat(config):
-        # TODO(mike): if the fields above are also calculations
-        # we should create CalculatedField objects either here
-        # or in the recursive buildout...
+    def concat(config, fields):
         if config.get("default_concat_separator") is None:
             config["default_concat_separator"] = ibis.literal(",")
-        config["fields"] = [config["default_concat_separator"], config["fields"]]
-        return CalculatedField(ibis.expr.api.StringValue.join, config,)
+        fields = [config["default_concat_separator"], fields]
+        return CalculatedField(ibis.expr.api.StringValue.join, config, fields,)
 
     @staticmethod
-    def ifnull(config):
+    def ifnull(config, fields):
         if config.get("default_null_string") is None:
             config["default_string"] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
-        config["fields"] = [config["default_string"], config["fields"][0]]
-        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config,)
+        fields = [config["default_string"], fields[0]]
+        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
 
     @staticmethod
-    def length(config):
-        return CalculatedField(ibis.expr.api.StringValue.length, config,)
+    def length(config, fields):
+        return CalculatedField(ibis.expr.api.StringValue.length, config, fields,)
 
     @staticmethod
-    def rstrip(config):
-        return CalculatedField(ibis.expr.api.StringValue.rstrip, config,)
+    def rstrip(config, fields):
+        return CalculatedField(ibis.expr.api.StringValue.rstrip, config, fields,)
 
     @staticmethod
-    def upper(config):
-        return CalculatedField(ibis.expr.api.StringValue.upper, config,)
+    def upper(config, fields):
+        return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
 
     @staticmethod
     def custom(expr):
@@ -261,7 +259,6 @@ class CalculatedField(object):
         compiled_fields = []
 
         for field in fields:
-            print(field)
             if type(field) in [StringScalar]:
                 compiled_fields.append(field)
             elif isinstance(field, list):
@@ -272,7 +269,7 @@ class CalculatedField(object):
         return compiled_fields
 
     def compile(self, ibis_table):
-        compiled_fields = self._compile_fields(ibis_table, self.config["fields"])
+        compiled_fields = self._compile_fields(ibis_table, self.fields)
 
         calc_field = self.expr(*compiled_fields)
         if self.config["field_alias"]:
@@ -332,7 +329,14 @@ class QueryBuilder(object):
         #     for n in range(0, (depth_limit + 1)):
         #         compiled_fields = compiled_fields + [field.compile(table) for field in self.calculated_fields if field.config['depth'] == n]
         #     return compiled_fields
-        if n:
+        if n is not None:
+            for field in self.calculated_fields:
+                print(field)
+        else:
+            print("THERE IS NO N")
+            for field in self.calculated_fields:
+                print(field)
+        if n is not None:
             return [
                 field.compile(table)
                 for field in self.calculated_fields
@@ -357,7 +361,9 @@ class QueryBuilder(object):
             depth_limit = max(
                 field.config.get("depth", 0) for field in self.calculated_fields
             )
+            print(depth_limit)
             for n in range(0, (depth_limit + 1)):
+                print(n)
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
