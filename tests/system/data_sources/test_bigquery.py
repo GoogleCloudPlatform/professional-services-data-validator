@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ibis.common.exceptions
 import os
 import pytest
 
@@ -238,13 +239,15 @@ def test_numeric_types():
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
-      assert float(validation["source_agg_value"]) == float(validation["target_agg_value"])
+        assert float(validation["source_agg_value"]) == float(
+            validation["target_agg_value"]
+        )
 
 
 def test_bignumeric_invalid():
     validator = data_validation.DataValidation(CONFIG_BIGNUMERIC_INVALID, verbose=True)
-    with pytest.raises(Exception):
-        df = validator.execute()
+    with pytest.raises(ibis.common.exceptions.IbisTypeError):
+        validator.execute()
 
 
 def test_cli_store_yaml_then_run():
