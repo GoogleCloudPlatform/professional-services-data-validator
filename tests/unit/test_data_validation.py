@@ -105,10 +105,10 @@ SAMPLE_ROW_CONFIG = {
     ],
     consts.CONFIG_CALCULATED_FIELDS: [
         {
-            "source_calculated_columns": ["text_value", "text_value_two"],
-            "target_calculated_columns": ["text_value", "text_value_two"],
-            "field_alias": "concat_text_value_text_value_two",
-            "type": "concat",
+            "source_calculated_columns": ["text_constant"],
+            "target_calculated_columns": ["text_constant"],
+            "field_alias": "length_text_constant",
+            "type": "length",
             "depth": 0,
         },
     ],
@@ -119,6 +119,12 @@ SAMPLE_ROW_CONFIG = {
             "field_alias": "count_text_value",
             "type": "count",
         },
+        {
+            "source_column": "length_text_constant",
+            "target_column": "length_text_constant",
+            "field_alias": "sum_length",
+            "type": "sum",
+        },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
 }
@@ -126,11 +132,15 @@ SAMPLE_ROW_CONFIG = {
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 
+
+STRING_CONSTANT = "constant"
+
 SOURCE_QUERY_DATA = [
     {
         "date": "2020-01-01",
         "int_val": 1,
         "double_val": 2.3,
+        "text_constant": STRING_CONSTANT,
         "text_val": "hello",
         "text_val_two": "goodbye",
     }
@@ -180,6 +190,7 @@ def _generate_fake_data(
             "date_value": rand_date,
             "timestamp_value": rand_timestamp,
             "int_value": random.randint(0, int_range),
+            "text_constant": STRING_CONSTANT,
             "text_value": random.choice(random_strings),
             "text_value_two": random.choice(random_strings),
         }
@@ -192,6 +203,7 @@ def _get_fake_json_data(data):
     for row in data:
         row["date_value"] = str(row["date_value"])
         row["timestamp_value"] = str(row["timestamp_value"])
+        row["text_constant"] = row["text_constant"]
         row["text_value"] = row["text_value"]
         row["text_value_two"] = row["text_value_two"]
 

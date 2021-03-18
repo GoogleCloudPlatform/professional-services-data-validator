@@ -323,19 +323,6 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.grouped_fields]
 
     def compile_calculated_fields(self, table, n=None):
-        # def compile_calculated_fields(self, table):
-        #     compiled_fields = []
-        #     depth_limit = max(field.config['depth'] for field in self.calculated_fields)
-        #     for n in range(0, (depth_limit + 1)):
-        #         compiled_fields = compiled_fields + [field.compile(table) for field in self.calculated_fields if field.config['depth'] == n]
-        #     return compiled_fields
-        if n is not None:
-            for field in self.calculated_fields:
-                print(field)
-        else:
-            print("THERE IS NO N")
-            for field in self.calculated_fields:
-                print(field)
         if n is not None:
             return [
                 field.compile(table)
