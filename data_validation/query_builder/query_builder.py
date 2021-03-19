@@ -211,7 +211,8 @@ class CalculatedField(object):
         """ A representation of an calculated field to build a query.
 
         Args:
-            config dict: Nothing makes sense anymore
+            config dict: Configurations object explaining calc field details
+            fields list: List of fields to transform into a single column
         """
         self.expr = ibis_expr
         self.config = config
@@ -280,7 +281,7 @@ class CalculatedField(object):
 
 class QueryBuilder(object):
     def __init__(
-        self, aggregate_fields, calculated_fields, filters, grouped_fields,
+        self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None
     ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
@@ -295,6 +296,7 @@ class QueryBuilder(object):
         self.calculated_fields = calculated_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
+        self.limit = limit
 
     @staticmethod
     def build_count_validator(limit=None):
@@ -348,7 +350,6 @@ class QueryBuilder(object):
             depth_limit = max(
                 field.config.get("depth", 0) for field in self.calculated_fields
             )
-            print(depth_limit)
             for n in range(0, (depth_limit + 1)):
                 print(n)
                 calc_table = calc_table.mutate(
