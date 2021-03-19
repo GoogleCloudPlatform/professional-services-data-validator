@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibis.common.exceptions
 import os
-import pytest
 
 from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
