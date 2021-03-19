@@ -98,7 +98,7 @@ CONFIG_GROUPED_COUNT_VALID = {
     ],
 }
 
-# TODO: The definition for this table is stored in SQL
+# TODO: The definition for this table is stored in: ./tests/resources/
 CONFIG_NUMERIC_AGG_VALID = {
     # BigQuery Specific Connection Config
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -121,20 +121,6 @@ CONFIG_NUMERIC_AGG_VALID = {
             consts.CONFIG_TARGET_COLUMN: "decimal_type",
             consts.CONFIG_FIELD_ALIAS: "compare_int_decimal",
         },
-    ],
-    consts.CONFIG_GROUPED_COLUMNS: [],
-}
-
-CONFIG_BIGNUMERIC_INVALID = {
-    # BigQuery Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: BQ_CONN,
-    consts.CONFIG_TARGET_CONN: BQ_CONN,
-    # Validation Type
-    consts.CONFIG_TYPE: "Column",
-    # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
-    consts.CONFIG_TABLE_NAME: "test_data_types",
-    consts.CONFIG_AGGREGATES: [
         {
             consts.CONFIG_TYPE: "sum",
             consts.CONFIG_SOURCE_COLUMN: "bignumeric_type",
@@ -242,12 +228,6 @@ def test_numeric_types():
         assert float(validation["source_agg_value"]) == float(
             validation["target_agg_value"]
         )
-
-
-def test_bignumeric_invalid():
-    validator = data_validation.DataValidation(CONFIG_BIGNUMERIC_INVALID, verbose=True)
-    with pytest.raises(ibis.common.exceptions.IbisTypeError):
-        validator.execute()
 
 
 def test_cli_store_yaml_then_run():
