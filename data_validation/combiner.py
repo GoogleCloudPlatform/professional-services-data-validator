@@ -84,26 +84,23 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype):
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
-        difference = ibis.literal(float("nan")).cast("double")
-        pct_difference = ibis.literal(float("nan")).cast("double")
+        source_value = field_differences["differences_source_agg_value"].epoch_seconds()
+        target_value = field_differences["differences_target_agg_value"].epoch_seconds()
     else:
-        difference = (
-            field_differences["differences_target_agg_value"]
-            - field_differences["differences_source_agg_value"]
+        source_value = field_differences["differences_source_agg_value"]
+        target_value = field_differences["differences_target_agg_value"]
+
+    difference = (target_value - source_value).cast("double")
+    pct_difference = (
+        ibis.literal(100.0)
+        * difference
+        / (
+            source_value.case()
+            .when(ibis.literal(0), target_value)
+            .else_(source_value)
+            .end()
         ).cast("double")
-        pct_difference = (
-            ibis.literal(100.0)
-            * difference
-            / (
-                field_differences["differences_source_agg_value"]
-                .case()
-                .when(
-                    ibis.literal(0), field_differences["differences_target_agg_value"]
-                )
-                .else_(field_differences["differences_source_agg_value"])
-                .end()
-            ).cast("double")
-        ).cast("double")
+    ).cast("double")
 
     return difference.name("difference"), pct_difference.name("pct_difference")
 

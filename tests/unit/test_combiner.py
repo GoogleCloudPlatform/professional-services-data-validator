@@ -179,8 +179,62 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "source_agg_value": ["2020-07-01 16:00:00+00:00"],
                     "target_agg_value": ["2020-07-01 16:00:00+00:00"],
                     "group_by_columns": [None],
-                    "difference": [_NAN],
-                    "pct_difference": [_NAN],
+                    "difference": [0.0],
+                    "pct_difference": [0.0],
+                    "labels": [[("name", "test_label")]],
+                }
+            ),
+        ),
+        (
+            pandas.DataFrame(
+                {
+                    "timecol__max": [
+                        pandas.Timestamp(1600000000, unit="s", tz=datetime.timezone.utc)
+                    ]
+                }
+            ),
+            pandas.DataFrame(
+                {
+                    "timecol__max": [
+                        pandas.Timestamp(2000000000, unit="s", tz=datetime.timezone.utc)
+                    ]
+                }
+            ),
+            metadata.RunMetadata(
+                validations={
+                    "timecol__max": metadata.ValidationMetadata(
+                        source_column_name="timecol",
+                        source_table_name="test_source",
+                        source_table_schema="bq-public.source_dataset",
+                        target_column_name="timecol",
+                        target_table_name="test_target",
+                        target_table_schema="bq-public.target_dataset",
+                        validation_type="Column",
+                        aggregation_type="max",
+                    ),
+                },
+                start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                labels=[("name", "test_label")],
+                run_id="test-run",
+            ),
+            pandas.DataFrame(
+                {
+                    "run_id": ["test-run"],
+                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "source_table_name": ["bq-public.source_dataset.test_source"],
+                    "source_column_name": ["timecol"],
+                    "target_table_name": ["bq-public.target_dataset.test_target"],
+                    "target_column_name": ["timecol"],
+                    "validation_type": ["Column"],
+                    "aggregation_type": ["max"],
+                    "validation_name": ["timecol__max"],
+                    "source_agg_value": ["2020-09-13 12:26:40+00:00"],
+                    "target_agg_value": ["2033-05-18 03:33:20+00:00"],
+                    "group_by_columns": [None],
+                    "difference": [400000000.0],
+                    "pct_difference": [25.0],
                     "labels": [[("name", "test_label")]],
                 }
             ),
