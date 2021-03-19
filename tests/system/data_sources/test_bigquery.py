@@ -96,6 +96,39 @@ CONFIG_GROUPED_COUNT_VALID = {
     ],
 }
 
+# TODO: The definition for this table is stored in: ./tests/resources/
+CONFIG_NUMERIC_AGG_VALID = {
+    # BigQuery Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
+    # Validation Type
+    consts.CONFIG_TYPE: "Column",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
+    consts.CONFIG_TABLE_NAME: "test_data_types",
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+        },
+        {
+            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_SOURCE_COLUMN: "int_type",
+            consts.CONFIG_TARGET_COLUMN: "decimal_type",
+            consts.CONFIG_FIELD_ALIAS: "compare_int_decimal",
+        },
+        {
+            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_SOURCE_COLUMN: "bignumeric_type",
+            consts.CONFIG_TARGET_COLUMN: "bignumeric_type",
+            consts.CONFIG_FIELD_ALIAS: "compare_bignumeric",
+        },
+    ],
+    consts.CONFIG_GROUPED_COLUMNS: [],
+}
+
 BQ_CONN_NAME = "bq-integration-test"
 CLI_CONFIG_FILE = "example_test.yaml"
 
@@ -183,6 +216,16 @@ def test_grouped_count_validator():
     for _, row in rows:
         assert float(row["source_agg_value"]) > 0
         assert row["source_agg_value"] == row["target_agg_value"]
+
+
+def test_numeric_types():
+    validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
+    df = validator.execute()
+
+    for validation in df.to_dict(orient="records"):
+        assert float(validation["source_agg_value"]) == float(
+            validation["target_agg_value"]
+        )
 
 
 def test_cli_store_yaml_then_run():

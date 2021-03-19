@@ -2,6 +2,10 @@
 
 ## Untagged
 
+## 1.1.7
+
+- Adding tests to validate BIGNUMERIC BQ type behavior
+
 ## 1.1.6
 
 - Minor fix for Teradata client from breaking IBis changes
