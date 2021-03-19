@@ -12,9 +12,11 @@ PyMySQL==1.0.2
 psycopg2-binary==2.8.6
 PyYAML==5.4.1
 pandas==1.2.1
+proto-plus==1.13.0
 pyarrow==3.0.0
 pydata-google-auth==1.1.0
 google-cloud-bigquery==2.7.0
 google-cloud-bigquery-storage==2.2.1
+google-cloud-spanner==3.1.0
 setuptools>=34.0.0
 jellyfish==0.8.2
