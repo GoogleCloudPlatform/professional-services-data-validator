@@ -101,7 +101,9 @@ class DataValidation(object):
                 - Finally return False if no covered case occured.
         """
         try:
-            recursive_query_size = max(float(row["source_agg_value"]), float(row["source_agg_value"]))
+            recursive_query_size = max(
+                float(row["source_agg_value"]), float(row["source_agg_value"])
+            )
         except Exception:
             logging.warning("Recursive values could not be cast to float.")
             return False

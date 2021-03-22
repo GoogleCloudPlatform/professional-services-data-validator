@@ -303,7 +303,7 @@ def test_row_level_validation_non_matching(module_under_test, fs):
 
 def test_row_level_validation_smart_count(module_under_test, fs):
     data = _generate_fake_data(rows=100, second_range=0)
-    
+
     source_json_data = _get_fake_json_data(data)
     target_json_data = _get_fake_json_data(data + data)
 
