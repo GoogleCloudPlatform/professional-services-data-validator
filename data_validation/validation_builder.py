@@ -18,6 +18,7 @@ from data_validation.query_builder.query_builder import (
     QueryBuilder,
     GroupedField,
     AggregateField,
+    CalculatedField,
     FilterField,
 )
 
@@ -45,9 +46,11 @@ class ValidationBuilder(object):
         self.target_builder = self.get_query_builder(self.validation_type)
 
         self.group_aliases = {}
+        self.calculated_aliases = {}
 
         self.add_config_aggregates()
         self.add_config_query_groups()
+        self.add_config_calculated_fields()
         self.add_config_filters()
         self.add_query_limit()
 
@@ -57,6 +60,7 @@ class ValidationBuilder(object):
         cloned_builder.source_builder = deepcopy(self.source_builder)
         cloned_builder.target_builder = deepcopy(self.target_builder)
         cloned_builder.group_aliases = deepcopy(self.group_aliases)
+        cloned_builder.calculated_aliases = deepcopy(self.calculated_aliases)
         cloned_builder._metadata = deepcopy(self._metadata)
 
         return cloned_builder
@@ -88,6 +92,10 @@ class ValidationBuilder(object):
         """ Return List of String Aliases """
         return self.group_aliases.keys()
 
+    def get_calculated_aliases(self):
+        """ Return List of String Aliases """
+        return self.calculated_aliases.keys()
+
     def get_grouped_alias_source_column(self, alias):
         return self.group_aliases[alias][consts.CONFIG_SOURCE_COLUMN]
 
@@ -99,6 +107,13 @@ class ValidationBuilder(object):
         aggregate_fields = self.config_manager.aggregates
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
+
+    def add_config_calculated_fields(self):
+        """ Add calculated fields to Query """
+        calc_fields = self.config_manager.calculated_fields
+        if calc_fields is not None:
+            for calc_field in calc_fields:
+                self.add_calc(calc_field)
 
     def add_config_query_groups(self, query_groups=None):
         """ Add Grouped Columns to Query """
@@ -122,7 +137,6 @@ class ValidationBuilder(object):
         source_field_name = aggregate_field[consts.CONFIG_SOURCE_COLUMN]
         target_field_name = aggregate_field[consts.CONFIG_TARGET_COLUMN]
         aggregate_type = aggregate_field.get(consts.CONFIG_TYPE)
-
         if not hasattr(AggregateField, aggregate_type):
             raise Exception("Unknown Aggregation Type: {}".format(aggregate_type))
 
@@ -202,6 +216,34 @@ class ValidationBuilder(object):
         # TODO(issues/40): Add metadata around filters
         self.source_builder.add_filter_field(source_filter)
         self.target_builder.add_filter_field(target_filter)
+
+    def add_calc(self, calc_field):
+        """ Add CalculatedField to Queries
+
+        Args:
+            calc_field (Dict): An object with source, target, and cast info
+        """
+        # prepare source and target payloads
+        source_config = deepcopy(calc_field)
+        source_fields = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
+        target_config = deepcopy(calc_field)
+        target_fields = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
+        # grab calc field metadata
+        alias = calc_field[consts.CONFIG_FIELD_ALIAS]
+        calc_type = calc_field[consts.CONFIG_TYPE]
+        # check if valid calc field and return correct object
+        if not hasattr(CalculatedField, calc_type):
+            raise Exception("Unknown Calculation Type: {}".format(calc_type))
+        source_field = getattr(CalculatedField, calc_type)(
+            config=source_config, fields=source_fields
+        )
+        target_field = getattr(CalculatedField, calc_type)(
+            config=target_config, fields=target_fields
+        )
+        self.source_builder.add_calculated_field(source_field)
+        self.target_builder.add_calculated_field(target_field)
+        # register calc field under alias
+        self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):
         """ Return query for source validation """

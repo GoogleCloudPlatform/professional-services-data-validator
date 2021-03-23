@@ -66,13 +66,15 @@ class Hash(ValueOp):
 
 class HashBytes(ValueOp):
     arg = Arg(rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)]))
-    how = Arg(rlz.isin({'sha256'}))
+    how = Arg(rlz.isin({'sha256', 'farm_fingerprint'}))
     output_type = rlz.shape_like('arg', 'binary')
 
 
 class RawSQL(Comparison):
     pass
 
+def compile_hash(numeric_value, how):
+    return Hash(numeric_value, how=how).to_expr()
 
 def compile_hash(binary_value, how):
     return Hash(binary_value, how=how).to_expr()
@@ -93,12 +95,21 @@ def format_hash_bigquery(translator, expr):
 def compile_hashbytes(binary_value, how):
     return HashBytes(binary_value, how=how).to_expr()
 
+def format_hash_bigquery(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    if how == "farm_fingerprint":
+        return f"FARM_FINGERPRINT({compiled_arg})"
+    else:
+        raise ValueError(f"unexpected value for 'how': {how}")
 
 def format_hashbytes_bigquery(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
     if how == "sha256":
         return f"SHA256({compiled_arg})"
+    elif how == "farm_fingerprint":
+        return f"FARM_FINGERPRINT({compiled_arg})"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 

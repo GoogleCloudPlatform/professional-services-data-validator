@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import ibis
+from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import operations
 
 from data_validation import clients
@@ -187,17 +188,112 @@ class GroupedField(object):
         return group_field
 
 
+class ColumnReference(object):
+    def __init__(self, column_name):
+        """ A representation of an calculated field to build a query.
+
+        Args:
+            column_name (String): The column name used in a complex expr
+        """
+        self.column_name = column_name
+
+    def compile(self, ibis_table):
+        """ Return an ibis object referencing the column.
+
+        Args:
+            ibis_table (IbisTable): The table obj reference
+        """
+        return ibis_table[self.column_name]
+
+
+class CalculatedField(object):
+    def __init__(self, ibis_expr, config, fields):
+        """ A representation of an calculated field to build a query.
+
+        Args:
+            config dict: Configurations object explaining calc field details
+            fields list: List of fields to transform into a single column
+        """
+        self.expr = ibis_expr
+        self.config = config
+        self.fields = fields
+
+    @staticmethod
+    def hash(config, fields):
+        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields,)
+
+    @staticmethod
+    def concat(config, fields):
+        if config.get("default_concat_separator") is None:
+            config["default_concat_separator"] = ibis.literal(",")
+        fields = [config["default_concat_separator"], fields]
+        return CalculatedField(ibis.expr.api.StringValue.join, config, fields,)
+
+    @staticmethod
+    def ifnull(config, fields):
+        if config.get("default_null_string") is None:
+            config["default_string"] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
+        fields = [config["default_string"], fields[0]]
+        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
+
+    @staticmethod
+    def length(config, fields):
+        return CalculatedField(ibis.expr.api.StringValue.length, config, fields,)
+
+    @staticmethod
+    def rstrip(config, fields):
+        return CalculatedField(ibis.expr.api.StringValue.rstrip, config, fields,)
+
+    @staticmethod
+    def upper(config, fields):
+        return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
+
+    @staticmethod
+    def custom(expr):
+        """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
+        Args:
+            expr (Str): A custom SQL expression used to filter a query
+        """
+        return CalculatedField(expr)
+
+    def _compile_fields(self, ibis_table, fields):
+        compiled_fields = []
+
+        for field in fields:
+            if type(field) in [StringScalar]:
+                compiled_fields.append(field)
+            elif isinstance(field, list):
+                compiled_fields.append(self._compile_fields(ibis_table, field))
+            else:
+                compiled_fields.append(ibis_table[field])
+
+        return compiled_fields
+
+    def compile(self, ibis_table):
+        compiled_fields = self._compile_fields(ibis_table, self.fields)
+
+        calc_field = self.expr(*compiled_fields)
+        if self.config["field_alias"]:
+            calc_field = calc_field.name(self.config["field_alias"])
+
+        return calc_field
+
+
 class QueryBuilder(object):
-    def __init__(self, aggregate_fields, filters, grouped_fields, limit=None):
+    def __init__(
+        self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None
+    ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
         Args:
             aggregate_fields (list[AggregateField]): AggregateField instances with Ibis expressions
+            calculated_fields (list[CalculatedField]): A list of CalculatedField instances
             filters (list[FilterField]): A list of FilterField instances
             grouped_fields (list[GroupedField]): A list of GroupedField instances
             limit (int): A limit value for the number of records to pull (used for testing)
         """
         self.aggregate_fields = aggregate_fields
+        self.calculated_fields = calculated_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
         self.limit = limit
@@ -208,12 +304,13 @@ class QueryBuilder(object):
         aggregate_fields = []
         filters = []
         grouped_fields = []
+        calculated_fields = []
 
         return QueryBuilder(
             aggregate_fields,
             filters=filters,
             grouped_fields=grouped_fields,
-            limit=limit,
+            calculated_fields=calculated_fields,
         )
 
     def compile_aggregate_fields(self, table):
@@ -227,6 +324,16 @@ class QueryBuilder(object):
     def compile_group_fields(self, table):
         return [field.compile(table) for field in self.grouped_fields]
 
+    def compile_calculated_fields(self, table, n=None):
+        if n is not None:
+            return [
+                field.compile(table)
+                for field in self.calculated_fields
+                if field.config["depth"] == n
+            ]
+        else:
+            return [field.compile(table) for field in self.calculated_fields]
+
     def compile(self, data_client, schema_name, table_name):
         """ Return an Ibis query object
 
@@ -238,8 +345,19 @@ class QueryBuilder(object):
         table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
+        calc_table = table
+        if self.calculated_fields:
+            depth_limit = max(
+                field.config.get("depth", 0) for field in self.calculated_fields
+            )
+            for n in range(0, (depth_limit + 1)):
+                calc_table = calc_table.mutate(
+                    self.compile_calculated_fields(calc_table, n)
+                )
         compiled_filters = self.compile_filter_fields(table)
-        filtered_table = table.filter(compiled_filters) if compiled_filters else table
+        filtered_table = (
+            calc_table.filter(compiled_filters) if compiled_filters else calc_table
+        )
 
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
@@ -283,3 +401,12 @@ class QueryBuilder(object):
             filter_obj (FilterField): A FilterField instance
         """
         self.filters.append(filter_obj)
+
+    def add_calculated_field(self, calculated_field):
+        """ Add a CalculatedField instance to your query which
+            will add the desired scalar function to your compiled
+            query (ie. CONCAT(field_a, field_b))
+        Args:
+            calculated_field (CalculatedField): A CalculatedField instance
+        """
+        self.calculated_fields.append(calculated_field)

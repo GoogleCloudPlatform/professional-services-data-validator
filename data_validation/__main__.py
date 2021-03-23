@@ -70,7 +70,6 @@ def get_aggregate_config(args, config_manager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, consts.NUMERIC_DATA_TYPES
         )
-
     return aggregate_configs
 
 
