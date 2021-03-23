@@ -303,6 +303,21 @@ def test_row_level_validation_perfect_match(module_under_test, fs):
     assert result_df["difference"].sum() == 0
 
 
+def test_calc_field_validation_string_len_match(module_under_test, fs):
+    num_rows = 100
+    data = _generate_fake_data(rows=num_rows, second_range=0)
+    json_data = _get_fake_json_data(data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    result_df = client.execute()
+    calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
+
+    assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
+
+
 def test_row_level_validation_non_matching(module_under_test, fs):
     data = _generate_fake_data(rows=10, second_range=0)
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)

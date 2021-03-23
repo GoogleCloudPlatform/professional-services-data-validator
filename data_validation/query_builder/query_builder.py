@@ -214,6 +214,7 @@ class ColumnReference(object):
 
 class CalculatedField(object):
     def __init__(self, ibis_expr, config, fields, **kwargs):
+
         """ A representation of an calculated field to build a query.
 
         Args:
@@ -223,9 +224,8 @@ class CalculatedField(object):
         self.expr = ibis_expr
         self.config = config
         self.fields = fields
-        # if kwargs is None:
-        #     kwargs = {}
         self.kwargs = kwargs
+
     @staticmethod
     def concat(config, fields):
         if config.get("default_concat_separator") is None:
@@ -233,14 +233,13 @@ class CalculatedField(object):
         fields = [config["default_concat_separator"], fields]
         return CalculatedField(ibis.expr.api.StringValue.join, config, fields,)
 
-
     @staticmethod
     def hash(config, fields):
         #TODO: replace with necessary
         if config.get("default_hash_function") is None:
             config["hash_function"] = "farm_fingerprint"
             fields.append({"how": "farm_fingerprint"})
-        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how='farm_fingerprint')
+        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how='farm_fingerprint',)
 
     @staticmethod
     def ifnull(config, fields):
