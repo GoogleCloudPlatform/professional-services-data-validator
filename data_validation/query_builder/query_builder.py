@@ -65,7 +65,13 @@ class AggregateField(object):
     @staticmethod
     def sum(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.api.NumericColumn.sum, field_name=field_name, alias=alias,
+            ibis.expr.api.IntegerColumn.sum, field_name=field_name, alias=alias,
+        )
+
+    @staticmethod
+    def bit_xor(field_name=None, alias=None):
+        return AggregateField(
+            ibis.expr.api.IntegerColumn.bit_xor, field_name=field_name, alias=alias,
         )
 
     def compile(self, ibis_table):
@@ -207,7 +213,7 @@ class ColumnReference(object):
 
 
 class CalculatedField(object):
-    def __init__(self, ibis_expr, config, fields):
+    def __init__(self, ibis_expr, config, fields, **kwargs):
         """ A representation of an calculated field to build a query.
 
         Args:
@@ -217,17 +223,24 @@ class CalculatedField(object):
         self.expr = ibis_expr
         self.config = config
         self.fields = fields
-
-    @staticmethod
-    def hash(config, fields):
-        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields,)
-
+        # if kwargs is None:
+        #     kwargs = {}
+        self.kwargs = kwargs
     @staticmethod
     def concat(config, fields):
         if config.get("default_concat_separator") is None:
             config["default_concat_separator"] = ibis.literal(",")
         fields = [config["default_concat_separator"], fields]
         return CalculatedField(ibis.expr.api.StringValue.join, config, fields,)
+
+
+    @staticmethod
+    def hash(config, fields):
+        #TODO: replace with necessary
+        if config.get("default_hash_function") is None:
+            config["hash_function"] = "farm_fingerprint"
+            fields.append({"how": "farm_fingerprint"})
+        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how='farm_fingerprint')
 
     @staticmethod
     def ifnull(config, fields):
@@ -264,6 +277,8 @@ class CalculatedField(object):
                 compiled_fields.append(field)
             elif isinstance(field, list):
                 compiled_fields.append(self._compile_fields(ibis_table, field))
+            elif isinstance(field, dict):
+                pass
             else:
                 compiled_fields.append(ibis_table[field])
 
@@ -271,8 +286,7 @@ class CalculatedField(object):
 
     def compile(self, ibis_table):
         compiled_fields = self._compile_fields(ibis_table, self.fields)
-
-        calc_field = self.expr(*compiled_fields)
+        calc_field = self.expr(*compiled_fields, **self.kwargs)
         if self.config["field_alias"]:
             calc_field = calc_field.name(self.config["field_alias"])
 
@@ -351,7 +365,6 @@ class QueryBuilder(object):
                 field.config.get("depth", 0) for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
-                print(n)
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
