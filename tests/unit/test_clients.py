@@ -50,7 +50,7 @@ def test_get_bigquery_client_sets_user_agent():
     user_agent = ibis_client.client._connection._client_info.to_user_agent()
     assert "google-pso-tool/data-validator" in user_agent
 
+
 def test_import_oracle_client():
-    with pytest.raises(ModuleNotFoundError,
-                       match=r"No module named 'cx_Oracle'"):
+    with pytest.raises(ModuleNotFoundError, match=r"No module named 'cx_Oracle'"):
         from third_party.ibis.ibis_oracle.client import OracleClient
