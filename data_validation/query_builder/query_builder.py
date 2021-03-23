@@ -351,7 +351,6 @@ class QueryBuilder(object):
                 field.config.get("depth", 0) for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
-                print(n)
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
