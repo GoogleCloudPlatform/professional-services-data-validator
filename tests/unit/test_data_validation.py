@@ -313,7 +313,7 @@ def test_calc_field_validation_string_len_match(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
-    calc_val_df = result_df[result_df["validation_name"]=="sum_length"]
+    calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
 
     assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
 
