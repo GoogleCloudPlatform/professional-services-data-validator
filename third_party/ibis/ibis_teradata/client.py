@@ -136,6 +136,12 @@ class TeradataClient(SQLClient):
     TABLE_SCHEMA_SQL = """
     HELP COLUMN {database}.{table}.*;
     """  # TODO move somewhere better
+    # TABLE_SCHEMA_SQL = """
+    # SELECT  ColumnName as "Column Name", ColumnType as "Type", Nullable, ColumnFormat as "Format"
+    #    FROM    DBC.ColumnsV
+    # WHERE   DatabaseName = '{database}'
+    #    AND     TableName = '{table}';
+    # """
 
     def _get_teradata_schema(self, database, table):
         table_schema_sql = self.TABLE_SCHEMA_SQL.format(database=database, table=table)
@@ -149,11 +155,10 @@ class TeradataClient(SQLClient):
         clean_schema = []
         for col_data in schema_list:
             schema_field = {
-                "names": col_data["Column Name"].rstrip(),
+                "names": col_data["Column SQL Name"].rstrip(),
                 "types": TeradataTypeTranslator.to_ibis(col_data),
             }
             clean_schema.append(schema_field)
-
         return pandas.DataFrame(clean_schema)
 
     def _get_schema_using_query(self, limited_query):
