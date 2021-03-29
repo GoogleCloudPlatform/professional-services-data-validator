@@ -65,13 +65,18 @@ class MockIbisClient(object):
 
 
 class MockIbisTable(object):
-    columns = ["a", "b", "c"]
+    def __init__(self):
+        self.columns = ["a", "b", "c"]
 
     def __getitem__(self, key):
         return self
 
     def type(self):
         return "int64"
+
+    def mutate(self, fields):
+        self.columns = self.columns + fields
+        return self
 
 
 @pytest.fixture

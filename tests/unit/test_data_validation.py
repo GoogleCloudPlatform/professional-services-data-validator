@@ -113,6 +113,7 @@ SAMPLE_ROW_CONFIG = {
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
     consts.CONFIG_TYPE: "Row",
+    consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
     "table_name": "my_table",
@@ -134,12 +135,27 @@ SAMPLE_ROW_CONFIG = {
             consts.CONFIG_CAST: None,
         },
     ],
+    consts.CONFIG_CALCULATED_FIELDS: [
+        {
+            "source_calculated_columns": ["text_constant"],
+            "target_calculated_columns": ["text_constant"],
+            "field_alias": "length_text_constant",
+            "type": "length",
+            "depth": 0,
+        },
+    ],
     consts.CONFIG_AGGREGATES: [
         {
             "source_column": "text_value",
             "target_column": "text_value",
             "field_alias": "count_text_value",
             "type": "count",
+        },
+        {
+            "source_column": "length_text_constant",
+            "target_column": "length_text_constant",
+            "field_alias": "sum_length",
+            "type": "sum",
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
@@ -149,8 +165,18 @@ JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
 
+
+STRING_CONSTANT = "constant"
+
 SOURCE_QUERY_DATA = [
-    {"date": "2020-01-01", "int_val": 1, "double_val": 2.3, "text_val": "hello"}
+    {
+        "date": "2020-01-01",
+        "int_val": 1,
+        "double_val": 2.3,
+        "text_constant": STRING_CONSTANT,
+        "text_val": "hello",
+        "text_val_two": "goodbye",
+    }
 ]
 SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
 JOIN_ON_FIELDS = ["date"]
@@ -197,7 +223,9 @@ def _generate_fake_data(
             "date_value": rand_date,
             "timestamp_value": rand_timestamp,
             "int_value": random.randint(0, int_range),
+            "text_constant": STRING_CONSTANT,
             "text_value": random.choice(random_strings),
+            "text_value_two": random.choice(random_strings),
         }
         data.append(row)
 
@@ -208,6 +236,9 @@ def _get_fake_json_data(data):
     for row in data:
         row["date_value"] = str(row["date_value"])
         row["timestamp_value"] = str(row["timestamp_value"])
+        row["text_constant"] = row["text_constant"]
+        row["text_value"] = row["text_value"]
+        row["text_value_two"] = row["text_value_two"]
 
     return json.dumps(data)
 
@@ -223,7 +254,6 @@ def test_data_validation_client(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
-
     assert int(result_df.source_agg_value[0]) == 2
 
 
@@ -353,6 +383,21 @@ def test_row_level_validation_perfect_match(module_under_test, fs):
     assert result_df["difference"].sum() == 0
 
 
+def test_calc_field_validation_string_len_match(module_under_test, fs):
+    num_rows = 100
+    data = _generate_fake_data(rows=num_rows, second_range=0)
+    json_data = _get_fake_json_data(data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    result_df = client.execute()
+    calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
+
+    assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
+
+
 def test_row_level_validation_non_matching(module_under_test, fs):
     data = _generate_fake_data(rows=10, second_range=0)
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
@@ -377,3 +422,20 @@ def test_row_level_validation_non_matching(module_under_test, fs):
         "group_by_columns"
     ].max()
     assert expected_date_result == grouped_column
+
+
+def test_row_level_validation_smart_count(module_under_test, fs):
+    data = _generate_fake_data(rows=100, second_range=0)
+
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data + data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    result_df = client.execute()
+
+    expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
+    assert expected_date_result == result_df["group_by_columns"].max()
+    assert result_df["difference"].sum() == 100
