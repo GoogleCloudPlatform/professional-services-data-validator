@@ -81,6 +81,11 @@ class ConfigManager(object):
         return True
 
     @property
+    def max_recursive_query_size(self):
+        """Return Aggregates from Config """
+        return self._config.get(consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE, 50000)
+
+    @property
     def aggregates(self):
         """Return Aggregates from Config """
         return self._config.get(consts.CONFIG_AGGREGATES, [])

@@ -15,6 +15,7 @@
 import copy
 import datetime
 import json
+import logging
 import warnings
 
 import google.oauth2.service_account
@@ -88,6 +89,32 @@ class DataValidation(object):
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
 
+    def query_too_large(self, row, grouped_fields):
+        """ Return bool to dictate if another level of recursion
+            would create a too large result set.
+
+            Rules to define too large are:
+                - If any grouped fields remain, return False.
+                    (assumes user added logical sized groups)
+                - Else, if next group size is larger
+                    than the limit, return True.
+                - Finally return False if no covered case occured.
+        """
+        try:
+            recursive_query_size = max(
+                float(row["source_agg_value"]), float(row["source_agg_value"])
+            )
+        except Exception:
+            logging.warning("Recursive values could not be cast to float.")
+            return False
+
+        if len(grouped_fields) > 1:
+            return False
+        elif recursive_query_size > self.config_manager.max_recursive_query_size:
+            return True
+
+        return False
+
     def execute_recursive_validation(self, validation_builder, grouped_fields):
         """ Recursive execution for Row validations.
 
@@ -107,6 +134,9 @@ class DataValidation(object):
 
             for row in result_df.to_dict(orient="row"):
                 if row["source_agg_value"] == row["target_agg_value"]:
+                    past_results.append(pandas.DataFrame([row]))
+                elif self.query_too_large(row, grouped_fields):
+                    logging.warning("Query result is too large for recursion: %s", row)
                     past_results.append(pandas.DataFrame([row]))
                 else:
                     recursive_validation_builder = validation_builder.clone()

@@ -38,6 +38,7 @@ CONFIG_LIMIT = "limit"
 CONFIG_FILTERS = "filters"
 CONFIG_FILTER_SOURCE = "source"
 CONFIG_FILTER_TARGET = "target"
+CONFIG_MAX_RECURSIVE_QUERY_SIZE = "max_recursive_query_size"
 
 CONFIG_FILTER_SOURCE_COLUMN = "source_column"
 CONFIG_FILTER_SOURCE_VALUE = "source_value"
