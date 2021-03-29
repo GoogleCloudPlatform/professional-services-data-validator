@@ -213,7 +213,7 @@ class ColumnReference(object):
 
 
 class CalculatedField(object):
-    def __init__(self, ibis_expr, config, fields, **kwargs):
+    def __init__(self, ibis_expr, config, fields, cast=None, **kwargs):
 
         """ A representation of an calculated field to build a query.
 
@@ -224,6 +224,7 @@ class CalculatedField(object):
         self.expr = ibis_expr
         self.config = config
         self.fields = fields
+        self.cast = cast
         self.kwargs = kwargs
 
     @staticmethod
@@ -231,15 +232,14 @@ class CalculatedField(object):
         if config.get("default_concat_separator") is None:
             config["default_concat_separator"] = ibis.literal(",")
         fields = [config["default_concat_separator"], fields]
-        return CalculatedField(ibis.expr.api.StringValue.join, config, fields,)
+        cast = "string"
+        return CalculatedField(ibis.expr.api.StringValue.join, config, fields, cast=cast,)
 
     @staticmethod
     def hash(config, fields):
-        #TODO: replace with necessary
         if config.get("default_hash_function") is None:
-            config["hash_function"] = "farm_fingerprint"
-            fields.append({"how": "farm_fingerprint"})
-        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how='farm_fingerprint',)
+            how = "farm_fingerprint"
+        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how=how,)
 
     @staticmethod
     def ifnull(config, fields):
@@ -276,10 +276,11 @@ class CalculatedField(object):
                 compiled_fields.append(field)
             elif isinstance(field, list):
                 compiled_fields.append(self._compile_fields(ibis_table, field))
-            elif isinstance(field, dict):
-                pass
             else:
-                compiled_fields.append(ibis_table[field])
+                if self.cast is not None:
+                    compiled_fields.append(ibis_table[field].cast(self.cast))
+                else:
+                    compiled_fields.append(ibis_table[field])
 
         return compiled_fields
 
