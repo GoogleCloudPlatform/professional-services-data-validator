@@ -95,11 +95,11 @@ def get_bigquery_client(project_id, dataset_id=None, credentials=None):
 
 
 def get_pandas_client(table_name, file_path, file_type):
-    """ Return pandas client and env with file loaded into DataFrame
+    """Return pandas client and env with file loaded into DataFrame
 
-        table_name (str): Table name to use as reference for file data
-        file_path (str): The local, s3, or GCS file path to the data
-        file_type (str): The file type of the file (csv or json)
+    table_name (str): Table name to use as reference for file data
+    file_path (str): The local, s3, or GCS file path to the data
+    file_type (str): The file type of the file (csv or json)
     """
     if file_type == "csv":
         df = pandas.read_csv(file_path)
@@ -114,12 +114,12 @@ def get_pandas_client(table_name, file_path, file_type):
 
 
 def get_ibis_table(client, schema_name, table_name, database_name=None):
-    """ Return Ibis Table for Supplied Client.
+    """Return Ibis Table for Supplied Client.
 
-        client (IbisClient): Client to use for table
-        schema_name (str): Schema name of table object
-        table_name (str): Table name of table object
-        database_name (str): Database name (generally default is used)
+    client (IbisClient): Client to use for table
+    schema_name (str): Schema name of table object
+    table_name (str): Table name of table object
+    database_name (str): Database name (generally default is used)
     """
     if type(client) in [OracleClient, PostgreSQLClient]:
         return client.table(table_name, database=database_name, schema=schema_name)
@@ -152,7 +152,7 @@ def list_tables(client, schema_name):
 def get_all_tables(client):
     """Return a list of tuples with database and table names.
 
-        client (IbisClient): Client to use for tables
+    client (IbisClient): Client to use for tables
     """
     table_objs = []
     schemas = list_schemas(client)

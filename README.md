@@ -53,6 +53,8 @@ data-validation run
   --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
   --config-file CONFIG_FILE, -c CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
+  --threshold THRESHOLD, -th THRESHOLD
+                        (Optional) Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
   --labels KEY=VALUE, -l KEY1=VALUE1,KEY2=VALUE2
                         (Optional) Comma-separated key value pair labels for the run.
   --verbose, -v         Verbose logging will print queries executed

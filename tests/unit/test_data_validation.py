@@ -73,6 +73,37 @@ SAMPLE_CONFIG = {
             "type": "count",
         },
     ],
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_RESULT_HANDLER: None,
+}
+
+SAMPLE_THRESHOLD_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: "Column",
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": "col_a",
+            "target_column": "col_a",
+            "field_alias": "count_col_a",
+            "type": "count",
+        },
+        {
+            "source_column": "col_b",
+            "target_column": "col_b",
+            "field_alias": "count_col_b",
+            "type": "count",
+        },
+    ],
+    consts.CONFIG_THRESHOLD: 150.0,
     consts.CONFIG_RESULT_HANDLER: None,
 }
 
@@ -132,6 +163,7 @@ SAMPLE_ROW_CONFIG = {
 
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
+JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
 
 
 STRING_CONSTANT = "constant"
@@ -170,14 +202,14 @@ def _create_table_file(table_path, data):
 def _generate_fake_data(
     rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
 ):
-    """ Return a list of dicts with given number of rows.
+    """Return a list of dicts with given number of rows.
 
-        Data Keys:
-            id: a unique int per row
-            timestamp_value: a random timestamp in the past {second_range} back
-            date_value: a random date in the past {second_range} back
-            int_value: a random int value inside 0 to {int_range}
-            text_value: a random string from supplied list
+    Data Keys:
+        id: a unique int per row
+        timestamp_value: a random timestamp in the past {second_range} back
+        date_value: a random date in the past {second_range} back
+        int_value: a random int value inside 0 to {int_range}
+        text_value: a random string from supplied list
     """
     data = []
     random_strings = random_strings or RANDOM_STRINGS
@@ -271,6 +303,53 @@ def test_zero_both_values(module_under_test, fs):
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
 
     assert numpy.isnan(col_a_pct_diff)
+
+
+def test_status_success_validation(module_under_test, fs):
+    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
+    _create_table_file(TARGET_TABLE_FILE_PATH, JSON_DATA)
+
+    client = module_under_test.DataValidation(SAMPLE_CONFIG)
+    result_df = client.execute()
+
+    col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
+    col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
+    col_a_status = col_a_result_df.status.values[0]
+
+    assert col_a_pct_threshold == 0.0
+    assert col_a_status == "success"
+
+
+def test_status_fail_validation(module_under_test, fs):
+    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
+    _create_table_file(TARGET_TABLE_FILE_PATH, JSON_COLA_ZERO_DATA)
+
+    client = module_under_test.DataValidation(SAMPLE_CONFIG)
+    result_df = client.execute()
+
+    col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
+    col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
+    col_a_status = col_a_result_df.status.values[0]
+
+    assert col_a_pct_threshold == 0.0
+    assert col_a_status == "fail"
+
+
+def test_threshold_equals_diff(module_under_test, fs):
+    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
+    _create_table_file(TARGET_TABLE_FILE_PATH, JSON_BAD_DATA)
+
+    client = module_under_test.DataValidation(SAMPLE_THRESHOLD_CONFIG)
+    result_df = client.execute()
+
+    col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
+    col_a_pct_diff = col_a_result_df.pct_difference.values[0]
+    col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
+    col_a_status = col_a_result_df.status.values[0]
+
+    assert col_a_pct_diff == 150.0
+    assert col_a_pct_threshold == 150.0
+    assert col_a_status == "success"
 
 
 def test_get_pandas_data_client(module_under_test, fs):

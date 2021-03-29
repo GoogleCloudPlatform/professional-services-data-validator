@@ -25,7 +25,7 @@ from data_validation.query_builder.query_builder import (
 
 class ValidationBuilder(object):
     def __init__(self, config_manager):
-        """ Initialize a ValidationBuilder client which supplies the
+        """Initialize a ValidationBuilder client which supplies the
             source and target queries to run.
 
         Args:
@@ -128,7 +128,7 @@ class ValidationBuilder(object):
             self.add_filter(filter_field)
 
     def add_aggregate(self, aggregate_field):
-        """ Add Aggregate Field to Queries
+        """Add Aggregate Field to Queries
 
         Args:
             aggregate_field (dict): A dictionary with source, target, and aggregation info.
@@ -158,6 +158,7 @@ class ValidationBuilder(object):
             target_table_name=self.config_manager.target_table,
             source_column_name=source_field_name,
             target_column_name=target_field_name,
+            threshold=self.config_manager.threshold,
         )
 
     def pop_grouped_fields(self):
@@ -169,7 +170,7 @@ class ValidationBuilder(object):
         return self.config_manager.query_groups
 
     def add_query_group(self, grouped_field):
-        """ Add Grouped Field to Query
+        """Add Grouped Field to Query
 
         Args:
             grouped_field (Dict): An object with source, target, and cast info
@@ -191,7 +192,7 @@ class ValidationBuilder(object):
         self.group_aliases[alias] = grouped_field
 
     def add_filter(self, filter_field):
-        """ Add FilterField to Queries
+        """Add FilterField to Queries
 
         Args:
             filter_field (Dict): An object with source and target filter details
@@ -274,9 +275,9 @@ class ValidationBuilder(object):
         return query
 
     def add_query_limit(self):
-        """ Add a limit to the query results
+        """Add a limit to the query results
 
-            **WARNING** this can skew results and should be used carefully
+        **WARNING** this can skew results and should be used carefully
         """
         limit = self.config_manager.query_limit
         self.source_builder.limit = limit
