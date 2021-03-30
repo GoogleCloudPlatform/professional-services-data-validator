@@ -149,11 +149,10 @@ class TeradataClient(SQLClient):
         clean_schema = []
         for col_data in schema_list:
             schema_field = {
-                "names": col_data["Column Name"].rstrip(),
+                "names": col_data["Column SQL Name"].rstrip(),
                 "types": TeradataTypeTranslator.to_ibis(col_data),
             }
             clean_schema.append(schema_field)
-
         return pandas.DataFrame(clean_schema)
 
     def _get_schema_using_query(self, limited_query):
