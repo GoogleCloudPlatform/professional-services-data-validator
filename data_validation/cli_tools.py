@@ -47,6 +47,7 @@ data-validation run-config -c ex_yaml.yaml
 import argparse
 import json
 import os
+import sys
 import uuid
 
 from data_validation import consts
@@ -222,6 +223,12 @@ def _configure_run_parser(subparsers):
         "--labels", "-l", help="Key value pair labels for validation run.",
     )
     run_parser.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference.",
+    )
+    run_parser.add_argument(
         "--filters",
         "-filters",
         help='Filter config details {["type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
@@ -275,6 +282,22 @@ def get_connection_config_from_args(args):
         config[field] = getattr(args, field)
 
     return config
+
+
+def threshold_float(x):
+    """Restrict threshold arg to be a positive float."""
+    try:
+        x = float(x)
+    except ValueError:
+        raise argparse.ArgumentTypeError("%r not a floating-point literal" % (x,))
+
+    if x < 0.0 or x > sys.float_info.max:
+        raise argparse.ArgumentTypeError(
+            "%r must be positive and below the max float value" % (x,)
+        )
+    elif x != x:
+        raise argparse.ArgumentTypeError("%r must be a number" % (x,))
+    return x
 
 
 def _get_data_validation_directory():

@@ -40,7 +40,7 @@ class DataValidation(object):
     def __init__(
         self, config, validation_builder=None, result_handler=None, verbose=False
     ):
-        """ Initialize a DataValidation client
+        """Initialize a DataValidation client
 
         Args:
             config (dict): The validation config used for the comparison
@@ -116,7 +116,7 @@ class DataValidation(object):
         return False
 
     def execute_recursive_validation(self, validation_builder, grouped_fields):
-        """ Recursive execution for Row validations.
+        """Recursive execution for Row validations.
 
         This method executes aggregate queries, such as sum-of-hashes, on the
         source and target tables. Where they differ, add to the GROUP BY

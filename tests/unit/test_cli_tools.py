@@ -30,6 +30,7 @@ CLI_ARGS = {
     "count": '["col_a","col_b"]',
     "config_file": "example_test.yaml",
     "labels": "name=test_run",
+    "threshold": 30.0,
     "verbose": True,
 }
 
@@ -52,6 +53,7 @@ def test_get_parsed_args(mock_args):
     args = cli_tools.get_parsed_args()
     assert args.command == "run"
     assert args.labels == "name=test_run"
+    assert args.threshold == 30.0
     assert args.verbose
 
 
@@ -121,3 +123,21 @@ def test_get_labels_err(test_input):
     """Ensure that Value Error is raised when incorrect label argument is provided. """
     with pytest.raises(ValueError):
         cli_tools.get_labels(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected", [(0, 0.0), (50, 50.0), (100, 100.0)],
+)
+def test_threshold_float(test_input, expected):
+    """Test threshold float function."""
+    res = cli_tools.threshold_float(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input", [(-4), (float("nan")), (float("inf")), ("string")],
+)
+def test_threshold_float_err(test_input):
+    """Test that threshold float only accepts positive floats."""
+    with pytest.raises(argparse.ArgumentTypeError):
+        cli_tools.threshold_float(test_input)
