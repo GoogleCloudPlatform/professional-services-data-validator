@@ -23,10 +23,6 @@ from ibis.backends.pandas.client import PandasClient
 
 from data_validation import consts, exceptions
 
-pandas.set_option("display.max_rows", 500)
-pandas.set_option("display.max_columns", 500)
-pandas.set_option("display.width", 1000)
-
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 
