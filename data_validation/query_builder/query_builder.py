@@ -233,7 +233,9 @@ class CalculatedField(object):
             config["default_concat_separator"] = ibis.literal(",")
         fields = [config["default_concat_separator"], fields]
         cast = "string"
-        return CalculatedField(ibis.expr.api.StringValue.join, config, fields, cast=cast,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.join, config, fields, cast=cast,
+        )
 
     @staticmethod
     def hash(config, fields):

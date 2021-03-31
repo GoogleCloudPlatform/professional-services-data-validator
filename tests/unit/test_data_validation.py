@@ -23,6 +23,9 @@ from ibis.backends.pandas.client import PandasClient
 
 from data_validation import consts, exceptions
 
+pandas.set_option("display.max_rows", 500)
+pandas.set_option("display.max_columns", 500)
+pandas.set_option("display.width", 1000)
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
@@ -104,6 +107,45 @@ SAMPLE_ROW_CONFIG = {
             consts.CONFIG_CAST: None,
         },
     ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": "text_value",
+            "target_column": "text_value",
+            "field_alias": "count_text_value",
+            "type": "count",
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
+}
+
+SAMPLE_ROW_CALC_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: "Row",
+    consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "date_value",
+            consts.CONFIG_SOURCE_COLUMN: "date_value",
+            consts.CONFIG_TARGET_COLUMN: "date_value",
+            consts.CONFIG_CAST: "date",
+        },
+    ],
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
     consts.CONFIG_CALCULATED_FIELDS: [
         {
             "source_calculated_columns": ["text_constant"],
@@ -112,23 +154,57 @@ SAMPLE_ROW_CONFIG = {
             "type": "length",
             "depth": 0,
         },
+        {
+            "source_calculated_columns": ["text_constant"],
+            "target_calculated_columns": ["text_constant"],
+            "field_alias": "upper_text_constant",
+            "type": "upper",
+            "depth": 0,
+        },
+        {
+            "source_calculated_columns": [
+                "length_text_constant",
+                "upper_text_constant",
+            ],
+            "target_calculated_columns": [
+                "length_text_constant",
+                "upper_text_constant",
+            ],
+            "field_alias": "concat_multi",
+            "type": "concat",
+            "depth": 1,
+        },
+        {
+            "source_calculated_columns": ["concat_multi"],
+            "target_calculated_columns": ["concat_multi"],
+            "field_alias": "concat_length",
+            "type": "length",
+            "depth": 2,
+        },
     ],
     consts.CONFIG_AGGREGATES: [
-        {
-            "source_column": "text_value",
-            "target_column": "text_value",
-            "field_alias": "count_text_value",
-            "type": "count",
-        },
+        # {
+        #     "source_column": "text_value",
+        #     "target_column": "text_value",
+        #     "field_alias": "count_text_value",
+        #     "type": "count",
+        # },
         {
             "source_column": "length_text_constant",
             "target_column": "length_text_constant",
             "field_alias": "sum_length",
             "type": "sum",
         },
+        {
+            "source_column": "concat_length",
+            "target_column": "concat_length",
+            "field_alias": "sum_concat_length",
+            "type": "sum",
+        },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
 }
+
 
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
@@ -304,7 +380,7 @@ def test_row_level_validation_perfect_match(module_under_test, fs):
     assert result_df["difference"].sum() == 0
 
 
-def test_calc_field_validation_string_len_match(module_under_test, fs):
+def test_calc_field_validation_calc_match(module_under_test, fs):
     num_rows = 100
     data = _generate_fake_data(rows=num_rows, second_range=0)
     json_data = _get_fake_json_data(data)
@@ -312,11 +388,16 @@ def test_calc_field_validation_string_len_match(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_ROW_CALC_CONFIG)
     result_df = client.execute()
     calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
+    calc_val_df2 = result_df[result_df["validation_name"] == "sum_concat_length"]
 
     assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
+
+    assert calc_val_df2["source_agg_value"].sum() == str(
+        num_rows * (len(STRING_CONSTANT + "," + str(len(STRING_CONSTANT))))
+    )
 
 
 def test_row_level_validation_non_matching(module_under_test, fs):
@@ -334,7 +415,8 @@ def test_row_level_validation_non_matching(module_under_test, fs):
 
     # TODO: this value is 0 because a COUNT() on now rows returns Null.
     # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
-    assert result_df["difference"].sum() == 0
+    non_match_df = result_df[result_df["source_column_name"] != "length_text_constant"]
+    assert non_match_df["difference"].sum() == 0
 
     expected_date_result = '{"date_value": "%s", "id": "11"}' % str(
         datetime.now().date()
@@ -359,4 +441,5 @@ def test_row_level_validation_smart_count(module_under_test, fs):
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
     assert expected_date_result == result_df["group_by_columns"].max()
-    assert result_df["difference"].sum() == 100
+    smart_count_df = result_df[result_df["validation_name"] == "count_text_value"]
+    assert smart_count_df["difference"].sum() == 100
