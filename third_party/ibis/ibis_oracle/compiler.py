@@ -395,10 +395,11 @@ def _table_column(t, expr):
 
     expr_type = expr.type()
 
-    if isinstance(expr_type, dt.Timestamp):
-        timezone = expr_type.timezone
-        if timezone is not None:
-            out_expr = out_expr.op('AT TIME ZONE')(timezone).label(op.name)
+    # Timezone may be required; however, it causes SQL errors for counts
+    # if isinstance(expr_type, dt.Timestamp):
+    #     timezone = expr_type.timezone
+    #     if timezone is not None:
+    #         out_expr = out_expr.op('AT TIME ZONE')(timezone).label(op.name)
 
     # If the column does not originate from the table set in the current SELECT
     # context, we should format as a subquery
