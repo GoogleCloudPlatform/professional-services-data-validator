@@ -104,11 +104,13 @@ class DataValidation(object):
             return False
 
         try:
-            count_df = rows_df[rows_df[consts.AGGREGATION_TYPE] == consts.CONFIG_TYPE_COUNT]
+            count_df = rows_df[
+                rows_df[consts.AGGREGATION_TYPE] == consts.CONFIG_TYPE_COUNT
+            ]
             for row in count_df.to_dict(orient="row"):
                 recursive_query_size = max(
                     float(row[consts.SOURCE_AGG_VALUE]),
-                    float(row[consts.TARGET_AGG_VALUE])
+                    float(row[consts.TARGET_AGG_VALUE]),
                 )
                 if recursive_query_size > self.config_manager.max_recursive_query_size:
                     logging.warning("Query result is too large for recursion: %s", row)
@@ -140,7 +142,9 @@ class DataValidation(object):
                 # Validations are viewed separtely, but queried together.
                 # We must treat them as a single item which failed or succeeded.
                 group_suceeded = True
-                grouped_key_df = result_df[result_df[consts.GROUP_BY_COLUMNS] == grouped_key]
+                grouped_key_df = result_df[
+                    result_df[consts.GROUP_BY_COLUMNS] == grouped_key
+                ]
 
                 if self.query_too_large(grouped_key_df, grouped_fields):
                     past_results.append(grouped_key_df)
