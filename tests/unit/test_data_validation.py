@@ -491,8 +491,7 @@ def test_row_level_validation_non_matching(module_under_test, fs):
 
     # TODO: this value is 0 because a COUNT() on now rows returns Null.
     # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
-    non_match_df = result_df[result_df["source_column_name"] != "length_text_constant"]
-    assert non_match_df["difference"].sum() == 0
+    assert result_df["difference"].sum() == 0
 
     expected_date_result = '{"date_value": "%s", "id": "11"}' % str(
         datetime.now().date()

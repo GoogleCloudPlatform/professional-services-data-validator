@@ -279,7 +279,7 @@ class CalculatedField(object):
             elif isinstance(field, list):
                 compiled_fields.append(self._compile_fields(ibis_table, field))
             else:
-                if self.cast is not None:
+                if self.cast:
                     compiled_fields.append(ibis_table[field].cast(self.cast))
                 else:
                     compiled_fields.append(ibis_table[field])
