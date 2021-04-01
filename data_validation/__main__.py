@@ -70,7 +70,6 @@ def get_aggregate_config(args, config_manager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, consts.NUMERIC_DATA_TYPES
         )
-
     return aggregate_configs
 
 
@@ -118,6 +117,7 @@ def build_config_managers_from_args(args):
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
 
+    threshold = args.threshold if args.threshold else 0.0
     tables_list = json.loads(args.tables_list)
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
@@ -128,6 +128,7 @@ def build_config_managers_from_args(args):
             target_client,
             table_obj,
             labels,
+            threshold,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,

@@ -27,6 +27,23 @@ def bigquery_client():
     return ibis.backends.bigquery.connect()
 
 
+def test_bit_xor_bigquery(bigquery_client):
+    tbl = bigquery_client.table(
+        "citibike_trips", database="bigquery-public-data.new_york_citibike"
+    )
+    expr = tbl["tripduration"].bit_xor().name("checksum")
+    sql = expr.compile()
+    assert (
+        sql
+        == textwrap.dedent(
+            """
+    SELECT BIT_XOR(`tripduration`) AS `checksum`
+    FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+    """
+        ).strip()
+    )
+
+
 def test_hash_bigquery_string(bigquery_client):
     tbl = bigquery_client.table(
         "citibike_trips", database="bigquery-public-data.new_york_citibike"

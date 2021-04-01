@@ -33,6 +33,7 @@ class ValidationMetadata(object):
     target_table_name: str
     source_column_name: str
     target_column_name: str
+    threshold: float
 
     def get_table_name(self, result_type):
         if result_type == consts.RESULT_TYPE_SOURCE:

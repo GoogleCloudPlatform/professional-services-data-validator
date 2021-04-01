@@ -15,6 +15,7 @@
 import copy
 import datetime
 import json
+import logging
 import warnings
 
 import google.oauth2.service_account
@@ -39,7 +40,7 @@ class DataValidation(object):
     def __init__(
         self, config, validation_builder=None, result_handler=None, verbose=False
     ):
-        """ Initialize a DataValidation client
+        """Initialize a DataValidation client
 
         Args:
             config (dict): The validation config used for the comparison
@@ -88,8 +89,40 @@ class DataValidation(object):
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
 
+    def query_too_large(self, rows_df, grouped_fields):
+        """ Return bool to dictate if another level of recursion
+            would create a too large result set.
+
+            Rules to define too large are:
+                - If any grouped fields remain, return False.
+                    (assumes user added logical sized groups)
+                - Else, if next group size is larger
+                    than the limit, return True.
+                - Finally return False if no covered case occured.
+        """
+        if len(grouped_fields) > 1:
+            return False
+
+        try:
+            count_df = rows_df[
+                rows_df[consts.AGGREGATION_TYPE] == consts.CONFIG_TYPE_COUNT
+            ]
+            for row in count_df.to_dict(orient="row"):
+                recursive_query_size = max(
+                    float(row[consts.SOURCE_AGG_VALUE]),
+                    float(row[consts.TARGET_AGG_VALUE]),
+                )
+                if recursive_query_size > self.config_manager.max_recursive_query_size:
+                    logging.warning("Query result is too large for recursion: %s", row)
+                    return True
+        except Exception:
+            logging.warning("Recursive values could not be cast to float.")
+            return False
+
+        return False
+
     def execute_recursive_validation(self, validation_builder, grouped_fields):
-        """ Recursive execution for Row validations.
+        """Recursive execution for Row validations.
 
         This method executes aggregate queries, such as sum-of-hashes, on the
         source and target tables. Where they differ, add to the GROUP BY
@@ -105,9 +138,27 @@ class DataValidation(object):
                 validation_builder, process_in_memory=process_in_memory
             )
 
-            for row in result_df.to_dict(orient="row"):
-                if row["source_agg_value"] == row["target_agg_value"]:
-                    past_results.append(pandas.DataFrame([row]))
+            for grouped_key in result_df[consts.GROUP_BY_COLUMNS].unique():
+                # Validations are viewed separtely, but queried together.
+                # We must treat them as a single item which failed or succeeded.
+                group_suceeded = True
+                grouped_key_df = result_df[
+                    result_df[consts.GROUP_BY_COLUMNS] == grouped_key
+                ]
+
+                if self.query_too_large(grouped_key_df, grouped_fields):
+                    past_results.append(grouped_key_df)
+                    continue
+
+                for row in grouped_key_df.to_dict(orient="row"):
+                    if row[consts.SOURCE_AGG_VALUE] == row[consts.TARGET_AGG_VALUE]:
+                        continue
+                    else:
+                        group_suceeded = False
+                        break
+
+                if group_suceeded:
+                    past_results.append(grouped_key_df)
                 else:
                     recursive_validation_builder = validation_builder.clone()
                     self._add_recursive_validation_filter(
@@ -135,7 +186,7 @@ class DataValidation(object):
 
     def _add_recursive_validation_filter(self, validation_builder, row):
         """ Return ValidationBuilder Configured for Next Recursive Search """
-        group_by_columns = json.loads(row["group_by_columns"])
+        group_by_columns = json.loads(row[consts.GROUP_BY_COLUMNS])
         for alias, value in group_by_columns.items():
             filter_field = {
                 consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,

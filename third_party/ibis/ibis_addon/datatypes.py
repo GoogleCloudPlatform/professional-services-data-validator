@@ -21,8 +21,8 @@ import pyarrow
 
 
 # BigQuery BIGNUMERIC support needs to be pushed to Ibis
-bigquery._pandas_helpers.BQ_TO_ARROW_SCALARS["BIGNUMERIC"] = pyarrow.string
-_DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.string
+bigquery._pandas_helpers.BQ_TO_ARROW_SCALARS["BIGNUMERIC"] = pyarrow.decimal256
+_DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.float64
 _DTYPE_TO_IBIS_TYPE["NUMERIC"] = dt.float64
 
 

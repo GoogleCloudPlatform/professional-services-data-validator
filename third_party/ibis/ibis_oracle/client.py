@@ -22,7 +22,7 @@ from typing import Optional
 import sqlalchemy as sa
 from third_party.ibis.ibis_oracle.compiler import OracleDialect
 
-import ibis.sql.alchemy as alch
+import ibis.backends.base_sqlalchemy.alchemy as alch
 
 import cx_Oracle  # NOQA fail early if the driver is missing
 

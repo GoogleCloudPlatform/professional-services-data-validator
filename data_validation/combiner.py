@@ -63,7 +63,9 @@ def generate_report(
             f"source: {source_names} target: {target_names}"
         )
 
-    differences_pivot = _calculate_differences(source, target, join_on_fields)
+    differences_pivot = _calculate_differences(
+        source, target, join_on_fields, run_metadata.validations
+    )
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
     )
@@ -82,33 +84,40 @@ def generate_report(
     return result_df
 
 
-def _calculate_difference(field_differences, datatype):
+def _calculate_difference(field_differences, datatype, validation):
+    pct_threshold = ibis.literal(validation.threshold)
+
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
-        difference = ibis.literal(float("nan")).cast("double")
-        pct_difference = ibis.literal(float("nan")).cast("double")
+        source_value = field_differences["differences_source_agg_value"].epoch_seconds()
+        target_value = field_differences["differences_target_agg_value"].epoch_seconds()
     else:
-        difference = (
-            field_differences["differences_target_agg_value"]
-            - field_differences["differences_source_agg_value"]
+        source_value = field_differences["differences_source_agg_value"]
+        target_value = field_differences["differences_target_agg_value"]
+
+    difference = (target_value - source_value).cast("double")
+    pct_difference = (
+        ibis.literal(100.0)
+        * difference
+        / (
+            source_value.case()
+            .when(ibis.literal(0), target_value)
+            .else_(source_value)
+            .end()
         ).cast("double")
-        pct_difference = (
-            ibis.literal(100.0)
-            * difference
-            / (
-                field_differences["differences_source_agg_value"]
-                .case()
-                .when(
-                    ibis.literal(0), field_differences["differences_target_agg_value"]
-                )
-                .else_(field_differences["differences_source_agg_value"])
-                .end()
-            ).cast("double")
-        ).cast("double")
+    ).cast("double")
 
-    return difference.name("difference"), pct_difference.name("pct_difference")
+    th_diff = (pct_difference.abs() - pct_threshold).cast("double")
+    status = ibis.case().when(th_diff > 0.0, "fail").else_("success").end()
+
+    return (
+        difference.name("difference"),
+        pct_difference.name("pct_difference"),
+        pct_threshold.name("pct_threshold"),
+        status.name("status"),
+    )
 
 
-def _calculate_differences(source, target, join_on_fields):
+def _calculate_differences(source, target, join_on_fields, validations):
     """Calculate differences between source and target fields.
 
     This function is separate from the "pivot" logic because we want to
@@ -135,6 +144,8 @@ def _calculate_differences(source, target, join_on_fields):
         if field not in validation_fields:
             continue
 
+        validation = validations[field]
+
         field_differences = differences_joined.projection(
             [
                 source[field].name("differences_source_agg_value"),
@@ -146,7 +157,7 @@ def _calculate_differences(source, target, join_on_fields):
             field_differences[
                 (ibis.literal(field).name("validation_name"),)
                 + join_on_fields
-                + _calculate_difference(field_differences, field_type)
+                + _calculate_difference(field_differences, field_type, validation)
             ]
         )
 
@@ -227,6 +238,8 @@ def _join_pivots(source, target, differences, join_on_fields):
             source["agg_value"],
             differences["difference"],
             differences["pct_difference"],
+            differences["pct_threshold"],
+            differences["status"],
         ]
     ]
     joined = source_difference.join(target, join_keys, how="outer")[
@@ -246,6 +259,8 @@ def _join_pivots(source, target, differences, join_on_fields):
         group_by_columns,
         source_difference["difference"],
         source_difference["pct_difference"],
+        source_difference["pct_threshold"],
+        source_difference["status"],
     ]
     return joined
 

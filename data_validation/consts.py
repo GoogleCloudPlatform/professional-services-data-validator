@@ -26,15 +26,20 @@ CONFIG_TARGET_TABLE_NAME = "target_table_name"
 CONFIG_LABELS = "labels"
 CONFIG_FIELD_ALIAS = "field_alias"
 CONFIG_AGGREGATES = "aggregates"
+CONFIG_CALCULATED_FIELDS = "calculated_fields"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
+CONFIG_CALCULATED_SOURCE_COLUMNS = "source_calculated_columns"
+CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
 CONFIG_PRIMARY_KEYS = "primary_keys"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
+CONFIG_THRESHOLD = "threshold"
 CONFIG_CAST = "cast"
 CONFIG_LIMIT = "limit"
 CONFIG_FILTERS = "filters"
 CONFIG_FILTER_SOURCE = "source"
 CONFIG_FILTER_TARGET = "target"
+CONFIG_MAX_RECURSIVE_QUERY_SIZE = "max_recursive_query_size"
 
 CONFIG_FILTER_SOURCE_COLUMN = "source_column"
 CONFIG_FILTER_SOURCE_VALUE = "source_value"
@@ -42,6 +47,9 @@ CONFIG_FILTER_TARGET_COLUMN = "target_column"
 CONFIG_FILTER_TARGET_VALUE = "target_value"
 
 CONFIG_RESULT_HANDLER = "result_handler"
+
+CONFIG_TYPE_COUNT = "count"
+CONFIG_TYPE_SUM = "sum"
 
 # Filter Type Options
 FILTER_TYPE_CUSTOM = "custom"
@@ -59,6 +67,21 @@ YAML_VALIDATIONS = "validations"
 PROJECT_ID = "project_id"
 TABLE_ID = "table_id"
 GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
+
+# BigQuery Output Table Fields
+VALIDATION_TYPE = "validation_type"
+AGGREGATION_TYPE = "aggregation_type"
+GROUP_BY_COLUMNS = "group_by_columns"
+
+SOURCE_TABLE_NAME = "source_table_name"
+SOURCE_COLUMN_NAME = "source_column_name"
+SOURCE_AGG_VALUE = "source_agg_value"
+
+TARGET_TABLE_NAME = "target_table_name"
+TARGET_COLUMN_NAME = "target_column_name"
+TARGET_AGG_VALUE = "target_agg_value"
+
+VALIDATION_STATUS = "status"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
