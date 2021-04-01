@@ -152,26 +152,6 @@ def grouped_config(spanner_connection_config, database_id):
 
 
 CLI_CONFIG_FILE = "example_test.yaml"
-
-CLI_STORE_COLUMN_ARGS = [
-    "run",
-    "--type",
-    "Column",
-    "--source-conn",
-    SPANNER_CONN_NAME,
-    "--target-conn",
-    SPANNER_CONN_NAME,
-    "--tables-list",
-    '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
-    "--sum",
-    '["tripduration","start_station_name"]',
-    "--count",
-    '["tripduration","start_station_name"]',
-    "--labels",
-    "name=test_label",
-    "--config-file",
-    CLI_CONFIG_FILE,
-]
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 
 
