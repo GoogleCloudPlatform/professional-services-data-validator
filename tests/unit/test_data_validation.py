@@ -514,6 +514,27 @@ def test_row_level_validation_smart_count(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
+
     assert expected_date_result == result_df["group_by_columns"].max()
     smart_count_df = result_df[result_df["validation_name"] == "count_text_value"]
     assert smart_count_df["difference"].sum() == 100
+
+
+def test_row_level_validation_multiple_aggregations(module_under_test, fs):
+    data = _generate_fake_data(rows=10, second_range=0)
+    trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
+
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data + trg_data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG, verbose=True)
+    result_df = client.execute()
+    validation_df = result_df[result_df["validation_name"] == "count_text_value"]
+
+    # Expect 11 rows, one for each PK value
+    assert len(validation_df) == 11
+    assert validation_df["source_agg_value"].astype(float).sum() == 10
+    assert validation_df["target_agg_value"].astype(float).sum() == 11

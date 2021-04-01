@@ -24,6 +24,7 @@ non-textual languages.
 """
 
 import ibis
+import sqlalchemy
 
 import ibis.expr.api
 from ibis.backends.bigquery.compiler import (
@@ -124,6 +125,10 @@ def format_raw_sql(translator, expr):
     rand_col, raw_sql = op.args
     return raw_sql.op().args[0]
 
+def sa_format_raw_sql(translator, expr):
+    op = expr.op()
+    rand_col, raw_sql = op.args
+    return sqlalchemy.text(raw_sql.op().args[0])
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
 IntegerColumn.bit_xor = ibis.expr.api._agg_function('bit_xor', BitXor, True)
@@ -137,5 +142,5 @@ BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
-OracleExprTranslator._registry[RawSQL] = format_raw_sql
+OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
