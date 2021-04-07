@@ -171,7 +171,7 @@ CLI_FIND_TABLES_ARGS = [
     "--target-conn",
     BQ_CONN_NAME,
     "--allowed-schemas",
-    "[\"pso_data_validator\"]"
+    '["pso_data_validator"]',
 ]
 
 STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'

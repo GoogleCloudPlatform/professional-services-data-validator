@@ -52,7 +52,7 @@ CLI_FIND_TABLES_ARGS = [
     "--target-conn",
     TEST_CONN,
     "--allowed-schemas",
-    "[\"my_schema\"]",
+    '["my_schema"]',
 ]
 
 
