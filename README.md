@@ -152,7 +152,7 @@ By default the handler will print to stdout.
 
 ## Building Matched Table Lists
 
-Creating the JSON list of matched tables can be a hassle.  We have added a feature which may help you to may all the tables together between source and target.
+Creating the JSON list of matched tables can be a hassle.  We have added a feature which may help you to match all of the tables together between source and target.
 The find-tables tool:
 
 - Pulls all tables in the source (applying a supplied allowed-schemas filter)
