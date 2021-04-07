@@ -2,6 +2,9 @@
 
 ## Untagged
 
+- Adding and documenting `find-tables` CLI feature with schema filter
+- Correct filter errors caused by SQL Alchemy errors
+
 ## 1.1.7
 
 - Adding tests to validate BIGNUMERIC BQ type behavior
