@@ -196,10 +196,10 @@ def _compare_match_tables(source_table_map, target_table_map):
     return table_configs
 
 
-def get_table_map(client):
+def get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
-    table_objs = clients.get_all_tables(client)
+    table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -218,7 +218,8 @@ def find_tables_using_string_matching(args):
     source_client = DataValidation.get_data_client(source_conn)
     target_client = DataValidation.get_data_client(target_conn)
 
-    source_table_map = get_table_map(source_client)
+    allowed_schemas = json.loads(args.allowed_schemas) if args.allowed_schemas else None
+    source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
 
     table_configs = _compare_match_tables(source_table_map, target_table_map)

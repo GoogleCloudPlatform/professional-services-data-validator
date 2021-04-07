@@ -149,15 +149,18 @@ def list_tables(client, schema_name):
         return client.list_tables()
 
 
-def get_all_tables(client):
+def get_all_tables(client, allowed_schemas=None):
     """Return a list of tuples with database and table names.
 
     client (IbisClient): Client to use for tables
+    allowed_schemas (List[str]): List of schemas to pull.
     """
     table_objs = []
     schemas = list_schemas(client)
 
     for schema_name in schemas:
+        if allowed_schemas and schema_name not in allowed_schemas:
+            continue
         try:
             tables = list_tables(client, schema_name)
         except Exception as e:

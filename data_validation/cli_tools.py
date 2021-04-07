@@ -137,15 +137,18 @@ def _configure_find_tables(subparsers):
     find_tables_parser.add_argument(
         "--target-conn", "-tc", help="Target connection name"
     )
+    find_tables_parser.add_argument(
+        "--allowed-schemas", "-as", help="Json List of source schemas to match."
+    )
 
 
 def _configure_raw_query(subparsers):
     """Configure arguments for text search table matching."""
-    find_tables_parser = subparsers.add_parser(
+    query_parser = subparsers.add_parser(
         "query", help="Run an adhoc query against the supplied connection"
     )
-    find_tables_parser.add_argument("--conn", "-c", help="Connection name to query")
-    find_tables_parser.add_argument("--query", "-q", help="Raw query to execute")
+    query_parser.add_argument("--conn", "-c", help="Connection name to query")
+    query_parser.add_argument("--query", "-q", help="Raw query to execute")
 
 
 def _configure_run_config_parser(subparsers):
