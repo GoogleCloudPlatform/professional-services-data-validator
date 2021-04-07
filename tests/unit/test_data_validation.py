@@ -23,7 +23,6 @@ from ibis.backends.pandas.client import PandasClient
 
 from data_validation import consts, exceptions
 
-
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 
@@ -73,6 +72,23 @@ SAMPLE_CONFIG = {
             "type": "count",
         },
     ],
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_RESULT_HANDLER: None,
+}
+
+SAMPLE_SCHEMA_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: "Schema",
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_AGGREGATES: [],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
 }
@@ -165,7 +181,6 @@ JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
 
-
 STRING_CONSTANT = "constant"
 
 SOURCE_QUERY_DATA = [
@@ -200,7 +215,7 @@ def _create_table_file(table_path, data):
 
 
 def _generate_fake_data(
-    rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
+        rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
 ):
     """Return a list of dicts with given number of rows.
 
@@ -362,7 +377,7 @@ def test_get_pandas_data_client(module_under_test, fs):
 
 def test_get_oracle_data_client(module_under_test):
     with pytest.raises(
-        exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
+            exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
     ):
         module_under_test.DataValidation.get_data_client(ORACLE_CONN_CONFIG)
 
@@ -461,3 +476,49 @@ def test_row_level_validation_multiple_aggregations(module_under_test, fs):
     assert len(validation_df) == 11
     assert validation_df["source_agg_value"].astype(float).sum() == 10
     assert validation_df["target_agg_value"].astype(float).sum() == 11
+
+
+def test_compare_schema(module_under_test):
+    source_fields = {"field1": "string", "field2": "datetime", "field3": "string"}
+    target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
+
+    expected_results = [['field1', 'field1', '1', '1', 'Pass', 'Source_type:string Target_type:string'],
+                        ['field2', 'field2', '1', '1', 'Fail', 'Data type mismatch between source and target. '
+                                                     'Source_type:datetime Target_type:timestamp'],
+                        ['field3', 'N/A', '1', '0', 'Fail', "Target doesn't have a matching field name"],
+                        ['N/A', 'field_3', '0', '1', 'Fail', "Source doesn't have a matching field name"]
+                        ]
+    assert expected_results == module_under_test.DataValidation.compare_schema(source_fields, target_fields)
+
+
+def test_data_validation_schema_validation(module_under_test):
+    num_rows = 1
+    data = _generate_fake_data(rows=num_rows, second_range=0)
+    json_data = _get_fake_json_data(data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
+    client = module_under_test.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
+    result_df = client.execute()
+    del result_df["run_id"]
+    del result_df["start_time"]
+    del result_df["end_time"]
+
+    expected_list = [
+        ["Schema", "Schema", "my_table", "my_table", "id", "id", "Schema", "1", "1", "Pass"],
+        ["Schema", "Schema", "my_table", "my_table", "date_value", "date_value", "Schema", "1", "1", "Pass"],
+        ["Schema", "Schema", "my_table", "my_table", "timestamp_value", "timestamp_value", "Schema", "1", "1", "Pass"],
+        ["Schema", "Schema", "my_table", "my_table", "int_value", "int_value", "Schema", "1", "1", "Pass"],
+        ["Schema", "Schema", "my_table", "my_table", "text_constant", "text_constant", "Schema", "1", "1", "Pass"],
+        ["Schema", "Schema", "my_table", "my_table", "text_value", "text_value", "Schema", "1", "1", "Pass"],
+        ["Schema", "Schema", "my_table", "my_table", "text_value_two", "text_value_two", "Schema", "1", "1", "Pass"]
+    ]
+
+    df_expected = pandas.DataFrame(expected_list)
+    df_expected.columns = ['validation_name', 'validation_type', 'source_table_name', 'target_table_name',
+                           'source_column_name', 'target_column_name', 'aggregation_type', 'source_agg_value',
+                           'target_agg_value', 'status']
+
+    assert len(result_df) == 7
+    assert result_df["source_agg_value"].astype(float).sum() == df_expected["source_agg_value"].astype(float).sum()
+    assert result_df["target_agg_value"].astype(float).sum() == df_expected["target_agg_value"].astype(float).sum()

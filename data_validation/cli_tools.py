@@ -167,7 +167,7 @@ def _configure_run_parser(subparsers):
     )
 
     run_parser.add_argument(
-        "--type", "-t", help="Type of Data Validation (Column, GroupedColumn, Row)"
+        "--type", "-t", help="Type of Data Validation (Column, GroupedColumn, Row, Schema)"
     )
     run_parser.add_argument("--source-conn", "-sc", help="Source connection name")
     run_parser.add_argument("--target-conn", "-tc", help="Target connection name")
