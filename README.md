@@ -160,7 +160,7 @@ The find-tables tool:
 - Uses Levenshtein distance to match tables
 - Finally, it prints a JSON list of tables which can be copy/pasted into the validation run config.
 
-data-validation find-tables --source-conn source --target-conn target --allowed-schemas '["a", "b"]'
+`data-validation find-tables --source-conn source --target-conn target --allowed-schemas '["pso_data_validator"]' `
 
 ## Add Support for an existing Ibis Data Source
 
