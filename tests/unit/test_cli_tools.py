@@ -160,3 +160,16 @@ def test_threshold_float_err(test_input):
     """Test that threshold float only accepts positive floats."""
     with pytest.raises(argparse.ArgumentTypeError):
         cli_tools.threshold_float(test_input)
+
+def test_get_invalid_json_arg():
+    arg_value = "not json"
+
+    with pytest.raises(ValueError):
+        cli_tools.get_json_arg(arg_value)
+
+def test_get_json_arg():
+    arg_value = '["value"]'
+    json_arg = cli_tools.get_json_arg(arg_value)
+
+    assert json_arg == ["value"]
+

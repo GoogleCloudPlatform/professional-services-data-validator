@@ -380,3 +380,19 @@ def get_labels(arg_labels):
             else:
                 raise ValueError("Labels must be comma-separated key-value pairs.")
     return labels
+
+
+def get_json_arg(arg_value, default_value=None):
+    """Return JSON parsed arg value.
+
+    arg_value (str): The parsed argument supplied.
+    default_value (Any): A default value to supplu when arg_Value is empty.
+    """
+    if not arg_value:
+        return default_value
+
+    try:
+        return json.loads(arg_value)
+    except json.decoder.JSONDecodeError:
+        raise ValueError("Could not parse value to JSON: `{}`".format(arg_value))
+
