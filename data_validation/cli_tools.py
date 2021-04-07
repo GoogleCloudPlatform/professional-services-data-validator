@@ -395,4 +395,3 @@ def get_json_arg(arg_value, default_value=None):
         return json.loads(arg_value)
     except json.decoder.JSONDecodeError:
         raise ValueError("Could not parse value to JSON: `{}`".format(arg_value))
-
