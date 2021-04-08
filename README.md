@@ -150,6 +150,18 @@ By default the handler will print to stdout.
 }
 ```
 
+## Building Matched Table Lists
+
+Creating the JSON list of matched tables can be a hassle.  We have added a feature which may help you to match all of the tables together between source and target.
+The find-tables tool:
+
+- Pulls all tables in the source (applying a supplied allowed-schemas filter)
+- Pulls all tables from the target
+- Uses Levenshtein distance to match tables
+- Finally, it prints a JSON list of tables which can be copy/pasted into the validation run config.
+
+`data-validation find-tables --source-conn source --target-conn target --allowed-schemas '["pso_data_validator"]' `
+
 ## Add Support for an existing Ibis Data Source
 
 If you want to add an Ibis Data Source which exists, but was not yet supported in the Data Validation tool, it is a simple process.
@@ -163,7 +175,6 @@ If you want to add an Ibis Data Source which exists, but was not yet supported i
 
 3. You are done, you can reference the data source via the config.
     - Config: {"source_type": "<RefName>", ...KV Values required in Client...}
-
 
 ## Deploy to Composer
 ```
