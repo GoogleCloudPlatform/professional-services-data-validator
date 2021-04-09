@@ -103,7 +103,7 @@ def schema_validation_matching(source_fields, target_fields):
                 results.append(
                     [source_field_name, source_field_name, "1", "1",
                      "Fail", "Data type mismatch between source and target. Source_type:{} Target_type:{}"
-                         .format(source_field_type, target_fields[source_field_name])])
+                     .format(source_field_type, target_fields[source_field_name])])
         # target field doesn't exist
         else:
             results.append(
