@@ -99,30 +99,64 @@ For example, the following command creates a YAML file for the validation of the
 '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]'
 -c citibike.yaml`
 
-Here is the generated YAML file named `citibike.yaml`: ``` result_handler: {}
+Here is the generated YAML file named `citibike.yaml`:
+
+```
+result_handler: {}
 source: bq target: bq validations: - aggregates: - field_alias: count
 source_column: null target_column: null type: count filters: [] labels: []
 schema_name: bigquery-public-data.new_york_citibike table_name: citibike_trips
 target_schema_name: bigquery-public-data.new_york_citibike target_table_name:
 citibike_trips type: Column
-
 ```
 
-You can now edit the YAML file if, for example, the `new_york_citibike` table is stored in datasets that have different names in the source and target systems. Once the file is updated and saved, the following command runs the new validation:
+You can now edit the YAML file if, for example, the `new_york_citibike` table is
+stored in datasets that have different names in the source and target systems.
+Once the file is updated and saved, the following command runs the new
+validation:
+
+```
+data-validation run-config -c citibike.yaml
 ```
 
-data-validation run-config -c citibike.yaml ```
+The Data Validation Tool exposes several components that can be stitched
+together to generate a wide range of queries
 
 ### Aggregated Fields
 
-TODO
+Aggregate fields contain the SQL fields that you want to produce an aggregate
+for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()` and `MAX()`
+are supported.
+
+#### Sample Aggregate Config
+
+```
+validations:
+- aggregates:
+    - field_alias: count
+    source_column: null
+    target_column: null
+    type: count
+    - field_alias: count__tripduration
+    source_column: tripduration
+    target_column: tripduration
+    type: count
+    - field_alias: sum__tripduration
+    source_column: tripduration
+    target_column: tripduration
+    type: sum
+  - field_alias: bit_xor__hashed_column
+    source_column: hashed_column
+    target_column: hashed_column
+    type: bit_xor
+```
 
 ### Filters
 
-Currently the only form of filter supported is a custom filter written by you in
-the syntax of the given source. In future we will also release pre-built filters
-to cover certain usecases (ie. `SELECT * FROM table WHERE created_at > 30 days
-ago;`).
+Filters let you apply a WHERE statement to your validation query. Currently the
+only form of filter supported is a custom filter written by you in the syntax of
+the given source. In future we will also release pre-built filters to cover
+certain usecases (ie. `SELECT * FROM table WHERE created_at > 30 days ago;`).
 
 #### Custom Filters
 
@@ -137,6 +171,12 @@ ago;`).
 Note that you are writing the query to execute, which does not have to match
 between source and target as long as the results can be expected to align.
 
+### Grouped Columns
+
+Grouped Columns contain the fields you want your aggregations to be broken out
+by, e.g. `SELECT last_updated::DATE, COUNT(*) FROM my.table` will produce a
+resultset that breaks down the count of rows per calendar date.
+
 ### Calculated Fields
 
 Sometimes direct comparisons are not feasible between databases due to
@@ -146,29 +186,40 @@ Examples might include trimming whitespace from a string, converting strings to
 a single case to compare case insensitivity, or rounding numeric types to a
 significant figure.
 
-Once a calculated field is defined, it can be referenced by other calculated fields at any "depth" or higher. Depth controls how many subqueries are executed in the resulting que
+Once a calculated field is defined, it can be referenced by other calculated
+fields at any "depth" or higher. Depth controls how many subqueries are executed
+in the resulting query. For example, with the following yaml config...
+
 ```
 - calculated_fields:
-  - field_alias: rtrim_col_a
-    source_calculated_columns: ['col_a']
-    target_calculated_columns: ['col_a']
-    type: rtrim
-    depth 0
-  - field_alias: ifnull_col_a
-    source_calculated_columns: ['col_b']
-    target_calculated_columns: ['col_b']
-    type: ifnull
-    depth 0
-  - field_alias: concat_col_a_col_b
-    source_calculated_columns: ['rtrim_col_a', 'ifnull_col_b']
-    target_calculated_columns: ['rtrim_col_a', 'ifnull_col_b']
-    type: concat
-    depth 1
+    - field_alias: rtrim_col_a
+      source_calculated_columns: ['col_a']
+      target_calculated_columns: ['col_a']
+      type: rtrim
+      depth: 0 # generated off of a native column
+    - field_alias: ltrim_col_a
+      source_calculated_columns: ['col_b']
+      target_calculated_columns: ['col_b']
+      type: ltrim
+      depth: 0 # generated off of a native column
+    - field_alias: concat_col_a_col_b
+      source_calculated_columns: ['rtrim_col_a', 'ltrim_col_b']
+      target_calculated_columns: ['rtrim_col_a', 'ltrim_col_b']
+      type: concat
+      depth: 1 # calculated one query above
 ```
 
-### Grouped Columns
+is equivalent to the following SQL query...
 
-TODO
+```
+SELECT
+  CONCAT(rtrim_col_a, rtrim_col_b) AS concat_col_a_col_b
+FROM (
+  SELECT
+    RTRIM(col_a) AS rtrim_col_a
+    LTRIM(col_b) AS ltrim_col_b
+  FROM my.table
+```
 
 ## Validation Reports
 
