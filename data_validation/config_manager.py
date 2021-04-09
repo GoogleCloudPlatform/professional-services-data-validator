@@ -157,7 +157,7 @@ class ConfigManager(object):
     @property
     def full_target_table(self):
         """Return string value of fully qualified target table."""
-        if self.target_schema is not None:
+        if self.target_schema:
             return self.target_schema + "." + self.target_table
         else:
             return self.target_table
@@ -165,7 +165,7 @@ class ConfigManager(object):
     @property
     def full_source_table(self):
         """Return string value of target table."""
-        if self.source_schema is not None:
+        if self.source_schema:
             return self.source_schema + "." + self.source_table
         else:
             return self.source_table
