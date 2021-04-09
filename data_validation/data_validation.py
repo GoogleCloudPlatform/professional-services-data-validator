@@ -26,7 +26,7 @@ import numpy
 from data_validation import consts, combiner, exceptions, metadata, clients
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
-
+from data_validation.schema_validation import SchemaValidation
 """ The DataValidation class is where the code becomes source/target aware
 
     The class builds specific source and target clients and is likely where someone would go to
@@ -53,10 +53,10 @@ class DataValidation(object):
         # Data Client Management
         self.config = config
 
-        self.source_client = DataValidation.get_data_client(
+        self.source_client = clients.get_data_client(
             self.config[consts.CONFIG_SOURCE_CONN]
         )
-        self.target_client = DataValidation.get_data_client(
+        self.target_client = clients.get_data_client(
             self.config[consts.CONFIG_TARGET_CONN]
         )
 
@@ -83,9 +83,9 @@ class DataValidation(object):
             )
         elif self.config_manager.validation_type == "Schema":
             """ Perform only schema validation """
-            result_df = self._execute_schema_validation(
-                self.validation_builder, process_in_memory=True
-            )
+            schema_validation = SchemaValidation(self.config, self.validation_builder, self.verbose)
+
+            result_df = schema_validation.execute_schema_validation()
         else:
             result_df = self._execute_validation(
                 self.validation_builder, process_in_memory=True
@@ -278,117 +278,6 @@ class DataValidation(object):
             )
 
         return result_df
-
-    def _execute_schema_validation(self, validation_builder, process_in_memory=True):
-        run_metadata = metadata.RunMetadata()
-        run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
-        # run_metadata.validations = validation_builder.get_metadata()
-        run_metadata.labels = self.config_manager.labels
-
-        ibis_source_schema = self.source_client.get_schema(self.config_manager.source_table,
-                                                  self.config_manager.source_schema)
-        ibis_target_schema = self.target_client.get_schema(self.config_manager.target_table,
-                                                  self.config_manager.target_schema)
-
-        source_fields = {}
-        for field_name, data_type in ibis_source_schema.items():
-            source_fields[field_name] = data_type
-        target_fields = {}
-        for field_name, data_type in ibis_target_schema.items():
-            target_fields[field_name] = data_type
-        results = self.compare_schema(source_fields, target_fields)
-        df = pandas.DataFrame(results)
-        df.columns = ['source_column_name', 'target_column_name', 'source_agg_value', 'target_agg_value',
-                      'status', 'error_result.details']
-
-        if self.config_manager.source_schema is not None:
-            full_source_table_name = self.config_manager.source_schema + "." + self.config_manager.source_table
-        else:
-            full_source_table_name = self.config_manager.source_table
-        if self.config_manager.target_schema is not None:
-            full_target_table_name = self.config_manager.target_schema + "." + self.config_manager.target_table
-        else:
-            full_target_table_name = self.config_manager.target_table
-
-        # add metadata
-        df.insert(loc=0, column='run_id', value=run_metadata.run_id)
-        df.insert(loc=1, column='validation_name', value="Schema")
-        df.insert(loc=2, column='validation_type', value="Schema")
-
-        df.insert(loc=3, column='start_time', value=run_metadata.start_time)
-        df.insert(loc=4, column='end_time', value=run_metadata.end_time)
-
-        df.insert(loc=5, column='source_table_name', value=full_source_table_name)
-        df.insert(loc=6, column='target_table_name', value=full_target_table_name)
-        df.insert(loc=9, column='aggregation_type', value="Schema")
-
-        del df['error_result.details']
-        return df
-
-    @staticmethod
-    def compare_schema(source_fields, target_fields):
-        results = []
-        # Go through each source and check if target exists and matches
-        for source_field_name, source_field_type in source_fields.items():
-            # target field exists
-            if source_field_name in target_fields:
-                # target data type matches
-                if source_field_type == target_fields[source_field_name]:
-                    results.append(
-                        [source_field_name, source_field_name, "1", "1", "Pass", "Source_type:{} Target_type:{}"
-                         .format(source_field_type, target_fields[source_field_name])])
-                # target data type mismatch
-                else:
-                    results.append(
-                        [source_field_name, source_field_name, "1", "1",
-                         "Fail", "Data type mismatch between source and target. Source_type:{} Target_type:{}"
-                         .format(source_field_type, target_fields[source_field_name])])
-            # target field doesn't exist
-            else:
-                results.append(
-                    [source_field_name, "N/A", "1", "0", "Fail",
-                     "Target doesn't have a matching field name"])
-
-        # source field doesn't exist
-        for target_field_name, target_field_type in target_fields.items():
-            if target_field_name not in source_fields:
-                results.append(
-                    ["N/A", target_field_name, "0", "1", "Fail",
-                     "Source doesn't have a matching field name"])
-
-        return results
-
-    @staticmethod
-    def get_data_client(connection_config):
-        """ Return DataClient client from given configuration """
-        connection_config = copy.deepcopy(connection_config)
-        source_type = connection_config.pop(consts.SOURCE_TYPE)
-
-        # The BigQueryClient expects a credentials object, not a string.
-        if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
-            key_path = connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
-            if key_path:
-                connection_config[
-                    "credentials"
-                ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
-                )
-
-        if source_type not in clients.CLIENT_LOOKUP:
-            msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
-                source_type=source_type
-            )
-            raise Exception(msg)
-
-        try:
-            data_client = clients.CLIENT_LOOKUP[source_type](**connection_config)
-        except Exception as e:
-            msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
-                source_type=source_type, error=str(e)
-            )
-            raise exceptions.DataClientConnectionFailure(msg)
-
-        return data_client
 
     def combine_data(self, source_df, target_df, join_on_fields):
         """ TODO: Return List of Dictionaries """

@@ -15,6 +15,9 @@
 
 import pandas
 import warnings
+import copy
+
+import google.oauth2.service_account
 
 from google.cloud import bigquery
 from ibis.backends.bigquery.client import BigQueryClient
@@ -26,7 +29,7 @@ from ibis.backends.postgres.client import PostgreSQLClient
 from third_party.ibis.ibis_impala.api import impala_connect
 import third_party.ibis.ibis_addon.datatypes
 from data_validation import client_info
-
+from data_validation import consts, exceptions
 
 # Our customized Ibis Datatype logic add support for new types
 third_party.ibis.ibis_addon.datatypes
@@ -168,6 +171,38 @@ def get_all_tables(client):
             table_objs.append((schema_name, table_name))
 
     return table_objs
+
+
+def get_data_client(connection_config):
+    """ Return DataClient client from given configuration """
+    connection_config = copy.deepcopy(connection_config)
+    source_type = connection_config.pop(consts.SOURCE_TYPE)
+
+    # The BigQueryClient expects a credentials object, not a string.
+    if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
+        key_path = connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
+        if key_path:
+            connection_config[
+                "credentials"
+            ] = google.oauth2.service_account.Credentials.from_service_account_file(
+                key_path
+            )
+
+    if source_type not in CLIENT_LOOKUP:
+        msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
+            source_type=source_type
+        )
+        raise Exception(msg)
+
+    try:
+        data_client = CLIENT_LOOKUP[source_type](**connection_config)
+    except Exception as e:
+        msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
+            source_type=source_type, error=str(e)
+        )
+        raise exceptions.DataClientConnectionFailure(msg)
+
+    return data_client
 
 
 CLIENT_LOOKUP = {
