@@ -67,7 +67,7 @@ except Exception:
 try:
     from third_party.ibis.ibis_mssql import connect as mssql_connect
 except Exception:
-    mssql_connect = _raise_missing_client_error("pip install pymssql")
+    mssql_connect = _raise_missing_client_error("pip install pyodbc")
 
 try:
     from third_party.ibis.ibis_snowflake.client import (

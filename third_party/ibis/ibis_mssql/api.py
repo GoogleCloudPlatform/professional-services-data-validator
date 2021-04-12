@@ -19,8 +19,7 @@ from third_party.ibis.ibis_mssql.compiler import (  # noqa: F401, E501
     dialect,
     rewrites,
 )
-from ibis.sql.alchemy import to_sqlalchemy
-
+from ibis.backends.base_sqlalchemy.alchemy import to_sqlalchemy
 
 def compile(expr, params=None):
     """Compile an ibis expression to the MSSQL target.
@@ -67,7 +66,7 @@ def connect(
     password=None,
     port=1433,
     database='master',
-    driver='pyodbc',
+    driver='pytds',
     odbc_driver='ODBC Driver 17 for SQL Server',
     url=None,
 ):
