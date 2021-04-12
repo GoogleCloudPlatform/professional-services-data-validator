@@ -1,9 +1,12 @@
 # Changelog
 
-## Untagged
+## TODO
+
+## 1.1.8
 
 - Adding and documenting `find-tables` CLI feature with schema filter
 - Correct filter errors caused by SQL Alchemy errors
+- Adding beta calculated fields logic
 
 ## 1.1.7
 
