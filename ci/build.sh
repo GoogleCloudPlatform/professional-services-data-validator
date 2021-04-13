@@ -28,9 +28,10 @@ python3.6 -m nox --version
 # otherwise run all the sessions.
 if [[ -n "${NOX_SESSION:-}" ]]; then
     if [[ "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" ]]; then
-        ./cloud_sql_proxy -dir=/cloudsql -instances=$CLOUD_SQL_CONNECTION> & sleep 2
+        ./cloud_sql_proxy -instances=$CLOUD_SQL_CONNECTION & python3.6 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    else
+        python3.6 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
     fi
-    python3.6 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 else
     python3.6 -m nox --error-on-missing-interpreters
 fi

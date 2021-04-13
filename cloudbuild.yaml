@@ -14,30 +14,30 @@
 
 timeout: 1800s
 steps:
-# - id: lint
-#   name: 'gcr.io/pso-kokoro-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=lint'
-#   waitFor: ['-']
-# - id: unit
-#   name: 'gcr.io/pso-kokoro-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=unit'
-#   waitFor: ['-']
+- id: lint
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=lint'
+  waitFor: ['-']
+- id: unit
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=unit'
+  waitFor: ['-']
 - id: proxy-install
   name: 'gcr.io/pso-kokoro-resources/python-multi'
   args: ['bash', './ci/install_cloud_proxy.sh']
   waitFor: ["-"]
-# - id: integration_mysql
-#   name: 'gcr.io/pso-kokoro-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_mysql'
-#   - 'MYSQL_HOST=35.184.142.16'
-#   - 'MYSQL_PASSWORD=password'
-#   waitFor: ['-']
+- id: integration_mysql
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_mysql'
+  - 'MYSQL_HOST=35.184.142.16'
+  - 'MYSQL_PASSWORD=password'
+  waitFor: ['-']
 - id: integration_postgres
   name: 'gcr.io/pso-kokoro-resources/python-multi'
   args: ['bash', './ci/build.sh']
@@ -45,7 +45,7 @@ steps:
   - 'NOX_SESSION=integration_postgres'
   - 'PROJECT_ID=pso-kokoro-resources'
   - 'POSTGRES_PASSWORD=password'
-  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
   waitFor: ['proxy-install']
 - id: integration_sql_server
   name: 'gcr.io/pso-kokoro-resources/python-multi'
@@ -54,19 +54,19 @@ steps:
   - 'NOX_SESSION=integration_sql_server'
   - 'PROJECT_ID=pso-kokoro-resources'
   - 'SQL_SERVER_PASSWORD=password'
-  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017'
-  waitFor: ['proxy-install']
-# - id: integration_bigquery
-#   name: 'gcr.io/pso-kokoro-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_bigquery'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   waitFor: ['-']
-# - id: integration_spanner
-#   name: 'gcr.io/pso-kokoro-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_spanner'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   waitFor: ['-']
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017=tcp:1433'
+  waitFor: ['proxy-install', integration_postgres]
+- id: integration_bigquery
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_bigquery'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  waitFor: ['-']
+- id: integration_spanner
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_spanner'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  waitFor: ['-']

@@ -66,7 +66,7 @@ def connect(
     password=None,
     port=1433,
     database='master',
-    driver='pytds',
+    driver='pyodbc',
     odbc_driver='ODBC Driver 17 for SQL Server',
     url=None,
 ):

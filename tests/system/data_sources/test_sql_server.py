@@ -12,17 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import CloudSQLResourceManager
-from data_validation import data_validation, consts, exceptions
+from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
+    CloudSQLResourceManager,
+)
+from data_validation import data_validation, consts
 
 import os
 
 # Local testing requires the Cloud SQL Proxy.
-# https://cloud.google.com/sql/docs/postgres/configure-ip 
+# https://cloud.google.com/sql/docs/postgres/configure-ip
 
 
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
 PROJECT_ID = os.getenv("PROJECT_ID")
+
 
 def test_sql_server_count():
     """ Test count validation on SQL Server instance """
@@ -37,16 +40,15 @@ def test_sql_server_count():
         cpu=1,
         memory="4GB",
         enable_bin_logs=False,
-        already_exists=True
-        
+        already_exists=True,
     )
-    host_ip = mssql_instance.setup()
-    print (host_ip)
-    # mssql_instance.add_data("gs://pso-kokoro-resources/mssql_data.sql")
+    mssql_instance.setup()
+    mssql_instance.add_data("gs://pso-kokoro-resources/mssql_data.sql")
 
+    # Cloud SQL Proxy listens on localhost
     conn = {
         "source_type": "MSSQL",
-        "host": 'localhost', # TODO update to Public IP when pushing
+        "host": "127.0.0.1",
         "user": "sqlserver",
         "password": SQL_SERVER_PASSWORD,
         "port": 1433,
@@ -72,11 +74,6 @@ def test_sql_server_count():
         ],
     }
 
-    data_validator = data_validation.DataValidation(
-        config_count_valid, verbose=False,
-    )
+    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
-
-if __name__ == "__main__":
-   test_sql_server_count()

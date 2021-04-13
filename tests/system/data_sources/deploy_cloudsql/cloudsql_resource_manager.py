@@ -13,12 +13,10 @@
 # limitations under the License.
 
 from tests.system.data_sources.deploy_cloudsql.gcloud_context import GCloudContext
-from urllib.error import HTTPError
 
 import json
 import random
 import string
-import tempfile
 
 DATABASE_TYPES = ("MYSQL_5_7", "POSTGRES_12", "SQLSERVER_2017_STANDARD")
 
@@ -68,11 +66,11 @@ class CloudSQLResourceManager:
         with GCloudContext(self._project_id) as gcloud:
             if self._already_exists:
                 json_describe = gcloud.Run(
-                        "sql", "instances", "describe", self._instance_id, "--format=json"
-                    ).decode("utf-8")
+                    "sql", "instances", "describe", self._instance_id, "--format=json"
+                ).decode("utf-8")
                 sql_describe = json.loads(json_describe)
                 return sql_describe["ipAddresses"][0].get("ipAddress")
-            else:    
+            else:
                 gcloud_create_params = [
                     "sql",
                     "instances",
@@ -115,7 +113,6 @@ class CloudSQLResourceManager:
 
                 return self.db["PRIMARY_ADDRESS"]
 
-
     def add_data(self, gcs_data_path):
         """ Adds data to Cloud SQL database """
         if self._already_exists:
@@ -128,20 +125,19 @@ class CloudSQLResourceManager:
                 self._instance_id,
                 gcs_data_path,
                 f"--database={self._database_id}",
-                "--quiet"
+                "--quiet",
             )
 
     def teardown(self):
         """ Deletes Cloud SQL instance """
         # If instance is deleted per integration test, instance_id will need a random
-        # suffix appended since Cloud SQL cannot re-use the same instance name until 
+        # suffix appended since Cloud SQL cannot re-use the same instance name until
         # 1 week after deletion.
         with GCloudContext(self._project_id) as gcloud:
             gcloud.Run("--quiet", "sql", "instances", "delete", self._instance_id)
-
 
     def _get_random_string(self, length=5):
         """ Returns random string
         Args:
             length (int): Desired length of random string"""
-        return "".join(random.choice(string.ascii_lowercase) for i in range (length))
+        return "".join(random.choice(string.ascii_lowercase) for i in range(length))

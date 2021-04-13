@@ -42,12 +42,13 @@ def test_postgres_count():
         enable_bin_logs=False,
         already_exists=True,
     )
-    host_ip = postgres_instance.setup()
+    postgres_instance.setup()
     postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data.sql")
 
+    # Cloud SQL proxy listens to localhost
     conn = {
         "source_type": "Postgres",
-        "host": "localhost",  # TODO update to Public IP when pushing
+        "host": "localhost",
         "user": "postgres",
         "password": POSTGRES_PASSWORD,
         "port": 5432,

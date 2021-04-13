@@ -15,7 +15,6 @@
 """ Context manager for gcloud which redirects config directory to temp location """
 
 import os
-import tempfile
 import subprocess
 
 
