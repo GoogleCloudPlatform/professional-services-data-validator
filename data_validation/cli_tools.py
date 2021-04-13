@@ -137,15 +137,18 @@ def _configure_find_tables(subparsers):
     find_tables_parser.add_argument(
         "--target-conn", "-tc", help="Target connection name"
     )
+    find_tables_parser.add_argument(
+        "--allowed-schemas", "-as", help="Json List of source schemas to match."
+    )
 
 
 def _configure_raw_query(subparsers):
     """Configure arguments for text search table matching."""
-    find_tables_parser = subparsers.add_parser(
+    query_parser = subparsers.add_parser(
         "query", help="Run an adhoc query against the supplied connection"
     )
-    find_tables_parser.add_argument("--conn", "-c", help="Connection name to query")
-    find_tables_parser.add_argument("--query", "-q", help="Raw query to execute")
+    query_parser.add_argument("--conn", "-c", help="Connection name to query")
+    query_parser.add_argument("--query", "-q", help="Raw query to execute")
 
 
 def _configure_run_config_parser(subparsers):
@@ -231,7 +234,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--filters",
         "-filters",
-        help='Filter config details {["type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
+        help='Filter config details [{"type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
     )
 
 
@@ -377,3 +380,18 @@ def get_labels(arg_labels):
             else:
                 raise ValueError("Labels must be comma-separated key-value pairs.")
     return labels
+
+
+def get_json_arg(arg_value, default_value=None):
+    """Return JSON parsed arg value.
+
+    arg_value (str): The parsed argument supplied.
+    default_value (Any): A default value to supplu when arg_Value is empty.
+    """
+    if not arg_value:
+        return default_value
+
+    try:
+        return json.loads(arg_value)
+    except json.decoder.JSONDecodeError:
+        raise ValueError(f"Could not parse value to JSON: `{arg_value}`")
