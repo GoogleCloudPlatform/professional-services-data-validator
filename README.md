@@ -103,11 +103,19 @@ Here is the generated YAML file named `citibike.yaml`:
 
 ```
 result_handler: {}
-source: bq target: bq validations: - aggregates: - field_alias: count
-source_column: null target_column: null type: count filters: [] labels: []
-schema_name: bigquery-public-data.new_york_citibike table_name: citibike_trips
-target_schema_name: bigquery-public-data.new_york_citibike target_table_name:
-citibike_trips type: Column
+source: bq target:
+bq validations:
+  - aggregates:
+    - field_alias: count
+      source_column: null
+      target_column: null
+      type: count
+      filters: []
+      labels: []
+schema_name: bigquery-public-data.new_york_citibike
+table_name: citibike_trips
+target_schema_name: bigquery-public-data.new_york_citibike
+target_table_name: citibike_trips type: Column
 ```
 
 You can now edit the YAML file if, for example, the `new_york_citibike` table is
