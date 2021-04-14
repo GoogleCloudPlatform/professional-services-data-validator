@@ -20,7 +20,7 @@ from data_validation import data_validation, consts
 import os
 
 # Local testing requires the Cloud SQL Proxy.
-# https://cloud.google.com/sql/docs/postgres/configure-ip
+# https://cloud.google.com/sql/docs/sqlserver/connect-admin-proxy
 
 
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")

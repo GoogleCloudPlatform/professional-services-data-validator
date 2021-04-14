@@ -112,10 +112,10 @@ def integration_mysql(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
-    _setup_session_requirements(session, extra_packages=["black==19.10b0"])
+    _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_mysql.py"
-    expected_env_vars = ["MYSQL_HOST", "MYSQL_PASSWORD"]
+    expected_env_vars = ["MYSQL_HOST", "MYSQL_PASSWORD", "CLOUD_SQL_CONNECTION"]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
@@ -130,10 +130,10 @@ def integration_postgres(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
-    _setup_session_requirements(session, extra_packages=["black==19.10b0"])
+    _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_postgres.py"
-    expected_env_vars = ["PROJECT_ID", "POSTGRES_PASSWORD"]
+    expected_env_vars = ["PROJECT_ID", "POSTGRES_PASSWORD", "CLOUD_SQL_CONNECTION"]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
@@ -148,7 +148,7 @@ def integration_sql_server(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
-    _setup_session_requirements(session, extra_packages=["black==19.10b0", "pyodbc"])
+    _setup_session_requirements(session, extra_packages=["pyodbc"])
 
     test_path = "tests/system/data_sources/test_sql_server.py"
     expected_env_vars = ["PROJECT_ID", "SQL_SERVER_PASSWORD"]
