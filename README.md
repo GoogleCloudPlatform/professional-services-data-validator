@@ -224,9 +224,87 @@ SELECT
   CONCAT(rtrim_col_a, rtrim_col_b) AS concat_col_a_col_b
 FROM (
   SELECT
-    RTRIM(col_a) AS rtrim_col_a
-    LTRIM(col_b) AS ltrim_col_b
+      RTRIM(col_a) AS rtrim_col_a
+    , LTRIM(col_b) AS ltrim_col_b
   FROM my.table
+  ) as table_0
+```
+
+Calculated fields can be used by aggregate fields to produce validations on
+calculated or sanitized raw data, such as calculating the aggregate hash of a
+table. For example the following yaml config...
+
+```
+validations:
+- aggregates:
+  - field_alias: xor__multi_statement_hash
+    source_column: multi_statement_hash
+    target_column: multi_statement_hash
+    type: bit_xor
+  calculated_fields:
+  - field_alias: multi_statement_hash
+    source_calculated_columns: [multi_statement_concat]
+    target_calculated_columns: [multi_statement_concat]
+    type: hash
+    depth: 2
+  - field_alias: multi_statement_concat
+    source_calculated_columns: [calc_length_col_a,
+                                calc_ifnull_col_b,
+                                calc_rstrip_col_c,
+                                calc_upper_col_d]
+    target_calculated_columns: [calc_length_col_a,
+                                calc_ifnull_col_b,
+                                calc_rstrip_col_c,
+                                calc_upper_col_d]
+    type: concat
+    depth: 1
+  - field_alias: calc_length_col_a
+    source_calculated_columns: [col_a]
+    target_calculated_columns: [col_a]
+    type: length
+    depth: 0
+  - field_alias: calc_ifnull_col_b
+    source_calculated_columns: [col_b]
+    target_calculated_columns: [col_b]
+    type: ifnull
+    depth: 0
+  - field_alias: calc_rstrip_col_c
+    source_calculated_columns: [col_c]
+    target_calculated_columns: [col_c]
+    type: rstrip
+    depth: 0
+  - field_alias: calc_upper_col_d
+    source_calculated_columns: [col_d]
+    target_calculated_columns: [col_d]
+    type: upper
+    depth: 0
+```
+
+is equivalent to the following SQL query...
+
+```
+SELECT
+  BIT_XOR(multi_statement_hash) AS xor__multi_statement_hash
+FROM (
+  SELECT
+    FARM_FINGERPRINT(mult_statement_concat) AS multi_statement_hash
+  FROM (
+    SELECT
+      CONCAT(calc_length_col_a,
+             calc_ifnull_col_b,
+             calc_rstrip_col_c,
+             calc_upper_col_d) AS multi_statement_concat
+    FROM (
+      SELECT
+          CAST(LENGTH(col_a) AS STRING) AS calc_length_col_a
+        , IFNULL(col_b,
+                 'DEFAULT_REPLACEMENT_STRING') AS calc_ifnull_col_b
+        , RTRIM(col_c) AS calc_rstrip_col_c
+        , UPPER(col_d) AS calc_upper_col_d
+      FROM my.table
+      ) AS table_0
+    ) AS table_1
+  ) AS table_2
 ```
 
 ## Validation Reports
