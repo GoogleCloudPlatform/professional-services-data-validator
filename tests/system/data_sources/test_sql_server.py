@@ -42,6 +42,8 @@ def test_sql_server_count():
         enable_bin_logs=False,
         already_exists=True,
     )
+
+    # If instance already exists, returns host IP and does not add new data
     mssql_instance.setup()
     mssql_instance.add_data("gs://pso-kokoro-resources/mssql_data.sql")
 

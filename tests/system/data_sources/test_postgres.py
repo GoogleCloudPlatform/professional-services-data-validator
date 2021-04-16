@@ -42,6 +42,8 @@ def test_postgres_count():
         enable_bin_logs=False,
         already_exists=True,
     )
+
+    # If instance already exists, returns host IP and does not add new data
     postgres_instance.setup()
     postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data.sql")
 
