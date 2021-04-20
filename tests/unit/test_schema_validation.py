@@ -165,32 +165,12 @@ def test_execute(module_under_test, fs):
 
     dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
     result_df = dv_client.schema_validator.execute()
-    # remove fields that are non-deterministic
-    del result_df["run_id"]
-    del result_df["start_time"]
-    del result_df["end_time"]
-
-    expected_list = [
-        ["Schema", "Schema", "my_table", "my_table", "id", "id", "Schema", "1", "0", "Fail"],
-        ["Schema", "Schema", "my_table", "my_table", "date_value", "date_value", "Schema", "1", "1", "Pass"],
-        ["Schema", "Schema", "my_table", "my_table", "timestamp_value", "timestamp_value", "Schema", "1", "1", "Pass"],
-        ["Schema", "Schema", "my_table", "my_table", "int_value", "int_value", "Schema", "1", "1", "Pass"],
-        ["Schema", "Schema", "my_table", "my_table", "text_constant", "text_constant", "Schema", "1", "1", "Pass"],
-        ["Schema", "Schema", "my_table", "my_table", "text_value", "text_value", "Schema", "1", "1", "Pass"],
-        ["Schema", "Schema", "my_table", "my_table", "text_value_two", "text_value_two", "Schema", "1", "1", "Pass"],
-        ["Schema", "Schema", "my_table", "my_table", "", "id_new", "Schema", "0", "1", "Fail"]
-    ]
-
-    df_expected = pandas.DataFrame(expected_list, columns=['validation_name', 'validation_type', 'source_table_name',
-                                                           'target_table_name', 'source_column_name',
-                                                           'target_column_name', 'aggregation_type', 'source_agg_value',
-                                                           'target_agg_value', 'status'])
 
     failures = result_df[result_df["status"].str.contains("Fail")]
     success = result_df[result_df["status"].str.contains("Pass")]
 
-    assert len(result_df) == 8
-    assert result_df["source_agg_value"].astype(float).sum() == df_expected["source_agg_value"].astype(float).sum()
-    assert result_df["target_agg_value"].astype(float).sum() == df_expected["target_agg_value"].astype(float).sum()
-    assert failures.shape[0] == 2
-    assert success.shape[0] == 6
+    assert len(result_df) == len(source_data[0]) + 1
+    assert result_df["source_agg_value"].astype(float).sum() == 7
+    assert result_df["target_agg_value"].astype(float).sum() == 7
+    assert failures["source_column_name"].to_list() == ["id", "N/A"]
+    assert failures["target_column_name"].to_list() == ["N/A", "id_new"]
