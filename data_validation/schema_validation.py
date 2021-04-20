@@ -22,7 +22,7 @@ from data_validation.validation_builder import ValidationBuilder
 
 class SchemaValidation(object):
     def __init__(
-            self, config, validation_builder=None, verbose=False
+            self, config_manager, run_metadata=None, verbose=False
     ):
         """Initialize a SchemaValidation client
 
@@ -32,32 +32,17 @@ class SchemaValidation(object):
             verbose (bool): If verbose, the Data Validation client will print the queries run
         """
         self.verbose = verbose
+        self.config_manager = config_manager
+        self.run_metadata = run_metadata or metadata.RunMetadata()
 
-        # Data Client Management
-        self.config = config
-        self.source_client = clients.get_data_client(
-            self.config[consts.CONFIG_SOURCE_CONN]
-        )
-        self.target_client = clients.get_data_client(
-            self.config[consts.CONFIG_TARGET_CONN]
-        )
-        self.config_manager = ConfigManager(
-            config, self.source_client, self.target_client, verbose=self.verbose
-        )
-        self.run_metadata = metadata.RunMetadata()
-        self.run_metadata.labels = self.config_manager.labels
-
-        # Initialize Validation Builder if None was supplied
-        self.validation_builder = validation_builder or ValidationBuilder(
-            self.config_manager
-        )
-
-    def execute_schema_validation(self):
+    def execute(self):
         """ Performs a validation between source and a target schema"""
-        ibis_source_schema = self.source_client.get_schema(self.config_manager.source_table,
-                                                           self.config_manager.source_schema)
-        ibis_target_schema = self.target_client.get_schema(self.config_manager.target_table,
-                                                           self.config_manager.target_schema)
+        ibis_source_schema = self.config_manager.source_client.get_schema(
+            self.config_manager.source_table, self.config_manager.source_schema
+        )
+        ibis_target_schema = self.config_manager.target_client.get_schema(
+            self.config_manager.target_table, self.config_manager.target_schema
+        )
 
         source_fields = {}
         for field_name, data_type in ibis_source_schema.items():
@@ -69,13 +54,14 @@ class SchemaValidation(object):
         df = pandas.DataFrame(results, columns=['source_column_name', 'target_column_name', 'source_agg_value',
                                                 'target_agg_value', 'status', 'error_result.details'])
 
-        # add metadata
+        # Update and Assign Metadata Values
+        self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
+
         df.insert(loc=0, column='run_id', value=self.run_metadata.run_id)
         df.insert(loc=1, column='validation_name', value="Schema")
         df.insert(loc=2, column='validation_type', value="Schema")
 
         df.insert(loc=3, column='start_time', value=self.run_metadata.start_time)
-        self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
         df.insert(loc=4, column='end_time', value=self.run_metadata.end_time)
 
         df.insert(loc=5, column='source_table_name', value=self.config_manager.full_source_table)

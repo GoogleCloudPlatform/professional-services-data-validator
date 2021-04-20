@@ -38,7 +38,8 @@ from data_validation.schema_validation import SchemaValidation
 
 class DataValidation(object):
     def __init__(
-            self, config, validation_builder=None, result_handler=None, verbose=False
+            self, config, validation_builder=None, schema_validator=None,
+            result_handler=None, verbose=False
     ):
         """Initialize a DataValidation client
 
@@ -64,9 +65,16 @@ class DataValidation(object):
             config, self.source_client, self.target_client, verbose=self.verbose
         )
 
+        self.run_metadata = metadata.RunMetadata()
+        self.run_metadata.labels = self.config_manager.labels
+
         # Initialize Validation Builder if None was supplied
         self.validation_builder = validation_builder or ValidationBuilder(
             self.config_manager
+        )
+
+        self.schema_validator = schema_validator or SchemaValidation(
+            self.config_manager, run_metadata=self.run_metadata, verbose=self.verbose
         )
 
         # Initialize the default Result Handler if None was supplied
@@ -83,9 +91,7 @@ class DataValidation(object):
             )
         elif self.config_manager.validation_type == "Schema":
             """ Perform only schema validation """
-            schema_validation = SchemaValidation(self.config, self.validation_builder, self.verbose)
-
-            result_df = schema_validation.execute_schema_validation()
+            result_df = self.schema_validator.execute()
         else:
             result_df = self._execute_validation(
                 self.validation_builder, process_in_memory=True
@@ -228,10 +234,7 @@ class DataValidation(object):
 
     def _execute_validation(self, validation_builder, process_in_memory=True):
         """ Execute Against a Supplied Validation Builder """
-        run_metadata = metadata.RunMetadata()
-        run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
-        run_metadata.validations = validation_builder.get_metadata()
-        run_metadata.labels = self.config_manager.labels
+        self.run_metadata.validations = validation_builder.get_metadata()
 
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()
@@ -252,7 +255,7 @@ class DataValidation(object):
             try:
                 result_df = combiner.generate_report(
                     pandas_client,
-                    run_metadata,
+                    self.run_metadata,
                     pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
                     pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
                     join_on_fields=join_on_fields,
@@ -270,13 +273,14 @@ class DataValidation(object):
         else:
             result_df = combiner.generate_report(
                 self.source_client,
-                run_metadata,
+                self.run_metadata,
                 source_query,
                 target_query,
                 join_on_fields=join_on_fields,
                 verbose=self.verbose,
             )
 
+        self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
         return result_df
 
     def combine_data(self, source_df, target_df, join_on_fields):
