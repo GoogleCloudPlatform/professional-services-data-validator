@@ -148,7 +148,7 @@ def test_schema_validation_matching(module_under_test):
     assert expected_results == module_under_test.schema_validation_matching(source_fields, target_fields)
 
 
-def test_execute(module_under_test):
+def test_execute(module_under_test, fs):
     num_rows = 1
     source_data = _generate_fake_data(rows=num_rows, second_range=0)
     _create_table_file(SOURCE_TABLE_FILE_PATH,
