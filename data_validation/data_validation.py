@@ -12,18 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import datetime
 import json
 import logging
 import warnings
 
-import google.oauth2.service_account
 import ibis.backends.pandas
 import pandas
 import numpy
 
-from data_validation import consts, combiner, exceptions, metadata, clients
+from data_validation import consts, combiner, metadata, clients
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.schema_validation import SchemaValidation
@@ -118,7 +116,7 @@ class DataValidation(object):
         try:
             count_df = rows_df[
                 rows_df[consts.AGGREGATION_TYPE] == consts.CONFIG_TYPE_COUNT
-                ]
+            ]
             for row in count_df.to_dict(orient="row"):
                 recursive_query_size = max(
                     float(row[consts.SOURCE_AGG_VALUE]),
@@ -156,7 +154,7 @@ class DataValidation(object):
                 group_suceeded = True
                 grouped_key_df = result_df[
                     result_df[consts.GROUP_BY_COLUMNS] == grouped_key
-                    ]
+                ]
 
                 if self.query_too_large(grouped_key_df, grouped_fields):
                     past_results.append(grouped_key_df)

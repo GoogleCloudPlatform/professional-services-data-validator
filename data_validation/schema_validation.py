@@ -15,9 +15,7 @@
 import datetime
 import pandas
 
-from data_validation import consts, metadata, clients
-from data_validation.config_manager import ConfigManager
-from data_validation.validation_builder import ValidationBuilder
+from data_validation import metadata
 
 
 class SchemaValidation(object):
