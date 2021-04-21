@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ class SchemaValidation(object):
         """Initialize a SchemaValidation client
 
         Args:
-            config (dict): The validation config used for the comparison
-            validation_builder (ValidationBuilder): Optional instance of a ValidationBuilder
+            config_manager (ConfigManager): The ConfigManager for the validation.
+            run_metadata (RunMetadata): The RunMetadata for the validation.
             verbose (bool): If verbose, the Data Validation client will print the queries run
         """
         self.verbose = verbose

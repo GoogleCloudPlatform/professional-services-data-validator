@@ -80,12 +80,13 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if config_manager.validation_type in ["GroupedColumn", "Row"]:
+    if (config_manager.validation_type in [consts.GROUPED_COLUMN_VALIDATION,
+                                           consts.ROW_VALIDATION]):
         grouped_columns = json.loads(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
-    if config_manager.validation_type in ["Row"]:
+    if config_manager.validation_type in [consts.ROW_VALIDATION]:
         primary_keys = json.loads(args.primary_keys or "[]")
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)

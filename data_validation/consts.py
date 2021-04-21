@@ -55,6 +55,12 @@ CONFIG_TYPE_SUM = "sum"
 FILTER_TYPE_CUSTOM = "custom"
 FILTER_TYPE_EQUALS = "equals"
 
+# Validation Types
+COLUMN_VALIDATION = "Column"
+GROUPED_COLUMN_VALIDATION = "GroupedColumn"
+ROW_VALIDATION = "Row"
+SCHEMA_VALIDATION = "Schema"
+
 # Yaml File Config Fields
 ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"

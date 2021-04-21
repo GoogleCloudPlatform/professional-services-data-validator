@@ -44,10 +44,11 @@ class DataValidation(object):
         """Initialize a DataValidation client
 
         Args:
-            config (dict): The validation config used for the comparison
-            validation_builder (ValidationBuilder): Optional instance of a ValidationBuilder
-            result_handler (ResultHandler): Optional instance of as ResultHandler client
-            verbose (bool): If verbose, the Data Validation client will print the queries run
+            config (dict): The validation config used for the comparison.
+            validation_builder (ValidationBuilder): Optional instance of a ValidationBuilder.
+            schema_validator (SchemaValidation): Optional instance of a SchemaValidation.
+            result_handler (ResultHandler): Optional instance of as ResultHandler client.
+            verbose (bool): If verbose, the Data Validation client will print the queries run.
         """
         self.verbose = verbose
 
@@ -84,12 +85,12 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
-        if self.config_manager.validation_type == "Row":
+        if self.config_manager.validation_type == consts.ROW_VALIDATION:
             grouped_fields = self.validation_builder.pop_grouped_fields()
             result_df = self.execute_recursive_validation(
                 self.validation_builder, grouped_fields
             )
-        elif self.config_manager.validation_type == "Schema":
+        elif self.config_manager.validation_type == consts.SCHEMA_VALIDATION:
             """ Perform only schema validation """
             result_df = self.schema_validator.execute()
         else:
