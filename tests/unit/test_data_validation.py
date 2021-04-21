@@ -69,23 +69,6 @@ SAMPLE_CONFIG = {
     consts.CONFIG_RESULT_HANDLER: None,
 }
 
-SAMPLE_SCHEMA_CONFIG = {
-    # BigQuery Specific Connection Config
-    "source_conn": SOURCE_CONN_CONFIG,
-    "target_conn": TARGET_CONN_CONFIG,
-    # Validation Type
-    consts.CONFIG_TYPE: "Schema",
-    # Configuration Required Depending on Validator Type
-    "schema_name": None,
-    "table_name": "my_table",
-    "target_schema_name": None,
-    "target_table_name": "my_table",
-    consts.CONFIG_GROUPED_COLUMNS: [],
-    consts.CONFIG_AGGREGATES: [],
-    consts.CONFIG_THRESHOLD: 0.0,
-    consts.CONFIG_RESULT_HANDLER: None,
-}
-
 SAMPLE_THRESHOLD_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
