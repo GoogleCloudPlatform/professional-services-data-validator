@@ -25,6 +25,7 @@ from data_validation import consts, combiner, metadata, clients
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.schema_validation import SchemaValidation
+
 """ The DataValidation class is where the code becomes source/target aware
 
     The class builds specific source and target clients and is likely where someone would go to
@@ -36,8 +37,12 @@ from data_validation.schema_validation import SchemaValidation
 
 class DataValidation(object):
     def __init__(
-            self, config, validation_builder=None, schema_validator=None,
-            result_handler=None, verbose=False
+        self,
+        config,
+        validation_builder=None,
+        schema_validator=None,
+        result_handler=None,
+        verbose=False,
     ):
         """Initialize a DataValidation client
 
