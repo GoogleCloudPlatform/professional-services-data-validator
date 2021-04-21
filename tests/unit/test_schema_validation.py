@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import json
-import pandas
 import pytest
 import random
 from datetime import datetime, timedelta
@@ -164,9 +163,7 @@ def test_execute(module_under_test, fs):
 
     dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
     result_df = dv_client.schema_validator.execute()
-
     failures = result_df[result_df["status"].str.contains("Fail")]
-    success = result_df[result_df["status"].str.contains("Pass")]
 
     assert len(result_df) == len(source_data[0]) + 1
     assert result_df["source_agg_value"].astype(float).sum() == 7

@@ -19,9 +19,7 @@ import pytest
 import random
 from datetime import datetime, timedelta
 
-from ibis.backends.pandas.client import PandasClient
-
-from data_validation import consts, exceptions
+from data_validation import consts
 
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
