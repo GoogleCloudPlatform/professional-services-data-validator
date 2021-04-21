@@ -281,7 +281,7 @@ def _create_table_file(table_path, data):
 
 
 def _generate_fake_data(
-        rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
+    rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
 ):
     """Return a list of dicts with given number of rows.
 

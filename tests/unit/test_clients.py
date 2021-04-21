@@ -80,7 +80,7 @@ def test_import_oracle_client():
 
 def test_get_oracle_data_client():
     with pytest.raises(
-            exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
+        exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
     ):
         clients.get_data_client(ORACLE_CONN_CONFIG)
 

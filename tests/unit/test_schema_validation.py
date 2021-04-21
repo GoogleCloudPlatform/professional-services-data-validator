@@ -83,7 +83,12 @@ def _create_table_file(table_path, data):
 
 
 def _generate_fake_data(
-        rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None, rename_columns=None,
+    rows=10,
+    initial_id=0,
+    second_range=60 * 60 * 24,
+    int_range=100,
+    random_strings=None,
+    rename_columns=None,
 ):
     """Return a list of dicts with given number of rows.
 
@@ -137,29 +142,48 @@ def test_schema_validation_matching(module_under_test):
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
 
     expected_results = [
-        ['field1', 'field1', '1', '1', 'Pass', 'Source_type:string Target_type:string'],
-        ['field2', 'field2', '1', '1', 'Fail', 'Data type mismatch between source and target. '
-                                               'Source_type:datetime Target_type:timestamp'],
-        ['field3', 'N/A', '1', '0', 'Fail', "Target doesn't have a matching field name"],
-        ['N/A', 'field_3', '0', '1', 'Fail', "Source doesn't have a matching field name"]
+        ["field1", "field1", "1", "1", "Pass", "Source_type:string Target_type:string"],
+        [
+            "field2",
+            "field2",
+            "1",
+            "1",
+            "Fail",
+            "Data type mismatch between source and target. "
+            "Source_type:datetime Target_type:timestamp",
+        ],
+        [
+            "field3",
+            "N/A",
+            "1",
+            "0",
+            "Fail",
+            "Target doesn't have a matching field name",
+        ],
+        [
+            "N/A",
+            "field_3",
+            "0",
+            "1",
+            "Fail",
+            "Source doesn't have a matching field name",
+        ],
     ]
-    assert expected_results == module_under_test.schema_validation_matching(source_fields, target_fields)
+    assert expected_results == module_under_test.schema_validation_matching(
+        source_fields, target_fields
+    )
 
 
 def test_execute(module_under_test, fs):
     num_rows = 1
     source_data = _generate_fake_data(rows=num_rows, second_range=0)
-    _create_table_file(SOURCE_TABLE_FILE_PATH,
-                       _get_fake_json_data(source_data))
+    _create_table_file(SOURCE_TABLE_FILE_PATH, _get_fake_json_data(source_data))
 
     # Create target data with new field
     target_data = _generate_fake_data(
-        rows=num_rows,
-        second_range=0,
-        rename_columns={"id": "id_new"}
+        rows=num_rows, second_range=0, rename_columns={"id": "id_new"}
     )
-    _create_table_file(TARGET_TABLE_FILE_PATH,
-                       _get_fake_json_data(target_data))
+    _create_table_file(TARGET_TABLE_FILE_PATH, _get_fake_json_data(target_data))
 
     dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
     result_df = dv_client.schema_validator.execute()
