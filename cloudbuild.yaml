@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-timeout: 1800s
+timeout: 2400s
 steps:
 - id: lint
   name: 'gcr.io/pso-kokoro-resources/python-multi'
@@ -26,6 +26,10 @@ steps:
   env:
   - 'NOX_SESSION=unit'
   waitFor: ['-']
+- id: proxy-install
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/install_cloud_proxy.sh']
+  waitFor: ["-"]
 - id: integration_mysql
   name: 'gcr.io/pso-kokoro-resources/python-multi'
   args: ['bash', './ci/build.sh']
@@ -34,6 +38,24 @@ steps:
   - 'MYSQL_HOST=35.184.142.16'
   - 'MYSQL_PASSWORD=password'
   waitFor: ['-']
+- id: integration_postgres
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_postgres'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'POSTGRES_PASSWORD=password'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
+  waitFor: ['proxy-install']
+- id: integration_sql_server
+  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_sql_server'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'SQL_SERVER_PASSWORD=password'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017=tcp:1433'
+  waitFor: ['proxy-install']
 - id: integration_bigquery
   name: 'gcr.io/pso-kokoro-resources/python-multi'
   args: ['bash', './ci/build.sh']

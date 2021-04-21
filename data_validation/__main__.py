@@ -46,27 +46,27 @@ def get_aggregate_config(args, config_manager):
     aggregate_configs = [config_manager.build_config_count_aggregate()]
 
     if args.count:
-        col_args = None if args.count == "*" else json.loads(args.count)
+        col_args = None if args.count == "*" else cli_tools.get_json_arg(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "count", col_args, None
         )
     if args.sum:
-        col_args = None if args.sum == "*" else json.loads(args.sum)
+        col_args = None if args.sum == "*" else cli_tools.get_json_arg(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "sum", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.avg:
-        col_args = None if args.avg == "*" else json.loads(args.avg)
+        col_args = None if args.avg == "*" else cli_tools.get_json_arg(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "avg", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.min:
-        col_args = None if args.min == "*" else json.loads(args.min)
+        col_args = None if args.min == "*" else cli_tools.get_json_arg(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "min", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.max:
-        col_args = None if args.max == "*" else json.loads(args.max)
+        col_args = None if args.max == "*" else cli_tools.get_json_arg(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, consts.NUMERIC_DATA_TYPES
         )
@@ -82,12 +82,12 @@ def build_config_from_args(args, config_manager):
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if (config_manager.validation_type in [consts.GROUPED_COLUMN_VALIDATION,
                                            consts.ROW_VALIDATION]):
-        grouped_columns = json.loads(args.grouped_columns)
+        grouped_columns = cli_tools.get_json_arg(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
     if config_manager.validation_type in [consts.ROW_VALIDATION]:
-        primary_keys = json.loads(args.primary_keys or "[]")
+        primary_keys = cli_tools.get_json_arg(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
         )
@@ -109,17 +109,17 @@ def build_config_managers_from_args(args):
 
     result_handler_config = None
     if args.result_handler_config:
-        result_handler_config = json.loads(args.result_handler_config)
+        result_handler_config = cli_tools.get_json_arg(args.result_handler_config)
 
     filter_config = []
     if args.filters:
-        filter_config = json.loads(args.filters)
+        filter_config = cli_tools.get_json_arg(args.filters)
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
     threshold = args.threshold if args.threshold else 0.0
-    tables_list = json.loads(args.tables_list)
+    tables_list = cli_tools.get_json_arg(args.tables_list, default_value=[])
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
             config_type,
@@ -197,10 +197,10 @@ def _compare_match_tables(source_table_map, target_table_map):
     return table_configs
 
 
-def get_table_map(client):
+def get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
-    table_objs = clients.get_all_tables(client)
+    table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -219,7 +219,8 @@ def find_tables_using_string_matching(args):
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
-    source_table_map = get_table_map(source_client)
+    allowed_schemas = cli_tools.get_json_arg(args.allowed_schemas)
+    source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
 
     table_configs = _compare_match_tables(source_table_map, target_table_map)

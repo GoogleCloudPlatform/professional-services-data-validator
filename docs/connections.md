@@ -56,6 +56,20 @@ Every source type requires its own configuration for connectivity.  Below is the
 * bigquery.tables.update (BigQuery Data Editor)
 * bigquery.tables.updateData (BigQuery Data Editor)
 
+##### Postgres
+```
+{
+    # Configuration Required for All Data Soures
+    "source_type": "Postgres",
+
+    # Connection Details
+    "host": "127.0.0.1",
+    "user": "my-user",
+    "password": "my-password",
+    "port":5432,
+    "database":"my-db"
+}
+```
 
 #####  Teradata
 Please note the Teradata is not-native to this package and must be installed
@@ -101,9 +115,9 @@ Then `pip install pyodbc`.
 
     # Connection Details
     "host": "127.0.0.1",
-    "port":1521,
-    "user_name":"my-user",
-    "password":"my-password",
+    "port": 1433,
+    "user": "my-user",
+    "password": "my-password",
     "database": "my-db",
 
 }

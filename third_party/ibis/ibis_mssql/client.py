@@ -28,7 +28,6 @@ from third_party.ibis.ibis_mssql.compiler import MSSQLDialect
 
 import pyodbc  # NOQA fail early if the driver is missing
 
-
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.UNIQUEIDENTIFIER)
 def sa_string(_, satype, nullable=True):
     return dt.String(nullable=nullable)
