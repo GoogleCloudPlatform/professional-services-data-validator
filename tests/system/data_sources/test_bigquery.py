@@ -185,7 +185,7 @@ def test_count_validator():
     count_tripduration_value = df[df["validation_name"] == "count_tripduration"][
         "source_agg_value"
     ].values[0]
-    avg_tripduration_value = df[df["validation_name"] == "count_tripduration"][
+    avg_tripduration_value = df[df["validation_name"] == "avg_tripduration"][
         "source_agg_value"
     ].values[0]
     max_birth_year_value = df[df["validation_name"] == "max_birth_year"][

@@ -23,8 +23,9 @@ from ibis.backends.pandas.client import PandasClient
 from ibis.backends.mysql.client import MySQLClient
 from ibis.backends.postgres.client import PostgreSQLClient
 
-from third_party.ibis.ibis_impala.api import impala_connect
 import third_party.ibis.ibis_addon.datatypes
+from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
+from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info
 
 
@@ -184,4 +185,5 @@ CLIENT_LOOKUP = {
     "Teradata": TeradataClient,
     "MSSQL": mssql_connect,
     "Snowflake": snowflake_connect,
+    "Spanner": spanner_connect,
 }
