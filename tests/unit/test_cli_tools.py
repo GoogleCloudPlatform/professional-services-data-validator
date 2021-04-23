@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+import json
 import pytest
 from unittest import mock
 
@@ -42,6 +43,16 @@ CLI_ADD_CONNECTION_ARGS = [
     "BigQuery",
     "--project-id",
     "example-project",
+]
+
+CLI_FIND_TABLES_ARGS = [
+    "find-tables",
+    "--source-conn",
+    TEST_CONN,
+    "--target-conn",
+    TEST_CONN,
+    "--allowed-schemas",
+    '["my_schema"]',
 ]
 
 
@@ -88,6 +99,14 @@ def test_create_and_list_connections(capsys, fs):
     captured = capsys.readouterr()
 
     assert captured.out == "Connection Name: test\n"
+
+
+def test_find_tables_config():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_FIND_TABLES_ARGS)
+
+    allowed_schemas = json.loads(args.allowed_schemas)
+    assert allowed_schemas[0] == "my_schema"
 
 
 @pytest.mark.parametrize(
@@ -141,3 +160,17 @@ def test_threshold_float_err(test_input):
     """Test that threshold float only accepts positive floats."""
     with pytest.raises(argparse.ArgumentTypeError):
         cli_tools.threshold_float(test_input)
+
+
+def test_get_invalid_json_arg():
+    arg_value = "not json"
+
+    with pytest.raises(ValueError):
+        cli_tools.get_json_arg(arg_value)
+
+
+def test_get_json_arg():
+    arg_value = '["value"]'
+    json_arg = cli_tools.get_json_arg(arg_value)
+
+    assert json_arg == ["value"]
