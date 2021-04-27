@@ -80,12 +80,15 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if config_manager.validation_type in ["GroupedColumn", "Row"]:
+    if config_manager.validation_type in [
+        consts.GROUPED_COLUMN_VALIDATION,
+        consts.ROW_VALIDATION,
+    ]:
         grouped_columns = cli_tools.get_json_arg(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
-    if config_manager.validation_type in ["Row"]:
+    if config_manager.validation_type in [consts.ROW_VALIDATION]:
         primary_keys = cli_tools.get_json_arg(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
@@ -114,8 +117,8 @@ def build_config_managers_from_args(args):
     if args.filters:
         filter_config = cli_tools.get_json_arg(args.filters)
 
-    source_client = DataValidation.get_data_client(source_conn)
-    target_client = DataValidation.get_data_client(target_conn)
+    source_client = clients.get_data_client(source_conn)
+    target_client = clients.get_data_client(target_conn)
 
     threshold = args.threshold if args.threshold else 0.0
     tables_list = cli_tools.get_json_arg(args.tables_list, default_value=[])
@@ -148,8 +151,8 @@ def build_config_managers_from_yaml(args):
     source_conn = cli_tools.get_connection(yaml_configs[consts.YAML_SOURCE])
     target_conn = cli_tools.get_connection(yaml_configs[consts.YAML_TARGET])
 
-    source_client = DataValidation.get_data_client(source_conn)
-    target_client = DataValidation.get_data_client(target_conn)
+    source_client = clients.get_data_client(source_conn)
+    target_client = clients.get_data_client(target_conn)
 
     for config in yaml_configs[consts.YAML_VALIDATIONS]:
         config[consts.CONFIG_SOURCE_CONN] = source_conn
@@ -215,8 +218,8 @@ def find_tables_using_string_matching(args):
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
 
-    source_client = DataValidation.get_data_client(source_conn)
-    target_client = DataValidation.get_data_client(target_conn)
+    source_client = clients.get_data_client(source_conn)
+    target_client = clients.get_data_client(target_conn)
 
     allowed_schemas = cli_tools.get_json_arg(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
@@ -229,7 +232,7 @@ def find_tables_using_string_matching(args):
 def run_raw_query_against_connection(args):
     """Return results of raw query for adhoc usage."""
     conn = cli_tools.get_connection(args.conn)
-    client = DataValidation.get_data_client(conn)
+    client = clients.get_data_client(conn)
 
     with client.raw_sql(args.query, results=True) as cur:
         return cur.fetchall()
@@ -313,7 +316,7 @@ def run_connections(args):
     elif args.connect_cmd == "add":
         conn = cli_tools.get_connection_config_from_args(args)
         # Test getting a client to validate connection details
-        _ = DataValidation.get_data_client(conn)
+        _ = clients.get_data_client(conn)
         cli_tools.store_connection(args.connection_name, conn)
     else:
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")

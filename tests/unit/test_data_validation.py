@@ -19,9 +19,8 @@ import pytest
 import random
 from datetime import datetime, timedelta
 
-from ibis.backends.pandas.client import PandasClient
+from data_validation import consts
 
-from data_validation import consts, exceptions
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
@@ -38,12 +37,6 @@ TARGET_CONN_CONFIG = {
     "table_name": "my_table",
     "file_path": TARGET_TABLE_FILE_PATH,
     "file_type": "json",
-}
-
-ORACLE_CONN_CONFIG = {
-    "source_type": "Oracle",
-    "host": "127.0.0.1",
-    "port": 1521,
 }
 
 SAMPLE_CONFIG = {
@@ -237,7 +230,6 @@ JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
 
-
 STRING_CONSTANT = "constant"
 
 SOURCE_QUERY_DATA = [
@@ -422,21 +414,6 @@ def test_threshold_equals_diff(module_under_test, fs):
     assert col_a_pct_diff == 150.0
     assert col_a_pct_threshold == 150.0
     assert col_a_status == "success"
-
-
-def test_get_pandas_data_client(module_under_test, fs):
-    conn_config = SAMPLE_CONFIG["source_conn"]
-    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
-    ibis_client = module_under_test.DataValidation.get_data_client(conn_config)
-
-    assert isinstance(ibis_client, PandasClient)
-
-
-def test_get_oracle_data_client(module_under_test):
-    with pytest.raises(
-        exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
-    ):
-        module_under_test.DataValidation.get_data_client(ORACLE_CONN_CONFIG)
 
 
 def test_row_level_validation_perfect_match(module_under_test, fs):

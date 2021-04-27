@@ -68,7 +68,7 @@ class ValidationBuilder(object):
     @staticmethod
     def get_query_builder(validation_type):
         """ Return Query Builder object given validation type """
-        if validation_type in ["Column", "GroupedColumn", "Row"]:
+        if validation_type in ["Column", "GroupedColumn", "Row", "Schema"]:
             builder = QueryBuilder.build_count_validator()
         else:
             msg = "Validation Builder supplied unknown type: %s" % validation_type

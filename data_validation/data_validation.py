@@ -12,20 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import datetime
 import json
 import logging
 import warnings
 
-import google.oauth2.service_account
 import ibis.backends.pandas
 import pandas
 import numpy
 
-from data_validation import consts, combiner, exceptions, metadata, clients
+from data_validation import consts, combiner, metadata, clients
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
+from data_validation.schema_validation import SchemaValidation
 
 """ The DataValidation class is where the code becomes source/target aware
 
@@ -38,25 +37,31 @@ from data_validation.validation_builder import ValidationBuilder
 
 class DataValidation(object):
     def __init__(
-        self, config, validation_builder=None, result_handler=None, verbose=False
+        self,
+        config,
+        validation_builder=None,
+        schema_validator=None,
+        result_handler=None,
+        verbose=False,
     ):
         """Initialize a DataValidation client
 
         Args:
-            config (dict): The validation config used for the comparison
-            validation_builder (ValidationBuilder): Optional instance of a ValidationBuilder
-            result_handler (ResultHandler): Optional instance of as ResultHandler client
-            verbose (bool): If verbose, the Data Validation client will print the queries run
+            config (dict): The validation config used for the comparison.
+            validation_builder (ValidationBuilder): Optional instance of a ValidationBuilder.
+            schema_validator (SchemaValidation): Optional instance of a SchemaValidation.
+            result_handler (ResultHandler): Optional instance of as ResultHandler client.
+            verbose (bool): If verbose, the Data Validation client will print the queries run.
         """
         self.verbose = verbose
 
         # Data Client Management
         self.config = config
 
-        self.source_client = DataValidation.get_data_client(
+        self.source_client = clients.get_data_client(
             self.config[consts.CONFIG_SOURCE_CONN]
         )
-        self.target_client = DataValidation.get_data_client(
+        self.target_client = clients.get_data_client(
             self.config[consts.CONFIG_TARGET_CONN]
         )
 
@@ -64,9 +69,16 @@ class DataValidation(object):
             config, self.source_client, self.target_client, verbose=self.verbose
         )
 
+        self.run_metadata = metadata.RunMetadata()
+        self.run_metadata.labels = self.config_manager.labels
+
         # Initialize Validation Builder if None was supplied
         self.validation_builder = validation_builder or ValidationBuilder(
             self.config_manager
+        )
+
+        self.schema_validator = schema_validator or SchemaValidation(
+            self.config_manager, run_metadata=self.run_metadata, verbose=self.verbose
         )
 
         # Initialize the default Result Handler if None was supplied
@@ -76,11 +88,14 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
-        if self.config_manager.validation_type == "Row":
+        if self.config_manager.validation_type == consts.ROW_VALIDATION:
             grouped_fields = self.validation_builder.pop_grouped_fields()
             result_df = self.execute_recursive_validation(
                 self.validation_builder, grouped_fields
             )
+        elif self.config_manager.validation_type == consts.SCHEMA_VALIDATION:
+            """ Perform only schema validation """
+            result_df = self.schema_validator.execute()
         else:
             result_df = self._execute_validation(
                 self.validation_builder, process_in_memory=True
@@ -233,10 +248,7 @@ class DataValidation(object):
 
     def _execute_validation(self, validation_builder, process_in_memory=True):
         """ Execute Against a Supplied Validation Builder """
-        run_metadata = metadata.RunMetadata()
-        run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
-        run_metadata.validations = validation_builder.get_metadata()
-        run_metadata.labels = self.config_manager.labels
+        self.run_metadata.validations = validation_builder.get_metadata()
 
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()
@@ -257,7 +269,7 @@ class DataValidation(object):
             try:
                 result_df = combiner.generate_report(
                     pandas_client,
-                    run_metadata,
+                    self.run_metadata,
                     pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
                     pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
                     join_on_fields=join_on_fields,
@@ -275,46 +287,15 @@ class DataValidation(object):
         else:
             result_df = combiner.generate_report(
                 self.source_client,
-                run_metadata,
+                self.run_metadata,
                 source_query,
                 target_query,
                 join_on_fields=join_on_fields,
                 verbose=self.verbose,
             )
 
+        self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
         return result_df
-
-    @staticmethod
-    def get_data_client(connection_config):
-        """ Return DataClient client from given configuration """
-        connection_config = copy.deepcopy(connection_config)
-        source_type = connection_config.pop(consts.SOURCE_TYPE)
-
-        # The BigQueryClient expects a credentials object, not a string.
-        if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
-            key_path = connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
-            if key_path:
-                connection_config[
-                    "credentials"
-                ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
-                )
-
-        if source_type not in clients.CLIENT_LOOKUP:
-            msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
-                source_type=source_type
-            )
-            raise Exception(msg)
-
-        try:
-            data_client = clients.CLIENT_LOOKUP[source_type](**connection_config)
-        except Exception as e:
-            msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
-                source_type=source_type, error=str(e)
-            )
-            raise exceptions.DataClientConnectionFailure(msg)
-
-        return data_client
 
     def combine_data(self, source_df, target_df, join_on_fields):
         """ TODO: Return List of Dictionaries """
