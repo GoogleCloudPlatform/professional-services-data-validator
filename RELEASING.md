@@ -7,42 +7,37 @@ First, prepare a development environment. Follow the instructions in the
 install the package locally, and add any dependencies needed for testing such
 as nox or pytest.
 
-In order to build packages for distribution, also install `setuptools` and
-`wheel` into your development virtual environment.
+1. Create PyPI (https://pypi.org/) and PyPI Test (https://test.pypi.org/) accounts. Example: https://pypi.org/user/TimSwast/
 
-```
-pip install setuptools wheel
-```
+2. Configure PyPI with a `.pypirc` file: https://packaging.python.org/specifications/pypirc/#using-a-pypi-token
+
+3. Have a remote named "upstream" pointing at this copy on GitHub.
+
+    ```
+    git remote add upstream git@github.com:GoogleCloudPlatform/professional-services-data-validator.git
+    ```
+
+4. Install `setuptools`, [twine](https://twine.readthedocs.io/en/latest/) CLI
+   for PyPI, and `wheel` into your development virtual environment.
+
+    ```
+    pip install setuptools twine wheel
+    ```
 
 ## Prepare a release
 
-- Update [CHANGELOG.md](CHANGELOG.md) based on git commit history since last
-  release.
-
-  Template (include only those sections that apply):
-
-  ```
-  ### Features
-
-  ### Bug Fixes
-
-  ### Dependencies
-
-  ### Documentation
-
-  ### Internal / Testing Changes
-  ```
-- Update the version string in [setup.py](setup.py).
-- Send a pull request with your changes.
+- Review and merge PR from `release-please`. If anything needs adjusting,
+  update the files in the PR. Check that it:
+    - Updates version string in `setup.py`.
+    - Includes all expected changes in `CHANGELOG.md`.
 
 ## Build a package
 
 - After the PR is merged, checkout the main `develop` branch.
 
   ```
-  git fetch upstream develop
-  git checkout develop
-  git rebase -i upstream/develop
+  git fetch upstream --tags
+  git checkout vA.B.C
   ```
 
 - Remove any temporary files leftover from previous builds.
@@ -75,42 +70,28 @@ pip install setuptools wheel
 
 ## Publish the package
 
-- Tag the release.
+- [Optional] Upload to test PyPI. See [documentation for
+  TestPyPI](https://packaging.python.org/guides/using-testpypi/)
 
-  ```
-  git tag -a x.x.x -m 'Version x.x.x'
-  ```
+    ```
+    twine upload --repository testpypi dist/*
+    ```
 
-- Push the tag to GitHub.
+- [Optional] Try out test PyPI package
 
-  ```
-  git push upstream develop --tags
-  ```
+    ```
+    pip install --upgrade \
+      --index-url https://test.pypi.org/simple/ \
+      --extra-index-url https://pypi.org/simple \
+      google-pso-data-validator
+    ```
+
+- Upload to PyPI
+
+    ```
+    twine upload dist/*
+    ```
 
 - Find the tag in the [GitHub
   releases](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases).
-  - Copy the release notes there.
   - Upload both files from the `dist/` directory.
-
-- Upload the `.whl` wheel file, README, and CHANGELOG to [Google
-  Drive](https://drive.google.com/corp/drive/folders/1C387pJKyqOCTN0I7sIm0SP6pfHu0PrLG).
-
-- Release Version to GCS
-
-  ```
-  export PACKAGE_VERSION=X.X.X
-  gsutil cp README.md CHANGELOG.md dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/${PACKAGE_VERSION}/
-  gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/${PACKAGE_VERSION}/**
-  ```
-
-- Release Latest to GCS
-
-  ```
-  export PACKAGE_VERSION=X.X.X
-
-  gsutil cp README.md CHANGELOG.md gs://professional-services-data-validator/releases/latest/
-  gsutil cp dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/google_pso_data_validator-latest-py3-none-any.whl
-  gsutil cp dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/google-pso-data-validator-latest.tar.gz
-
-  gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/latest/**
-  ```
