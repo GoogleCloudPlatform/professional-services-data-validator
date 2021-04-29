@@ -67,7 +67,8 @@ class TeradataClient(SQLClient):
     dialect = compiler.TeradataDialect
 
     def __init__(self, host, user_name, password, port=1025, use_no_lock_tables=False):
-        """Construct a BigQueryClient.
+        """Construct a TeradataClient.
+
         Parameters
         ----------
         host : str

@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import ibis.expr.operations as ops
-from ibis.backends.bigquery import compiler as bigquery_compiler
+import ibis_bigquery
+from ibis_bigquery import compiler as bigquery_compiler
 
 
 def build_ast(expr, context):
@@ -54,4 +55,4 @@ compiles = bigquery_compiler.BigQueryExprTranslator.compiles
 rewrites = bigquery_compiler.BigQueryExprTranslator.rewrites
 
 
-dialect = bigquery_compiler.BigQueryDialect
+dialect = ibis_bigquery.Backend().dialect

@@ -15,7 +15,7 @@
 import textwrap
 
 import pytest
-import ibis.backends.bigquery
+import ibis_bigquery
 import ibis.expr.datatypes as dt
 
 # Import required in order to register operations.
@@ -24,7 +24,7 @@ import third_party.ibis.ibis_addon.operations  # noqa: F401
 
 @pytest.fixture
 def bigquery_client():
-    return ibis.backends.bigquery.connect()
+    return ibis_bigquery.connect()
 
 
 def test_bit_xor_bigquery(bigquery_client):
