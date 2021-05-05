@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-import json
 import pytest
 from unittest import mock
 
@@ -162,20 +161,6 @@ def test_threshold_float_err(test_input):
         cli_tools.threshold_float(test_input)
 
 
-def test_get_invalid_json_arg():
-    arg_value = "not json"
-
-    with pytest.raises(ValueError):
-        cli_tools.get_json_arg(arg_value)
-
-
-def test_get_json_arg():
-    arg_value = '["value"]'
-    json_arg = cli_tools.get_json_arg(arg_value)
-
-    assert json_arg == ["value"]
-
-
 @pytest.mark.parametrize(
     "test_input,expected",
     [
@@ -250,25 +235,26 @@ def test_get_result_handler(test_input, expected):
     assert res == expected
 
 
-def test_get_filters(fs):
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "source:target",
+            [{"type": "custom", "source": "source", "target": "target"}],
+        ),
+        ("source", [{"type": "custom", "source": "source", "target": "source"}]),
+    ],
+)
+def test_get_filters(test_input, expected):
     """ Test get filters from file function. """
-    file_path = "filters.json"
-    fs.create_file(
-        file_path,
-        contents='{"type":"custom","source":"region_id=71","target":"region_id=71"}',
-    )
-    expected = json.loads(
-        '{"type":"custom","source":"region_id=71","target":"region_id=71"}'
-    )
-    assert expected == cli_tools.get_filters(file_path)
+    res = cli_tools.get_filters(test_input)
+    assert res == expected
 
 
-def test_get_filters_err(fs):
+@pytest.mark.parametrize(
+    "test_input", [("source:"), ("invalid:filter:count")],
+)
+def test_get_filters_err(test_input):
     """ Test get filters function returns error. """
-    file_path = "filters.json"
-    fs.create_file(
-        file_path,
-        contents='{"type":"invalid_json""source":"region_id=71,"target":"region_id=71"}',
-    )
     with pytest.raises(ValueError):
-        cli_tools.get_filters(file_path)
+        cli_tools.get_filters(test_input)

@@ -26,19 +26,19 @@ data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-r
 
 Step 2) Run Validation using supplied connections
 data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
--tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
+-tbls bigquery-public-data.new_york_citibike:citibike_trips,bigquery-public-data.new_york_citibike:citibike_stations \
 --sum '*' --count '*'
 
 python -m data_validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn \
--tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' \
---grouped-columns '["starttime"]' \
---sum '["tripduration"]' --count '["tripduration"]'
+-tbls bigquery-public-data.new_york_citibike:citibike_trips \
+--grouped-columns starttime \
+--sum tripduration --count tripduration
 
 data-validation run -t Column \
 -sc my_bq_conn -tc my_bq_conn \
--tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
---sum '["tripduration","start_station_name"]' --count '["tripduration","start_station_name"]' \
--rc '{"project_id":"pso-kokoro-resources","type":"BigQuery","table_id":"pso_data_validator.results"}'
+-tbls bigquery-public-data.new_york_citibike:citibike_trips,bigquery-public-data.new_york_citibike:citibike_stations \
+--sum tripduration,start_station_name --count tripduration,start_station_name \
+-rc pso-kokoro-resources.pso_data_validator.results
 -c ex_yaml.yaml
 
 data-validation run-config -c ex_yaml.yaml
@@ -144,7 +144,7 @@ def _configure_find_tables(subparsers):
         "--target-conn", "-tc", help="Target connection name"
     )
     find_tables_parser.add_argument(
-        "--allowed-schemas", "-as", help="Json List of source schemas to match."
+        "--allowed-schemas", "-as", help="List of source schemas to match."
     )
 
 
@@ -185,42 +185,42 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--tables-list",
         "-tbls",
-        help="Comma separated tables list 'schema:table:target_table'",
+        help="Comma separated tables list in the form 'schema:table:target_table'",
     )
     run_parser.add_argument(
         "--count",
         "-count",
-        help="JSON List of columns count '[\"col_a\"]' or * for all columns",
+        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--sum",
         "-sum",
-        help="JSON List of columns sum '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--avg",
         "-avg",
-        help="JSON List of columns average '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--min",
         "-min",
-        help="JSON List of columns min '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--max",
         "-max",
-        help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--grouped-columns",
         "-gc",
-        help="JSON List of columns to use in group by '[\"col_a\"]'",
+        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
     )
     run_parser.add_argument(
         "--primary-keys",
         "-pk",
-        help="JSON List of columns to use as primary keys '[\"id\"]'",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     run_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"
@@ -239,7 +239,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--service-account",
         "-sa",
-        help="JSON path to SA key for result handler output",
+        help="Path to SA key file for result handler output",
     )
     run_parser.add_argument(
         "--threshold",
@@ -398,33 +398,34 @@ def get_labels(arg_labels):
     return labels
 
 
-def get_json_arg(arg_value, default_value=None):
-    """Return JSON parsed arg value.
-
-    arg_value (str): The parsed argument supplied.
-    default_value (Any): A default value to supply when arg_value is empty.
-    """
-    if not arg_value:
-        return default_value
-    try:
-        return json.loads(arg_value)
-    except json.decoder.JSONDecodeError:
-        raise ValueError(f"Could not parse value to JSON: `{arg_value}`")
-
-
 def get_filters(filter_value):
     """Returns parsed JSON from filter file. Backwards compatible for JSON input.
 
     filter_value (str): Filter argument specified.
     """
     try:
-        return json.loads(filter_value)
+        filter_config = json.loads(filter_value)
     except json.decoder.JSONDecodeError:
-        with open(filter_value) as f:
-            try:
-                return json.load(f)
-            except json.decoder.JSONDecodeError:
-                raise ValueError("Error parsing JSON filter file.")
+        filter_config = []
+        filter_vals = filter_value.split(":")
+        if len(filter_vals) == 1:
+            filter_dict = {
+                "type": "custom",
+                "source": filter_vals[0],
+                "target": filter_vals[0],
+            }
+        elif len(filter_vals) == 2:
+            if not filter_vals[1]:
+                raise ValueError("Please provide valid target filter.")
+            filter_dict = {
+                "type": "custom",
+                "source": filter_vals[0],
+                "target": filter_vals[1],
+            }
+        else:
+            raise ValueError("Unable to parse filter arguments.")
+        filter_config.append(filter_dict)
+    return filter_config
 
 
 def get_result_handler(rc_value, sa_file=None):
@@ -444,9 +445,7 @@ def get_result_handler(rc_value, sa_file=None):
                 "table_id": config[1],
             }
         else:
-            raise ValueError(
-                f"Unable to parse result handler config: `{rc_value}`"
-            )
+            raise ValueError(f"Unable to parse result handler config: `{rc_value}`")
 
         if sa_file:
             result_handler["google_service_account_key_path"] = sa_file
@@ -493,6 +492,8 @@ def get_tables_list(arg_tables, default_value=None):
                     "table_name": val[1],
                 }
             elif len(val) == 3:
+                if not val[2]:
+                    raise ValueError("Please provide valid target table.")
                 table_dict = {
                     "schema_name": val[0],
                     "table_name": val[1],

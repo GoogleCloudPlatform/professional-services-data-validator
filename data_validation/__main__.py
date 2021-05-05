@@ -89,7 +89,7 @@ def build_config_from_args(args, config_manager):
             config_manager.build_config_grouped_columns(grouped_columns)
         )
     if config_manager.validation_type in [consts.ROW_VALIDATION]:
-        primary_keys = cli_tools.get_json_arg(args.primary_keys, default_value=[])
+        primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
         )
