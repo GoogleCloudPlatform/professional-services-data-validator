@@ -26,9 +26,9 @@ CLI_ARGS = {
     "type": "Column",
     "source_conn": TEST_CONN,
     "target_conn": TEST_CONN,
-    "tables_list": '[{"schema_name":"my_schema","table_name":"my_table"}]',
-    "sum": '["col_a","col_b"]',
-    "count": '["col_a","col_b"]',
+    "tables_list": "my_schema:my_table",
+    "sum": "col_a,col_b",
+    "count": "col_a,col_b",
     "config_file": "example_test.yaml",
     "labels": "name=test_run",
     "threshold": 30.0,
@@ -52,7 +52,7 @@ CLI_FIND_TABLES_ARGS = [
     "--target-conn",
     TEST_CONN,
     "--allowed-schemas",
-    '["my_schema"]',
+    "my_schema",
 ]
 
 
@@ -105,7 +105,7 @@ def test_find_tables_config():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
 
-    allowed_schemas = json.loads(args.allowed_schemas)
+    allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     assert allowed_schemas[0] == "my_schema"
 
 
@@ -174,3 +174,101 @@ def test_get_json_arg():
     json_arg = cli_tools.get_json_arg(arg_value)
 
     assert json_arg == ["value"]
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "schema:table:target",
+            [
+                {
+                    "schema_name": "schema",
+                    "table_name": "table",
+                    "target_table_name": "target",
+                }
+            ],
+        ),
+        ("schema:table", [{"schema_name": "schema", "table_name": "table"}]),
+        (
+            "schema:table,schema2:table2",
+            [
+                {"schema_name": "schema", "table_name": "table"},
+                {"schema_name": "schema2", "table_name": "table2"},
+            ],
+        ),
+        ("schema:table name", [{"schema_name": "schema", "table_name": "table name"}]),
+    ],
+)
+def test_get_tables_list(test_input, expected):
+    """Test get tables list."""
+    res = cli_tools.get_tables_list(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize("test_input", [("schema:table:target:extra")])
+def test_get_tables_list_err(test_input):
+    """Test get tables list errors correclty."""
+    with pytest.raises(ValueError):
+        cli_tools.get_tables_list(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        ("col_a,col_b", ["col_a", "col_b"]),
+        ("col_a", ["col_a"]),
+        ("col a,col b", ["col a", "col b"]),
+    ],
+)
+def test_get_arg_list(test_input, expected):
+    """Test get aggregations list of columns."""
+    res = cli_tools.get_arg_list(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "project.dataset.table",
+            {"type": "BigQuery", "project_id": "project", "table_id": "dataset.table"},
+        ),
+        (
+            "project.data.data.table",
+            {
+                "type": "BigQuery",
+                "project_id": "project",
+                "table_id": "data.data.table",
+            },
+        ),
+    ],
+)
+def test_get_result_handler(test_input, expected):
+    """Test get result handler config dictionary."""
+    res = cli_tools.get_result_handler(test_input)
+    assert res == expected
+
+
+def test_get_filters(fs):
+    """ Test get filters from file function. """
+    file_path = "filters.json"
+    fs.create_file(
+        file_path,
+        contents='{"type":"custom","source":"region_id=71","target":"region_id=71"}',
+    )
+    expected = json.loads(
+        '{"type":"custom","source":"region_id=71","target":"region_id=71"}'
+    )
+    assert expected == cli_tools.get_filters(file_path)
+
+
+def test_get_filters_err(fs):
+    """ Test get filters function returns error. """
+    file_path = "filters.json"
+    fs.create_file(
+        file_path,
+        contents='{"type":"invalid_json""source":"region_id=71,"target":"region_id=71"}',
+    )
+    with pytest.raises(ValueError):
+        cli_tools.get_filters(file_path)
