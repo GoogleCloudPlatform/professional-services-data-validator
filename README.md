@@ -59,19 +59,24 @@ data-validation run
                         Target table name is optional.
                         i.e 'bigquery-public-data.new_york_citibike:citibike_trips'
   --grouped-columns or -gc GROUPED_COLUMNS
-                        Comma separated list of columns to use in Group By i.e col_a,col_b
-                        (Optional) Only used in GroupedColumn type validations
-  --count COLUMNS       Comma separated list of columns to use in count or * for all columns
-  --sum COLUMNS         Comma separated list of columns to us in sum or * for all numeric
-  --min COLUMNS         Comma separated list of columns to us in min or * for all numeric
-  --max COLUMNS         Comma separated list of columns to us in max or * for all numeric
-  --avg COLUMNS         Comma separated list of columns to us in avg or * for all numeric
+                        Comma separated list of columns for Group By i.e col_a,col_b
+                        (Optional) Only used in GroupedColumn validations
+  --primary-keys or -pc PRIMARY_KEYS
+                        Comma separated list of columns to use as primary keys
+                        (Optional) Only use in Row validations 
+  --count COLUMNS       Comma separated list of columns for count or * for all columns
+  --sum COLUMNS         Comma separated list of columns for sum or * for all numeric
+  --min COLUMNS         Comma separated list of columns for min or * for all numeric
+  --max COLUMNS         Comma separated list of columns for max or * for all numeric
+  --avg COLUMNS         Comma separated list of columns for avg or * for all numeric
   --bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE
                         (Optional) BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
   --service-account or -sa PATH_TO_SA_KEY
                         (Optional) Service account to use for BigQuery result handler output.
-  --filters FILE        Path to local file with filter config
+  --filters SOURCE_FILTER:TARGET_FILTER
+                        Colon spearated string values of source and target filters.
+                        If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
   --config-file or -c CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
@@ -79,8 +84,11 @@ data-validation run
                         (Optional) Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
   --labels or -l KEY1=VALUE1,KEY2=VALUE2
                         (Optional) Comma-separated key value pair labels for the run.
-  --verbose or -v         Verbose logging will print queries executed
+  --verbose or -v       Verbose logging will print queries executed
 ```
+
+The default aggregation type is a 'COUNT *'. If no aggregation flag 
+(i.e count, sum , min, etc.) is provided, the default aggregation will run.
 
 The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
@@ -164,56 +172,15 @@ validations:
 
 ### Filters
 
-Filters let you apply a WHERE statement to your validation query. Currently the
-the two forms of filters are 'custom' and 'equals'. The custom filter is written
-by you in the syntax of the given source. The equals filter compares a provided
-column name with a value. In future we will release additional pre-built filters
-to cover certain usecases 
-(ie. `SELECT * FROM table WHERE created_at > 30 days ago;`).
-
-#### Custom Filters
-
-```
-{
-    "type": "custom",
-    "source": "created_at > '2020-01-01 00:00:00'::TIMESTAMP",
-    "target": "created_at > '2020-01-01 00:00:00'"
-}
-```
+Filters let you apply a WHERE statement to your validation query 
+(ie. `SELECT * FROM table WHERE created_at > 30 days ago AND region_id = 71;`).
+The filter is written in the syntax of the given source. 
 
 Note that you are writing the query to execute, which does not have to match
-between source and target as long as the results can be expected to align.
+between source and target as long as the results can be expected to align. If
+the target filter is omitted, the source filter will run on both the source
+and target tables.
 
-#### Pre-Built Filters
-
-```
-{
-    "type": "equals",
-    "source_column": "region_id",
-    "source_value": 71,
-    "target_column": "region_id",
-    "target_value": 71
-}
-```
-
-#### Filter File
-The filter file you specify can combine different types of filters as well.
-For example, the following file `filters.json`:
-
-```
-[{
-   "type":"custom",
-   "source":"created_at > '2020-01-01 00:00:00'::TIMESTAMP",
-   "target":"created_at > '2020-01-01 00:00:00'"
-},
-{
-   "type":"equals",
-   "source_column":"region_id",
-   "source_value":74,
-   "target_column":"region_id",
-   "target_value":74
-}]
-```
 
 ### Grouped Columns
 

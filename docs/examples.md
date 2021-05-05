@@ -2,7 +2,9 @@
 This page describes some basic use cases of the tool.
 
 **PLEASE NOTE:** In below commands, my_bq_conn refers to the connection name for your BigQuery project. We are validating BigQuery tables that are
-available in BigQuery public datasets.
+available in BigQuery public datasets. 
+
+Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *' default aggregation.
 
 #### Simple COUNT(*) on a table
 ````shell script
@@ -104,19 +106,8 @@ data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquer
 
 #### Apply filters
 ````shell script
-data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike:citibike_stations --grouped-columns region_id --sum num_bikes_available,num_docks_available --filters filters.json -rc $YOUR_PROJECT_ID.pso_data_validator.results
+data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike:citibike_stations --grouped-columns region_id --sum num_bikes_available,num_docks_available --filters 'region_id=71' -rc $YOUR_PROJECT_ID.pso_data_validator.results
 ````
-
-The filter file could look like so:
-```
-[
-   {
-      "type":"custom",
-      "source":"region_id=71",
-      "target":"region_id=71"
-   }
-]
-```
 
 #### Apply labels
 ````shell script
