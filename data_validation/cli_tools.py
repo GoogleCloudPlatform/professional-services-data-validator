@@ -188,7 +188,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--tables-list",
         "-tbls",
-        help="JSON List of dict {schema:schema_name, table:table_name}",
+        help="Comma separated tables list 'schema:table:target_table'",
     )
     run_parser.add_argument(
         "--count",
@@ -229,12 +229,20 @@ def _configure_run_parser(subparsers):
         "--result-handler-config", "-rc", help="Result handler config details"
     )
     run_parser.add_argument(
+        "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
+    )
+    run_parser.add_argument(
         "--config-file",
         "-c",
         help="Store the validation in the YAML Config File Path specified.",
     )
     run_parser.add_argument(
         "--labels", "-l", help="Key value pair labels for validation run.",
+    )
+    run_parser.add_argument(
+        "--service-account",
+        "-sa",
+        help="JSON path to SA key for result handler output",
     )
     run_parser.add_argument(
         "--threshold",
@@ -407,12 +415,105 @@ def get_json_arg(arg_value, default_value=None):
     """Return JSON parsed arg value.
 
     arg_value (str): The parsed argument supplied.
-    default_value (Any): A default value to supplu when arg_Value is empty.
+    default_value (Any): A default value to supply when arg_value is empty.
+    """
+    if not arg_value:
+        return default_value
+    try:
+        return json.loads(arg_value)
+    except json.decoder.JSONDecodeError:
+        raise ValueError(f"Could not parse value to JSON: `{arg_value}`")
+
+
+def get_filters(filter_value):
+    """Returns parsed JSON from filter file. Backwards compatible for JSON input.
+
+    filter_value (str): Filter argument specified.
+    """
+    try:
+        return json.loads(filter_value)
+    except json.decoder.JSONDecodeError:
+        with open(filter_value) as f:
+            try:
+                return json.load(f)
+            except json.decoder.JSONDecodeError:
+                raise ValueError("Error parsing JSON filter file.")
+
+
+def get_result_handler(rc_value, sa_file=None):
+    """Returns dict of result handler config. Backwards compatible for JSON input.
+
+    rc_value (str): Result config argument specified.
+    sa_file (str): SA path argument specified.
+    """
+    try:
+        result_handler = json.loads(rc_value)
+    except json.decoder.JSONDecodeError:
+        config = rc_value.split(".", 1)
+        if len(config) == 2:
+            result_handler = {
+                "type": "BigQuery",
+                "project_id": config[0],
+                "table_id": config[1],
+            }
+        else:
+            raise ValueError(
+                f"Unable to parse result handler config: `{rc_value}`"
+            )
+
+        if sa_file:
+            result_handler["google_service_account_key_path"] = sa_file
+
+    return result_handler
+
+
+def get_arg_list(arg_value, default_value=None):
+    """Returns list of values from argument provided. Backwards compatible for JSON input.
+
+    arg_value (str): Argument supplied
+    default_value (Any): A default value to supply when arg_value is empty.
     """
     if not arg_value:
         return default_value
 
     try:
-        return json.loads(arg_value)
+        arg_list = json.loads(arg_value)
     except json.decoder.JSONDecodeError:
-        raise ValueError(f"Could not parse value to JSON: `{arg_value}`")
+        arg_list = arg_value.split(",")
+    return arg_list
+
+
+def get_tables_list(arg_tables, default_value=None):
+    """ Returns dictionary of tables. Backwards compatible for JSON input.
+
+    arg_table (str): tables_list argument specified
+    default_value (Any): A default value to supply when arg_value is empty.
+    """
+    if not arg_tables:
+        return default_value
+
+    try:
+        # Backwards compatibility for JSON input
+        tables_list = json.loads(arg_tables)
+    except json.decoder.JSONDecodeError:
+        tables_list = []
+        tables = arg_tables.split(",")
+        for table in tables:
+            val = table.split(":")
+            if len(val) == 2:
+                table_dict = {
+                    "schema_name": val[0],
+                    "table_name": val[1],
+                }
+            elif len(val) == 3:
+                table_dict = {
+                    "schema_name": val[0],
+                    "table_name": val[1],
+                    "target_table_name": val[2],
+                }
+            else:
+                raise ValueError("Unable to parse tables-list.")
+
+            tables_list.append(table_dict)
+
+    return tables_list
