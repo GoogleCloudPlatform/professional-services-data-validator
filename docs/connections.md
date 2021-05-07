@@ -26,11 +26,11 @@ data-validation connections add --connection-name MY-TD-CONNECTION Teradata --ho
 ```
 data-validation connections list
 ```
-## List supporting connection source types
+## List supporting connection types
 ```
 data-validation connections add -h
 ```
-The data validation tool supports the following connection source types.
+The data validation tool supports the following connection types.
 
 * [Raw](#raw)
 * [BigQuery](#google-bigquery)
@@ -44,23 +44,19 @@ The data validation tool supports the following connection source types.
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 
-Every source type requires its own configuration for connectivity. To find out the connection configuration for each source type, use the following command.
+Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
 
 ```
-data-validation connections add <source type> -h
+data-validation connections add -c '<name>' <connection type> -h
 ```
 
-Below is the expected configuration for each source type.
+Below is the expected configuration for each type.
 
 ## Raw
 ```
 {
     # Raw JSON config for a connection
-    "json": '{
-               "ConnectionStrings": {       
-                 "DefaultConnection": "Server=YOURSERVERNAME; Database=YOURDATABASENAME; Trusted_Connection=True; MultipleActiveResultSets=true"        
-               } 
-            }',
+    "json": '{"source_type": "BigQuery", "project_id": "pso-kokoro-resources", "google_service_account_key_path": null}'
 }
 ```
 
