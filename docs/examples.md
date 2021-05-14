@@ -2,7 +2,7 @@
 This page describes some basic use cases of the tool.
 
 **PLEASE NOTE:** In below commands, my_bq_conn refers to the connection name for your BigQuery project. We are validating BigQuery tables that are
-available in BigQuery public datasets.
+available in BigQuery public datasets. These examples validate a table agaist itself for example purposes.  
 
 #### Simple COUNT(*) on a table
 ````shell script
@@ -111,6 +111,11 @@ data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls '[{"sch
 #### Apply labels
 ````shell script
 data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' --count '["tripduration","start_station_name"]' -l "run-tag=test-run,run-val=test"
+````
+
+#### Run validation on a file
+````shell script
+data-validation run -t Column -sc local_file -tc local_file -tbls '[{"table_name":"my_local_file"}]' --count '["name"]'
 ````
 
 #### Run custom SQL 
