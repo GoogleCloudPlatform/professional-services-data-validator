@@ -245,11 +245,6 @@ def _configure_run_parser(subparsers):
         help="Path to SA key file for result handler output",
     )
     run_parser.add_argument(
-        "--service-account",
-        "-sa",
-        help="Path to SA key file for result handler output",
-    )
-    run_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
