@@ -108,11 +108,7 @@ case specific CLI arguments or editing the saved YAML configuration file.
 
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table. `data-validation run -t Column -sc bq -tc bq -tbls
-<<<<<<< HEAD
 bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml`
-=======
-bigquery-public-data.new_york_citibike:citibike_trips -c citibike.yaml`
->>>>>>> aacbe782287702e61c0ddf9098e5b14184429d7c
 
 Here is the generated YAML file named `citibike.yaml`:
 
@@ -329,11 +325,7 @@ data-validation run
   -t Column 
   -sc bq_conn 
   -tc bq_conn 
-<<<<<<< HEAD
   -tbls bigquery-public-data.new_york_citibike.citibike_trips 
-=======
-  -tbls bigquery-public-data.new_york_citibike:citibike_trips 
->>>>>>> aacbe782287702e61c0ddf9098e5b14184429d7c
   -bqrh project_id.dataset.table
   -sa service-acct@project.iam.gserviceaccount.com
 ```
