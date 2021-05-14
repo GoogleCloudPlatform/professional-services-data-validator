@@ -90,7 +90,7 @@ Below is the expected configuration for each type.
     # Configuration Required for All Data Soures
     "source_type": "Spanner",
 
-    # GCP Project to use for Spanne
+    # GCP Project to use for Spanner
     "project_id": "my-project-name",
     
     # ID of Spanner instance to connect to
@@ -204,3 +204,19 @@ Then `pip install pyodbc`.
 }
 ```
 
+## FileSystem
+```
+{
+    # Configuration Required for All Data Soures
+    "source_type": "FileSystem",
+
+    # Table name to use as a reference for file data
+    "table_name": "my_table_name",
+    
+    # The local, s3, or GCS file path to the data
+    "file_path": "gs://path/to/file",
+    
+    # The file type. Either 'csv' or 'json
+    "file_type":"csv"
+}
+```

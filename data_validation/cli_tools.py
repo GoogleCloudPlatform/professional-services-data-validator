@@ -105,6 +105,11 @@ CONNECTION_SOURCE_FIELDS = {
         ["database_id", "ID of Spanner database (schema) to connect to"],
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
     ],
+    "FileSystem": [
+        ["table_name", "Table name to use as reference for file data"],
+        ["file_path", "The local, s3, or GCS file path to the data"],
+        ["file_type", "The file type of the file.'csv' or 'json'"],
+    ],
 }
 
 
@@ -121,8 +126,6 @@ def configure_arg_parser():
     )
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
-    parser.add_argument("beta", nargs='?', help="Beta flag to enable beta features for the tool.")
-
     subparsers = parser.add_subparsers(dest="command")
 
     _configure_run_parser(subparsers)
@@ -247,16 +250,6 @@ def _configure_run_parser(subparsers):
         "-filters",
         help='Filter config details [{"type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
     )
-
-    # add beta features arguments here
-    if "beta" in sys.argv:
-        print("*** Enabling beta features ***")
-        # Sample argument to show how new ones can be added when beta flag is provided
-        # run_parser.add_argument(
-        #    "--test-beta",
-        #     "-test-beta",
-        #    help="testing beta"
-        # )
 
 
 def _configure_connection_parser(subparsers):
