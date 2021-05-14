@@ -150,7 +150,11 @@ CLI_STORE_COLUMN_ARGS = [
     "--target-conn",
     BQ_CONN_NAME,
     "--tables-list",
+<<<<<<< HEAD
     "bigquery-public-data.new_york_citibike.citibike_trips",
+=======
+    "bigquery-public-data.new_york_citibike:citibike_trips",
+>>>>>>> aacbe782287702e61c0ddf9098e5b14184429d7c
     "--sum",
     "tripduration,start_station_name",
     "--count",

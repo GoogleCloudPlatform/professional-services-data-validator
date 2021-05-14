@@ -245,6 +245,11 @@ def _configure_run_parser(subparsers):
         help="Path to SA key file for result handler output",
     )
     run_parser.add_argument(
+        "--service-account",
+        "-sa",
+        help="Path to SA key file for result handler output",
+    )
+    run_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -454,8 +459,13 @@ def get_result_handler(rc_value, sa_file=None):
             result_handler["google_service_account_key_path"] = sa_file
 
     return result_handler
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> aacbe782287702e61c0ddf9098e5b14184429d7c
 def get_arg_list(arg_value, default_value=None):
     """Returns list of values from argument provided. Backwards compatible for JSON input.
 
@@ -486,6 +496,7 @@ def get_tables_list(arg_tables, default_value=None):
         tables_list = json.loads(arg_tables)
     except json.decoder.JSONDecodeError:
         tables_list = []
+<<<<<<< HEAD
         tables_mapping = list(csv.reader([arg_tables]))[0]
 
         for mapping in tables_mapping:
@@ -539,3 +550,27 @@ def split_table(table_ref, schema_required=True):
     table = table_ref_list.pop()
     schema = ".".join(table_ref_list)
     return schema.strip(), table.strip()
+=======
+        tables = arg_tables.split(",")
+        for table in tables:
+            val = table.split(":")
+            if len(val) == 2:
+                table_dict = {
+                    "schema_name": val[0],
+                    "table_name": val[1],
+                }
+            elif len(val) == 3:
+                if not val[2]:
+                    raise ValueError("Please provide valid target table.")
+                table_dict = {
+                    "schema_name": val[0],
+                    "table_name": val[1],
+                    "target_table_name": val[2],
+                }
+            else:
+                raise ValueError("Unable to parse tables-list.")
+
+            tables_list.append(table_dict)
+
+    return tables_list
+>>>>>>> aacbe782287702e61c0ddf9098e5b14184429d7c
