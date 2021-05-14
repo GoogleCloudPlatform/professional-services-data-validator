@@ -45,6 +45,7 @@ data-validation run-config -c ex_yaml.yaml
 """
 
 import argparse
+import csv
 import json
 import os
 import sys
@@ -188,7 +189,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--tables-list",
         "-tbls",
-        help="Comma separated tables list in the form 'schema:table:target_table'",
+        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
     )
     run_parser.add_argument(
         "--count",
@@ -234,10 +235,10 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--config-file",
         "-c",
-        help="Store the validation in the YAML Config File Path specified.",
+        help="Store the validation in the YAML Config File Path specified",
     )
     run_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run.",
+        "--labels", "-l", help="Key value pair labels for validation run",
     )
     run_parser.add_argument(
         "--service-account",
@@ -248,12 +249,12 @@ def _configure_run_parser(subparsers):
         "--threshold",
         "-th",
         type=threshold_float,
-        help="Float max threshold for percent difference.",
+        help="Float max threshold for percent difference",
     )
     run_parser.add_argument(
         "--filters",
         "-filters",
-        help='Filter config details [{"type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
+        help="Filters in the format source_filter:target_filter",
     )
 
     # add beta features arguments here
@@ -496,25 +497,56 @@ def get_tables_list(arg_tables, default_value=None):
         tables_list = json.loads(arg_tables)
     except json.decoder.JSONDecodeError:
         tables_list = []
-        tables = arg_tables.split(",")
-        for table in tables:
-            val = table.split(":")
-            if len(val) == 2:
+        tables_mapping = list(csv.reader([arg_tables]))[0]
+
+        for mapping in tables_mapping:
+            tables_map = mapping.split("=")
+            if len(tables_map) == 1:
+                schema, table = split_table(tables_map)
                 table_dict = {
-                    "schema_name": val[0],
-                    "table_name": val[1],
+                    "schema_name": schema,
+                    "table_name": table,
                 }
-            elif len(val) == 3:
-                if not val[2]:
-                    raise ValueError("Please provide valid target table.")
+            elif len(tables_map) == 2:
+                src_schema, src_table = split_table([tables_map[0]])
+
                 table_dict = {
-                    "schema_name": val[0],
-                    "table_name": val[1],
-                    "target_table_name": val[2],
+                    "schema_name": src_schema,
+                    "table_name": src_table,
                 }
+
+                targ_schema, targ_table = split_table(
+                    [tables_map[1]], schema_required=False
+                )
+
+                if targ_schema:
+                    table_dict["target_schema_name"] = targ_schema
+                table_dict["target_table_name"] = targ_table
+
             else:
-                raise ValueError("Unable to parse tables-list.")
+                raise ValueError(
+                    "Unable to parse tables list. Please provide valid mapping."
+                )
 
             tables_list.append(table_dict)
 
-    return tables_list
+        return tables_list
+
+
+def split_table(table_ref, schema_required=True):
+    """ Returns schema and table name given list of input values.
+
+    table_ref (List): Table reference i.e ['my.schema.my_table']
+    scehma_required (boolean): Indicates whether schema is required. A source
+    table reference requires schema. A target table reference does not.
+    """
+    table_ref_list = list(csv.reader(table_ref, delimiter=".", quotechar='"'))[0]
+
+    if len(table_ref_list) == 1 and schema_required:
+        raise ValueError("Please provide schema in tables list.")
+    elif len(table_ref_list) == 1:
+        return None, table_ref_list[0].strip()
+
+    table = table_ref_list.pop()
+    schema = ".".join(table_ref_list)
+    return schema.strip(), table.strip()

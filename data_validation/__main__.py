@@ -110,13 +110,13 @@ def build_config_managers_from_args(args):
     labels = cli_tools.get_labels(args.labels)
 
     result_handler_config = None
-    if args.result_handler_config:
-        result_handler_config = cli_tools.get_result_handler(
-            args.result_handler_config, args.service_account
-        )
-    elif args.bq_result_handler:
+    if args.bq_result_handler:
         result_handler_config = cli_tools.get_result_handler(
             args.bq_result_handler, args.service_account
+        )
+    elif args.result_handler_config:
+        result_handler_config = cli_tools.get_result_handler(
+            args.result_handler_config, args.service_account
         )
 
     filter_config = []

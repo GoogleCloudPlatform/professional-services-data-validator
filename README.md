@@ -54,10 +54,10 @@ data-validation run
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
-  --tables-list or -tbls SCHEMA_A:TABLE_A,SCHEMA_B:TABLE_B
-                        Comma separated list of tables in the form schema:table_name:target_table_name 
-                        Target table name is optional.
-                        i.e 'bigquery-public-data.new_york_citibike:citibike_trips'
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE  
+                        Comma separated list of tables in the form schema.table=target_schema.target_table 
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   --grouped-columns or -gc GROUPED_COLUMNS
                         Comma separated list of columns for Group By i.e col_a,col_b
                         (Optional) Only used in GroupedColumn validations
@@ -108,7 +108,7 @@ case specific CLI arguments or editing the saved YAML configuration file.
 
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table. `data-validation run -t Column -sc bq -tc bq -tbls
-bigquery-public-data.new_york_citibike:citibike_trips -c citibike.yaml`
+bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml`
 
 Here is the generated YAML file named `citibike.yaml`:
 
@@ -325,7 +325,7 @@ data-validation run
   -t Column 
   -sc bq_conn 
   -tc bq_conn 
-  -tbls bigquery-public-data.new_york_citibike:citibike_trips 
+  -tbls bigquery-public-data.new_york_citibike.citibike_trips 
   -bqrh project_id.dataset.table
   -sa service-acct@project.iam.gserviceaccount.com
 ```

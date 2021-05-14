@@ -167,24 +167,67 @@ def test_threshold_float_err(test_input):
     "test_input,expected",
     [
         (
-            "schema:table:target",
+            "src.schema.src_table=targ.schema.targ_table",
             [
                 {
-                    "schema_name": "schema",
-                    "table_name": "table",
-                    "target_table_name": "target",
+                    "schema_name": "src.schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ.schema",
+                    "target_table_name": "targ_table",
                 }
             ],
         ),
-        ("schema:table", [{"schema_name": "schema", "table_name": "table"}]),
         (
-            "schema:table,schema2:table2",
+            'src_schema."odd.table"=targ_schema.targ_table',
             [
-                {"schema_name": "schema", "table_name": "table"},
-                {"schema_name": "schema2", "table_name": "table2"},
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "odd.table",
+                    "target_schema_name": "targ_schema",
+                    "target_table_name": "targ_table",
+                }
             ],
         ),
-        ("schema:table name", [{"schema_name": "schema", "table_name": "table name"}]),
+        (
+            "src_schema.src_table = targ_schema. targ_table",
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ_schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            "src_schema.src_table",
+            [{"schema_name": "src_schema", "table_name": "src_table"}],
+        ),
+        (
+            "src_schema.src_table = targ_table",
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "src_table",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            "src.schema.src_table = targ.schema.targ_table",
+            [
+                {
+                    "schema_name": "src.schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ.schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            'src.schema."src.table"',
+            [{"schema_name": "src.schema", "table_name": "src.table"}],
+        ),
     ],
 )
 def test_get_tables_list(test_input, expected):
@@ -193,7 +236,14 @@ def test_get_tables_list(test_input, expected):
     assert res == expected
 
 
-@pytest.mark.parametrize("test_input", [("schema:table:target:extra")])
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        ("schema.table=targ_schema.targ_table=extra_schema"),
+        ("no_schema=target_table"),
+        ("schema,table=target_table"),
+    ],
+)
 def test_get_tables_list_err(test_input):
     """Test get tables list errors correclty."""
     with pytest.raises(ValueError):
@@ -260,3 +310,33 @@ def test_get_filters_err(test_input):
     """ Test get filters function returns error. """
     with pytest.raises(ValueError):
         cli_tools.get_filters(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (["schema.table"], ("schema", "table")),
+        (["full.schema.table"], ("full.schema", "table")),
+        (['full.schema."table.name"'], ("full.schema", "table.name")),
+    ],
+)
+def test_split_table(test_input, expected):
+    """Test split table into schema and table name."""
+    res = cli_tools.split_table(test_input)
+    assert res == expected
+
+
+def test_split_table_no_schema():
+    """Test split table not requiring schema."""
+    expected = (None, "target_table")
+    res = cli_tools.split_table(["target_table"], schema_required=False)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input", [(["table"])],
+)
+def test_split_table_err(test_input,):
+    """Test split table throws the right errors."""
+    with pytest.raises(ValueError):
+        cli_tools.split_table(test_input)
