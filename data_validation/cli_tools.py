@@ -121,15 +121,16 @@ def configure_arg_parser():
     )
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
-    parser.add_argument("beta", nargs='?', help="Beta flag to enable beta features for the tool.")
 
-    subparsers = parser.add_subparsers(dest="command")
+    if "run" in sys.argv:
+        _configure_run_parser(parser)
+    else:
+        subparsers = parser.add_subparsers(dest="command")
 
-    _configure_run_parser(subparsers)
-    _configure_run_config_parser(subparsers)
-    _configure_connection_parser(subparsers)
-    _configure_find_tables(subparsers)
-    _configure_raw_query(subparsers)
+        _configure_run_config_parser(subparsers)
+        _configure_connection_parser(subparsers)
+        _configure_find_tables(subparsers)
+        _configure_raw_query(subparsers)
 
     return parser
 
@@ -171,8 +172,13 @@ def _configure_run_config_parser(subparsers):
     )
 
 
-def _configure_run_parser(subparsers):
+def _configure_run_parser(parser):
     """ Configure arguments to run a data validation."""
+    parser.add_argument(
+        "beta", nargs="?", help="Beta flag to enable beta features for the tool.",
+        default=""
+    )
+    subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser(
         "run", help="Manually run a validation and optionally store to config"
