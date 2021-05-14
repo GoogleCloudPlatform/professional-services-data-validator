@@ -122,6 +122,7 @@ def configure_arg_parser():
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
+    # beta feature only available in run command
     if "run" in sys.argv:
         _configure_run_parser(parser)
     else:
@@ -175,8 +176,10 @@ def _configure_run_config_parser(subparsers):
 def _configure_run_parser(parser):
     """ Configure arguments to run a data validation."""
     parser.add_argument(
-        "beta", nargs="?", help="Beta flag to enable beta features for the tool.",
-        default=""
+        "beta",
+        nargs="?",
+        help="Beta flag to enable beta features for the tool.",
+        default="",
     )
     subparsers = parser.add_subparsers(dest="command")
 
