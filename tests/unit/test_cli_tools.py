@@ -21,12 +21,11 @@ from data_validation import cli_tools
 
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
-    "beta": "beta",
     "command": "run",
     "type": "Column",
     "source_conn": TEST_CONN,
     "target_conn": TEST_CONN,
-    "tables_list": "my_schema:my_table",
+    "tables_list": "my_schema.my_table",
     "sum": "col_a,col_b",
     "count": "col_a,col_b",
     "config_file": "example_test.yaml",
@@ -62,7 +61,6 @@ CLI_FIND_TABLES_ARGS = [
 def test_get_parsed_args(mock_args):
     """Test arg parser values."""
     args = cli_tools.get_parsed_args()
-    assert args.beta == "beta"
     assert args.command == "run"
     assert args.labels == "name=test_run"
     assert args.threshold == 30.0

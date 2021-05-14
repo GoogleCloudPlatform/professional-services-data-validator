@@ -122,7 +122,6 @@ def configure_arg_parser():
     )
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
-    parser.add_argument("beta", nargs='?', help="Beta flag to enable beta features for the tool.")
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -256,16 +255,6 @@ def _configure_run_parser(subparsers):
         "-filters",
         help="Filters in the format source_filter:target_filter",
     )
-
-    # add beta features arguments here
-    if "beta" in sys.argv:
-        print("*** Enabling beta features ***")
-        # Sample argument to show how new ones can be added when beta flag is provided
-        # run_parser.add_argument(
-        #    "--test-beta",
-        #     "-test-beta",
-        #    help="testing beta"
-        # )
 
 
 def _configure_connection_parser(subparsers):
