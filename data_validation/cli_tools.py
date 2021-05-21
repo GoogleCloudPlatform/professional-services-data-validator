@@ -78,6 +78,13 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
     ],
+    "MySQL": [
+        ["host", "Desired MySQL host (default localhost)"],
+        ["port", "MySQL port to connect on (default 4322)"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["database", "Database to connect to (default master)"],
+    ],
     "Snowflake": [
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
@@ -98,6 +105,11 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
         ["database", "Database in postgres to connect to (default postgres)"],
+    ],
+    "Filesystem": [
+        ["table_name", "Alias for the dataset."],
+        ["filepath", "filepath or URI to the dataset."],
+        ["format", "source file format (csv or json)"],
     ],
     "Spanner": [
         ["project_id", "GCP Project to use for Spanner"],
