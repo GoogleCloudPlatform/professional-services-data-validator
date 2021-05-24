@@ -30,7 +30,7 @@ TABLES_RESULT = [(None, TABLE_NAME)]
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 SOURCE_CONN_CONFIG = {
-    "source_type": "Filesystem",
+    "source_type": "Pandas",
     "table_name": "my_table",
     "file_path": SOURCE_TABLE_FILE_PATH,
     "file_type": "json",

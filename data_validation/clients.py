@@ -214,7 +214,7 @@ CLIENT_LOOKUP = {
     "Impala": impala_connect,
     "MySQL": MySQLClient,
     "Oracle": OracleClient,
-    "Filesystem": get_pandas_client,
+    "Pandas": get_pandas_client,
     "Postgres": PostgreSQLClient,
     "Redshift": PostgreSQLClient,
     "Teradata": TeradataClient,

@@ -106,11 +106,6 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["database", "Database in postgres to connect to (default postgres)"],
     ],
-    "Filesystem": [
-        ["table_name", "Alias for the dataset."],
-        ["filepath", "filepath or URI to the dataset."],
-        ["format", "source file format (csv or json)"],
-    ],
     "Spanner": [
         ["project_id", "GCP Project to use for Spanner"],
         ["instance_id", "ID of Spanner instance to connect to"],
