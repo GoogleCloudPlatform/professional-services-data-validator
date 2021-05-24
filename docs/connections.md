@@ -40,6 +40,7 @@ The data validation tool supports the following connection types.
 * [MSSQL](#mssql-server)
 * [Snowflake](#snowflake)
 * [Postgres](#postgres)
+* [MySQL](#mysql)
 * [Redshift](#redshift)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
@@ -183,6 +184,21 @@ Then `pip install pyodbc`.
     # Connection Details
     "host": "127.0.0.1",
     "port":5432,
+    "user": "my-user",
+    "password": "my-password",
+    "database":"my-db"
+}
+```
+
+## MySQL
+```
+{
+    # Configuration Required for All Data Soures
+    "source_type": "MySQL",
+
+    # Connection Details
+    "host": "127.0.0.1",
+    "port":3306
     "user": "my-user",
     "password": "my-password",
     "database":"my-db"

@@ -78,6 +78,13 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
     ],
+    "MySQL": [
+        ["host", "Desired MySQL host (default localhost)"],
+        ["port", "MySQL port to connect on (default 3306)"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["database", "Database to connect to (default master)"],
+    ],
     "Snowflake": [
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
