@@ -80,7 +80,7 @@ CONNECTION_SOURCE_FIELDS = {
     ],
     "MySQL": [
         ["host", "Desired MySQL host (default localhost)"],
-        ["port", "MySQL port to connect on (default 4322)"],
+        ["port", "MySQL port to connect on (default 3306)"],
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
