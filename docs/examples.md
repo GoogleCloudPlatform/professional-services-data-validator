@@ -2,9 +2,9 @@
 This page describes some basic use cases of the tool.
 
 **PLEASE NOTE:** In below commands, my_bq_conn refers to the connection name for your BigQuery project. We are validating BigQuery tables that are
-available in BigQuery public datasets. 
+available in BigQuery public datasets. These examples validate a table agaist itself for example purposes.  
 
-Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *' default aggregation.
+Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *' as the default aggregation.
 
 #### Simple COUNT(*) on a table
 ````shell script
@@ -108,6 +108,17 @@ data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquer
 #### Apply labels
 ````shell script
 data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -l tag=test-run,owner=name
+````
+
+#### Run validation on a file
+````shell script
+# Additional dependencies needed for GCS files
+pip install gcsfs
+pip install fsspec
+
+data-validation connections add --connection-name file_conn FileSystem --table-name my_local_file --file-path gs://path/to/file --file-type csv
+
+data-validation run -t Column -sc file_conn -tc file_conn -tbls my_local_file --count name
 ````
 
 #### Run custom SQL 

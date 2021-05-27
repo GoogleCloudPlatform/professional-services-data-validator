@@ -108,9 +108,15 @@ used to run powerful validations without writing any queries.
 
 There are many occasions where you need to explore a data source while running
 validations. To avoid the need to open and install a new client, the CLI allows
-you to run custom queries. `data-validation query --conn connection-name The
-named connection to be queried. --query, -q The Raw query to run against the
-supplied connection`
+you to run custom queries. 
+
+```
+data-validation query 
+  --conn or -c CONN
+          The connection name to be queried
+  --query or -q QUERY
+          The raw query to run against the supplied connection
+```
 
 ## Query Configurations
 

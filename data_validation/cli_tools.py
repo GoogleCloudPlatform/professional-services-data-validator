@@ -113,6 +113,11 @@ CONNECTION_SOURCE_FIELDS = {
         ["database_id", "ID of Spanner database (schema) to connect to"],
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
     ],
+    "FileSystem": [
+        ["table_name", "Table name to use as reference for file data"],
+        ["file_path", "The local, s3, or GCS file path to the data"],
+        ["file_type", "The file type of the file.'csv' or 'json'"],
+    ],
 }
 
 
@@ -491,11 +496,12 @@ def get_arg_list(arg_value, default_value=None):
     return arg_list
 
 
-def get_tables_list(arg_tables, default_value=None):
+def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
     """ Returns dictionary of tables. Backwards compatible for JSON input.
 
     arg_table (str): tables_list argument specified
     default_value (Any): A default value to supply when arg_value is empty.
+    is_filesystem (boolean): Boolean indicating whether source connection is a FileSystem. In this case, a schema is not required.
     """
     if not arg_tables:
         return default_value
@@ -506,17 +512,22 @@ def get_tables_list(arg_tables, default_value=None):
     except json.decoder.JSONDecodeError:
         tables_list = []
         tables_mapping = list(csv.reader([arg_tables]))[0]
+        source_schema_required = False if is_filesystem else True
 
         for mapping in tables_mapping:
             tables_map = mapping.split("=")
             if len(tables_map) == 1:
-                schema, table = split_table(tables_map)
+                schema, table = split_table(
+                    tables_map, schema_required=source_schema_required
+                )
                 table_dict = {
                     "schema_name": schema,
                     "table_name": table,
                 }
             elif len(tables_map) == 2:
-                src_schema, src_table = split_table([tables_map[0]])
+                src_schema, src_table = split_table(
+                    [tables_map[0]], schema_required=source_schema_required
+                )
 
                 table_dict = {
                     "schema_name": src_schema,

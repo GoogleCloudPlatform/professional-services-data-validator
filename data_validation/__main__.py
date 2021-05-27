@@ -127,7 +127,11 @@ def build_config_managers_from_args(args):
     target_client = clients.get_data_client(target_conn)
 
     threshold = args.threshold if args.threshold else 0.0
-    tables_list = cli_tools.get_tables_list(args.tables_list, default_value=[])
+
+    is_filesystem = True if source_conn["source_type"] == "FileSystem" else False
+    tables_list = cli_tools.get_tables_list(
+        args.tables_list, default_value=[], is_filesystem=is_filesystem
+    )
 
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
