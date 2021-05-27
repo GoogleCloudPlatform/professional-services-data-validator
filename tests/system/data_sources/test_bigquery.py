@@ -154,7 +154,7 @@ CLI_STORE_COLUMN_ARGS = [
     "--sum",
     "tripduration,start_station_name",
     "--count",
-    "tripduration,start_station_name",
+    '["tripduration","start_station_name"]',
     "--labels",
     "name=test_label",
     "--threshold",
