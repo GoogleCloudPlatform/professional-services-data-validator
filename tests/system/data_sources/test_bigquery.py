@@ -150,9 +150,9 @@ CLI_STORE_COLUMN_ARGS = [
     "--target-conn",
     BQ_CONN_NAME,
     "--tables-list",
-    '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]',
+    "bigquery-public-data.new_york_citibike.citibike_trips",
     "--sum",
-    '["tripduration","start_station_name"]',
+    "tripduration,start_station_name",
     "--count",
     '["tripduration","start_station_name"]',
     "--labels",
@@ -171,7 +171,7 @@ CLI_FIND_TABLES_ARGS = [
     "--target-conn",
     BQ_CONN_NAME,
     "--allowed-schemas",
-    '["pso_data_validator"]',
+    "pso_data_validator",
 ]
 
 STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'

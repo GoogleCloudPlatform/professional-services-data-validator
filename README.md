@@ -47,36 +47,48 @@ Once you have your connections set up, you are ready to run the validations.
 
 ```
 data-validation run
-  --type TYPE, -t TYPE  Type of Data Validation (Column, GroupedColumn)
-  --source-conn SOURCE_CONN, -sc SOURCE_CONN
-                        Source connection details.
+  --type or -t TYPE  Type of Data Validation (Column, GroupedColumn, Row, Schema)
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
                         See: *Data Source Configurations* section for each data source
-  --target-conn TARGET_CONN, -tc TARGET_CONN
+  --target-conn or -tc TARGET_CONN
                         Target connection details
-                        See: *Data Source Configurations* section for each data source
-  --tables-list TABLES, -tbls TABLES
-                        JSON List of tables
-                        '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips","target_table_name":"citibike_trips"}]'
-  --grouped-columns GROUPED_COLUMNS, -gc GROUPED_COLUMNS
-                        JSON List of columns to use in group by '["col_a"]'
-                        (Optional) Only used in GroupedColumn type validations
-  --count COUNT         JSON List of columns count '["col_a"]' or * for all columns
-  --sum SUM             JSON List of columns sum '["col_a"]' or * for all numeric
-  --min MIN             JSON List of columns min '[\"col_a\"]' or * for all numeric
-  --max MAX             JSON List of columns max '[\"col_a\"]' or * for all numeric
-  --avg AVG             JSON List of columns avg '[\"col_a\"]' or * for all numeric
-  --result-handler-config RESULT_HANDLER_CONFIG, -rc RESULT_HANDLER_CONFIG
-                        (Optional) JSON Result handler config details. Defaults to stdout
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE  
+                        Comma separated list of tables in the form schema.table=target_schema.target_table 
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --grouped-columns or -gc GROUPED_COLUMNS
+                        Comma separated list of columns for Group By i.e col_a,col_b
+                        (Optional) Only used in GroupedColumn validations
+  --primary-keys or -pc PRIMARY_KEYS
+                        Comma separated list of columns to use as primary keys
+                        (Optional) Only use in Row validations 
+  --count COLUMNS       Comma separated list of columns for count or * for all columns
+  --sum COLUMNS         Comma separated list of columns for sum or * for all numeric
+  --min COLUMNS         Comma separated list of columns for min or * for all numeric
+  --max COLUMNS         Comma separated list of columns for max or * for all numeric
+  --avg COLUMNS         Comma separated list of columns for avg or * for all numeric
+  --bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE
+                        (Optional) BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
-  --filters FILTER      JSON List of filters '[{"type":"custom","source":"Col > 100","target":"Col > 100"}]'
-  --config-file CONFIG_FILE, -c CONFIG_FILE
+  --service-account or -sa PATH_TO_SA_KEY
+                        (Optional) Service account to use for BigQuery result handler output.
+  --filters SOURCE_FILTER:TARGET_FILTER
+                        Colon spearated string values of source and target filters.
+                        If target filter is not provided, the source filter will run on source and target tables.
+                        See: *Filters* section
+  --config-file or -c CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
-  --threshold THRESHOLD, -th THRESHOLD
+  --threshold or -th THRESHOLD
                         (Optional) Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
-  --labels KEY=VALUE, -l KEY1=VALUE1,KEY2=VALUE2
+  --labels or -l KEY1=VALUE1,KEY2=VALUE2
                         (Optional) Comma-separated key value pair labels for the run.
-  --verbose, -v         Verbose logging will print queries executed
+  --verbose or -v       Verbose logging will print queries executed
 ```
+
+The default aggregation type is a 'COUNT *'. If no aggregation flag 
+(i.e count, sum , min, etc.) is provided, the default aggregation will run.
 
 The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
@@ -85,9 +97,15 @@ used to run powerful validations without writing any queries.
 
 There are many occasions where you need to explore a data source while running
 validations. To avoid the need to open and install a new client, the CLI allows
-you to run custom queries. `data-validation query --conn connection-name The
-named connection to be queried. --query, -q The Raw query to run against the
-supplied connection`
+you to run custom queries. 
+
+```
+data-validation query 
+  --conn or -c CONN
+          The connection name to be queried
+  --query or -q QUERY
+          The raw query to run against the supplied connection
+```
 
 ## Query Configurations
 
@@ -96,8 +114,7 @@ case specific CLI arguments or editing the saved YAML configuration file.
 
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table. `data-validation run -t Column -sc bq -tc bq -tbls
-'[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]'
--c citibike.yaml`
+bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml`
 
 Here is the generated YAML file named `citibike.yaml`:
 
@@ -161,23 +178,15 @@ validations:
 
 ### Filters
 
-Filters let you apply a WHERE statement to your validation query. Currently the
-only form of filter supported is a custom filter written by you in the syntax of
-the given source. In future we will also release pre-built filters to cover
-certain usecases (ie. `SELECT * FROM table WHERE created_at > 30 days ago;`).
-
-#### Custom Filters
-
-```
-{
-    "type": "custom",
-    "source": "created_at > '2020-01-01 00:00:00'::TIMESTAMP",
-    "target": "created_at > '2020-01-01 00:00:00'",
-}
-```
+Filters let you apply a WHERE statement to your validation query 
+(ie. `SELECT * FROM table WHERE created_at > 30 days ago AND region_id = 71;`).
+The filter is written in the syntax of the given source. 
 
 Note that you are writing the query to execute, which does not have to match
-between source and target as long as the results can be expected to align.
+between source and target as long as the results can be expected to align. If
+the target filter is omitted, the source filter will run on both the source
+and target tables.
+
 
 ### Grouped Columns
 
@@ -318,32 +327,26 @@ validation. By default the handler will print to stdout.
 ### Configure tool to output to BigQuery
 
 ```
-{
-    # Configuration Required for All Data Soures
-    "type": "BigQuery",
-
-    # BigQuery Specific Connection Config
-    "project_id": "my-project-name",
-
-    # (Optional) BigQuery JSON Config File for On-Prem usecases
-    "google_service_account_key_path": "/path/to/key.json",
-
-    # Configuration Required Depending on Validator Type
-    "table_id": "dataset_name.table_name"
-}
+data-validation run 
+  -t Column 
+  -sc bq_conn 
+  -tc bq_conn 
+  -tbls bigquery-public-data.new_york_citibike.citibike_trips 
+  -bqrh project_id.dataset.table
+  -sa service-acct@project.iam.gserviceaccount.com
 ```
 
 ## Building Matched Table Lists
 
-Creating the JSON list of matched tables can be a hassle.  We have added a feature which may help you to match all of the tables together between source and target.
+Creating the list of matched tables can be a hassle.  We have added a feature which may help you to match all of the tables together between source and target.
 The find-tables tool:
 
 - Pulls all tables in the source (applying a supplied allowed-schemas filter)
 - Pulls all tables from the target
 - Uses Levenshtein distance to match tables
-- Finally, it prints a JSON list of tables which can be copy/pasted into the validation run config.
+- Finally, it prints a JSON list of tables which can be a reference for the validation run config.
 
-`data-validation find-tables --source-conn source --target-conn target --allowed-schemas '["pso_data_validator"]' `
+`data-validation find-tables --source-conn source --target-conn target --allowed-schemas pso_data_validator`
 
 ## Add Support for an existing Ibis Data Source
 

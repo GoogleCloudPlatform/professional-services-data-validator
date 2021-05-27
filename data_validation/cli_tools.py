@@ -26,25 +26,26 @@ data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-r
 
 Step 2) Run Validation using supplied connections
 data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
--tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
+-tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
 --sum '*' --count '*'
 
 python -m data_validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn \
--tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"}]' \
---grouped-columns '["starttime"]' \
---sum '["tripduration"]' --count '["tripduration"]'
+-tbls bigquery-public-data.new_york_citibike.citibike_trips \
+--grouped-columns starttime \
+--sum tripduration --count tripduration
 
 data-validation run -t Column \
 -sc my_bq_conn -tc my_bq_conn \
--tbls '[{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_trips"},{"schema_name":"bigquery-public-data.new_york_citibike","table_name":"citibike_stations"}]' \
---sum '["tripduration","start_station_name"]' --count '["tripduration","start_station_name"]' \
--rc '{"project_id":"pso-kokoro-resources","type":"BigQuery","table_id":"pso_data_validator.results"}'
+-tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
+--sum tripduration,start_station_name --count tripduration,start_station_name \
+-rc pso-kokoro-resources.pso_data_validator.results
 -c ex_yaml.yaml
 
 data-validation run-config -c ex_yaml.yaml
 """
 
 import argparse
+import csv
 import json
 import os
 import sys
@@ -167,7 +168,7 @@ def _configure_find_tables(subparsers):
         "--target-conn", "-tc", help="Target connection name"
     )
     find_tables_parser.add_argument(
-        "--allowed-schemas", "-as", help="Json List of source schemas to match."
+        "--allowed-schemas", "-as", help="List of source schemas to match."
     )
 
 
@@ -211,64 +212,72 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--tables-list",
         "-tbls",
-        help="JSON List of dict {schema:schema_name, table:table_name}",
+        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
     )
     run_parser.add_argument(
         "--count",
         "-count",
-        help="JSON List of columns count '[\"col_a\"]' or * for all columns",
+        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--sum",
         "-sum",
-        help="JSON List of columns sum '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--avg",
         "-avg",
-        help="JSON List of columns average '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--min",
         "-min",
-        help="JSON List of columns min '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--max",
         "-max",
-        help="JSON List of columns max '[\"col_a\"]' or * for all numeric",
+        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--grouped-columns",
         "-gc",
-        help="JSON List of columns to use in group by '[\"col_a\"]'",
+        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
     )
     run_parser.add_argument(
         "--primary-keys",
         "-pk",
-        help="JSON List of columns to use as primary keys '[\"id\"]'",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     run_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"
     )
     run_parser.add_argument(
-        "--config-file",
-        "-c",
-        help="Store the validation in the YAML Config File Path specified.",
+        "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
     )
     run_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run.",
+        "--config-file",
+        "-c",
+        help="Store the validation in the YAML Config File Path specified",
+    )
+    run_parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run",
+    )
+    run_parser.add_argument(
+        "--service-account",
+        "-sa",
+        help="Path to SA key file for result handler output",
     )
     run_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
-        help="Float max threshold for percent difference.",
+        help="Float max threshold for percent difference",
     )
     run_parser.add_argument(
         "--filters",
         "-filters",
-        help='Filter config details [{"type":"custom","source":"xyz=xyz","target":"XYZ=XYZ"}]',
+        help="Filters in the format source_filter:target_filter",
     )
 
 
@@ -416,16 +425,147 @@ def get_labels(arg_labels):
     return labels
 
 
-def get_json_arg(arg_value, default_value=None):
-    """Return JSON parsed arg value.
+def get_filters(filter_value):
+    """Returns parsed JSON from filter file. Backwards compatible for JSON input.
 
-    arg_value (str): The parsed argument supplied.
-    default_value (Any): A default value to supplu when arg_Value is empty.
+    filter_value (str): Filter argument specified.
+    """
+    try:
+        filter_config = json.loads(filter_value)
+    except json.decoder.JSONDecodeError:
+        filter_config = []
+        filter_vals = filter_value.split(":")
+        if len(filter_vals) == 1:
+            filter_dict = {
+                "type": "custom",
+                "source": filter_vals[0],
+                "target": filter_vals[0],
+            }
+        elif len(filter_vals) == 2:
+            if not filter_vals[1]:
+                raise ValueError("Please provide valid target filter.")
+            filter_dict = {
+                "type": "custom",
+                "source": filter_vals[0],
+                "target": filter_vals[1],
+            }
+        else:
+            raise ValueError("Unable to parse filter arguments.")
+        filter_config.append(filter_dict)
+    return filter_config
+
+
+def get_result_handler(rc_value, sa_file=None):
+    """Returns dict of result handler config. Backwards compatible for JSON input.
+
+    rc_value (str): Result config argument specified.
+    sa_file (str): SA path argument specified.
+    """
+    try:
+        result_handler = json.loads(rc_value)
+    except json.decoder.JSONDecodeError:
+        config = rc_value.split(".", 1)
+        if len(config) == 2:
+            result_handler = {
+                "type": "BigQuery",
+                "project_id": config[0],
+                "table_id": config[1],
+            }
+        else:
+            raise ValueError(f"Unable to parse result handler config: `{rc_value}`")
+
+        if sa_file:
+            result_handler["google_service_account_key_path"] = sa_file
+
+    return result_handler
+
+
+def get_arg_list(arg_value, default_value=None):
+    """Returns list of values from argument provided. Backwards compatible for JSON input.
+
+    arg_value (str): Argument supplied
+    default_value (Any): A default value to supply when arg_value is empty.
     """
     if not arg_value:
         return default_value
 
     try:
-        return json.loads(arg_value)
+        arg_list = json.loads(arg_value)
     except json.decoder.JSONDecodeError:
-        raise ValueError(f"Could not parse value to JSON: `{arg_value}`")
+        arg_list = arg_value.split(",")
+    return arg_list
+
+
+def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
+    """ Returns dictionary of tables. Backwards compatible for JSON input.
+
+    arg_table (str): tables_list argument specified
+    default_value (Any): A default value to supply when arg_value is empty.
+    is_filesystem (boolean): Boolean indicating whether source connection is a FileSystem. In this case, a schema is not required.
+    """
+    if not arg_tables:
+        return default_value
+
+    try:
+        # Backwards compatibility for JSON input
+        tables_list = json.loads(arg_tables)
+    except json.decoder.JSONDecodeError:
+        tables_list = []
+        tables_mapping = list(csv.reader([arg_tables]))[0]
+        source_schema_required = False if is_filesystem else True
+
+        for mapping in tables_mapping:
+            tables_map = mapping.split("=")
+            if len(tables_map) == 1:
+                schema, table = split_table(
+                    tables_map, schema_required=source_schema_required
+                )
+                table_dict = {
+                    "schema_name": schema,
+                    "table_name": table,
+                }
+            elif len(tables_map) == 2:
+                src_schema, src_table = split_table(
+                    [tables_map[0]], schema_required=source_schema_required
+                )
+
+                table_dict = {
+                    "schema_name": src_schema,
+                    "table_name": src_table,
+                }
+
+                targ_schema, targ_table = split_table(
+                    [tables_map[1]], schema_required=False
+                )
+
+                if targ_schema:
+                    table_dict["target_schema_name"] = targ_schema
+                table_dict["target_table_name"] = targ_table
+
+            else:
+                raise ValueError(
+                    "Unable to parse tables list. Please provide valid mapping."
+                )
+
+            tables_list.append(table_dict)
+
+        return tables_list
+
+
+def split_table(table_ref, schema_required=True):
+    """ Returns schema and table name given list of input values.
+
+    table_ref (List): Table reference i.e ['my.schema.my_table']
+    scehma_required (boolean): Indicates whether schema is required. A source
+    table reference requires schema. A target table reference does not.
+    """
+    table_ref_list = list(csv.reader(table_ref, delimiter=".", quotechar='"'))[0]
+
+    if len(table_ref_list) == 1 and schema_required:
+        raise ValueError("Please provide schema in tables list.")
+    elif len(table_ref_list) == 1:
+        return None, table_ref_list[0].strip()
+
+    table = table_ref_list.pop()
+    schema = ".".join(table_ref_list)
+    return schema.strip(), table.strip()

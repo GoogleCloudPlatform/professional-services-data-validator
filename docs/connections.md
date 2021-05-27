@@ -9,17 +9,17 @@ These commands can be used to create connections:
 
 ## Command template to create a connection:
 ```
-data-validation connections add --connection-name my-conn-name source_type 
+data-validation connections add --connection-name CONN_NAME source_type 
 ```
 
 ## Create a sample BigQuery connection:
 ```
-data-validation connections add --connection-name MY-BQ-CONNECTION BigQuery --project-id MY-GCP-PROJECT
+data-validation connections add --connection-name MY_BQ_CONN BigQuery --project-id MY_GCP_PROJECT
 ```
 
 ## Create a sample Teradata connection:
 ```
-data-validation connections add --connection-name MY-TD-CONNECTION Teradata --host HOST_IP --port PORT --user_name USER_NAME --password PASSWORD
+data-validation connections add --connection-name MY_TD_CONN Teradata --host HOST_IP --port PORT --user_name USER_NAME --password PASSWORD
 ```
 
 ## List existing connections
@@ -42,13 +42,14 @@ The data validation tool supports the following connection types.
 * [Postgres](#postgres)
 * [MySQL](#mysql)
 * [Redshift](#redshift)
+* [FileSystem](#filesystem)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
 
 ```
-data-validation connections add -c '<name>' <connection type> -h
+data-validation connections add -c CONN_NAME <connection type> -h
 ```
 
 Below is the expected configuration for each type.
