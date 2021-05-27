@@ -15,7 +15,7 @@ DVT supports the following validation types:
   - Full column data type
   - Selected column data type
 
-- Row level hash comparison  (* BQ tables only)
+- Row level hash comparison  (BigQuery tables only)
 
 - Schema validation
 
