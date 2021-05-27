@@ -1,8 +1,8 @@
 # Data Validation Tool
 
-The Data Validation Tool (DVT) is a open sourced Python CLI tool based on the [ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html) that compares heterogeneous data source tables with multiple levels validation functions. 
+The Data Validation Tool (DVT) is an open sourced Python CLI tool based on the [Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html) that compares heterogeneous data source tables with multi-leveled validation functions. 
 
-Data validation is a critical step in a EDW, a Database or a Datalake migration project, where structured or semi-structured data from both the source and the destination tables are compared to ensure they are matched and correct after each migration step (e.g., data and schema migration, SQL script translation, ETL migration, etc.). The Data Validation Tool provides an automated and repeatable solution to perform this task.
+Data validation is a critical step in a Data Warehouse, Database or Data Lake migration project, where structured or semi-structured data from both the source and the destination tables are compared to ensure they are matched and correct after each migration step (e.g. data and schema migration, SQL script translation, ETL migration, etc.). The Data Validation Tool provides an automated and repeatable solution to perform this task.
 
 DVT supports the following validation types:
 - Table level
@@ -20,7 +20,7 @@ DVT supports the following validation types:
 - Schema validation
 
 - Raw SQL exploration
-  - Retrieve result set with a custom query
+  - Run custom queries on different data sources
 
 ## Installation
 
