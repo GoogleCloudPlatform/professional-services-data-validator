@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-import json
 import pytest
 from unittest import mock
 
@@ -22,14 +21,13 @@ from data_validation import cli_tools
 
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
-    "beta": "beta",
     "command": "run",
     "type": "Column",
     "source_conn": TEST_CONN,
     "target_conn": TEST_CONN,
-    "tables_list": '[{"schema_name":"my_schema","table_name":"my_table"}]',
-    "sum": '["col_a","col_b"]',
-    "count": '["col_a","col_b"]',
+    "tables_list": "my_schema.my_table",
+    "sum": "col_a,col_b",
+    "count": "col_a,col_b",
     "config_file": "example_test.yaml",
     "labels": "name=test_run",
     "threshold": 30.0,
@@ -53,7 +51,7 @@ CLI_FIND_TABLES_ARGS = [
     "--target-conn",
     TEST_CONN,
     "--allowed-schemas",
-    '["my_schema"]',
+    "my_schema",
 ]
 
 
@@ -63,7 +61,6 @@ CLI_FIND_TABLES_ARGS = [
 def test_get_parsed_args(mock_args):
     """Test arg parser values."""
     args = cli_tools.get_parsed_args()
-    assert args.beta == "beta"
     assert args.command == "run"
     assert args.labels == "name=test_run"
     assert args.threshold == 30.0
@@ -107,7 +104,7 @@ def test_find_tables_config():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
 
-    allowed_schemas = json.loads(args.allowed_schemas)
+    allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     assert allowed_schemas[0] == "my_schema"
 
 
@@ -164,15 +161,180 @@ def test_threshold_float_err(test_input):
         cli_tools.threshold_float(test_input)
 
 
-def test_get_invalid_json_arg():
-    arg_value = "not json"
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "src.schema.src_table=targ.schema.targ_table",
+            [
+                {
+                    "schema_name": "src.schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ.schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            'src_schema."odd.table"=targ_schema.targ_table',
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "odd.table",
+                    "target_schema_name": "targ_schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            "src_schema.src_table = targ_schema. targ_table",
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ_schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            "src_schema.src_table",
+            [{"schema_name": "src_schema", "table_name": "src_table"}],
+        ),
+        (
+            "src_schema.src_table = targ_table",
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "src_table",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            "src.schema.src_table = targ.schema.targ_table",
+            [
+                {
+                    "schema_name": "src.schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ.schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
+        ),
+        (
+            'src.schema."src.table"',
+            [{"schema_name": "src.schema", "table_name": "src.table"}],
+        ),
+    ],
+)
+def test_get_tables_list(test_input, expected):
+    """Test get tables list."""
+    res = cli_tools.get_tables_list(test_input)
+    assert res == expected
 
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        ("schema.table=targ_schema.targ_table=extra_schema"),
+        ("no_schema=target_table"),
+        ("schema,table=target_table"),
+    ],
+)
+def test_get_tables_list_err(test_input):
+    """Test get tables list errors correclty."""
     with pytest.raises(ValueError):
-        cli_tools.get_json_arg(arg_value)
+        cli_tools.get_tables_list(test_input)
 
 
-def test_get_json_arg():
-    arg_value = '["value"]'
-    json_arg = cli_tools.get_json_arg(arg_value)
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        ("col_a,col_b", ["col_a", "col_b"]),
+        ("col_a", ["col_a"]),
+        ("col a,col b", ["col a", "col b"]),
+    ],
+)
+def test_get_arg_list(test_input, expected):
+    """Test get aggregations list of columns."""
+    res = cli_tools.get_arg_list(test_input)
+    assert res == expected
 
-    assert json_arg == ["value"]
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "project.dataset.table",
+            {"type": "BigQuery", "project_id": "project", "table_id": "dataset.table"},
+        ),
+        (
+            "project.data.data.table",
+            {
+                "type": "BigQuery",
+                "project_id": "project",
+                "table_id": "data.data.table",
+            },
+        ),
+    ],
+)
+def test_get_result_handler(test_input, expected):
+    """Test get result handler config dictionary."""
+    res = cli_tools.get_result_handler(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "source:target",
+            [{"type": "custom", "source": "source", "target": "target"}],
+        ),
+        ("source", [{"type": "custom", "source": "source", "target": "source"}]),
+    ],
+)
+def test_get_filters(test_input, expected):
+    """ Test get filters from file function. """
+    res = cli_tools.get_filters(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input", [("source:"), ("invalid:filter:count")],
+)
+def test_get_filters_err(test_input):
+    """ Test get filters function returns error. """
+    with pytest.raises(ValueError):
+        cli_tools.get_filters(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (["schema.table"], ("schema", "table")),
+        (["full.schema.table"], ("full.schema", "table")),
+        (['full.schema."table.name"'], ("full.schema", "table.name")),
+    ],
+)
+def test_split_table(test_input, expected):
+    """Test split table into schema and table name."""
+    res = cli_tools.split_table(test_input)
+    assert res == expected
+
+
+def test_split_table_no_schema():
+    """Test split table not requiring schema."""
+    expected = (None, "target_table")
+    res = cli_tools.split_table(["target_table"], schema_required=False)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input", [(["table"])],
+)
+def test_split_table_err(test_input,):
+    """Test split table throws the right errors."""
+    with pytest.raises(ValueError):
+        cli_tools.split_table(test_input)
