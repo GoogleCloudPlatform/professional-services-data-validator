@@ -1,15 +1,26 @@
 # Data Validation Tool
 
-The goal of the data validation tool is to allow easy comparison and validation
-between different tables. This Python CLI tool supports several types of
-comparison:
+The Data Validation Tool (DVT) is an open sourced Python CLI tool based on the [Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html) that compares heterogeneous data source tables with multi-leveled validation functions. 
 
-```
-- Count Validation: Total counts and other aggregates match between source and destination
-- Partitioned Count: Partitioned counts and other aggregations between source and destination
-    - Grouped values ie SELECT updated_at::DATE, COUNT(1) matches for each date
-- Filters: Count or Partitioned Count WHERE FILTER_CONDITION
-```
+Data validation is a critical step in a Data Warehouse, Database or Data Lake migration project, where structured or semi-structured data from both the source and the destination tables are compared to ensure they are matched and correct after each migration step (e.g. data and schema migration, SQL script translation, ETL migration, etc.). The Data Validation Tool provides an automated and repeatable solution to perform this task.
+
+DVT supports the following validation types:
+- Table level
+  - Table row count
+  - Group by row count
+  - Column aggregation
+  - Filters and limits
+
+- Column level
+  - Full column data type
+  - Selected column data type
+
+- Row level hash comparison  (BigQuery tables only)
+
+- Schema validation
+
+- Raw SQL exploration
+  - Run custom queries on different data sources
 
 ## Installation
 
@@ -39,7 +50,7 @@ validations.
 
 The validation tool first expects connections to be created before running
 validations. To create connections please review the
-[Connections](connections.md) page.
+[Connections](docs/connections.md) page.
 
 Once you have your connections set up, you are ready to run the validations.
 
