@@ -7,8 +7,7 @@ This tool can be natively installed on your machine or can be containerized and 
 
 
 ## Prerequisites
-The data validation tool can be configured to store the results of validation runs into BigQuery tables. To allow tool to 
-do that, we need to do following:
+The Data Validation Tool can be configured to store the results of validation runs into BigQuery tables. To allow tool to do that, we need to do following:
 
 ## Setup
 
@@ -54,8 +53,6 @@ bq mk --table \
 ```
 
 
-
-
 ## Deploy Data Validation CLI on your machine
 
 The Data Validation tooling requires Python 3.6+.
@@ -74,28 +71,10 @@ apt-get update  && apt-get install gcc -y && apt-get clean
 pip install --upgrade pip
 ```
 
-
-You can [pip install this package directly from git](https://pip.pypa.io/en/stable/reference/pip_install/#git)
-for any tag (or branch or commit). We suggest installing from latest [GitHub Release]([GitHub](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases).
-
-install from tag 1.1.0
-```bash
-python -m pip install -e git+https://github.com/GoogleCloudPlatform/professional-services-data-validator.git@1.1.0#egg=google_pso_data_validator
+You can install the tool via [pip](https://pypi.org/project/google-pso-data-validator/1.2.0/).
 ```
-
-install from HEAD of default branch
-```bash
-python -m pip install -e git+https://github.com/GoogleCloudPlatform/professional-services-data-validator.git#egg=google_pso_data_validator
+pip install google-pso-data-validator
 ```
-
-
-Alternatively, you can install from [Python Wheel](https://pythonwheels.com/) on [GCS](
-https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl).
-
-```
-python -m pip install https://storage.googleapis.com/professional-services-data-validator/releases/1.1.0/google_pso_data_validator-1.1.0-py3-none-any.whl
-```
-
 
 If you require Teradata and have a license, install the `teradatasql` package.
 
@@ -106,6 +85,13 @@ python -m pip install teradatasql
 After installing the Data Validation package you will
 have access to the `data-validation -h` or `python -m data_validation -h`
 tool on your CLI.
+
+
+## Test locally
+If you want to test local changes to the tool, run the following command from the root directory of this repository:
+```
+pip install .
+```
 
 
 ## Build a Docker container 
