@@ -138,7 +138,7 @@ data-validation query
 #### Sample YAML file (GroupedColumn validation)
 ```yaml
 result_handler:
-  project_id: nehanene-dev
+  project_id: my-project-id
   table_id: pso_data_validator.results
   type: BigQuery
 source: my_bq_conn
