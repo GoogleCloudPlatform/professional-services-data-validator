@@ -5,20 +5,17 @@ The Data Validation Tool (DVT) is an open sourced Python CLI tool based on the [
 Data validation is a critical step in a Data Warehouse, Database or Data Lake migration project, where structured or semi-structured data from both the source and the destination tables are compared to ensure they are matched and correct after each migration step (e.g. data and schema migration, SQL script translation, ETL migration, etc.). The Data Validation Tool provides an automated and repeatable solution to perform this task.
 
 DVT supports the following validation types:
-- Table level
-  - Table row count
-  - Group by row count
-  - Column aggregation
-  - Filters and limits
+* Table level
+  * Table row count
+  * Group by row count
+  * Column aggregation
+  * Filters and limits
+* Schema validation
+* Row level hash comparison  (BigQuery tables only)
+* Raw SQL exploration
+  * Run custom queries on different data sources
 
-- Schema validation
-
-- Row level hash comparison  (BigQuery tables only)
-
-- Raw SQL exploration
-  - Run custom queries on different data sources
-
-The data validation tool supports the following connection types:
+DVT supports the following connection types:
 
 * [BigQuery](docs/connections.md#google-bigquery)
 * [Spanner](docs/connections.md#google-spanner)
