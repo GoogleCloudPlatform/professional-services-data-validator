@@ -18,9 +18,25 @@ DVT supports the following validation types:
 - Raw SQL exploration
   - Run custom queries on different data sources
 
+The data validation tool supports the following connection types:
+
+* [BigQuery](docs/connections.md#google-bigquery)
+* [Spanner](docs/connections.md#google-spanner)
+* [Teradata](docs/connections.md#teradata)
+* [Oracle](docs/connections.md#oracle)
+* [MSSQL](docs/connections.md#mssql-server)
+* [Snowflake](docs/connections.md#snowflake)
+* [Postgres](docs/connections.md#postgres)
+* [MySQL](docs/connections.md#mysql)
+* [Redshift](docs/connections.md#redshift)
+* [FileSystem](docs/connections.md#filesystem)
+
+The [Connections](docs/connections.md) page provides details about how to create
+and list connections for the validation tool.
+
 ## Installation
 
-The [installation](docs/installation.md) page describes the prerequisites and
+The [Installation](docs/installation.md) page describes the prerequisites and
 setup steps needed to install and use the data validation tool.
 
 ## Usage
@@ -31,11 +47,6 @@ those tables. Validation results can be printed to stdout (default) or outputted
 to BigQuery. The validation tool also allows you to save or edit validation
 configurations in a YAML file. This is useful for running common validations or
 updating the configuration.
-
-### Connections
-
-The [Connections](docs/connections.md) page provides details about how to create
-and list connections for the validation tool.
 
 ### Running CLI Validations
 
