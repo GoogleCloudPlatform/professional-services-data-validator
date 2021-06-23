@@ -60,6 +60,11 @@ bq mk --table \
 
 The Data Validation tooling requires Python 3.6+.
 
+```
+sudo apt-get install python3
+sudo apt-get install python3-dev
+```
+
 Create and activate a new virtual environment to sandbox the tool and its
 dependencies from your system installation of Python.
 
@@ -70,7 +75,7 @@ source venv/bin/activate
 
 Update pip and make sure gcc is installed in your environment.
 ```
-apt-get update  && apt-get install gcc -y && apt-get clean
+sudo apt-get update  && sudo apt-get install gcc -y && sudo apt-get clean
 pip install --upgrade pip
 ```
 
