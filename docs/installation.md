@@ -66,7 +66,7 @@ sudo apt-get install python3-dev
 ```
 
 Create and activate a new virtual environment to sandbox the tool and its
-dependencies from your system installation of Python.
+dependencies from your system installation of Python. 
 
 ```
 python3.6 -m venv venv
