@@ -549,7 +549,7 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
 
             tables_list.append(table_dict)
 
-        return tables_list
+    return tables_list
 
 
 def split_table(table_ref, schema_required=True):
