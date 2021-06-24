@@ -237,8 +237,9 @@ def find_tables_using_string_matching(args):
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
 
-    table_configs = _compare_match_tables(source_table_map, target_table_map,
-                                          score_cutoff=score_cutoff)
+    table_configs = _compare_match_tables(
+        source_table_map, target_table_map, score_cutoff=score_cutoff
+    )
     return json.dumps(table_configs)
 
 
