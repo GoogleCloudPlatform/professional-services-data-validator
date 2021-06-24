@@ -2,6 +2,13 @@
 
 ## Untagged
 
+### [1.2.1](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.2.0...v1.2.1) (2021-06-24)
+
+
+### Bug Fixes
+
+* correct issues blocking impala and hive ([#266](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/266)) ([5110d1f](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5110d1fc537b87bde80bb53411129e106d8695c5))
+
 ## [1.2.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.1.7...v1.2.0) (2021-05-27)
 
 
