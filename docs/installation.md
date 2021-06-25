@@ -7,8 +7,16 @@ This tool can be natively installed on your machine or can be containerized and 
 
 
 ## Prerequisites
-The data validation tool can be configured to store the results of validation runs into BigQuery tables. To allow tool to 
-do that, we need to do following:
+
+Clone the repository onto your machine and navigate inside the directory:
+
+```
+git clone https://github.com/GoogleCloudPlatform/professional-services-data-validator.git
+cd professional-services-data-validator
+```
+
+By default, the data validation tool writes the results of data validation runs into stdout. We recommend storing the results of validation runs into BigQuery tables for future reference and access across team members. To allow tool to do that, 
+users need to create a BigQuery table with a specific schema:
 
 ## Setup
 
@@ -19,21 +27,29 @@ A Google Cloud Platform project with the BigQuery API enabled is required.
 
 Confirm which Google user account will be used to execute the tool. If you plan to run this tool in
 production, it's recommended that you create a service account specifically
-for running the tool.
-There are two methods of creating the Cloud resources necessary for the tool: via Terraform or the Cloud SDK.
+for running the tool. See our [guide](https://cloud.google.com/docs/authentication/production) on how to authenticate with your service account. In addition, you need to 
+grant your service account the BigQuery Data Editor role on your project in order for it to make tables on your behalf.
+
+There are two methods of creating the BigQuery table necessary for the tool: via Terraform or the Cloud SDK.
+
 ### Create cloud resources - Terraform
 
-You can use Terraform to create the necessary BigQuery resources. (See next
+You can use Terraform to create the necessary cloud resources. (See next
 section for manually creating resources with `gcloud`.)
+
+By default, Terraform is run inside a test environment and needs to be directed to your project. Perform the following steps to direct the creation of the BigQuery table to your project:
+
+1. Delete the `testenv.tf` file
+2. Enter `variables.tf` and replace `default = "pso-kokoro-resources"` with `default = "YOUR_PROJECT_ID"`
+
+
+After installing [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) and the steps above, run the following commands from inside the repo:
 
 ```
 cd terraform
 terraform init
 terraform apply
 ```
-
-You should see a dataset named `pso_data_validator` and a table named
-`results`.
 
 ### Create cloud resources - Cloud SDK (gcloud)
 
@@ -53,8 +69,12 @@ bq mk --table \
   terraform/results_schema.json
 ```
 
+### Create cloud resources - After success
 
+You should see a dataset named `pso_data_validator` and a table named
+`results`.
 
+You are now ready to run data validation commands and output the results to BigQuery. See an example [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#store-results-in-a-bigquery-table).
 
 ## Deploy Data Validation CLI on your machine
 
