@@ -178,7 +178,7 @@ def build_config_managers_from_yaml(args):
     return config_managers
 
 
-def _compare_match_tables(source_table_map, target_table_map):
+def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8):
     """Return dict config object from matching tables."""
     # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
     table_configs = []
@@ -186,7 +186,7 @@ def _compare_match_tables(source_table_map, target_table_map):
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
         target_key = jellyfish_distance.extract_closest_match(
-            source_key, target_keys, score_cutoff=0.8
+            source_key, target_keys, score_cutoff=score_cutoff
         )
         if target_key is None:
             continue
@@ -228,6 +228,7 @@ def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
+    score_cutoff = args.score_cutoff or 0.8
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
@@ -236,7 +237,9 @@ def find_tables_using_string_matching(args):
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
 
-    table_configs = _compare_match_tables(source_table_map, target_table_map)
+    table_configs = _compare_match_tables(
+        source_table_map, target_table_map, score_cutoff=score_cutoff
+    )
     return json.dumps(table_configs)
 
 
