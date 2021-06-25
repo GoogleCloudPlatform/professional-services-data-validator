@@ -9,17 +9,13 @@ This tool can be natively installed on your machine or can be containerized and 
 
 - Any machine with Python 3.6+ installed.
 
-- By default, the data validation tool writes the results of data validation to `stdout`. However, we recommend storing the results of validations to a BigQuery table in order to standardize the process and share results across a team. In order to allow the data validation tool to write to a BigQuery table, users need to have a BigQuery table created with a specific schema. Further instructions on this below.
-
 ## Setup
 
-To write results to BigQuery, you'll need to setup the required cloud resources (BigQuery), authenticate locally, and use the `bqrh` [flag](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/issue263/docs/examples.md#store-results-in-a-bigquery-table) on your data validation commands.
+By default, the data validation tool writes the results of data validation to `stdout`. However, we recommend storing the results of validations to a BigQuery table in order to standardize the process and share results across a team. In order to allow the data validation tool to write to a BigQuery table, users need to have a BigQuery table created with a specific schema. If you choose to write results to a BigQuery table, there are a couple of requirements:
 
-- A Google Cloud Platform project with the BigQuery API enabled is required if writing results to a BQ table.
+- A Google Cloud Platform project with the BigQuery API enabled.
 
-- Confirm which Google user account will be used to execute the tool. If you plan to run this tool in
-production, it's recommended that you create a service account specifically for running the tool. See our [guide](https://cloud.google.com/docs/authentication/production) on how to authenticate with your service account. If you are using a service account, you need to 
-grant your service account the `BigQuery Data Editor` role on your project so that it has appropriate permissions for creating resources.
+- A Google user account with appropriate permissions. If you plan to run this tool in production, it's recommended that you create a service account specifically for running the tool. See our [guide](https://cloud.google.com/docs/authentication/production) on how to authenticate with your service account. If you are using a service account, you need to grant your service account appropriate roles on your project so that it has permissions to create and read resources.
 
 Clone the repository onto your machine and navigate inside the directory:
 
@@ -33,13 +29,10 @@ There are two methods of creating the BigQuery output table for the tool: via *T
 
 ### Cloud Resource Creation - Terraform
 
-You can use Terraform to create the necessary cloud resources. (See next
-section for manually creating resources with `gcloud`.)
-
 By default, Terraform is run inside a test environment and needs to be directed to your project. Perform the following steps to direct the creation of the BigQuery table to your project:
 
-1. Delete the `testenv.tf` file
-2. View `variables.tf` and replace `default = "pso-kokoro-resources"` with `default = "YOUR_PROJECT_ID"`
+1. Delete the `testenv.tf` file inside the `terraform` folder
+2. View `variables.tf` inside the `terraform` folder and replace `default = "pso-kokoro-resources"` with `default = "YOUR_PROJECT_ID"`
 
 
 After installing the [terraform CLI tool](https://learn.hashicorp.com/tutorials/terraform/install-cli) and completing the steps above, run the following commands from inside the root of the repo:
@@ -52,7 +45,7 @@ terraform apply
 
 ### Cloud Resource Creation - Cloud SDK (gcloud)
 
-If you need to, install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install). 
+Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) if necessary. 
 
 Create a dataset for validation results:
 
