@@ -170,6 +170,12 @@ def _configure_find_tables(subparsers):
     find_tables_parser.add_argument(
         "--allowed-schemas", "-as", help="List of source schemas to match."
     )
+    find_tables_parser.add_argument(
+        "--score-cutoff",
+        "-score",
+        type=float,
+        help="The minimum distance score allowed to match tables (0 to 1).",
+    )
 
 
 def _configure_raw_query(subparsers):
@@ -549,7 +555,7 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
 
             tables_list.append(table_dict)
 
-        return tables_list
+    return tables_list
 
 
 def split_table(table_ref, schema_required=True):

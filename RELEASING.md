@@ -17,13 +17,6 @@ as nox or pytest.
     git remote add upstream git@github.com:GoogleCloudPlatform/professional-services-data-validator.git
     ```
 
-4. Install `setuptools`, [twine](https://twine.readthedocs.io/en/latest/) CLI
-   for PyPI, and `wheel` into your development virtual environment.
-
-    ```
-    pip install setuptools twine wheel
-    ```
-
 ## Prepare a release
 
 - Review and merge PR from `release-please`. If anything needs adjusting,
@@ -31,7 +24,7 @@ as nox or pytest.
     - Updates version string in `setup.py`.
     - Includes all expected changes in `CHANGELOG.md`.
 
-## Build a package
+## Build & Publish a test package
 
 - After the PR is merged, checkout the main `develop` branch.
 
@@ -46,10 +39,47 @@ as nox or pytest.
   git clean -xfd
   ```
 
-- Build the package.
+- Build the package to the pypi test site
 
   ```
-  python setup.py register sdist bdist_wheel
+  PROJECT_ID=pso-kokoro-resources
+  _TWINE_REPOSITORY_URL=https://test.pypi.org/legacy/
+  _TWINE_USERNAME=<user>
+  _TWINE_PASSWORD=<password>
+
+  gcloud builds submit \
+      --config ci/cloudbuild_pypi.yaml \
+      --substitutions "_TWINE_REPOSITORY_URL=${_TWINE_REPOSITORY_URL},_TWINE_USERNAME=${_TWINE_USERNAME},_TWINE_PASSWORD=${_TWINE_PASSWORD}" \
+      --project=${PROJECT_ID}
+  ```
+
+## Build & Publish Package
+
+- After the PR is merged, checkout the main `develop` branch.
+
+  ```
+  git fetch upstream --tags
+  git checkout vA.B.C
+  ```
+
+- Remove any temporary files leftover from previous builds.
+
+  ```
+  git clean -xfd
+  ```
+
+- Build the package to the pypi test site
+
+  ```
+  PROJECT_ID=pso-kokoro-resources
+  _TWINE_REPOSITORY_URL=https://upload.pypi.org/legacy/
+  _TWINE_USERNAME=<user>
+  _TWINE_PASSWORD=<password>
+
+  gcloud builds submit \
+      --config ci/cloudbuild_pypi.yaml \
+      --substitutions "_TWINE_REPOSITORY_URL=${_TWINE_REPOSITORY_URL},_TWINE_USERNAME=${_TWINE_USERNAME},_TWINE_PASSWORD=${_TWINE_PASSWORD}" \
+      --project=${PROJECT_ID}
   ```
 
 ## Test the package
@@ -58,7 +88,7 @@ as nox or pytest.
 - Install the package from the `dist/` directory.
 
   ```
-  pip install ./dist/google_pso_data_validator-X.X.X-py3-none-any.whl
+  pip install --upgrade google_pso_data_validator
   ```
 
 - Check that the command-line runs.
@@ -67,31 +97,3 @@ as nox or pytest.
   data-validation -h
   python -m data_validation -h
   ```
-
-## Publish the package
-
-- [Optional] Upload to test PyPI. See [documentation for
-  TestPyPI](https://packaging.python.org/guides/using-testpypi/)
-
-    ```
-    twine upload --repository testpypi dist/*
-    ```
-
-- [Optional] Try out test PyPI package
-
-    ```
-    pip install --upgrade \
-      --index-url https://test.pypi.org/simple/ \
-      --extra-index-url https://pypi.org/simple \
-      google-pso-data-validator
-    ```
-
-- Upload to PyPI
-
-    ```
-    twine upload dist/*
-    ```
-
-- Find the tag in the [GitHub
-  releases](https://github.com/GoogleCloudPlatform/professional-services-data-validator/releases).
-  - Upload both files from the `dist/` directory.

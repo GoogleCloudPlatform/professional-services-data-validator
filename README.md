@@ -1,8 +1,16 @@
 # Data Validation Tool
 
-The Data Validation Tool (DVT) is an open sourced Python CLI tool based on the [Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html) that compares heterogeneous data source tables with multi-leveled validation functions. 
+The Data Validation Tool (DVT) is an open sourced Python CLI tool based on the
+[Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html)
+that compares heterogeneous data source tables with multi-leveled validation
+functions.
 
-Data validation is a critical step in a Data Warehouse, Database or Data Lake migration project, where structured or semi-structured data from both the source and the destination tables are compared to ensure they are matched and correct after each migration step (e.g. data and schema migration, SQL script translation, ETL migration, etc.). The Data Validation Tool provides an automated and repeatable solution to perform this task.
+Data validation is a critical step in a Data Warehouse, Database or Data Lake
+migration project, where structured or semi-structured data from both the source
+and the destination tables are compared to ensure they are matched and correct
+after each migration step (e.g. data and schema migration, SQL script
+translation, ETL migration, etc.). The Data Validation Tool provides an
+automated and repeatable solution to perform this task.
 
 DVT supports the following validation types:
 * Table level
@@ -10,7 +18,8 @@ DVT supports the following validation types:
   * Group by row count
   * Column aggregation
   * Filters and limits
-* Schema validation
+* Column level
+  * Full column data type
 * Row level hash comparison  (BigQuery tables only)
 * Raw SQL exploration
   * Run custom queries on different data sources
@@ -69,8 +78,8 @@ data-validation run
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
-  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE  
-                        Comma separated list of tables in the form schema.table=target_schema.target_table 
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   --grouped-columns or -gc GROUPED_COLUMNS
@@ -78,7 +87,7 @@ data-validation run
                         (Optional) Only used in GroupedColumn validations
   --primary-keys or -pc PRIMARY_KEYS
                         Comma separated list of columns to use as primary keys
-                        (Optional) Only use in Row validations 
+                        (Optional) Only use in Row validations
   --count COLUMNS       Comma separated list of columns for count or * for all columns
   --sum COLUMNS         Comma separated list of columns for sum or * for all numeric
   --min COLUMNS         Comma separated list of columns for min or * for all numeric
@@ -102,8 +111,8 @@ data-validation run
   --verbose or -v       Verbose logging will print queries executed
 ```
 
-The default aggregation type is a 'COUNT *'. If no aggregation flag 
-(i.e count, sum , min, etc.) is provided, the default aggregation will run.
+The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
+sum , min, etc.) is provided, the default aggregation will run.
 
 The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
@@ -112,10 +121,10 @@ used to run powerful validations without writing any queries.
 
 There are many occasions where you need to explore a data source while running
 validations. To avoid the need to open and install a new client, the CLI allows
-you to run custom queries. 
+you to run custom queries.
 
 ```
-data-validation query 
+data-validation query
   --conn or -c CONN
           The connection name to be queried
   --query or -q QUERY
@@ -199,15 +208,14 @@ validations:
 
 ### Filters
 
-Filters let you apply a WHERE statement to your validation query 
-(ie. `SELECT * FROM table WHERE created_at > 30 days ago AND region_id = 71;`).
-The filter is written in the syntax of the given source. 
+Filters let you apply a WHERE statement to your validation query (ie. `SELECT *
+FROM table WHERE created_at > 30 days ago AND region_id = 71;`). The filter is
+written in the syntax of the given source.
 
 Note that you are writing the query to execute, which does not have to match
 between source and target as long as the results can be expected to align. If
-the target filter is omitted, the source filter will run on both the source
-and target tables.
-
+the target filter is omitted, the source filter will run on both the source and
+target tables.
 
 ### Grouped Columns
 
@@ -349,26 +357,35 @@ View the schema of the results [here](terraform/results_schema.json).
 ### Configure tool to output to BigQuery
 
 ```
-data-validation run 
-  -t Column 
-  -sc bq_conn 
-  -tc bq_conn 
-  -tbls bigquery-public-data.new_york_citibike.citibike_trips 
+data-validation run
+  -t Column
+  -sc bq_conn
+  -tc bq_conn
+  -tbls bigquery-public-data.new_york_citibike.citibike_trips
   -bqrh project_id.dataset.table
   -sa service-acct@project.iam.gserviceaccount.com
 ```
 
 ## Building Matched Table Lists
 
-Creating the list of matched tables can be a hassle.  We have added a feature which may help you to match all of the tables together between source and target.
-The find-tables tool:
+Creating the list of matched tables can be a hassle. We have added a feature
+which may help you to match all of the tables together between source and
+target. The find-tables tool:
 
-- Pulls all tables in the source (applying a supplied allowed-schemas filter)
-- Pulls all tables from the target
-- Uses Levenshtein distance to match tables
-- Finally, it prints a JSON list of tables which can be a reference for the validation run config.
+-   Pulls all tables in the source (applying a supplied allowed-schemas filter)
+-   Pulls all tables from the target
+-   Uses Levenshtein distance to match tables
+-   Finally, it prints a JSON list of tables which can be a reference for the
+    validation run config.
 
-`data-validation find-tables --source-conn source --target-conn target --allowed-schemas pso_data_validator`
+Note that our score cutoff default is a 0.8, which was manually tested to be an
+accurate value. If no matches occur, reduce this value.
+
+```
+data-validation find-tables --source-conn source --target-conn target \
+    --allowed-schemas pso_data_validator \
+    --score-cutoff 0.8
+```
 
 ## Add Support for an existing Ibis Data Source
 
