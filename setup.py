@@ -24,8 +24,30 @@ release_status = "Development Status :: 3 - Alpha"
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-dependencies = open("requirements.txt").read().strip().split("\n")
-dependencies = [v for v in dependencies if not v.startswith("#")]  # Remove comments
+dependencies = [
+    # Dependency corrections from our requirements
+    "attrs==20.3.0",
+    "grpcio==1.35.0",
+    "lazy-object-proxy==1.4.3",
+    "marshmallow==3.10.0",
+    # Core dependencies
+    "google-api-python-client==1.12.8",
+    "ibis-framework==1.4.0",
+    "impyla==0.16.3",
+    "SQLAlchemy==1.3.22",
+    "PyMySQL==1.0.2",
+    "psycopg2-binary==2.8.6",
+    "PyYAML==5.4.1",
+    "pandas==1.2.3",
+    "proto-plus==1.13.0",
+    "pyarrow==3.0.0",
+    "pydata-google-auth==1.1.0",
+    "google-cloud-bigquery==2.11.0",
+    "google-cloud-bigquery-storage==2.3.0",
+    "google-cloud-spanner==3.1.0",
+    "setuptools>=34.0.0",
+    "jellyfish==0.8.2",
+]
 
 extras_require = {
     "apache-airflow": "1.10.11",
