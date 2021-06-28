@@ -23,8 +23,8 @@ steps:
   - 'TWINE_PASSWORD=${_TWINE_PASSWORD}'
   - 'TWINE_REPOSITORY_URL=${_TWINE_REPOSITORY_URL}'
 substitutions:
-  _TWINE_USERNAME: username
-  _TWINE_PASSWORD: password
+  _TWINE_USERNAME: __token__
+  _TWINE_PASSWORD:
   _TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
 options:
   substitution_option: 'ALLOW_LOOSE'

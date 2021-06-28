@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+if [ "${TWINE_PASSWORD}" == "" ]
+then
+    TWINE_PASSWORD=$(gcloud secrets versions access latest --secret="data-validation" --project=${PROJECT_ID})
+fi
+
 python3 -m pip install --upgrade build setuptools twine wheel
 python3 -m build
 python3 -m twine upload dist/*
