@@ -12,25 +12,37 @@ after each migration step (e.g. data and schema migration, SQL script
 translation, ETL migration, etc.). The Data Validation Tool provides an
 automated and repeatable solution to perform this task.
 
-DVT supports the following validation types: - Table level - Table row count -
-Group by row count - Column aggregation - Filters and limits
+DVT supports the following validation types:
+* Table level
+  * Table row count
+  * Group by row count
+  * Column aggregation
+  * Filters and limits
+* Column level
+  * Full column data type
+* Row level hash comparison  (BigQuery tables only)
+* Raw SQL exploration
+  * Run custom queries on different data sources
 
--   Column level
+DVT supports the following connection types:
 
-    -   Full column data type
-    -   Selected column data type
+* [BigQuery](docs/connections.md#google-bigquery)
+* [Spanner](docs/connections.md#google-spanner)
+* [Teradata](docs/connections.md#teradata)
+* [Oracle](docs/connections.md#oracle)
+* [MSSQL](docs/connections.md#mssql-server)
+* [Snowflake](docs/connections.md#snowflake)
+* [Postgres](docs/connections.md#postgres)
+* [MySQL](docs/connections.md#mysql)
+* [Redshift](docs/connections.md#redshift)
+* [FileSystem](docs/connections.md#filesystem)
 
--   Row level hash comparison (BigQuery tables only)
-
--   Schema validation
-
--   Raw SQL exploration
-
-    -   Run custom queries on different data sources
+The [Connections](docs/connections.md) page provides details about how to create
+and list connections for the validation tool.
 
 ## Installation
 
-The [installation](docs/installation.md) page describes the prerequisites and
+The [Installation](docs/installation.md) page describes the prerequisites and
 setup steps needed to install and use the data validation tool.
 
 ## Usage
@@ -41,11 +53,6 @@ those tables. Validation results can be printed to stdout (default) or outputted
 to BigQuery. The validation tool also allows you to save or edit validation
 configurations in a YAML file. This is useful for running common validations or
 updating the configuration.
-
-### Connections
-
-The [Connections](docs/connections.md) page provides details about how to create
-and list connections for the validation tool.
 
 ### Running CLI Validations
 
@@ -130,26 +137,32 @@ You can customize the configuration for any given validation by providing use
 case specific CLI arguments or editing the saved YAML configuration file.
 
 For example, the following command creates a YAML file for the validation of the
-`new_york_citibike` table. `data-validation run -t Column -sc bq -tc bq -tbls
-bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml`
+`new_york_citibike` table: 
+```
+data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls
+bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml
+```
 
 Here is the generated YAML file named `citibike.yaml`:
 
 ```
 result_handler: {}
-source: bq target:
-bq validations:
-  - aggregates:
-    - field_alias: count
-      source_column: null
-      target_column: null
-      type: count
-      filters: []
-      labels: []
-schema_name: bigquery-public-data.new_york_citibike
-table_name: citibike_trips
-target_schema_name: bigquery-public-data.new_york_citibike
-target_table_name: citibike_trips type: Column
+source: my_bq_conn
+target: my_bq_conn
+validations:
+- aggregates:
+  - field_alias: count
+    source_column: null
+    target_column: null
+    type: count
+  filters: []
+  labels: []
+  schema_name: bigquery-public-data.new_york_citibike
+  table_name: citibike_trips
+  target_schema_name: bigquery-public-data.new_york_citibike
+  target_table_name: citibike_trips
+  threshold: 0.0
+  type: Column
 ```
 
 You can now edit the YAML file if, for example, the `new_york_citibike` table is
@@ -161,8 +174,8 @@ validation:
 data-validation run-config -c citibike.yaml
 ```
 
-The Data Validation Tool exposes several components that can be stitched
-together to generate a wide range of queries
+View the complete YAML file for a GroupedColumn validation on the [examples](docs/examples.md#)
+page.
 
 ### Aggregated Fields
 
@@ -334,11 +347,12 @@ FROM (
 
 ## Validation Reports
 
-The data validation tool can write the results of a validation run to Google
-BigQuery or print to Std Out.
+The output handlers tell the data validation tool where to store the results of each
+validation. The tool can write the results of a validation run to Google
+BigQuery or print to stdout (default).
 
-The output handlers tell the data validation where to store the results of each
-validation. By default the handler will print to stdout.
+View the schema of the results [here](terraform/results_schema.json).
+
 
 ### Configure tool to output to BigQuery
 

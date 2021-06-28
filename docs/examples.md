@@ -110,6 +110,13 @@ data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquer
 data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -l tag=test-run,owner=name
 ````
 
+#### Run a schema validation
+````shell script
+# Schema validation will ignore irrelevant flags (count, sum, filters, etc.)
+# Labels are not supported for schema validation
+data-validation run -t Schema -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
+````
+
 #### Run validation on a file
 ````shell script
 # Additional dependencies needed for GCS files
@@ -127,3 +134,46 @@ data-validation query
   --conn connection-name The named connection to be queried.
   --query, -q The Raw query to run against the supplied connection
 ````
+
+#### Sample YAML file (GroupedColumn validation)
+```yaml
+result_handler:
+  project_id: my-project-id
+  table_id: pso_data_validator.results
+  type: BigQuery
+source: my_bq_conn
+target: my_bq_conn
+validations:
+- aggregates:
+  - field_alias: count
+    source_column: null
+    target_column: null
+    type: count
+  - field_alias: sum__num_bikes_available
+    source_column: num_bikes_available
+    target_column: num_bikes_available
+    type: sum
+  - field_alias: sum__num_docks_available
+    source_column: num_docks_available
+    target_column: num_docks_available
+    type: sum
+  filters:
+  - source: region_id=71
+    target: region_id=71
+    type: custom
+  grouped_columns:
+  - cast: null
+    field_alias: region_id
+    source_column: region_id
+    target_column: region_id
+  labels:
+  - !!python/tuple
+    - description
+    - test
+  schema_name: bigquery-public-data.new_york_citibike
+  table_name: citibike_stations
+  target_schema_name: bigquery-public-data.new_york_citibike
+  target_table_name: citibike_stations
+  threshold: 0.0
+  type: GroupedColumn
+  ```
