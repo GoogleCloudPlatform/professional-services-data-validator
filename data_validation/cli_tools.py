@@ -170,6 +170,12 @@ def _configure_find_tables(subparsers):
     find_tables_parser.add_argument(
         "--allowed-schemas", "-as", help="List of source schemas to match."
     )
+    find_tables_parser.add_argument(
+        "--score-cutoff",
+        "-score",
+        type=float,
+        help="The minimum distance score allowed to match tables (0 to 1).",
+    )
 
 
 def _configure_raw_query(subparsers):
