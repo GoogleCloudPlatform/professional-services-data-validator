@@ -23,8 +23,28 @@ Output validation report to text-based log
 """
 
 
-class TextResultHandler(object):
-    def execute(self, config, result_df):
+def print_formatted_(result_df, result_format):
+    """
+    Utility for printing formatted results
+    :param result_df
+    :param result_format
+    """
+    if result_format == "text":
         print(result_df.to_string(index=False))
+    elif result_format == "csv":
+        print(result_df.to_csv(index=False))
+    elif result_format == "json":
+        print(result_df.to_json(orient="index"))
+    elif result_format == "table":
+        print(result_df.to_markdown(tablefmt="fancy_grid"))
+    else:
+        error_msg = f"format [{result_format}] not supported, printed in default(table grid) mode"
+        print(result_df.to_markdown(tablefmt="fancy_grid"))
+        raise Exception(error_msg)
+
+
+class TextResultHandler(object):
+    def execute(self, config, result_df, result_format="table"):
+        print_formatted_(result_df, result_format)
 
         return result_df

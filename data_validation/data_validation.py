@@ -86,7 +86,7 @@ class DataValidation(object):
 
     # TODO(dhercher) we planned on shifting this to use an Execution Handler.
     # Leaving to to swast on the design of how this should look.
-    def execute(self):
+    def execute(self, result_format="table"):
         """ Execute Queries and Store Results """
         if self.config_manager.validation_type == consts.ROW_VALIDATION:
             grouped_fields = self.validation_builder.pop_grouped_fields()
@@ -102,7 +102,7 @@ class DataValidation(object):
             )
 
         # Call Result Handler to Manage Results
-        return self.result_handler.execute(self.config, result_df)
+        return self.result_handler.execute(self.config, result_df, result_format)
 
     def query_too_large(self, rows_df, grouped_fields):
         """ Return bool to dictate if another level of recursion

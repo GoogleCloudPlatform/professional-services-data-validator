@@ -47,6 +47,7 @@ dependencies = [
     "google-cloud-spanner==3.1.0",
     "setuptools>=34.0.0",
     "jellyfish==0.8.2",
+    "tabulate==0.8.9",
 ]
 
 extras_require = {

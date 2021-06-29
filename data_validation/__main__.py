@@ -272,11 +272,12 @@ def convert_config_to_yaml(args, config_managers):
     return yaml_config
 
 
-def run_validation(config_manager, verbose=False):
+def run_validation(config_manager, result_format="table", verbose=False):
     """Run a single validation.
 
     Args:
         config_manager (ConfigManager): Validation config manager instance.
+        result_format: pretty printing results format
         verbose (bool): Validation setting to log queries run.
     """
     validator = DataValidation(
@@ -285,7 +286,7 @@ def run_validation(config_manager, verbose=False):
         result_handler=None,
         verbose=verbose,
     )
-    validator.execute()
+    validator.execute(result_format)
 
 
 def run_validations(args, config_managers):
@@ -296,7 +297,7 @@ def run_validations(args, config_managers):
     """
     # TODO(issue/31): Add parallel execution logic
     for config_manager in config_managers:
-        run_validation(config_manager, verbose=args.verbose)
+        run_validation(config_manager, result_format=args.format, verbose=args.verbose)
 
 
 def store_yaml_config_file(args, config_managers):
