@@ -2,6 +2,14 @@
 
 ## Untagged
 
+### [1.3.2](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.3.1...v1.3.2) (2021-06-29)
+
+
+### Documentation
+
+* add secrets logic to ci ([#273](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/273)) ([3c21ee5](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3c21ee5e35bb9ad33b2406b78fa3d913dee114d4))
+* Issue263 Installation doc updates ([#270](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/270)) ([0328c0e](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0328c0e4099963982a6b7ddb44b64d913379f2c1))
+
 ### [1.3.1](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.3.0...v1.3.1) (2021-06-28)
 
 
