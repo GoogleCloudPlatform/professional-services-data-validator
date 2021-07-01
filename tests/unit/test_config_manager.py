@@ -101,6 +101,16 @@ def test_config_property(module_under_test):
     assert config == config_manager._config
 
 
+def test_schema_property(module_under_test):
+    """Test getting schema."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    target_schema = config_manager.target_schema
+    assert target_schema == "bigquery-public-data.new_york_citibike"
+
+
 def test_filters_property(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False

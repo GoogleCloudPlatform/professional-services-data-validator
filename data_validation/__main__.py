@@ -46,27 +46,27 @@ def get_aggregate_config(args, config_manager):
     aggregate_configs = [config_manager.build_config_count_aggregate()]
 
     if args.count:
-        col_args = None if args.count == "*" else cli_tools.get_json_arg(args.count)
+        col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "count", col_args, None
         )
     if args.sum:
-        col_args = None if args.sum == "*" else cli_tools.get_json_arg(args.sum)
+        col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "sum", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.avg:
-        col_args = None if args.avg == "*" else cli_tools.get_json_arg(args.avg)
+        col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "avg", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.min:
-        col_args = None if args.min == "*" else cli_tools.get_json_arg(args.min)
+        col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "min", col_args, consts.NUMERIC_DATA_TYPES
         )
     if args.max:
-        col_args = None if args.max == "*" else cli_tools.get_json_arg(args.max)
+        col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, consts.NUMERIC_DATA_TYPES
         )
@@ -84,12 +84,12 @@ def build_config_from_args(args, config_manager):
         consts.GROUPED_COLUMN_VALIDATION,
         consts.ROW_VALIDATION,
     ]:
-        grouped_columns = cli_tools.get_json_arg(args.grouped_columns)
+        grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
     if config_manager.validation_type in [consts.ROW_VALIDATION]:
-        primary_keys = cli_tools.get_json_arg(args.primary_keys, default_value=[])
+        primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
         )
@@ -110,18 +110,29 @@ def build_config_managers_from_args(args):
     labels = cli_tools.get_labels(args.labels)
 
     result_handler_config = None
-    if args.result_handler_config:
-        result_handler_config = cli_tools.get_json_arg(args.result_handler_config)
+    if args.bq_result_handler:
+        result_handler_config = cli_tools.get_result_handler(
+            args.bq_result_handler, args.service_account
+        )
+    elif args.result_handler_config:
+        result_handler_config = cli_tools.get_result_handler(
+            args.result_handler_config, args.service_account
+        )
 
     filter_config = []
     if args.filters:
-        filter_config = cli_tools.get_json_arg(args.filters)
+        filter_config = cli_tools.get_filters(args.filters)
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
     threshold = args.threshold if args.threshold else 0.0
-    tables_list = cli_tools.get_json_arg(args.tables_list, default_value=[])
+
+    is_filesystem = True if source_conn["source_type"] == "FileSystem" else False
+    tables_list = cli_tools.get_tables_list(
+        args.tables_list, default_value=[], is_filesystem=is_filesystem
+    )
+
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
             config_type,
@@ -167,7 +178,7 @@ def build_config_managers_from_yaml(args):
     return config_managers
 
 
-def _compare_match_tables(source_table_map, target_table_map):
+def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8):
     """Return dict config object from matching tables."""
     # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
     table_configs = []
@@ -175,7 +186,7 @@ def _compare_match_tables(source_table_map, target_table_map):
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
         target_key = jellyfish_distance.extract_closest_match(
-            source_key, target_keys, score_cutoff=0.8
+            source_key, target_keys, score_cutoff=score_cutoff
         )
         if target_key is None:
             continue
@@ -217,15 +228,18 @@ def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
+    score_cutoff = args.score_cutoff or 0.8
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
-    allowed_schemas = cli_tools.get_json_arg(args.allowed_schemas)
+    allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
 
-    table_configs = _compare_match_tables(source_table_map, target_table_map)
+    table_configs = _compare_match_tables(
+        source_table_map, target_table_map, score_cutoff=score_cutoff
+    )
     return json.dumps(table_configs)
 
 

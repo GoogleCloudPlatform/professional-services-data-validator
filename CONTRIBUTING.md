@@ -37,3 +37,30 @@ cd professional-services-data-validator/
 python -m pip install --upgrade pip
 python -m pip install .
 ```
+
+## Conventional Commits
+
+This project uses [Conventional
+Commits](https://www.conventionalcommits.org/en/v1.0.0/) to manage the
+CHANGELOG and releases.
+
+Allowed commit prefixes are defined in the [release-please source
+code](https://github.com/googleapis/release-please/blob/master/src/releasers/python.ts):
+
+### User-facing commits
+
+- `feat: ` section: 'Features'
+- `fix: ` section: 'Bug Fixes'
+- `perf: ` section: 'Performance Improvements'
+- `deps: ` section: 'Dependencies'
+- `revert: ` section: 'Reverts'
+- `docs: ` section: 'Documentation'
+
+### Hidden commits (not shown in CHANGELOG)
+
+- `style: ` section: 'Styles', hidden: true
+- `chore: ` section: 'Miscellaneous Chores', hidden: true
+- `refactor: ` section: 'Code Refactoring', hidden: true
+- `test: ` section: 'Tests', hidden: true
+- `build: ` section: 'Build System', hidden: true
+- `ci: ` section: 'Continuous Integration', hidden: true

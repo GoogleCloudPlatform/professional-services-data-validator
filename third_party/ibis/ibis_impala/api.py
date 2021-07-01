@@ -12,26 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.backends.impala import udf
 from ibis.backends.impala import connect as impala_connect
+from ibis.backends.impala import udf
+import ibis.expr.datatypes as dt
+
+_impala_to_ibis_type = udf._impala_to_ibis_type
 
 
 def parse_type(t):
-   t = t.lower()
-   if t in _impala_to_ibis_type:
-       return _impala_to_ibis_type[t]
-   else:
-       if 'varchar' in t or 'char' in t:
-           return 'string'
-       elif 'decimal' in t:
-           result = dt.dtype(t)
-           if result:
-               return t
-           else:
-               return ValueError(t)
-       elif 'struct' in t or 'array' in t or 'map' in t:
-            return t.replace('int','int32')
-       else:
-           raise Exception(t)
+  """Returns the Ibis datatype from source type."""
+  t = t.lower()
+  if t in _impala_to_ibis_type:
+    return _impala_to_ibis_type[t]
+  else:
+    if 'varchar' in t or 'char' in t:
+      return 'string'
+    elif 'decimal' in t:
+      result = dt.dtype(t)
+      if result:
+        return t
+      else:
+        return ValueError(t)
+    elif 'struct' in t or 'array' in t or 'map' in t:
+      return t.replace('int', 'int32')
+    else:
+      raise Exception(t)
 
 udf.parse_type = parse_type

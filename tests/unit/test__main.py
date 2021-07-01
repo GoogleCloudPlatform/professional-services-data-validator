@@ -25,9 +25,9 @@ CLI_ARGS = {
     "type": "Column",
     "source_conn": TEST_CONN,
     "target_conn": TEST_CONN,
-    "tables_list": '[{"schema_name":"my_schema","table_name":"my_table"}]',
-    "sum": '["col_a","col_b"]',
-    "count": '["col_a","col_b"]',
+    "tables_list": "my_schema.my_table",
+    "sum": "col_a,col_b",
+    "count": "col_a,col_b",
     "config_file": "example_test.yaml",
     "verbose": True,
 }
