@@ -20,7 +20,8 @@ import copy
 import google.oauth2.service_account
 
 from google.cloud import bigquery
-from ibis.backends.bigquery.client import BigQueryClient
+import ibis
+import ibis_bigquery
 import ibis.backends.pandas
 from ibis.backends.pandas.client import PandasClient
 from ibis.backends.mysql.client import MySQLClient
@@ -88,7 +89,7 @@ def get_bigquery_client(project_id, dataset_id=None, credentials=None):
     google_client = bigquery.Client(
         project=project_id, client_info=info, credentials=credentials
     )
-    ibis_client = BigQueryClient(
+    ibis_client = ibis_bigquery.connect(
         project_id, dataset_id=dataset_id, credentials=credentials
     )
 
@@ -182,7 +183,7 @@ def get_data_client(connection_config):
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
 
-    # The BigQueryClient expects a credentials object, not a string.
+    # The ibis_bigquery.connect expects a credentials object, not a string.
     if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
         key_path = connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
         if key_path:

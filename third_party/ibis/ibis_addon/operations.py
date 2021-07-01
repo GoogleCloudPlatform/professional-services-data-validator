@@ -27,7 +27,7 @@ import ibis
 import sqlalchemy
 
 import ibis.expr.api
-from ibis.backends.bigquery.compiler import (
+from ibis_bigquery.compiler import (
     reduction as bq_reduction,
     BigQueryExprTranslator
 )
