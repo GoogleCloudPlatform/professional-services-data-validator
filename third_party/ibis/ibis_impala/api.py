@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.backends.impala import connect as impala_connect
+from ibis.backends.impala import connect
 from ibis.backends.impala import udf
 import ibis.expr.datatypes as dt
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
 
+def impala_connect(host=None, port=10000, database="default", auth_mechanism="PLAIN"):
+  return connect(host=host, port=int(port), databse=database,auth_mechanism=auth_mechanism)
 
 def parse_type(t):
   """Returns the Ibis datatype from source type."""

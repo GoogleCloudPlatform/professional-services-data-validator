@@ -119,11 +119,10 @@ CONNECTION_SOURCE_FIELDS = {
         ["file_type", "The file type of the file.'csv' or 'json'"],
     ],
     "Impala": [
-        ["source_type", "Source type"]
         ["host", "Desired Impala host"],
-        ["port", "Desired Imapala port"],
-        ["database", "Desired Impala database"],
-        ["auth_mechanism", "Desired Impala auth mechanism"],
+        ["port", "Desired Imapala port (10000 if not provided)"],
+        ["database", "Desired Impala database (default if not provided)"],
+        ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
     ],
 }
 
