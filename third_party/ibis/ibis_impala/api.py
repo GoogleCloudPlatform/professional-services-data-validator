@@ -22,7 +22,7 @@ def impala_connect(host=None, port=10000, database="default", auth_mechanism="PL
    auth_mechanism = (auth_mechanism, "PLAIN")[auth_mechanism is None]
    database = (database, "default")[database is None]
    port = (port, 10000)[port is None]
-  return connect(host=host, port=int(port), database=database,auth_mechanism=auth_mechanism)
+   return connect(host=host, port=int(port), database=database,auth_mechanism=auth_mechanism)
 
 def parse_type(t):
   """Returns the Ibis datatype from source type."""
