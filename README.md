@@ -36,6 +36,7 @@ DVT supports the following connection types:
 * [MySQL](docs/connections.md#mysql)
 * [Redshift](docs/connections.md#redshift)
 * [FileSystem](docs/connections.md#filesystem)
+* [Impala](docs/connections.md#impala)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
