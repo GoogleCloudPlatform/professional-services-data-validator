@@ -43,6 +43,7 @@ The data validation tool supports the following connection types.
 * [MySQL](#mysql)
 * [Redshift](#redshift)
 * [FileSystem](#filesystem)
+* [Impala](#Impala)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 
@@ -65,7 +66,7 @@ Below is the expected configuration for each type.
 ## Google BigQuery
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "BigQuery",
 
     # BigQuery Specific Connection Config
@@ -89,7 +90,7 @@ Below is the expected configuration for each type.
 ## Google Spanner
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "Spanner",
 
     # GCP Project to use for Spanner
@@ -114,7 +115,7 @@ Please note the Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "Teradata",
 
     # Connection Details
@@ -130,7 +131,7 @@ Please note the Oracle package is not installed by default. You will need to fol
 Then `pip install cx_Oracle`.
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "Oracle",
 
     # Connection Details
@@ -148,7 +149,7 @@ Please note the MSSQL Server package is not installed by default. You will need 
 Then `pip install pyodbc`.
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "MSSQL",
 
     # Connection Details
@@ -164,7 +165,7 @@ Then `pip install pyodbc`.
 ## Snowflake
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "Snowflake",
 
     # Connection Details
@@ -179,7 +180,7 @@ Then `pip install pyodbc`.
 ## Postgres
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "Postgres",
 
     # Connection Details
@@ -194,7 +195,7 @@ Then `pip install pyodbc`.
 ## MySQL
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "MySQL",
 
     # Connection Details
@@ -209,7 +210,7 @@ Then `pip install pyodbc`.
 ## Redshift
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "Redshift",
 
     # Connection Details
@@ -224,7 +225,7 @@ Then `pip install pyodbc`.
 ## FileSystem
 ```
 {
-    # Configuration Required for All Data Soures
+    # Configuration Required for All Data Sources
     "source_type": "FileSystem",
 
     # Table name to use as a reference for file data
@@ -235,5 +236,19 @@ Then `pip install pyodbc`.
     
     # The file type. Either 'csv' or 'json
     "file_type":"csv"
+}
+```
+
+## Impala
+```
+{
+    # Configuration Required for All Data Sources
+    "source_type": "Impala",
+
+    # Connection Details
+    "host": "127.0.0.1",
+    "port": 10000,
+    "database": "default",
+    "auth_mechanism":"PLAIN"
 }
 ```
