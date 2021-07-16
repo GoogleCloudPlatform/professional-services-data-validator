@@ -32,7 +32,7 @@ def _clean_dataframe(df):
 
 
 def _get_request_content(request):
-  return request.json
+    return request.json
 
 
 def validate(config):
@@ -64,6 +64,7 @@ def run():
     except Exception as e:
         print(e)
         return "Found Error: {}".format(e)
+
 
 @app.route("/test", methods=["POST"])
 def other():

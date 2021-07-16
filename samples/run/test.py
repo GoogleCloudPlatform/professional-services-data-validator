@@ -24,46 +24,40 @@ gcloud run services describe {service_name} --region=us-central1 --project={proj
 
 
 def get_token():
-  with os.popen("gcloud auth print-identity-token") as cmd:
-    token = cmd.read().strip()
+    with os.popen("gcloud auth print-identity-token") as cmd:
+        token = cmd.read().strip()
 
-  return token
+    return token
 
 
 def get_cloud_run_url(service_name, project_id):
-  describe_service = DESCRIBE_SERVICE.format(service_name=service_name,
-                                             project_id=project_id)
-  with os.popen(describe_service) as service:
-    description = service.read()
+    describe_service = DESCRIBE_SERVICE.format(
+        service_name=service_name, project_id=project_id
+    )
+    with os.popen(describe_service) as service:
+        description = service.read()
 
-  return re.findall("URL:.*\n", description)[0].split()[1].strip()
+    return re.findall("URL:.*\n", description)[0].split()[1].strip()
 
 
 data = {
-    "source_conn": {
-        "source_type": "BigQuery",
-        "project_id": PROJECT_ID,
-    },
-    "target_conn": {
-        "source_type": "BigQuery",
-        "project_id": PROJECT_ID,
-    },
+    "source_conn": {"source_type": "BigQuery", "project_id": PROJECT_ID,},
+    "target_conn": {"source_type": "BigQuery", "project_id": PROJECT_ID,},
     "type": "Column",
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_stations",
     "target_schema_name": "bigquery-public-data.new_york_citibike",
     "target_table_name": "citibike_stations",
-
     "aggregates": [
         {
             "source_column": None,
             "target_column": None,
             "field_alias": "count",
-            "type": "count"
-        }],
+            "type": "count",
+        }
+    ],
 }
 
 url = get_cloud_run_url("data-validation", PROJECT_ID)
-res = requests.post(
-    url, headers={"Authorization": "Bearer " + get_token()}, json=data)
+res = requests.post(url, headers={"Authorization": "Bearer " + get_token()}, json=data)
 print(res.content)
