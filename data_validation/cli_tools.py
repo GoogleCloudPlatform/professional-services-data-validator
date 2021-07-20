@@ -118,6 +118,12 @@ CONNECTION_SOURCE_FIELDS = {
         ["file_path", "The local, s3, or GCS file path to the data"],
         ["file_type", "The file type of the file.'csv' or 'json'"],
     ],
+    "Impala": [
+        ["host", "Desired Impala host"],
+        ["port", "Desired Imapala port (10000 if not provided)"],
+        ["database", "Desired Impala database (default if not provided)"],
+        ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
+    ],
 }
 
 
