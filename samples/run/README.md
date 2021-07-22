@@ -79,6 +79,11 @@ data = {
     "table_name": "citibike_stations",
     "target_schema_name": "bigquery-public-data.new_york_citibike",
     "target_table_name": "citibike_stations",
+    "result_handler": {
+      "type": "BigQuery",
+      "project_id": PROJECT_ID,
+      "table_id": "pso_data_validator.results"
+   },
 
     "aggregates": [
         {
