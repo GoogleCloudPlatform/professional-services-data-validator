@@ -1,5 +1,16 @@
 # Data Validation on Cloud Run
 
+### Quick Steps
+
+The dpeloyment logic is discussed in more detail below; however, to quickly
+deploy you follow follow this simple script:
+
+```
+export PROJECT_ID=<PROJECT-ID>
+./deploy.sh
+python3 test.py
+```
+
 ### Build Docker Image
 
 You will need to build a Docker image to be used by Cloud Run. In order to add
@@ -99,3 +110,17 @@ res = requests.post(
     url, headers={"Authorization": "Bearer " + get_token()}, json=data)
 print(res.content.decode())
 ```
+
+### Oracle Setup
+
+If you would like to use Data Validation against an Oracle DB you will need to
+supply your own license files.  To do so:
+
+1) Create an `oracle` directory and add your .rpm files into it.
+
+- oracle/oracle-instantclient12.2-basiclite-12.2.0.1.0-1.x86_64.rpm
+- oracle/oracle-instantclient12.2-devel-12.2.0.1.0-1.x86_64.rpm
+- oracle/oracle-instantclient12.2-odbc-12.2.0.1.0-2.x86_64.rpm
+
+2) Uncomment all logic in the Dockerfile under the Oracle Dependencies comments
+
