@@ -21,7 +21,7 @@ gcloud run deploy --image gcr.io/${PROJECT_ID}/data-validation \
 
 ### Test Cloud Run Endpoint
 
-You can easily run a request via Python. For example:
+You can easily run a request via Python.  For a quick test, we have provided this logic in `test.py` to run a validation against a public BigQuery table. The example is similar and also shows how you can foward results to BigQuery from the Cloud Run job:
 
 ```
 # Copyright 2020 Google LLC
