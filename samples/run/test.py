@@ -16,7 +16,7 @@ import os
 import re
 import requests
 
-PROJECT_ID = os.environ.get("PROJECT_ID", "pso-kokoro-resources")
+PROJECT_ID = os.environ.get("PROJECT_ID")
 
 DESCRIBE_SERVICE = """
 gcloud run services describe {service_name} --region=us-central1 --project={project_id}
