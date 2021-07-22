@@ -60,4 +60,4 @@ data = {
 
 url = get_cloud_run_url("data-validation", PROJECT_ID)
 res = requests.post(url, headers={"Authorization": "Bearer " + get_token()}, json=data)
-print(res.content)
+print(res.content.decode())
