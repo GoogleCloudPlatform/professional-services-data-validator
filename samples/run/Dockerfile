@@ -15,6 +15,25 @@ RUN apt-get update \
 RUN pip install --upgrade pip
 RUN pip install Flask gunicorn google_pso_data_validator
 
+# Oracle Dependencies
+# if you are using Oracle you should add .rpm files
+# under your license to a directory called oracle/
+# and then uncomment the setup below.
+
+# ENV ORACLE_SID oracle
+# ENV ORACLE_ODBC_VERSION 12.2
+# ENV ORACLE_HOME /usr/lib/oracle/${ORACLE_ODBC_VERSION}/client64
+
+# RUN pip install cx_Oracle
+# RUN apt-get -y install --fix-missing --upgrade vim alien unixodbc-dev wget libaio1 libaio-dev
+
+# COPY oracle/*.rpm ./
+# RUN alien -i *.rpm && rm *.rpm \
+#     && echo "/usr/lib/oracle/${ORACLE_ODBC_VERSION}/client64/lib/" > /etc/ld.so.conf.d/oracle.conf \
+#     && ln -s /usr/include/oracle/${ORACLE_ODBC_VERSION}/client64 $ORACLE_HOME/include \
+#     && ldconfig -v
+
+
 # Run the web service on container startup. Here we use the gunicorn
 # webserver, with one worker process and 8 threads.
 # For environments with multiple CPU cores, increase the number of workers
