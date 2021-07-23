@@ -27,7 +27,7 @@ import nox
 
 
 # Python version used for linting.
-DEFAULT_PYTHON_VERSION = "3.7"
+DEFAULT_PYTHON_VERSION = "3.9"
 
 # Python versions used for testing.
 PYTHON_VERSIONS = ["3.7", "3.8", "3.9"]
@@ -62,6 +62,11 @@ def unit(session):
         os.path.join("tests", "unit"),
         *session.posargs,
     )
+
+
+@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+def unit_small(session):
+    unit(session)
 
 
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
