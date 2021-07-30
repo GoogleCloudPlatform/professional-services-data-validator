@@ -146,6 +146,7 @@ def build_config_managers_from_args(args):
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,
+            format=args.format
         )
         configs.append(build_config_from_args(args, config_manager))
 
@@ -281,6 +282,7 @@ def run_validation(config_manager, verbose=False):
     """
     validator = DataValidation(
         config_manager.config,
+        format=config_manager.format,
         validation_builder=None,
         result_handler=None,
         verbose=verbose,

@@ -39,6 +39,7 @@ class DataValidation(object):
     def __init__(
         self,
         config,
+        format,
         validation_builder=None,
         schema_validator=None,
         result_handler=None,
@@ -57,6 +58,8 @@ class DataValidation(object):
 
         # Data Client Management
         self.config = config
+
+        self.format = format
 
         self.source_client = clients.get_data_client(
             self.config[consts.CONFIG_SOURCE_CONN]
@@ -102,7 +105,7 @@ class DataValidation(object):
             )
 
         # Call Result Handler to Manage Results
-        return self.result_handler.execute(self.config, result_df)
+        return self.result_handler.execute(self.config, self.format, result_df)
 
     def query_too_large(self, rows_df, grouped_fields):
         """ Return bool to dictate if another level of recursion
