@@ -159,7 +159,7 @@ STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "resu
 
 
 def test_count_validator(count_config):
-    validator = data_validation.DataValidation(count_config, verbose=True)
+    validator = data_validation.DataValidation(count_config, format="json", verbose=True)
     df = validator.execute()
 
     count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
@@ -186,7 +186,7 @@ def test_count_validator(count_config):
 
 
 def test_grouped_count_validator(grouped_config):
-    validator = data_validation.DataValidation(grouped_config, verbose=True)
+    validator = data_validation.DataValidation(grouped_config, format="json", verbose=True)
     df = validator.execute()
     rows = list(df[df["validation_name"] == "count"].iterrows())
 
