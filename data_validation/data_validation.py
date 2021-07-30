@@ -39,7 +39,7 @@ class DataValidation(object):
     def __init__(
         self,
         config,
-        format,
+        format="table",
         validation_builder=None,
         schema_validator=None,
         result_handler=None,
