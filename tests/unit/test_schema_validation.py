@@ -185,7 +185,7 @@ def test_execute(module_under_test, fs):
     )
     _create_table_file(TARGET_TABLE_FILE_PATH, _get_fake_json_data(target_data))
 
-    dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, format="json", verbose=True)
+    dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
     result_df = dv_client.schema_validator.execute()
     failures = result_df[result_df["status"].str.contains("Fail")]
 

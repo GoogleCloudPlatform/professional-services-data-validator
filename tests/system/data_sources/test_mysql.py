@@ -52,7 +52,7 @@ CONFIG_COUNT_VALID = {
 def test_mysql_count_invalid_host():
     try:
         data_validator = data_validation.DataValidation(
-            CONFIG_COUNT_VALID, format="json", verbose=False,
+            CONFIG_COUNT_VALID, verbose=False,
         )
         df = data_validator.execute()
         assert df["source_agg_value"][0] == df["target_agg_value"][0]

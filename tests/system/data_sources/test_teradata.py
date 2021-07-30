@@ -37,7 +37,7 @@ TERADATA_CONFIG = {
 
 def create_validator(builder):
     return data_validation.DataValidation(
-        TERADATA_CONFIG, builder=builder, result_handler=None, format="json", verbose=False
+        TERADATA_CONFIG, builder=builder, result_handler=None, verbose=False
     )
 
 
