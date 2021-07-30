@@ -179,7 +179,7 @@ def get_all_tables(client, allowed_schemas=None):
 
 
 def get_data_client(connection_config):
-    """Return DataClient client from given configuration"""
+    """ Return DataClient client from given configuration """
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
 

@@ -32,7 +32,7 @@ class SchemaValidation(object):
         self.run_metadata = run_metadata or metadata.RunMetadata()
 
     def execute(self):
-        """Performs a validation between source and a target schema"""
+        """ Performs a validation between source and a target schema"""
         ibis_source_schema = self.config_manager.source_client.get_schema(
             self.config_manager.source_table, self.config_manager.source_schema
         )
@@ -86,7 +86,7 @@ class SchemaValidation(object):
 
 
 def schema_validation_matching(source_fields, target_fields):
-    """Compare schemas between two dictionary objects"""
+    """ Compare schemas between two dictionary objects """
     results = []
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields.items():

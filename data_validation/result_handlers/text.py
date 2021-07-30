@@ -38,10 +38,8 @@ def print_formatted_(format, result_df):
     elif format == "table":
         print(result_df.to_markdown(tablefmt="fancy_grid"))
     else:
-        error_msg = (
-            f"format [{format}] not supported, results printed in default(table) mode. "
-            f"Supported formats are [text, csv, json, table]"
-        )
+        error_msg = f"format [{format}] not supported, results printed in default(table) mode. " \
+                    f"Supported formats are [text, csv, json, table]"
         print(result_df.to_markdown(tablefmt="fancy_grid"))
         raise ValueError(error_msg)
 

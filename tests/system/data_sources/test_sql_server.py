@@ -28,7 +28,7 @@ PROJECT_ID = os.getenv("PROJECT_ID")
 
 
 def test_sql_server_count():
-    """Test count validation on SQL Server instance"""
+    """ Test count validation on SQL Server instance """
     mssql_instance = CloudSQLResourceManager(
         PROJECT_ID,
         "SQLSERVER_2017_STANDARD",
@@ -76,9 +76,6 @@ def test_sql_server_count():
         ],
     }
 
-    data_validator = data_validation.DataValidation(
-        config_count_valid,
-        verbose=False,
-    )
+    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]

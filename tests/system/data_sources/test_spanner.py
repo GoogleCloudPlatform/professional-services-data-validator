@@ -179,13 +179,9 @@ def test_count_validator(count_config):
     assert float(count_value) > 0
     assert float(count_string_value) > 0
     assert float(avg_float_value) > 0
-    assert (
-        datetime.datetime.strptime(
-            max_timestamp_value,
-            "%Y-%m-%d %H:%M:%S%z",
-        )
-        > datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-    )
+    assert datetime.datetime.strptime(
+        max_timestamp_value, "%Y-%m-%d %H:%M:%S%z",
+    ) > datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
     assert float(min_int_value) > 0
 
 
