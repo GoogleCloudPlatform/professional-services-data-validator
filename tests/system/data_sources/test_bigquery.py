@@ -16,8 +16,8 @@ import os
 
 import pytest
 
-from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
+from data_validation import cli_tools, consts, data_validation
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
 CONFIG_COUNT_VALID = {
@@ -202,8 +202,7 @@ def test_count_validator():
     assert float(max_birth_year_value) > 0
     assert float(min_birth_year_value) > 0
     assert (
-            df["source_agg_value"].astype(float).sum()
-            == df["target_agg_value"].astype(float).sum()
+        df["source_agg_value"].astype(float).sum() == df["target_agg_value"].astype(float).sum()
     )
 
 
@@ -282,7 +281,7 @@ def _remove_bq_conn():
 
 
 def test_unsupported_result_format():
-    with pytest.raises(ValueError) as exp:
+    with pytest.raises(ValueError):
         validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, format="foobar", verbose=True)
         df = validator.execute()
         rows = list(df[df["validation_name"] == "count"].iterrows())
