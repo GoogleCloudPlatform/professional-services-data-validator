@@ -32,12 +32,12 @@ def module_under_test():
 
 
 def test_import(module_under_test):
-    """Test import cleanly """
+    """Test import cleanly"""
     assert module_under_test is not None
 
 
 def test_basic_result_handler(module_under_test):
-    """Test basic handler executes """
+    """Test basic handler executes"""
     format = "json"
     result_df = DataFrame(SAMPLE_RESULT_DATA)
     result_handler = module_under_test.TextResultHandler()

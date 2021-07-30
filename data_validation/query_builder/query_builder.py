@@ -37,11 +37,15 @@ class AggregateField(object):
     def count(field_name=None, alias=None):
         if field_name:
             return AggregateField(
-                ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.ColumnExpr.count,
+                field_name=field_name,
+                alias=alias,
             )
         else:
             return AggregateField(
-                ibis.expr.types.TableExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.TableExpr.count,
+                field_name=field_name,
+                alias=alias,
             )
 
     @staticmethod
@@ -59,19 +63,25 @@ class AggregateField(object):
     @staticmethod
     def max(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias,
+            ibis.expr.types.ColumnExpr.max,
+            field_name=field_name,
+            alias=alias,
         )
 
     @staticmethod
     def sum(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.sum, field_name=field_name, alias=alias,
+            ibis.expr.api.IntegerColumn.sum,
+            field_name=field_name,
+            alias=alias,
         )
 
     @staticmethod
     def bit_xor(field_name=None, alias=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.bit_xor, field_name=field_name, alias=alias,
+            ibis.expr.api.IntegerColumn.bit_xor,
+            field_name=field_name,
+            alias=alias,
         )
 
     def compile(self, ibis_table):
@@ -196,7 +206,7 @@ class GroupedField(object):
 
 class ColumnReference(object):
     def __init__(self, column_name):
-        """ A representation of an calculated field to build a query.
+        """A representation of an calculated field to build a query.
 
         Args:
             column_name (String): The column name used in a complex expr
@@ -204,7 +214,7 @@ class ColumnReference(object):
         self.column_name = column_name
 
     def compile(self, ibis_table):
-        """ Return an ibis object referencing the column.
+        """Return an ibis object referencing the column.
 
         Args:
             ibis_table (IbisTable): The table obj reference
@@ -215,7 +225,7 @@ class ColumnReference(object):
 class CalculatedField(object):
     def __init__(self, ibis_expr, config, fields, cast=None, **kwargs):
 
-        """ A representation of an calculated field to build a query.
+        """A representation of an calculated field to build a query.
 
         Args:
             config dict: Configurations object explaining calc field details
@@ -234,37 +244,61 @@ class CalculatedField(object):
         fields = [config["default_concat_separator"], fields]
         cast = "string"
         return CalculatedField(
-            ibis.expr.api.StringValue.join, config, fields, cast=cast,
+            ibis.expr.api.StringValue.join,
+            config,
+            fields,
+            cast=cast,
         )
 
     @staticmethod
     def hash(config, fields):
         if config.get("default_hash_function") is None:
             how = "farm_fingerprint"
-        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how=how,)
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.hash,
+            config,
+            fields,
+            how=how,
+        )
 
     @staticmethod
     def ifnull(config, fields):
         if config.get("default_null_string") is None:
             config["default_string"] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
         fields = [config["default_string"], fields[0]]
-        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.fillna,
+            config,
+            fields,
+        )
 
     @staticmethod
     def length(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.length, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.length,
+            config,
+            fields,
+        )
 
     @staticmethod
     def rstrip(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.rstrip, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.rstrip,
+            config,
+            fields,
+        )
 
     @staticmethod
     def upper(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.upper,
+            config,
+            fields,
+        )
 
     @staticmethod
     def custom(expr):
-        """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
+        """Returns a CalculatedField instance built for any custom SQL using a supported operator.
         Args:
             expr (Str): A custom SQL expression used to filter a query
         """
@@ -299,7 +333,7 @@ class QueryBuilder(object):
     def __init__(
         self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None
     ):
-        """ Build a QueryBuilder object which can be used to build queries easily
+        """Build a QueryBuilder object which can be used to build queries easily
 
         Args:
             aggregate_fields (list[AggregateField]): AggregateField instances with Ibis expressions
@@ -316,7 +350,7 @@ class QueryBuilder(object):
 
     @staticmethod
     def build_count_validator(limit=None):
-        """ Return a basic template builder for most validations """
+        """Return a basic template builder for most validations"""
         aggregate_fields = []
         filters = []
         grouped_fields = []
@@ -419,7 +453,7 @@ class QueryBuilder(object):
         self.filters.append(filter_obj)
 
     def add_calculated_field(self, calculated_field):
-        """ Add a CalculatedField instance to your query which
+        """Add a CalculatedField instance to your query which
             will add the desired scalar function to your compiled
             query (ie. CONCAT(field_a, field_b))
         Args:

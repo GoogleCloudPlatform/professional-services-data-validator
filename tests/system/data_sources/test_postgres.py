@@ -28,7 +28,7 @@ PROJECT_ID = os.getenv("PROJECT_ID")
 
 
 def test_postgres_count():
-    """ Test count validation on Postgres instance """
+    """Test count validation on Postgres instance"""
     postgres_instance = CloudSQLResourceManager(
         PROJECT_ID,
         "POSTGRES_12",
@@ -76,6 +76,9 @@ def test_postgres_count():
         ],
     }
 
-    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]

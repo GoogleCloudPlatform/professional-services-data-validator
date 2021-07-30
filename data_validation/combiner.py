@@ -32,7 +32,12 @@ DEFAULT_TARGET = "target"
 
 
 def generate_report(
-    client, run_metadata, source, target, join_on_fields=(), verbose=False,
+    client,
+    run_metadata,
+    source,
+    target,
+    join_on_fields=(),
+    verbose=False,
 ):
     """Combine results into a report.
 

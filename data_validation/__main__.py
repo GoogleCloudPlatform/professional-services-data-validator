@@ -146,7 +146,7 @@ def build_config_managers_from_args(args):
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,
-            format=args.format
+            format=args.format,
         )
         configs.append(build_config_from_args(args, config_manager))
 
@@ -326,7 +326,7 @@ def run(args):
 
 
 def run_connections(args):
-    """ Run commands related to connection management."""
+    """Run commands related to connection management."""
     if args.connect_cmd == "list":
         cli_tools.list_connections()
     elif args.connect_cmd == "add":

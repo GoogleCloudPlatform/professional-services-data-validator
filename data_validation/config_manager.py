@@ -82,12 +82,12 @@ class ConfigManager(object):
 
     @property
     def max_recursive_query_size(self):
-        """Return Aggregates from Config """
+        """Return Aggregates from Config"""
         return self._config.get(consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE, 50000)
 
     @property
     def aggregates(self):
-        """Return Aggregates from Config """
+        """Return Aggregates from Config"""
         return self._config.get(consts.CONFIG_AGGREGATES, [])
 
     def append_aggregates(self, aggregate_configs):
@@ -105,7 +105,7 @@ class ConfigManager(object):
 
     @property
     def query_groups(self):
-        """ Return Query Groups from Config """
+        """Return Query Groups from Config"""
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
 
     def append_query_groups(self, grouped_column_configs):
@@ -116,7 +116,7 @@ class ConfigManager(object):
 
     @property
     def primary_keys(self):
-        """ Return Query Groups from Config """
+        """Return Query Groups from Config"""
         return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
 
     def append_primary_keys(self, primary_key_configs):
@@ -127,7 +127,7 @@ class ConfigManager(object):
 
     @property
     def filters(self):
-        """Return Filters from Config """
+        """Return Filters from Config"""
         return self._config.get(consts.CONFIG_FILTERS, [])
 
     @property
@@ -185,12 +185,12 @@ class ConfigManager(object):
 
     @property
     def threshold(self):
-        """Return threshold from Config """
+        """Return threshold from Config"""
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
     @property
     def format(self):
-        """Return threshold from Config """
+        """Return threshold from Config"""
         return self._config.get(consts.CONFIG_FORMAT, "table")
 
     def get_source_ibis_table(self):
@@ -253,8 +253,10 @@ class ConfigManager(object):
                 consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
             )
             if key_path:
-                credentials = google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
+                credentials = (
+                    google.oauth2.service_account.Credentials.from_service_account_file(
+                        key_path
+                    )
                 )
             else:
                 credentials = None

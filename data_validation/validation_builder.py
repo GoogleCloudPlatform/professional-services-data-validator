@@ -67,7 +67,7 @@ class ValidationBuilder(object):
 
     @staticmethod
     def get_query_builder(validation_type):
-        """ Return Query Builder object given validation type """
+        """Return Query Builder object given validation type"""
         if validation_type in ["Column", "GroupedColumn", "Row", "Schema"]:
             builder = QueryBuilder.build_count_validator()
         else:
@@ -89,11 +89,11 @@ class ValidationBuilder(object):
         return self._metadata
 
     def get_group_aliases(self):
-        """ Return List of String Aliases """
+        """Return List of String Aliases"""
         return self.group_aliases.keys()
 
     def get_calculated_aliases(self):
-        """ Return List of String Aliases """
+        """Return List of String Aliases"""
         return self.calculated_aliases.keys()
 
     def get_grouped_alias_source_column(self, alias):
@@ -103,26 +103,26 @@ class ValidationBuilder(object):
         return self.group_aliases[alias][consts.CONFIG_TARGET_COLUMN]
 
     def add_config_aggregates(self):
-        """ Add Aggregations to Query """
+        """Add Aggregations to Query"""
         aggregate_fields = self.config_manager.aggregates
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
     def add_config_calculated_fields(self):
-        """ Add calculated fields to Query """
+        """Add calculated fields to Query"""
         calc_fields = self.config_manager.calculated_fields
         if calc_fields is not None:
             for calc_field in calc_fields:
                 self.add_calc(calc_field)
 
     def add_config_query_groups(self, query_groups=None):
-        """ Add Grouped Columns to Query """
+        """Add Grouped Columns to Query"""
         grouped_fields = query_groups or self.config_manager.query_groups
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
 
     def add_config_filters(self):
-        """ Add Filters to Query """
+        """Add Filters to Query"""
         filter_fields = self.config_manager.filters
         for filter_field in filter_fields:
             self.add_filter(filter_field)
@@ -162,7 +162,7 @@ class ValidationBuilder(object):
         )
 
     def pop_grouped_fields(self):
-        """ Return grouped fields and reset configs."""
+        """Return grouped fields and reset configs."""
         self.source_builder.grouped_fields = []
         self.target_builder.grouped_fields = []
         self.group_aliases = {}
@@ -219,7 +219,7 @@ class ValidationBuilder(object):
         self.target_builder.add_filter_field(target_filter)
 
     def add_calc(self, calc_field):
-        """ Add CalculatedField to Queries
+        """Add CalculatedField to Queries
 
         Args:
             calc_field (Dict): An object with source, target, and cast info
@@ -247,7 +247,7 @@ class ValidationBuilder(object):
         self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):
-        """ Return query for source validation """
+        """Return query for source validation"""
         source_config = {
             "data_client": self.source_client,
             "schema_name": self.config_manager.source_schema,
@@ -261,7 +261,7 @@ class ValidationBuilder(object):
         return query
 
     def get_target_query(self):
-        """ Return query for source validation """
+        """Return query for source validation"""
         target_config = {
             "data_client": self.target_client,
             "schema_name": self.config_manager.target_schema,
