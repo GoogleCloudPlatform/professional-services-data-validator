@@ -293,7 +293,7 @@ def _configure_run_parser(subparsers):
     )
     run_parser.add_argument(
         "--format",
-        "-format",
+        "-fmt",
         default="table",
         help="Set the format for printing command output",
     )
