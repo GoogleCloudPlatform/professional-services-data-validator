@@ -146,7 +146,7 @@ def build_config_managers_from_args(args):
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,
-            format=args.format
+            format=args.format,
         )
         configs.append(build_config_from_args(args, config_manager))
 

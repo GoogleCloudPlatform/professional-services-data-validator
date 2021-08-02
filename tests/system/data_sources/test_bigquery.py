@@ -179,7 +179,9 @@ STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "resu
 
 
 def test_count_validator():
-    validator = data_validation.DataValidation(CONFIG_COUNT_VALID, format="text", verbose=True)
+    validator = data_validation.DataValidation(
+        CONFIG_COUNT_VALID, format="text", verbose=True
+    )
     df = validator.execute()
 
     count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
@@ -202,12 +204,15 @@ def test_count_validator():
     assert float(max_birth_year_value) > 0
     assert float(min_birth_year_value) > 0
     assert (
-        df["source_agg_value"].astype(float).sum() == df["target_agg_value"].astype(float).sum()
+        df["source_agg_value"].astype(float).sum()
+        == df["target_agg_value"].astype(float).sum()
     )
 
 
 def test_grouped_count_validator():
-    validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, format="csv", verbose=True)
+    validator = data_validation.DataValidation(
+        CONFIG_GROUPED_COUNT_VALID, format="csv", verbose=True
+    )
     df = validator.execute()
     rows = list(df[df["validation_name"] == "count"].iterrows())
 
@@ -223,7 +228,9 @@ def test_grouped_count_validator():
 
 
 def test_numeric_types():
-    validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, format="json", verbose=True)
+    validator = data_validation.DataValidation(
+        CONFIG_NUMERIC_AGG_VALID, format="json", verbose=True
+    )
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
@@ -282,7 +289,9 @@ def _remove_bq_conn():
 
 def test_unsupported_result_format():
     with pytest.raises(ValueError):
-        validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, format="foobar", verbose=True)
+        validator = data_validation.DataValidation(
+            CONFIG_GROUPED_COUNT_VALID, format="foobar", verbose=True
+        )
         df = validator.execute()
         rows = list(df[df["validation_name"] == "count"].iterrows())
         assert len(rows) > 1
