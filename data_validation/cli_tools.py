@@ -295,7 +295,7 @@ def _configure_run_parser(subparsers):
         "--format",
         "-fmt",
         default="table",
-        help="Set the format for printing command output",
+        help="Set the format for printing command output, Supported formats are (text, csv, json, table)",
     )
 
 
