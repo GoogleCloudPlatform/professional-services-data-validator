@@ -14,9 +14,10 @@
 
 import os
 
-from data_validation import cli_tools, consts, data_validation
-from data_validation import __main__ as main
+import pytest
 
+from data_validation import __main__ as main
+from data_validation import cli_tools, consts, data_validation
 
 BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
 CONFIG_COUNT_VALID = {
@@ -178,7 +179,9 @@ STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "resu
 
 
 def test_count_validator():
-    validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
+    validator = data_validation.DataValidation(
+        CONFIG_COUNT_VALID, format="text", verbose=True
+    )
     df = validator.execute()
 
     count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
@@ -207,7 +210,9 @@ def test_count_validator():
 
 
 def test_grouped_count_validator():
-    validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
+    validator = data_validation.DataValidation(
+        CONFIG_GROUPED_COUNT_VALID, format="csv", verbose=True
+    )
     df = validator.execute()
     rows = list(df[df["validation_name"] == "count"].iterrows())
 
@@ -223,7 +228,9 @@ def test_grouped_count_validator():
 
 
 def test_numeric_types():
-    validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
+    validator = data_validation.DataValidation(
+        CONFIG_NUMERIC_AGG_VALID, format="json", verbose=True
+    )
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
@@ -246,7 +253,7 @@ def test_cli_store_yaml_then_run():
         # The number of lines is not significant, except that it represents
         # the exact file expected to be created.  Any change to this value
         # is likely to be a breaking change and must be assessed.
-        assert len(yaml_file.readlines()) == 32
+        assert len(yaml_file.readlines()) == 33
 
     # Run generated config
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
@@ -278,3 +285,13 @@ def _store_bq_conn():
 def _remove_bq_conn():
     file_path = cli_tools._get_connection_file(BQ_CONN_NAME)
     os.remove(file_path)
+
+
+def test_unsupported_result_format():
+    with pytest.raises(ValueError):
+        validator = data_validation.DataValidation(
+            CONFIG_GROUPED_COUNT_VALID, format="foobar", verbose=True
+        )
+        df = validator.execute()
+        rows = list(df[df["validation_name"] == "count"].iterrows())
+        assert len(rows) > 1
