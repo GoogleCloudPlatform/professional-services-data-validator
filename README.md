@@ -110,8 +110,6 @@ data-validation run
   --labels or -l KEY1=VALUE1,KEY2=VALUE2
                         (Optional) Comma-separated key value pair labels for the run.
   --verbose or -v       Verbose logging will print queries executed
-  --format or -fmt      Format for stdout output, Supported formats are (text, csv, json, table)
-                        It defaults to table.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,

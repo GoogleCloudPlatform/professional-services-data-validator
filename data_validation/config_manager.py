@@ -188,11 +188,6 @@ class ConfigManager(object):
         """Return threshold from Config """
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
-    @property
-    def format(self):
-        """Return threshold from Config """
-        return self._config.get(consts.CONFIG_FORMAT, "table")
-
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
@@ -274,7 +269,6 @@ class ConfigManager(object):
         table_obj,
         labels,
         threshold,
-        format,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
@@ -295,7 +289,6 @@ class ConfigManager(object):
             consts.CONFIG_THRESHOLD: threshold,
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
             consts.CONFIG_FILTERS: filter_config,
-            consts.CONFIG_FORMAT: format,
         }
 
         # Only FileSystem connections do not require schemas
