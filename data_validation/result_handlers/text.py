@@ -23,31 +23,8 @@ Output validation report to text-based log
 """
 
 
-def print_formatted_(format, result_df):
-    """
-    Utility for printing formatted results
-    :param result_df
-    :param format
-    """
-    if format == "text":
-        print(result_df.to_string(index=False))
-    elif format == "csv":
-        print(result_df.to_csv(index=False))
-    elif format == "json":
-        print(result_df.to_json(orient="index"))
-    elif format == "table":
-        print(result_df.to_markdown(tablefmt="fancy_grid"))
-    else:
-        error_msg = (
-            f"format [{format}] not supported, results printed in default(table) mode. "
-            f"Supported formats are [text, csv, json, table]"
-        )
-        print(result_df.to_markdown(tablefmt="fancy_grid"))
-        raise ValueError(error_msg)
-
-
 class TextResultHandler(object):
-    def execute(self, config, format, result_df):
-        print_formatted_(format, result_df)
+    def execute(self, config, result_df):
+        print(result_df.to_string(index=False))
 
         return result_df
