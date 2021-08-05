@@ -112,6 +112,7 @@ def count_config(spanner_connection_config, database_id):
                 consts.CONFIG_FIELD_ALIAS: "min_int_col",
             },
         ],
+        consts.CONFIG_FORMAT: "table",
     }
 
 
@@ -148,6 +149,7 @@ def grouped_config(spanner_connection_config, database_id):
                 consts.CONFIG_CAST: "date",
             },
         ],
+        consts.CONFIG_FORMAT: "table",
     }
 
 

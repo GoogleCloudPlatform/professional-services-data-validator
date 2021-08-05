@@ -143,6 +143,7 @@ def build_config_managers_from_args(args):
             table_obj,
             labels,
             threshold,
+            format=args.format,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,

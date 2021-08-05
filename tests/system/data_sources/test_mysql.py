@@ -46,6 +46,7 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_FIELD_ALIAS: "count",
         },
     ],
+    consts.CONFIG_FORMAT: "table",
 }
 
 
