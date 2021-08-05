@@ -67,6 +67,7 @@ SAMPLE_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 SAMPLE_THRESHOLD_CONFIG = {
@@ -97,6 +98,7 @@ SAMPLE_THRESHOLD_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 150.0,
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 SAMPLE_ROW_CONFIG = {
@@ -136,6 +138,7 @@ SAMPLE_ROW_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 SAMPLE_ROW_CALC_CONFIG = {
@@ -223,6 +226,7 @@ SAMPLE_ROW_CALC_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 
