@@ -51,7 +51,7 @@ SAMPLE_SCHEMA_CONFIG = {
     consts.CONFIG_AGGREGATES: [],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
-    # consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: "table",
 }
 
 STRING_CONSTANT = "constant"
