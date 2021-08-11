@@ -2,8 +2,8 @@
 
 ### Quick Steps
 
-The dpeloyment logic is discussed in more detail below; however, to quickly
-deploy you follow follow this simple script:
+The deployment logic is discussed in more detail below; however, to quickly
+deploy DVT, follow this simple script:
 
 ```
 export PROJECT_ID=<PROJECT-ID>
