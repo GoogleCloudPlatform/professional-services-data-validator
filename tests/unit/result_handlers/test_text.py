@@ -66,7 +66,7 @@ def test_columns_to_print(module_under_test, capsys):
     result_handler = module_under_test.TextResultHandler(
         format, SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
-    handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
+    result_handler.execute(SAMPLE_CONFIG, result_df)
 
     grid_text = "││A│C││0│0│2││1│4│6││2│8│10│"
     printed_text = capsys.readouterr().out
