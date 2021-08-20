@@ -16,7 +16,6 @@ import pytest
 
 from pandas import DataFrame
 
-
 SAMPLE_CONFIG = {}
 SAMPLE_RESULT_DATA = [
     {"table_name": "my_table", "count": 10},
@@ -53,3 +52,26 @@ def test_unsupported_result_format(module_under_test):
 
         handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
         assert handler_output["count"].sum() == result_df["count"].sum()
+
+
+def test_columns_to_print(module_under_test, capsys):
+    """Check for trimmed columns in grid print"""
+    table = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]
+    result_df = DataFrame(table, columns=["A", "B", "C", "D"])
+    cols_filter_list = ["B", "D"]
+    format = "table-"
+    result_handler = module_under_test.TextResultHandler(format, cols_filter_list)
+    handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
+
+    grid_text = "││A│C││0│0│2││1│4│6││2│8│10│"
+    printed_text = capsys.readouterr().out
+    printed_text = (
+        printed_text.replace("\n", "")
+        .replace("'", "")
+        .replace(" ", "")
+        .replace("╒════╤═════╤═════╕", "")
+        .replace("╞════╪═════╪═════╡", "")
+        .replace("├────┼─────┼─────┤", "")
+        .replace("╘════╧═════╧═════╛", "")
+    )
+    assert printed_text == grid_text

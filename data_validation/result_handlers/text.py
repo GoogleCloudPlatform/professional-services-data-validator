@@ -22,10 +22,13 @@ from the validation run.
 Output validation report to text-based log
 """
 
+from data_validation import consts
+
 
 class TextResultHandler(object):
-    def __init__(self, format):
+    def __init__(self, format, cols_filter_list=consts.COLUMN_FILTER_LIST):
         self.format = format
+        self.cols_filter_list = cols_filter_list
 
     def print_formatted_(self, result_df):
         """
@@ -38,15 +41,21 @@ class TextResultHandler(object):
             print(result_df.to_csv(index=False))
         elif self.format == "json":
             print(result_df.to_json(orient="index"))
-        elif self.format == "table":
-            print(result_df.to_markdown(tablefmt="fancy_grid"))
         else:
+            print(
+                result_df.drop(self.cols_filter_list, axis=1).to_markdown(
+                    tablefmt="fancy_grid"
+                )
+            )
+
+        if self.format not in consts.FORMAT_TYPES:
             error_msg = (
                 f"format [{self.format}] not supported, results printed in default(table) mode. "
                 f"Supported formats are [text, csv, json, table]"
             )
-            print(result_df.to_markdown(tablefmt="fancy_grid"))
             raise ValueError(error_msg)
+
+        return result_df
 
     def execute(self, config, result_df):
         self.print_formatted_(result_df)
