@@ -291,6 +291,13 @@ def _configure_run_parser(subparsers):
         "-filters",
         help="Filters in the format source_filter:target_filter",
     )
+    run_parser.add_argument(
+        "--format",
+        "-fmt",
+        default="table",
+        help="Set the format for printing command output, Supported formats are (text, csv, json, table). It defaults "
+        "to table",
+    )
 
 
 def _configure_connection_parser(subparsers):
