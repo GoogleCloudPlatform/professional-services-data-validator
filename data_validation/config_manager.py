@@ -68,12 +68,12 @@ class ConfigManager(object):
 
     @property
     def validation_type(self):
-        """Return string validation type (Column|GroupedColumn|Row)."""
+        """Return string validation type (Column|Schema)."""
         return self._config[consts.CONFIG_TYPE]
 
     def process_in_memory(self):
         if (
-            self.validation_type == "Row"
+            self.is_grouped_row_validation
             and self.source_connection == self.target_connection
         ):
             return False
@@ -116,7 +116,7 @@ class ConfigManager(object):
 
     @property
     def primary_keys(self):
-        """ Return Query Groups from Config """
+        """ Return Primary keys from Config """
         return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
 
     def append_primary_keys(self, primary_key_configs):
@@ -124,6 +124,12 @@ class ConfigManager(object):
         self._config[consts.CONFIG_PRIMARY_KEYS] = (
             self.primary_keys + primary_key_configs
         )
+
+    @property
+    def is_grouped_row_validation(self):
+        """ Returns boolean indicating if validation type is a Grouped_Column
+        Row validation. """
+        return self.primary_keys != []
 
     @property
     def filters(self):

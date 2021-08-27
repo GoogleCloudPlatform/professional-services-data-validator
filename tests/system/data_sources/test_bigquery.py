@@ -68,7 +68,7 @@ CONFIG_GROUPED_COUNT_VALID = {
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
     consts.CONFIG_TARGET_CONN: BQ_CONN,
     # Validation Type
-    consts.CONFIG_TYPE: "GroupedColumn",
+    consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
