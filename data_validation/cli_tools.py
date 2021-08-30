@@ -442,6 +442,13 @@ def _add_common_arguments(parser):
         "-c",
         help="Store the validation in the YAML Config File Path specified",
     )
+    parser.add_argument(
+        "--format",
+        "-fmt",
+        default="table",
+        help="Set the format for printing command output, Supported formats are (text, csv, json, table). Defaults "
+        "to table",
+    )
 
 
 def get_connection_config_from_args(args):
