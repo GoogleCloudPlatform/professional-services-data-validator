@@ -32,6 +32,7 @@ TERADATA_CONFIG = {
     "schema_name": "Sys_Calendar",
     "table_name": "CALENDAR",
     "partition_column": "year_of_calendar",
+    "format": "table",
 }
 
 

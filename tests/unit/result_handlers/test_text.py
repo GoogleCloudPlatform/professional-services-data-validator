@@ -16,12 +16,10 @@ import pytest
 
 from pandas import DataFrame
 
-
 SAMPLE_CONFIG = {}
-SAMPLE_RESULT_DATA = [
-    {"table_name": "my_table", "count": 10},
-    {"table_name": "my_table", "count": 10},
-]
+SAMPLE_RESULT_DATA = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]
+SAMPLE_RESULT_COLUMNS = ["A", "B", "C", "D"]
+SAMPLE_RESULT_COLUMNS_FILTER_LIST = ["B", "D"]
 
 
 @pytest.fixture
@@ -38,8 +36,47 @@ def test_import(module_under_test):
 
 def test_basic_result_handler(module_under_test):
     """Test basic handler executes """
-    result_df = DataFrame(SAMPLE_RESULT_DATA)
-    result_handler = module_under_test.TextResultHandler()
+    result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
+    format = "csv"
+    result_handler = module_under_test.TextResultHandler(
+        format, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+    )
 
     handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
-    assert handler_output["count"].sum() == result_df["count"].sum()
+    assert handler_output["A"].sum() == result_df["A"].sum()
+
+
+def test_unsupported_result_format(module_under_test):
+    """Check for invalid format"""
+    with pytest.raises(ValueError):
+        result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
+        format = "foobar"
+        result_handler = module_under_test.TextResultHandler(
+            format, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+        )
+
+        handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
+        assert handler_output["A"].sum() == result_df["A"].sum()
+
+
+def test_columns_to_print(module_under_test, capsys):
+    """Check for trimmed columns in grid print"""
+    result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
+    format = "table"
+    result_handler = module_under_test.TextResultHandler(
+        format, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+    )
+    result_handler.execute(SAMPLE_CONFIG, result_df)
+
+    grid_text = "││A│C││0│0│2││1│4│6││2│8│10│"
+    printed_text = capsys.readouterr().out
+    printed_text = (
+        printed_text.replace("\n", "")
+        .replace("'", "")
+        .replace(" ", "")
+        .replace("╒════╤═════╤═════╕", "")
+        .replace("╞════╪═════╪═════╡", "")
+        .replace("├────┼─────┼─────┤", "")
+        .replace("╘════╧═════╧═════╛", "")
+    )
+    assert printed_text == grid_text

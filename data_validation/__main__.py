@@ -134,6 +134,8 @@ def build_config_managers_from_args(args):
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
+    format = args.format if args.format else "table"
+
     is_filesystem = True if source_conn["source_type"] == "FileSystem" else False
     tables_list = cli_tools.get_tables_list(
         args.tables_list, default_value=[], is_filesystem=is_filesystem
@@ -149,6 +151,7 @@ def build_config_managers_from_args(args):
             table_obj,
             labels,
             threshold,
+            format,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,

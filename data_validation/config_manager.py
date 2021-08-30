@@ -24,7 +24,6 @@ from data_validation.validation_builder import ValidationBuilder
 
 
 class ConfigManager(object):
-
     _config: dict = None
     source_client = None
     target_client = None
@@ -244,7 +243,7 @@ class ConfigManager(object):
     def get_result_handler(self):
         """Return ResultHandler instance from supplied config."""
         if not self.result_handler_config:
-            return TextResultHandler()
+            return TextResultHandler(self._config[consts.CONFIG_FORMAT])
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
         if result_type == "BigQuery":
@@ -275,6 +274,7 @@ class ConfigManager(object):
         table_obj,
         labels,
         threshold,
+        format,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
@@ -293,6 +293,7 @@ class ConfigManager(object):
             ),
             consts.CONFIG_LABELS: labels,
             consts.CONFIG_THRESHOLD: threshold,
+            consts.CONFIG_FORMAT: format,
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
             consts.CONFIG_FILTERS: filter_config,
         }

@@ -35,6 +35,7 @@ CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
 CONFIG_THRESHOLD = "threshold"
 CONFIG_CAST = "cast"
+CONFIG_FORMAT = "format"
 CONFIG_LIMIT = "limit"
 CONFIG_FILTERS = "filters"
 CONFIG_FILTER_SOURCE = "source"
@@ -99,3 +100,18 @@ RESULT_TYPE_TARGET = "target"
 
 # Ibis Object Info
 NUMERIC_DATA_TYPES = ["float64", "int32", "int64", "decimal"]
+
+FORMAT_TYPES = ["csv", "json", "table", "text"]
+
+# Text Result Handler column filter list
+COLUMN_FILTER_LIST = [
+    "aggregation_type",
+    "difference",
+    "end_time",
+    "labels",
+    "pct_threshold",
+    "run_id",
+    "source_agg_value",
+    "start_time",
+    "target_agg_value",
+]

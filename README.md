@@ -118,6 +118,8 @@ data-validation (--verbose or -v) validate column
                         (Optional) Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
   --labels or -l KEY1=VALUE1,KEY2=VALUE2
                         (Optional) Comma-separated key value pair labels for the run.
+  --format or -fmt      Format for stdout output, Supported formats are (text, csv, json, table)
+                        It defaults to table.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
@@ -147,6 +149,8 @@ data-validation (--verbose or -v) validate schema
                         (Optional) Service account to use for BigQuery result handler output.
   --config-file or -c CONFIG_FILE
                         YAML Config File Path to be used for storing validations.
+  --format or -fmt      Format for stdout output, Supported formats are (text, csv, json, table)
+                        It defaults to table.
 ```
 
 ### Running Custom SQL Exploration

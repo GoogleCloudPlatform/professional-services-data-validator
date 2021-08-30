@@ -67,6 +67,7 @@ SAMPLE_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 SAMPLE_THRESHOLD_CONFIG = {
@@ -97,6 +98,7 @@ SAMPLE_THRESHOLD_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 150.0,
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 # Grouped Column Row confg
@@ -137,6 +139,7 @@ SAMPLE_GC_ROW_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 SAMPLE_GC_ROW_CALC_CONFIG = {
@@ -224,6 +227,7 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 
