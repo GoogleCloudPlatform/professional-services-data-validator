@@ -2,7 +2,7 @@
 This page describes some basic use cases of the tool.
 
 **PLEASE NOTE:** In below commands, my_bq_conn refers to the connection name for your BigQuery project. We are validating BigQuery tables that are
-available in BigQuery public datasets. These examples validate a table agaist itself for example purposes.  
+available in BigQuery public datasets. These examples validate a table against itself for example purposes.  
 
 Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *' as the default aggregation.
 

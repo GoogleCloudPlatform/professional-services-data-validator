@@ -100,7 +100,7 @@ data-validation run
   --service-account or -sa PATH_TO_SA_KEY
                         (Optional) Service account to use for BigQuery result handler output.
   --filters SOURCE_FILTER:TARGET_FILTER
-                        Colon spearated string values of source and target filters.
+                        Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
   --config-file or -c CONFIG_FILE

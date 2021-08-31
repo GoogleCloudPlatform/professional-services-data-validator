@@ -2,7 +2,7 @@
 
 ### Quick Steps
 
-The dpeloyment logic is discussed in more detail below; however, to quickly
+The deployment logic is discussed in more detail below; however, to quickly
 deploy you follow follow this simple script:
 
 ```
