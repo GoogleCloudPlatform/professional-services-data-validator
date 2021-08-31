@@ -77,8 +77,8 @@ DVT supports column (including grouped column) and schema validations.
 
 Below is the command syntax for column validations. To run a grouped column validation,
 simply specify the `--grouped-columns` flag. You can also take grouped column validations
-a step further by providing the `primary-key` flag. In this case, if a mismatch was found
-DVT will dive deeper into the slice with the error and find the row (PK value) with the
+a step further by providing the `--primary-key` flag. With this flag, if a mismatch was found,
+DVT will dive deeper into the slice with the error and find the row (primary key value) with the
 inconsistency. 
 
 ```
@@ -93,32 +93,33 @@ data-validation (--verbose or -v) validate column
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
-  --grouped-columns or -gc GROUPED_COLUMNS
+  [--grouped-columns or -gc GROUPED_COLUMNS]
                         Comma separated list of columns for Group By i.e col_a,col_b
-  --primary-keys or -pk PRIMARY_KEYS
+  [--primary-keys or -pk PRIMARY_KEYS]
                         Comma separated list of columns to use as primary keys
-                        (Optional) Only use with grouped column validation
-  --count COLUMNS       Comma separated list of columns for count or * for all columns
-  --sum COLUMNS         Comma separated list of columns for sum or * for all numeric
-  --min COLUMNS         Comma separated list of columns for min or * for all numeric
-  --max COLUMNS         Comma separated list of columns for max or * for all numeric
-  --avg COLUMNS         Comma separated list of columns for avg or * for all numeric
-  --bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE
-                        (Optional) BigQuery destination for validation results. Defaults to stdout.
+                        (Note) Only use with grouped column validation
+  [--count COLUMNS]     Comma separated list of columns for count or * for all columns
+  [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
+  [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
+  [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
+  [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
-  --service-account or -sa PATH_TO_SA_KEY
-                        (Optional) Service account to use for BigQuery result handler output.
-  --filters SOURCE_FILTER:TARGET_FILTER
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon spearated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
-  --config-file or -c CONFIG_FILE
+  [--config-file or -c CONFIG_FILE]
                         YAML Config File Path to be used for storing validations.
-  --threshold or -th THRESHOLD
-                        (Optional) Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
-  --labels or -l KEY1=VALUE1,KEY2=VALUE2
-                        (Optional) Comma-separated key value pair labels for the run.
-  --format or -fmt      Format for stdout output, Supported formats are (text, csv, json, table) Defaults to table.
+  [--threshold or -th THRESHOLD]
+                        Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
@@ -128,6 +129,8 @@ The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
 
 #### Schema Validations
+Below is the syntax for schema validations. These can be used to compare column types between source
+and target.
 
 ```
 data-validation (--verbose or -v) validate schema
@@ -141,14 +144,15 @@ data-validation (--verbose or -v) validate schema
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
-  --bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE
-                        (Optional) BigQuery destination for validation results. Defaults to stdout.
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
-  --service-account or -sa PATH_TO_SA_KEY
-                        (Optional) Service account to use for BigQuery result handler output.
-  --config-file or -c CONFIG_FILE
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--config-file or -c CONFIG_FILE]
                         YAML Config File Path to be used for storing validations.
-  --format or -fmt      Format for stdout output, Supported formats are (text, csv, json, table) Defaults to table.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table). 
+                        Defaults  to table.
 ```
 
 ### Running Custom SQL Exploration
@@ -173,7 +177,7 @@ case specific CLI arguments or editing the saved YAML configuration file.
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table: 
 ```
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls
 bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml
 ```
 
@@ -391,8 +395,7 @@ View the schema of the results [here](terraform/results_schema.json).
 ### Configure tool to output to BigQuery
 
 ```
-data-validation run
-  -t Column
+data-validation validate column
   -sc bq_conn
   -tc bq_conn
   -tbls bigquery-public-data.new_york_citibike.citibike_trips
