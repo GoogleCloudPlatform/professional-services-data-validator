@@ -20,7 +20,7 @@ from data_validation import clients
 
 
 class AggregateField(object):
-    def __init__(self, ibis_expr, field_name=None, alias=None):
+    def __init__(self, ibis_expr, field_name=None, alias=None, cast=None):
         """A representation of a table or column aggregate in Ibis
 
         Args:
@@ -32,44 +32,45 @@ class AggregateField(object):
         self.expr = ibis_expr
         self.field_name = field_name
         self.alias = alias
+        self.cast = cast
 
     @staticmethod
-    def count(field_name=None, alias=None):
+    def count(field_name=None, alias=None, cast=None):
         if field_name:
             return AggregateField(
-                ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.ColumnExpr.count, field_name=field_name, case=case, alias=alias,
             )
         else:
             return AggregateField(
-                ibis.expr.types.TableExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.TableExpr.count, field_name=field_name, case=case alias=alias,
             )
 
     @staticmethod
-    def min(field_name=None, alias=None):
+    def min(field_name=None, alias=None, cast=None):
         return AggregateField(
             ibis.expr.types.ColumnExpr.min, field_name=field_name, alias=alias
         )
 
     @staticmethod
-    def avg(field_name=None, alias=None):
+    def avg(field_name=None, alias=None, cast=None):
         return AggregateField(
             ibis.expr.types.NumericColumn.mean, field_name=field_name, alias=alias
         )
 
     @staticmethod
-    def max(field_name=None, alias=None):
+    def max(field_name=None, alias=None, cast=None):
         return AggregateField(
             ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias,
         )
 
     @staticmethod
-    def sum(field_name=None, alias=None):
+    def sum(field_name=None, alias=None, cast=None):
         return AggregateField(
             ibis.expr.api.IntegerColumn.sum, field_name=field_name, alias=alias,
         )
 
     @staticmethod
-    def bit_xor(field_name=None, alias=None):
+    def bit_xor(field_name=None, alias=None, cast=None):
         return AggregateField(
             ibis.expr.api.IntegerColumn.bit_xor, field_name=field_name, alias=alias,
         )
@@ -82,6 +83,9 @@ class AggregateField(object):
 
         if self.alias:
             agg_field = agg_field.name(self.alias)
+
+        if self.cast:
+            agg_field = agg_field.cast(self.cast)
 
         return agg_field
 
