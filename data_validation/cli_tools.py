@@ -25,20 +25,20 @@ Step 1) Store Connection to be used in validation
 data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-resources
 
 Step 2) Run Validation using supplied connections
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
+data-validation validate column -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
 --sum '*' --count '*'
 
-python -m data_validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn \
+python -m data_validation validate column -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips \
 --grouped-columns starttime \
 --sum tripduration --count tripduration
 
-data-validation run -t Column \
+data-validation validate column \
 -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
 --sum tripduration,start_station_name --count tripduration,start_station_name \
--rc pso-kokoro-resources.pso_data_validator.results
+-bqrh pso-kokoro-resources.pso_data_validator.results
 -c ex_yaml.yaml
 
 data-validation run-config -c ex_yaml.yaml
@@ -141,7 +141,7 @@ def configure_arg_parser():
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
-    # beta feature only available in run command
+    # beta feature only available in run/validate command
     if "beta" in sys.argv:
         parser.add_argument(
             "beta",
@@ -151,13 +151,15 @@ def configure_arg_parser():
         )
         subparsers = parser.add_subparsers(dest="command")
         _configure_run_parser(subparsers)
+        _configure_validate_parser(subparsers)
     else:
         subparsers = parser.add_subparsers(dest="command")
-        _configure_run_parser(subparsers)
+        _configure_validate_parser(subparsers)
         _configure_run_config_parser(subparsers)
         _configure_connection_parser(subparsers)
         _configure_find_tables(subparsers)
         _configure_raw_query(subparsers)
+        _configure_run_parser(subparsers)
 
     return parser
 
@@ -211,7 +213,7 @@ def _configure_run_parser(subparsers):
     # subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser(
-        "run", help="Manually run a validation and optionally store to config"
+        "run", help="Run a validation and optionally store to config (deprecated)"
     )
 
     run_parser.add_argument(
@@ -333,6 +335,120 @@ def _configure_database_specific_parsers(parser):
             arg_field = "--" + field_obj[0].replace("_", "-")
             help_txt = field_obj[1]
             db_parser.add_argument(arg_field, help=help_txt)
+
+
+def _configure_validate_parser(subparsers):
+    """Configure arguments to run validations."""
+    validate_parser = subparsers.add_parser(
+        "validate", help="Run a validation and optionally store to config"
+    )
+
+    # Keep these in order to support data-validation run command for backwards-compatibility
+    validate_parser.add_argument("--type", "-t", help="Type of Data Validation")
+    validate_parser.add_argument(
+        "--result-handler-config", "-rc", help="Result handler config details"
+    )
+
+    validate_subparsers = validate_parser.add_subparsers(dest="validate_cmd")
+
+    column_parser = validate_subparsers.add_parser(
+        "column", help="Run a column validation"
+    )
+    _configure_column_parser(column_parser)
+
+    schema_parser = validate_subparsers.add_parser(
+        "schema", help="Run a schema validation"
+    )
+    _configure_schema_parser(schema_parser)
+
+
+def _configure_column_parser(column_parser):
+    """Configure arguments to run column level validations."""
+    _add_common_arguments(column_parser)
+    column_parser.add_argument(
+        "--count",
+        "-count",
+        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--sum",
+        "-sum",
+        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--avg",
+        "-avg",
+        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--min",
+        "-min",
+        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--max",
+        "-max",
+        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--grouped-columns",
+        "-gc",
+        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
+    )
+    column_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    column_parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
+    )
+    column_parser.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    column_parser.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
+
+
+def _configure_schema_parser(schema_parser):
+    """Configure arguments to run column level validations."""
+    _add_common_arguments(schema_parser)
+
+
+def _add_common_arguments(parser):
+    parser.add_argument("--source-conn", "-sc", help="Source connection name")
+    parser.add_argument("--target-conn", "-tc", help="Target connection name")
+    parser.add_argument(
+        "--tables-list",
+        "-tbls",
+        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+    )
+    parser.add_argument(
+        "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
+    )
+    parser.add_argument(
+        "--service-account",
+        "-sa",
+        help="Path to SA key file for result handler output",
+    )
+    parser.add_argument(
+        "--config-file",
+        "-c",
+        help="Store the validation in the YAML Config File Path specified",
+    )
+    parser.add_argument(
+        "--format",
+        "-fmt",
+        default="table",
+        help="Set the format for printing command output, Supported formats are (text, csv, json, table). Defaults "
+        "to table",
+    )
 
 
 def get_connection_config_from_args(args):

@@ -118,7 +118,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 _NAN,
                 _NAN,
             ],
-            "validation_type": ["GroupedColumn"] * 6,
+            "validation_type": ["Column"] * 6,
             "aggregation_type": ["count"] * 6,
             "validation_name": ["count"] * 6,
             "source_agg_value": ["2", "4", _NAN, _NAN, "6", "8"],

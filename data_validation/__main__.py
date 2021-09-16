@@ -80,15 +80,16 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if config_manager.validation_type in [
-        consts.GROUPED_COLUMN_VALIDATION,
-        consts.ROW_VALIDATION,
-    ]:
+    if args.primary_keys and not args.grouped_columns:
+        raise ValueError(
+            "Grouped columns must be specified for primary key level validation."
+        )
+    if args.grouped_columns:
         grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
-    if config_manager.validation_type in [consts.ROW_VALIDATION]:
+    if args.primary_keys:
         primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
@@ -103,11 +104,13 @@ def build_config_managers_from_args(args):
     """Return a list of config managers ready to execute."""
     configs = []
 
-    config_type = args.type
+    if args.type is None:
+        config_type = args.validate_cmd.capitalize()
+    else:
+        config_type = args.type
+
     source_conn = cli_tools.get_connection(args.source_conn)
     target_conn = cli_tools.get_connection(args.target_conn)
-
-    labels = cli_tools.get_labels(args.labels)
 
     result_handler_config = None
     if args.bq_result_handler:
@@ -119,14 +122,18 @@ def build_config_managers_from_args(args):
             args.result_handler_config, args.service_account
         )
 
-    filter_config = []
-    if args.filters:
-        filter_config = cli_tools.get_filters(args.filters)
+    # Schema validation will not accept filters, labels, or threshold as flags
+    filter_config, labels, threshold = [], [], 0.0
+    if config_type != consts.SCHEMA_VALIDATION:
+        if args.filters:
+            filter_config = cli_tools.get_filters(args.filters)
+        if args.threshold:
+            threshold = args.threshold
+        labels = cli_tools.get_labels(args.labels)
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
-    threshold = args.threshold if args.threshold else 0.0
     format = args.format if args.format else "table"
 
     is_filesystem = True if source_conn["source_type"] == "FileSystem" else False
@@ -149,7 +156,10 @@ def build_config_managers_from_args(args):
             filter_config=filter_config,
             verbose=args.verbose,
         )
-        configs.append(build_config_from_args(args, config_manager))
+        if config_type != consts.SCHEMA_VALIDATION:
+            config_manager = build_config_from_args(args, config_manager)
+
+        configs.append(config_manager)
 
     return configs
 
@@ -302,7 +312,7 @@ def run_validations(args, config_managers):
 
 
 def store_yaml_config_file(args, config_managers):
-    """Build a YAML config file fromt he supplied configs.
+    """Build a YAML config file from the supplied configs.
 
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
@@ -338,6 +348,14 @@ def run_connections(args):
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 
 
+def validate(args):
+    """ Run commands related to data validation."""
+    if args.validate_cmd == "column" or args.validate_cmd == "schema":
+        run(args)
+    else:
+        raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
+
+
 def main():
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
@@ -353,6 +371,8 @@ def main():
         print(find_tables_using_string_matching(args))
     elif args.command == "query":
         print(run_raw_query_against_connection(args))
+    elif args.command == "validate":
+        validate(args)
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
