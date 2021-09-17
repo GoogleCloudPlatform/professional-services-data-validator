@@ -143,7 +143,7 @@ def _calculate_differences(source, target, join_on_fields, validations):
     for field, field_type in schema.items():
         if field not in validation_fields:
             continue
-        print(field)
+
         validation = validations[field]
 
         field_differences = differences_joined.projection(
