@@ -38,41 +38,41 @@ class AggregateField(object):
     def count(field_name=None, alias=None, cast=None):
         if field_name:
             return AggregateField(
-                ibis.expr.types.ColumnExpr.count, field_name=field_name, case=case, alias=alias,
+                ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias, cast=cast
             )
         else:
             return AggregateField(
-                ibis.expr.types.TableExpr.count, field_name=field_name, case=case alias=alias,
+                ibis.expr.types.TableExpr.count, field_name=field_name, alias=alias, cast=cast
             )
 
     @staticmethod
     def min(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.min, field_name=field_name, alias=alias
+            ibis.expr.types.ColumnExpr.min, field_name=field_name, alias=alias, cast=cast
         )
 
     @staticmethod
     def avg(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.types.NumericColumn.mean, field_name=field_name, alias=alias
+            ibis.expr.types.NumericColumn.mean, field_name=field_name, alias=alias, cast=cast
         )
 
     @staticmethod
     def max(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias,
+            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias, cast=cast
         )
 
     @staticmethod
     def sum(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.sum, field_name=field_name, alias=alias,
+            ibis.expr.api.IntegerColumn.sum, field_name=field_name, alias=alias, cast=cast
         )
 
     @staticmethod
     def bit_xor(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.bit_xor, field_name=field_name, alias=alias,
+            ibis.expr.api.IntegerColumn.bit_xor, field_name=field_name, alias=alias, cast=cast
         )
 
     def compile(self, ibis_table):

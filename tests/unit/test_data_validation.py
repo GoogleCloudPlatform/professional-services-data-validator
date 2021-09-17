@@ -220,6 +220,13 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
             "type": "sum",
         },
         {
+            "source_column": "text_numeric",
+            "target_column": "text_numeric",
+            "field_alias": "sum_text_numeric",
+            "type": "sum",
+            "cast": "int64",
+        },
+        {
             "source_column": "concat_length",
             "target_column": "concat_length",
             "field_alias": "sum_concat_length",
@@ -243,6 +250,7 @@ SOURCE_QUERY_DATA = [
         "int_val": 1,
         "double_val": 2.3,
         "text_constant": STRING_CONSTANT,
+        "text_numeric": "2",
         "text_val": "hello",
         "text_val_two": "goodbye",
     }
@@ -293,6 +301,7 @@ def _generate_fake_data(
             "timestamp_value": rand_timestamp,
             "int_value": random.randint(0, int_range),
             "text_constant": STRING_CONSTANT,
+            "text_numeric": "2",
             "text_value": random.choice(random_strings),
             "text_value_two": random.choice(random_strings),
         }
@@ -306,6 +315,7 @@ def _get_fake_json_data(data):
         row["date_value"] = str(row["date_value"])
         row["timestamp_value"] = str(row["timestamp_value"])
         row["text_constant"] = row["text_constant"]
+        row["text_numeric"] = row["text_numeric"]
         row["text_value"] = row["text_value"]
         row["text_value_two"] = row["text_value_two"]
 
@@ -449,12 +459,14 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
     result_df = client.execute()
     calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
     calc_val_df2 = result_df[result_df["validation_name"] == "sum_concat_length"]
+    calc_val_df3 = result_df[result_df["validation_name"] == "sum_text_numeric"]
 
     assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
 
     assert calc_val_df2["source_agg_value"].sum() == str(
-        num_rows * (len(STRING_CONSTANT + "," + str(len(STRING_CONSTANT))))
-    )
+        num_rows * (len(STRING_CONSTANT + "," + str(len(STRING_CONSTANT)))))
+
+    assert calc_val_df3["source_agg_value"].sum() == str(num_rows * 2)
 
 
 def test_row_level_validation_non_matching(module_under_test, fs):
