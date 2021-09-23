@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
-import pytest
-from unittest import mock
-
 from data_validation import state_manager
 
 
