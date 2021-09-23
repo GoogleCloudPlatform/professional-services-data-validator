@@ -21,7 +21,7 @@ from data_validation import state_manager
 
 TEST_CONN_NAME = "example"
 TEST_CONN = {
-    "source_type":"BigQuery",
+    "source_type": "BigQuery",
     "project_id": "my-project",
 }
 

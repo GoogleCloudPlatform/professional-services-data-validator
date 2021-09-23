@@ -16,27 +16,20 @@ configurations and state. The majority of this work is file system management
 of connections and validation files.
 """
 
-import copy
+import enum
 import json
-import logging
 import os
-from enum import Enum
 
 from data_validation import consts
-from data_validation import clients
-from data_validation.result_handlers.bigquery import BigQueryResultHandler
-from data_validation.result_handlers.text import TextResultHandler
-from data_validation.validation_builder import ValidationBuilder
 
 
-class FileSystem(Enum):
+class FileSystem(enum.Enum):
     LOCAL = 1
     GCS = 2
 
 
 class StateManager(object):
-
-    def __init__(self, file_system_root_path: str=None, verbose: bool=False):
+    def __init__(self, file_system_root_path: str = None, verbose: bool = False):
         """Initialize a StateManager which handles configuration
         and state management files.
 
@@ -45,10 +38,10 @@ class StateManager(object):
                 eg. "gs://bucket/data-validation/" or "/path/to/files/"
         """
         raw_dir_path = (
-          file_system_root_path
+            file_system_root_path
             or os.environ.get(consts.ENV_DIRECTORY_VAR)
             or consts.DEFAULT_ENV_DIRECTORY
-          )
+        )
         self.file_system_root_path = os.path.expanduser(raw_dir_path)
         self.file_system = self._get_file_system()
         self.verbose = verbose
@@ -80,19 +73,25 @@ class StateManager(object):
     def list_connections(self) -> list[str]:
         """Returns a list of the connection names that exist."""
         file_names = self._list_directory(self._get_connections_directory())
-        return [file_name.split(".")[0] for file_name in file_names if file_name.endswith(".connection.json")]
+        return [
+            file_name.split(".")[0]
+            for file_name in file_names
+            if file_name.endswith(".connection.json")
+        ]
 
     def _get_connections_directory(self) -> str:
-      """Returns the connections directory path."""
-      return os.path.join(self.file_system_root_path, "connections")
+        """Returns the connections directory path."""
+        return os.path.join(self.file_system_root_path, "connections")
 
     def _get_connection_path(self, name: str) -> str:
-      """Returns the full path to a connection.
+        """Returns the full path to a connection.
 
       Args:
           name: The name of the connection.
       """
-      return os.path.join(self._get_connections_directory(), f"{name}.connection.json")
+        return os.path.join(
+            self._get_connections_directory(), f"{name}.connection.json"
+        )
 
     def _read_file(self, file_path: str):
         if self.file_system == FileSystem.GCS:
