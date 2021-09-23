@@ -16,7 +16,7 @@
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation import cli_tools, clients, consts, jellyfish_distance
+from data_validation import cli_tools, clients, consts, jellyfish_distance, state_manager
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
