@@ -11,14 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""The StateManager is a utility to help manage Data Validations long-lived
-configurations and state. The majority of this work is file system management
-of connections and validation files.
+"""A utility to manage Data Validations long-lived configurations and state.
+
+The majority of this work is file system management of connections
+and validation files.
 """
 
 import enum
 import json
 import os
+from google.cloud import storage
 
 from data_validation import consts
 
@@ -45,7 +47,7 @@ class StateManager(object):
         self.file_system_root_path = os.path.expanduser(raw_dir_path)
         self.file_system = self._get_file_system()
         self.verbose = verbose
-        self._validate_path_requirements()
+        self.setup()
 
     def create_connection(self, name: str, config: dict[str]):
         """Create a connection file and store the given config as JSON.
@@ -93,22 +95,22 @@ class StateManager(object):
             self._get_connections_directory(), f"{name}.connection.json"
         )
 
-    def _read_file(self, file_path: str):
+    def _read_file(self, file_path: str) -> str:
         if self.file_system == FileSystem.GCS:
-            raise Exception("GCS File read not supported")
+            return self._read_gcs_file(file_path)
         else:
             return open(file_path, "r").read()
 
     def _write_file(self, file_path: str, data: str):
         if self.file_system == FileSystem.GCS:
-            raise Exception("GCS File write not supported")
+            self._write_gcs_file(file_path, data)
         else:
             with open(file_path, "w") as file:
                 file.write(data)
 
     def _list_directory(self, directory_path: str) -> list[str]:
         if self.file_system == FileSystem.GCS:
-            raise Exception("GCS File list not supported")
+            return self._list_gcs_directory(directory_path)
         else:
             return os.listdir(directory_path)
 
@@ -118,10 +120,42 @@ class StateManager(object):
         else:
             return FileSystem.LOCAL
 
-    def _validate_path_requirements(self):
+    def setup(self):
         if self.file_system == FileSystem.GCS:
-            # No current GCS validations are run
-            pass
+            self.setup_gcs()
         else:
             if not os.path.exists(self._get_connections_directory()):
                 os.makedirs(self._get_connections_directory())
+
+    # GCS File Management Section
+    def setup_gcs(self):
+        self.storage_client = storage.Client()
+        self.gcs_bucket = self._get_gcs_bucket()
+
+    def _get_gcs_bucket(self):
+        bucket_name = self.file_system_root_path[5:].split("/")[0]
+        return self.storage_client.bucket(bucket_name)
+
+    def _get_gcs_file_path(self, gcs_file_path: str):
+        return str.join("", gcs_file_path[5:].split("/", 1)[1:])
+
+    def _read_gcs_file(self, file_path: str) -> str:
+        gcs_file_path = self._get_gcs_file_path(file_path)
+        blob = self.gcs_bucket.get_blob(gcs_file_path)
+
+        return blob.download_as_string()
+
+    def _write_gcs_file(self, file_path: str, data: str):
+        gcs_file_path = self._get_gcs_file_path(file_path)
+        blob = self.gcs_bucket.blob(gcs_file_path)
+        blob.upload_from_string(data)
+
+    def _list_gcs_directory(self, directory_path: str) -> list[str]:
+        gcs_prefix = self._get_gcs_file_path(directory_path)
+        blobs = [
+            f.name.replace(gcs_prefix, "")
+            for f in self.gcs_bucket.list_blobs(prefix=gcs_prefix, delimiter="/")
+            if f.name.replace(gcs_prefix, "")
+        ]
+
+        return blobs
