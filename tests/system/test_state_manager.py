@@ -25,8 +25,7 @@ TEST_CONN = {
 
 def test_get_gcs_file_path():
     manager = state_manager.StateManager(GCS_STATE_PATH)
-    result_path = manager._get_gcs_file_path(
-      GCS_STATE_PATH + "file/path/name.json")
+    result_path = manager._get_gcs_file_path(GCS_STATE_PATH + "file/path/name.json")
 
     assert result_path == "state/file/path/name.json"
 
