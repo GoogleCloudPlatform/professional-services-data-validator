@@ -17,7 +17,7 @@ import logging
 
 import google.oauth2.service_account
 
-from data_validation import consts, clients
+from data_validation import consts, clients, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 from data_validation.validation_builder import ValidationBuilder
@@ -25,10 +25,13 @@ from data_validation.validation_builder import ValidationBuilder
 
 class ConfigManager(object):
     _config: dict = None
+    _source_conn = None
+    _target_conn = None
+    _state_manager = None
     source_client = None
     target_client = None
 
-    def __init__(self, config, source_client, target_client, verbose=False):
+    def __init__(self, config, source_client=None, target_client=None, verbose=False):
         """Initialize a ConfigManager client which supplies the
             source and target queries to run.
 
@@ -41,10 +44,17 @@ class ConfigManager(object):
                 Explicit credentials to use in case default credentials
                 aren't working properly.
         """
+        self._state_manager = state_manager.StateManager()
         self._config = config
 
-        self.source_client = source_client
-        self.target_client = target_client
+        self.source_client = (
+            source_client or
+            clients.get_data_client(self.get_source_connection())
+        )
+        self.target_client = (
+            target_client or
+            clients.get_data_client(self.get_target_connection())
+        )
         if not self.process_in_memory():
             self.target_client = source_client
 
@@ -55,15 +65,29 @@ class ConfigManager(object):
         """Return config object."""
         return self._config
 
-    @property
-    def source_connection(self):
-        """return source connection object."""
-        return self._config.get(consts.CONFIG_SOURCE_CONN)
+    def get_source_connection(self):
+        """Return source connection object."""
+        if not self._source_conn:
+            if self._config.get(consts.CONFIG_SOURCE_CONN):
+                self._source_conn = self._config.get(consts.CONFIG_SOURCE_CONN)
+            else:
+                conn_name = self._config.get(consts.CONFIG_SOURCE_CONN_NAME)
+                self._source_conn = self._state_manager.get_connection_config(
+                    conn_name)
 
-    @property
-    def target_connection(self):
-        """return source connection object."""
-        return self._config.get(consts.CONFIG_TARGET_CONN)
+        return self._source_conn
+
+    def get_target_connection(self):
+        """Return target connection object."""
+        if not self._target_conn:
+            if self._config.get(consts.CONFIG_TARGET_CONN):
+                self._target_conn = self._config.get(consts.CONFIG_TARGET_CONN)
+            else:
+                conn_name = self._config.get(consts.CONFIG_TARGET_CONN_NAME)
+                self._target_conn = self._state_manager.get_connection_config(
+                    conn_name)
+
+        return self._target_conn
 
     @property
     def validation_type(self):
@@ -73,7 +97,7 @@ class ConfigManager(object):
     def process_in_memory(self):
         if (
             self.is_grouped_row_validation
-            and self.source_connection == self.target_connection
+            and self.get_source_connection() == self.get_target_connection()
         ):
             return False
 
@@ -267,14 +291,14 @@ class ConfigManager(object):
     @staticmethod
     def build_config_manager(
         config_type,
-        source_conn,
-        target_conn,
-        source_client,
-        target_client,
+        source_conn_name,
+        target_conn_name,
         table_obj,
         labels,
         threshold,
         format,
+        source_client=None,
+        target_client=None,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
@@ -285,8 +309,8 @@ class ConfigManager(object):
         """Return a ConfigManager instance with available config."""
         config = {
             consts.CONFIG_TYPE: config_type,
-            consts.CONFIG_SOURCE_CONN: source_conn,
-            consts.CONFIG_TARGET_CONN: target_conn,
+            consts.CONFIG_SOURCE_CONN_NAME: source_conn_name,
+            consts.CONFIG_TARGET_CONN_NAME: target_conn_name,
             consts.CONFIG_TABLE_NAME: table_obj[consts.CONFIG_TABLE_NAME],
             consts.CONFIG_SCHEMA_NAME: table_obj[consts.CONFIG_SCHEMA_NAME],
             consts.CONFIG_TARGET_SCHEMA_NAME: table_obj.get(
@@ -305,7 +329,10 @@ class ConfigManager(object):
         if target_conn["source_type"] == "FileSystem":
             config[consts.CONFIG_TARGET_SCHEMA_NAME] = None
 
-        return ConfigManager(config, source_client, target_client, verbose=verbose)
+        return ConfigManager(config,
+                             source_client=source_client,
+                             target_client=target_client,
+                             verbose=verbose)
 
     def build_config_grouped_columns(self, grouped_columns):
         """Return list of grouped column config objects."""

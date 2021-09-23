@@ -21,7 +21,7 @@ import ibis.backends.pandas
 import pandas
 import numpy
 
-from data_validation import consts, combiner, metadata, clients
+from data_validation import consts, combiner, metadata
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.schema_validation import SchemaValidation
@@ -58,15 +58,8 @@ class DataValidation(object):
         # Data Client Management
         self.config = config
 
-        self.source_client = clients.get_data_client(
-            self.config[consts.CONFIG_SOURCE_CONN]
-        )
-        self.target_client = clients.get_data_client(
-            self.config[consts.CONFIG_TARGET_CONN]
-        )
-
         self.config_manager = ConfigManager(
-            config, self.source_client, self.target_client, verbose=self.verbose
+            config, verbose=self.verbose
         )
 
         self.run_metadata = metadata.RunMetadata()
@@ -256,8 +249,8 @@ class DataValidation(object):
         join_on_fields = validation_builder.get_group_aliases()
 
         if process_in_memory:
-            source_df = self.source_client.execute(source_query)
-            target_df = self.target_client.execute(target_query)
+            source_df = self.config_manager.source_client.execute(source_query)
+            target_df = self.config_manager.target_client.execute(target_query)
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
@@ -286,7 +279,7 @@ class DataValidation(object):
                 raise e
         else:
             result_df = combiner.generate_report(
-                self.source_client,
+                self.config_manager.source_client,
                 self.run_metadata,
                 source_query,
                 target_query,
