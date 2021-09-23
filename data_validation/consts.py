@@ -62,9 +62,11 @@ GROUPED_COLUMN_VALIDATION = "GroupedColumn"
 ROW_VALIDATION = "Row"
 SCHEMA_VALIDATION = "Schema"
 
-# Yaml File Config Fields
-ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+# State Manager Fields
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
+ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+
+# Yaml File Config Fields
 YAML_RESULT_HANDLER = "result_handler"
 YAML_SOURCE = "source"
 YAML_TARGET = "target"
