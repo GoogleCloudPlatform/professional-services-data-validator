@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" The StateManager is a utility to help manage Data Validations long-lived
+"""The StateManager is a utility to help manage Data Validations long-lived
 configurations and state. The majority of this work is file system management
 of connections and validation files.
 """
