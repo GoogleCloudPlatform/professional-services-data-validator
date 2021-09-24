@@ -24,7 +24,6 @@ from data_validation.validation_builder import ValidationBuilder
 
 
 class ConfigManager(object):
-
     _config: dict = None
     source_client = None
     target_client = None
@@ -68,12 +67,12 @@ class ConfigManager(object):
 
     @property
     def validation_type(self):
-        """Return string validation type (Column|GroupedColumn|Row)."""
+        """Return string validation type (Column|Schema)."""
         return self._config[consts.CONFIG_TYPE]
 
     def process_in_memory(self):
         if (
-            self.validation_type == "Row"
+            self.is_grouped_row_validation
             and self.source_connection == self.target_connection
         ):
             return False
@@ -116,7 +115,7 @@ class ConfigManager(object):
 
     @property
     def primary_keys(self):
-        """ Return Query Groups from Config """
+        """ Return Primary keys from Config """
         return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
 
     def append_primary_keys(self, primary_key_configs):
@@ -124,6 +123,12 @@ class ConfigManager(object):
         self._config[consts.CONFIG_PRIMARY_KEYS] = (
             self.primary_keys + primary_key_configs
         )
+
+    @property
+    def is_grouped_row_validation(self):
+        """ Returns boolean indicating if validation type is a Grouped_Column
+        Row validation. """
+        return self.primary_keys != []
 
     @property
     def filters(self):
@@ -238,7 +243,7 @@ class ConfigManager(object):
     def get_result_handler(self):
         """Return ResultHandler instance from supplied config."""
         if not self.result_handler_config:
-            return TextResultHandler()
+            return TextResultHandler(self._config[consts.CONFIG_FORMAT])
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
         if result_type == "BigQuery":
@@ -269,6 +274,7 @@ class ConfigManager(object):
         table_obj,
         labels,
         threshold,
+        format,
         result_handler_config=None,
         filter_config=None,
         verbose=False,
@@ -287,6 +293,7 @@ class ConfigManager(object):
             ),
             consts.CONFIG_LABELS: labels,
             consts.CONFIG_THRESHOLD: threshold,
+            consts.CONFIG_FORMAT: format,
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
             consts.CONFIG_FILTERS: filter_config,
         }

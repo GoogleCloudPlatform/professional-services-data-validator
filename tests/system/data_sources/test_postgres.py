@@ -74,6 +74,7 @@ def test_postgres_count():
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
         ],
+        consts.CONFIG_FORMAT: "table",
     }
 
     data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)

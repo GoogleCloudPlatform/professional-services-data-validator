@@ -165,7 +165,14 @@ def test_process_in_memory(module_under_test):
     assert config_manager.process_in_memory() is True
 
     config_manager._config = copy.deepcopy(config_manager._config)
-    config_manager._config[consts.CONFIG_TYPE] = "Row"
+    config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ]
     assert config_manager.process_in_memory() is False
 
 

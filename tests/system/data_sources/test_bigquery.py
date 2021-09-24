@@ -61,6 +61,7 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_FIELD_ALIAS: "min_birth_year",
         },
     ],
+    consts.CONFIG_FORMAT: "table",
 }
 
 CONFIG_GROUPED_COUNT_VALID = {
@@ -68,7 +69,7 @@ CONFIG_GROUPED_COUNT_VALID = {
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
     consts.CONFIG_TARGET_CONN: BQ_CONN,
     # Validation Type
-    consts.CONFIG_TYPE: "GroupedColumn",
+    consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
@@ -94,6 +95,7 @@ CONFIG_GROUPED_COUNT_VALID = {
             consts.CONFIG_CAST: "date",
         },
     ],
+    consts.CONFIG_FORMAT: "table",
 }
 
 # TODO: The definition for this table is stored in: ./tests/resources/
@@ -127,6 +129,7 @@ CONFIG_NUMERIC_AGG_VALID = {
         },
     ],
     consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_FORMAT: "table",
 }
 
 BQ_CONN_NAME = "bq-integration-test"
@@ -246,7 +249,7 @@ def test_cli_store_yaml_then_run():
         # The number of lines is not significant, except that it represents
         # the exact file expected to be created.  Any change to this value
         # is likely to be a breaking change and must be assessed.
-        assert len(yaml_file.readlines()) == 32
+        assert len(yaml_file.readlines()) == 33
 
     # Run generated config
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)

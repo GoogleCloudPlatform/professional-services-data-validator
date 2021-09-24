@@ -67,6 +67,7 @@ SAMPLE_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 SAMPLE_THRESHOLD_CONFIG = {
@@ -97,14 +98,16 @@ SAMPLE_THRESHOLD_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 150.0,
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
-SAMPLE_ROW_CONFIG = {
+# Grouped Column Row confg
+SAMPLE_GC_ROW_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: "Row",
+    consts.CONFIG_TYPE: "Column",
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -136,14 +139,15 @@ SAMPLE_ROW_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
-SAMPLE_ROW_CALC_CONFIG = {
+SAMPLE_GC_ROW_CALC_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: "Row",
+    consts.CONFIG_TYPE: "Column",
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -223,6 +227,7 @@ SAMPLE_ROW_CALC_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
 }
 
 
@@ -423,7 +428,7 @@ def test_row_level_validation_perfect_match(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
@@ -440,7 +445,7 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CALC_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CALC_CONFIG)
     result_df = client.execute()
     calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
     calc_val_df2 = result_df[result_df["validation_name"] == "sum_concat_length"]
@@ -462,7 +467,7 @@ def test_row_level_validation_non_matching(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
 
@@ -488,7 +493,7 @@ def test_row_level_validation_smart_count(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
 
@@ -507,7 +512,7 @@ def test_row_level_validation_multiple_aggregations(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
 

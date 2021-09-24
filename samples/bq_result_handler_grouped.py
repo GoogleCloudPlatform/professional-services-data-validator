@@ -25,7 +25,7 @@ GROUPED_CONFIG_COUNT_VALID = {
     "source_conn": BQ_CONN,
     "target_conn": BQ_CONN,
     # Validation Type
-    "type": "GroupedColumn",
+    "type": "Column",
     # Configuration Required Depending on Validator Type
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_trips",
