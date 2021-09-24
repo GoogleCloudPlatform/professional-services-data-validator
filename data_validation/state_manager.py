@@ -59,7 +59,7 @@ class StateManager(object):
         connection_path = self._get_connection_path(name)
         self._write_file(connection_path, json.dumps(config))
 
-    def get_connection_config(self, name: str) -> dict[str]:
+    def get_connection_config(self, name: str) -> dict[str, str]:
         """Get a connection configuration from the expected file.
 
         Args:
