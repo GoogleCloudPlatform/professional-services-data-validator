@@ -47,13 +47,11 @@ class ConfigManager(object):
         self._state_manager = state_manager.StateManager()
         self._config = config
 
-        self.source_client = (
-            source_client or
-            clients.get_data_client(self.get_source_connection())
+        self.source_client = source_client or clients.get_data_client(
+            self.get_source_connection()
         )
-        self.target_client = (
-            target_client or
-            clients.get_data_client(self.get_target_connection())
+        self.target_client = target_client or clients.get_data_client(
+            self.get_target_connection()
         )
         if not self.process_in_memory():
             self.target_client = source_client
@@ -72,8 +70,7 @@ class ConfigManager(object):
                 self._source_conn = self._config.get(consts.CONFIG_SOURCE_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_SOURCE_CONN_NAME)
-                self._source_conn = self._state_manager.get_connection_config(
-                    conn_name)
+                self._source_conn = self._state_manager.get_connection_config(conn_name)
 
         return self._source_conn
 
@@ -84,8 +81,7 @@ class ConfigManager(object):
                 self._target_conn = self._config.get(consts.CONFIG_TARGET_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_TARGET_CONN_NAME)
-                self._target_conn = self._state_manager.get_connection_config(
-                    conn_name)
+                self._target_conn = self._state_manager.get_connection_config(conn_name)
 
         return self._target_conn
 
@@ -162,6 +158,8 @@ class ConfigManager(object):
     @property
     def source_schema(self):
         """Return string value of source schema."""
+        if self.source_client._source_type == "FileSystem":
+            return None
         return self._config.get(consts.CONFIG_SCHEMA_NAME, None)
 
     @property
@@ -172,6 +170,8 @@ class ConfigManager(object):
     @property
     def target_schema(self):
         """Return string value of target schema."""
+        if self.target_client._source_type == "FileSystem":
+            return None
         return self._config.get(consts.CONFIG_TARGET_SCHEMA_NAME, self.source_schema)
 
     @property
@@ -326,13 +326,12 @@ class ConfigManager(object):
             consts.CONFIG_FILTERS: filter_config,
         }
 
-        if target_conn["source_type"] == "FileSystem":
-            config[consts.CONFIG_TARGET_SCHEMA_NAME] = None
-
-        return ConfigManager(config,
-                             source_client=source_client,
-                             target_client=target_client,
-                             verbose=verbose)
+        return ConfigManager(
+            config,
+            source_client=source_client,
+            target_client=target_client,
+            verbose=verbose,
+        )
 
     def build_config_grouped_columns(self, grouped_columns):
         """Return list of grouped column config objects."""

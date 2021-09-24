@@ -16,7 +16,13 @@
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation import cli_tools, clients, consts, jellyfish_distance, state_manager
+from data_validation import (
+    cli_tools,
+    clients,
+    consts,
+    jellyfish_distance,
+    state_manager,
+)
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
@@ -129,14 +135,12 @@ def build_config_managers_from_args(args):
         labels = cli_tools.get_labels(args.labels)
 
     mgr = state_manager.StateManager()
-    source_client = clients.get_data_client(
-        mgr.get_connection_config(args.source_conn))
-    target_client = clients.get_data_client(
-        mgr.get_connection_config(args.source_conn))
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
 
     format = args.format if args.format else "table"
 
-    is_filesystem = True if source_conn["source_type"] == "FileSystem" else False
+    is_filesystem = source_client._source_type == "FileSystem"
     tables_list = cli_tools.get_tables_list(
         args.tables_list, default_value=[], is_filesystem=is_filesystem
     )

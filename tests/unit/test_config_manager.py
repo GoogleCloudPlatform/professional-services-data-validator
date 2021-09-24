@@ -60,6 +60,8 @@ GROUPED_COLUMN_CONFIG_A = {
 
 
 class MockIbisClient(object):
+    _source_type = "BigQuery"
+
     def table(self, table, database=None):
         return MockIbisTable()
 

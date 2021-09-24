@@ -58,9 +58,7 @@ class DataValidation(object):
         # Data Client Management
         self.config = config
 
-        self.config_manager = ConfigManager(
-            config, verbose=self.verbose
-        )
+        self.config_manager = ConfigManager(config, verbose=self.verbose)
 
         self.run_metadata = metadata.RunMetadata()
         self.run_metadata.labels = self.config_manager.labels
