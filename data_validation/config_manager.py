@@ -257,10 +257,13 @@ class ConfigManager(object):
         """Return Dict object formatted for a Yaml file."""
         config = copy.deepcopy(self.config)
 
-        del config[consts.CONFIG_SOURCE_CONN]
-        del config[consts.CONFIG_TARGET_CONN]
-        if consts.CONFIG_RESULT_HANDLER in config:
-            del config[consts.CONFIG_RESULT_HANDLER]
+        config.pop(consts.CONFIG_SOURCE_CONN, None)
+        config.pop(consts.CONFIG_TARGET_CONN, None)
+
+        config.pop(consts.CONFIG_SOURCE_CONN_NAME, None)
+        config.pop(consts.CONFIG_TARGET_CONN_NAME, None)
+
+        config.pop(consts.CONFIG_RESULT_HANDLER, None)
 
         return config
 
