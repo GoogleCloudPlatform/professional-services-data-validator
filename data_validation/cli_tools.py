@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-""" The Data Validation CLI tool is intended to help to build and execute
+"""The Data Validation CLI tool is intended to help to build and execute
 data validation runs with ease.
 
 The Data Validator can be called either using:
@@ -47,11 +47,11 @@ data-validation run-config -c ex_yaml.yaml
 import argparse
 import csv
 import json
-import os
 import sys
 import uuid
 
-from data_validation import consts, state_manager
+from data_validation import consts
+from data_validation import state_manager
 
 
 CONNECTION_SOURCE_FIELDS = {
@@ -507,6 +507,7 @@ def store_connection(connection_name, conn):
     mgr = state_manager.StateManager()
     mgr.create_connection(connection_name, conn)
 
+
 #     connection_name = connection_name or _generate_random_name(conn)
 #     file_path = _get_connection_file(connection_name)
 
@@ -543,6 +544,8 @@ def get_connection(connection_name):
     """ Return dict connection details for a specific connection."""
     mgr = state_manager.StateManager()
     return mgr.get_connection_config(connection_name)
+
+
 #     with open(file_path, "r") as file:
 #         conn_str = file.read()
 #     return json.loads(conn_str)
