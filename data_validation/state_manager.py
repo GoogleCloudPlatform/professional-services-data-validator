@@ -112,7 +112,7 @@ class StateManager(object):
             with open(file_path, "w") as file:
                 file.write(data)
 
-    def _list_directory(self, directory_path: str) -> list[str]:
+    def _list_directory(self, directory_path: str) -> List[str]:
         if self.file_system == FileSystem.GCS:
             return self._list_gcs_directory(directory_path)
         else:
