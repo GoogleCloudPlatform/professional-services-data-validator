@@ -21,6 +21,7 @@ import enum
 import json
 import os
 from google.cloud import storage
+from typing import Dict, List
 
 from data_validation import consts
 
@@ -49,7 +50,7 @@ class StateManager(object):
         self.verbose = verbose
         self.setup()
 
-    def create_connection(self, name: str, config: dict[str]):
+    def create_connection(self, name: str, config: Dict[str, str]):
         """Create a connection file and store the given config as JSON.
 
         Args:
@@ -59,7 +60,7 @@ class StateManager(object):
         connection_path = self._get_connection_path(name)
         self._write_file(connection_path, json.dumps(config))
 
-    def get_connection_config(self, name: str) -> dict[str, str]:
+    def get_connection_config(self, name: str) -> Dict[str, str]:
         """Get a connection configuration from the expected file.
 
         Args:
@@ -72,7 +73,7 @@ class StateManager(object):
 
         return json.loads(conn_str)
 
-    def list_connections(self) -> list[str]:
+    def list_connections(self) -> List[str]:
         """Returns a list of the connection names that exist."""
         file_names = self._list_directory(self._get_connections_directory())
         return [
@@ -153,7 +154,7 @@ class StateManager(object):
         blob = self.gcs_bucket.blob(gcs_file_path)
         blob.upload_from_string(data)
 
-    def _list_gcs_directory(self, directory_path: str) -> list[str]:
+    def _list_gcs_directory(self, directory_path: str) -> List[str]:
         gcs_prefix = self._get_gcs_file_path(directory_path)
         blobs = [
             f.name.replace(gcs_prefix, "")
