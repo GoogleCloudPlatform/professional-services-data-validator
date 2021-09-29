@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
 from data_validation import state_manager
 
 
@@ -36,3 +38,25 @@ def test_create_and_list_connection(capsys, fs):
 
     connections = manager.list_connections()
     assert connections == [TEST_CONN_NAME]
+
+
+def test_create_unknown_filepath(capsys, fs):
+    # Unknown file paths will be created by the state manager
+    files_directory = "create/this/path/"
+    manager = state_manager.StateManager(files_directory)
+    manager.create_connection(TEST_CONN_NAME, TEST_CONN)
+
+    connections = manager.list_connections()
+    assert connections == [TEST_CONN_NAME]
+
+    file_path = manager._get_connection_path(TEST_CONN_NAME)
+    expected_file_path = files_directory + f"{TEST_CONN_NAME}.connection.json"
+    assert file_path == expected_file_path
+
+
+def test_create_invalid_gcs_path_raises(fs):
+    # Unknown file paths will be created by the state manager
+    files_directory = "gs://!!bucket!!/this/path/"
+
+    with pytest.raises(ValueError, match=r"GCS Path Failure .*"):
+        state_manager.StateManager(files_directory)

@@ -134,7 +134,10 @@ class StateManager(object):
     # GCS File Management Section
     def setup_gcs(self):
         self.storage_client = storage.Client()
-        self.gcs_bucket = self._get_gcs_bucket()
+        try:
+            self.gcs_bucket = self._get_gcs_bucket()
+        except ValueError as e:
+           raise ValueError("GCS Path Failure {} -> {}".format(self.file_system_root_path, e))
 
     def _get_gcs_bucket(self):
         bucket_name = self.file_system_root_path[5:].split("/")[0]
