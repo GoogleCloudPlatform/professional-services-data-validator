@@ -136,7 +136,7 @@ def build_config_managers_from_args(args):
 
     mgr = state_manager.StateManager()
     source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
-    target_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     format = args.format if args.format else "table"
 
