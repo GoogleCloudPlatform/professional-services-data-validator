@@ -22,7 +22,9 @@ steps:
   - 'TWINE_USERNAME=${_TWINE_USERNAME}'
   - 'TWINE_PASSWORD=${_TWINE_PASSWORD}'
   - 'TWINE_REPOSITORY_URL=${_TWINE_REPOSITORY_URL}'
+  - 'PROJECT_ID=${_PROJECT_ID}'
 substitutions:
+  _PROJECT_ID: pso-kokoro-resources
   _TWINE_USERNAME: __token__
   _TWINE_PASSWORD:
   _TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
