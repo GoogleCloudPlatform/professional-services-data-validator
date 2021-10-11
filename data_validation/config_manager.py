@@ -54,7 +54,7 @@ class ConfigManager(object):
             self.get_target_connection()
         )
         if not self.process_in_memory():
-            self.target_client = source_client
+            self.target_client = self.source_client
 
         self.verbose = verbose
 
