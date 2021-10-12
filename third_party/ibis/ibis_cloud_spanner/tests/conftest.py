@@ -74,7 +74,7 @@ def cleanup_spanner_instances(spanner_client):
 
 @pytest.fixture(scope="session")
 def spanner_client():
-    return spanner_v1.Client(project="pso-kokoro-resources")
+    return spanner_v1.Client()
 
 
 @pytest.fixture(scope="session")
