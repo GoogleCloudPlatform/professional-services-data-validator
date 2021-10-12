@@ -24,7 +24,9 @@ from third_party.ibis.ibis_cloud_spanner.api import connect
 DATA_DIR = pathlib.Path(__file__).parent
 
 RANDOM_MAX = 0xFFFFFFFF
-INSTANCE_ID_TEMPLATE = "data-validation-tool-{timestamp}"
+INSTANCE_ID_PREFIX = "data-validation-tool-"
+INSTANCE_ID_TEMPLATE = f"{INSTANCE_ID_PREFIX}{{timestamp}}"
+INSTANCE_ID_TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S"
 DATABASE_ID_TEMPLATE = "db_{timestamp}_{randint}"
 
 
@@ -54,9 +56,25 @@ def insert_rows2(transaction):
         transaction.execute_update(dml)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_spanner_instances(spanner_client):
+    """Remove any instances that are leftover from previous test runs.
+
+    These instances can be leftover if Cloud Build terminates the test run
+    before the cleanup in the instance_id fixture compltetes.
+    """
+    for instance in spanner_client.list_instances():
+        instance_id = instance.name.split("/")[-1]
+        if instance_id.startswith(INSTANCE_ID_PREFIX):
+            creation_time = datetime.datetime.strptime(instance_id[len(INSTANCE_ID_PREFIX):], INSTANCE_ID_TIMESTAMP_FORMAT)
+            if datetime.datetime.now() - creation_time > datetime.timedelta(days=1):
+                instance = spanner_client.instance(instance_id)
+                instance.delete()
+
+
 @pytest.fixture(scope="session")
 def spanner_client():
-    return spanner_v1.Client()
+    return spanner_v1.Client(project="pso-kokoro-resources")
 
 
 @pytest.fixture(scope="session")
@@ -65,7 +83,7 @@ def instance_id(spanner_client):
         spanner_client.project_name
     )
     instance_id = INSTANCE_ID_TEMPLATE.format(
-        timestamp=datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        timestamp=datetime.datetime.utcnow().strftime(INSTANCE_ID_TIMESTAMP_FORMAT)
     )
     instance = spanner_client.instance(
         instance_id,
