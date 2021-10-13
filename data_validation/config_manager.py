@@ -243,7 +243,7 @@ class ConfigManager(object):
     def get_result_handler(self):
         """Return ResultHandler instance from supplied config."""
         if not self.result_handler_config:
-            return TextResultHandler(self._config.get(consts.CONFIG_FORMAT, 'table'))
+            return TextResultHandler(self._config.get(consts.CONFIG_FORMAT, "table"))
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
         if result_type == "BigQuery":
