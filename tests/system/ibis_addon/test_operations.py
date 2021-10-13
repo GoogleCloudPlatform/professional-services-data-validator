@@ -20,11 +20,17 @@ import ibis.expr.datatypes as dt
 
 # Import required in order to register operations.
 import third_party.ibis.ibis_addon.operations  # noqa: F401
+from third_party.ibis import ibis_teradata
 
 
 @pytest.fixture
 def bigquery_client():
     return ibis_bigquery.connect()
+
+
+@pytest.fixture
+def teradata_client():
+    return ibis_teradata.connect()
 
 
 def test_bit_xor_bigquery(bigquery_client):
@@ -127,10 +133,9 @@ def test_hashbytes_bigquery_binary(bigquery_client):
         ).strip()
     )
 
-  def test_hashbytes_bigquery_binary(bigquery_client):
-    tbl = bigquery_client.table(
-        "citibike_trips", database="udfs.new_york_citibike"
-    )
+
+def test_hashbytes_teradata_binary(teradata_client):
+    tbl = teradata_client.table("citibike_trips", database="udfs.new_york_citibike")
     expr = tbl[
         tbl["start_station_name"]
         .cast(dt.binary)
