@@ -79,7 +79,10 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
-        if self.config_manager.is_grouped_row_validation or self.config_manager.validation_type == "Row":
+        if (
+            self.config_manager.is_grouped_row_validation
+            or self.config_manager.validation_type == "Row"
+        ):
             grouped_fields = self.validation_builder.pop_grouped_fields()
             result_df = self.execute_recursive_validation(
                 self.validation_builder, grouped_fields
