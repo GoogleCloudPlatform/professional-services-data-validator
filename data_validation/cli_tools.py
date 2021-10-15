@@ -123,6 +123,10 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Desired Imapala port (10000 if not provided)"],
         ["database", "Desired Impala database (default if not provided)"],
         ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
+        [
+            "kerberos_service_name",
+            "Desired Kerberos service name ('impala' if not provided)",
+        ],
     ],
 }
 

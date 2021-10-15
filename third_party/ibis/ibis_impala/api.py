@@ -18,29 +18,47 @@ import ibis.expr.datatypes as dt
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
 
-def impala_connect(host=None, port=10000, database="default", auth_mechanism="PLAIN"):
-   auth_mechanism = (auth_mechanism, "PLAIN")[auth_mechanism is None]
-   database = (database, "default")[database is None]
-   port = (port, 10000)[port is None]
-   return connect(host=host, port=int(port), database=database,auth_mechanism=auth_mechanism)
+
+def impala_connect(
+    host=None,
+    port=10000,
+    database="default",
+    auth_mechanism="PLAIN",
+    kerberos_service_name="impala",
+):
+    auth_mechanism = (auth_mechanism, "PLAIN")[auth_mechanism is None]
+    database = (database, "default")[database is None]
+    port = (port, 10000)[port is None]
+    kerberos_service_name = (kerberos_service_name, "impala")[
+        kerberos_service_name is None
+    ]
+    return connect(
+        host=host,
+        port=int(port),
+        database=database,
+        auth_mechanism=auth_mechanism,
+        kerberos_service_name=kerberos_service_name,
+    )
+
 
 def parse_type(t):
-  """Returns the Ibis datatype from source type."""
-  t = t.lower()
-  if t in _impala_to_ibis_type:
-    return _impala_to_ibis_type[t]
-  else:
-    if 'varchar' in t or 'char' in t:
-      return 'string'
-    elif 'decimal' in t:
-      result = dt.dtype(t)
-      if result:
-        return t
-      else:
-        return ValueError(t)
-    elif 'struct' in t or 'array' in t or 'map' in t:
-      return t.replace('int', 'int32')
+    """Returns the Ibis datatype from source type."""
+    t = t.lower()
+    if t in _impala_to_ibis_type:
+        return _impala_to_ibis_type[t]
     else:
-      raise Exception(t)
+        if "varchar" in t or "char" in t:
+            return "string"
+        elif "decimal" in t:
+            result = dt.dtype(t)
+            if result:
+                return t
+            else:
+                return ValueError(t)
+        elif "struct" in t or "array" in t or "map" in t:
+            return t.replace("int", "int32")
+        else:
+            raise Exception(t)
+
 
 udf.parse_type = parse_type
