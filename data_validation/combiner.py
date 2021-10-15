@@ -32,7 +32,13 @@ DEFAULT_TARGET = "target"
 
 
 def generate_report(
-    client, run_metadata, source, target, join_on_fields=(), verbose=False,
+    client,
+    run_metadata,
+    source,
+    target,
+    join_on_fields=(),
+    is_row_hash=False,
+    verbose=False,
 ):
     """Combine results into a report.
 
@@ -46,6 +52,7 @@ def generate_report(
             A collection of column names to use to join source and target.
             These are the columns that both the source and target queries
             grouped by.
+        is_row_hash (boolean): Boolean representing if validation type is row hash.
 
     Returns:
         pandas.DataFrame:
@@ -64,7 +71,7 @@ def generate_report(
         )
 
     differences_pivot = _calculate_differences(
-        source, target, join_on_fields, run_metadata.validations
+        source, target, join_on_fields, run_metadata.validations, is_row_hash
     )
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
@@ -84,7 +91,7 @@ def generate_report(
     return result_df
 
 
-def _calculate_difference(field_differences, datatype, validation):
+def _calculate_difference(field_differences, datatype, validation, is_row_hash):
     pct_threshold = ibis.literal(validation.threshold)
 
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
@@ -94,20 +101,30 @@ def _calculate_difference(field_differences, datatype, validation):
         source_value = field_differences["differences_source_agg_value"]
         target_value = field_differences["differences_target_agg_value"]
 
-    difference = (target_value - source_value).cast("double")
-    pct_difference = (
-        ibis.literal(100.0)
-        * difference
-        / (
-            source_value.case()
-            .when(ibis.literal(0), target_value)
-            .else_(source_value)
+    # Does not calculate difference between agg values for row hash due to int64 overflow
+    if is_row_hash:
+        difference = pct_difference = ibis.null()
+        status = (
+            ibis.case()
+            .when(target_value == source_value, "success")
+            .else_("fail")
             .end()
-        ).cast("double")
-    ).cast("double")
+        )
+    else:
+        difference = (target_value - source_value).cast("float64")
+        pct_difference = (
+            ibis.literal(100.0)
+            * difference
+            / (
+                source_value.case()
+                .when(ibis.literal(0), target_value)
+                .else_(source_value)
+                .end()
+            ).cast("float64")
+        ).cast("float64")
 
-    th_diff = (pct_difference.abs() - pct_threshold).cast("double")
-    status = ibis.case().when(th_diff > 0.0, "fail").else_("success").end()
+        th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
+        status = ibis.case().when(th_diff > 0.0, "fail").else_("success").end()
 
     return (
         difference.name("difference"),
@@ -117,7 +134,7 @@ def _calculate_difference(field_differences, datatype, validation):
     )
 
 
-def _calculate_differences(source, target, join_on_fields, validations):
+def _calculate_differences(source, target, join_on_fields, validations, is_row_hash):
     """Calculate differences between source and target fields.
 
     This function is separate from the "pivot" logic because we want to
@@ -157,7 +174,9 @@ def _calculate_differences(source, target, join_on_fields, validations):
             field_differences[
                 (ibis.literal(field).name("validation_name"),)
                 + join_on_fields
-                + _calculate_difference(field_differences, field_type, validation)
+                + _calculate_difference(
+                    field_differences, field_type, validation, is_row_hash
+                )
             ]
         )
 

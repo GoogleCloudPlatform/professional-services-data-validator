@@ -79,7 +79,7 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
-        if self.config_manager.is_grouped_row_validation:
+        if self.config_manager.is_grouped_row_validation or self.config_manager.validation_type == "Row":
             grouped_fields = self.validation_builder.pop_grouped_fields()
             result_df = self.execute_recursive_validation(
                 self.validation_builder, grouped_fields
@@ -246,6 +246,9 @@ class DataValidation(object):
 
         join_on_fields = validation_builder.get_group_aliases()
 
+        # Validation type will only be 'Row' if done via YAML config
+        is_row_hash = self.config_manager.validation_type == "Row"
+
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)
             target_df = self.config_manager.target_client.execute(target_query)
@@ -264,6 +267,7 @@ class DataValidation(object):
                     pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
                     pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
                     join_on_fields=join_on_fields,
+                    is_row_hash=is_row_hash,
                     verbose=self.verbose,
                 )
             except Exception as e:
@@ -282,6 +286,7 @@ class DataValidation(object):
                 source_query,
                 target_query,
                 join_on_fields=join_on_fields,
+                is_row_hash=is_row_hash,
                 verbose=self.verbose,
             )
 
