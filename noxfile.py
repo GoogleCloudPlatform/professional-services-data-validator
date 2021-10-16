@@ -60,6 +60,7 @@ def unit(session):
         "--cov-config=.coveragerc",
         "--cov-report=term",
         os.path.join("tests", "unit"),
+        env={"PSO_DV_CONFIG_HOME": ""},
         *session.posargs,
     )
 
@@ -172,12 +173,12 @@ def integration_bigquery(session):
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_bigquery.py"
-    expected_env_vars = ["PROJECT_ID"]
-    for env_var in expected_env_vars:
-        if not os.environ.get(env_var, ""):
+    env_vars = {"PROJECT_ID": os.environ.get("PROJECT_ID", "pso-kokoro-resources")}
+    for env_var in env_vars:
+      if not env_vars[env_var]:
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", test_path, *session.posargs)
+    session.run("pytest", test_path, env=env_vars, *session.posargs)
 
 
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
