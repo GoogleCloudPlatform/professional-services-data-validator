@@ -249,8 +249,8 @@ class DataValidation(object):
 
         join_on_fields = validation_builder.get_group_aliases()
 
-        # Validation type will only be 'Row' if done via YAML config
-        is_row_hash = self.config_manager.validation_type == "Row"
+        # If row validation from YAML, compare source and target agg values
+        is_value_comparison = self.config_manager.validation_type == "Row"
 
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)
@@ -270,7 +270,7 @@ class DataValidation(object):
                     pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
                     pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
                     join_on_fields=join_on_fields,
-                    is_row_hash=is_row_hash,
+                    is_value_comparison=is_value_comparison,
                     verbose=self.verbose,
                 )
             except Exception as e:
@@ -289,7 +289,7 @@ class DataValidation(object):
                 source_query,
                 target_query,
                 join_on_fields=join_on_fields,
-                is_row_hash=is_row_hash,
+                is_value_comparison=is_value_comparison,
                 verbose=self.verbose,
             )
 
