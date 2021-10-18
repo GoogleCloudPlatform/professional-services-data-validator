@@ -5,13 +5,13 @@ create these connections using the CLI.
 These connections will automatically be saved either to `~/.config/google-pso-data-validator/` or 
 a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
 
-## GCS Connection Management
+## GCS Connection Management (recommended)
 
 The connections can also be stored in GCS using `PSO_DV_CONFIG_HOME`.
 To do so simply add the GCS path to the environment.
 
 eg.
-`PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`
+`export PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`
 
 The following commands can be used to create connections:
 
@@ -119,7 +119,7 @@ Below is the expected configuration for each type.
 * roles/spanner.databaseReader
 
 ## Teradata
-Please note the Teradata is not-native to this package and must be installed
+Please note that Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
 ```
 {

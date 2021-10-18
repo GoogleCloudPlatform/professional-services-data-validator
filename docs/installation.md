@@ -115,6 +115,7 @@ If you want to test local changes to the tool, run the following command from th
 ```
 pip install .
 ```
+The unit test suite can be executed using either `pytest tests/unit` or `python -m nox -s unit` from the root directory. If you are using nox, you will need to run `pip install nox` first.
 
 
 ## Build a Docker container 

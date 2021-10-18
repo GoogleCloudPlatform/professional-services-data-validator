@@ -23,6 +23,7 @@ import os
 from google.cloud import storage
 from typing import Dict, List
 
+from data_validation import client_info
 from data_validation import consts
 
 
@@ -133,7 +134,8 @@ class StateManager(object):
 
     # GCS File Management Section
     def setup_gcs(self):
-        self.storage_client = storage.Client()
+        info = client_info.get_http_client_info()
+        self.storage_client = storage.Client(client_info=info)
         try:
             self.gcs_bucket = self._get_gcs_bucket()
         except ValueError as e:
