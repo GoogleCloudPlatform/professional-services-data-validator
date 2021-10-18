@@ -175,7 +175,7 @@ def integration_bigquery(session):
     test_path = "tests/system/data_sources/test_bigquery.py"
     env_vars = {"PROJECT_ID": os.environ.get("PROJECT_ID", "pso-kokoro-resources")}
     for env_var in env_vars:
-      if not env_vars[env_var]:
+        if not env_vars[env_var]:
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", test_path, env=env_vars, *session.posargs)
