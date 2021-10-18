@@ -87,7 +87,7 @@ class StateManager(object):
         if self.file_system == FileSystem.LOCAL:
             return self.file_system_root_path
 
-        return os.path.join(self.file_system_root_path, "connections")
+        return os.path.join(self.file_system_root_path, "connections/")
 
     def _get_connection_path(self, name: str) -> str:
         """Returns the full path to a connection.
