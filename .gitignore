@@ -75,4 +75,4 @@ override.tf.json
 terraform.rc
 
 # Custom
-sample.yaml
+*.yaml
