@@ -60,6 +60,7 @@ def unit(session):
         "--cov-config=.coveragerc",
         "--cov-report=term",
         os.path.join("tests", "unit"),
+        env={"PSO_DV_CONFIG_HOME": ""},
         *session.posargs,
     )
 
@@ -172,12 +173,12 @@ def integration_bigquery(session):
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_bigquery.py"
-    expected_env_vars = ["PROJECT_ID"]
-    for env_var in expected_env_vars:
-        if not os.environ.get(env_var, ""):
+    env_vars = {"PROJECT_ID": os.environ.get("PROJECT_ID", "pso-kokoro-resources")}
+    for env_var in env_vars:
+        if not env_vars[env_var]:
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", test_path, *session.posargs)
+    session.run("pytest", test_path, env=env_vars, *session.posargs)
 
 
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
@@ -194,3 +195,20 @@ def integration_spanner(session):
 
     session.run("pytest", "third_party/ibis/ibis_cloud_spanner/tests", *session.posargs)
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
+
+
+@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+def integration_state(session):
+    """Run StateManager integration tests.
+    Ensure the StateManager is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=[])
+
+    test_path = "tests/system/test_state_manager.py"
+    # env_vars = {"PSO_DV_CONFIG_HOME": os.environ.get("PSO_DV_CONFIG_HOME", "gs://pso-kokoro-resources/state/")}
+    # for env_var in env_vars:
+    #     if not env_vars[env_var]:
+    #         raise Exception("Expected Env Var: %s" % env_var)
+
+    # session.run("pytest", test_path, env=env_vars, *session.posargs)
+    session.run("pytest", test_path, *session.posargs)
