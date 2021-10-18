@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
 from data_validation import state_manager
 
 
@@ -44,3 +46,10 @@ def test_list_connections():
     connections = manager.list_connections()
 
     assert set(connections) == expected
+
+def test_create_invalid_gcs_path_raises():
+    # Unknown file paths will be created by the state manager
+    files_directory = "gs://!!bucket!!/this/path/"
+
+    with pytest.raises(ValueError, match=r"GCS Path Failure .*"):
+        state_manager.StateManager(files_directory)
