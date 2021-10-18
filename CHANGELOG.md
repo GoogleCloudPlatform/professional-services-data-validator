@@ -2,6 +2,24 @@
 
 ## Untagged
 
+## [1.5.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.4.0...v1.5.0) (2021-10-18)
+
+
+### Features
+
+* added kerberos service name flag for Impala connections, fixed bug in row validation with YAML ([#320](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/320)) ([351994c](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/351994c4fd028540915694e8f154ef45cdcd6398))
+* Track DVT GCS connections ([#326](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/326)) ([b384b1f](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b384b1fc62d24b8761d5587cd5fee5ff0c808459))
+
+
+### Bug Fixes
+
+* Issue323 row hash ([#328](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/328)) ([1a03ad7](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1a03ad787fd8db2155b748c8c0e75c58c566b58e))
+
+
+### Documentation
+
+* Added python install commands ([#264](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/264)) ([0936d84](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0936d843c215ed8b6c81385175f23cf705278a9a))
+
 ## [1.4.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.3.2...v1.4.0) (2021-09-30)
 
 
