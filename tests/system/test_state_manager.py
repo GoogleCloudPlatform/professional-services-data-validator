@@ -39,6 +39,7 @@ def test_gcs_create_and_get_connection_config():
     config = manager.get_connection_config(TEST_CONN_NAME)
     assert config == TEST_CONN
 
+
 def test_list_connections():
     manager = state_manager.StateManager(GCS_STATE_PATH)
     expected = set(["example", "my_bq_conn"])
@@ -46,6 +47,7 @@ def test_list_connections():
     connections = manager.list_connections()
 
     assert set(connections) == expected
+
 
 def test_create_invalid_gcs_path_raises():
     # Unknown file paths will be created by the state manager
