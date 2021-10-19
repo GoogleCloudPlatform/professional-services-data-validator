@@ -22,6 +22,7 @@ package.
 """
 
 import os
+import random
 
 import nox
 
@@ -111,7 +112,7 @@ def blacken(session):
     session.run("black", *BLACK_PATHS)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_mysql(session):
     """Run MySQL integration tests.
     Ensure MySQL validation is running as expected.
@@ -129,7 +130,7 @@ def integration_mysql(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_postgres(session):
     """Run Postgres integration tests.
     Ensure Postgres validation is running as expected.
@@ -147,7 +148,7 @@ def integration_postgres(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_sql_server(session):
     """Run SQL Server integration tests.
     Ensure SQL Server validation is running as expected.
@@ -165,7 +166,7 @@ def integration_sql_server(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_bigquery(session):
     """Run BigQuery integration tests.
     Ensure BigQuery validation is running as expected.
@@ -181,7 +182,7 @@ def integration_bigquery(session):
     session.run("pytest", test_path, env=env_vars, *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_spanner(session):
     """Run Spanner integration tests.
     Ensure Spanner validation is running as expected.
@@ -197,7 +198,7 @@ def integration_spanner(session):
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_state(session):
     """Run StateManager integration tests.
     Ensure the StateManager is running as expected.
@@ -205,10 +206,4 @@ def integration_state(session):
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/test_state_manager.py"
-    # env_vars = {"PSO_DV_CONFIG_HOME": os.environ.get("PSO_DV_CONFIG_HOME", "gs://pso-kokoro-resources/state/")}
-    # for env_var in env_vars:
-    #     if not env_vars[env_var]:
-    #         raise Exception("Expected Env Var: %s" % env_var)
-
-    # session.run("pytest", test_path, env=env_vars, *session.posargs)
     session.run("pytest", test_path, *session.posargs)
