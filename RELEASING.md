@@ -1,5 +1,11 @@
 # Release steps
 
+Our release process is managed by Cloud Build. Please review the PSO Cloud Build project to view more granular build details.
+
+# Manual Release steps
+
+If a manual build is required, or you wish to run a build to a custom repository, please follow the instructions below.
+
 ## Prerequisites
 
 First, prepare a development environment. Follow the instructions in the
