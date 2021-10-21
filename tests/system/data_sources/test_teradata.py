@@ -23,10 +23,10 @@ TERADATA_CONFIG = {
     "source_type": "Teradata",
     # BigQuery Specific Connection Config
     "config": {
-        "host": "127.0.0.1",
-        "user_name": "dbc",
-        "password": "dbc",
-        "port": 10255,
+        "host": "10.128.15.235",
+        "user_name": "udf",
+        "password": "udfs",
+        "port": 1025,
     },
     # Configuration Required Depending on Validator Type
     "schema_name": "Sys_Calendar",
@@ -68,6 +68,12 @@ def test_partitioned_count_validator():
     for _, row in rows:
         assert row["count_inp"] > 0
         assert row["count_inp"] == row["count_out"]
+
+def test_hashing_udf():
+    builder = query_builder.QueryBuilder.build_count_validator()
+    validator = create_validator(builder)
+    df = validator.execute()
+    rows = list(df.iterrows())
 
 
 def _add_calendar_date_filters(builder):
