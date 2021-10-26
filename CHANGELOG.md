@@ -2,6 +2,13 @@
 
 ## Untagged
 
+### [1.5.1](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.5.0...v1.5.1) (2021-10-26)
+
+
+### Bug Fixes
+
+* Include StringIO into teradata ibis compiler.py ([#336](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/336)) ([1dba63b](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1dba63be87a8e4b4ff63d1753c6197a6ec3411e5))
+
 ## [1.5.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.4.0...v1.5.0) (2021-10-19)
 
 
