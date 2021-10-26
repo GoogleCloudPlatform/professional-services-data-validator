@@ -69,12 +69,6 @@ def test_partitioned_count_validator():
         assert row["count_inp"] > 0
         assert row["count_inp"] == row["count_out"]
 
-def test_hashing_udf():
-    builder = query_builder.QueryBuilder.build_count_validator()
-    validator = create_validator(builder)
-    df = validator.execute()
-    rows = list(df.iterrows())
-
 
 def _add_calendar_date_filters(builder):
     # Adding custom filter for better results
