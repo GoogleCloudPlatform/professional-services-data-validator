@@ -24,8 +24,8 @@ TERADATA_CONFIG = {
     # BigQuery Specific Connection Config
     "config": {
         "host": "10.128.15.235",
-        "user_name": "udf",
-        "password": "udfs",
+        "user_name": "dbc",
+        "password": "dbc",
         "port": 1025,
     },
     # Configuration Required Depending on Validator Type
