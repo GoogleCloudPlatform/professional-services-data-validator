@@ -13,19 +13,23 @@
 # limitations under the License.
 
 from datetime import datetime
+import os
 
 from data_validation import data_validation
 from data_validation.query_builder import query_builder
 
+TERADATA_PASSWORD = os.getenv("TERADATA_PASSWORD")
+TERADATA_HOST = os.getenv("TERADATA_HOST")
+PROJECT_ID = os.getenv("PROJECT_ID")
 
 TERADATA_CONFIG = {
     # Configuration Required for All Data Soures
     "source_type": "Teradata",
     # BigQuery Specific Connection Config
     "config": {
-        "host": "10.128.15.235",
-        "user_name": "dbc",
-        "password": "dbc",
+        "host": TERADATA_HOST,
+        "user_name": "udf",
+        "password": TERADATA_PASSWORD,
         "port": 1025,
     },
     # Configuration Required Depending on Validator Type
