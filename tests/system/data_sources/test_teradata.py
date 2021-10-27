@@ -23,33 +23,33 @@ TERADATA_HOST = os.getenv("TERADATA_HOST")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 conn = {
-        "source_type": "Teradata",
-        "host": TERADATA_HOST,
-        "user_name": "udf",
-        "password": TERADATA_PASSWORD,
-        "port": 1025,
-    }
+    "source_type": "Teradata",
+    "host": TERADATA_HOST,
+    "user_name": "udf",
+    "password": TERADATA_PASSWORD,
+    "port": 1025,
+}
 
 
 TERADATA_CONFIG = {
-        # Specific Connection Config
-        consts.CONFIG_SOURCE_CONN: conn,
-        consts.CONFIG_TARGET_CONN: conn,
-        # Validation Type
-        consts.CONFIG_TYPE: "Column",
-        # Configuration Required Depending on Validator Type
-        consts.CONFIG_SCHEMA_NAME: "Sys_Calendar",
-        consts.CONFIG_TABLE_NAME: "CALENDAR",
-        consts.CONFIG_AGGREGATES: [
-            {
-                consts.CONFIG_TYPE: "count",
-                consts.CONFIG_SOURCE_COLUMN: "year_of_calendar",
-                consts.CONFIG_TARGET_COLUMN: "year_of_calendar",
-                consts.CONFIG_FIELD_ALIAS: "count",
-            },
-        ],
-        consts.CONFIG_FORMAT: "table",
-    }
+    # Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: conn,
+    consts.CONFIG_TARGET_CONN: conn,
+    # Validation Type
+    consts.CONFIG_TYPE: "Column",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "Sys_Calendar",
+    consts.CONFIG_TABLE_NAME: "CALENDAR",
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_SOURCE_COLUMN: "year_of_calendar",
+            consts.CONFIG_TARGET_COLUMN: "year_of_calendar",
+            consts.CONFIG_FIELD_ALIAS: "count",
+        },
+    ],
+    consts.CONFIG_FORMAT: "table",
+}
 
 
 def test_count_validator():
