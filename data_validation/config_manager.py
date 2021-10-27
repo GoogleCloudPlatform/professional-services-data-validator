@@ -92,9 +92,8 @@ class ConfigManager(object):
 
     def process_in_memory(self):
         if (
-            self.is_grouped_row_validation
-            and self.get_source_connection() == self.get_target_connection()
-        ):
+            self.validation_type == "Row" or self.is_grouped_row_validation
+        ) and self.get_source_connection() == self.get_target_connection():
             return False
 
         return True
@@ -146,9 +145,9 @@ class ConfigManager(object):
 
     @property
     def is_grouped_row_validation(self):
-        """ Returns boolean indicating if validation type is a Grouped_Column
+        """ Returns boolean indicating if validation type is a Grouped Column
         Row validation. """
-        return self.primary_keys != []
+        return self.primary_keys != [] and self.validation_type == "Column"
 
     @property
     def filters(self):
