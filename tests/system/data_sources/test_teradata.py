@@ -54,26 +54,6 @@ def test_count_validator():
     assert df["count_inp"][0] == df["count_out"][0]
 
 
-def test_partitioned_count_validator():
-    builder = query_builder.QueryBuilder.build_partition_count_validator(
-        days_past=700, limit=100
-    )
-    # Add Filters for large table
-    _add_calendar_date_filters(builder)
-
-    validator = create_validator(builder)
-    df = validator.execute()
-    rows = list(df.iterrows())
-
-    # Check that all partitions are unique.
-    partitions = frozenset(df["partition_key"])
-    assert len(rows) == len(partitions)
-
-    for _, row in rows:
-        assert row["count_inp"] > 0
-        assert row["count_inp"] == row["count_out"]
-
-
 def _add_calendar_date_filters(builder):
     # Adding custom filter for better results
     project_start_date = datetime(2020, 1, 1, 0, 0, 0)
