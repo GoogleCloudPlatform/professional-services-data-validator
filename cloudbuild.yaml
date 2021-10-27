@@ -13,6 +13,9 @@
 # limitations under the License.
 
 timeout: 7200s
+options:
+  pool:
+    name: 'projects/pso-kokoro-resources/locations/us-central1/workerPools/private-pool'
 steps:
 - id: lint
   name: 'gcr.io/pso-kokoro-resources/python-multi'
