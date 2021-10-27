@@ -15,43 +15,48 @@
 from datetime import datetime
 import os
 
-from data_validation import data_validation
+from data_validation import data_validation, consts
 from data_validation.query_builder import query_builder
 
 TERADATA_PASSWORD = os.getenv("TERADATA_PASSWORD")
 TERADATA_HOST = os.getenv("TERADATA_HOST")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
-TERADATA_CONFIG = {
-    # Configuration Required for All Data Soures
-    "source_type": "Teradata",
-    # BigQuery Specific Connection Config
-    "config": {
+conn = {
+        "source_type": "Teradata",
         "host": TERADATA_HOST,
         "user_name": "udf",
         "password": TERADATA_PASSWORD,
         "port": 1025,
-    },
-    # Configuration Required Depending on Validator Type
-    "schema_name": "Sys_Calendar",
-    "table_name": "CALENDAR",
-    "partition_column": "year_of_calendar",
-    "format": "table",
-}
+    }
 
 
-def create_validator(builder):
-    return data_validation.DataValidation(
-        TERADATA_CONFIG, builder=builder, result_handler=None, verbose=False
-    )
+TERADATA_CONFIG = {
+        # Specific Connection Config
+        consts.CONFIG_SOURCE_CONN: conn,
+        consts.CONFIG_TARGET_CONN: conn,
+        # Validation Type
+        consts.CONFIG_TYPE: "Column",
+        # Configuration Required Depending on Validator Type
+        consts.CONFIG_SCHEMA_NAME: "Sys_Calendar",
+        consts.CONFIG_TABLE_NAME: "CALENDAR",
+        consts.CONFIG_AGGREGATES: [
+            {
+                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_SOURCE_COLUMN: "year_of_calendar",
+                consts.CONFIG_TARGET_COLUMN: "year_of_calendar",
+                consts.CONFIG_FIELD_ALIAS: "count",
+            },
+        ],
+        consts.CONFIG_FORMAT: "table",
+    }
 
 
 def test_count_validator():
-    builder = query_builder.QueryBuilder.build_count_validator()
-    validator = create_validator(builder)
+    validator = data_validation.DataValidation(TERADATA_CONFIG, verbose=True)
     df = validator.execute()
-    assert df["count_inp"][0] > 0
-    assert df["count_inp"][0] == df["count_out"][0]
+    assert int(df["source_agg_value"][0]) > 0
+    assert df["source_agg_value"][0] == df["target_agg_value"][0]
 
 
 def _add_calendar_date_filters(builder):

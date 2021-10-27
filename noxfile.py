@@ -203,7 +203,7 @@ def integration_teradata(session):
     """Run Teradata integration tests.
     Ensure Teradata validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=[])
+    _setup_session_requirements(session, extra_packages=["teradatasql"])
 
     expected_env_vars = ["PROJECT_ID", "TERADATA_PASSWORD", "TERADATA_HOST"]
     for env_var in expected_env_vars:
