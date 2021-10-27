@@ -118,7 +118,7 @@ CALCULATED_MULTIPLE_TEST = [
 
 
 class MockIbisClient(object):
-    pass
+    _source_type = "BigQuery"
 
 
 @pytest.fixture

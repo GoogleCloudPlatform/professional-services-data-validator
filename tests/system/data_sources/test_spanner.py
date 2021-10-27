@@ -20,6 +20,7 @@ import pytest
 
 from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
+from data_validation import state_manager
 from third_party.ibis.ibis_cloud_spanner.tests import conftest
 
 
@@ -240,5 +241,6 @@ def _store_spanner_conn(spanner_connection_args):
 
 
 def _remove_spanner_conn():
-    file_path = cli_tools._get_connection_file(SPANNER_CONN_NAME)
+    mgr = state_manager.StateManager()
+    file_path = mgr._get_connection_path(SPANNER_CONN_NAME)
     os.remove(file_path)

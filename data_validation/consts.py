@@ -16,6 +16,8 @@
 # Configuration Fields
 SOURCE_TYPE = "source_type"
 CONFIG = "config"
+CONFIG_SOURCE_CONN_NAME = "source_conn_name"
+CONFIG_TARGET_CONN_NAME = "target_conn_name"
 CONFIG_SOURCE_CONN = "source_conn"
 CONFIG_TARGET_CONN = "target_conn"
 CONFIG_TYPE = "type"
@@ -62,9 +64,11 @@ GROUPED_COLUMN_VALIDATION = "GroupedColumn"
 ROW_VALIDATION = "Row"
 SCHEMA_VALIDATION = "Schema"
 
-# Yaml File Config Fields
-ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+# State Manager Fields
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
+ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+
+# Yaml File Config Fields
 YAML_RESULT_HANDLER = "result_handler"
 YAML_SOURCE = "source"
 YAML_TARGET = "target"

@@ -121,9 +121,11 @@ data-validation validate schema -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 pip install gcsfs
 pip install fsspec
 
-data-validation connections add --connection-name file_conn FileSystem --table-name my_local_file --file-path gs://path/to/file --file-type csv
+data-validation connections add --connection-name file_conn FileSystem --table-name $FILE_NAME --file-path gs://path/to/file --file-type csv
+data-validation connections add --connection-name my_bq_conn BigQuery --project-id $YOUR_PROJECT_ID
 
-data-validation validate column -sc file_conn -tc file_conn -tbls my_local_file --count name
+# Validate GCS CSV file with BigQuery table
+data-validation validate column -sc file_conn -tc my_bq_conn -tbls $FILE_NAME=$YOUR_PROJECT_ID.dataset.table --count $COLUMN
 ````
 
 #### Run custom SQL 

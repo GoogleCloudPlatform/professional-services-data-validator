@@ -16,7 +16,13 @@
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation import cli_tools, clients, consts, jellyfish_distance
+from data_validation import (
+    cli_tools,
+    clients,
+    consts,
+    jellyfish_distance,
+    state_manager,
+)
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
@@ -109,9 +115,6 @@ def build_config_managers_from_args(args):
     else:
         config_type = args.type
 
-    source_conn = cli_tools.get_connection(args.source_conn)
-    target_conn = cli_tools.get_connection(args.target_conn)
-
     result_handler_config = None
     if args.bq_result_handler:
         result_handler_config = cli_tools.get_result_handler(
@@ -131,12 +134,13 @@ def build_config_managers_from_args(args):
             threshold = args.threshold
         labels = cli_tools.get_labels(args.labels)
 
-    source_client = clients.get_data_client(source_conn)
-    target_client = clients.get_data_client(target_conn)
+    mgr = state_manager.StateManager()
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     format = args.format if args.format else "table"
 
-    is_filesystem = True if source_conn["source_type"] == "FileSystem" else False
+    is_filesystem = source_client._source_type == "FileSystem"
     tables_list = cli_tools.get_tables_list(
         args.tables_list, default_value=[], is_filesystem=is_filesystem
     )
@@ -144,14 +148,14 @@ def build_config_managers_from_args(args):
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
             config_type,
-            source_conn,
-            target_conn,
-            source_client,
-            target_client,
+            args.source_conn,
+            args.target_conn,
             table_obj,
             labels,
             threshold,
             format,
+            source_client=source_client,
+            target_client=target_client,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,
@@ -171,8 +175,9 @@ def build_config_managers_from_yaml(args):
     config_file_path = _get_arg_config_file(args)
     yaml_configs = _get_yaml_config_from_file(config_file_path)
 
-    source_conn = cli_tools.get_connection(yaml_configs[consts.YAML_SOURCE])
-    target_conn = cli_tools.get_connection(yaml_configs[consts.YAML_TARGET])
+    mgr = state_manager.StateManager()
+    source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE])
+    target_conn = mgr.get_connection_config(yaml_configs[consts.YAML_TARGET])
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
@@ -238,12 +243,11 @@ def get_table_map(client, allowed_schemas=None):
 
 def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
-    source_conn = cli_tools.get_connection(args.source_conn)
-    target_conn = cli_tools.get_connection(args.target_conn)
     score_cutoff = args.score_cutoff or 0.8
 
-    source_client = clients.get_data_client(source_conn)
-    target_client = clients.get_data_client(target_conn)
+    mgr = state_manager.StateManager()
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
@@ -257,8 +261,8 @@ def find_tables_using_string_matching(args):
 
 def run_raw_query_against_connection(args):
     """Return results of raw query for adhoc usage."""
-    conn = cli_tools.get_connection(args.conn)
-    client = clients.get_data_client(conn)
+    mgr = state_manager.StateManager()
+    client = clients.get_data_client(mgr.get_connection_config(args.conn))
 
     with client.raw_sql(args.query, results=True) as cur:
         return cur.fetchall()

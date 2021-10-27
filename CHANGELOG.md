@@ -2,6 +2,26 @@
 
 ## Untagged
 
+## [1.4.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.3.2...v1.4.0) (2021-09-30)
+
+
+### Features
+
+* add state manager client ([#311](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/311)) ([e893ea5](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e893ea5f723e0e33350410e64e0d588cc96b36cf))
+* Allow user to specify a format for stdout ([#242](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/242)) ([#293](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/293)) ([f0a9fa1](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f0a9fa1e94e86def089c77912cf49911aa63cae1))
+* Allow user to specify a format for stdout T2 ([#242](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/242)) ([#296](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/296)) ([ec1af22](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ec1af22006f75b11430ac87262ae55634dc897a6))
+* cast aggregates ([#306](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/306)) ([e3da4c3](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e3da4c3a9d156b864e846e8a526c4b0e864cd2e7))
+* Issue262 impala connect ([#281](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/281)) ([eaa052f](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/eaa052f8b003899857fe2c8a47afaeee33e7ffd3))
+* logic to deploy dvt on Cloud Run ([#280](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/280)) ([9076286](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/90762862b476d7fba531affa4f35985a51add0e4))
+* promote 3.9 to main version (as it is in Cloudtops now for local testing) and add a small unit test for persoanl use ([#292](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/292)) ([eb0f21a](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/eb0f21a559a332f198c16280732a35cc3efea5b5))
+* Refactor CLI to fit Command Pattern ([#303](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/303)) ([f6d2b9d](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f6d2b9d6879aaab1ab92f2f907d9334e15f75d7b))
+* Updated Cloud Functions sample ([#297](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/297)) ([923413d](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/923413d30ffeed2d1dd8483758c39009b1bd9aa0))
+
+
+### Bug Fixes
+
+* updated code so that BQ target schema would not set to None for FileSystem to BQ validations ([#309](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/309)) ([5016d65](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5016d65f24bc950f8c62d248b10a73413da5d49f))
+
 ### [1.3.2](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.3.1...v1.3.2) (2021-06-29)
 
 

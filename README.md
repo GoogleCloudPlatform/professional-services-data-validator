@@ -12,31 +12,24 @@ after each migration step (e.g. data and schema migration, SQL script
 translation, ETL migration, etc.). The Data Validation Tool provides an
 automated and repeatable solution to perform this task.
 
-DVT supports the following validation types:
-* Table level
-  * Table row count
-  * Group by row count
-  * Column aggregation
-  * Filters and limits
-* Column level
-  * Full column data type
-* Row level hash comparison  (BigQuery tables only)
-* Raw SQL exploration
-  * Run custom queries on different data sources
+DVT supports the following validation types: * Table level * Table row count *
+Group by row count * Column aggregation * Filters and limits * Column level *
+Full column data type * Row level hash comparison (BigQuery tables only) * Raw
+SQL exploration * Run custom queries on different data sources
 
 DVT supports the following connection types:
 
-* [BigQuery](docs/connections.md#google-bigquery)
-* [Spanner](docs/connections.md#google-spanner)
-* [Teradata](docs/connections.md#teradata)
-* [Oracle](docs/connections.md#oracle)
-* [MSSQL](docs/connections.md#mssql-server)
-* [Snowflake](docs/connections.md#snowflake)
-* [Postgres](docs/connections.md#postgres)
-* [MySQL](docs/connections.md#mysql)
-* [Redshift](docs/connections.md#redshift)
-* [FileSystem](docs/connections.md#filesystem)
-* [Impala](docs/connections.md#impala)
+*   [BigQuery](docs/connections.md#google-bigquery)
+*   [Spanner](docs/connections.md#google-spanner)
+*   [Teradata](docs/connections.md#teradata)
+*   [Oracle](docs/connections.md#oracle)
+*   [MSSQL](docs/connections.md#mssql-server)
+*   [Snowflake](docs/connections.md#snowflake)
+*   [Postgres](docs/connections.md#postgres)
+*   [MySQL](docs/connections.md#mysql)
+*   [Redshift](docs/connections.md#redshift)
+*   [FileSystem](docs/connections.md#filesystem)
+*   [Impala](docs/connections.md#impala)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
@@ -54,6 +47,18 @@ those tables. Validation results can be printed to stdout (default) or outputted
 to BigQuery. The validation tool also allows you to save or edit validation
 configurations in a YAML file. This is useful for running common validations or
 updating the configuration.
+
+### Managing Connections
+
+The Data Validation Tool expects to recieve a source and target connection for
+each validation which is run.
+
+These connections can be supplied directly to the configuration, but more often
+you want to manage connections separately and reference them by name.
+
+Connections can be stored locally or in a GCS directory.
+
+To create connections please review the [Connections](docs/connections.md) page.
 
 ### Running CLI Validations
 
@@ -75,11 +80,11 @@ DVT supports column (including grouped column) and schema validations.
 
 #### Column Validations
 
-Below is the command syntax for column validations. To run a grouped column validation,
-simply specify the `--grouped-columns` flag. You can also take grouped column validations
-a step further by providing the `--primary-key` flag. With this flag, if a mismatch was found,
-DVT will dive deeper into the slice with the error and find the row (primary key value) with the
-inconsistency. 
+Below is the command syntax for column validations. To run a grouped column
+validation, simply specify the `--grouped-columns` flag. You can also take
+grouped column validations a step further by providing the `--primary-key` flag.
+With this flag, if a mismatch was found, DVT will dive deeper into the slice
+with the error and find the row (primary key value) with the inconsistency.
 
 ```
 data-validation (--verbose or -v) validate column
@@ -129,8 +134,9 @@ The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
 
 #### Schema Validations
-Below is the syntax for schema validations. These can be used to compare column types between source
-and target.
+
+Below is the syntax for schema validations. These can be used to compare column
+types between source and target.
 
 ```
 data-validation (--verbose or -v) validate schema
@@ -151,7 +157,7 @@ data-validation (--verbose or -v) validate schema
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
                         YAML Config File Path to be used for storing validations.
-  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table). 
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
 ```
 
@@ -175,11 +181,9 @@ You can customize the configuration for any given validation by providing use
 case specific CLI arguments or editing the saved YAML configuration file.
 
 For example, the following command creates a YAML file for the validation of the
-`new_york_citibike` table: 
-```
-data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls
-bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml
-```
+`new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
+my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
+citibike.yaml`
 
 Here is the generated YAML file named `citibike.yaml`:
 
@@ -212,8 +216,8 @@ validation:
 data-validation run-config -c citibike.yaml
 ```
 
-View the complete YAML file for a GroupedColumn validation on the [examples](docs/examples.md#)
-page.
+View the complete YAML file for a GroupedColumn validation on the
+[examples](docs/examples.md#) page.
 
 ### Aggregated Fields
 
@@ -385,12 +389,11 @@ FROM (
 
 ## Validation Reports
 
-The output handlers tell the data validation tool where to store the results of each
-validation. The tool can write the results of a validation run to Google
+The output handlers tell the data validation tool where to store the results of
+each validation. The tool can write the results of a validation run to Google
 BigQuery or print to stdout (default).
 
 View the schema of the results [here](terraform/results_schema.json).
-
 
 ### Configure tool to output to BigQuery
 

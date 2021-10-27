@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-""" The Data Validation CLI tool is intended to help to build and execute
+"""The Data Validation CLI tool is intended to help to build and execute
 data validation runs with ease.
 
 The Data Validator can be called either using:
@@ -47,11 +47,11 @@ data-validation run-config -c ex_yaml.yaml
 import argparse
 import csv
 import json
-import os
 import sys
 import uuid
 
 from data_validation import consts
+from data_validation import state_manager
 
 
 CONNECTION_SOURCE_FIELDS = {
@@ -123,6 +123,10 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Desired Imapala port (10000 if not provided)"],
         ["database", "Desired Impala database (default if not provided)"],
         ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
+        [
+            "kerberos_service_name",
+            "Desired Kerberos service name ('impala' if not provided)",
+        ],
     ],
 }
 
@@ -481,22 +485,20 @@ def threshold_float(x):
     return x
 
 
-def _get_data_validation_directory():
-    raw_dir_path = (
-        os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
-    )
-    dir_path = os.path.expanduser(raw_dir_path)
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
+# def _get_data_validation_directory():
+#     raw_dir_path = (
+#         os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
+#     )
+#     dir_path = os.path.expanduser(raw_dir_path)
+#     if not os.path.exists(dir_path):
+#         os.makedirs(dir_path)
+#     return dir_path
 
-    return dir_path
 
-
-def _get_connection_file(connection_name):
-    dir_path = _get_data_validation_directory()
-    file_name = f"{connection_name}.connection.json"
-
-    return os.path.join(dir_path, file_name)
+# def _get_connection_file(connection_name):
+#     dir_path = _get_data_validation_directory()
+#     file_name = f"{connection_name}.connection.json"
+#     return os.path.join(dir_path, file_name)
 
 
 def _generate_random_name(conn):
@@ -506,32 +508,37 @@ def _generate_random_name(conn):
 
 def store_connection(connection_name, conn):
     """ Store the connection config under the given name."""
-    connection_name = connection_name or _generate_random_name(conn)
-    file_path = _get_connection_file(connection_name)
-
-    with open(file_path, "w") as file:
-        file.write(json.dumps(conn))
+    mgr = state_manager.StateManager()
+    mgr.create_connection(connection_name, conn)
 
 
-def get_connections():
-    """ Return dict with connection name and path key pairs."""
-    connections = {}
+#     connection_name = connection_name or _generate_random_name(conn)
+#     file_path = _get_connection_file(connection_name)
 
-    dir_path = _get_data_validation_directory()
-    all_config_files = os.listdir(dir_path)
-    for config_file in all_config_files:
-        if config_file.endswith(".connection.json"):
-            config_file_path = os.path.join(dir_path, config_file)
-            conn_name = config_file.split(".")[0]
+#     with open(file_path, "w") as file:
+#         file.write(json.dumps(conn))
 
-            connections[conn_name] = config_file_path
 
-    return connections
+# def get_connections():
+#     """ Return dict with connection name and path key pairs."""
+#     connections = {}
+
+#     dir_path = _get_data_validation_directory()
+#     all_config_files = os.listdir(dir_path)
+#     for config_file in all_config_files:
+#         if config_file.endswith(".connection.json"):
+#             config_file_path = os.path.join(dir_path, config_file)
+#             conn_name = config_file.split(".")[0]
+
+#             connections[conn_name] = config_file_path
+
+#     return connections
 
 
 def list_connections():
     """ List all saved connections."""
-    connections = get_connections()
+    mgr = state_manager.StateManager()
+    connections = mgr.list_connections()
 
     for conn_name in connections:
         print(f"Connection Name: {conn_name}")
@@ -539,11 +546,13 @@ def list_connections():
 
 def get_connection(connection_name):
     """ Return dict connection details for a specific connection."""
-    file_path = _get_connection_file(connection_name)
-    with open(file_path, "r") as file:
-        conn_str = file.read()
+    mgr = state_manager.StateManager()
+    return mgr.get_connection_config(connection_name)
 
-    return json.loads(conn_str)
+
+#     with open(file_path, "r") as file:
+#         conn_str = file.read()
+#     return json.loads(conn_str)
 
 
 def get_labels(arg_labels):
