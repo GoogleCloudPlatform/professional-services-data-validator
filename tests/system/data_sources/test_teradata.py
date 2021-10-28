@@ -53,9 +53,9 @@ TERADATA_CONFIG = {
         {
             consts.CONFIG_FILTER_TYPE: "custom",
             consts.CONFIG_FILTER_TARGET: "1=1",
-            consts.CONFIG_FILTER_SOURCEL "1=1",
+            consts.CONFIG_FILTER_SOURCE: "1=1",
         },
-    ]
+    ],
 }
 
 
