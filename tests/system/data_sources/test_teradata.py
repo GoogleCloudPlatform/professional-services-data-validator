@@ -52,10 +52,10 @@ TERADATA_CONFIG = {
     consts.CONFIG_FILTERS: [
         {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,
-            consts.CONFIG_FILTER_SOURCE_COLUMN = "year_of_calendar",
-            consts.CONFIG_FILTER_SOURCE_VALUE = 2010,
-            consts.CONFIG_FILTER_TARGET_COLUMN = "year_of_calendar",
-            consts.CONFIG_FILTER_TARGET_VALUE = 2010,
+            consts.CONFIG_FILTER_SOURCE_COLUMN: "year_of_calendar",
+            consts.CONFIG_FILTER_SOURCE_VALUE: 2010,
+            consts.CONFIG_FILTER_TARGET_COLUMN: "year_of_calendar",
+            consts.CONFIG_FILTER_TARGET_VALUE: 2010,
         },
     ],
 }
