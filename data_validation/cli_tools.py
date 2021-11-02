@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """The Data Validation CLI tool is intended to help to build and execute
 data validation runs with ease.
 
@@ -52,7 +50,6 @@ import uuid
 
 from data_validation import consts
 from data_validation import state_manager
-
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -122,7 +119,10 @@ CONNECTION_SOURCE_FIELDS = {
         ["host", "Desired Impala host"],
         ["port", "Desired Imapala port (10000 if not provided)"],
         ["database", "Desired Impala database (default if not provided)"],
-        ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
+        [
+            "auth_mechanism",
+            "Desired Impala auth mechanism (PLAIN if not provided)"
+        ],
         [
             "kerberos_service_name",
             "Desired Kerberos service name ('impala' if not provided)",
@@ -140,10 +140,12 @@ def get_parsed_args():
 def configure_arg_parser():
     """Extract Args for Run."""
     parser = argparse.ArgumentParser(
-        usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+        usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
+    parser.add_argument("--verbose",
+                        "-v",
+                        action="store_true",
+                        help="Verbose logging")
 
     # beta feature only available in run/validate command
     if "beta" in sys.argv:
@@ -171,17 +173,16 @@ def configure_arg_parser():
 def _configure_find_tables(subparsers):
     """Configure arguments for text search table matching."""
     find_tables_parser = subparsers.add_parser(
-        "find-tables", help="Build tables list using approx string matching"
-    )
-    find_tables_parser.add_argument(
-        "--source-conn", "-sc", help="Source connection name"
-    )
-    find_tables_parser.add_argument(
-        "--target-conn", "-tc", help="Target connection name"
-    )
-    find_tables_parser.add_argument(
-        "--allowed-schemas", "-as", help="List of source schemas to match."
-    )
+        "find-tables", help="Build tables list using approx string matching")
+    find_tables_parser.add_argument("--source-conn",
+                                    "-sc",
+                                    help="Source connection name")
+    find_tables_parser.add_argument("--target-conn",
+                                    "-tc",
+                                    help="Target connection name")
+    find_tables_parser.add_argument("--allowed-schemas",
+                                    "-as",
+                                    help="List of source schemas to match.")
     find_tables_parser.add_argument(
         "--score-cutoff",
         "-score",
@@ -193,8 +194,7 @@ def _configure_find_tables(subparsers):
 def _configure_raw_query(subparsers):
     """Configure arguments for text search table matching."""
     query_parser = subparsers.add_parser(
-        "query", help="Run an adhoc query against the supplied connection"
-    )
+        "query", help="Run an adhoc query against the supplied connection")
     query_parser.add_argument("--conn", "-c", help="Connection name to query")
     query_parser.add_argument("--query", "-q", help="Raw query to execute")
 
@@ -202,12 +202,17 @@ def _configure_raw_query(subparsers):
 def _configure_run_config_parser(subparsers):
     """ Configure arguments to run a data validation YAML config."""
     run_config_parser = subparsers.add_parser(
-        "run-config", help="Run validations stored in a YAML config file"
-    )
+        "run-config", help="Run validations stored in a YAML config file")
+    run_config_subparsers = run_config_parser.add_subparsers(
+        dest="run_config_cmd")
+    _ = run_config_subparsers.add_parser("list",
+                                         help="List your validation configs")
+
     run_config_parser.add_argument(
         "--config-file",
         "-c",
-        help="YAML Config File Path to be used for building or running validations.",
+        help=
+        "YAML Config File Path to be used for building or running validations.",
     )
 
 
@@ -217,45 +222,55 @@ def _configure_run_parser(subparsers):
     # subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser(
-        "run", help="Run a validation and optionally store to config (deprecated)"
-    )
+        "run",
+        help="Run a validation and optionally store to config (deprecated)")
 
     run_parser.add_argument(
         "--type",
         "-t",
         help="Type of Data Validation (Column, GroupedColumn, Row, Schema)",
     )
-    run_parser.add_argument("--source-conn", "-sc", help="Source connection name")
-    run_parser.add_argument("--target-conn", "-tc", help="Target connection name")
+    run_parser.add_argument("--source-conn",
+                            "-sc",
+                            help="Source connection name")
+    run_parser.add_argument("--target-conn",
+                            "-tc",
+                            help="Target connection name")
     run_parser.add_argument(
         "--tables-list",
         "-tbls",
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+        help=
+        "Comma separated tables list in the form 'schema.table=target_schema.target_table'",
     )
     run_parser.add_argument(
         "--count",
         "-count",
-        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for count 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--sum",
         "-sum",
-        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--avg",
         "-avg",
-        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--min",
         "-min",
-        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for min 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--max",
         "-max",
-        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for max 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--grouped-columns",
@@ -267,19 +282,21 @@ def _configure_run_parser(subparsers):
         "-pk",
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
-    run_parser.add_argument(
-        "--result-handler-config", "-rc", help="Result handler config details"
-    )
-    run_parser.add_argument(
-        "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
-    )
+    run_parser.add_argument("--result-handler-config",
+                            "-rc",
+                            help="Result handler config details")
+    run_parser.add_argument("--bq-result-handler",
+                            "-bqrh",
+                            help="BigQuery result handler config details")
     run_parser.add_argument(
         "--config-file",
         "-c",
         help="Store the validation in the YAML Config File Path specified",
     )
     run_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run",
+        "--labels",
+        "-l",
+        help="Key value pair labels for validation run",
     )
     run_parser.add_argument(
         "--service-account",
@@ -301,7 +318,8 @@ def _configure_run_parser(subparsers):
         "--format",
         "-fmt",
         default="table",
-        help="Set the format for printing command output, Supported formats are (text, csv, json, table). It defaults "
+        help=
+        "Set the format for printing command output, Supported formats are (text, csv, json, table). It defaults "
         "to table",
     )
 
@@ -309,15 +327,15 @@ def _configure_run_parser(subparsers):
 def _configure_connection_parser(subparsers):
     """ Configure the Parser for Connection Management. """
     connection_parser = subparsers.add_parser(
-        "connections", help="Manage & Store connections to your Databases"
-    )
+        "connections", help="Manage & Store connections to your Databases")
     connect_subparsers = connection_parser.add_subparsers(dest="connect_cmd")
     _ = connect_subparsers.add_parser("list", help="List your connections")
 
-    add_parser = connect_subparsers.add_parser("add", help="Store a new connection")
-    add_parser.add_argument(
-        "--connection-name", "-c", help="Name of connection used as reference"
-    )
+    add_parser = connect_subparsers.add_parser("add",
+                                               help="Store a new connection")
+    add_parser.add_argument("--connection-name",
+                            "-c",
+                            help="Name of connection used as reference")
     _configure_database_specific_parsers(add_parser)
 
 
@@ -326,14 +344,12 @@ def _configure_database_specific_parsers(parser):
     subparsers = parser.add_subparsers(dest="connect_type")
 
     raw_parser = subparsers.add_parser(
-        "Raw", help="Supply Raw JSON config for a connection"
-    )
+        "Raw", help="Supply Raw JSON config for a connection")
     raw_parser.add_argument("--json", "-j", help="Json string config")
 
     for database in CONNECTION_SOURCE_FIELDS:
         db_parser = subparsers.add_parser(
-            database, help=f"Store a {database} connection"
-        )
+            database, help=f"Store a {database} connection")
 
         for field_obj in CONNECTION_SOURCE_FIELDS[database]:
             arg_field = "--" + field_obj[0].replace("_", "-")
@@ -344,25 +360,24 @@ def _configure_database_specific_parsers(parser):
 def _configure_validate_parser(subparsers):
     """Configure arguments to run validations."""
     validate_parser = subparsers.add_parser(
-        "validate", help="Run a validation and optionally store to config"
-    )
+        "validate", help="Run a validation and optionally store to config")
 
     # Keep these in order to support data-validation run command for backwards-compatibility
-    validate_parser.add_argument("--type", "-t", help="Type of Data Validation")
-    validate_parser.add_argument(
-        "--result-handler-config", "-rc", help="Result handler config details"
-    )
+    validate_parser.add_argument("--type",
+                                 "-t",
+                                 help="Type of Data Validation")
+    validate_parser.add_argument("--result-handler-config",
+                                 "-rc",
+                                 help="Result handler config details")
 
     validate_subparsers = validate_parser.add_subparsers(dest="validate_cmd")
 
     column_parser = validate_subparsers.add_parser(
-        "column", help="Run a column validation"
-    )
+        "column", help="Run a column validation")
     _configure_column_parser(column_parser)
 
     schema_parser = validate_subparsers.add_parser(
-        "schema", help="Run a schema validation"
-    )
+        "schema", help="Run a schema validation")
     _configure_schema_parser(schema_parser)
 
 
@@ -372,27 +387,32 @@ def _configure_column_parser(column_parser):
     column_parser.add_argument(
         "--count",
         "-count",
-        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for count 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
         "--sum",
         "-sum",
-        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
         "--avg",
         "-avg",
-        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
         "--min",
         "-min",
-        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for min 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
         "--max",
         "-max",
-        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
+        help=
+        "Comma separated list of columns for max 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
         "--grouped-columns",
@@ -404,9 +424,9 @@ def _configure_column_parser(column_parser):
         "-pk",
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
-    column_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
+    column_parser.add_argument("--labels",
+                               "-l",
+                               help="Key value pair labels for validation run")
     column_parser.add_argument(
         "--threshold",
         "-th",
@@ -431,11 +451,12 @@ def _add_common_arguments(parser):
     parser.add_argument(
         "--tables-list",
         "-tbls",
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+        help=
+        "Comma separated tables list in the form 'schema.table=target_schema.target_table'",
     )
-    parser.add_argument(
-        "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
-    )
+    parser.add_argument("--bq-result-handler",
+                        "-bqrh",
+                        help="BigQuery result handler config details")
     parser.add_argument(
         "--service-account",
         "-sa",
@@ -450,7 +471,8 @@ def _add_common_arguments(parser):
         "--format",
         "-fmt",
         default="table",
-        help="Set the format for printing command output, Supported formats are (text, csv, json, table). Defaults "
+        help=
+        "Set the format for printing command output, Supported formats are (text, csv, json, table). Defaults "
         "to table",
     )
 
@@ -474,14 +496,14 @@ def threshold_float(x):
     try:
         x = float(x)
     except ValueError:
-        raise argparse.ArgumentTypeError("%r not a floating-point literal" % (x,))
+        raise argparse.ArgumentTypeError("%r not a floating-point literal" %
+                                         (x, ))
 
     if x < 0.0 or x > sys.float_info.max:
         raise argparse.ArgumentTypeError(
-            "%r must be positive and below the max float value" % (x,)
-        )
+            "%r must be positive and below the max float value" % (x, ))
     elif x != x:
-        raise argparse.ArgumentTypeError("%r must be a number" % (x,))
+        raise argparse.ArgumentTypeError("%r must be a number" % (x, ))
     return x
 
 
@@ -493,7 +515,6 @@ def threshold_float(x):
 #     if not os.path.exists(dir_path):
 #         os.makedirs(dir_path)
 #     return dir_path
-
 
 # def _get_connection_file(connection_name):
 #     dir_path = _get_data_validation_directory()
@@ -517,7 +538,6 @@ def store_connection(connection_name, conn):
 
 #     with open(file_path, "w") as file:
 #         file.write(json.dumps(conn))
-
 
 # def get_connections():
 #     """ Return dict with connection name and path key pairs."""
@@ -555,6 +575,27 @@ def get_connection(connection_name):
 #     return json.loads(conn_str)
 
 
+def store_validation(validation_file_name, yaml_config):
+    """ Store the validation YAML config under the given name."""
+    mgr = state_manager.StateManager()
+    mgr.create_validation_yaml(validation_file_name, yaml_config)
+
+
+def get_validation(validation_name):
+    """ Return validation YAML for a specific connection."""
+    mgr = state_manager.StateManager()
+    return mgr.get_validation_config(validation_name)
+
+
+def list_validations():
+    """ List all saved validation YAMLs."""
+    mgr = state_manager.StateManager()
+    validations = mgr.list_validations()
+
+    for validation_name in validations:
+        print(f"Validation YAML name: {validation_name}")
+
+
 def get_labels(arg_labels):
     """ Return list of tuples representing key-value label pairs. """
     labels = []
@@ -565,7 +606,8 @@ def get_labels(arg_labels):
             if len(kv) == 2:
                 labels.append((kv[0], kv[1]))
             else:
-                raise ValueError("Labels must be comma-separated key-value pairs.")
+                raise ValueError(
+                    "Labels must be comma-separated key-value pairs.")
     return labels
 
 
@@ -616,7 +658,8 @@ def get_result_handler(rc_value, sa_file=None):
                 "table_id": config[1],
             }
         else:
-            raise ValueError(f"Unable to parse result handler config: `{rc_value}`")
+            raise ValueError(
+                f"Unable to parse result handler config: `{rc_value}`")
 
         if sa_file:
             result_handler["google_service_account_key_path"] = sa_file
@@ -662,25 +705,22 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
             tables_map = mapping.split("=")
             if len(tables_map) == 1:
                 schema, table = split_table(
-                    tables_map, schema_required=source_schema_required
-                )
+                    tables_map, schema_required=source_schema_required)
                 table_dict = {
                     "schema_name": schema,
                     "table_name": table,
                 }
             elif len(tables_map) == 2:
                 src_schema, src_table = split_table(
-                    [tables_map[0]], schema_required=source_schema_required
-                )
+                    [tables_map[0]], schema_required=source_schema_required)
 
                 table_dict = {
                     "schema_name": src_schema,
                     "table_name": src_table,
                 }
 
-                targ_schema, targ_table = split_table(
-                    [tables_map[1]], schema_required=False
-                )
+                targ_schema, targ_table = split_table([tables_map[1]],
+                                                      schema_required=False)
 
                 if targ_schema:
                     table_dict["target_schema_name"] = targ_schema
@@ -703,7 +743,8 @@ def split_table(table_ref, schema_required=True):
     scehma_required (boolean): Indicates whether schema is required. A source
     table reference requires schema. A target table reference does not.
     """
-    table_ref_list = list(csv.reader(table_ref, delimiter=".", quotechar='"'))[0]
+    table_ref_list = list(csv.reader(table_ref, delimiter=".",
+                                     quotechar='"'))[0]
 
     if len(table_ref_list) == 1 and schema_required:
         raise ValueError("Please provide schema in tables list.")
