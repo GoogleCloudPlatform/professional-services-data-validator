@@ -14,11 +14,42 @@
 
 from data_validation import state_manager
 
-
 TEST_CONN_NAME = "example"
 TEST_CONN = {
     "source_type": "BigQuery",
     "project_id": "my-project",
+}
+TEST_VALIDATION_NAME = "citibike.yaml"
+TEST_VALIDATION_CONFIG = {
+    'source':
+    'example',
+    'target':
+    'example',
+    'result_handler': {},
+    'validations': [{
+        'type':
+        'Column',
+        'table_name':
+        'citibike_trips',
+        'schema_name':
+        'bigquery-public-data.new_york_citibike',
+        'target_schema_name':
+        'bigquery-public-data.new_york_citibike',
+        'target_table_name':
+        'citibike_trips',
+        'labels': [],
+        'threshold':
+        0.0,
+        'format':
+        'table',
+        'filters': [],
+        'aggregates': [{
+            'source_column': None,
+            'target_column': None,
+            'field_alias': 'count',
+            'type': 'count'
+        }]
+    }]
 }
 
 
@@ -50,3 +81,21 @@ def test_create_unknown_filepath(capsys, fs):
     file_path = manager._get_connection_path(TEST_CONN_NAME)
     expected_file_path = files_directory + f"{TEST_CONN_NAME}.connection.json"
     assert file_path == expected_file_path
+
+
+def test_create_and_get_validation_config(capsys, fs):
+    manager = state_manager.StateManager()
+    manager.create_validation_yaml(TEST_VALIDATION_NAME,
+                                   TEST_VALIDATION_CONFIG)
+
+    config = manager.get_validation_config(TEST_VALIDATION_NAME)
+    assert config == TEST_VALIDATION_CONFIG
+
+
+def test_create_and_list_validation(capsys, fs):
+    manager = state_manager.StateManager()
+    manager.create_validation_yaml(TEST_VALIDATION_NAME,
+                                   TEST_VALIDATION_CONFIG)
+
+    validations = manager.list_validations()
+    assert validations == [TEST_VALIDATION_NAME.split(".")[0]]
