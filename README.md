@@ -183,7 +183,9 @@ case specific CLI arguments or editing the saved YAML configuration file.
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
-citibike.yaml`
+citibike.yaml`. 
+
+The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME` env variable if that has been set; otherwise, it is saved to wherever the tool is run. 
 
 Here is the generated YAML file named `citibike.yaml`:
 
@@ -218,6 +220,8 @@ data-validation run-config -c citibike.yaml
 
 View the complete YAML file for a GroupedColumn validation on the
 [examples](docs/examples.md#) page.
+
+You can view a list of all saved validation YAML files using `data-validation run-config list`. 
 
 ### Aggregated Fields
 

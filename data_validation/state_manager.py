@@ -99,7 +99,7 @@ class StateManager(object):
         return os.path.join(self._get_connections_directory(),
                             f"{name}.connection.json")
 
-    def create_validation_yaml(self, name: str, yaml_config: dict[str, str]):
+    def create_validation_yaml(self, name: str, yaml_config: Dict[str, str]):
         """Create a validation file and store the given config as YAML.
 
         Args:
@@ -111,7 +111,7 @@ class StateManager(object):
         self._write_file(validation_path, yaml_config_str)
         print(yaml_config)
 
-    def get_validation_config(self, name: str) -> dict[str, str]:
+    def get_validation_config(self, name: str) -> Dict[str, str]:
         """Get a validation configuration from the expected file.
 
         Args:
