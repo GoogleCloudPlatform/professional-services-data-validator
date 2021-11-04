@@ -66,7 +66,7 @@ def unit(session):
     )
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(venv_backend="venv")
 def unit_small(session):
     unit(session)
 
