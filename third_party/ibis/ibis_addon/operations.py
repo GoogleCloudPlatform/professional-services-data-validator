@@ -155,4 +155,4 @@ BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
-TeradataExprTranslator._registry[RawSQL] = format_hashbytes_bigquery
+TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
