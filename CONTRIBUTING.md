@@ -38,6 +38,14 @@ python -m pip install --upgrade pip
 python -m pip install .
 ```
 
+## Testing
+
+This project uses [Nox](https://nox.thea.codes/en/stable/) for managing tests. Install nox to your local environment and it will handle creating the virtual environments required for each test.
+
+To run our local testing suite, use:
+
+`python3 -m nox --envdir ~/dvt/envs/ -s unit_small blacken lint`
+
 ## Conventional Commits
 
 This project uses [Conventional
