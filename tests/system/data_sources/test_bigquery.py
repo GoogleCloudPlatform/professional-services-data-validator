@@ -265,7 +265,6 @@ def test_cli_store_yaml_then_run_gcs():
     config_managers = main.build_config_managers_from_yaml(run_config_args)
     main.run_validations(run_config_args, config_managers)
 
-    os.remove(yaml_file_path)
     # _remove_bq_conn()
 
 
