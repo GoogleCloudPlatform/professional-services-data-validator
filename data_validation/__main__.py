@@ -48,30 +48,30 @@ def get_aggregate_config(args, config_manager):
     aggregate_configs = [config_manager.build_config_count_aggregate()]
 
     if args.count:
-        col_args = None if args.count == "*" else cli_tools.get_arg_list(
-            args.count)
+        col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, None)
+            "count", col_args, None
+        )
     if args.sum:
-        col_args = None if args.sum == "*" else cli_tools.get_arg_list(
-            args.sum)
+        col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, consts.NUMERIC_DATA_TYPES)
+            "sum", col_args, consts.NUMERIC_DATA_TYPES
+        )
     if args.avg:
-        col_args = None if args.avg == "*" else cli_tools.get_arg_list(
-            args.avg)
+        col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, consts.NUMERIC_DATA_TYPES)
+            "avg", col_args, consts.NUMERIC_DATA_TYPES
+        )
     if args.min:
-        col_args = None if args.min == "*" else cli_tools.get_arg_list(
-            args.min)
+        col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, consts.NUMERIC_DATA_TYPES)
+            "min", col_args, consts.NUMERIC_DATA_TYPES
+        )
     if args.max:
-        col_args = None if args.max == "*" else cli_tools.get_arg_list(
-            args.max)
+        col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, consts.NUMERIC_DATA_TYPES)
+            "max", col_args, consts.NUMERIC_DATA_TYPES
+        )
     return aggregate_configs
 
 
@@ -81,8 +81,7 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
-    config_manager.append_aggregates(get_aggregate_config(
-        args, config_manager))
+    config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if args.primary_keys and not args.grouped_columns:
         raise ValueError(
             "Grouped columns must be specified for primary key level validation."
@@ -90,12 +89,13 @@ def build_config_from_args(args, config_manager):
     if args.grouped_columns:
         grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
         config_manager.append_query_groups(
-            config_manager.build_config_grouped_columns(grouped_columns))
+            config_manager.build_config_grouped_columns(grouped_columns)
+        )
     if args.primary_keys:
-        primary_keys = cli_tools.get_arg_list(args.primary_keys,
-                                              default_value=[])
+        primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
-            config_manager.build_config_grouped_columns(primary_keys))
+            config_manager.build_config_grouped_columns(primary_keys)
+        )
 
     # TODO(GH#18): Add query filter config logic
 
@@ -114,10 +114,12 @@ def build_config_managers_from_args(args):
     result_handler_config = None
     if args.bq_result_handler:
         result_handler_config = cli_tools.get_result_handler(
-            args.bq_result_handler, args.service_account)
+            args.bq_result_handler, args.service_account
+        )
     elif args.result_handler_config:
         result_handler_config = cli_tools.get_result_handler(
-            args.result_handler_config, args.service_account)
+            args.result_handler_config, args.service_account
+        )
 
     # Schema validation will not accept filters, labels, or threshold as flags
     filter_config, labels, threshold = [], [], 0.0
@@ -129,17 +131,15 @@ def build_config_managers_from_args(args):
         labels = cli_tools.get_labels(args.labels)
 
     mgr = state_manager.StateManager()
-    source_client = clients.get_data_client(
-        mgr.get_connection_config(args.source_conn))
-    target_client = clients.get_data_client(
-        mgr.get_connection_config(args.target_conn))
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     format = args.format if args.format else "table"
 
     is_filesystem = source_client._source_type == "FileSystem"
-    tables_list = cli_tools.get_tables_list(args.tables_list,
-                                            default_value=[],
-                                            is_filesystem=is_filesystem)
+    tables_list = cli_tools.get_tables_list(
+        args.tables_list, default_value=[], is_filesystem=is_filesystem
+    )
 
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
@@ -181,21 +181,17 @@ def build_config_managers_from_yaml(args):
     for config in yaml_configs[consts.YAML_VALIDATIONS]:
         config[consts.CONFIG_SOURCE_CONN] = source_conn
         config[consts.CONFIG_TARGET_CONN] = target_conn
-        config[consts.CONFIG_RESULT_HANDLER] = yaml_configs[
-            consts.YAML_RESULT_HANDLER]
-        config_manager = ConfigManager(config,
-                                       source_client,
-                                       target_client,
-                                       verbose=args.verbose)
+        config[consts.CONFIG_RESULT_HANDLER] = yaml_configs[consts.YAML_RESULT_HANDLER]
+        config_manager = ConfigManager(
+            config, source_client, target_client, verbose=args.verbose
+        )
 
         config_managers.append(config_manager)
 
     return config_managers
 
 
-def _compare_match_tables(source_table_map,
-                          target_table_map,
-                          score_cutoff=0.8):
+def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8):
     """Return dict config object from matching tables."""
     # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
     table_configs = []
@@ -203,19 +199,24 @@ def _compare_match_tables(source_table_map,
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
         target_key = jellyfish_distance.extract_closest_match(
-            source_key, target_keys, score_cutoff=score_cutoff)
+            source_key, target_keys, score_cutoff=score_cutoff
+        )
         if target_key is None:
             continue
 
         table_config = {
-            consts.CONFIG_SCHEMA_NAME:
-            source_table_map[source_key][consts.CONFIG_SCHEMA_NAME],
-            consts.CONFIG_TABLE_NAME:
-            source_table_map[source_key][consts.CONFIG_TABLE_NAME],
-            consts.CONFIG_TARGET_SCHEMA_NAME:
-            target_table_map[target_key][consts.CONFIG_SCHEMA_NAME],
-            consts.CONFIG_TARGET_TABLE_NAME:
-            target_table_map[target_key][consts.CONFIG_TABLE_NAME],
+            consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][
+                consts.CONFIG_SCHEMA_NAME
+            ],
+            consts.CONFIG_TABLE_NAME: source_table_map[source_key][
+                consts.CONFIG_TABLE_NAME
+            ],
+            consts.CONFIG_TARGET_SCHEMA_NAME: target_table_map[target_key][
+                consts.CONFIG_SCHEMA_NAME
+            ],
+            consts.CONFIG_TARGET_TABLE_NAME: target_table_map[target_key][
+                consts.CONFIG_TABLE_NAME
+            ],
         }
         table_configs.append(table_config)
 
@@ -225,8 +226,7 @@ def _compare_match_tables(source_table_map,
 def get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
-    table_objs = clients.get_all_tables(client,
-                                        allowed_schemas=allowed_schemas)
+    table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -242,19 +242,16 @@ def find_tables_using_string_matching(args):
     score_cutoff = args.score_cutoff or 0.8
 
     mgr = state_manager.StateManager()
-    source_client = clients.get_data_client(
-        mgr.get_connection_config(args.source_conn))
-    target_client = clients.get_data_client(
-        mgr.get_connection_config(args.target_conn))
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
-    source_table_map = get_table_map(source_client,
-                                     allowed_schemas=allowed_schemas)
+    source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
 
-    table_configs = _compare_match_tables(source_table_map,
-                                          target_table_map,
-                                          score_cutoff=score_cutoff)
+    table_configs = _compare_match_tables(
+        source_table_map, target_table_map, score_cutoff=score_cutoff
+    )
     return json.dumps(table_configs)
 
 
@@ -282,7 +279,8 @@ def convert_config_to_yaml(args, config_managers):
 
     for config_manager in config_managers:
         yaml_config[consts.YAML_VALIDATIONS].append(
-            config_manager.get_yaml_validation_block())
+            config_manager.get_yaml_validation_block()
+        )
     return yaml_config
 
 
@@ -344,8 +342,7 @@ def run_connections(args):
         _ = clients.get_data_client(conn)
         cli_tools.store_connection(args.connection_name, conn)
     else:
-        raise ValueError(
-            f"Connections Argument '{args.connect_cmd}' is not supported")
+        raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 
 
 def run_validation_config(args):
@@ -362,8 +359,7 @@ def validate(args):
     if args.validate_cmd == "column" or args.validate_cmd == "schema":
         run(args)
     else:
-        raise ValueError(
-            f"Validation Argument '{args.validate_cmd}' is not supported")
+        raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
 
 
 def main():
@@ -383,8 +379,7 @@ def main():
     elif args.command == "validate":
         validate(args)
     else:
-        raise ValueError(
-            f"Positional Argument '{args.command}' is not supported")
+        raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
 
 if __name__ == "__main__":

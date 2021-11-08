@@ -59,35 +59,30 @@ CLI_ADD_CONNECTION_ARGS = [
 ]
 
 TEST_VALIDATION_CONFIG = {
-    'source':
-    'example',
-    'target':
-    'example',
-    'result_handler': {},
-    'validations': [{
-        'type':
-        'Column',
-        'table_name':
-        'citibike_trips',
-        'schema_name':
-        'bigquery-public-data.new_york_citibike',
-        'target_schema_name':
-        'bigquery-public-data.new_york_citibike',
-        'target_table_name':
-        'citibike_trips',
-        'labels': [],
-        'threshold':
-        0.0,
-        'format':
-        'table',
-        'filters': [],
-        'aggregates': [{
-            'source_column': None,
-            'target_column': None,
-            'field_alias': 'count',
-            'type': 'count'
-        }]
-    }]
+    "source": "example",
+    "target": "example",
+    "result_handler": {},
+    "validations": [
+        {
+            "type": "Column",
+            "table_name": "citibike_trips",
+            "schema_name": "bigquery-public-data.new_york_citibike",
+            "target_schema_name": "bigquery-public-data.new_york_citibike",
+            "target_table_name": "citibike_trips",
+            "labels": [],
+            "threshold": 0.0,
+            "format": "table",
+            "filters": [],
+            "aggregates": [
+                {
+                    "source_column": None,
+                    "target_column": None,
+                    "field_alias": "count",
+                    "type": "count",
+                }
+            ],
+        }
+    ],
 }
 
 WRITE_SUCCESS_STRING = "Success! Config output written to"
@@ -104,8 +99,7 @@ CLI_FIND_TABLES_ARGS = [
 
 
 @mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CLI_ARGS),
+    "argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(**CLI_ARGS),
 )
 def test_get_parsed_args(mock_args):
     """Test arg parser values with validate command."""
@@ -176,8 +170,7 @@ def test_configure_arg_parser_list_validation_configs():
 
 def test_create_and_list_and_get_validations(capsys, fs):
     # Create validation config file
-    cli_tools.store_validation("example_validation.yaml",
-                               TEST_VALIDATION_CONFIG)
+    cli_tools.store_validation("example_validation.yaml", TEST_VALIDATION_CONFIG)
     captured = capsys.readouterr()
     assert WRITE_SUCCESS_STRING in captured.out
 
@@ -236,8 +229,7 @@ def test_get_labels_err(test_input):
 
 
 @pytest.mark.parametrize(
-    "test_input,expected",
-    [(0, 0.0), (50, 50.0), (100, 100.0)],
+    "test_input,expected", [(0, 0.0), (50, 50.0), (100, 100.0)],
 )
 def test_threshold_float(test_input, expected):
     """Test threshold float function."""
@@ -246,8 +238,7 @@ def test_threshold_float(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "test_input",
-    [(-4), (float("nan")), (float("inf")), ("string")],
+    "test_input", [(-4), (float("nan")), (float("inf")), ("string")],
 )
 def test_threshold_float_err(test_input):
     """Test that threshold float only accepts positive floats."""
@@ -260,68 +251,69 @@ def test_threshold_float_err(test_input):
     [
         (
             "src.schema.src_table=targ.schema.targ_table",
-            [{
-                "schema_name": "src.schema",
-                "table_name": "src_table",
-                "target_schema_name": "targ.schema",
-                "target_table_name": "targ_table",
-            }],
+            [
+                {
+                    "schema_name": "src.schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ.schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
         ),
         (
             'src_schema."odd.table"=targ_schema.targ_table',
-            [{
-                "schema_name": "src_schema",
-                "table_name": "odd.table",
-                "target_schema_name": "targ_schema",
-                "target_table_name": "targ_table",
-            }],
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "odd.table",
+                    "target_schema_name": "targ_schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
         ),
         (
             "src_schema.src_table = targ_schema. targ_table",
-            [{
-                "schema_name": "src_schema",
-                "table_name": "src_table",
-                "target_schema_name": "targ_schema",
-                "target_table_name": "targ_table",
-            }],
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ_schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
         ),
         (
             "src_schema.src_table",
-            [{
-                "schema_name": "src_schema",
-                "table_name": "src_table"
-            }],
+            [{"schema_name": "src_schema", "table_name": "src_table"}],
         ),
         (
             "src_schema.src_table = targ_table",
-            [{
-                "schema_name": "src_schema",
-                "table_name": "src_table",
-                "target_table_name": "targ_table",
-            }],
+            [
+                {
+                    "schema_name": "src_schema",
+                    "table_name": "src_table",
+                    "target_table_name": "targ_table",
+                }
+            ],
         ),
         (
             "src.schema.src_table = targ.schema.targ_table",
-            [{
-                "schema_name": "src.schema",
-                "table_name": "src_table",
-                "target_schema_name": "targ.schema",
-                "target_table_name": "targ_table",
-            }],
+            [
+                {
+                    "schema_name": "src.schema",
+                    "table_name": "src_table",
+                    "target_schema_name": "targ.schema",
+                    "target_table_name": "targ_table",
+                }
+            ],
         ),
         (
             'src.schema."src.table"',
-            [{
-                "schema_name": "src.schema",
-                "table_name": "src.table"
-            }],
+            [{"schema_name": "src.schema", "table_name": "src.table"}],
         ),
         (
             '[{"schema_name":"schema", "table_name": "table"}]',
-            [{
-                "schema_name": "schema",
-                "table_name": "table"
-            }],
+            [{"schema_name": "schema", "table_name": "table"}],
         ),
     ],
 )
@@ -364,11 +356,7 @@ def test_get_arg_list(test_input, expected):
     [
         (
             "project.dataset.table",
-            {
-                "type": "BigQuery",
-                "project_id": "project",
-                "table_id": "dataset.table"
-            },
+            {"type": "BigQuery", "project_id": "project", "table_id": "dataset.table"},
         ),
         (
             "project.data.data.table",
@@ -391,17 +379,9 @@ def test_get_result_handler(test_input, expected):
     [
         (
             "source:target",
-            [{
-                "type": "custom",
-                "source": "source",
-                "target": "target"
-            }],
+            [{"type": "custom", "source": "source", "target": "target"}],
         ),
-        ("source", [{
-            "type": "custom",
-            "source": "source",
-            "target": "source"
-        }]),
+        ("source", [{"type": "custom", "source": "source", "target": "source"}]),
     ],
 )
 def test_get_filters(test_input, expected):
@@ -411,8 +391,7 @@ def test_get_filters(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "test_input",
-    [("source:"), ("invalid:filter:count")],
+    "test_input", [("source:"), ("invalid:filter:count")],
 )
 def test_get_filters_err(test_input):
     """ Test get filters function returns error. """
@@ -442,10 +421,9 @@ def test_split_table_no_schema():
 
 
 @pytest.mark.parametrize(
-    "test_input",
-    [(["table"])],
+    "test_input", [(["table"])],
 )
-def test_split_table_err(test_input, ):
+def test_split_table_err(test_input,):
     """Test split table throws the right errors."""
     with pytest.raises(ValueError):
         cli_tools.split_table(test_input)
