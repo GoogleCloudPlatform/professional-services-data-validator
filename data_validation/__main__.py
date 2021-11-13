@@ -379,6 +379,7 @@ def main():
         validate(args)
     elif args.command == "deploy":
         from data_validation import app
+
         app.app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
