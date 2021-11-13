@@ -164,8 +164,16 @@ def configure_arg_parser():
         _configure_find_tables(subparsers)
         _configure_raw_query(subparsers)
         _configure_run_parser(subparsers)
+        _configure_deploy(subparsers)
 
     return parser
+
+
+def _configure_deploy(subparsers):
+    """Configure arguments for deploying as a service."""
+    subparsers.add_parser(
+        "deploy", help="Deploy Data Validation as a Service (w/ Flask)"
+    )
 
 
 def _configure_find_tables(subparsers):

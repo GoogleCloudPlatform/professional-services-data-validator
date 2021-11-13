@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import os
 import json
 from yaml import dump, load, Dumper, Loader
 
@@ -377,6 +377,9 @@ def main():
         print(run_raw_query_against_connection(args))
     elif args.command == "validate":
         validate(args)
+    elif args.command == "deploy":
+        from data_validation import app
+        app.app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
