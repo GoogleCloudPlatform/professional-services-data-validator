@@ -172,7 +172,7 @@ def configure_arg_parser():
 def _configure_deploy(subparsers):
     """Configure arguments for deploying as a service."""
     subparsers.add_parser(
-        "deploy", help="Deploy Data Validation as a Service (w/ Flask)"
+        "deploy", help="(Beta) Deploy Data Validation as a Service (w/ Flask)"
     )
 
 
