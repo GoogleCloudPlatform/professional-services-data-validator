@@ -64,6 +64,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
+        ["logmech", "Log on mechanism"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
