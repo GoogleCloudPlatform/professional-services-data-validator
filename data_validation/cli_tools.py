@@ -168,6 +168,7 @@ def _configure_beta_parser(subparsers):
     _configure_validate_parser(beta_subparsers)
     _configure_deploy(beta_subparsers)
 
+
 def _configure_deploy(subparsers):
     """Configure arguments for deploying as a service."""
     subparsers.add_parser(
