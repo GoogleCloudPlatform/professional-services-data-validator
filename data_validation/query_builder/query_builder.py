@@ -16,7 +16,7 @@ import ibis
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import operations
 
-from data_validation import clients
+from data_validation import clients, consts
 
 
 class AggregateField(object):
@@ -370,7 +370,7 @@ class QueryBuilder(object):
             return [
                 field.compile(table)
                 for field in self.calculated_fields
-                if field.config["depth"] == n
+                if field.config[consts.CONFIG_DEPTH] == n
             ]
         else:
             return [field.compile(table) for field in self.calculated_fields]
@@ -389,7 +389,7 @@ class QueryBuilder(object):
         calc_table = table
         if self.calculated_fields:
             depth_limit = max(
-                field.config.get("depth", 0) for field in self.calculated_fields
+                field.config.get(consts.CONFIG_DEPTH, 0) for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
                 calc_table = calc_table.mutate(

@@ -411,3 +411,39 @@ class ConfigManager(object):
             aggregate_configs.append(aggregate_config)
 
         return aggregate_configs
+
+    def build_calculated_fields(self, calc_type, calc_value, calc_depth, supported_types):
+        """Returns list of calculated fields"""
+        calc_configs = []
+        source_table = self.get_source_calculated_table()
+        target_table = self.get_target_calculated_table()
+
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        allowlist_columns = arg_value or casefold_source_columns
+        for column in casefold_source_columns:
+            column_type_str = str(source_table[casefopld_source_columns[column]],type())
+            column_type = column_type_str.split("(")[0]
+            if column not in allowlist_columns:
+                continue
+            elif column not in casefold_target_columns:
+                logging.info(
+                    f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                )
+                continue
+            elif supported_types and column_type not in supported_types:
+                if self.verbose:
+                    msg = f"Slipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    print(msg)
+                continue
+            calculated_config = {
+                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
+                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
+                consts.CONFIG_FIELD_ALIAS: f"{calc_type}__{column}",
+                consts.CONFIG_TYPE: calc_type,
+                consts.CONFIG_DEPTH: calc_depth,
+            }
+            calculated_configs.append(calculated_config)
+
+        return calculated_configs
