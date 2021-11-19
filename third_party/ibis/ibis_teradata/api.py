@@ -38,7 +38,7 @@ def verify(expr, params=None):
 
 
 def connect(
-    host: str, user_name: str, password: str, port: Optional[int] = 1025
+    host: str, user_name: str, password: str, logmech: str, port: Optional[int] = 1025
 ) -> TeradataClient:
     """ Create a TeradataClient for use with Ibis.
     Parameters
@@ -49,6 +49,8 @@ def connect(
         A Database username to connect with
     password : str
         Password for supplied username
+    logmech : str
+        Logmech flag to select with
     port : Optional[int]
         The database port to connect to (default. 1025)
     Returns
@@ -56,4 +58,4 @@ def connect(
     TeradataClient
     """
 
-    return TeradataClient(host, user_name, password, port)
+    return TeradataClient(host, user_name, password, logmech, port)

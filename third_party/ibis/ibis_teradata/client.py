@@ -66,7 +66,7 @@ class TeradataClient(SQLClient):
     table_class = TeradataTable
     dialect = compiler.TeradataDialect
 
-    def __init__(self, host, user_name, password, port=1025, use_no_lock_tables=False):
+    def __init__(self, host, user_name, password, port=1025, use_no_lock_tables=False, logmech):
         """Construct a TeradataClient.
 
         Parameters
@@ -85,6 +85,7 @@ class TeradataClient(SQLClient):
             "user": user_name,
             "password": password,
             "dbs_port": port,
+            "logmech": logmech,
         }
 
         self.client = teradatasql.connect(**self.teradata_config)
