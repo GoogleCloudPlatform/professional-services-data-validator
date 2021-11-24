@@ -129,6 +129,7 @@ via `pip install teradatasql` if you have a license.
     # Connection Details
     "host": "127.0.0.1",
     "port":1025,
+    "logmech":TD2,
     "user_name":"my-user",
     "password":"my-password"
 }
