@@ -288,6 +288,12 @@ class CalculatedField(object):
         return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
 
     @staticmethod
+    def cast(config, fields):
+        if config.get("default_cast") is None:
+            how = "string"
+        return CalculatedField(ibis.expr.api.ValueExpr.cast, config, fields, how=how,)
+
+    @staticmethod
     def custom(expr):
         """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
         Args:

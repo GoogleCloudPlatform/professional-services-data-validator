@@ -412,7 +412,7 @@ class ConfigManager(object):
 
         return aggregate_configs
 
-    def build_calculated_fields(self, calc_type, calc_value, calc_depth, supported_types):
+    def build_config_calculated_fields(self, calc_type, alias, calc_value, calc_depth, supported_types):
         """Returns list of calculated fields"""
         calc_configs = []
         source_table = self.get_source_calculated_table()
@@ -423,7 +423,7 @@ class ConfigManager(object):
 
         allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
-            column_type_str = str(source_table[casefopld_source_columns[column]],type())
+            column_type_str = str(source_table[casefold_source_columns[column]],type())
             column_type = column_type_str.split("(")[0]
             if column not in allowlist_columns:
                 continue
@@ -440,10 +440,27 @@ class ConfigManager(object):
             calculated_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
                 consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
-                consts.CONFIG_FIELD_ALIAS: f"{calc_type}__{column}",
+                consts.CONFIG_FIELD_ALIAS: alias,
                 consts.CONFIG_TYPE: calc_type,
                 consts.CONFIG_DEPTH: calc_depth,
             }
             calculated_configs.append(calculated_config)
 
         return calculated_configs
+
+    def _build_recipe_aliases(self, calculations, col_name):
+        """This is a utility function for determining the required depth of all fields"""
+        # order_of_operations = ['cast', 'ifnull', 'rtrim', 'upper', 'concat','hash']
+        col_names = []
+        name = f"{col_name}"
+        for i, calc in enumerate(calculations):
+            name = f"{calc}__" + name
+            col = {}
+            col["alias"] = name
+            col["depth"] = i
+            col_names.append(col)
+    return col_names
+
+    def 
+
+
