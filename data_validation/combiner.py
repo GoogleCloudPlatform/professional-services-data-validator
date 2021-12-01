@@ -292,7 +292,7 @@ def _join_pivots(source, target, differences, join_on_fields):
 def _add_metadata(joined, run_metadata):
     # TODO: Add source and target queries to metadata
     run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
-    
+
     joined = joined[
         joined,
         ibis.literal(run_metadata.run_id).name("run_id"),
