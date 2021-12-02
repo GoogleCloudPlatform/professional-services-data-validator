@@ -58,4 +58,4 @@ def connect(
     TeradataClient
     """
 
-    return TeradataClient(host, user_name, password, logmech, port)
+    return TeradataClient(host, user_name, password, port, logmech)
