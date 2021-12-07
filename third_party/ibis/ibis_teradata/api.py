@@ -49,10 +49,10 @@ def connect(
         A Database username to connect with
     password : str
         Password for supplied username
-    logmech : Optional[str]
-        Logmech flag to select with (default. TD2)
     port : Optional[int]
         The database port to connect to (default. 1025)
+    logmech : Optional[str]
+        Logmech flag to select with (default. TD2)
     Returns
     -------
     TeradataClient

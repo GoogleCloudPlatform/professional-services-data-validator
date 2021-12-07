@@ -79,6 +79,8 @@ class TeradataClient(SQLClient):
             Password for supplied username
         port : Optional[int]
             The database port to connect to (default. 1025)
+        logmech : Optional[int]
+            The logmech type to connect to (default. TD2)
         """
         self.teradata_config = {
             "host": host,
