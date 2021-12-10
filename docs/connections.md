@@ -27,7 +27,7 @@ data-validation connections add --connection-name MY_BQ_CONN BigQuery --project-
 
 ## Create a sample Teradata connection:
 ```
-data-validation connections add --connection-name MY_TD_CONN Teradata --host HOST_IP --port PORT --user_name USER_NAME --password PASSWORD
+data-validation connections add --connection-name MY_TD_CONN Teradata --host HOST_IP --port PORT --user-name USER-NAME --password PASSWORD
 ```
 
 ## List existing connections
@@ -129,6 +129,7 @@ via `pip install teradatasql` if you have a license.
     # Connection Details
     "host": "127.0.0.1",
     "port":1025,
+    "logmech":"TD2",
     "user_name":"my-user",
     "password":"my-password"
 }
