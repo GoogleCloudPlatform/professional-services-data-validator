@@ -52,6 +52,7 @@ The data validation tool supports the following connection types.
 * [Redshift](#redshift)
 * [FileSystem](#filesystem)
 * [Impala](#Impala)
+* [Hive](#Hive)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 
@@ -256,6 +257,20 @@ Then `pip install pyodbc`.
 
     # Connection Details
     "host": "127.0.0.1",
+    "port": 10000,
+    "database": "default",
+    "auth_mechanism":"PLAIN"
+}
+```
+
+## Hive
+```
+{
+    # Hive is based off Impala connector
+    "source_type": "Impala",
+
+    # Connection Details
+    "host": "HIVE_IP_ADDRESS",
     "port": 10000,
     "database": "default",
     "auth_mechanism":"PLAIN"
