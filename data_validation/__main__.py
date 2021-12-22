@@ -76,7 +76,29 @@ def get_aggregate_config(args, config_manager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, consts.NUMERIC_DATA_TYPES
         )
+    if args.bit_xor:
+        col_args = None if args.max == "*" else cli_tools.get_arg_list(args.bit_xor)
+        aggregate_configs += config_manager.build_config_column_aggregates(
+            "bit_xor", col_args, consts.NUMERIC_DATA_TYPES
+        )
     return aggregate_configs
+
+def get_calculated_config(args, config_manager):
+    """Return list of formatted calculated objects.
+
+    Args:
+        config_manager(ConfigManager): Validation config manager instance.
+    """
+    calculated_configs = []
+
+    if args.hash:
+        col_args = None if args.count == "*" else cli_tools.get_arg_list(args.hash)
+        fields = config_manager._generate['cast', 'ifnull', 'rtrim', 'upper', 'concat', 'hash']
+
+        calculated_configs += config_manager.build_config_calculated_fields(
+            "hash", col_args)
+        )
+    return calculated_configs
 
 
 def build_config_from_args(args, config_manager):
@@ -85,11 +107,11 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
+    if args.
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if args.primary_keys and not args.grouped_columns:
         raise ValueError(
             "Grouped columns must be specified for primary key level validation."
-        )
     if args.grouped_columns:
         grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
         config_manager.append_query_groups(

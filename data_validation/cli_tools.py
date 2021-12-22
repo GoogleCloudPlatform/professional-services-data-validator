@@ -258,6 +258,11 @@ def _configure_run_parser(subparsers):
         help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    run_parser.add_argument(
         "--grouped-columns",
         "-gc",
         help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",

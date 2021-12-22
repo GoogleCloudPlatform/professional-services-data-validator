@@ -437,30 +437,37 @@ class ConfigManager(object):
                     msg = f"Slipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
                     print(msg)
                 continue
-            calculated_config = {
-                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
-                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
-                consts.CONFIG_FIELD_ALIAS: alias,
-                consts.CONFIG_TYPE: calc_type,
-                consts.CONFIG_DEPTH: calc_depth,
-            }
+            nested_cols = _build_dependent_aliases(self, calc_type, column)
+            for col in nested_cols:
+                calculated_config = {
+                    consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[col],
+                    consts.CONFIG_TARGET_COLUMN: casefold_target_columns[col],
+                    consts.CONFIG_FIELD_ALIAS: col["alias"],
+                    consts.CONFIG_TYPE: col["type"],
+                    consts.CONFIG_DEPTH: col["depth"],
+                }
             calculated_configs.append(calculated_config)
 
         return calculated_configs
 
-    def _build_recipe_aliases(self, calculations, col_name):
+    def _build_dependent_aliases(self, calculation_recipe, col_name):
         """This is a utility function for determining the required depth of all fields"""
         # order_of_operations = ['cast', 'ifnull', 'rtrim', 'upper', 'concat','hash']
         col_names = []
         name = f"{col_name}"
-        for i, calc in enumerate(calculations):
-            name = f"{calc}__" + name
+        for i, calc in enumerate(calculation_recipe):
             col = {}
+            col["reference"] = name
+            name = f"{calc}__" + name
+            type = calc
             col["alias"] = name
             col["depth"] = i
             col_names.append(col)
     return col_names
 
-    def 
+    def build_config_dependencies(self, col_list)
+
+
+
 
 
