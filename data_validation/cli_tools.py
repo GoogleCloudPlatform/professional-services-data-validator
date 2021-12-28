@@ -365,11 +365,43 @@ def _configure_validate_parser(subparsers):
     )
     _configure_column_parser(column_parser)
 
+    row_parser = validate_subparsers.add_parser(
+        "row", help="Run a row validation"
+    )
+    _configure_row_parser(row_parser)
+
     schema_parser = validate_subparsers.add_parser(
         "schema", help="Run a schema validation"
     )
     _configure_schema_parser(schema_parser)
 
+def _configure_row_parser(row_parser):
+    """Configure arguments to run row level validations."""
+    _add_common_arguments(row_parser)
+    row_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hash 'col_a,col_b' or * for all columns",
+    )
+    row_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    row_parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
+    )
+    row_parser.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    row_parser.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
 
 def _configure_column_parser(column_parser):
     """Configure arguments to run column level validations."""
@@ -398,6 +430,11 @@ def _configure_column_parser(column_parser):
         "--max",
         "-max",
         help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="this is stupid"
     )
     column_parser.add_argument(
         "--grouped-columns",

@@ -14,6 +14,7 @@
 
 import copy
 import logging
+import pprint
 
 import google.oauth2.service_account
 
@@ -114,7 +115,7 @@ class ConfigManager(object):
 
     @property
     def calculated_fields(self):
-        return self._config.get(consts.CONFIG_CALCULATED_FIELDS)
+        return self._config.get(consts.CONFIG_CALCULATED_FIELDS, [])
 
     def append_calculated_fields(self, calculated_configs):
         self._config[consts.CONFIG_CALCULATED_FIELDS] = (
@@ -224,12 +225,12 @@ class ConfigManager(object):
             )
         return self._source_ibis_table
 
-    def get_source_ibis_calculated_table(self):
+    def get_source_ibis_calculated_table(self, n=None):
         """Return mutated IbisTable from source"""
         table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.source_builder.compile_calculated_fields(table)
+            vb.source_builder.compile_calculated_fields(table, n)
         )
 
         return calculated_table
@@ -242,12 +243,12 @@ class ConfigManager(object):
             )
         return self._target_ibis_table
 
-    def get_target_ibis_calculated_table(self):
+    def get_target_ibis_calculated_table(self, n=None):
         """Return mutated IbisTable from target"""
         table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.target_builder.compile_calculated_fields(table)
+            vb.target_builder.compile_calculated_fields(table, n)
         )
 
         return calculated_table
@@ -411,19 +412,23 @@ class ConfigManager(object):
             aggregate_configs.append(aggregate_config)
 
         return aggregate_configs
+            # field['reference'],
+            # field['calc_type'],
+            # field['name'],
+            # field['depth'],
+            # consts.NUMERIC_DATA_TYPES)
 
-    def build_config_calculated_fields(self, calc_type, alias, calc_value, calc_depth, supported_types):
+    def build_config_calculated_fields(self, reference, calc_type, alias, depth, supported_types, arg_value=None):
         """Returns list of calculated fields"""
-        calc_configs = []
-        source_table = self.get_source_calculated_table()
-        target_table = self.get_target_calculated_table()
+        source_table = self.get_source_ibis_calculated_table(n=depth)
+        target_table = self.get_target_ibis_calculated_table(n=depth)
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
-            column_type_str = str(source_table[casefold_source_columns[column]],type())
+            column_type_str = str(source_table[casefold_source_columns[column]].type())
             column_type = column_type_str.split("(")[0]
             if column not in allowlist_columns:
                 continue
@@ -434,40 +439,53 @@ class ConfigManager(object):
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Slipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    msg = f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
                     print(msg)
                 continue
-            nested_cols = _build_dependent_aliases(self, calc_type, column)
-            for col in nested_cols:
-                calculated_config = {
-                    consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[col],
-                    consts.CONFIG_TARGET_COLUMN: casefold_target_columns[col],
-                    consts.CONFIG_FIELD_ALIAS: col["alias"],
-                    consts.CONFIG_TYPE: col["type"],
-                    consts.CONFIG_DEPTH: col["depth"],
-                }
-            calculated_configs.append(calculated_config)
 
-        return calculated_configs
 
-    def _build_dependent_aliases(self, calculation_recipe, col_name):
+        calculated_config = {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: reference,
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: reference,
+            consts.CONFIG_FIELD_ALIAS: alias,
+            consts.CONFIG_TYPE: calc_type,
+            consts.CONFIG_DEPTH: depth,
+        }
+        return calculated_config
+
+
+    def _build_dependent_aliases(self, calc_type):
         """This is a utility function for determining the required depth of all fields"""
-        # order_of_operations = ['cast', 'ifnull', 'rtrim', 'upper', 'concat','hash']
+        order_of_operations = []
+        source_table = self.get_source_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        if calc_type == 'hash':
+            order_of_operations = ['cast', 'ifnull', 'rstrip', 'upper', 'concat', 'hash']
+        column_aliases = {}
         col_names = []
-        name = f"{col_name}"
-        for i, calc in enumerate(calculation_recipe):
-            col = {}
-            col["reference"] = name
-            name = f"{calc}__" + name
-            type = calc
-            col["alias"] = name
-            col["depth"] = i
-            col_names.append(col)
-    return col_names
-
-    def build_config_dependencies(self, col_list)
-
-
-
-
-
+        for i, calc in enumerate(order_of_operations):
+            if i == 0:
+                previous_level = [x for x in casefold_source_columns.values()]
+            else:
+                previous_level = [k for k, v in column_aliases.items() if v == i-1]
+            if calc in ['concat', 'hash']:
+                col = {}
+                col["reference"] = previous_level
+                col["name"] = f"{calc}__all"
+                col["calc_type"] = calc
+                col["depth"] = i
+                name = col["name"]
+                # need to capture all aliases at the previous level. probably name concat__all
+                column_aliases[name] = i
+                col_names.append(col)
+            else:
+                for column in previous_level: # this needs to be the previous manifest of columns
+                    col = {}
+                    col["reference"] = [column]
+                    col['name'] = f"{calc}__" + column
+                    col['calc_type'] = calc
+                    col["depth"] = i
+                    name = col['name']
+                    column_aliases[name] = i
+                    col_names.append(col)
+        return col_names

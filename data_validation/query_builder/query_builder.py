@@ -290,8 +290,8 @@ class CalculatedField(object):
     @staticmethod
     def cast(config, fields):
         if config.get("default_cast") is None:
-            how = "string"
-        return CalculatedField(ibis.expr.api.ValueExpr.cast, config, fields, how=how,)
+            target_type = "string"
+        return CalculatedField(ibis.expr.api.ValueExpr.cast, config, fields, target_type=target_type,)
 
     @staticmethod
     def custom(expr):
@@ -314,7 +314,6 @@ class CalculatedField(object):
                     compiled_fields.append(ibis_table[field].cast(self.cast))
                 else:
                     compiled_fields.append(ibis_table[field])
-
         return compiled_fields
 
     def compile(self, ibis_table):
@@ -371,15 +370,18 @@ class QueryBuilder(object):
     def compile_group_fields(self, table):
         return [field.compile(table) for field in self.grouped_fields]
 
-    def compile_calculated_fields(self, table, n=None):
-        if n is not None:
-            return [
-                field.compile(table)
-                for field in self.calculated_fields
-                if field.config[consts.CONFIG_DEPTH] == n
-            ]
-        else:
-            return [field.compile(table) for field in self.calculated_fields]
+    def compile_calculated_fields(self, table, n=0):
+        print(n)
+        print('calc')
+        return [field.compile(table) for field in self.calculated_fields if field.config[consts.CONFIG_DEPTH] == n]
+        # if n is not None:
+        #     return [
+        #         field.compile(table)
+        #         for field in self.calculated_fields
+        #         if field.config[consts.CONFIG_DEPTH] == n
+        #     ]
+        # else:
+        #     return [field.compile(table) for field in self.calculated_fields]
 
     def compile(self, data_client, schema_name, table_name):
         """Return an Ibis query object
@@ -397,7 +399,10 @@ class QueryBuilder(object):
             depth_limit = max(
                 field.config.get(consts.CONFIG_DEPTH, 0) for field in self.calculated_fields
             )
+            print(depth_limit)
             for n in range(0, (depth_limit + 1)):
+                print(n)
+                print('compile')
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
