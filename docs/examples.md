@@ -141,6 +141,7 @@ result_handler:
   project_id: my-project-id
   table_id: pso_data_validator.results
   type: BigQuery
+  google_service_account_key_path: path/to/sa.json
 source: my_bq_conn
 target: my_bq_conn
 validations:
@@ -153,6 +154,7 @@ validations:
     source_column: num_bikes_available
     target_column: num_bikes_available
     type: sum
+    cast: float64
   - field_alias: sum__num_docks_available
     source_column: num_docks_available
     target_column: num_docks_available
