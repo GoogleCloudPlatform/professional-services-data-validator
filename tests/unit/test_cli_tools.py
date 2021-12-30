@@ -99,7 +99,8 @@ CLI_FIND_TABLES_ARGS = [
 
 
 @mock.patch(
-    "argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(**CLI_ARGS),
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS),
 )
 def test_get_parsed_args(mock_args):
     """Test arg parser values with validate command."""
@@ -159,13 +160,17 @@ def test_create_and_list_connections(capsys, fs):
     assert captured.out == "Connection Name: test\n"
 
 
-def test_configure_arg_parser_list_validation_configs():
+def test_configure_arg_parser_list_and_run_validation_configs():
     """Test configuring arg parse in different ways."""
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(["run-config", "list"])
 
-    assert args.command == "run-config"
-    assert args.run_config_cmd == "list"
+    args = parser.parse_args(["configs", "list"])
+    assert args.command == "configs"
+    assert args.validation_config_cmd == "list"
+
+    args = parser.parse_args(["configs", "run"])
+    assert args.command == "configs"
+    assert args.validation_config_cmd == "run"
 
 
 def test_create_and_list_and_get_validations(capsys, fs):
@@ -178,7 +183,7 @@ def test_create_and_list_and_get_validations(capsys, fs):
     cli_tools.list_validations()
     captured = capsys.readouterr()
 
-    assert captured.out == "Validation YAML name: example_validation\n"
+    assert captured.out == "Validation YAMLs found:\nexample_validation.yaml\n"
 
     # Retrive the stored vaildation config
     yaml_config = cli_tools.get_validation("example_validation.yaml")
@@ -223,13 +228,14 @@ def test_get_labels(test_input, expected):
     ],
 )
 def test_get_labels_err(test_input):
-    """Ensure that Value Error is raised when incorrect label argument is provided. """
+    """Ensure that Value Error is raised when incorrect label argument is provided."""
     with pytest.raises(ValueError):
         cli_tools.get_labels(test_input)
 
 
 @pytest.mark.parametrize(
-    "test_input,expected", [(0, 0.0), (50, 50.0), (100, 100.0)],
+    "test_input,expected",
+    [(0, 0.0), (50, 50.0), (100, 100.0)],
 )
 def test_threshold_float(test_input, expected):
     """Test threshold float function."""
@@ -238,7 +244,8 @@ def test_threshold_float(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "test_input", [(-4), (float("nan")), (float("inf")), ("string")],
+    "test_input",
+    [(-4), (float("nan")), (float("inf")), ("string")],
 )
 def test_threshold_float_err(test_input):
     """Test that threshold float only accepts positive floats."""
@@ -385,16 +392,17 @@ def test_get_result_handler(test_input, expected):
     ],
 )
 def test_get_filters(test_input, expected):
-    """ Test get filters from file function. """
+    """Test get filters from file function."""
     res = cli_tools.get_filters(test_input)
     assert res == expected
 
 
 @pytest.mark.parametrize(
-    "test_input", [("source:"), ("invalid:filter:count")],
+    "test_input",
+    [("source:"), ("invalid:filter:count")],
 )
 def test_get_filters_err(test_input):
-    """ Test get filters function returns error. """
+    """Test get filters function returns error."""
     with pytest.raises(ValueError):
         cli_tools.get_filters(test_input)
 
@@ -421,9 +429,12 @@ def test_split_table_no_schema():
 
 
 @pytest.mark.parametrize(
-    "test_input", [(["table"])],
+    "test_input",
+    [(["table"])],
 )
-def test_split_table_err(test_input,):
+def test_split_table_err(
+    test_input,
+):
     """Test split table throws the right errors."""
     with pytest.raises(ValueError):
         cli_tools.split_table(test_input)

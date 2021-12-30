@@ -215,13 +215,13 @@ Once the file is updated and saved, the following command runs the new
 validation:
 
 ```
-data-validation run-config -c citibike.yaml
+data-validation configs run -c citibike.yaml
 ```
 
 View the complete YAML file for a GroupedColumn validation on the
 [examples](docs/examples.md#) page.
 
-You can view a list of all saved validation YAML files using `data-validation run-config list`. 
+You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`. 
 
 ### Aggregated Fields
 

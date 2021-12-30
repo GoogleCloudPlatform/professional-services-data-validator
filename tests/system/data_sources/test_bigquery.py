@@ -168,6 +168,7 @@ CLI_STORE_COLUMN_ARGS = [
 ]
 EXPECTED_NUM_YAML_LINES = 33  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
+CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -260,8 +261,13 @@ def test_cli_store_yaml_then_run_gcs():
     yaml_file_str = validation_bytes.decode("utf-8")
     assert len(yaml_file_str.splitlines()) == EXPECTED_NUM_YAML_LINES
 
-    # Run generated config
+    # Run generated config using 'run-config' command
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
+
+    # Run generated config using 'configs run' command
+    run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
     config_managers = main.build_config_managers_from_yaml(run_config_args)
     main.run_validations(run_config_args, config_managers)
 
@@ -289,8 +295,13 @@ def test_cli_store_yaml_then_run_local():
         # is likely to be a breaking change and must be assessed.
         assert len(yaml_file.readlines()) == EXPECTED_NUM_YAML_LINES
 
-    # Run generated config
+    # Run generated config using 'run-config' command
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
+
+    # Run generated config using 'configs run' command
+    run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
     config_managers = main.build_config_managers_from_yaml(run_config_args)
     main.run_validations(run_config_args, config_managers)
 
