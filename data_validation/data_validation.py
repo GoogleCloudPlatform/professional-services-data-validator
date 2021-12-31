@@ -24,6 +24,7 @@ from data_validation import consts, combiner, metadata
 from data_validation.config_manager import ConfigManager
 from data_validation.validation_builder import ValidationBuilder
 from data_validation.schema_validation import SchemaValidation
+from data_validation.query_builder.random_row_builder import RandomRowBuilder
 
 """ The DataValidation class is where the code becomes source/target aware
 
@@ -78,10 +79,12 @@ class DataValidation(object):
     # Leaving to to swast on the design of how this should look.
     def execute(self):
         """ Execute Queries and Store Results """
-        if (
-            self.config_manager.is_grouped_row_validation
-            or self.config_manager.validation_type == "Row"
-        ):
+        # Apply random row filter before validations run
+        if self.config_manager.use_random_rows():
+            self._add_random_row_filter()
+
+        # Run correct execution for the given validation type
+        if (self.config_manager.validation_type == consts.ROW_VALIDATION):
             grouped_fields = self.validation_builder.pop_grouped_fields()
             result_df = self.execute_recursive_validation(
                 self.validation_builder, grouped_fields
@@ -96,6 +99,26 @@ class DataValidation(object):
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(self.config, result_df)
+
+    def _add_random_row_filter(self):
+        """ Add random row filters to the validation builder. """
+        if not self.config_manager.primary_keys:
+            raise ValueError("Primary Keys are required for Random Row Filters")
+
+        # Filter for only first primary key (multi-pk filter not supported)
+        primary_key_info = self.config_manager.primary_keys[0]
+        query = RandomRowBuilder([primary_key_info[consts.CONFIG_SOURCE_COLUMN]], self.config_manager.random_row_batch_size()) \
+            .compile(self.config_manager.source_client, self.config_manager.source_schema, self.config_manager.source_table)
+
+        random_rows = self.config_manager.source_client.execute(query)
+        filter_field = {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
+            consts.CONFIG_FILTER_SOURCE_COLUMN: primary_key_info[consts.CONFIG_SOURCE_COLUMN],
+            consts.CONFIG_FILTER_SOURCE_VALUE: random_rows[primary_key_info[consts.CONFIG_SOURCE_COLUMN]],
+            consts.CONFIG_FILTER_TARGET_COLUMN: primary_key_info[consts.CONFIG_TARGET_COLUMN],
+            consts.CONFIG_FILTER_TARGET_VALUE: random_rows[primary_key_info[consts.CONFIG_SOURCE_COLUMN]],
+        }
+        self.validation_builder.add_filter(filter_field)
 
     def query_too_large(self, rows_df, grouped_fields):
         """ Return bool to dictate if another level of recursion

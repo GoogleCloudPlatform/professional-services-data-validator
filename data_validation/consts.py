@@ -33,7 +33,7 @@ CONFIG_GROUPED_COLUMNS = "grouped_columns"
 CONFIG_CALCULATED_SOURCE_COLUMNS = "source_calculated_columns"
 CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
 CONFIG_USE_RANDOM_ROWS = "use_random_rows"
-CONFIG_NUM_RANDOM_ROWS = "num_random_rows"
+CONFIG_RANDOM_ROW_BATCH_SIZE = "random_row_batch_size"
 CONFIG_PRIMARY_KEYS = "primary_keys"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
@@ -57,7 +57,7 @@ CONFIG_TYPE_COUNT = "count"
 CONFIG_TYPE_SUM = "sum"
 
 # Default values
-DEFAULT_NUM_RANDOM_ROWS = 100
+DEFAULT_NUM_RANDOM_ROWS = 10000
 
 # Filter Type Options
 FILTER_TYPE_CUSTOM = "custom"
@@ -69,6 +69,8 @@ COLUMN_VALIDATION = "Column"
 GROUPED_COLUMN_VALIDATION = "GroupedColumn"
 ROW_VALIDATION = "Row"
 SCHEMA_VALIDATION = "Schema"
+
+CONFIG_TYPES = [COLUMN_VALIDATION, GROUPED_COLUMN_VALIDATION, ROW_VALIDATION, SCHEMA_VALIDATION]
 
 # State Manager Fields
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
