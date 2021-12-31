@@ -155,6 +155,13 @@ class FilterField(object):
         )
 
     @staticmethod
+    def isin(field_name, values):
+        # Build Left and Right Objects
+        return FilterField(
+            ibis.expr.types.ColumnExpr.isin, left_field=field_name, right=values
+        )
+
+    @staticmethod
     def custom(expr):
         """Returns a FilterField instance built for any custom SQL using a supported operator.
 

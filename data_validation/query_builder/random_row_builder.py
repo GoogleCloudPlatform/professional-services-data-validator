@@ -42,5 +42,8 @@ class RandomRowBuilder(object):
         table_name (String): The name of the table to query.
     """
     table = clients.get_ibis_table(data_client, schema_name, table_name)
-    
+    query = table[self.primary_keys].limit(self.batch_size)
+
+    return query
+
 

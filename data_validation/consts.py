@@ -32,6 +32,8 @@ CONFIG_CALCULATED_FIELDS = "calculated_fields"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
 CONFIG_CALCULATED_SOURCE_COLUMNS = "source_calculated_columns"
 CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
+CONFIG_USE_RANDOM_ROWS = "use_random_rows"
+CONFIG_NUM_RANDOM_ROWS = "num_random_rows"
 CONFIG_PRIMARY_KEYS = "primary_keys"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
@@ -54,9 +56,13 @@ CONFIG_RESULT_HANDLER = "result_handler"
 CONFIG_TYPE_COUNT = "count"
 CONFIG_TYPE_SUM = "sum"
 
+# Default values
+DEFAULT_NUM_RANDOM_ROWS = 100
+
 # Filter Type Options
 FILTER_TYPE_CUSTOM = "custom"
 FILTER_TYPE_EQUALS = "equals"
+FILTER_TYPE_ISIN = "isin"
 
 # Validation Types
 COLUMN_VALIDATION = "Column"

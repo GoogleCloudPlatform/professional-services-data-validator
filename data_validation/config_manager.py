@@ -90,6 +90,14 @@ class ConfigManager(object):
         """Return string validation type (Column|Schema)."""
         return self._config[consts.CONFIG_TYPE]
 
+    def use_random_rows(self):
+        """ Return if the validation should use a random row filter. """
+        return self._config.get(consts.CONFIG_USE_RANDOM_ROWS, True)
+
+    def num_random_rows(self):
+        """ Return if the validation should use a random row filter. """
+        return self._config.get(consts.CONFIG_NUM_RANDOM_ROWS, consts.DEFAULT_NUM_RANDOM_ROWS)
+
     def process_in_memory(self):
         if (
             self.validation_type == "Row" or self.is_grouped_row_validation
