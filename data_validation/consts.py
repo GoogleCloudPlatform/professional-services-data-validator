@@ -118,12 +118,9 @@ FORMAT_TYPES = ["csv", "json", "table", "text"]
 # Text Result Handler column filter list
 COLUMN_FILTER_LIST = [
     "aggregation_type",
-    "difference",
     "end_time",
     "labels",
     "pct_threshold",
     "run_id",
-    "source_agg_value",
     "start_time",
-    "target_agg_value",
 ]
