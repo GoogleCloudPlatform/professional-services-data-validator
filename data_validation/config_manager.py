@@ -98,10 +98,16 @@ class ConfigManager(object):
 
     def random_row_batch_size(self):
         """ Return if the validation should use a random row filter. """
-        return self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE) or consts.DEFAULT_NUM_RANDOM_ROWS
+        return (
+            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
+            or consts.DEFAULT_NUM_RANDOM_ROWS
+        )
 
     def process_in_memory(self):
-        if self.validation_type == "Row" and self.get_source_connection() == self.get_target_connection():
+        if (
+            self.validation_type == "Row"
+            and self.get_source_connection() == self.get_target_connection()
+        ):
             return False
 
         return True

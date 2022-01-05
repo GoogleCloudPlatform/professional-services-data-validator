@@ -13,37 +13,36 @@
 # limitations under the License.
 
 import ibis
-from typing import Any, Dict, List
-from ibis.expr.types import StringScalar
-from third_party.ibis.ibis_addon import operations
+from typing import List
 
 from data_validation import clients
 
 
 """ The QueryBuilder for retreiving random row values to filter against."""
-class RandomRowBuilder(object):
 
-  def __init__(self, primary_keys: List[str], batch_size: int):
-    """ Build a RandomRowBuilder objct which is ready to build a random row filter query.
+
+class RandomRowBuilder(object):
+    def __init__(self, primary_keys: List[str], batch_size: int):
+        """ Build a RandomRowBuilder objct which is ready to build a random row filter query.
 
     Args:
         primary_keys: A list of primary key field strings used to find random rows.
         batch_size: A max size for the number of random row values to find.
     """
-    self.primary_keys = primary_keys
-    self.batch_size = batch_size
+        self.primary_keys = primary_keys
+        self.batch_size = batch_size
 
-  def compile(self, data_client: ibis.client, schema_name: str, table_name: str) -> ibis.Expr:
-    """Return an Ibis query object
+    def compile(
+        self, data_client: ibis.client, schema_name: str, table_name: str
+    ) -> ibis.Expr:
+        """Return an Ibis query object
 
     Args:
         data_client (IbisClient): The client used to query random rows.
         schema_name (String): The name of the schema for the given table.
         table_name (String): The name of the table to query.
     """
-    table = clients.get_ibis_table(data_client, schema_name, table_name)
-    query = table[self.primary_keys].limit(self.batch_size)
+        table = clients.get_ibis_table(data_client, schema_name, table_name)
+        query = table[self.primary_keys].limit(self.batch_size)
 
-    return query
-
-
+        return query

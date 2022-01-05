@@ -12,14 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import numpy
-import pandas
 import pytest
-import random
-from datetime import datetime, timedelta
 
-from data_validation import consts, clients
+from data_validation import clients
 
 
 TABLE_FILE_PATH = "table_data.json"
@@ -30,7 +25,9 @@ CONN_CONFIG = {
     "file_type": "json",
 }
 
-JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"}]"""
+JSON_DATA = (
+    """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"}]"""
+)
 
 
 @pytest.fixture
@@ -56,16 +53,15 @@ def test_init(module_under_test):
 
     assert builder.primary_keys == primary_keys
 
+
 def test_compile(module_under_test, fs):
-  _create_table_file(TABLE_FILE_PATH, JSON_DATA)
-  client = clients.get_data_client(CONN_CONFIG)
-  primary_keys = ["col_a"]
-  builder = module_under_test.RandomRowBuilder(primary_keys, 1)
+    _create_table_file(TABLE_FILE_PATH, JSON_DATA)
+    client = clients.get_data_client(CONN_CONFIG)
+    primary_keys = ["col_a"]
+    builder = module_under_test.RandomRowBuilder(primary_keys, 1)
 
-  query = builder.compile(client, None, CONN_CONFIG["table_name"])
-  df = client.execute(query)
+    query = builder.compile(client, None, CONN_CONFIG["table_name"])
+    df = client.execute(query)
 
-  assert list(df.columns) == primary_keys
-  assert len(df) == 1
-
-
+    assert list(df.columns) == primary_keys
+    assert len(df) == 1
