@@ -72,7 +72,8 @@ def generate_report(
             "Expected source and target to have same schema, got "
             f"source: {source_names} target: {target_names}"
         )
-
+    print(source_names)
+    print(target_names)
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
     )
@@ -96,6 +97,7 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
+    print('field_differences')
 
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
         source_value = field_differences["differences_source_agg_value"].epoch_seconds()
@@ -103,6 +105,8 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     else:
         source_value = field_differences["differences_source_agg_value"]
         target_value = field_differences["differences_target_agg_value"]
+    print(source_value)
+    print(target_value)
 
     # Does not calculate difference between agg values for row hash due to int64 overflow
     if is_value_comparison:
@@ -161,13 +165,11 @@ def _calculate_differences(
         differences_joined = source.cross_join(target)
 
     differences_pivots = []
-
     for field, field_type in schema.items():
         if field not in validation_fields:
             continue
 
         validation = validations[field]
-
         field_differences = differences_joined.projection(
             [
                 source[field].name("differences_source_agg_value"),
@@ -184,7 +186,6 @@ def _calculate_differences(
                 )
             ]
         )
-
     differences_pivot = functools.reduce(
         lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots
     )

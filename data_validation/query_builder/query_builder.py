@@ -371,8 +371,6 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.grouped_fields]
 
     def compile_calculated_fields(self, table, n=0):
-        print(n)
-        print('calc')
         return [field.compile(table) for field in self.calculated_fields if field.config[consts.CONFIG_DEPTH] == n]
         # if n is not None:
         #     return [
@@ -399,10 +397,7 @@ class QueryBuilder(object):
             depth_limit = max(
                 field.config.get(consts.CONFIG_DEPTH, 0) for field in self.calculated_fields
             )
-            print(depth_limit)
             for n in range(0, (depth_limit + 1)):
-                print(n)
-                print('compile')
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )

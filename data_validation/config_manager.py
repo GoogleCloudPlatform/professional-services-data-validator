@@ -14,7 +14,6 @@
 
 import copy
 import logging
-import pprint
 
 import google.oauth2.service_account
 
@@ -412,11 +411,6 @@ class ConfigManager(object):
             aggregate_configs.append(aggregate_config)
 
         return aggregate_configs
-            # field['reference'],
-            # field['calc_type'],
-            # field['name'],
-            # field['depth'],
-            # consts.NUMERIC_DATA_TYPES)
 
     def build_config_calculated_fields(self, reference, calc_type, alias, depth, supported_types, arg_value=None):
         """Returns list of calculated fields"""
