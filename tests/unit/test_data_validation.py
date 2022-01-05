@@ -107,7 +107,7 @@ SAMPLE_GC_ROW_CONFIG = {
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: "Column",
+    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -484,14 +484,14 @@ def test_row_level_validation_non_matching(module_under_test, fs):
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
 
-    # TODO: this value is 0 because a COUNT() on now rows returns Null.
+    # TODO: this value is 0 because a COUNT() on no rows returns Null.
     # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
     assert result_df["difference"].sum() == 0
 
     expected_date_result = '{"date_value": "%s", "id": "11"}' % str(
         datetime.now().date()
     )
-    grouped_column = validation_df[validation_df["difference"].isnull()][
+    grouped_column = validation_df[validation_df["source_table_name"].isnull()][
         "group_by_columns"
     ].max()
     assert expected_date_result == grouped_column
@@ -511,8 +511,10 @@ def test_row_level_validation_smart_count(module_under_test, fs):
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
 
     assert expected_date_result == result_df["group_by_columns"].max()
+
     smart_count_df = result_df[result_df["validation_name"] == "count_text_value"]
-    assert smart_count_df["difference"].sum() == 100
+    assert smart_count_df["source_agg_value"].astype(int).sum() == 100
+    assert smart_count_df["target_agg_value"].astype(int).sum() == 200
 
 
 def test_row_level_validation_multiple_aggregations(module_under_test, fs):

@@ -159,14 +159,20 @@ def test_get_threshold_property(module_under_test):
 
 
 def test_process_in_memory(module_under_test):
-    """Test getting config copy."""
+    """Test process in memory for normal validations."""
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     assert config_manager.process_in_memory() is True
 
-    config_manager._config = copy.deepcopy(config_manager._config)
+
+def test_do_not_process_in_memory(module_under_test):
+    """Test process in memory for normal validations."""
+    config_manager = module_under_test.ConfigManager(
+        copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
     config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
         {
             consts.CONFIG_FIELD_ALIAS: "id",

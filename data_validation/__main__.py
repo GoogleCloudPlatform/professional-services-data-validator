@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import os
+
+import logging
 import json
 from yaml import dump, load, Dumper, Loader
 
@@ -87,9 +89,10 @@ def build_config_from_args(args, config_manager):
     """
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
     if args.primary_keys and not args.grouped_columns:
-        raise ValueError(
-            "Grouped columns must be specified for primary key level validation."
-        )
+        if not args.grouped_columns and not config_manager.use_random_rows():
+            logging.warning(
+                "No Grouped columns or Random Rows specified, ignoring primary keys."
+            )
     if args.grouped_columns:
         grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
         config_manager.append_query_groups(
@@ -111,7 +114,17 @@ def build_config_managers_from_args(args):
     configs = []
 
     if args.type is None:
-        config_type = args.validate_cmd.capitalize()
+        validate_cmd = args.validate_cmd.capitalize()
+        if validate_cmd == "Schema":
+            config_type = consts.SCHEMA_VALIDATION
+        elif validate_cmd == "Column":
+            # TODO: We need to discuss how GroupedColumn and Row are differentiated.
+            if args.grouped_columns:
+                config_type = consts.GROUPED_COLUMN_VALIDATION
+            else:
+                config_type = consts.COLUMN_VALIDATION
+        else:
+            raise ValueError(f"Unknown Validation Type: {validate_cmd}")
     else:
         config_type = args.type
 
@@ -154,6 +167,8 @@ def build_config_managers_from_args(args):
             labels,
             threshold,
             format,
+            use_random_rows=args.use_random_row,
+            random_row_batch_size=args.random_row_batch_size,
             source_client=source_client,
             target_client=target_client,
             result_handler_config=result_handler_config,

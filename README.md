@@ -30,6 +30,7 @@ DVT supports the following connection types:
 *   [Redshift](docs/connections.md#redshift)
 *   [FileSystem](docs/connections.md#filesystem)
 *   [Impala](docs/connections.md#impala)
+*   [Hive](docs/connections.md#hive)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.

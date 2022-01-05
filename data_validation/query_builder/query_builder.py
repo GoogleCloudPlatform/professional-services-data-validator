@@ -102,11 +102,11 @@ class AggregateField(object):
         else:
             agg_field = self.expr(ibis_table)
 
-        if self.alias:
-            agg_field = agg_field.name(self.alias)
-
         if self.cast:
             agg_field = agg_field.cast(self.cast)
+
+        if self.alias:
+            agg_field = agg_field.name(self.alias)
 
         return agg_field
 
@@ -152,6 +152,13 @@ class FilterField(object):
         # Build Left and Right Objects
         return FilterField(
             ibis.expr.types.ColumnExpr.__eq__, left_field=field_name, right=value
+        )
+
+    @staticmethod
+    def isin(field_name, values):
+        # Build Left and Right Objects
+        return FilterField(
+            ibis.expr.types.ColumnExpr.isin, left_field=field_name, right=values
         )
 
     @staticmethod

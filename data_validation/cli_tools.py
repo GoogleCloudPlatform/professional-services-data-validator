@@ -64,6 +64,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
+        ["logmech", "Log on mechanism"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -312,6 +313,17 @@ def _configure_run_parser(subparsers):
         help="Set the format for printing command output, Supported formats are (text, csv, json, table). It defaults "
         "to table",
     )
+    run_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    run_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
 
 
 def _configure_connection_parser(subparsers):
@@ -425,6 +437,17 @@ def _configure_column_parser(column_parser):
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
+    )
+    column_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    column_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
     )
 
 
