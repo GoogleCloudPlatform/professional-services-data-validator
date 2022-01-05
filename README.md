@@ -176,6 +176,25 @@ data-validation query
           The raw query to run against the supplied connection
 ```
 
+### Using Beta CLI Features
+
+There may be ocassions we want to release a new CLI feature under a Beta flag.
+Any features under Beta may or may not make their way to production. However, if
+there is a Beta feature you wish to use than it can be accessed using the
+following.
+
+```
+data-validation beta --help
+```
+
+#### [Beta] Deploy Data Validation as a Local Service
+
+If you wish to use Data Validation as a Flask service, the following command
+will help. This same logic is also expected to be used for Cloud Run, Cloud
+Functions, and other deployment services.
+
+`data-validation beta deploy`
+
 ## Query Configurations
 
 You can customize the configuration for any given validation by providing use
