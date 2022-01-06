@@ -141,6 +141,7 @@ class DataValidation(object):
         past_results = []
 
         if len(grouped_fields) > 0:
+            print(grouped_fields)
             validation_builder.add_query_group(grouped_fields[0])
             result_df = self._execute_validation(
                 validation_builder, process_in_memory=process_in_memory
@@ -178,7 +179,7 @@ class DataValidation(object):
                         )
                     )
         elif self.config_manager.primary_keys:
-            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+            validation_builder.add_comparison_fields(self.config_manager.primary_keys)
             past_results.append(
                 self._execute_validation(
                     validation_builder, process_in_memory=process_in_memory
@@ -246,7 +247,11 @@ class DataValidation(object):
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()
 
-        join_on_fields = validation_builder.get_group_aliases()
+
+        if self.config_manager.validation_type == "Row":
+            join_on_fields = validation_builder.get_comparison_fields()
+        else:
+            join_on_fields = validation_builder.get_group_aliases()
 
         # If row validation from YAML, compare source and target agg values
         is_value_comparison = self.config_manager.validation_type == "Row"

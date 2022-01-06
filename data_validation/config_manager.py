@@ -144,6 +144,17 @@ class ConfigManager(object):
         )
 
     @property
+    def comparison_fields(self):
+        """ Return fields from Config """
+        return self._config.get(consts.CONFIG_FIELDS, [])
+
+    def append_comparison_fields(self, field_configs):
+        """Append field configs to existing config."""
+        self._config[consts.CONFIG_FIELDS] = (
+            self.comparison_fields + field_configs
+        )
+
+    @property
     def is_grouped_row_validation(self):
         """ Returns boolean indicating if validation type is a Grouped Column
         Row validation. """
@@ -334,6 +345,33 @@ class ConfigManager(object):
             target_client=target_client,
             verbose=verbose,
         )
+
+    def build_comparison_fields(self, fields):
+        """Return list of field config objects."""
+        field_configs = []
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        for field in fields:
+
+#             if field.casefold() not in casefold_source_columns:
+#                 raise ValueError(
+#                     f"Field DNE in source: {source_table.op().name}.{column}"
+#                 )
+#             if field.casefold() not in casefold_target_columns:
+#                 raise ValueError(
+#                     f"Field DNE in target: {target_table.op().name}.{column}"
+#                 )
+            column_config = {
+                consts.CONFIG_SOURCE_COLUMN: field.casefold(),
+                consts.CONFIG_TARGET_COLUMN: field.casefold(),
+                consts.CONFIG_FIELD_ALIAS: field,
+                consts.CONFIG_CAST: None,
+            }
+            field_configs.append(column_config)
+        return field_configs
 
     def build_config_grouped_columns(self, grouped_columns):
         """Return list of grouped column config objects."""

@@ -184,6 +184,39 @@ class FilterField(object):
 
         return self.expr(self.left, self.right)
 
+class ComparisonField(object):
+    def __init__(self, field_name, alias=None, cast=None):
+        """A representation of a group by field used to build a query.
+
+        Args:
+            field_name (String): A field to act on in the table
+            alias (String): An alias to use for the group
+            cast (String): A cast on the column if required
+        """
+        self.field_name = field_name
+        self.alias = alias
+        self.cast = cast
+
+    def compile(self, ibis_table):
+        # Fields are supplied on compile or on build
+        comparison_field = ibis_table[self.field_name]
+
+        # TODO: generate cast for known types not specified
+        if self.cast:
+            comparison_field = comparison_field.cast(self.cast)
+        elif isinstance(group_field.type(), ibis.expr.datatypes.Timestamp):
+            comparison_field = comparison_field.cast("date")
+        else:
+            # TODO: need to build Truncation Int support
+            # TODO: should be using a logger
+            print("WARNING: Unknown cast types can cause memory errors")
+
+        # The Casts require we also supply a name.
+        alias = self.alias or self.field_name
+        comparison_field = comparison_field.name(alias)
+
+        return comparison_field
+
 
 class GroupedField(object):
     def __init__(self, field_name, alias=None, cast=None):
@@ -272,7 +305,7 @@ class CalculatedField(object):
     def ifnull(config, fields):
         if config.get("default_null_string") is None:
             config["default_string"] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
-        fields = [config["default_string"], fields[0]]
+        fields = [fields[0], config["default_string"]]
         return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
 
     @staticmethod
@@ -327,7 +360,7 @@ class CalculatedField(object):
 
 class QueryBuilder(object):
     def __init__(
-        self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None
+        self, aggregate_fields, calculated_fields, filters, grouped_fields, comparison_fields, limit=None
     ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
@@ -342,6 +375,7 @@ class QueryBuilder(object):
         self.calculated_fields = calculated_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
+        self.comparison_fields = comparison_fields
         self.limit = limit
 
     @staticmethod
@@ -350,12 +384,14 @@ class QueryBuilder(object):
         aggregate_fields = []
         filters = []
         grouped_fields = []
+        comparison_fields = []
         calculated_fields = []
 
         return QueryBuilder(
             aggregate_fields,
             filters=filters,
             grouped_fields=grouped_fields,
+            comparison_fields = comparison_fields,
             calculated_fields=calculated_fields,
         )
 
@@ -369,6 +405,9 @@ class QueryBuilder(object):
 
     def compile_group_fields(self, table):
         return [field.compile(table) for field in self.grouped_fields]
+
+    def compile_comparison_fields(self, table):
+        return [field.compile(table) for field in self.comparison_fields]
 
     def compile_calculated_fields(self, table, n=0):
         return [field.compile(table) for field in self.calculated_fields if field.config[consts.CONFIG_DEPTH] == n]
@@ -412,8 +451,10 @@ class QueryBuilder(object):
             if compiled_groups
             else filtered_table
         )
-
-        query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
+        if self.aggregate_fields:
+            query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
+        else:
+            query = grouped_table
 
         if self.limit:
             query = query.limit(self.limit)
@@ -428,6 +469,15 @@ class QueryBuilder(object):
             aggregate_field (AggregateField): An AggregateField instance
         """
         self.aggregate_fields.append(aggregate_field)
+
+    def add_comparison_field(self, comparison_field):
+        """Add an ComparisonField instance to the query which
+            will be used when compiling your query (ie. SUM(a))
+
+        Args:
+            comparison_field (ComparisonField): An ComparisonField instance
+        """
+        self.comparison_fields.append(comparison_field)
 
     def add_grouped_field(self, grouped_field):
         """Add a GroupedField instance to the query which

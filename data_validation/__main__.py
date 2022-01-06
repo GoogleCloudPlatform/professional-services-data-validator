@@ -127,7 +127,12 @@ def build_config_from_args(args, config_manager):
     if args.primary_keys:
         primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
-            config_manager.build_config_grouped_columns(primary_keys)
+            config_manager.build_comparison_fields(primary_keys)
+        )
+    if args.fields:
+        fields = cli_tools.get_arg_list(args.fields, default_value=[])
+        config_manager.append_comparison_fields(
+            config_manager.build_comparison_fields(fields)
         )
 
     # TODO(GH#18): Add query filter config logic

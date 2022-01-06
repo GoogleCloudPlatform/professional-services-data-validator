@@ -52,7 +52,7 @@ def generate_report(
         join_on_fields (Sequence[str]):
             A collection of column names to use to join source and target.
             These are the columns that both the source and target queries
-            grouped by.
+            are grouped by.
         is_value_comparison (boolean): Boolean representing if source and
             target agg values should be compared with 'equals to' rather than
             a 'difference' comparison.
@@ -98,6 +98,7 @@ def generate_report(
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
     print('field_differences')
+    print(field_differences)
 
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
         source_value = field_differences["differences_source_agg_value"].epoch_seconds()
@@ -153,7 +154,13 @@ def _calculate_differences(
     """
     schema = source.schema()
     all_fields = frozenset(schema.names)
+    print(all_fields)
     validation_fields = all_fields - frozenset(join_on_fields)
+    print(validation_fields)
+    print('validations')
+    print(validations)
+    print('join_on_fields')
+    print(join_on_fields)
 
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
@@ -172,8 +179,8 @@ def _calculate_differences(
         validation = validations[field]
         field_differences = differences_joined.projection(
             [
-                source[field].name("differences_source_agg_value"),
-                target[field].name("differences_target_agg_value"),
+                source[field].name("differences_source_value"),
+                target[field].name("differences_target_value"),
             ]
             + [source[join_field] for join_field in join_on_fields]
         )
