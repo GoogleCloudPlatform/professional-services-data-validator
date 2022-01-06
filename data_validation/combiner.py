@@ -72,8 +72,6 @@ def generate_report(
             "Expected source and target to have same schema, got "
             f"source: {source_names} target: {target_names}"
         )
-    print(source_names)
-    print(target_names)
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
     )
@@ -97,17 +95,13 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
-    print('field_differences')
-    print(field_differences)
 
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
-        source_value = field_differences["differences_source_agg_value"].epoch_seconds()
-        target_value = field_differences["differences_target_agg_value"].epoch_seconds()
+        source_value = field_differences["differences_source_value"].epoch_seconds()
+        target_value = field_differences["differences_target_value"].epoch_seconds()
     else:
-        source_value = field_differences["differences_source_agg_value"]
-        target_value = field_differences["differences_target_agg_value"]
-    print(source_value)
-    print(target_value)
+        source_value = field_differences["differences_source_value"]
+        target_value = field_differences["differences_target_value"]
 
     # Does not calculate difference between agg values for row hash due to int64 overflow
     if is_value_comparison:
@@ -154,13 +148,7 @@ def _calculate_differences(
     """
     schema = source.schema()
     all_fields = frozenset(schema.names)
-    print(all_fields)
     validation_fields = all_fields - frozenset(join_on_fields)
-    print(validation_fields)
-    print('validations')
-    print(validations)
-    print('join_on_fields')
-    print(join_on_fields)
 
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
@@ -173,26 +161,26 @@ def _calculate_differences(
 
     differences_pivots = []
     for field, field_type in schema.items():
-        if field not in validation_fields:
-            continue
-
-        validation = validations[field]
-        field_differences = differences_joined.projection(
-            [
-                source[field].name("differences_source_value"),
-                target[field].name("differences_target_value"),
-            ]
-            + [source[join_field] for join_field in join_on_fields]
-        )
-        differences_pivots.append(
-            field_differences[
-                (ibis.literal(field).name("validation_name"),)
-                + join_on_fields
-                + _calculate_difference(
+        if field not in validations.keys():
+            pass
+        else:
+            validation = validations[field]
+            field_differences = differences_joined.projection(
+                [
+                    source[field].name("differences_source_value"),
+                    target[field].name("differences_target_value"),
+                ]
+                + [source[join_field] for join_field in join_on_fields]
+            )
+            differences_pivots.append(
+                field_differences[
+                    (ibis.literal(field).name("validation_name"),)
+                    + join_on_fields
+                    + _calculate_difference(
                     field_differences, field_type, validation, is_value_comparison
-                )
-            ]
-        )
+                    )
+                ]
+            )
     differences_pivot = functools.reduce(
         lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots
     )
@@ -205,26 +193,31 @@ def _pivot_result(result, join_on_fields, validations, result_type):
     pivots = []
 
     for field in validation_fields:
-        validation = validations[field]
-        pivots.append(
-            result.projection(
-                (
-                    ibis.literal(field).name("validation_name"),
-                    ibis.literal(validation.validation_type).name("validation_type"),
-                    ibis.literal(validation.aggregation_type).name("aggregation_type"),
-                    ibis.literal(validation.get_table_name(result_type)).name(
-                        "table_name"
-                    ),
-                    # Cast to string to ensure types match, even when column
-                    # name is NULL (such as for count aggregations).
-                    ibis.literal(validation.get_column_name(result_type))
-                    .cast("string")
-                    .name("column_name"),
-                    result[field].cast("string").name("agg_value"),
+        if field not in validations.keys():
+            pass
+        else:
+            validation = validations[field]
+            print('VALIDATION')
+            print(validation)
+            pivots.append(
+                result.projection(
+                    (
+                        ibis.literal(field).name("validation_name"),
+                        ibis.literal(validation.validation_type).name("validation_type"),
+                        ibis.literal(validation.aggregation_type).name("aggregation_type"),
+                        ibis.literal(validation.get_table_name(result_type)).name(
+                            "table_name"
+                        ),
+                        # Cast to string to ensure types match, even when column
+                        # name is NULL (such as for count aggregations).
+                        ibis.literal(validation.get_column_name(result_type))
+                        .cast("string")
+                        .name("column_name"),
+                        result[field].cast("string").name("agg_value"),
+                    )
+                    + join_on_fields
                 )
-                + join_on_fields
             )
-        )
     pivot = functools.reduce(lambda pivot1, pivot2: pivot1.union(pivot2), pivots)
     return pivot
 

@@ -200,18 +200,6 @@ class ComparisonField(object):
     def compile(self, ibis_table):
         # Fields are supplied on compile or on build
         comparison_field = ibis_table[self.field_name]
-
-        # TODO: generate cast for known types not specified
-        if self.cast:
-            comparison_field = comparison_field.cast(self.cast)
-        elif isinstance(group_field.type(), ibis.expr.datatypes.Timestamp):
-            comparison_field = comparison_field.cast("date")
-        else:
-            # TODO: need to build Truncation Int support
-            # TODO: should be using a logger
-            print("WARNING: Unknown cast types can cause memory errors")
-
-        # The Casts require we also supply a name.
         alias = self.alias or self.field_name
         comparison_field = comparison_field.name(alias)
 
@@ -444,10 +432,9 @@ class QueryBuilder(object):
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
         )
-
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
-            filtered_table.groupby(compiled_groups)
+            row_table.groupby(compiled_groups)
             if compiled_groups
             else filtered_table
         )

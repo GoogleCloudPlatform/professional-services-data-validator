@@ -14,7 +14,6 @@
 
 
 import json
-import pprint
 from yaml import dump, load, Dumper, Loader
 
 from data_validation import (
@@ -96,6 +95,9 @@ def get_calculated_config(args, config_manager):
     if args.hash:
         col_args = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
         fields = config_manager._build_dependent_aliases("hash")
+        config_manager.append_comparison_fields(
+            config_manager.build_comparison_fields(["hash__all"])
+        )
     for field in fields:
         calculated_configs.append(config_manager.build_config_calculated_fields(
             field['reference'],
@@ -127,14 +129,13 @@ def build_config_from_args(args, config_manager):
     if args.primary_keys:
         primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
-            config_manager.build_comparison_fields(primary_keys)
+            config_manager.build_config_grouped_columns(primary_keys)
         )
-    if args.fields:
-        fields = cli_tools.get_arg_list(args.fields, default_value=[])
+    if args.type == consts.ROW_VALIDATION:
+        comparison_fields = cli.tools.get_arg_list(args.fields, default_value=[])
         config_manager.append_comparison_fields(
-            config_manager.build_comparison_fields(fields)
+            config_manager.build_comparison_fields(comparison_fields)
         )
-
     # TODO(GH#18): Add query filter config logic
 
     return config_manager

@@ -96,6 +96,10 @@ class ValidationBuilder(object):
         """ Return List of String Aliases """
         return self.group_aliases.keys()
 
+    def get_primary_keys(self):
+        """ Return List of String Aliases """
+        return self.primary_ke
+
     def get_calculated_aliases(self):
         """ Return List of String Aliases """
         return self.calculated_aliases.keys()
@@ -239,21 +243,31 @@ class ValidationBuilder(object):
             comparison_field (Dict): An object with source, target, and cast info
         """
         source_config = deepcopy(comparison_field)
-        source_field = comparison_field[consts.CONFIG_SOURCE_COLUMN]
+        source_field_name = comparison_field[consts.CONFIG_SOURCE_COLUMN]
         target_config = deepcopy(comparison_field)
-        target_field = comparison_field[consts.CONFIG_TARGET_COLUMN]
+        target_field_name = comparison_field[consts.CONFIG_TARGET_COLUMN]
         # grab calc field metadata
         alias = comparison_field[consts.CONFIG_FIELD_ALIAS]
-        print(alias)
         # check if valid calc field and return correct object
         source_field = ComparisonField(
-            field_name=source_field, alias=alias
+            field_name=source_field_name, alias=alias
         )
         target_field = ComparisonField(
-            field_name=target_field, alias=alias
+            field_name=target_field_name, alias=alias
         )
-        self.source_builder.add_comparison_field(source_field)
-        self.target_builder.add_comparison_field(target_field)
+        self.source_builder.add_comparison_field(source_field_name)
+        self.target_builder.add_comparison_field(target_field_name)
+        self._metadata[alias] = metadata.ValidationMetadata(
+            aggregation_type = None,
+            validation_type=self.validation_type,
+            source_table_schema=self.config_manager.source_schema,
+            source_table_name=self.config_manager.source_table,
+            target_table_schema=self.config_manager.target_schema,
+            target_table_name=self.config_manager.target_table,
+            source_column_name=source_field_name,
+            target_column_name=target_field_name,
+            threshold = None,
+        )
 
     def add_calc(self, calc_field):
         """ Add CalculatedField to Queries
