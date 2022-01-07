@@ -145,27 +145,35 @@ def configure_arg_parser():
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
-    # beta feature only available in run/validate command
-    if "beta" in sys.argv:
-        parser.add_argument(
-            "beta",
-            nargs="?",
-            help="Beta flag to enable beta features for the tool.",
-            default="",
-        )
-        subparsers = parser.add_subparsers(dest="command")
-        _configure_run_parser(subparsers)
-        _configure_validate_parser(subparsers)
-    else:
-        subparsers = parser.add_subparsers(dest="command")
-        _configure_validate_parser(subparsers)
-        _configure_run_config_parser(subparsers)
-        _configure_connection_parser(subparsers)
-        _configure_find_tables(subparsers)
-        _configure_raw_query(subparsers)
-        _configure_run_parser(subparsers)
+    subparsers = parser.add_subparsers(dest="command")
+    _configure_validate_parser(subparsers)
+    _configure_run_config_parser(subparsers)
+    _configure_connection_parser(subparsers)
+    _configure_find_tables(subparsers)
+    _configure_raw_query(subparsers)
+    _configure_run_parser(subparsers)
+    _configure_beta_parser(subparsers)
 
     return parser
+
+
+def _configure_beta_parser(subparsers):
+    """Configure beta commands for the parser."""
+    connection_parser = subparsers.add_parser(
+        "beta", help="Run a Beta command for new utilities and features."
+    )
+    beta_subparsers = connection_parser.add_subparsers(dest="beta_cmd")
+
+    _configure_run_parser(beta_subparsers)
+    _configure_validate_parser(beta_subparsers)
+    _configure_deploy(beta_subparsers)
+
+
+def _configure_deploy(subparsers):
+    """Configure arguments for deploying as a service."""
+    subparsers.add_parser(
+        "deploy", help="Deploy Data Validation as a Service (w/ Flask)"
+    )
 
 
 def _configure_find_tables(subparsers):
@@ -313,6 +321,17 @@ def _configure_run_parser(subparsers):
         default="table",
         help="Set the format for printing command output, Supported formats are (text, csv, json, table). It defaults "
         "to table",
+    )
+    run_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    run_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
     )
 
 
@@ -479,6 +498,17 @@ def _configure_column_parser(column_parser):
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
+    )
+    column_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    column_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
     )
 
 

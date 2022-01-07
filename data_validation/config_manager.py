@@ -57,6 +57,8 @@ class ConfigManager(object):
             self.target_client = self.source_client
 
         self.verbose = verbose
+        if self.validation_type not in consts.CONFIG_TYPES:
+            raise ValueError(f"Unknown Configuration Type: {self.validation_type}")
 
     @property
     def config(self):
@@ -90,14 +92,22 @@ class ConfigManager(object):
         """Return string validation type (Column|Schema)."""
         return self._config[consts.CONFIG_TYPE]
 
+    def use_random_rows(self):
+        """ Return if the validation should use a random row filter. """
+        return self._config.get(consts.CONFIG_USE_RANDOM_ROWS) or False
+
+    def random_row_batch_size(self):
+        """ Return if the validation should use a random row filter. """
+        return (
+            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
+            or consts.DEFAULT_NUM_RANDOM_ROWS
+        )
+
     def process_in_memory(self):
         if (
             self.validation_type == "Row" or self.is_grouped_row_validation
         ) and self.get_source_connection() == self.get_target_connection():
             return True
-        # TODO (emceehilton): swap this back once we know why the BQ connector is throwing an error
-
-        return True
 
     @property
     def max_recursive_query_size(self):
@@ -311,6 +321,8 @@ class ConfigManager(object):
         labels,
         threshold,
         format,
+        use_random_rows=None,
+        random_row_batch_size=None,
         source_client=None,
         target_client=None,
         result_handler_config=None,
@@ -338,6 +350,8 @@ class ConfigManager(object):
             consts.CONFIG_FORMAT: format,
             consts.CONFIG_RESULT_HANDLER: result_handler_config,
             consts.CONFIG_FILTERS: filter_config,
+            consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
+            consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
         }
 
         return ConfigManager(

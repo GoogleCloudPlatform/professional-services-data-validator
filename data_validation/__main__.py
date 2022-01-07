@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 
+import logging
 import json
 from yaml import dump, load, Dumper, Loader
 
@@ -156,7 +158,17 @@ def build_config_managers_from_args(args):
     configs = []
 
     if args.type is None:
-        config_type = args.validate_cmd.capitalize()
+        validate_cmd = args.validate_cmd.capitalize()
+        if validate_cmd == "Schema":
+            config_type = consts.SCHEMA_VALIDATION
+        elif validate_cmd == "Column":
+            # TODO: We need to discuss how GroupedColumn and Row are differentiated.
+            if args.grouped_columns:
+                config_type = consts.GROUPED_COLUMN_VALIDATION
+            else:
+                config_type = consts.COLUMN_VALIDATION
+        else:
+            raise ValueError(f"Unknown Validation Type: {validate_cmd}")
     else:
         config_type = args.type
 
@@ -199,6 +211,8 @@ def build_config_managers_from_args(args):
             labels,
             threshold,
             format,
+            use_random_rows=args.use_random_row,
+            random_row_batch_size=args.random_row_batch_size,
             source_client=source_client,
             target_client=target_client,
             result_handler_config=result_handler_config,
@@ -422,6 +436,10 @@ def main():
         print(run_raw_query_against_connection(args))
     elif args.command == "validate":
         validate(args)
+    elif args.command == "deploy":
+        from data_validation import app
+
+        app.app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 
