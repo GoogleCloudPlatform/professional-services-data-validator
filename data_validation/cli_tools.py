@@ -696,6 +696,9 @@ def get_arg_list(arg_value, default_value=None):
         return default_value
 
     try:
+        if isinstance (arg_value, list):
+            arg_value = str(arg_value)
+        # arg_value = "hash_all"
         arg_list = json.loads(arg_value)
     except json.decoder.JSONDecodeError:
         arg_list = arg_value.split(",")

@@ -347,7 +347,7 @@ class ConfigManager(object):
             verbose=verbose,
         )
 
-    def build_comparison_fields(self, fields):
+    def build_config_comparison_fields(self, fields):
         """Return list of field config objects."""
         field_configs = []
         source_table = self.get_source_ibis_calculated_table()
