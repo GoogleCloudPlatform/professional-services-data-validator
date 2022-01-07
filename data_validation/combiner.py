@@ -149,6 +149,7 @@ def _calculate_differences(
     schema = source.schema()
     all_fields = frozenset(schema.names)
     validation_fields = all_fields - frozenset(join_on_fields)
+    print(validations)
 
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
@@ -161,6 +162,7 @@ def _calculate_differences(
 
     differences_pivots = []
     for field, field_type in schema.items():
+        print(field)
         if field not in validations.keys():
             pass
         else:
@@ -197,8 +199,6 @@ def _pivot_result(result, join_on_fields, validations, result_type):
             pass
         else:
             validation = validations[field]
-            print('VALIDATION')
-            print(validation)
             pivots.append(
                 result.projection(
                     (

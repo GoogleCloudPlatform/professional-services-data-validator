@@ -95,6 +95,7 @@ class ConfigManager(object):
             self.validation_type == "Row" or self.is_grouped_row_validation
         ) and self.get_source_connection() == self.get_target_connection():
             return True
+        # TODO (emceehilton): swap this back once we know why the BQ connector is throwing an error
 
         return True
 

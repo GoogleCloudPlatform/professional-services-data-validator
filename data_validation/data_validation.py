@@ -177,7 +177,6 @@ class DataValidation(object):
                         )
                     )
         elif self.config_manager.primary_keys:
-            validation_builder.add_comparison_fields(self.config_manager.primary_keys)
             past_results.append(
                 self._execute_validation(
                     validation_builder, process_in_memory=process_in_memory
@@ -215,7 +214,6 @@ class DataValidation(object):
         # currently the hack to cast it to string works, but is not ideal.
         # We should look at both types, and if 1 is
         # date-like than use pandas.to_datetime on the other.
-        print(join_on_fields)
         for join_on_field in join_on_fields:
             source_df[join_on_field] = source_df[join_on_field].astype(str)
             target_df[join_on_field] = target_df[join_on_field].astype(str)
@@ -261,12 +259,6 @@ class DataValidation(object):
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
-            print('SOURCE YO')
-            print(source_df)
-            print('TARGET YO')
-            print(target_df)
-            print('SCHEMA YO')
-            print(pd_schema)
             pandas_client = ibis.backends.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )

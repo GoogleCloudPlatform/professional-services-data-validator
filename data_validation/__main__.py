@@ -92,6 +92,7 @@ def get_calculated_config(args, config_manager):
         config_manager(ConfigManager): Validation config manager instance.
     """
     calculated_configs = []
+    fields = []
     if args.hash:
         col_args = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
         fields = config_manager._build_dependent_aliases("hash")
@@ -115,23 +116,25 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
-    if args.type == consts.COLUMN_VALIDATION:
+    if args.type == consts.ROW_VALIDATION:
+        pass
+    else:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        if args.primary_keys and not args.grouped_columns:
-            raise ValueError(
-                "Grouped columns must be specified for primary key level validation."
-                    )
-        if args.grouped_columns:
-            grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
-            config_manager.append_query_groups(
-                config_manager.build_config_grouped_columns(grouped_columns)
-            )
+    if args.primary_keys and not args.grouped_columns:
+        raise ValueError(
+            "Grouped columns must be specified for primary key level validation."
+                )
+    if args.grouped_columns:
+        grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
+        config_manager.append_query_groups(
+            config_manager.build_config_grouped_columns(grouped_columns)
+        )
     if args.primary_keys:
         primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
         )
-    if args.type == consts.ROW_VALIDATION:
+    if args.fields:
         comparison_fields = cli.tools.get_arg_list(args.fields, default_value=[])
         config_manager.append_comparison_fields(
             config_manager.build_comparison_fields(comparison_fields)
