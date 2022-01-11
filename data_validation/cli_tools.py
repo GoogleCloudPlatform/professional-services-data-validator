@@ -129,6 +129,16 @@ CONNECTION_SOURCE_FIELDS = {
             "Desired Kerberos service name ('impala' if not provided)",
         ],
     ],
+    "DB2": [
+        ["host": "Desired Postgres host."],
+        ["user": "Username to connect to"],
+        ["password": "Password for authentication of user"],
+        ["port": "DB2 port to connect on (ie. 50000)"],
+        ["database": "Desired Impala database (default if not provided"].
+        ["url": "url link to connect to"],
+        ["driver": "driver link to connect to"],
+
+    ]
 }
 
 
