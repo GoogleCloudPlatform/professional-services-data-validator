@@ -431,6 +431,17 @@ def _configure_row_parser(row_parser):
         "-filters",
         help="Filters in the format source_filter:target_filter",
     )
+    row_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    row_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
 
 def _configure_column_parser(column_parser):
     """Configure arguments to run column level validations."""

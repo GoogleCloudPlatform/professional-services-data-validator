@@ -97,7 +97,6 @@ def get_calculated_config(args, config_manager):
     fields = []
     if hasattr(args, 'hash'):
         col_args = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
-        print("do we get here")
         fields = config_manager._build_dependent_aliases("hash")
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(["hash__all"])
@@ -129,22 +128,16 @@ def build_config_from_args(args, config_manager):
                     )
     if hasattr(args, 'grouped_columns'):
         grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
-        print('grouped_columns')
-        print(grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
     if hasattr(args, 'primary_keys'):
         primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
-        print('primary_keys')
-        print(primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
         )
     if hasattr(args, 'comparison_fields'):
         comparison_fields = cli_tools.get_arg_list(args.comparison_fields, default_value=[])
-        print('comparison_fields')
-        print(comparison_fields)
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(comparison_fields)
         )
@@ -167,6 +160,8 @@ def build_config_managers_from_args(args):
                 config_type = consts.GROUPED_COLUMN_VALIDATION
             else:
                 config_type = consts.COLUMN_VALIDATION
+        elif validate_cmd == "Row":
+            config_type = consts.ROW_VALIDATION
         else:
             raise ValueError(f"Unknown Validation Type: {validate_cmd}")
     else:

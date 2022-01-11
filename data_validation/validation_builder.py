@@ -98,7 +98,8 @@ class ValidationBuilder(object):
 
     def get_primary_keys(self):
         """ Return List of String Aliases """
-        return self.primary_ke
+        # do we need this?
+        return self.primary_keys.keys()
 
     def get_calculated_aliases(self):
         """ Return List of String Aliases """

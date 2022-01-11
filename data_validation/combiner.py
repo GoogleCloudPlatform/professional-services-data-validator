@@ -24,6 +24,7 @@ import json
 
 import ibis
 import ibis.expr.datatypes
+import numpy
 
 from data_validation import consts
 
@@ -126,7 +127,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         ).cast("float64")
 
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
-        status = ibis.case().when(th_diff > 0.0, "fail").else_("success").end()
+        status = ibis.case().when(th_diff > 0.0, "fail").when(th_diff.isnull(), "fail").else_("success").end()
 
     return (
         difference.name("difference"),
@@ -149,7 +150,6 @@ def _calculate_differences(
     schema = source.schema()
     all_fields = frozenset(schema.names)
     validation_fields = all_fields - frozenset(join_on_fields)
-    print(validations)
 
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
