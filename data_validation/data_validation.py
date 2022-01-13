@@ -283,7 +283,7 @@ class DataValidation(object):
 
 
         if self.config_manager.validation_type == "Row" and len(self.config_manager.query_groups) == 0:
-            join_on_fields = validation_manager.get_primary_keys()
+            join_on_fields = validation_builder.get_primary_keys()
         else:
             join_on_fields = validation_builder.get_group_aliases()
 
