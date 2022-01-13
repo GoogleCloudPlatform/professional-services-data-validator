@@ -127,7 +127,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         ).cast("float64")
 
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
-        status = ibis.case().when(th_diff > 0.0, "fail").when(th_diff.isnull(), "fail").else_("success").end()
+        status = ibis.case().when(th_diff > 0.0, "fail").else_("success").end()
 
     return (
         difference.name("difference"),
@@ -162,7 +162,6 @@ def _calculate_differences(
 
     differences_pivots = []
     for field, field_type in schema.items():
-        print(field)
         if field not in validations.keys():
             pass
         else:

@@ -213,7 +213,7 @@ class DataValidation(object):
                             recursive_validation_builder, grouped_fields[1:]
                         )
                     )
-        elif self.config_manager.primary_keys:
+        elif self.config_manager.primary_keys and len(grouped_fields) == 0:
             past_results.append(
                 self._execute_validation(
                     validation_builder, process_in_memory=process_in_memory
@@ -282,8 +282,8 @@ class DataValidation(object):
         target_query = validation_builder.get_target_query()
 
 
-        if self.config_manager.validation_type == "Row":
-            join_on_fields = [x['source_column'] for x in self.config_manager.primary_keys]
+        if self.config_manager.validation_type == "Row" and len(self.config_manager.query_groups) == 0:
+            join_on_fields = validation_manager.get_primary_keys()
         else:
             join_on_fields = validation_builder.get_group_aliases()
 
