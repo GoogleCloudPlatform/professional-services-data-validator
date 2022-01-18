@@ -731,7 +731,7 @@ def split_table(table_ref, schema_required=True):
     """ Returns schema and table name given list of input values.
 
     table_ref (List): Table reference i.e ['my.schema.my_table']
-    scehma_required (boolean): Indicates whether schema is required. A source
+    schema_required (boolean): Indicates whether schema is required. A source
     table reference requires schema. A target table reference does not.
     """
     table_ref_list = list(csv.reader(table_ref, delimiter=".", quotechar='"'))[0]
