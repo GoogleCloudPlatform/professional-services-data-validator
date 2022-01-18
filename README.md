@@ -12,31 +12,25 @@ after each migration step (e.g. data and schema migration, SQL script
 translation, ETL migration, etc.). The Data Validation Tool provides an
 automated and repeatable solution to perform this task.
 
-DVT supports the following validation types:
-* Table level
-  * Table row count
-  * Group by row count
-  * Column aggregation
-  * Filters and limits
-* Column level
-  * Full column data type
-* Row level hash comparison  (BigQuery tables only)
-* Raw SQL exploration
-  * Run custom queries on different data sources
+DVT supports the following validation types: * Table level * Table row count *
+Group by row count * Column aggregation * Filters and limits * Column level *
+Full column data type * Row level hash comparison (BigQuery tables only) * Raw
+SQL exploration * Run custom queries on different data sources
 
 DVT supports the following connection types:
 
-* [BigQuery](docs/connections.md#google-bigquery)
-* [Spanner](docs/connections.md#google-spanner)
-* [Teradata](docs/connections.md#teradata)
-* [Oracle](docs/connections.md#oracle)
-* [MSSQL](docs/connections.md#mssql-server)
-* [Snowflake](docs/connections.md#snowflake)
-* [Postgres](docs/connections.md#postgres)
-* [MySQL](docs/connections.md#mysql)
-* [Redshift](docs/connections.md#redshift)
-* [FileSystem](docs/connections.md#filesystem)
-* [Impala](docs/connections.md#impala)
+*   [BigQuery](docs/connections.md#google-bigquery)
+*   [Spanner](docs/connections.md#google-spanner)
+*   [Teradata](docs/connections.md#teradata)
+*   [Oracle](docs/connections.md#oracle)
+*   [MSSQL](docs/connections.md#mssql-server)
+*   [Snowflake](docs/connections.md#snowflake)
+*   [Postgres](docs/connections.md#postgres)
+*   [MySQL](docs/connections.md#mysql)
+*   [Redshift](docs/connections.md#redshift)
+*   [FileSystem](docs/connections.md#filesystem)
+*   [Impala](docs/connections.md#impala)
+*   [Hive](docs/connections.md#hive)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
@@ -55,6 +49,18 @@ to BigQuery. The validation tool also allows you to save or edit validation
 configurations in a YAML file. This is useful for running common validations or
 updating the configuration.
 
+### Managing Connections
+
+The Data Validation Tool expects to recieve a source and target connection for
+each validation which is run.
+
+These connections can be supplied directly to the configuration, but more often
+you want to manage connections separately and reference them by name.
+
+Connections can be stored locally or in a GCS directory.
+
+To create connections please review the [Connections](docs/connections.md) page.
+
 ### Running CLI Validations
 
 The data validation CLI is a main interface to use this tool.
@@ -70,9 +76,19 @@ Once you have your connections set up, you are ready to run the validations.
 
 ### Validation command syntax and options
 
+Below are the command syntax and options for running validations from the CLI.
+DVT supports column (including grouped column) and schema validations.
+
+#### Column Validations
+
+Below is the command syntax for column validations. To run a grouped column
+validation, simply specify the `--grouped-columns` flag. You can also take
+grouped column validations a step further by providing the `--primary-key` flag.
+With this flag, if a mismatch was found, DVT will dive deeper into the slice
+with the error and find the row (primary key value) with the inconsistency.
+
 ```
-data-validation run
-  --type or -t TYPE  Type of Data Validation (Column, GroupedColumn, Row, Schema)
+data-validation (--verbose or -v) validate column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -83,19 +99,18 @@ data-validation run
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
-  --grouped-columns or -gc GROUPED_COLUMNS
+  [--grouped-columns or -gc GROUPED_COLUMNS]
                         Comma separated list of columns for Group By i.e col_a,col_b
-                        (Optional) Only used in GroupedColumn validations
-  --primary-keys or -pc PRIMARY_KEYS
+  [--primary-keys or -pk PRIMARY_KEYS]
                         Comma separated list of columns to use as primary keys
-                        (Optional) Only use in Row validations
-  --count COLUMNS       Comma separated list of columns for count or * for all columns
-  --sum COLUMNS         Comma separated list of columns for sum or * for all numeric
-  --min COLUMNS         Comma separated list of columns for min or * for all numeric
-  --max COLUMNS         Comma separated list of columns for max or * for all numeric
-  --avg COLUMNS         Comma separated list of columns for avg or * for all numeric
-  --bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE
-                        (Optional) BigQuery destination for validation results. Defaults to stdout.
+                        (Note) Only use with grouped column validation
+  [--count COLUMNS]     Comma separated list of columns for count or * for all columns
+  [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
+  [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
+  [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
+  [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
   --service-account or -sa PATH_TO_SA_KEY
                         (Optional) Service account to use for BigQuery result handler output.
@@ -103,15 +118,14 @@ data-validation run
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
-  --config-file or -c CONFIG_FILE
+  [--config-file or -c CONFIG_FILE]
                         YAML Config File Path to be used for storing validations.
-  --threshold or -th THRESHOLD
-                        (Optional) Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
-  --labels or -l KEY1=VALUE1,KEY2=VALUE2
-                        (Optional) Comma-separated key value pair labels for the run.
-  --verbose or -v       Verbose logging will print queries executed
-  --format or -fmt      Format for stdout output, Supported formats are (text, csv, json, table)
-                        It defaults to table.
+  [--threshold or -th THRESHOLD]
+                        Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
@@ -119,6 +133,34 @@ sum , min, etc.) is provided, the default aggregation will run.
 
 The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
+
+#### Schema Validations
+
+Below is the syntax for schema validations. These can be used to compare column
+types between source and target.
+
+```
+data-validation (--verbose or -v) validate schema
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--config-file or -c CONFIG_FILE]
+                        YAML Config File Path to be used for storing validations.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults  to table.
+```
 
 ### Running Custom SQL Exploration
 
@@ -134,17 +176,34 @@ data-validation query
           The raw query to run against the supplied connection
 ```
 
+### Using Beta CLI Features
+
+There may be ocassions we want to release a new CLI feature under a Beta flag.
+Any features under Beta may or may not make their way to production. However, if
+there is a Beta feature you wish to use than it can be accessed using the
+following.
+
+```
+data-validation beta --help
+```
+
+#### [Beta] Deploy Data Validation as a Local Service
+
+If you wish to use Data Validation as a Flask service, the following command
+will help. This same logic is also expected to be used for Cloud Run, Cloud
+Functions, and other deployment services.
+
+`data-validation beta deploy`
+
 ## Query Configurations
 
 You can customize the configuration for any given validation by providing use
 case specific CLI arguments or editing the saved YAML configuration file.
 
 For example, the following command creates a YAML file for the validation of the
-`new_york_citibike` table: 
-```
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls
-bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml
-```
+`new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
+my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
+citibike.yaml`
 
 Here is the generated YAML file named `citibike.yaml`:
 
@@ -177,8 +236,8 @@ validation:
 data-validation run-config -c citibike.yaml
 ```
 
-View the complete YAML file for a GroupedColumn validation on the [examples](docs/examples.md#)
-page.
+View the complete YAML file for a GroupedColumn validation on the
+[examples](docs/examples.md#) page.
 
 ### Aggregated Fields
 
@@ -350,18 +409,16 @@ FROM (
 
 ## Validation Reports
 
-The output handlers tell the data validation tool where to store the results of each
-validation. The tool can write the results of a validation run to Google
+The output handlers tell the data validation tool where to store the results of
+each validation. The tool can write the results of a validation run to Google
 BigQuery or print to stdout (default).
 
 View the schema of the results [here](terraform/results_schema.json).
 
-
 ### Configure tool to output to BigQuery
 
 ```
-data-validation run
-  -t Column
+data-validation validate column
   -sc bq_conn
   -tc bq_conn
   -tbls bigquery-public-data.new_york_citibike.citibike_trips

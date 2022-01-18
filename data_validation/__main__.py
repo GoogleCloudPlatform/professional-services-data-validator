@@ -12,11 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 
+import logging
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation import cli_tools, clients, consts, jellyfish_distance
+from data_validation import (
+    cli_tools,
+    clients,
+    consts,
+    jellyfish_distance,
+    state_manager,
+)
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
@@ -80,15 +88,17 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if config_manager.validation_type in [
-        consts.GROUPED_COLUMN_VALIDATION,
-        consts.ROW_VALIDATION,
-    ]:
+    if args.primary_keys and not args.grouped_columns:
+        if not args.grouped_columns and not config_manager.use_random_rows():
+            logging.warning(
+                "No Grouped columns or Random Rows specified, ignoring primary keys."
+            )
+    if args.grouped_columns:
         grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
         config_manager.append_query_groups(
             config_manager.build_config_grouped_columns(grouped_columns)
         )
-    if config_manager.validation_type in [consts.ROW_VALIDATION]:
+    if args.primary_keys:
         primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
             config_manager.build_config_grouped_columns(primary_keys)
@@ -103,11 +113,20 @@ def build_config_managers_from_args(args):
     """Return a list of config managers ready to execute."""
     configs = []
 
-    config_type = args.type
-    source_conn = cli_tools.get_connection(args.source_conn)
-    target_conn = cli_tools.get_connection(args.target_conn)
-
-    labels = cli_tools.get_labels(args.labels)
+    if args.type is None:
+        validate_cmd = args.validate_cmd.capitalize()
+        if validate_cmd == "Schema":
+            config_type = consts.SCHEMA_VALIDATION
+        elif validate_cmd == "Column":
+            # TODO: We need to discuss how GroupedColumn and Row are differentiated.
+            if args.grouped_columns:
+                config_type = consts.GROUPED_COLUMN_VALIDATION
+            else:
+                config_type = consts.COLUMN_VALIDATION
+        else:
+            raise ValueError(f"Unknown Validation Type: {validate_cmd}")
+    else:
+        config_type = args.type
 
     result_handler_config = None
     if args.bq_result_handler:
@@ -119,17 +138,22 @@ def build_config_managers_from_args(args):
             args.result_handler_config, args.service_account
         )
 
-    filter_config = []
-    if args.filters:
-        filter_config = cli_tools.get_filters(args.filters)
+    # Schema validation will not accept filters, labels, or threshold as flags
+    filter_config, labels, threshold = [], [], 0.0
+    if config_type != consts.SCHEMA_VALIDATION:
+        if args.filters:
+            filter_config = cli_tools.get_filters(args.filters)
+        if args.threshold:
+            threshold = args.threshold
+        labels = cli_tools.get_labels(args.labels)
 
-    source_client = clients.get_data_client(source_conn)
-    target_client = clients.get_data_client(target_conn)
+    mgr = state_manager.StateManager()
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
-    threshold = args.threshold if args.threshold else 0.0
     format = args.format if args.format else "table"
 
-    is_filesystem = True if source_conn["source_type"] == "FileSystem" else False
+    is_filesystem = source_client._source_type == "FileSystem"
     tables_list = cli_tools.get_tables_list(
         args.tables_list, default_value=[], is_filesystem=is_filesystem
     )
@@ -137,19 +161,24 @@ def build_config_managers_from_args(args):
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
             config_type,
-            source_conn,
-            target_conn,
-            source_client,
-            target_client,
+            args.source_conn,
+            args.target_conn,
             table_obj,
             labels,
             threshold,
             format,
+            use_random_rows=args.use_random_row,
+            random_row_batch_size=args.random_row_batch_size,
+            source_client=source_client,
+            target_client=target_client,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
             verbose=args.verbose,
         )
-        configs.append(build_config_from_args(args, config_manager))
+        if config_type != consts.SCHEMA_VALIDATION:
+            config_manager = build_config_from_args(args, config_manager)
+
+        configs.append(config_manager)
 
     return configs
 
@@ -161,8 +190,9 @@ def build_config_managers_from_yaml(args):
     config_file_path = _get_arg_config_file(args)
     yaml_configs = _get_yaml_config_from_file(config_file_path)
 
-    source_conn = cli_tools.get_connection(yaml_configs[consts.YAML_SOURCE])
-    target_conn = cli_tools.get_connection(yaml_configs[consts.YAML_TARGET])
+    mgr = state_manager.StateManager()
+    source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE])
+    target_conn = mgr.get_connection_config(yaml_configs[consts.YAML_TARGET])
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
@@ -228,12 +258,11 @@ def get_table_map(client, allowed_schemas=None):
 
 def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
-    source_conn = cli_tools.get_connection(args.source_conn)
-    target_conn = cli_tools.get_connection(args.target_conn)
     score_cutoff = args.score_cutoff or 0.8
 
-    source_client = clients.get_data_client(source_conn)
-    target_client = clients.get_data_client(target_conn)
+    mgr = state_manager.StateManager()
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
@@ -247,8 +276,8 @@ def find_tables_using_string_matching(args):
 
 def run_raw_query_against_connection(args):
     """Return results of raw query for adhoc usage."""
-    conn = cli_tools.get_connection(args.conn)
-    client = clients.get_data_client(conn)
+    mgr = state_manager.StateManager()
+    client = clients.get_data_client(mgr.get_connection_config(args.conn))
 
     with client.raw_sql(args.query, results=True) as cur:
         return cur.fetchall()
@@ -302,7 +331,7 @@ def run_validations(args, config_managers):
 
 
 def store_yaml_config_file(args, config_managers):
-    """Build a YAML config file fromt he supplied configs.
+    """Build a YAML config file from the supplied configs.
 
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
@@ -338,6 +367,14 @@ def run_connections(args):
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 
 
+def validate(args):
+    """ Run commands related to data validation."""
+    if args.validate_cmd == "column" or args.validate_cmd == "schema":
+        run(args)
+    else:
+        raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
+
+
 def main():
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
@@ -353,6 +390,12 @@ def main():
         print(find_tables_using_string_matching(args))
     elif args.command == "query":
         print(run_raw_query_against_connection(args))
+    elif args.command == "validate":
+        validate(args)
+    elif args.command == "deploy":
+        from data_validation import app
+
+        app.app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
 

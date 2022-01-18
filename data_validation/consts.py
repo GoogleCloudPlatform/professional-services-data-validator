@@ -16,6 +16,8 @@
 # Configuration Fields
 SOURCE_TYPE = "source_type"
 CONFIG = "config"
+CONFIG_SOURCE_CONN_NAME = "source_conn_name"
+CONFIG_TARGET_CONN_NAME = "target_conn_name"
 CONFIG_SOURCE_CONN = "source_conn"
 CONFIG_TARGET_CONN = "target_conn"
 CONFIG_TYPE = "type"
@@ -30,6 +32,8 @@ CONFIG_CALCULATED_FIELDS = "calculated_fields"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
 CONFIG_CALCULATED_SOURCE_COLUMNS = "source_calculated_columns"
 CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
+CONFIG_USE_RANDOM_ROWS = "use_random_rows"
+CONFIG_RANDOM_ROW_BATCH_SIZE = "random_row_batch_size"
 CONFIG_PRIMARY_KEYS = "primary_keys"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
@@ -52,9 +56,13 @@ CONFIG_RESULT_HANDLER = "result_handler"
 CONFIG_TYPE_COUNT = "count"
 CONFIG_TYPE_SUM = "sum"
 
+# Default values
+DEFAULT_NUM_RANDOM_ROWS = 10000
+
 # Filter Type Options
 FILTER_TYPE_CUSTOM = "custom"
 FILTER_TYPE_EQUALS = "equals"
+FILTER_TYPE_ISIN = "isin"
 
 # Validation Types
 COLUMN_VALIDATION = "Column"
@@ -62,9 +70,18 @@ GROUPED_COLUMN_VALIDATION = "GroupedColumn"
 ROW_VALIDATION = "Row"
 SCHEMA_VALIDATION = "Schema"
 
-# Yaml File Config Fields
-ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+CONFIG_TYPES = [
+    COLUMN_VALIDATION,
+    GROUPED_COLUMN_VALIDATION,
+    ROW_VALIDATION,
+    SCHEMA_VALIDATION,
+]
+
+# State Manager Fields
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
+ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+
+# Yaml File Config Fields
 YAML_RESULT_HANDLER = "result_handler"
 YAML_SOURCE = "source"
 YAML_TARGET = "target"
@@ -106,12 +123,9 @@ FORMAT_TYPES = ["csv", "json", "table", "text"]
 # Text Result Handler column filter list
 COLUMN_FILTER_LIST = [
     "aggregation_type",
-    "difference",
     "end_time",
     "labels",
     "pct_threshold",
     "run_id",
-    "source_agg_value",
     "start_time",
-    "target_agg_value",
 ]

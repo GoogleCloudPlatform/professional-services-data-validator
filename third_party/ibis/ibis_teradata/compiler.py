@@ -1,5 +1,6 @@
 import datetime
 from functools import partial
+from io import StringIO
 
 import numpy as np
 import toolz
@@ -168,6 +169,64 @@ class TeradataSelect(BaseSelect):
         limit_sql = "SAMPLE {}".format(self.limit["n"])
         return limit_sql
 
+    def format_select_set(self):
+        context = self.context
+        formatted = []
+        for expr in self.select_set:
+            if isinstance(expr, ir.ValueExpr):
+                expr_str = self._translate(expr, named=True)
+            elif isinstance(expr, ir.TableExpr):
+                # A * selection, possibly prefixed
+                if context.need_aliases(expr):
+                    alias = context.get_ref(expr)
+
+                    # materialized join will not have an alias. see #491
+                    expr_str = f'{alias}.*' if alias else ', '.join(expr.columns)
+                else:
+                    expr_str = ', '.join(expr.columns)
+            formatted.append(expr_str)
+
+        buf = StringIO()
+        line_length = 0
+        max_length = 70
+        tokens = 0
+        for i, val in enumerate(formatted):
+            # always line-break for multi-line expressions
+            if val.count('\n'):
+                if i:
+                    buf.write(',')
+                buf.write('\n')
+                indented = util.indent(val, self.indent)
+                buf.write(indented)
+
+                # set length of last line
+                line_length = len(indented.split('\n')[-1])
+                tokens = 1
+            elif (
+                tokens > 0
+                and line_length
+                and len(val) + line_length > max_length
+            ):
+                # There is an expr, and adding this new one will make the line
+                # too long
+                buf.write(',\n       ') if i else buf.write('\n')
+                buf.write(val)
+                line_length = len(val) + 7
+                tokens = 1
+            else:
+                if i:
+                    buf.write(',')
+                buf.write(' ')
+                buf.write(val)
+                tokens += 1
+                line_length += len(val) + 2
+
+        if self.distinct:
+            select_key = 'SELECT DISTINCT'
+        else:
+            select_key = 'SELECT'
+
+        return f'{select_key}{buf.getvalue()}'
 
 class TeradataSelectBuilder(comp.SelectBuilder):
     @property
@@ -510,7 +569,7 @@ _operation_registry.update(
         ops.RegexExtract: _regex_extract,
         ops.RegexReplace: _regex_replace,
         ops.GroupConcat: reduction("STRING_AGG"),
-        ops.IfNull: fixed_arity("IFNULL", 2),
+        ops.IfNull: fixed_arity("NVL", 2),
         ops.Cast: _cast,
         ops.StructField: _struct_field,
         ops.ArrayCollect: unary("ARRAY_AGG"),

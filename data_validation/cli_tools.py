@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-""" The Data Validation CLI tool is intended to help to build and execute
+"""The Data Validation CLI tool is intended to help to build and execute
 data validation runs with ease.
 
 The Data Validator can be called either using:
@@ -25,20 +25,20 @@ Step 1) Store Connection to be used in validation
 data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-resources
 
 Step 2) Run Validation using supplied connections
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn \
+data-validation validate column -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
 --sum '*' --count '*'
 
-python -m data_validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn \
+python -m data_validation validate column -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips \
 --grouped-columns starttime \
 --sum tripduration --count tripduration
 
-data-validation run -t Column \
+data-validation validate column \
 -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
 --sum tripduration,start_station_name --count tripduration,start_station_name \
--rc pso-kokoro-resources.pso_data_validator.results
+-bqrh pso-kokoro-resources.pso_data_validator.results
 -c ex_yaml.yaml
 
 data-validation run-config -c ex_yaml.yaml
@@ -47,11 +47,11 @@ data-validation run-config -c ex_yaml.yaml
 import argparse
 import csv
 import json
-import os
 import sys
 import uuid
 
 from data_validation import consts
+from data_validation import state_manager
 
 
 CONNECTION_SOURCE_FIELDS = {
@@ -64,6 +64,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
+        ["logmech", "Log on mechanism"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -123,6 +124,10 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Desired Imapala port (10000 if not provided)"],
         ["database", "Desired Impala database (default if not provided)"],
         ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
+        [
+            "kerberos_service_name",
+            "Desired Kerberos service name ('impala' if not provided)",
+        ],
     ],
 }
 
@@ -141,25 +146,35 @@ def configure_arg_parser():
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
-    # beta feature only available in run command
-    if "beta" in sys.argv:
-        parser.add_argument(
-            "beta",
-            nargs="?",
-            help="Beta flag to enable beta features for the tool.",
-            default="",
-        )
-        subparsers = parser.add_subparsers(dest="command")
-        _configure_run_parser(subparsers)
-    else:
-        subparsers = parser.add_subparsers(dest="command")
-        _configure_run_parser(subparsers)
-        _configure_run_config_parser(subparsers)
-        _configure_connection_parser(subparsers)
-        _configure_find_tables(subparsers)
-        _configure_raw_query(subparsers)
+    subparsers = parser.add_subparsers(dest="command")
+    _configure_validate_parser(subparsers)
+    _configure_run_config_parser(subparsers)
+    _configure_connection_parser(subparsers)
+    _configure_find_tables(subparsers)
+    _configure_raw_query(subparsers)
+    _configure_run_parser(subparsers)
+    _configure_beta_parser(subparsers)
 
     return parser
+
+
+def _configure_beta_parser(subparsers):
+    """Configure beta commands for the parser."""
+    connection_parser = subparsers.add_parser(
+        "beta", help="Run a Beta command for new utilities and features."
+    )
+    beta_subparsers = connection_parser.add_subparsers(dest="beta_cmd")
+
+    _configure_run_parser(beta_subparsers)
+    _configure_validate_parser(beta_subparsers)
+    _configure_deploy(beta_subparsers)
+
+
+def _configure_deploy(subparsers):
+    """Configure arguments for deploying as a service."""
+    subparsers.add_parser(
+        "deploy", help="Deploy Data Validation as a Service (w/ Flask)"
+    )
 
 
 def _configure_find_tables(subparsers):
@@ -211,7 +226,7 @@ def _configure_run_parser(subparsers):
     # subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser(
-        "run", help="Manually run a validation and optionally store to config"
+        "run", help="Run a validation and optionally store to config (deprecated)"
     )
 
     run_parser.add_argument(
@@ -298,6 +313,17 @@ def _configure_run_parser(subparsers):
         help="Set the format for printing command output, Supported formats are (text, csv, json, table). It defaults "
         "to table",
     )
+    run_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    run_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
 
 
 def _configure_connection_parser(subparsers):
@@ -335,6 +361,131 @@ def _configure_database_specific_parsers(parser):
             db_parser.add_argument(arg_field, help=help_txt)
 
 
+def _configure_validate_parser(subparsers):
+    """Configure arguments to run validations."""
+    validate_parser = subparsers.add_parser(
+        "validate", help="Run a validation and optionally store to config"
+    )
+
+    # Keep these in order to support data-validation run command for backwards-compatibility
+    validate_parser.add_argument("--type", "-t", help="Type of Data Validation")
+    validate_parser.add_argument(
+        "--result-handler-config", "-rc", help="Result handler config details"
+    )
+
+    validate_subparsers = validate_parser.add_subparsers(dest="validate_cmd")
+
+    column_parser = validate_subparsers.add_parser(
+        "column", help="Run a column validation"
+    )
+    _configure_column_parser(column_parser)
+
+    schema_parser = validate_subparsers.add_parser(
+        "schema", help="Run a schema validation"
+    )
+    _configure_schema_parser(schema_parser)
+
+
+def _configure_column_parser(column_parser):
+    """Configure arguments to run column level validations."""
+    _add_common_arguments(column_parser)
+    column_parser.add_argument(
+        "--count",
+        "-count",
+        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--sum",
+        "-sum",
+        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--avg",
+        "-avg",
+        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--min",
+        "-min",
+        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--max",
+        "-max",
+        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--grouped-columns",
+        "-gc",
+        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
+    )
+    column_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    column_parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
+    )
+    column_parser.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    column_parser.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
+    column_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    column_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
+
+
+def _configure_schema_parser(schema_parser):
+    """Configure arguments to run column level validations."""
+    _add_common_arguments(schema_parser)
+
+
+def _add_common_arguments(parser):
+    parser.add_argument("--source-conn", "-sc", help="Source connection name")
+    parser.add_argument("--target-conn", "-tc", help="Target connection name")
+    parser.add_argument(
+        "--tables-list",
+        "-tbls",
+        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+    )
+    parser.add_argument(
+        "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
+    )
+    parser.add_argument(
+        "--service-account",
+        "-sa",
+        help="Path to SA key file for result handler output",
+    )
+    parser.add_argument(
+        "--config-file",
+        "-c",
+        help="Store the validation in the YAML Config File Path specified",
+    )
+    parser.add_argument(
+        "--format",
+        "-fmt",
+        default="table",
+        help="Set the format for printing command output, Supported formats are (text, csv, json, table). Defaults "
+        "to table",
+    )
+
+
 def get_connection_config_from_args(args):
     """ Return dict with connection config supplied."""
     config = {consts.SOURCE_TYPE: args.connect_type}
@@ -365,22 +516,20 @@ def threshold_float(x):
     return x
 
 
-def _get_data_validation_directory():
-    raw_dir_path = (
-        os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
-    )
-    dir_path = os.path.expanduser(raw_dir_path)
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
+# def _get_data_validation_directory():
+#     raw_dir_path = (
+#         os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
+#     )
+#     dir_path = os.path.expanduser(raw_dir_path)
+#     if not os.path.exists(dir_path):
+#         os.makedirs(dir_path)
+#     return dir_path
 
-    return dir_path
 
-
-def _get_connection_file(connection_name):
-    dir_path = _get_data_validation_directory()
-    file_name = f"{connection_name}.connection.json"
-
-    return os.path.join(dir_path, file_name)
+# def _get_connection_file(connection_name):
+#     dir_path = _get_data_validation_directory()
+#     file_name = f"{connection_name}.connection.json"
+#     return os.path.join(dir_path, file_name)
 
 
 def _generate_random_name(conn):
@@ -390,32 +539,37 @@ def _generate_random_name(conn):
 
 def store_connection(connection_name, conn):
     """ Store the connection config under the given name."""
-    connection_name = connection_name or _generate_random_name(conn)
-    file_path = _get_connection_file(connection_name)
-
-    with open(file_path, "w") as file:
-        file.write(json.dumps(conn))
+    mgr = state_manager.StateManager()
+    mgr.create_connection(connection_name, conn)
 
 
-def get_connections():
-    """ Return dict with connection name and path key pairs."""
-    connections = {}
+#     connection_name = connection_name or _generate_random_name(conn)
+#     file_path = _get_connection_file(connection_name)
 
-    dir_path = _get_data_validation_directory()
-    all_config_files = os.listdir(dir_path)
-    for config_file in all_config_files:
-        if config_file.endswith(".connection.json"):
-            config_file_path = os.path.join(dir_path, config_file)
-            conn_name = config_file.split(".")[0]
+#     with open(file_path, "w") as file:
+#         file.write(json.dumps(conn))
 
-            connections[conn_name] = config_file_path
 
-    return connections
+# def get_connections():
+#     """ Return dict with connection name and path key pairs."""
+#     connections = {}
+
+#     dir_path = _get_data_validation_directory()
+#     all_config_files = os.listdir(dir_path)
+#     for config_file in all_config_files:
+#         if config_file.endswith(".connection.json"):
+#             config_file_path = os.path.join(dir_path, config_file)
+#             conn_name = config_file.split(".")[0]
+
+#             connections[conn_name] = config_file_path
+
+#     return connections
 
 
 def list_connections():
     """ List all saved connections."""
-    connections = get_connections()
+    mgr = state_manager.StateManager()
+    connections = mgr.list_connections()
 
     for conn_name in connections:
         print(f"Connection Name: {conn_name}")
@@ -423,11 +577,13 @@ def list_connections():
 
 def get_connection(connection_name):
     """ Return dict connection details for a specific connection."""
-    file_path = _get_connection_file(connection_name)
-    with open(file_path, "r") as file:
-        conn_str = file.read()
+    mgr = state_manager.StateManager()
+    return mgr.get_connection_config(connection_name)
 
-    return json.loads(conn_str)
+
+#     with open(file_path, "r") as file:
+#         conn_str = file.read()
+#     return json.loads(conn_str)
 
 
 def get_labels(arg_labels):

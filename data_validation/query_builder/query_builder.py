@@ -20,7 +20,7 @@ from data_validation import clients
 
 
 class AggregateField(object):
-    def __init__(self, ibis_expr, field_name=None, alias=None):
+    def __init__(self, ibis_expr, field_name=None, alias=None, cast=None):
         """A representation of a table or column aggregate in Ibis
 
         Args:
@@ -32,46 +32,68 @@ class AggregateField(object):
         self.expr = ibis_expr
         self.field_name = field_name
         self.alias = alias
+        self.cast = cast
 
     @staticmethod
-    def count(field_name=None, alias=None):
+    def count(field_name=None, alias=None, cast=None):
         if field_name:
             return AggregateField(
-                ibis.expr.types.ColumnExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.ColumnExpr.count,
+                field_name=field_name,
+                alias=alias,
+                cast=cast,
             )
         else:
             return AggregateField(
-                ibis.expr.types.TableExpr.count, field_name=field_name, alias=alias,
+                ibis.expr.types.TableExpr.count,
+                field_name=field_name,
+                alias=alias,
+                cast=cast,
             )
 
     @staticmethod
-    def min(field_name=None, alias=None):
+    def min(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.min, field_name=field_name, alias=alias
+            ibis.expr.types.ColumnExpr.min,
+            field_name=field_name,
+            alias=alias,
+            cast=cast,
         )
 
     @staticmethod
-    def avg(field_name=None, alias=None):
+    def avg(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.types.NumericColumn.mean, field_name=field_name, alias=alias
+            ibis.expr.types.NumericColumn.mean,
+            field_name=field_name,
+            alias=alias,
+            cast=cast,
         )
 
     @staticmethod
-    def max(field_name=None, alias=None):
+    def max(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.types.ColumnExpr.max, field_name=field_name, alias=alias,
+            ibis.expr.types.ColumnExpr.max,
+            field_name=field_name,
+            alias=alias,
+            cast=cast,
         )
 
     @staticmethod
-    def sum(field_name=None, alias=None):
+    def sum(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.sum, field_name=field_name, alias=alias,
+            ibis.expr.api.IntegerColumn.sum,
+            field_name=field_name,
+            alias=alias,
+            cast=cast,
         )
 
     @staticmethod
-    def bit_xor(field_name=None, alias=None):
+    def bit_xor(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.bit_xor, field_name=field_name, alias=alias,
+            ibis.expr.api.IntegerColumn.bit_xor,
+            field_name=field_name,
+            alias=alias,
+            cast=cast,
         )
 
     def compile(self, ibis_table):
@@ -79,6 +101,9 @@ class AggregateField(object):
             agg_field = self.expr(ibis_table[self.field_name])
         else:
             agg_field = self.expr(ibis_table)
+
+        if self.cast:
+            agg_field = agg_field.cast(self.cast)
 
         if self.alias:
             agg_field = agg_field.name(self.alias)
@@ -127,6 +152,13 @@ class FilterField(object):
         # Build Left and Right Objects
         return FilterField(
             ibis.expr.types.ColumnExpr.__eq__, left_field=field_name, right=value
+        )
+
+    @staticmethod
+    def isin(field_name, values):
+        # Build Left and Right Objects
+        return FilterField(
+            ibis.expr.types.ColumnExpr.isin, left_field=field_name, right=values
         )
 
     @staticmethod

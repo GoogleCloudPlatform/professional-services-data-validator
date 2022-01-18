@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "1.3.2"
+version = "1.6.0"
 release_status = "Development Status :: 3 - Alpha"
 
 with open("README.md", "r") as fh:
@@ -46,9 +46,11 @@ dependencies = [
     "google-cloud-bigquery==2.11.0",
     "google-cloud-bigquery-storage==2.3.0",
     "google-cloud-spanner==3.1.0",
+    "google-cloud-storage==1.42.2",
     "setuptools>=34.0.0",
     "jellyfish==0.8.2",
     "tabulate==0.8.9",
+    "Flask==2.0.2",
 ]
 
 extras_require = {

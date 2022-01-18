@@ -8,17 +8,17 @@ Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *
 
 #### Simple COUNT(*) on a table
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips
 ````
 
 #### Run multiple tables
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations
 ````
 
 #### Store validation config to the file
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c citibike.yaml
 ````
 Above command creates a YAML file named citibike.yaml that can be used to run validations in the future. 
 
@@ -33,17 +33,17 @@ Above command executes validations stored in a config file named citibike.yaml.
  
 #### Run COUNT validations for all columns
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count '*'
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count '*'
 ````
 
 #### Run COUNT validations for selected columns
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count bikeid,gender
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count bikeid,gender
 ````
 
 #### Store results in a BigQuery table
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
 ````
 Please replace $YOUR_PROJECT_ID with the correct project-id where you created your results datasets as mentioned in the [installation](installation.md#setup) section.
 
@@ -71,50 +71,48 @@ ORDER BY
 
 #### Run a single column GroupBy validation
 ````shell script
-data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --grouped-columns bikeid
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --grouped-columns bikeid
 ````
 
 #### Run a multi-column GroupBy validation
 ````shell script
-data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --grouped-columns bikeid,usertype
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --grouped-columns bikeid,usertype
 ````
 
 #### Apply single aggregation on a single field
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available
 ````
 
 
 #### Apply single aggregation on multiple fields
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available,num_docks_available
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available,num_docks_available
 ````
 
 #### Apply different aggregations on multiple fields
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available,num_docks_available --avg num_bikes_disabled,num_docks_disabled
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available,num_docks_available --avg num_bikes_disabled,num_docks_disabled
 ````
 
 #### Apply different aggregations on multiple fields and apply GroupBy
 ````shell script
-data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --grouped-columns region_id --sum num_bikes_available,num_docks_available --avg num_bikes_disabled,num_docks_disabled
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --grouped-columns region_id --sum num_bikes_available,num_docks_available --avg num_bikes_disabled,num_docks_disabled
 ````
 
 #### Apply filters
 ````shell script
-data-validation run -t GroupedColumn -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --grouped-columns region_id --sum num_bikes_available,num_docks_available --filters 'region_id=71' -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --grouped-columns region_id --sum num_bikes_available,num_docks_available --filters 'region_id=71' -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
 ````
 
 #### Apply labels
 ````shell script
-data-validation run -t Column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -l tag=test-run,owner=name
+data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -l tag=test-run,owner=name
 ````
 
 #### Run a schema validation
 ````shell script
-# Schema validation will ignore irrelevant flags (count, sum, filters, etc.)
-# Labels are not supported for schema validation
-data-validation run -t Schema -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
+data-validation validate schema -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
 ````
 
 #### Run validation on a file
@@ -123,9 +121,11 @@ data-validation run -t Schema -sc my_bq_conn -tc my_bq_conn -tbls bigquery-publi
 pip install gcsfs
 pip install fsspec
 
-data-validation connections add --connection-name file_conn FileSystem --table-name my_local_file --file-path gs://path/to/file --file-type csv
+data-validation connections add --connection-name file_conn FileSystem --table-name $FILE_NAME --file-path gs://path/to/file --file-type csv
+data-validation connections add --connection-name my_bq_conn BigQuery --project-id $YOUR_PROJECT_ID
 
-data-validation run -t Column -sc file_conn -tc file_conn -tbls my_local_file --count name
+# Validate GCS CSV file with BigQuery table
+data-validation validate column -sc file_conn -tc my_bq_conn -tbls $FILE_NAME=$YOUR_PROJECT_ID.dataset.table --count $COLUMN
 ````
 
 #### Run custom SQL 
@@ -135,12 +135,13 @@ data-validation query
   --query, -q The Raw query to run against the supplied connection
 ````
 
-#### Sample YAML file (GroupedColumn validation)
+#### Sample YAML file (Grouped Column validation)
 ```yaml
 result_handler:
   project_id: my-project-id
   table_id: pso_data_validator.results
   type: BigQuery
+  google_service_account_key_path: path/to/sa.json
 source: my_bq_conn
 target: my_bq_conn
 validations:
@@ -153,6 +154,7 @@ validations:
     source_column: num_bikes_available
     target_column: num_bikes_available
     type: sum
+    cast: float64
   - field_alias: sum__num_docks_available
     source_column: num_docks_available
     target_column: num_docks_available
@@ -175,5 +177,5 @@ validations:
   target_schema_name: bigquery-public-data.new_york_citibike
   target_table_name: citibike_stations
   threshold: 0.0
-  type: GroupedColumn
+  type: Column
   ```

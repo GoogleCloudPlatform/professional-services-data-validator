@@ -75,8 +75,13 @@ After installing the CLI tool using the instructions below, you will be ready to
 
 The Data Validation tooling requires Python 3.6+.
 
+```
+sudo apt-get install python3
+sudo apt-get install python3-dev
+```
+
 Create and activate a new virtual environment to sandbox the tool and its
-dependencies from your system installation of Python.
+dependencies from your system installation of Python. 
 
 ```
 python3.6 -m venv venv
@@ -85,7 +90,7 @@ source venv/bin/activate
 
 Update pip and make sure gcc is installed in your environment.
 ```
-apt-get update  && apt-get install gcc -y && apt-get clean
+sudo apt-get update  && sudo apt-get install gcc -y && sudo apt-get clean
 pip install --upgrade pip
 ```
 
@@ -110,6 +115,7 @@ If you want to test local changes to the tool, run the following command from th
 ```
 pip install .
 ```
+The unit test suite can be executed using either `pytest tests/unit` or `python -m nox -s unit` from the root directory. If you are using nox, you will need to run `pip install nox` first.
 
 
 ## Build a Docker container 

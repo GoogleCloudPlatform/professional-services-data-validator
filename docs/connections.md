@@ -5,7 +5,15 @@ create these connections using the CLI.
 These connections will automatically be saved either to `~/.config/google-pso-data-validator/` or 
 a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
 
-These commands can be used to create connections:
+## GCS Connection Management (recommended)
+
+The connections can also be stored in GCS using `PSO_DV_CONFIG_HOME`.
+To do so simply add the GCS path to the environment.
+
+eg.
+`export PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`
+
+The following commands can be used to create connections:
 
 ## Command template to create a connection:
 ```
@@ -19,7 +27,7 @@ data-validation connections add --connection-name MY_BQ_CONN BigQuery --project-
 
 ## Create a sample Teradata connection:
 ```
-data-validation connections add --connection-name MY_TD_CONN Teradata --host HOST_IP --port PORT --user_name USER_NAME --password PASSWORD
+data-validation connections add --connection-name MY_TD_CONN Teradata --host HOST_IP --port PORT --user-name USER-NAME --password PASSWORD
 ```
 
 ## List existing connections
@@ -44,6 +52,7 @@ The data validation tool supports the following connection types.
 * [Redshift](#redshift)
 * [FileSystem](#filesystem)
 * [Impala](#Impala)
+* [Hive](#Hive)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 
@@ -111,7 +120,7 @@ Below is the expected configuration for each type.
 * roles/spanner.databaseReader
 
 ## Teradata
-Please note the Teradata is not-native to this package and must be installed
+Please note that Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
 ```
 {
@@ -121,6 +130,7 @@ via `pip install teradatasql` if you have a license.
     # Connection Details
     "host": "127.0.0.1",
     "port":1025,
+    "logmech":"TD2",
     "user_name":"my-user",
     "password":"my-password"
 }
@@ -247,6 +257,20 @@ Then `pip install pyodbc`.
 
     # Connection Details
     "host": "127.0.0.1",
+    "port": 10000,
+    "database": "default",
+    "auth_mechanism":"PLAIN"
+}
+```
+
+## Hive
+```
+{
+    # Hive is based off Impala connector
+    "source_type": "Impala",
+
+    # Connection Details
+    "host": "HIVE_IP_ADDRESS",
     "port": 10000,
     "database": "default",
     "auth_mechanism":"PLAIN"

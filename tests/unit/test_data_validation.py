@@ -101,12 +101,13 @@ SAMPLE_THRESHOLD_CONFIG = {
     consts.CONFIG_FORMAT: "table",
 }
 
-SAMPLE_ROW_CONFIG = {
+# Grouped Column Row confg
+SAMPLE_GC_ROW_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: "Row",
+    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -141,12 +142,12 @@ SAMPLE_ROW_CONFIG = {
     consts.CONFIG_FORMAT: "table",
 }
 
-SAMPLE_ROW_CALC_CONFIG = {
+SAMPLE_GC_ROW_CALC_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: "Row",
+    consts.CONFIG_TYPE: "Column",
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -219,6 +220,13 @@ SAMPLE_ROW_CALC_CONFIG = {
             "type": "sum",
         },
         {
+            "source_column": "text_numeric",
+            "target_column": "text_numeric",
+            "field_alias": "sum_text_numeric",
+            "type": "sum",
+            "cast": "int64",
+        },
+        {
             "source_column": "concat_length",
             "target_column": "concat_length",
             "field_alias": "sum_concat_length",
@@ -242,6 +250,7 @@ SOURCE_QUERY_DATA = [
         "int_val": 1,
         "double_val": 2.3,
         "text_constant": STRING_CONSTANT,
+        "text_numeric": "2",
         "text_val": "hello",
         "text_val_two": "goodbye",
     }
@@ -292,6 +301,7 @@ def _generate_fake_data(
             "timestamp_value": rand_timestamp,
             "int_value": random.randint(0, int_range),
             "text_constant": STRING_CONSTANT,
+            "text_numeric": "2",
             "text_value": random.choice(random_strings),
             "text_value_two": random.choice(random_strings),
         }
@@ -305,6 +315,7 @@ def _get_fake_json_data(data):
         row["date_value"] = str(row["date_value"])
         row["timestamp_value"] = str(row["timestamp_value"])
         row["text_constant"] = row["text_constant"]
+        row["text_numeric"] = row["text_numeric"]
         row["text_value"] = row["text_value"]
         row["text_value_two"] = row["text_value_two"]
 
@@ -427,7 +438,7 @@ def test_row_level_validation_perfect_match(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
@@ -444,16 +455,19 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CALC_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CALC_CONFIG)
     result_df = client.execute()
     calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
     calc_val_df2 = result_df[result_df["validation_name"] == "sum_concat_length"]
+    calc_val_df3 = result_df[result_df["validation_name"] == "sum_text_numeric"]
 
     assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
 
     assert calc_val_df2["source_agg_value"].sum() == str(
         num_rows * (len(STRING_CONSTANT + "," + str(len(STRING_CONSTANT))))
     )
+
+    assert calc_val_df3["source_agg_value"].sum() == str(num_rows * 2)
 
 
 def test_row_level_validation_non_matching(module_under_test, fs):
@@ -466,18 +480,18 @@ def test_row_level_validation_non_matching(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
 
-    # TODO: this value is 0 because a COUNT() on now rows returns Null.
+    # TODO: this value is 0 because a COUNT() on no rows returns Null.
     # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
     assert result_df["difference"].sum() == 0
 
     expected_date_result = '{"date_value": "%s", "id": "11"}' % str(
         datetime.now().date()
     )
-    grouped_column = validation_df[validation_df["difference"].isnull()][
+    grouped_column = validation_df[validation_df["source_table_name"].isnull()][
         "group_by_columns"
     ].max()
     assert expected_date_result == grouped_column
@@ -492,13 +506,15 @@ def test_row_level_validation_smart_count(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
 
     assert expected_date_result == result_df["group_by_columns"].max()
+
     smart_count_df = result_df[result_df["validation_name"] == "count_text_value"]
-    assert smart_count_df["difference"].sum() == 100
+    assert smart_count_df["source_agg_value"].astype(int).sum() == 100
+    assert smart_count_df["target_agg_value"].astype(int).sum() == 200
 
 
 def test_row_level_validation_multiple_aggregations(module_under_test, fs):
@@ -511,7 +527,7 @@ def test_row_level_validation_multiple_aggregations(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
 

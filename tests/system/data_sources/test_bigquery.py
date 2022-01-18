@@ -18,7 +18,9 @@ from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
 
 
-BQ_CONN = {"source_type": "BigQuery", "project_id": os.environ["PROJECT_ID"]}
+PROJECT_ID = os.environ["PROJECT_ID"]
+os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
+BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -69,7 +71,7 @@ CONFIG_GROUPED_COUNT_VALID = {
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
     consts.CONFIG_TARGET_CONN: BQ_CONN,
     # Validation Type
-    consts.CONFIG_TYPE: "GroupedColumn",
+    consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
@@ -249,7 +251,7 @@ def test_cli_store_yaml_then_run():
         # The number of lines is not significant, except that it represents
         # the exact file expected to be created.  Any change to this value
         # is likely to be a breaking change and must be assessed.
-        assert len(yaml_file.readlines()) == 33
+        assert len(yaml_file.readlines()) == 35
 
     # Run generated config
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
@@ -257,7 +259,7 @@ def test_cli_store_yaml_then_run():
     main.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
-    _remove_bq_conn()
+    # _remove_bq_conn()
 
 
 def test_cli_find_tables():
@@ -269,7 +271,7 @@ def test_cli_find_tables():
     assert isinstance(tables_json, str)
     assert STRING_MATCH_RESULT in tables_json
 
-    _remove_bq_conn()
+    # _remove_bq_conn()
 
 
 def _store_bq_conn():
@@ -278,6 +280,6 @@ def _store_bq_conn():
     main.run_connections(mock_args)
 
 
-def _remove_bq_conn():
-    file_path = cli_tools._get_connection_file(BQ_CONN_NAME)
-    os.remove(file_path)
+# def _remove_bq_conn():
+#     file_path = cli_tools._get_connection_file(BQ_CONN_NAME)
+#     os.remove(file_path)

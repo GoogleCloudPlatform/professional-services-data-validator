@@ -60,6 +60,8 @@ GROUPED_COLUMN_CONFIG_A = {
 
 
 class MockIbisClient(object):
+    _source_type = "BigQuery"
+
     def table(self, table, database=None):
         return MockIbisTable()
 
@@ -120,21 +122,21 @@ def test_filters_property(module_under_test):
     ]
 
 
-def test_source_connection_property(module_under_test):
+def test_get_source_connection(module_under_test):
     """Test getting config copy."""
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
-    source_connection = config_manager.source_connection
+    source_connection = config_manager.get_source_connection()
     assert source_connection == SAMPLE_CONFIG[consts.CONFIG_SOURCE_CONN]
 
 
-def test_target_connection_property(module_under_test):
+def test_get_target_connection(module_under_test):
     """Test getting config copy."""
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
-    target_connection = config_manager.target_connection
+    target_connection = config_manager.get_target_connection()
     assert target_connection == SAMPLE_CONFIG[consts.CONFIG_TARGET_CONN]
 
 
@@ -157,15 +159,28 @@ def test_get_threshold_property(module_under_test):
 
 
 def test_process_in_memory(module_under_test):
-    """Test getting config copy."""
+    """Test process in memory for normal validations."""
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     assert config_manager.process_in_memory() is True
 
-    config_manager._config = copy.deepcopy(config_manager._config)
-    config_manager._config[consts.CONFIG_TYPE] = "Row"
+
+def test_do_not_process_in_memory(module_under_test):
+    """Test process in memory for normal validations."""
+    config_manager = module_under_test.ConfigManager(
+        copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
+    config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ]
     assert config_manager.process_in_memory() is False
 
 

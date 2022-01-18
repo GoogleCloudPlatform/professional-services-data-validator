@@ -23,6 +23,7 @@ from data_validation import metadata
 
 
 _NAN = float("nan")
+FAKE_TIME = datetime.datetime(1998, 9, 4, 7, 31, 42)
 
 EXAMPLE_RUN_METADATA = metadata.RunMetadata(
     validations={
@@ -50,6 +51,16 @@ def module_under_test():
     from data_validation import combiner
 
     return combiner
+
+
+@pytest.fixture
+def patch_datetime_now(monkeypatch):
+    class mydatetime:
+        @classmethod
+        def now(cls, utc):
+            return FAKE_TIME
+
+    monkeypatch.setattr(datetime, "datetime", mydatetime)
 
 
 def test_generate_report_with_different_columns(module_under_test):
@@ -116,7 +127,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     ),
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                end_time=None,
                 labels=[("name", "test_label")],
                 run_id="test-run",
             ),
@@ -165,7 +176,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     ),
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                end_time=None,
                 labels=[("name", "test_label")],
                 run_id="test-run",
             ),
@@ -222,7 +233,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     ),
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                end_time=None,
                 labels=[("name", "test_label")],
                 run_id="test-run",
             ),
@@ -278,7 +289,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     ),
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                end_time=None,
                 labels=[("name", "test_label")],
                 run_id="test-run",
             ),
@@ -314,7 +325,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
     ),
 )
 def test_generate_report_without_group_by(
-    module_under_test, source_df, target_df, run_metadata, expected
+    module_under_test, patch_datetime_now, source_df, target_df, run_metadata, expected
 ):
     pandas_client = ibis.backends.pandas.connect(
         {"test_source": source_df, "test_target": target_df}
@@ -369,13 +380,13 @@ def test_generate_report_without_group_by(
                         target_table_name="test_target",
                         target_table_schema="bq-public.target_dataset",
                         target_column_name=None,
-                        validation_type="GroupedColumn",
+                        validation_type="Column",
                         aggregation_type="count",
                         threshold=7.0,
                     ),
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                end_time=None,
                 labels=[("name", "group_label")],
                 run_id="grouped-test",
             ),
@@ -388,7 +399,7 @@ def test_generate_report_without_group_by(
                     "source_column_name": [None] * 4,
                     "target_table_name": ["bq-public.target_dataset.test_target"] * 4,
                     "target_column_name": [None] * 4,
-                    "validation_type": ["GroupedColumn"] * 4,
+                    "validation_type": ["Column"] * 4,
                     "aggregation_type": ["count"] * 4,
                     "validation_name": ["count"] * 4,
                     "source_agg_value": ["2", "4", "8", "16"],
@@ -420,13 +431,13 @@ def test_generate_report_without_group_by(
                         target_table_name="test_target",
                         target_table_schema="bq-public.target_dataset",
                         target_column_name=None,
-                        validation_type="GroupedColumn",
+                        validation_type="Column",
                         aggregation_type="count",
                         threshold=100.0,
                     ),
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                end_time=None,
                 labels=[("name", "group_label")],
                 run_id="grouped-test",
             ),
@@ -439,7 +450,7 @@ def test_generate_report_without_group_by(
                     "source_column_name": [None] * 2,
                     "target_table_name": ["bq-public.target_dataset.test_target"] * 2,
                     "target_column_name": [None] * 2,
-                    "validation_type": ["GroupedColumn"] * 2,
+                    "validation_type": ["Column"] * 2,
                     "aggregation_type": ["count"] * 2,
                     "validation_name": ["count"] * 2,
                     "source_agg_value": ["1", "2"],
@@ -478,13 +489,13 @@ def test_generate_report_without_group_by(
                         target_table_name="test_target",
                         target_table_schema="bq-public.target_dataset",
                         target_column_name=None,
-                        validation_type="GroupedColumn",
+                        validation_type="Column",
                         aggregation_type="count",
                         threshold=25.0,
                     ),
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
-                end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
+                end_time=None,
                 labels=[("name", "group_label")],
                 run_id="grouped-test",
             ),
@@ -511,7 +522,7 @@ def test_generate_report_without_group_by(
                         _NAN,
                     ],
                     "target_column_name": [None] * 6,
-                    "validation_type": ["GroupedColumn"] * 6,
+                    "validation_type": ["Column"] * 6,
                     "aggregation_type": ["count"] * 6,
                     "validation_name": ["count"] * 6,
                     "source_agg_value": ["2", "4", _NAN, _NAN, "6", "8"],
@@ -535,7 +546,13 @@ def test_generate_report_without_group_by(
     ),
 )
 def test_generate_report_with_group_by(
-    module_under_test, source_df, target_df, join_on_fields, run_metadata, expected
+    module_under_test,
+    patch_datetime_now,
+    source_df,
+    target_df,
+    join_on_fields,
+    run_metadata,
+    expected,
 ):
     pandas_client = ibis.backends.pandas.connect(
         {"test_source": source_df, "test_target": target_df}

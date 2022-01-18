@@ -137,14 +137,15 @@ class ValidationBuilder(object):
         source_field_name = aggregate_field[consts.CONFIG_SOURCE_COLUMN]
         target_field_name = aggregate_field[consts.CONFIG_TARGET_COLUMN]
         aggregate_type = aggregate_field.get(consts.CONFIG_TYPE)
+        cast = aggregate_field.get(consts.CONFIG_CAST)
         if not hasattr(AggregateField, aggregate_type):
             raise Exception("Unknown Aggregation Type: {}".format(aggregate_type))
 
         source_agg = getattr(AggregateField, aggregate_type)(
-            field_name=source_field_name, alias=alias
+            field_name=source_field_name, alias=alias, cast=cast
         )
         target_agg = getattr(AggregateField, aggregate_type)(
-            field_name=target_field_name, alias=alias
+            field_name=target_field_name, alias=alias, cast=cast
         )
 
         self.source_builder.add_aggregate_field(source_agg)
@@ -210,6 +211,15 @@ class ValidationBuilder(object):
                 filter_field[consts.CONFIG_FILTER_SOURCE_VALUE],
             )
             target_filter = FilterField.equal_to(
+                filter_field[consts.CONFIG_FILTER_TARGET_COLUMN],
+                filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
+            )
+        elif filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_ISIN:
+            source_filter = FilterField.isin(
+                filter_field[consts.CONFIG_FILTER_SOURCE_COLUMN],
+                filter_field[consts.CONFIG_FILTER_SOURCE_VALUE],
+            )
+            target_filter = FilterField.isin(
                 filter_field[consts.CONFIG_FILTER_TARGET_COLUMN],
                 filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
             )
