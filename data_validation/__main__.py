@@ -134,7 +134,7 @@ def build_config_from_args(args, config_manager):
     if hasattr(args, 'primary_keys'):
         primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
         config_manager.append_primary_keys(
-            config_manager.build_config_grouped_columns(primary_keys)
+            config_manager.build_config_comparison_fields(primary_keys)
         )
     if hasattr(args, 'comparison_fields'):
         comparison_fields = cli_tools.get_arg_list(args.comparison_fields, default_value=[])

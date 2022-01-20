@@ -276,7 +276,7 @@ class ValidationBuilder(object):
             target_table_name=self.config_manager.target_table,
             source_column_name=source_field_name,
             target_column_name=target_field_name,
-            threshold = None,
+            threshold = self.config_manager.threshold,
         )
 
     def add_calc(self, calc_field):

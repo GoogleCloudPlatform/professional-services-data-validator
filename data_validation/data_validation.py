@@ -213,6 +213,9 @@ class DataValidation(object):
                             recursive_validation_builder, grouped_fields[1:]
                         )
                     )
+        elif self.config_manager.primary_keys:
+            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+
         elif self.config_manager.primary_keys and len(grouped_fields) == 0:
             past_results.append(
                 self._execute_validation(
@@ -279,23 +282,35 @@ class DataValidation(object):
         self.run_metadata.validations = validation_builder.get_metadata()
 
         source_query = validation_builder.get_source_query()
+        print('SOURCE QUERY')
+        print(source_query.execute())
         target_query = validation_builder.get_target_query()
+        print('TARGET QUERY')
+        print(target_query.execute())
 
 
         if self.config_manager.validation_type == "Row" and len(self.config_manager.query_groups) == 0:
             join_on_fields = validation_builder.get_primary_keys()
         else:
+            print('is this because I screwed with group aliases')
             join_on_fields = validation_builder.get_group_aliases()
+            print(join_on_fields)
 
         # If row validation from YAML, compare source and target agg values
         is_value_comparison = self.config_manager.validation_type == "Row"
 
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)
+            print('this is the...source_df')
+            print(source_df)
             target_df = self.config_manager.target_client.execute(target_query)
+            print('this is the...target_df')
+            print(target_df)
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
+            print('THIS IS THE SCHEMA')
+            print(pd_schema)
             pandas_client = ibis.backends.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )
@@ -320,6 +335,7 @@ class DataValidation(object):
                     print(target_df)
                 raise e
         else:
+            print('why not have another print statement')
             result_df = combiner.generate_report(
                 self.config_manager.source_client,
                 self.run_metadata,

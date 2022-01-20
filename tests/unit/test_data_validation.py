@@ -238,7 +238,7 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
 }
 
 
-JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
+JSON_DATA = """[{"col_a":1,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
 
@@ -351,6 +351,8 @@ def test_zero_source_value(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
+    print('I AM SPECIAL')
+    print(result_df)
 
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
@@ -405,8 +407,10 @@ def test_status_fail_validation(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
-
+    print('yo yo yo')
+    print(result_df)
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
+    print(col_a_result_df)
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
     col_a_status = col_a_result_df.status.values[0]
 
@@ -420,10 +424,16 @@ def test_threshold_equals_diff(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_THRESHOLD_CONFIG)
     result_df = client.execute()
-
+    print('ayy lmao')
+    print(result_df)
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
+    print(col_a_result_df)
+    print(col_a_result_df['source_agg_value'])
+    print(col_a_result_df['target_agg_value'])
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
+    print(col_a_pct_diff)
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
+    print(col_a_pct_threshold)
     col_a_status = col_a_result_df.status.values[0]
 
     assert col_a_pct_diff == 150.0
@@ -473,27 +483,23 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
 def test_row_level_validation_non_matching(module_under_test, fs):
     data = _generate_fake_data(rows=10, second_range=0)
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
-
     source_json_data = _get_fake_json_data(data)
     target_json_data = _get_fake_json_data(data + trg_data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
-
     # TODO: this value is 0 because a COUNT() on no rows returns Null.
     # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
     assert result_df["difference"].sum() == 0
 
-    expected_date_result = '{"date_value": "%s", "id": "11"}' % str(
+    expected_date_result = '{"date_value": "%s"}' % str(
         datetime.now().date()
     )
-    grouped_column = validation_df[validation_df["source_table_name"].isnull()][
-        "group_by_columns"
-    ].max()
+    grouped_column = validation_df["group_by_columns"].max()
     assert expected_date_result == grouped_column
 
 
@@ -529,8 +535,10 @@ def test_row_level_validation_multiple_aggregations(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
     result_df = client.execute()
+    print(result_df)
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
-
+    print('why')
+    print(len(validation_df))
     # Expect 11 rows, one for each PK value
     assert len(validation_df) == 11
     assert validation_df["source_agg_value"].astype(float).sum() == 10
