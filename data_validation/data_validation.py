@@ -213,15 +213,17 @@ class DataValidation(object):
                             recursive_validation_builder, grouped_fields[1:]
                         )
                     )
-        elif self.config_manager.primary_keys:
-            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
-
         elif self.config_manager.primary_keys and len(grouped_fields) == 0:
             past_results.append(
                 self._execute_validation(
                     validation_builder, process_in_memory=process_in_memory
                 )
             )
+
+        elif self.config_manager.primary_keys:
+            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+            validation_builder.add_config_query_groups(grouped_fields)
+
         else:
             warnings.warn(
                 "WARNING: No Primary Keys Suppplied in Row Validation", UserWarning
@@ -283,18 +285,18 @@ class DataValidation(object):
 
         source_query = validation_builder.get_source_query()
         print('SOURCE QUERY')
-        print(source_query.execute())
+        print(source_query.compile().compile())
         target_query = validation_builder.get_target_query()
         print('TARGET QUERY')
-        print(target_query.execute())
+        print(target_query.compile().compile())
 
 
-        if self.config_manager.validation_type == "Row" and len(self.config_manager.query_groups) == 0:
-            join_on_fields = validation_builder.get_primary_keys()
+        if self.config_manager.validation_type == consts.ROW_VALIDATION:
+            join_on_fields = set(validation_builder.get_primary_keys())
         else:
-            print('is this because I screwed with group aliases')
-            join_on_fields = validation_builder.get_group_aliases()
-            print(join_on_fields)
+            join_on_fields = set(validation_builder.get_group_aliases())
+        print('join on fields')
+        print(join_on_fields)
 
         # If row validation from YAML, compare source and target agg values
         is_value_comparison = self.config_manager.validation_type == "Row"
@@ -335,7 +337,6 @@ class DataValidation(object):
                     print(target_df)
                 raise e
         else:
-            print('why not have another print statement')
             result_df = combiner.generate_report(
                 self.config_manager.source_client,
                 self.run_metadata,

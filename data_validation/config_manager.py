@@ -53,8 +53,6 @@ class ConfigManager(object):
         self.target_client = target_client or clients.get_data_client(
             self.get_target_connection()
         )
-        if not self.process_in_memory():
-            self.target_client = self.source_client
 
         self.verbose = verbose
         if self.validation_type not in consts.CONFIG_TYPES:

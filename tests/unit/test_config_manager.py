@@ -164,7 +164,7 @@ def test_process_in_memory(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    assert config_manager.process_in_memory() is True
+    assert config_manager.process_in_memory() is None
 
 
 def test_do_not_process_in_memory(module_under_test):
@@ -181,7 +181,7 @@ def test_do_not_process_in_memory(module_under_test):
             consts.CONFIG_CAST: None,
         },
     ]
-    assert config_manager.process_in_memory() is False
+    assert config_manager.process_in_memory() is True
 
 
 def test_get_table_info(module_under_test):

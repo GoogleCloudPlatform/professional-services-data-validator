@@ -107,7 +107,7 @@ SAMPLE_GC_ROW_CONFIG = {
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+    consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -121,8 +121,6 @@ SAMPLE_GC_ROW_CONFIG = {
             consts.CONFIG_TARGET_COLUMN: "date_value",
             consts.CONFIG_CAST: "date",
         },
-    ],
-    consts.CONFIG_PRIMARY_KEYS: [
         {
             consts.CONFIG_FIELD_ALIAS: "id",
             consts.CONFIG_SOURCE_COLUMN: "id",
@@ -130,6 +128,14 @@ SAMPLE_GC_ROW_CONFIG = {
             consts.CONFIG_CAST: None,
         },
     ],
+    # consts.CONFIG_PRIMARY_KEYS: [
+    #     {
+    #         consts.CONFIG_FIELD_ALIAS: "id",
+    #         consts.CONFIG_SOURCE_COLUMN: "id",
+    #         consts.CONFIG_TARGET_COLUMN: "id",
+    #         consts.CONFIG_CAST: None,
+    #     },
+    # ],
     consts.CONFIG_AGGREGATES: [
         {
             "source_column": "text_value",
@@ -147,7 +153,7 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: "Column",
+    consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -162,14 +168,14 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
             consts.CONFIG_CAST: "date",
         },
     ],
-    consts.CONFIG_PRIMARY_KEYS: [
-        {
-            consts.CONFIG_FIELD_ALIAS: "id",
-            consts.CONFIG_SOURCE_COLUMN: "id",
-            consts.CONFIG_TARGET_COLUMN: "id",
-            consts.CONFIG_CAST: None,
-        },
-    ],
+    # consts.CONFIG_PRIMARY_KEYS: [
+    #     {
+    #         consts.CONFIG_FIELD_ALIAS: "id",
+    #         consts.CONFIG_SOURCE_COLUMN: "id",
+    #         consts.CONFIG_TARGET_COLUMN: "id",
+    #         consts.CONFIG_CAST: None,
+    #     },
+    # ],
     consts.CONFIG_CALCULATED_FIELDS: [
         {
             "source_calculated_columns": ["text_constant"],
@@ -207,12 +213,12 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
         },
     ],
     consts.CONFIG_AGGREGATES: [
-        # {
-        #     "source_column": "text_value",
-        #     "target_column": "text_value",
-        #     "field_alias": "count_text_value",
-        #     "type": "count",
-        # },
+        {
+            "source_column": "text_value",
+            "target_column": "text_value",
+            "field_alias": "count_text_value",
+            "type": "count",
+        },
         {
             "source_column": "length_text_constant",
             "target_column": "length_text_constant",
@@ -351,8 +357,6 @@ def test_zero_source_value(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
-    print('I AM SPECIAL')
-    print(result_df)
 
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
@@ -407,10 +411,7 @@ def test_status_fail_validation(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
-    print('yo yo yo')
-    print(result_df)
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
-    print(col_a_result_df)
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
     col_a_status = col_a_result_df.status.values[0]
 
@@ -424,16 +425,9 @@ def test_threshold_equals_diff(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_THRESHOLD_CONFIG)
     result_df = client.execute()
-    print('ayy lmao')
-    print(result_df)
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
-    print(col_a_result_df)
-    print(col_a_result_df['source_agg_value'])
-    print(col_a_result_df['target_agg_value'])
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
-    print(col_a_pct_diff)
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
-    print(col_a_pct_threshold)
     col_a_status = col_a_result_df.status.values[0]
 
     assert col_a_pct_diff == 150.0
@@ -451,8 +445,8 @@ def test_row_level_validation_perfect_match(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
 
-    expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
-    assert expected_date_result == result_df["group_by_columns"].max()
+    expected_date_result = '{"id": "9", "date_value": "%s"}' % str(datetime.now().date())
+    assert json.loads(expected_date_result) == json.loads(result_df["group_by_columns"].max())
 
     assert result_df["difference"].sum() == 0
 
@@ -488,7 +482,6 @@ def test_row_level_validation_non_matching(module_under_test, fs):
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
-
     client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
@@ -496,11 +489,11 @@ def test_row_level_validation_non_matching(module_under_test, fs):
     # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
     assert result_df["difference"].sum() == 0
 
-    expected_date_result = '{"date_value": "%s"}' % str(
+    expected_date_result = '{"id": "9", "date_value": "%s"}' % str(
         datetime.now().date()
     )
     grouped_column = validation_df["group_by_columns"].max()
-    assert expected_date_result == grouped_column
+    assert json.loads(expected_date_result) == json.loads(grouped_column)
 
 
 def test_row_level_validation_smart_count(module_under_test, fs):
@@ -514,31 +507,35 @@ def test_row_level_validation_smart_count(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
     result_df = client.execute()
-    expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
+    expected_date_result = '{"id": "99", "date_value": "%s"}' % str(datetime.now().date())
 
-    assert expected_date_result == result_df["group_by_columns"].max()
+    assert json.loads(expected_date_result) == json.loads(result_df["group_by_columns"].max())
 
     smart_count_df = result_df[result_df["validation_name"] == "count_text_value"]
     assert smart_count_df["source_agg_value"].astype(int).sum() == 100
     assert smart_count_df["target_agg_value"].astype(int).sum() == 200
 
 
-def test_row_level_validation_multiple_aggregations(module_under_test, fs):
+def test_row_level_validation_multiple_aggregations(module_under_test):
     data = _generate_fake_data(rows=10, second_range=0)
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
 
     source_json_data = _get_fake_json_data(data)
+    print('last...one')
+    print(source_json_data)
     target_json_data = _get_fake_json_data(data + trg_data)
+    print(target_json_data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
+    print('client')
+    print(client)
     result_df = client.execute()
+    print('result_df')
     print(result_df)
-    validation_df = result_df[result_df["validation_name"] == "count_text_value"]
-    print('why')
-    print(len(validation_df))
+    validation_df = result_df # [result_df["validation_name"] == "count_text_value"]
     # Expect 11 rows, one for each PK value
     assert len(validation_df) == 11
     assert validation_df["source_agg_value"].astype(float).sum() == 10
