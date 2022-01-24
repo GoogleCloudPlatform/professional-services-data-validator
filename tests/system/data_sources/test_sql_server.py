@@ -19,39 +19,46 @@ from data_validation import data_validation, consts
 
 import os
 
+import pytest
+
 # Local testing requires the Cloud SQL Proxy.
 # https://cloud.google.com/sql/docs/sqlserver/connect-admin-proxy
 
-
+# Cloud SQL Proxy listens on localhost
+SQL_SERVER_HOST = os.getenv("SQL_SERVER_HOST", "localhost")
+SQL_SERVER_USER = os.getenv("SQL_SERVER_USER", "sqlserver")
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 
-def test_sql_server_count():
+@pytest.fixture
+def cloud_sql(request):
+    if not request.config.getoption("--no-cloud-sql"):
+        mssql_instance = CloudSQLResourceManager(
+            PROJECT_ID,
+            "SQLSERVER_2017_STANDARD",
+            "data-validator-mssql2017",
+            SQL_SERVER_PASSWORD,
+            database_id="guestbook",
+            assign_public_ip=True,
+            authorized_networks=None,
+            cpu=1,
+            memory="4GB",
+            enable_bin_logs=False,
+            already_exists=True,
+        )
+
+        # If instance already exists, returns host IP and does not add new data
+        mssql_instance.setup()
+        mssql_instance.add_data("gs://pso-kokoro-resources/mssql_data.sql")
+
+
+def test_sql_server_count(cloud_sql):
     """ Test count validation on SQL Server instance """
-    mssql_instance = CloudSQLResourceManager(
-        PROJECT_ID,
-        "SQLSERVER_2017_STANDARD",
-        "data-validator-mssql2017",
-        SQL_SERVER_PASSWORD,
-        database_id="guestbook",
-        assign_public_ip=True,
-        authorized_networks=None,
-        cpu=1,
-        memory="4GB",
-        enable_bin_logs=False,
-        already_exists=True,
-    )
-
-    # If instance already exists, returns host IP and does not add new data
-    mssql_instance.setup()
-    mssql_instance.add_data("gs://pso-kokoro-resources/mssql_data.sql")
-
-    # Cloud SQL Proxy listens on localhost
     conn = {
         "source_type": "MSSQL",
-        "host": "127.0.0.1",
-        "user": "sqlserver",
+        "host": SQL_SERVER_HOST,
+        "user": SQL_SERVER_USER,
         "password": SQL_SERVER_PASSWORD,
         "port": 1433,
         "database": "guestbook",
