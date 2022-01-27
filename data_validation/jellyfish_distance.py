@@ -19,9 +19,9 @@ def extract_closest_match(search_key, target_list, score_cutoff=0):
     """Return str value from target list with highest score using Jaro
     for String distance.
 
-     search_key (str): A string used to search for cloest match.
+     search_key (str): A string used to search for closest match.
      target_list (list): A list of strings for comparison.
-     score_cutoff (float): A scorre cutoff (betwen 0 and 1) to be met.
+     score_cutoff (float): A score cutoff (betwen 0 and 1) to be met.
     """
     highest_score = score_cutoff
     highest_value_key = None
