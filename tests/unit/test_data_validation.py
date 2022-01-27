@@ -102,7 +102,48 @@ SAMPLE_THRESHOLD_CONFIG = {
 }
 
 # Grouped Column Row confg
-SAMPLE_GC_ROW_CONFIG = {
+SAMPLE_GC_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
+    consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "date_value",
+            consts.CONFIG_SOURCE_COLUMN: "date_value",
+            consts.CONFIG_TARGET_COLUMN: "date_value",
+            consts.CONFIG_CAST: "date",
+        },
+    ],
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": "text_value",
+            "target_column": "text_value",
+            "field_alias": "count_text_value",
+            "type": "count",
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
+}
+
+# Grouped Column Row confg
+SAMPLE_MULTI_GC_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
@@ -128,14 +169,9 @@ SAMPLE_GC_ROW_CONFIG = {
             consts.CONFIG_CAST: None,
         },
     ],
-    # consts.CONFIG_PRIMARY_KEYS: [
-    #     {
-    #         consts.CONFIG_FIELD_ALIAS: "id",
-    #         consts.CONFIG_SOURCE_COLUMN: "id",
-    #         consts.CONFIG_TARGET_COLUMN: "id",
-    #         consts.CONFIG_CAST: None,
-    #     },
-    # ],
+    consts.CONFIG_PRIMARY_KEYS: [
+
+    ],
     consts.CONFIG_AGGREGATES: [
         {
             "source_column": "text_value",
@@ -168,14 +204,14 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
             consts.CONFIG_CAST: "date",
         },
     ],
-    # consts.CONFIG_PRIMARY_KEYS: [
-    #     {
-    #         consts.CONFIG_FIELD_ALIAS: "id",
-    #         consts.CONFIG_SOURCE_COLUMN: "id",
-    #         consts.CONFIG_TARGET_COLUMN: "id",
-    #         consts.CONFIG_CAST: None,
-    #     },
-    # ],
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
     consts.CONFIG_CALCULATED_FIELDS: [
         {
             "source_calculated_columns": ["text_constant"],
@@ -442,10 +478,10 @@ def test_row_level_validation_perfect_match(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_CONFIG)
     result_df = client.execute()
 
-    expected_date_result = '{"id": "9", "date_value": "%s"}' % str(datetime.now().date())
+    expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
     assert json.loads(expected_date_result) == json.loads(result_df["group_by_columns"].max())
 
     assert result_df["difference"].sum() == 0
@@ -482,14 +518,13 @@ def test_row_level_validation_non_matching(module_under_test, fs):
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_CONFIG)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
-    # TODO: this value is 0 because a COUNT() on no rows returns Null.
-    # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
-    assert result_df["difference"].sum() == 0
+    # TODO: this value is 0 because a COUNT() on no rows returns Null
+    assert result_df["difference"].sum() == 1
 
-    expected_date_result = '{"id": "9", "date_value": "%s"}' % str(
+    expected_date_result = '{"date_value": "%s"}' % str(
         datetime.now().date()
     )
     grouped_column = validation_df["group_by_columns"].max()
@@ -505,9 +540,9 @@ def test_row_level_validation_smart_count(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_CONFIG)
     result_df = client.execute()
-    expected_date_result = '{"id": "99", "date_value": "%s"}' % str(datetime.now().date())
+    expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
 
     assert json.loads(expected_date_result) == json.loads(result_df["group_by_columns"].max())
 
@@ -521,20 +556,13 @@ def test_row_level_validation_multiple_aggregations(module_under_test):
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
 
     source_json_data = _get_fake_json_data(data)
-    print('last...one')
-    print(source_json_data)
     target_json_data = _get_fake_json_data(data + trg_data)
-    print(target_json_data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
-    print('client')
-    print(client)
+    client = module_under_test.DataValidation(SAMPLE_MULTI_GC_CONFIG)
     result_df = client.execute()
-    print('result_df')
-    print(result_df)
     validation_df = result_df # [result_df["validation_name"] == "count_text_value"]
     # Expect 11 rows, one for each PK value
     assert len(validation_df) == 11

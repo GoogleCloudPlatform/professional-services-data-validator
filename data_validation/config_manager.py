@@ -102,10 +102,8 @@ class ConfigManager(object):
         )
 
     def process_in_memory(self):
-        if (
-            self.validation_type == "Row" or self.is_grouped_row_validation
-        ) and self.get_source_connection() == self.get_target_connection():
-            return True
+        """TODO: (emceehilton) we need to eventually make remote execution a parameter"""
+        return True
 
     @property
     def max_recursive_query_size(self):

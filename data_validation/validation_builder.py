@@ -135,8 +135,8 @@ class ValidationBuilder(object):
         for field in primary_keys:
             self.add_primary_key(field)
 
-    def add_comparison_fields(self, comparion_fields=None):
-        comparison_fields = comparion_fields or self.config_manager.comparison_fields
+    def add_comparison_fields(self, comparison_fields=None):
+        comparison_fields = comparison_fields or self.config_manager.comparison_fields
         for field in comparison_fields:
             self.add_comparison_field(field)
 
@@ -236,8 +236,8 @@ class ValidationBuilder(object):
         target_field = ComparisonField(
             field_name=target_field_name, alias=alias
         )
-        self.source_builder.add_grouped_field(source_field_name)
-        self.target_builder.add_grouped_field(target_field_name)
+        self.source_builder.add_comparison_field(source_field_name)
+        self.target_builder.add_comparison_field(target_field_name)
         self.primary_keys[alias] = primary_key
 
     def add_filter(self, filter_field):
@@ -346,6 +346,7 @@ class ValidationBuilder(object):
         }
         query = self.source_builder.compile(**source_config)
         if self.verbose:
+            print(source_config)
             print("-- ** Source Query ** --")
             print(query.compile())
 

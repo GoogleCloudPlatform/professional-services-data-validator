@@ -284,35 +284,23 @@ class DataValidation(object):
         self.run_metadata.validations = validation_builder.get_metadata()
 
         source_query = validation_builder.get_source_query()
-        print('SOURCE QUERY')
-        print(source_query.compile().compile())
         target_query = validation_builder.get_target_query()
-        print('TARGET QUERY')
-        print(target_query.compile().compile())
 
 
         if self.config_manager.validation_type == consts.ROW_VALIDATION:
             join_on_fields = set(validation_builder.get_primary_keys())
         else:
             join_on_fields = set(validation_builder.get_group_aliases())
-        print('join on fields')
-        print(join_on_fields)
 
         # If row validation from YAML, compare source and target agg values
         is_value_comparison = self.config_manager.validation_type == "Row"
 
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)
-            print('this is the...source_df')
-            print(source_df)
             target_df = self.config_manager.target_client.execute(target_query)
-            print('this is the...target_df')
-            print(target_df)
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
-            print('THIS IS THE SCHEMA')
-            print(pd_schema)
             pandas_client = ibis.backends.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )

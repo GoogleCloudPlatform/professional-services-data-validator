@@ -271,8 +271,8 @@ def _configure_run_parser(subparsers):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
-        "--fields",
-        "-fields",
+        "--comparison-fields",
+        "-comp-fields",
         help="Individual columns to compare. If comparing a calculated field use the column alias."
     )
     run_parser.add_argument(
@@ -408,8 +408,8 @@ def _configure_row_parser(row_parser):
         help="Comma separated list of columns for hash 'col_a,col_b' or * for all columns",
     )
     row_parser.add_argument(
-        "--fields",
-        "-fields",
+        "--comparison-fields",
+        "-comp-fields",
         help="Individual columns to compare. If comparing a calculated field use the column alias."
     )
     row_parser.add_argument(
@@ -425,6 +425,11 @@ def _configure_row_parser(row_parser):
         "-th",
         type=threshold_float,
         help="Float max threshold for percent difference",
+    )
+    row_parser.add_argument(
+        "--grouped-columns",
+        "-gc",
+        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
     )
     row_parser.add_argument(
         "--filters",
@@ -482,8 +487,8 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns"
     )
     column_parser.add_argument(
-        "--fields",
-        "-fields",
+        "--comparison-fields",
+        "-comp-fields",
         help="list of fields to perform exact comparisons to. Use column aliases if this is calculated."
     )
     column_parser.add_argument(

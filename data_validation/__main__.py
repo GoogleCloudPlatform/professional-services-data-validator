@@ -95,12 +95,14 @@ def get_calculated_config(args, config_manager):
     """
     calculated_configs = []
     fields = []
-    if hasattr(args, 'hash'):
+    if args.hash is not None:
         col_args = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
         fields = config_manager._build_dependent_aliases("hash")
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(["hash__all"])
         )
+    else:
+        pass
     for field in fields:
         calculated_configs.append(config_manager.build_config_calculated_fields(
             field['reference'],
@@ -118,29 +120,25 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
-    if config_manager.validation_type == consts.ROW_VALIDATION:
-        pass
-    else:
+    if config_manager.validation_type == consts.COLUMN_VALIDATION:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        if config_manager.primary_keys and not config_manager.query_groups:
-            raise ValueError(
-                "Grouped columns must be specified for primary key level validation."
-                    )
-    if hasattr(args, 'grouped_columns'):
-        grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
-        config_manager.append_query_groups(
-            config_manager.build_config_grouped_columns(grouped_columns)
-        )
-    if hasattr(args, 'primary_keys'):
-        primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
+        if args.grouped_columns is not None:
+            grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
+            config_manager.append_query_groups(
+                config_manager.build_config_grouped_columns(grouped_columns)
+            )
+    elif config_manager.validation_type == consts.ROW_VALIDATION:
+        if args.comparison_fields is not None:
+            comparison_fields = cli_tools.get_arg_list(args.comparison_fields, default_value=[])
+            config_manager.append_comparison_fields(
+                config_manager.build_config_comparison_fields(comparison_fields)
+            )
+    if args.primary_keys is not None:
+        primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_config_comparison_fields(primary_keys)
         )
-    if hasattr(args, 'comparison_fields'):
-        comparison_fields = cli_tools.get_arg_list(args.comparison_fields, default_value=[])
-        config_manager.append_comparison_fields(
-            config_manager.build_config_comparison_fields(comparison_fields)
-        )
+
     # TODO(GH#18): Add query filter config logic
 
     return config_manager
@@ -155,11 +153,7 @@ def build_config_managers_from_args(args):
         if validate_cmd == "Schema":
             config_type = consts.SCHEMA_VALIDATION
         elif validate_cmd == "Column":
-            # TODO: We need to discuss how GroupedColumn and Row are differentiated.
-            if args.grouped_columns:
-                config_type = consts.GROUPED_COLUMN_VALIDATION
-            else:
-                config_type = consts.COLUMN_VALIDATION
+            config_type = consts.COLUMN_VALIDATION
         elif validate_cmd == "Row":
             config_type = consts.ROW_VALIDATION
         else:

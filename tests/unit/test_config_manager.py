@@ -159,29 +159,31 @@ def test_get_threshold_property(module_under_test):
 
 
 def test_process_in_memory(module_under_test):
-    """Test process in memory for normal validations."""
+    """Test process in memory for normal validations.
+    TODO: emceehilton Re-enable opposite test once option is available
+    """
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    assert config_manager.process_in_memory() is None
-
-
-def test_do_not_process_in_memory(module_under_test):
-    """Test process in memory for normal validations."""
-    config_manager = module_under_test.ConfigManager(
-        copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
-    )
-    config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
-    config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
-        {
-            consts.CONFIG_FIELD_ALIAS: "id",
-            consts.CONFIG_SOURCE_COLUMN: "id",
-            consts.CONFIG_TARGET_COLUMN: "id",
-            consts.CONFIG_CAST: None,
-        },
-    ]
     assert config_manager.process_in_memory() is True
+
+
+# def test_do_not_process_in_memory(module_under_test):
+#     """Test process in memory for normal validations."""
+#     config_manager = module_under_test.ConfigManager(
+#         copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+#     )
+#     config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
+#     config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
+#         {
+#             consts.CONFIG_FIELD_ALIAS: "id",
+#             consts.CONFIG_SOURCE_COLUMN: "id",
+#             consts.CONFIG_TARGET_COLUMN: "id",
+#             consts.CONFIG_CAST: None,
+#         },
+#     ]
+#     assert config_manager.process_in_memory() is True
 
 
 def test_get_table_info(module_under_test):

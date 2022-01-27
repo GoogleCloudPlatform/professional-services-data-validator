@@ -193,7 +193,7 @@ class FilterField(object):
 
 class ComparisonField(object):
     def __init__(self, field_name, alias=None, cast=None):
-        """A representation of a group by field used to build a query.
+        """A representation of a comparison field used to build a query.
 
         Args:
             field_name (String): A field to act on in the table
