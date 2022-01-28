@@ -14,7 +14,6 @@
 
 import os
 
-import logging
 import json
 from yaml import dump, load, Dumper, Loader
 
@@ -28,7 +27,7 @@ from data_validation import (
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
-Dumper.ignore_aliases = lambda *args : True
+Dumper.ignore_aliases = lambda *args: True
 
 
 def _get_arg_config_file(args):
@@ -87,6 +86,7 @@ def get_aggregate_config(args, config_manager):
         )
     return aggregate_configs
 
+
 def get_calculated_config(args, config_manager):
     """Return list of formatted calculated objects.
 
@@ -95,8 +95,7 @@ def get_calculated_config(args, config_manager):
     """
     calculated_configs = []
     fields = []
-    if args.hash is not None:
-        col_args = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
+    if args.hash:
         fields = config_manager._build_dependent_aliases("hash")
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(["hash__all"])
@@ -104,12 +103,15 @@ def get_calculated_config(args, config_manager):
     else:
         pass
     for field in fields:
-        calculated_configs.append(config_manager.build_config_calculated_fields(
-            field['reference'],
-            field['calc_type'],
-            field['name'],
-            field['depth'],
-            None))
+        calculated_configs.append(
+            config_manager.build_config_calculated_fields(
+                field["reference"],
+                field["calc_type"],
+                field["name"],
+                field["depth"],
+                None,
+            )
+        )
     return calculated_configs
 
 
@@ -129,7 +131,9 @@ def build_config_from_args(args, config_manager):
             )
     elif config_manager.validation_type == consts.ROW_VALIDATION:
         if args.comparison_fields is not None:
-            comparison_fields = cli_tools.get_arg_list(args.comparison_fields, default_value=[])
+            comparison_fields = cli_tools.get_arg_list(
+                args.comparison_fields, default_value=[]
+            )
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )

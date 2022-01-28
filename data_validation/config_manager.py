@@ -153,11 +153,11 @@ class ConfigManager(object):
     @property
     def comparison_fields(self):
         """ Return fields from Config """
-        return self._config.get(consts.CONFIG_FIELDS, [])
+        return self._config.get(consts.CONFIG_COMPARISON_FIELDS, [])
 
     def append_comparison_fields(self, field_configs):
         """Append field configs to existing config."""
-        self._config[consts.CONFIG_FIELDS] = (
+        self._config[consts.CONFIG_COMPARISON_FIELDS] = (
             self.comparison_fields + field_configs
         )
 
@@ -366,15 +366,14 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for field in fields:
-
-#             if field.casefold() not in casefold_source_columns:
-#                 raise ValueError(
-#                     f"Field DNE in source: {source_table.op().name}.{column}"
-#                 )
-#             if field.casefold() not in casefold_target_columns:
-#                 raise ValueError(
-#                     f"Field DNE in target: {target_table.op().name}.{column}"
-#                 )
+            if field.casefold() not in casefold_source_columns:
+                raise ValueError(
+                    f"Field DNE in source: {source_table.op().name}.{field}"
+                )
+            if field.casefold() not in casefold_target_columns:
+                raise ValueError(
+                    f"Field DNE in target: {target_table.op().name}.{field}"
+                )
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: field.casefold(),
                 consts.CONFIG_TARGET_COLUMN: field.casefold(),
@@ -461,7 +460,9 @@ class ConfigManager(object):
 
         return aggregate_configs
 
-    def build_config_calculated_fields(self, reference, calc_type, alias, depth, supported_types, arg_value=None):
+    def build_config_calculated_fields(
+        self, reference, calc_type, alias, depth, supported_types, arg_value=None
+    ):
         """Returns list of calculated fields"""
         source_table = self.get_source_ibis_calculated_table(n=depth)
         target_table = self.get_target_ibis_calculated_table(n=depth)
@@ -486,7 +487,6 @@ class ConfigManager(object):
                     print(msg)
                 continue
 
-
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: reference,
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: reference,
@@ -496,22 +496,28 @@ class ConfigManager(object):
         }
         return calculated_config
 
-
     def _build_dependent_aliases(self, calc_type):
         """This is a utility function for determining the required depth of all fields"""
         order_of_operations = []
         source_table = self.get_source_ibis_calculated_table()
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
-        if calc_type == 'hash':
-            order_of_operations = ['cast', 'ifnull', 'rstrip', 'upper', 'concat', 'hash']
+        if calc_type == "hash":
+            order_of_operations = [
+                "cast",
+                "ifnull",
+                "rstrip",
+                "upper",
+                "concat",
+                "hash",
+            ]
         column_aliases = {}
         col_names = []
         for i, calc in enumerate(order_of_operations):
             if i == 0:
                 previous_level = [x for x in casefold_source_columns.values()]
             else:
-                previous_level = [k for k, v in column_aliases.items() if v == i-1]
-            if calc in ['concat', 'hash']:
+                previous_level = [k for k, v in column_aliases.items() if v == i - 1]
+            if calc in ["concat", "hash"]:
                 col = {}
                 col["reference"] = previous_level
                 col["name"] = f"{calc}__all"
@@ -522,13 +528,17 @@ class ConfigManager(object):
                 column_aliases[name] = i
                 col_names.append(col)
             else:
-                for column in previous_level: # this needs to be the previous manifest of columns
+                for (
+                    column
+                ) in (
+                    previous_level
+                ):  # this needs to be the previous manifest of columns
                     col = {}
                     col["reference"] = [column]
-                    col['name'] = f"{calc}__" + column
-                    col['calc_type'] = calc
+                    col["name"] = f"{calc}__" + column
+                    col["calc_type"] = calc
                     col["depth"] = i
-                    name = col['name']
+                    name = col["name"]
                     column_aliases[name] = i
                     col_names.append(col)
         return col_names

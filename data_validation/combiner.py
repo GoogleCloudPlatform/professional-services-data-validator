@@ -24,7 +24,6 @@ import json
 
 import ibis
 import ibis.expr.datatypes
-import numpy
 
 from data_validation import consts
 
@@ -148,8 +147,6 @@ def _calculate_differences(
     difference calculation would fail if done after that step.
     """
     schema = source.schema()
-    all_fields = frozenset(schema.names)
-    validation_fields = all_fields - frozenset(join_on_fields)
 
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
@@ -178,7 +175,7 @@ def _calculate_differences(
                     (ibis.literal(field).name("validation_name"),)
                     + join_on_fields
                     + _calculate_difference(
-                    field_differences, field_type, validation, is_value_comparison
+                        field_differences, field_type, validation, is_value_comparison
                     )
                 ]
             )
@@ -202,8 +199,12 @@ def _pivot_result(result, join_on_fields, validations, result_type):
                 result.projection(
                     (
                         ibis.literal(field).name("validation_name"),
-                        ibis.literal(validation.validation_type).name("validation_type"),
-                        ibis.literal(validation.aggregation_type).name("aggregation_type"),
+                        ibis.literal(validation.validation_type).name(
+                            "validation_type"
+                        ),
+                        ibis.literal(validation.aggregation_type).name(
+                            "aggregation_type"
+                        ),
                         ibis.literal(validation.get_table_name(result_type)).name(
                             "table_name"
                         ),

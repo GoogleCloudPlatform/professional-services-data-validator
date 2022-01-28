@@ -19,7 +19,6 @@ from data_validation.query_builder.query_builder import (
     GroupedField,
     AggregateField,
     CalculatedField,
-    ComparisonField,
     FilterField,
 )
 
@@ -223,19 +222,11 @@ class ValidationBuilder(object):
         Args:
             primary_key (Dict): An object with source, target, and cast info
         """
-        source_config = deepcopy(primary_key)
         source_field_name = primary_key[consts.CONFIG_SOURCE_COLUMN]
-        target_config = deepcopy(primary_key)
         target_field_name = primary_key[consts.CONFIG_TARGET_COLUMN]
         # grab calc field metadata
         alias = primary_key[consts.CONFIG_FIELD_ALIAS]
         # check if valid calc field and return correct object
-        source_field = ComparisonField(
-            field_name=source_field_name, alias=alias
-        )
-        target_field = ComparisonField(
-            field_name=target_field_name, alias=alias
-        )
         self.source_builder.add_comparison_field(source_field_name)
         self.target_builder.add_comparison_field(target_field_name)
         self.primary_keys[alias] = primary_key
@@ -282,23 +273,15 @@ class ValidationBuilder(object):
         Args:
             comparison_field (Dict): An object with source, target, and cast info
         """
-        source_config = deepcopy(comparison_field)
         source_field_name = comparison_field[consts.CONFIG_SOURCE_COLUMN]
-        target_config = deepcopy(comparison_field)
         target_field_name = comparison_field[consts.CONFIG_TARGET_COLUMN]
         # grab calc field metadata
         alias = comparison_field[consts.CONFIG_FIELD_ALIAS]
         # check if valid calc field and return correct object
-        source_field = ComparisonField(
-            field_name=source_field_name, alias=alias
-        )
-        target_field = ComparisonField(
-            field_name=target_field_name, alias=alias
-        )
         self.source_builder.add_comparison_field(source_field_name)
         self.target_builder.add_comparison_field(target_field_name)
         self._metadata[alias] = metadata.ValidationMetadata(
-            aggregation_type = None,
+            aggregation_type=None,
             validation_type=self.validation_type,
             source_table_schema=self.config_manager.source_schema,
             source_table_name=self.config_manager.source_table,
@@ -306,7 +289,7 @@ class ValidationBuilder(object):
             target_table_name=self.config_manager.target_table,
             source_column_name=source_field_name,
             target_column_name=target_field_name,
-            threshold = self.config_manager.threshold,
+            threshold=self.config_manager.threshold,
         )
 
     def add_calc(self, calc_field):

@@ -273,7 +273,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--comparison-fields",
         "-comp-fields",
-        help="Individual columns to compare. If comparing a calculated field use the column alias."
+        help="Individual columns to compare. If comparing a calculated field use the column alias.",
     )
     run_parser.add_argument(
         "--grouped-columns",
@@ -389,15 +389,14 @@ def _configure_validate_parser(subparsers):
     )
     _configure_column_parser(column_parser)
 
-    row_parser = validate_subparsers.add_parser(
-        "row", help="Run a row validation"
-    )
+    row_parser = validate_subparsers.add_parser("row", help="Run a row validation")
     _configure_row_parser(row_parser)
 
     schema_parser = validate_subparsers.add_parser(
         "schema", help="Run a schema validation"
     )
     _configure_schema_parser(schema_parser)
+
 
 def _configure_row_parser(row_parser):
     """Configure arguments to run row level validations."""
@@ -410,7 +409,7 @@ def _configure_row_parser(row_parser):
     row_parser.add_argument(
         "--comparison-fields",
         "-comp-fields",
-        help="Individual columns to compare. If comparing a calculated field use the column alias."
+        help="Individual columns to compare. If comparing a calculated field use the column alias.",
     )
     row_parser.add_argument(
         "--primary-keys",
@@ -448,6 +447,7 @@ def _configure_row_parser(row_parser):
         help="Row batch size used for random row filters (default 10,000).",
     )
 
+
 def _configure_column_parser(column_parser):
     """Configure arguments to run column level validations."""
     _add_common_arguments(column_parser)
@@ -479,17 +479,17 @@ def _configure_column_parser(column_parser):
     column_parser.add_argument(
         "--hash",
         "-hash",
-        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns"
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
         "--bit_xor",
         "-bit_xor",
-        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns"
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
         "--comparison-fields",
         "-comp-fields",
-        help="list of fields to perform exact comparisons to. Use column aliases if this is calculated."
+        help="list of fields to perform exact comparisons to. Use column aliases if this is calculated.",
     )
     column_parser.add_argument(
         "--grouped-columns",
@@ -742,7 +742,7 @@ def get_arg_list(arg_value, default_value=None):
         return default_value
 
     try:
-        if isinstance (arg_value, list):
+        if isinstance(arg_value, list):
             arg_value = str(arg_value)
         # arg_value = "hash_all"
         arg_list = json.loads(arg_value)

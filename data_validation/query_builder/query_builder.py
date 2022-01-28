@@ -191,6 +191,7 @@ class FilterField(object):
 
         return self.expr(self.left, self.right)
 
+
 class ComparisonField(object):
     def __init__(self, field_name, alias=None, cast=None):
         """A representation of a comparison field used to build a query.
@@ -319,7 +320,9 @@ class CalculatedField(object):
     def cast(config, fields):
         if config.get("default_cast") is None:
             target_type = "string"
-        return CalculatedField(ibis.expr.api.ValueExpr.cast, config, fields, target_type=target_type,)
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.cast, config, fields, target_type=target_type,
+        )
 
     @staticmethod
     def custom(expr):
@@ -355,7 +358,13 @@ class CalculatedField(object):
 
 class QueryBuilder(object):
     def __init__(
-        self, aggregate_fields, calculated_fields, filters, grouped_fields, comparison_fields, limit=None
+        self,
+        aggregate_fields,
+        calculated_fields,
+        filters,
+        grouped_fields,
+        comparison_fields,
+        limit=None,
     ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
@@ -386,7 +395,7 @@ class QueryBuilder(object):
             aggregate_fields,
             filters=filters,
             grouped_fields=grouped_fields,
-            comparison_fields = comparison_fields,
+            comparison_fields=comparison_fields,
             calculated_fields=calculated_fields,
         )
 
@@ -405,7 +414,11 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.comparison_fields]
 
     def compile_calculated_fields(self, table, n=0):
-        return [field.compile(table) for field in self.calculated_fields if field.config[consts.CONFIG_DEPTH] == n]
+        return [
+            field.compile(table)
+            for field in self.calculated_fields
+            if field.config[consts.CONFIG_DEPTH] == n
+        ]
         # if n is not None:
         #     return [
         #         field.compile(table)
@@ -429,7 +442,8 @@ class QueryBuilder(object):
         calc_table = table
         if self.calculated_fields:
             depth_limit = max(
-                field.config.get(consts.CONFIG_DEPTH, 0) for field in self.calculated_fields
+                field.config.get(consts.CONFIG_DEPTH, 0)
+                for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
                 calc_table = calc_table.mutate(
@@ -446,7 +460,9 @@ class QueryBuilder(object):
             else filtered_table
         )
         if self.aggregate_fields:
-            query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
+            query = grouped_table.aggregate(
+                self.compile_aggregate_fields(filtered_table)
+            )
         else:
             query = grouped_table
 

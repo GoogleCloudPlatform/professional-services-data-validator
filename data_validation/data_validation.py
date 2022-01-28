@@ -286,7 +286,6 @@ class DataValidation(object):
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()
 
-
         if self.config_manager.validation_type == consts.ROW_VALIDATION:
             join_on_fields = set(validation_builder.get_primary_keys())
         else:
