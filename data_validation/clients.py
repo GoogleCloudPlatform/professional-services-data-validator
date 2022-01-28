@@ -26,12 +26,11 @@ import ibis.backends.pandas
 from ibis.backends.pandas.client import PandasClient
 from ibis.backends.mysql.client import MySQLClient
 from ibis.backends.postgres.client import PostgreSQLClient
-from ibis.backends.DB2.client import DB2Client
 
 import third_party.ibis.ibis_addon.datatypes
 from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
-from third_party.ibis.ibis_DB2.api import db2_connect
+from third_party.ibis.ibis_DB2.api import connect as db2_connect
 from data_validation import client_info
 from data_validation import consts, exceptions
 

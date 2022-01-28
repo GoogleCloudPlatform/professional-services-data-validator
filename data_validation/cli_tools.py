@@ -130,14 +130,14 @@ CONNECTION_SOURCE_FIELDS = {
         ],
     ],
     "DB2": [
-        ["host": "Desired DB2 host"],
-        ["port": "Desired DB2 port (50000 if not provided)"],
-        ["user": "Username to connect to"],
-        ["password": "Password for authentication of user"],
-        ["database": "Database in DB2 to connect to"],
-        ["url": "URL link in DB2 to connect to"],
-        ["driver": "Driver link in DB2 to connect to (default ibm_db_sa)"],
-    ]
+        ["host", "Desired DB2 host"],
+        ["port", "Desired DB2 port (50000 if not provided)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in DB2 to connect to"],
+        ["url", "URL link in DB2 to connect to"],
+        ["driver", "Driver link in DB2 to connect to (default ibm_db_sa)"],
+    ],
 }
 
 

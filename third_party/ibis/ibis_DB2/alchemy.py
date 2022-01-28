@@ -18,7 +18,7 @@ from ibm_db_sa.base import DB2Dialect
 
 import ibis.expr.datatypes as dt11
 import ibis.expr.datatypes as dts
-import ibis.sql.alchemy as s_al
+import ibis.backends.base_sqlalchemy.alchemy as s_al
 import third_party.ibis.ibis_DB2.expr.datatypes as dt
 
 _ibis_type_to_sqla = {

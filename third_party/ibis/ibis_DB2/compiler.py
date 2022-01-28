@@ -31,11 +31,11 @@ import ibis.common.geospatial as geo
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
-import ibis.sql.alchemy as alch
+import ibis.backends.base_sqlalchemy.alchemy as alch
 import third_party.ibis.ibis_DB2.alchemy as db2_alch
 
 # used for literal translate
-from ibis.sql.alchemy import (
+from ibis.backends.base_sqlalchemy.alchemy import (
     _get_sqla_table,
     _variance_reduction,
     fixed_arity,
