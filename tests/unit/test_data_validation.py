@@ -322,9 +322,45 @@ SAMPLE_ROW_CONFIG = {
     consts.CONFIG_FORMAT: "table",
 }
 
+# Row confg
+SAMPLE_JSON_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "pkey",
+            consts.CONFIG_SOURCE_COLUMN: "pkey",
+            consts.CONFIG_TARGET_COLUMN: "pkey",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_COMPARISON_FIELDS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "col_b",
+            consts.CONFIG_SOURCE_COLUMN: "col_b",
+            consts.CONFIG_TARGET_COLUMN: "col_b",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
+}
+
 JSON_DATA = """[{"col_a":1,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
+JSON_PK_DATA = (
+    """[{"pkey":1, "col_a":1,"col_b":"a"},{"pkey":2, "col_a":1,"col_b":"b"}]"""
+)
+JSON_PK_BAD_DATA = """[{"pkey":1, "col_a":0,"col_b":"b"},{"pkey":2, "col_a":1,"col_b":"c"},{"pkey":3, "col_a":2,"col_b":"d"},{"pkey":4, "col_a":3,"col_b":"e"},{"pkey":5, "col_a":4,"col_b":"f"}]"""
 
 STRING_CONSTANT = "constant"
 
@@ -628,3 +664,36 @@ def test_row_level_validation(module_under_test, fs):
     assert len(result_df) == 200
     assert len(str_comparison_df) == 100
     assert len(int_comparison_df) == 100
+
+
+def test_fail_row_level_validation(module_under_test, fs):
+    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_PK_DATA)
+    _create_table_file(TARGET_TABLE_FILE_PATH, JSON_PK_BAD_DATA)
+
+    client = module_under_test.DataValidation(SAMPLE_JSON_ROW_CONFIG)
+    result_df = client.execute()
+
+    success_df = result_df[result_df["status"] == "fail"]
+
+    # based on shared keys
+    assert len(success_df) == 2
+    assert len(result_df) == 5
+
+
+def test_bad_join_row_level_validation(module_under_test, fs):
+    data = _generate_fake_data(rows=100, second_range=0)
+    target_data = _generate_fake_data(initial_id=100, rows=1, second_range=0)
+
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(target_data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    result_df = client.execute()
+
+    comparison_df = result_df[result_df["status"].isnull()]
+    # 2 validations * (100 source + 1 target)
+    assert len(result_df) == 202
+    assert len(comparison_df) == 202
