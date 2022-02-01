@@ -27,6 +27,7 @@ from data_validation import (
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
+# by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
 
 
@@ -177,7 +178,7 @@ def build_config_managers_from_args(args):
 
     # Schema validation will not accept filters, labels, or threshold as flags
     filter_config, labels, threshold = [], [], 0.0
-    if config_type == consts.COLUMN_VALIDATION:
+    if config_type != consts.COLUMN_VALIDATION:
         if args.filters:
             filter_config = cli_tools.get_filters(args.filters)
         if args.threshold:

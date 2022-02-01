@@ -220,9 +220,9 @@ class DataValidation(object):
                 )
             )
 
-        elif self.config_manager.primary_keys:
-            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
-            validation_builder.add_config_query_groups(grouped_fields)
+        # elif self.config_manager.primary_keys:
+        #     validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+        #     validation_builder.add_config_query_groups(grouped_fields)
 
         else:
             warnings.warn(
