@@ -299,8 +299,11 @@ class CalculatedField(object):
 
     @staticmethod
     def ifnull(config, fields):
-        if config.get("default_null_string") is None:
-            config["default_string"] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
+        config["default_string"] = (
+            ibis.literal("DEFAULT_REPLACEMENT_STRING")
+            if config.get("default_null_string") is None
+            else config.get("default_null_string")
+        )
         fields = [fields[0], config["default_string"]]
         return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
 

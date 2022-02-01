@@ -159,7 +159,7 @@ def _calculate_differences(
 
     differences_pivots = []
     for field, field_type in schema.items():
-        if field not in validations.keys():
+        if field not in validations:
             continue
         else:
             validation = validations[field]
@@ -191,7 +191,7 @@ def _pivot_result(result, join_on_fields, validations, result_type):
     pivots = []
 
     for field in validation_fields:
-        if field not in validations.keys():
+        if field not in validations:
             continue
         else:
             validation = validations[field]

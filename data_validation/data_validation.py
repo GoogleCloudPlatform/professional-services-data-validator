@@ -286,13 +286,16 @@ class DataValidation(object):
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()
 
-        if self.config_manager.validation_type == consts.ROW_VALIDATION:
-            join_on_fields = set(validation_builder.get_primary_keys())
-        else:
-            join_on_fields = set(validation_builder.get_group_aliases())
+        join_on_fields = (
+            set(validation_builder.get_primary_keys())
+            if self.config_manager.validation_type == consts.ROW_VALIDATION
+            else set(validation_builder.get_group_aliases())
+        )
 
         # If row validation from YAML, compare source and target agg values
-        is_value_comparison = self.config_manager.validation_type == "Row"
+        is_value_comparison = (
+            self.config_manager.validation_type == consts.ROW_VALIDATION
+        )
 
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)

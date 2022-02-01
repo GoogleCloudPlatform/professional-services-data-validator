@@ -102,7 +102,7 @@ class ConfigManager(object):
         )
 
     def process_in_memory(self):
-        """TODO: (emceehilton) we need to eventually make remote execution a parameter"""
+        """Return whether to process in memory or on a remote platform."""
         return True
 
     @property
@@ -243,7 +243,8 @@ class ConfigManager(object):
         return self._source_ibis_table
 
     def get_source_ibis_calculated_table(self, n=None):
-        """Return mutated IbisTable from source"""
+        """Return mutated IbisTable from source
+           n: Int the depth of subquery requested"""
         table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
@@ -261,7 +262,8 @@ class ConfigManager(object):
         return self._target_ibis_table
 
     def get_target_ibis_calculated_table(self, n=None):
-        """Return mutated IbisTable from target"""
+        """Return mutated IbisTable from target
+           n: Int the depth of subquery requested"""
         table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
