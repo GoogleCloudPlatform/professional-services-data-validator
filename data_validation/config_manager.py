@@ -242,13 +242,13 @@ class ConfigManager(object):
             )
         return self._source_ibis_table
 
-    def get_source_ibis_calculated_table(self, n=None):
+    def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
            n: Int the depth of subquery requested"""
         table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.source_builder.compile_calculated_fields(table, n)
+            vb.source_builder.compile_calculated_fields(table, n=depth)
         )
 
         return calculated_table
@@ -261,13 +261,13 @@ class ConfigManager(object):
             )
         return self._target_ibis_table
 
-    def get_target_ibis_calculated_table(self, n=None):
+    def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
            n: Int the depth of subquery requested"""
         table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.target_builder.compile_calculated_fields(table, n)
+            vb.target_builder.compile_calculated_fields(table, n=depth)
         )
 
         return calculated_table
@@ -359,23 +359,23 @@ class ConfigManager(object):
             verbose=verbose,
         )
 
-    def build_config_comparison_fields(self, fields):
+    def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
-        source_table = self.get_source_ibis_calculated_table()
-        target_table = self.get_target_ibis_calculated_table()
-        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
-        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
-
+        # source_table = self.get_source_ibis_calculated_table(depth=depth)
+        # target_table = self.get_target_ibis_calculated_table(depth=depth)
+        # casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        # casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
         for field in fields:
-            if field.casefold() not in casefold_source_columns:
-                raise ValueError(
-                    f"Field DNE in source: {source_table.op().name}.{field}"
-                )
-            if field.casefold() not in casefold_target_columns:
-                raise ValueError(
-                    f"Field DNE in target: {target_table.op().name}.{field}"
-                )
+            # TODO: (emceehilton) need to find a way to evaluate columns after nested subqueries are built
+            # if field.casefold() not in casefold_source_columns:
+            #     raise ValueError(
+            #         f"Field DNE in source: {source_table.op().name}.{field}"
+            #     )
+            # if field.casefold() not in casefold_target_columns:
+            #     raise ValueError(
+            #         f"Field DNE in target: {target_table.op().name}.{field}"
+            #     )
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: field.casefold(),
                 consts.CONFIG_TARGET_COLUMN: field.casefold(),
@@ -466,8 +466,8 @@ class ConfigManager(object):
         self, reference, calc_type, alias, depth, supported_types, arg_value=None
     ):
         """Returns list of calculated fields"""
-        source_table = self.get_source_ibis_calculated_table(n=depth)
-        target_table = self.get_target_ibis_calculated_table(n=depth)
+        source_table = self.get_source_ibis_calculated_table(depth=depth)
+        target_table = self.get_target_ibis_calculated_table(depth=depth)
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}

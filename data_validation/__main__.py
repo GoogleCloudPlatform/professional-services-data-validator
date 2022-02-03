@@ -98,11 +98,9 @@ def get_calculated_config(args, config_manager):
     fields = []
     if args.hash:
         fields = config_manager._build_dependent_aliases("hash")
-        config_manager.append_comparison_fields(
-            config_manager.build_config_comparison_fields(["hash__all"])
-        )
-    else:
-        pass
+    max_depth = max([x["depth"] for x in fields])
+    print("+++++++++")
+    print(max_depth)
     for field in fields:
         calculated_configs.append(
             config_manager.build_config_calculated_fields(
@@ -111,6 +109,12 @@ def get_calculated_config(args, config_manager):
                 field["name"],
                 field["depth"],
                 None,
+            )
+        )
+    if args.hash:
+        config_manager.append_comparison_fields(
+            config_manager.build_config_comparison_fields(
+                ["hash__all"], depth=max_depth
             )
         )
     return calculated_configs

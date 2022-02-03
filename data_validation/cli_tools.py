@@ -241,51 +241,6 @@ def _configure_run_parser(subparsers):
         help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
     )
     run_parser.add_argument(
-        "--count",
-        "-count",
-        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--sum",
-        "-sum",
-        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--avg",
-        "-avg",
-        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--min",
-        "-min",
-        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--max",
-        "-max",
-        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--hash",
-        "-hash",
-        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--comparison-fields",
-        "-comp-fields",
-        help="Individual columns to compare. If comparing a calculated field use the column alias.",
-    )
-    run_parser.add_argument(
-        "--grouped-columns",
-        "-gc",
-        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
-    )
-    run_parser.add_argument(
-        "--primary-keys",
-        "-pk",
-        help="Comma separated list of primary key columns 'col_a,col_b'",
-    )
-    run_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"
     )
     run_parser.add_argument(
@@ -298,6 +253,11 @@ def _configure_run_parser(subparsers):
     )
     run_parser.add_argument(
         "--labels", "-l", help="Key value pair labels for validation run",
+    )
+    run_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hash 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--service-account",
@@ -412,6 +372,11 @@ def _configure_row_parser(row_parser):
         help="Individual columns to compare. If comparing a calculated field use the column alias.",
     )
     row_parser.add_argument(
+        "--calculated-fields",
+        "-calc-fields",
+        help="list of calculated fields to generate.",
+    )
+    row_parser.add_argument(
         "--primary-keys",
         "-pk",
         help="Comma separated list of primary key columns 'col_a,col_b'",
@@ -490,6 +455,11 @@ def _configure_column_parser(column_parser):
         "--comparison-fields",
         "-comp-fields",
         help="list of fields to perform exact comparisons to. Use column aliases if this is calculated.",
+    )
+    column_parser.add_argument(
+        "--calculated-fields",
+        "-calc-fields",
+        help="list of calculated fields to generate.",
     )
     column_parser.add_argument(
         "--grouped-columns",
