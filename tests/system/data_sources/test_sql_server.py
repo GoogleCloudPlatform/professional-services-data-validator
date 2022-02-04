@@ -64,7 +64,7 @@ def test_sql_server_count():
         # Validation Type
         consts.CONFIG_TYPE: "Column",
         # Configuration Required Depending on Validator Type
-        consts.CONFIG_SCHEMA_NAME: "guestbook",
+        consts.CONFIG_SCHEMA_NAME: "dbo",
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_AGGREGATES: [
             {
