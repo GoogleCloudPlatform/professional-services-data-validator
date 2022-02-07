@@ -70,9 +70,9 @@ except Exception:
     OracleClient = _raise_missing_client_error("pip install cx_Oracle")
 
 try:
-    from third_party.ibis.ibis_mssql import connect as mssql_connect
+    from third_party.ibis.ibis_mssql.client import MSSQLClient
 except Exception:
-    mssql_connect = _raise_missing_client_error("pip install pyodbc")
+    MSSQLClient = _raise_missing_client_error("pip install pyodbc")
 
 try:
     from third_party.ibis.ibis_snowflake.client import (
@@ -129,7 +129,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     if type(client) in [
         OracleClient,
         PostgreSQLClient,
-        third_party.ibis.ibis_mssql.client.MSSQLClient,
+        MSSQLClient,
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif type(client) in [PandasClient]:
@@ -143,7 +143,7 @@ def list_schemas(client):
     if type(client) in [
         OracleClient,
         PostgreSQLClient,
-        third_party.ibis.ibis_mssql.client.MSSQLClient,
+        MSSQLClient,
     ]:
         return client.list_schemas()
     elif hasattr(client, "list_databases"):
@@ -157,7 +157,7 @@ def list_tables(client, schema_name):
     if type(client) in [
         OracleClient,
         PostgreSQLClient,
-        third_party.ibis.ibis_mssql.client.MSSQLClient,
+        MSSQLClient,
     ]:
         return client.list_tables(schema=schema_name)
     elif schema_name:
@@ -232,7 +232,7 @@ CLIENT_LOOKUP = {
     "Postgres": PostgreSQLClient,
     "Redshift": PostgreSQLClient,
     "Teradata": TeradataClient,
-    "MSSQL": mssql_connect,
+    "MSSQL": MSSQLClient,
     "Snowflake": snowflake_connect,
     "Spanner": spanner_connect,
 }
