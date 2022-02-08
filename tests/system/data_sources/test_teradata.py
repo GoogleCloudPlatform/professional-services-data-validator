@@ -16,6 +16,7 @@ import os
 
 from data_validation import data_validation, consts
 
+TERADATA_USER = os.getenv("TERADATA_USER", "udf")
 TERADATA_PASSWORD = os.getenv("TERADATA_PASSWORD")
 TERADATA_HOST = os.getenv("TERADATA_HOST")
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -23,7 +24,7 @@ PROJECT_ID = os.getenv("PROJECT_ID")
 conn = {
     "source_type": "Teradata",
     "host": TERADATA_HOST,
-    "user_name": "udf",
+    "user_name": TERADATA_USER,
     "password": TERADATA_PASSWORD,
     "port": 1025,
 }

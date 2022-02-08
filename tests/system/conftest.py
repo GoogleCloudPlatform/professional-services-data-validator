@@ -23,6 +23,10 @@ import pytest
 ALPHABET = "abcdefghijklmnopqrstuvwxyz"
 
 
+def pytest_addoption(parser):
+    parser.addoption("--no-cloud-sql", action="store_const", const=True)
+
+
 @pytest.fixture(scope="module")
 def bigquery_client():
     project_id = os.environ["PROJECT_ID"]
