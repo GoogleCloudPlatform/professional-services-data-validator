@@ -159,6 +159,8 @@ class ValidationBuilder(object):
             target_table_name=self.config_manager.target_table,
             source_column_name=source_field_name,
             target_column_name=target_field_name,
+            primary_keys=self.config_manager.primary_keys,
+            num_random_rows=self.config_manager.random_row_batch_size,
             threshold=self.config_manager.threshold,
         )
 
