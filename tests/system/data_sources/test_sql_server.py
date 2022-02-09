@@ -25,7 +25,7 @@ import pytest
 # https://cloud.google.com/sql/docs/sqlserver/connect-admin-proxy
 
 # Cloud SQL Proxy listens on localhost
-SQL_SERVER_HOST = os.getenv("SQL_SERVER_HOST", "localhost")
+SQL_SERVER_HOST = os.getenv("SQL_SERVER_HOST", "127.0.0.1")
 SQL_SERVER_USER = os.getenv("SQL_SERVER_USER", "sqlserver")
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
 PROJECT_ID = os.getenv("PROJECT_ID")

@@ -14,7 +14,7 @@
 
 CREATE SCHEMA Sales;
 
-DROP TABLE IF EXISTS Salses.customers;
+DROP TABLE IF EXISTS Sales.customers;
 CREATE TABLE Sales.customers (
 customer VARCHAR(255),
 content VARCHAR(255),
