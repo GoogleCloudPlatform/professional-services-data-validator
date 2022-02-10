@@ -294,8 +294,15 @@ class CalculatedField(object):
     @staticmethod
     def hash(config, fields):
         if config.get("default_hash_function") is None:
+            how = "sha256"
+            return CalculatedField(
+                ibis.expr.api.StringValue.hashbytes, config, fields, how=how,
+            )
+        else:
             how = "farm_fingerprint"
-        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how=how,)
+            return CalculatedField(
+                ibis.expr.api.ValueExpr.hash, config, fields, how=how,
+            )
 
     @staticmethod
     def ifnull(config, fields):

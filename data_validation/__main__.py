@@ -99,8 +99,6 @@ def get_calculated_config(args, config_manager):
     if args.hash:
         fields = config_manager._build_dependent_aliases("hash")
     max_depth = max([x["depth"] for x in fields])
-    print("+++++++++")
-    print(max_depth)
     for field in fields:
         calculated_configs.append(
             config_manager.build_config_calculated_fields(
