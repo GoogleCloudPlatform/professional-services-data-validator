@@ -162,12 +162,6 @@ class ConfigManager(object):
         )
 
     @property
-    def is_grouped_row_validation(self):
-        """ Returns boolean indicating if validation type is a Grouped Column
-        Row validation. """
-        return self.primary_keys != [] and self.validation_type == "Column"
-
-    @property
     def filters(self):
         """Return Filters from Config """
         return self._config.get(consts.CONFIG_FILTERS, [])
@@ -362,20 +356,7 @@ class ConfigManager(object):
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
-        # source_table = self.get_source_ibis_calculated_table(depth=depth)
-        # target_table = self.get_target_ibis_calculated_table(depth=depth)
-        # casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
-        # casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
         for field in fields:
-            # TODO: (emceehilton) need to find a way to evaluate columns after nested subqueries are built
-            # if field.casefold() not in casefold_source_columns:
-            #     raise ValueError(
-            #         f"Field DNE in source: {source_table.op().name}.{field}"
-            #     )
-            # if field.casefold() not in casefold_target_columns:
-            #     raise ValueError(
-            #         f"Field DNE in target: {target_table.op().name}.{field}"
-            #     )
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: field.casefold(),
                 consts.CONFIG_TARGET_COLUMN: field.casefold(),

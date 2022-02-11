@@ -344,6 +344,7 @@ class ValidationBuilder(object):
         }
         query = self.target_builder.compile(**target_config)
         if self.verbose:
+            print(target_config)
             print("-- ** Target Query ** --")
             print(query.compile())
 
