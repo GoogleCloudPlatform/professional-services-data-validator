@@ -38,14 +38,13 @@ class TextResultHandler(object):
         """
         # the text transformer chokes on bytestring results (e.g. SHA256) this
         # dataframe slice is to remove the source and target values
-        if "validation_type" in result_df.columns:
-            mask = result_df["validation_type"] == consts.ROW_VALIDATION
-            row_result_df = result_df[mask]
-            other_result_df = result_df[~mask]
-            row_result_df["source_agg_value"] = None
-            row_result_df["target_agg_value"] = None
-            frames = [row_result_df, other_result_df]
-            result_df = pd.concat(frames)
+        mask = result_df["validation_type"] == consts.ROW_VALIDATION
+        row_result_df = result_df[mask]
+        other_result_df = result_df[~mask]
+        row_result_df["source_agg_value"] = None
+        row_result_df["target_agg_value"] = None
+        frames = [row_result_df, other_result_df]
+        result_df = pd.concat(frames)
 
         if self.format == "text":
             print(result_df.to_string(index=False))
