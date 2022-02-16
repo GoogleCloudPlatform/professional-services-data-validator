@@ -2,6 +2,24 @@
 
 ## Untagged
 
+## [1.6.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.5.0...v1.6.0) (2021-12-01)
+
+
+### Features
+
+* teradata hashing implementation ([#324](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/324)) ([b74e03e](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b74e03ee94b666afe6a7765add81e6bfef9c227b))
+
+
+### Bug Fixes
+
+* Include StringIO into teradata ibis compiler.py ([#336](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/336)) ([1dba63b](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1dba63be87a8e4b4ff63d1753c6197a6ec3411e5))
+* Issue348 casting ([#349](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/349)) ([1560c7e](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1560c7e4a939f6b1d6eaae912d46ace6eda422b6))
+
+
+### Documentation
+
+* add local development nox docs ([#342](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/issues/342)) ([80d26c6](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/commit/80d26c6adb02ce0d4eeb9053b50f1cdad8372f2c))
+
 ## [1.5.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.4.0...v1.5.0) (2021-10-19)
 
 

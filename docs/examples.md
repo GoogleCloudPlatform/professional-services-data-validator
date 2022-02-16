@@ -2,7 +2,7 @@
 This page describes some basic use cases of the tool.
 
 **PLEASE NOTE:** In below commands, my_bq_conn refers to the connection name for your BigQuery project. We are validating BigQuery tables that are
-available in BigQuery public datasets. These examples validate a table agaist itself for example purposes.  
+available in BigQuery public datasets. These examples validate a table against itself for example purposes.  
 
 Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *' as the default aggregation.
 
@@ -141,6 +141,7 @@ result_handler:
   project_id: my-project-id
   table_id: pso_data_validator.results
   type: BigQuery
+  google_service_account_key_path: path/to/sa.json
 source: my_bq_conn
 target: my_bq_conn
 validations:
@@ -153,6 +154,7 @@ validations:
     source_column: num_bikes_available
     target_column: num_bikes_available
     type: sum
+    cast: float64
   - field_alias: sum__num_docks_available
     source_column: num_docks_available
     target_column: num_docks_available

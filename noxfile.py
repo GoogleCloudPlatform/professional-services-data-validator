@@ -66,7 +66,7 @@ def unit(session):
     )
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(venv_backend="venv")
 def unit_small(session):
     unit(session)
 
@@ -196,6 +196,23 @@ def integration_spanner(session):
 
     session.run("pytest", "third_party/ibis/ibis_cloud_spanner/tests", *session.posargs)
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
+
+
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+def integration_teradata(session):
+    """Run Teradata integration tests.
+    Ensure Teradata validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=["teradatasql"])
+
+    expected_env_vars = ["PROJECT_ID", "TERADATA_PASSWORD", "TERADATA_HOST"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run(
+        "pytest", "tests/system/data_sources/test_teradata.py", *session.posargs
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
