@@ -8,7 +8,7 @@ a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
 ## GCS Connection Management (recommended)
 
 The connections can also be stored in GCS using `PSO_DV_CONFIG_HOME`.
-To do so simply add the GCS path to the environment.
+To do so simply add the GCS path to the environment. Note that if this path is set, query validation configs will also be saved here.
 
 eg.
 `export PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`
