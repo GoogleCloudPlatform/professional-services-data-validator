@@ -14,9 +14,8 @@
 
 import os
 
-from data_validation import cli_tools, consts, data_validation
+from data_validation import cli_tools, consts, data_validation, state_manager
 from data_validation import __main__ as main
-
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
@@ -167,7 +166,9 @@ CLI_STORE_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
+EXPECTED_NUM_YAML_LINES = 35  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
+CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -237,7 +238,48 @@ def test_numeric_types():
         )
 
 
-def test_cli_store_yaml_then_run():
+def test_cli_store_yaml_then_run_gcs():
+    """Test storing and retrieving validation YAML when GCS env var is set."""
+    # Store BQ Connection
+    _store_bq_conn()
+
+    # Build validation and store to file
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(CLI_STORE_COLUMN_ARGS)
+    main.run(mock_args)
+
+    # Look for YAML file in GCS env directory, since that has been set
+    yaml_file_path = os.path.join(
+        os.environ[consts.ENV_DIRECTORY_VAR], "validations/", CLI_CONFIG_FILE
+    )
+
+    # The number of lines is not significant, except that it represents
+    # the exact file expected to be created.  Any change to this value
+    # is likely to be a breaking change and must be assessed.
+    mgr = state_manager.StateManager()
+    validation_bytes = mgr._read_file(yaml_file_path)
+    yaml_file_str = validation_bytes.decode("utf-8")
+    assert len(yaml_file_str.splitlines()) == EXPECTED_NUM_YAML_LINES
+
+    # Run generated config using 'run-config' command
+    run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
+
+    # Run generated config using 'configs run' command
+    run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
+
+    # _remove_bq_conn()
+
+
+def test_cli_store_yaml_then_run_local():
+    """Test storing and retrieving validation YAML when GCS env var not set."""
+    # Unset GCS env var so that YAML is saved locally
+    gcs_path = os.environ[consts.ENV_DIRECTORY_VAR]
+    os.environ[consts.ENV_DIRECTORY_VAR] = ""
+
     # Store BQ Connection
     _store_bq_conn()
 
@@ -251,15 +293,23 @@ def test_cli_store_yaml_then_run():
         # The number of lines is not significant, except that it represents
         # the exact file expected to be created.  Any change to this value
         # is likely to be a breaking change and must be assessed.
-        assert len(yaml_file.readlines()) == 35
+        assert len(yaml_file.readlines()) == EXPECTED_NUM_YAML_LINES
 
-    # Run generated config
+    # Run generated config using 'run-config' command
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
+
+    # Run generated config using 'configs run' command
+    run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
     config_managers = main.build_config_managers_from_yaml(run_config_args)
     main.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
     # _remove_bq_conn()
+
+    # Re-set GCS env var
+    os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
 
 
 def test_cli_find_tables():
