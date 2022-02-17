@@ -19,38 +19,44 @@ from data_validation import data_validation, consts
 
 import os
 
+import pytest
+
 # Local testing requires the Cloud SQL Proxy.
 # https://cloud.google.com/sql/docs/postgres/connect-admin-proxy
 
-
+# Cloud SQL proxy listens to localhost
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 
-def test_postgres_count():
+@pytest.fixture
+def cloud_sql(request):
+    if not request.config.getoption("--no-cloud-sql"):
+        postgres_instance = CloudSQLResourceManager(
+            PROJECT_ID,
+            "POSTGRES_12",
+            "data-validator-postgres12",
+            POSTGRES_PASSWORD,
+            database_id="guestbook",
+            assign_public_ip=True,
+            authorized_networks=None,
+            cpu=1,
+            memory="4GB",
+            enable_bin_logs=False,
+            already_exists=True,
+        )
+
+        # If instance already exists, returns host IP and does not add new data
+        postgres_instance.setup()
+        postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data.sql")
+
+
+def test_postgres_count(cloud_sql):
     """ Test count validation on Postgres instance """
-    postgres_instance = CloudSQLResourceManager(
-        PROJECT_ID,
-        "POSTGRES_12",
-        "data-validator-postgres12",
-        POSTGRES_PASSWORD,
-        database_id="guestbook",
-        assign_public_ip=True,
-        authorized_networks=None,
-        cpu=1,
-        memory="4GB",
-        enable_bin_logs=False,
-        already_exists=True,
-    )
-
-    # If instance already exists, returns host IP and does not add new data
-    postgres_instance.setup()
-    postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data.sql")
-
-    # Cloud SQL proxy listens to localhost
     conn = {
         "source_type": "Postgres",
-        "host": "localhost",
+        "host": POSTGRES_HOST,
         "user": "postgres",
         "password": POSTGRES_PASSWORD,
         "port": 5432,

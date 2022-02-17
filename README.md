@@ -51,7 +51,7 @@ updating the configuration.
 
 ### Managing Connections
 
-The Data Validation Tool expects to recieve a source and target connection for
+The Data Validation Tool expects to receive a source and target connection for
 each validation which is run.
 
 These connections can be supplied directly to the configuration, but more often
@@ -115,7 +115,7 @@ data-validation (--verbose or -v) validate column
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--filters SOURCE_FILTER:TARGET_FILTER]
-                        Colon spearated string values of source and target filters.
+                        Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
   [--config-file or -c CONFIG_FILE]
@@ -178,7 +178,7 @@ data-validation query
 
 ### Using Beta CLI Features
 
-There may be ocassions we want to release a new CLI feature under a Beta flag.
+There may be occasions we want to release a new CLI feature under a Beta flag.
 Any features under Beta may or may not make their way to production. However, if
 there is a Beta feature you wish to use than it can be accessed using the
 following.
@@ -203,7 +203,9 @@ case specific CLI arguments or editing the saved YAML configuration file.
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
-citibike.yaml`
+citibike.yaml`. 
+
+The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME` env variable if that has been set; otherwise, it is saved to wherever the tool is run. 
 
 Here is the generated YAML file named `citibike.yaml`:
 
@@ -233,11 +235,13 @@ Once the file is updated and saved, the following command runs the new
 validation:
 
 ```
-data-validation run-config -c citibike.yaml
+data-validation configs run -c citibike.yaml
 ```
 
 View the complete YAML file for a GroupedColumn validation on the
 [examples](docs/examples.md#) page.
+
+You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`. 
 
 ### Aggregated Fields
 
@@ -454,7 +458,7 @@ in the Data Validation tool, it is a simple process.
 
 1.  In data_validation/data_validation.py
 
-    -   Import the extened Client for the given source (ie. from
+    -   Import the extended Client for the given source (ie. from
         ibis.sql.mysql.client import MySQLClient).
     -   Add the "<RefName>": Client to the global CLIENT_LOOKUP dictionary.
 
