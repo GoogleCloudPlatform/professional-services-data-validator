@@ -277,7 +277,13 @@ class ConfigManager(object):
     def get_result_handler(self):
         """Return ResultHandler instance from supplied config."""
         if not self.result_handler_config:
-            return TextResultHandler(self._config.get(consts.CONFIG_FORMAT, "table"))
+            if self.config[consts.CONFIG_TYPE] == consts.SCHEMA_VALIDATION:
+                cols_filter_list = consts.SCHEMA_VALIDATION_COLUMN_FILTER_LIST
+            else:
+                cols_filter_list = consts.COLUMN_FILTER_LIST
+            return TextResultHandler(
+                self._config.get(consts.CONFIG_FORMAT, "table"), cols_filter_list
+            )
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
         if result_type == "BigQuery":

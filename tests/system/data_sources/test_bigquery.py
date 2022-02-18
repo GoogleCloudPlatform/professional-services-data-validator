@@ -134,6 +134,18 @@ CONFIG_NUMERIC_AGG_VALID = {
     consts.CONFIG_FORMAT: "table",
 }
 
+CONFIG_SCHEMA_VALIDATION = {
+    # BigQuery Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
+    # Validation Type
+    consts.CONFIG_TYPE: "Schema",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_FORMAT: "table",
+}
+
 BQ_CONN_NAME = "bq-integration-test"
 CLI_CONFIG_FILE = "example_test.yaml"
 
@@ -235,6 +247,14 @@ def test_numeric_types():
         assert float(validation["source_agg_value"]) == float(
             validation["target_agg_value"]
         )
+
+
+def test_schema_validation():
+    validator = data_validation.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
+    df = validator.execute()
+
+    for validation in df.to_dict(orient="records"):
+        assert validation["status"] == "Pass"
 
 
 def test_cli_store_yaml_then_run():
