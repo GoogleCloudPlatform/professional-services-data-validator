@@ -276,3 +276,25 @@ def test_get_result_handler(module_under_test):
     handler = config_manager.get_result_handler()
 
     assert handler._table_id == "dataset.table_name"
+
+
+def test_get_primary_keys_list(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+        {
+            consts.CONFIG_FIELD_ALIAS: "sample_id",
+            consts.CONFIG_SOURCE_COLUMN: "sample_id",
+            consts.CONFIG_TARGET_COLUMN: "sample_id",
+            consts.CONFIG_CAST: None,
+        },
+    ]
+    res = config_manager.get_primary_keys_list()
+    assert res == ["id", "sample_id"]

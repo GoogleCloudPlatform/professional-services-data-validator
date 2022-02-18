@@ -61,7 +61,7 @@
   },
   {
     "name": "num_random_rows",
-    "type": "STRING",
+    "type": "INTEGER",
     "description": "Number of random row batch size"
   },
   {

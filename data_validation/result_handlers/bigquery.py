@@ -17,6 +17,7 @@
 from google.cloud import bigquery
 
 from data_validation import client_info
+from data_validation.result_handlers.text import TextResultHandler
 
 
 class BigQueryResultHandler(object):
@@ -54,11 +55,15 @@ class BigQueryResultHandler(object):
         return BigQueryResultHandler(client, table_id=table_id)
 
     def execute(self, config, result_df):
+        text_handler = TextResultHandler("table")
+        text_handler.print_formatted_(result_df)
+
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df
         )
         if any(chunk_errors):
             raise RuntimeError(f"could not write rows: {chunk_errors}")
+        # May need to run `bq update project-id:pso_data_validator.results terraform/results_schema.json` to update schema
 
         return result_df
