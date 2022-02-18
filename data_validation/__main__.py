@@ -16,7 +16,6 @@ import os
 
 import logging
 import json
-from yaml import dump, load, Dumper, Loader
 
 from data_validation import (
     cli_tools,
@@ -27,6 +26,9 @@ from data_validation import (
 )
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
+
+from yaml import dump
+import sys
 
 
 def _get_arg_config_file(args):
@@ -39,10 +41,8 @@ def _get_arg_config_file(args):
 
 def _get_yaml_config_from_file(config_file_path):
     """Return Dict of yaml validation data."""
-    with open(config_file_path, "r") as yaml_file:
-        yaml_configs = load(yaml_file.read(), Loader=Loader)
-
-    return yaml_configs
+    yaml_config = cli_tools.get_validation(config_file_path)
+    return yaml_config
 
 
 def get_aggregate_config(args, config_manager):
@@ -343,12 +343,9 @@ def store_yaml_config_file(args, config_managers):
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
     """
-    config_file_path = _get_arg_config_file(args)
     yaml_configs = convert_config_to_yaml(args, config_managers)
-    yaml_config_str = dump(yaml_configs, Dumper=Dumper)
-
-    with open(config_file_path, "w") as yaml_file:
-        yaml_file.write(yaml_config_str)
+    config_file_path = _get_arg_config_file(args)
+    cli_tools.store_validation(config_file_path, yaml_configs)
 
 
 def run(args):
@@ -362,7 +359,7 @@ def run(args):
 
 
 def run_connections(args):
-    """ Run commands related to connection management."""
+    """Run commands related to connection management."""
     if args.connect_cmd == "list":
         cli_tools.list_connections()
     elif args.connect_cmd == "add":
@@ -374,8 +371,29 @@ def run_connections(args):
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 
 
+def run_config(args):
+    """Run commands related to validation config YAMLs (legacy - superceded by run_validation_configs)."""
+    config_managers = build_config_managers_from_yaml(args)
+    run_validations(args, config_managers)
+
+
+def run_validation_configs(args):
+    """Run commands related to validation config YAMLs."""
+    if args.validation_config_cmd == "run":
+        config_managers = build_config_managers_from_yaml(args)
+        run_validations(args, config_managers)
+    elif args.validation_config_cmd == "list":
+        cli_tools.list_validations()
+    elif args.validation_config_cmd == "get":
+        # Get and print yaml file config.
+        yaml = cli_tools.get_validation(_get_arg_config_file(args))
+        dump(yaml, sys.stdout)
+    else:
+        raise ValueError(f"Configs argument '{args.validate_cmd}' is not supported")
+
+
 def validate(args):
-    """ Run commands related to data validation."""
+    """Run commands related to data validation."""
     if args.validate_cmd == "column" or args.validate_cmd == "schema":
         run(args)
     else:
@@ -391,8 +409,9 @@ def main():
     elif args.command == "connections":
         run_connections(args)
     elif args.command == "run-config":
-        config_managers = build_config_managers_from_yaml(args)
-        run_validations(args, config_managers)
+        run_config(args)
+    elif args.command == "configs":
+        run_validation_configs(args)
     elif args.command == "find-tables":
         print(find_tables_using_string_matching(args))
     elif args.command == "query":

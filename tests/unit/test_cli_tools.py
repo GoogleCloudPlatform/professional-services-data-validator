@@ -18,7 +18,6 @@ from unittest import mock
 
 from data_validation import cli_tools
 
-
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
     "command": "validate",
@@ -58,6 +57,35 @@ CLI_ADD_CONNECTION_ARGS = [
     "--project-id",
     "example-project",
 ]
+
+TEST_VALIDATION_CONFIG = {
+    "source": "example",
+    "target": "example",
+    "result_handler": {},
+    "validations": [
+        {
+            "type": "Column",
+            "table_name": "citibike_trips",
+            "schema_name": "bigquery-public-data.new_york_citibike",
+            "target_schema_name": "bigquery-public-data.new_york_citibike",
+            "target_table_name": "citibike_trips",
+            "labels": [],
+            "threshold": 0.0,
+            "format": "table",
+            "filters": [],
+            "aggregates": [
+                {
+                    "source_column": None,
+                    "target_column": None,
+                    "field_alias": "count",
+                    "type": "count",
+                }
+            ],
+        }
+    ],
+}
+
+WRITE_SUCCESS_STRING = "Success! Config output written to"
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -121,12 +149,44 @@ def test_create_and_list_connections(capsys, fs):
 
     conn = cli_tools.get_connection_config_from_args(args)
     cli_tools.store_connection(args.connection_name, conn)
+    captured = capsys.readouterr()
+    assert WRITE_SUCCESS_STRING in captured.out
 
     # List Connection
     cli_tools.list_connections()
     captured = capsys.readouterr()
 
     assert captured.out == "Connection Name: test\n"
+
+
+def test_configure_arg_parser_list_and_run_validation_configs():
+    """Test configuring arg parse in different ways."""
+    parser = cli_tools.configure_arg_parser()
+
+    args = parser.parse_args(["configs", "list"])
+    assert args.command == "configs"
+    assert args.validation_config_cmd == "list"
+
+    args = parser.parse_args(["configs", "run"])
+    assert args.command == "configs"
+    assert args.validation_config_cmd == "run"
+
+
+def test_create_and_list_and_get_validations(capsys, fs):
+    # Create validation config file
+    cli_tools.store_validation("example_validation.yaml", TEST_VALIDATION_CONFIG)
+    captured = capsys.readouterr()
+    assert WRITE_SUCCESS_STRING in captured.out
+
+    # List validation configs
+    cli_tools.list_validations()
+    captured = capsys.readouterr()
+
+    assert captured.out == "Validation YAMLs found:\nexample_validation.yaml\n"
+
+    # Retrive the stored vaildation config
+    yaml_config = cli_tools.get_validation("example_validation.yaml")
+    assert yaml_config == TEST_VALIDATION_CONFIG
 
 
 def test_find_tables_config():
@@ -167,7 +227,7 @@ def test_get_labels(test_input, expected):
     ],
 )
 def test_get_labels_err(test_input):
-    """Ensure that Value Error is raised when incorrect label argument is provided. """
+    """Ensure that Value Error is raised when incorrect label argument is provided."""
     with pytest.raises(ValueError):
         cli_tools.get_labels(test_input)
 
@@ -329,7 +389,7 @@ def test_get_result_handler(test_input, expected):
     ],
 )
 def test_get_filters(test_input, expected):
-    """ Test get filters from file function. """
+    """Test get filters from file function."""
     res = cli_tools.get_filters(test_input)
     assert res == expected
 
@@ -338,7 +398,7 @@ def test_get_filters(test_input, expected):
     "test_input", [("source:"), ("invalid:filter:count")],
 )
 def test_get_filters_err(test_input):
-    """ Test get filters function returns error. """
+    """Test get filters function returns error."""
     with pytest.raises(ValueError):
         cli_tools.get_filters(test_input)
 

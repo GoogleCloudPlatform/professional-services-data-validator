@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """The Data Validation CLI tool is intended to help to build and execute
 data validation runs with ease.
 
@@ -52,7 +50,6 @@ import uuid
 
 from data_validation import consts
 from data_validation import state_manager
-
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -133,7 +130,7 @@ CONNECTION_SOURCE_FIELDS = {
 
 
 def get_parsed_args():
-    """ Return ArgParser with configured CLI arguments."""
+    """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
     return parser.parse_args()
 
@@ -149,6 +146,7 @@ def configure_arg_parser():
     subparsers = parser.add_subparsers(dest="command")
     _configure_validate_parser(subparsers)
     _configure_run_config_parser(subparsers)
+    _configure_validation_config_parser(subparsers)
     _configure_connection_parser(subparsers)
     _configure_find_tables(subparsers)
     _configure_raw_query(subparsers)
@@ -209,10 +207,12 @@ def _configure_raw_query(subparsers):
 
 
 def _configure_run_config_parser(subparsers):
-    """ Configure arguments to run a data validation YAML config."""
+    """Configure arguments to run a data validation YAML config using the legacy run-config command."""
     run_config_parser = subparsers.add_parser(
-        "run-config", help="Run validations stored in a YAML config file"
+        "run-config",
+        help="Run validations stored in a YAML config file. Note: the 'configs run' command is now the recommended approach",
     )
+
     run_config_parser.add_argument(
         "--config-file",
         "-c",
@@ -220,8 +220,36 @@ def _configure_run_config_parser(subparsers):
     )
 
 
+def _configure_validation_config_parser(subparsers):
+    """Configure arguments to run a data validation YAML config."""
+    validation_config_parser = subparsers.add_parser(
+        "configs", help="Run validations stored in a YAML config file"
+    )
+    configs_subparsers = validation_config_parser.add_subparsers(
+        dest="validation_config_cmd"
+    )
+    _ = configs_subparsers.add_parser("list", help="List your validation configs")
+    run_parser = configs_subparsers.add_parser(
+        "run", help="Run your validation configs"
+    )
+    run_parser.add_argument(
+        "--config-file",
+        "-c",
+        help="YAML Config File Path to be used for building or running validations.",
+    )
+
+    get_parser = configs_subparsers.add_parser(
+        "get", help="Get and print a validation config"
+    )
+    get_parser.add_argument(
+        "--config-file",
+        "-c",
+        help="YAML Config File Path to be used for building or running validations.",
+    )
+
+
 def _configure_run_parser(subparsers):
-    """ Configure arguments to run a data validation."""
+    """Configure arguments to run a data validation."""
 
     # subparsers = parser.add_subparsers(dest="command")
 
@@ -327,7 +355,7 @@ def _configure_run_parser(subparsers):
 
 
 def _configure_connection_parser(subparsers):
-    """ Configure the Parser for Connection Management. """
+    """Configure the Parser for Connection Management."""
     connection_parser = subparsers.add_parser(
         "connections", help="Manage & Store connections to your Databases"
     )
@@ -487,7 +515,7 @@ def _add_common_arguments(parser):
 
 
 def get_connection_config_from_args(args):
-    """ Return dict with connection config supplied."""
+    """Return dict with connection config supplied."""
     config = {consts.SOURCE_TYPE: args.connect_type}
 
     if args.connect_type == "Raw":
@@ -525,7 +553,6 @@ def threshold_float(x):
 #         os.makedirs(dir_path)
 #     return dir_path
 
-
 # def _get_connection_file(connection_name):
 #     dir_path = _get_data_validation_directory()
 #     file_name = f"{connection_name}.connection.json"
@@ -538,7 +565,7 @@ def _generate_random_name(conn):
 
 
 def store_connection(connection_name, conn):
-    """ Store the connection config under the given name."""
+    """Store the connection config under the given name."""
     mgr = state_manager.StateManager()
     mgr.create_connection(connection_name, conn)
 
@@ -548,7 +575,6 @@ def store_connection(connection_name, conn):
 
 #     with open(file_path, "w") as file:
 #         file.write(json.dumps(conn))
-
 
 # def get_connections():
 #     """ Return dict with connection name and path key pairs."""
@@ -567,7 +593,7 @@ def store_connection(connection_name, conn):
 
 
 def list_connections():
-    """ List all saved connections."""
+    """List all saved connections."""
     mgr = state_manager.StateManager()
     connections = mgr.list_connections()
 
@@ -576,7 +602,7 @@ def list_connections():
 
 
 def get_connection(connection_name):
-    """ Return dict connection details for a specific connection."""
+    """Return dict connection details for a specific connection."""
     mgr = state_manager.StateManager()
     return mgr.get_connection_config(connection_name)
 
@@ -586,8 +612,30 @@ def get_connection(connection_name):
 #     return json.loads(conn_str)
 
 
+def store_validation(validation_file_name, yaml_config):
+    """Store the validation YAML config under the given name."""
+    mgr = state_manager.StateManager()
+    mgr.create_validation_yaml(validation_file_name, yaml_config)
+
+
+def get_validation(validation_name):
+    """Return validation YAML for a specific connection."""
+    mgr = state_manager.StateManager()
+    return mgr.get_validation_config(validation_name)
+
+
+def list_validations():
+    """List all saved validation YAMLs."""
+    mgr = state_manager.StateManager()
+    validations = mgr.list_validations()
+
+    print("Validation YAMLs found:")
+    for validation_name in validations:
+        print(f"{validation_name}.yaml")
+
+
 def get_labels(arg_labels):
-    """ Return list of tuples representing key-value label pairs. """
+    """Return list of tuples representing key-value label pairs."""
     labels = []
     if arg_labels:
         pairs = arg_labels.split(",")
@@ -672,7 +720,7 @@ def get_arg_list(arg_value, default_value=None):
 
 
 def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
-    """ Returns dictionary of tables. Backwards compatible for JSON input.
+    """Returns dictionary of tables. Backwards compatible for JSON input.
 
     arg_table (str): tables_list argument specified
     default_value (Any): A default value to supply when arg_value is empty.
@@ -728,7 +776,7 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
 
 
 def split_table(table_ref, schema_required=True):
-    """ Returns schema and table name given list of input values.
+    """Returns schema and table name given list of input values.
 
     table_ref (List): Table reference i.e ['my.schema.my_table']
     schema_required (boolean): Indicates whether schema is required. A source
