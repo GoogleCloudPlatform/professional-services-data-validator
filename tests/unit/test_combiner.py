@@ -538,7 +538,7 @@ def test_generate_report_without_group_by(
                     "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
-                    "status": ["fail", "success", _NAN, _NAN, _NAN, _NAN],
+                    "status": ["fail", "success", "fail", "fail", "fail", "fail"],
                     "labels": [[("name", "group_label")]] * 6,
                 }
             ),

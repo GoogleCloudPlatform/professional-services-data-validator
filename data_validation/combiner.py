@@ -90,6 +90,7 @@ def generate_report(
         print(documented.compile())
 
     result_df = client.execute(documented)
+    result_df.status.fillna("fail", inplace=True)
 
     return result_df
 
