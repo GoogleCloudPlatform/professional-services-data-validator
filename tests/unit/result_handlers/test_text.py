@@ -17,9 +17,27 @@ import pytest
 from pandas import DataFrame
 
 SAMPLE_CONFIG = {}
-SAMPLE_RESULT_DATA = [[0, 1, 2, 3, "Column", "source", "target"], [4, 5, 6, 7, "Column", "source", "target"], [8, 9, 10, 11, "Column", "source", "target"]]
-SAMPLE_RESULT_COLUMNS = ["A", "B", "C", "D", "validation_type", "source_agg_value", "target_agg_value"]
-SAMPLE_RESULT_COLUMNS_FILTER_LIST = ["B", "D", "validation_type", "source_agg_value", "target_agg_value"]
+SAMPLE_RESULT_DATA = [
+    [0, 1, 2, 3, "Column", "source", "target"],
+    [4, 5, 6, 7, "Column", "source", "target"],
+    [8, 9, 10, 11, "Column", "source", "target"],
+]
+SAMPLE_RESULT_COLUMNS = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "validation_type",
+    "source_agg_value",
+    "target_agg_value",
+]
+SAMPLE_RESULT_COLUMNS_FILTER_LIST = [
+    "B",
+    "D",
+    "validation_type",
+    "source_agg_value",
+    "target_agg_value",
+]
 
 
 @pytest.fixture
