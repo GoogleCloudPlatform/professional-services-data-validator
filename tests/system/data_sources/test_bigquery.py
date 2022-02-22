@@ -147,9 +147,8 @@ BQ_CONN_ARGS = [
     os.environ["PROJECT_ID"],
 ]
 CLI_STORE_COLUMN_ARGS = [
-    "run",
-    "--type",
-    "Column",
+    "validate",
+    "column",
     "--source-conn",
     BQ_CONN_NAME,
     "--target-conn",
