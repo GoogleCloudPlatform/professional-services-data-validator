@@ -13,8 +13,9 @@
 # limitations under the License.
 
 import os
-
 import json
+import sys
+from yaml import Dumper, dump
 
 from data_validation import (
     cli_tools,
@@ -26,10 +27,9 @@ from data_validation import (
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
+
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
-from yaml import dump
-import sys
 
 
 def _get_arg_config_file(args):
@@ -425,13 +425,8 @@ def run_validation_configs(args):
 
 
 def validate(args):
-<<<<<<< HEAD
     """ Run commands related to data validation."""
     if args.validate_cmd in ["column", "row", "schema"]:
-=======
-    """Run commands related to data validation."""
-    if args.validate_cmd == "column" or args.validate_cmd == "schema":
->>>>>>> develop
         run(args)
     else:
         raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")

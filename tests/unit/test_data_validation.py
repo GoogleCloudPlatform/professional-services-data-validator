@@ -673,11 +673,9 @@ def test_fail_row_level_validation(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_JSON_ROW_CONFIG)
     result_df = client.execute()
 
-    success_df = result_df[result_df["status"] == "fail"]
-
     # based on shared keys
-    assert len(success_df) == 2
-    assert len(result_df) == 5
+    fail_df = result_df[result_df["status"] == "fail"]
+    assert len(fail_df) == 5
 
 
 def test_bad_join_row_level_validation(module_under_test, fs):
@@ -693,7 +691,7 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
 
-    comparison_df = result_df[result_df["status"].isnull()]
+    comparison_df = result_df[result_df["status"] == "fail"]
     # 2 validations * (100 source + 1 target)
     assert len(result_df) == 202
     assert len(comparison_df) == 202
