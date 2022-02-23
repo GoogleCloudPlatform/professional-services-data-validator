@@ -16,7 +16,7 @@ import ibis
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import operations
 
-from data_validation import clients
+from data_validation import clients, consts
 
 
 class AggregateField(object):
@@ -192,6 +192,28 @@ class FilterField(object):
         return self.expr(self.left, self.right)
 
 
+class ComparisonField(object):
+    def __init__(self, field_name, alias=None, cast=None):
+        """A representation of a comparison field used to build a query.
+
+        Args:
+            field_name (String): A field to act on in the table
+            alias (String): An alias to use for the group
+            cast (String): A cast on the column if required
+        """
+        self.field_name = field_name
+        self.alias = alias
+        self.cast = cast
+
+    def compile(self, ibis_table):
+        # Fields are supplied on compile or on build
+        comparison_field = ibis_table[self.field_name]
+        alias = self.alias or self.field_name
+        comparison_field = comparison_field.name(alias)
+
+        return comparison_field
+
+
 class GroupedField(object):
     def __init__(self, field_name, alias=None, cast=None):
         """A representation of a group by field used to build a query.
@@ -272,14 +294,24 @@ class CalculatedField(object):
     @staticmethod
     def hash(config, fields):
         if config.get("default_hash_function") is None:
+            how = "sha256"
+            return CalculatedField(
+                ibis.expr.api.StringValue.hashbytes, config, fields, how=how,
+            )
+        else:
             how = "farm_fingerprint"
-        return CalculatedField(ibis.expr.api.ValueExpr.hash, config, fields, how=how,)
+            return CalculatedField(
+                ibis.expr.api.ValueExpr.hash, config, fields, how=how,
+            )
 
     @staticmethod
     def ifnull(config, fields):
-        if config.get("default_null_string") is None:
-            config["default_string"] = ibis.literal("DEFAULT_REPLACEMENT_STRING")
-        fields = [config["default_string"], fields[0]]
+        config["default_string"] = (
+            ibis.literal("DEFAULT_REPLACEMENT_STRING")
+            if config.get("default_null_string") is None
+            else config.get("default_null_string")
+        )
+        fields = [fields[0], config["default_string"]]
         return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
 
     @staticmethod
@@ -293,6 +325,14 @@ class CalculatedField(object):
     @staticmethod
     def upper(config, fields):
         return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
+
+    @staticmethod
+    def cast(config, fields):
+        if config.get("default_cast") is None:
+            target_type = "string"
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.cast, config, fields, target_type=target_type,
+        )
 
     @staticmethod
     def custom(expr):
@@ -315,7 +355,6 @@ class CalculatedField(object):
                     compiled_fields.append(ibis_table[field].cast(self.cast))
                 else:
                     compiled_fields.append(ibis_table[field])
-
         return compiled_fields
 
     def compile(self, ibis_table):
@@ -329,7 +368,13 @@ class CalculatedField(object):
 
 class QueryBuilder(object):
     def __init__(
-        self, aggregate_fields, calculated_fields, filters, grouped_fields, limit=None
+        self,
+        aggregate_fields,
+        calculated_fields,
+        filters,
+        grouped_fields,
+        comparison_fields,
+        limit=None,
     ):
         """ Build a QueryBuilder object which can be used to build queries easily
 
@@ -344,6 +389,7 @@ class QueryBuilder(object):
         self.calculated_fields = calculated_fields
         self.filters = filters
         self.grouped_fields = grouped_fields
+        self.comparison_fields = comparison_fields
         self.limit = limit
 
     @staticmethod
@@ -352,12 +398,14 @@ class QueryBuilder(object):
         aggregate_fields = []
         filters = []
         grouped_fields = []
+        comparison_fields = []
         calculated_fields = []
 
         return QueryBuilder(
             aggregate_fields,
             filters=filters,
             grouped_fields=grouped_fields,
+            comparison_fields=comparison_fields,
             calculated_fields=calculated_fields,
         )
 
@@ -372,15 +420,23 @@ class QueryBuilder(object):
     def compile_group_fields(self, table):
         return [field.compile(table) for field in self.grouped_fields]
 
-    def compile_calculated_fields(self, table, n=None):
-        if n is not None:
-            return [
-                field.compile(table)
-                for field in self.calculated_fields
-                if field.config["depth"] == n
-            ]
-        else:
-            return [field.compile(table) for field in self.calculated_fields]
+    def compile_comparison_fields(self, table):
+        return [field.compile(table) for field in self.comparison_fields]
+
+    def compile_calculated_fields(self, table, n=0):
+        return [
+            field.compile(table)
+            for field in self.calculated_fields
+            if field.config[consts.CONFIG_DEPTH] == n
+        ]
+        # if n is not None:
+        #     return [
+        #         field.compile(table)
+        #         for field in self.calculated_fields
+        #         if field.config[consts.CONFIG_DEPTH] == n
+        #     ]
+        # else:
+        #     return [field.compile(table) for field in self.calculated_fields]
 
     def compile(self, data_client, schema_name, table_name):
         """Return an Ibis query object
@@ -396,7 +452,8 @@ class QueryBuilder(object):
         calc_table = table
         if self.calculated_fields:
             depth_limit = max(
-                field.config.get("depth", 0) for field in self.calculated_fields
+                field.config.get(consts.CONFIG_DEPTH, 0)
+                for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
                 calc_table = calc_table.mutate(
@@ -406,15 +463,18 @@ class QueryBuilder(object):
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
         )
-
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
             filtered_table.groupby(compiled_groups)
             if compiled_groups
             else filtered_table
         )
-
-        query = grouped_table.aggregate(self.compile_aggregate_fields(filtered_table))
+        if self.aggregate_fields:
+            query = grouped_table.aggregate(
+                self.compile_aggregate_fields(filtered_table)
+            )
+        else:
+            query = grouped_table
 
         if self.limit:
             query = query.limit(self.limit)
@@ -429,6 +489,15 @@ class QueryBuilder(object):
             aggregate_field (AggregateField): An AggregateField instance
         """
         self.aggregate_fields.append(aggregate_field)
+
+    def add_comparison_field(self, comparison_field):
+        """Add an ComparisonField instance to the query which
+            will be used when compiling your query (ie. SUM(a))
+
+        Args:
+            comparison_field (ComparisonField): An ComparisonField instance
+        """
+        self.comparison_fields.append(comparison_field)
 
     def add_grouped_field(self, grouped_field):
         """Add a GroupedField instance to the query which

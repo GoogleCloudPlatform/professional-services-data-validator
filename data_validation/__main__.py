@@ -13,9 +13,9 @@
 # limitations under the License.
 
 import os
-
-import logging
 import json
+import sys
+from yaml import Dumper, dump
 
 from data_validation import (
     cli_tools,
@@ -27,8 +27,9 @@ from data_validation import (
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
-from yaml import dump
-import sys
+
+# by default yaml dumps lists as pointers. This disables that feature
+Dumper.ignore_aliases = lambda *args: True
 
 
 def _get_arg_config_file(args):
@@ -78,7 +79,45 @@ def get_aggregate_config(args, config_manager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, consts.NUMERIC_DATA_TYPES
         )
+    if args.bit_xor:
+        col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
+        aggregate_configs += config_manager.build_config_column_aggregates(
+            "bit_xor", col_args, consts.NUMERIC_DATA_TYPES
+        )
     return aggregate_configs
+
+
+def get_calculated_config(args, config_manager):
+    """Return list of formatted calculated objects.
+
+    Args:
+        config_manager(ConfigManager): Validation config manager instance.
+    """
+    calculated_configs = []
+    fields = []
+    if args.hash:
+        fields = config_manager._build_dependent_aliases("hash")
+    if len(fields) > 0:
+        max_depth = max([x["depth"] for x in fields])
+    else:
+        max_depth = 0
+    for field in fields:
+        calculated_configs.append(
+            config_manager.build_config_calculated_fields(
+                field["reference"],
+                field["calc_type"],
+                field["name"],
+                field["depth"],
+                None,
+            )
+        )
+    if args.hash:
+        config_manager.append_comparison_fields(
+            config_manager.build_config_comparison_fields(
+                ["hash__all"], depth=max_depth
+            )
+        )
+    return calculated_configs
 
 
 def build_config_from_args(args, config_manager):
@@ -87,21 +126,26 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
-    config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if args.primary_keys and not args.grouped_columns:
-        if not args.grouped_columns and not config_manager.use_random_rows():
-            logging.warning(
-                "No Grouped columns or Random Rows specified, ignoring primary keys."
+    config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
+    if config_manager.validation_type == consts.COLUMN_VALIDATION:
+        config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+        if args.grouped_columns is not None:
+            grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
+            config_manager.append_query_groups(
+                config_manager.build_config_grouped_columns(grouped_columns)
             )
-    if args.grouped_columns:
-        grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
-        config_manager.append_query_groups(
-            config_manager.build_config_grouped_columns(grouped_columns)
-        )
-    if args.primary_keys:
-        primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
+    elif config_manager.validation_type == consts.ROW_VALIDATION:
+        if args.comparison_fields is not None:
+            comparison_fields = cli_tools.get_arg_list(
+                args.comparison_fields, default_value=[]
+            )
+            config_manager.append_comparison_fields(
+                config_manager.build_config_comparison_fields(comparison_fields)
+            )
+    if args.primary_keys is not None:
+        primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
-            config_manager.build_config_grouped_columns(primary_keys)
+            config_manager.build_config_comparison_fields(primary_keys)
         )
 
     # TODO(GH#18): Add query filter config logic
@@ -118,11 +162,9 @@ def build_config_managers_from_args(args):
         if validate_cmd == "Schema":
             config_type = consts.SCHEMA_VALIDATION
         elif validate_cmd == "Column":
-            # TODO: We need to discuss how GroupedColumn and Row are differentiated.
-            if args.grouped_columns:
-                config_type = consts.GROUPED_COLUMN_VALIDATION
-            else:
-                config_type = consts.COLUMN_VALIDATION
+            config_type = consts.COLUMN_VALIDATION
+        elif validate_cmd == "Row":
+            config_type = consts.ROW_VALIDATION
         else:
             raise ValueError(f"Unknown Validation Type: {validate_cmd}")
     else:
@@ -140,7 +182,7 @@ def build_config_managers_from_args(args):
 
     # Schema validation will not accept filters, labels, or threshold as flags
     filter_config, labels, threshold = [], [], 0.0
-    if config_type != consts.SCHEMA_VALIDATION:
+    if config_type != consts.COLUMN_VALIDATION:
         if args.filters:
             filter_config = cli_tools.get_filters(args.filters)
         if args.threshold:
@@ -386,8 +428,8 @@ def run_validation_configs(args):
 
 
 def validate(args):
-    """Run commands related to data validation."""
-    if args.validate_cmd == "column" or args.validate_cmd == "schema":
+    """ Run commands related to data validation."""
+    if args.validate_cmd in ["column", "row", "schema"]:
         run(args)
     else:
         raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
