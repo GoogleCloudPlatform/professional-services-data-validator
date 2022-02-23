@@ -70,9 +70,9 @@ except Exception:
     OracleClient = _raise_missing_client_error("pip install cx_Oracle")
 
 try:
-    from third_party.ibis.ibis_mssql import connect as mssql_connect
+    from third_party.ibis.ibis_mssql.client import MSSQLClient
 except Exception:
-    mssql_connect = _raise_missing_client_error("pip install pyodbc")
+    MSSQLClient = _raise_missing_client_error("pip install pyodbc")
 
 try:
     from third_party.ibis.ibis_snowflake.client import (
@@ -126,7 +126,11 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if type(client) in [OracleClient, PostgreSQLClient]:
+    if type(client) in [
+        OracleClient,
+        PostgreSQLClient,
+        MSSQLClient,
+    ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif type(client) in [PandasClient]:
         return client.table(table_name, schema=schema_name)
@@ -136,7 +140,11 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
 
 def list_schemas(client):
     """Return a list of schemas in the DB."""
-    if type(client) in [OracleClient, PostgreSQLClient]:
+    if type(client) in [
+        OracleClient,
+        PostgreSQLClient,
+        MSSQLClient,
+    ]:
         return client.list_schemas()
     elif hasattr(client, "list_databases"):
         return client.list_databases()
@@ -146,7 +154,11 @@ def list_schemas(client):
 
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
-    if type(client) in [OracleClient, PostgreSQLClient]:
+    if type(client) in [
+        OracleClient,
+        PostgreSQLClient,
+        MSSQLClient,
+    ]:
         return client.list_tables(schema=schema_name)
     elif schema_name:
         return client.list_tables(database=schema_name)
@@ -220,7 +232,7 @@ CLIENT_LOOKUP = {
     "Postgres": PostgreSQLClient,
     "Redshift": PostgreSQLClient,
     "Teradata": TeradataClient,
-    "MSSQL": mssql_connect,
+    "MSSQL": MSSQLClient,
     "Snowflake": snowflake_connect,
     "Spanner": spanner_connect,
 }

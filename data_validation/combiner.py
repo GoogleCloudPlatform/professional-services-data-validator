@@ -89,6 +89,7 @@ def generate_report(
         print(documented.compile())
 
     result_df = client.execute(documented)
+    result_df.status.fillna("fail", inplace=True)
 
     return result_df
 
@@ -126,7 +127,12 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         ).cast("float64")
 
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
-        status = ibis.case().when(th_diff > 0.0, "fail").else_("success").end()
+        status = (
+            ibis.case()
+            .when(th_diff.isnan() | (th_diff > 0.0), "fail")
+            .else_("success")
+            .end()
+        )
 
     return (
         difference.name("difference"),
