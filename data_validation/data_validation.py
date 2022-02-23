@@ -176,7 +176,6 @@ class DataValidation(object):
         """
         process_in_memory = self.config_manager.process_in_memory()
         past_results = []
-
         if len(grouped_fields) > 0:
             validation_builder.add_query_group(grouped_fields[0])
             result_df = self._execute_validation(
@@ -214,13 +213,17 @@ class DataValidation(object):
                             recursive_validation_builder, grouped_fields[1:]
                         )
                     )
-        elif self.config_manager.primary_keys:
-            validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+        elif self.config_manager.primary_keys and len(grouped_fields) == 0:
             past_results.append(
                 self._execute_validation(
                     validation_builder, process_in_memory=process_in_memory
                 )
             )
+
+        # elif self.config_manager.primary_keys:
+        #     validation_builder.add_config_query_groups(self.config_manager.primary_keys)
+        #     validation_builder.add_config_query_groups(grouped_fields)
+
         else:
             warnings.warn(
                 "WARNING: No Primary Keys Suppplied in Row Validation", UserWarning
@@ -283,10 +286,16 @@ class DataValidation(object):
         source_query = validation_builder.get_source_query()
         target_query = validation_builder.get_target_query()
 
-        join_on_fields = validation_builder.get_group_aliases()
+        join_on_fields = (
+            set(validation_builder.get_primary_keys())
+            if self.config_manager.validation_type == consts.ROW_VALIDATION
+            else set(validation_builder.get_group_aliases())
+        )
 
         # If row validation from YAML, compare source and target agg values
-        is_value_comparison = self.config_manager.validation_type == "Row"
+        is_value_comparison = (
+            self.config_manager.validation_type == consts.ROW_VALIDATION
+        )
 
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)
@@ -294,7 +303,6 @@ class DataValidation(object):
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
-
             pandas_client = ibis.backends.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )

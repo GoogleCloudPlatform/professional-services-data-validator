@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import pytest
 
 from data_validation import consts
@@ -159,7 +158,9 @@ def test_get_threshold_property(module_under_test):
 
 
 def test_process_in_memory(module_under_test):
-    """Test process in memory for normal validations."""
+    """Test process in memory for normal validations.
+    TODO: emceehilton Re-enable opposite test once option is available
+    """
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
@@ -167,21 +168,21 @@ def test_process_in_memory(module_under_test):
     assert config_manager.process_in_memory() is True
 
 
-def test_do_not_process_in_memory(module_under_test):
-    """Test process in memory for normal validations."""
-    config_manager = module_under_test.ConfigManager(
-        copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
-    )
-    config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
-    config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
-        {
-            consts.CONFIG_FIELD_ALIAS: "id",
-            consts.CONFIG_SOURCE_COLUMN: "id",
-            consts.CONFIG_TARGET_COLUMN: "id",
-            consts.CONFIG_CAST: None,
-        },
-    ]
-    assert config_manager.process_in_memory() is False
+# def test_do_not_process_in_memory(module_under_test):
+#     """Test process in memory for normal validations."""
+#     config_manager = module_under_test.ConfigManager(
+#         copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+#     )
+#     config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
+#     config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
+#         {
+#             consts.CONFIG_FIELD_ALIAS: "id",
+#             consts.CONFIG_SOURCE_COLUMN: "id",
+#             consts.CONFIG_TARGET_COLUMN: "id",
+#             consts.CONFIG_CAST: None,
+#         },
+#     ]
+#     assert config_manager.process_in_memory() is True
 
 
 def test_get_table_info(module_under_test):

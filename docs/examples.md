@@ -41,6 +41,11 @@ data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count bikeid,gender
 ````
 
+#### Run a checksum validation for all rows
+````shell script
+data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --primary-keys station_id --hash '*'
+````
+
 #### Store results in a BigQuery table
 ````shell script
 data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -bqrh $YOUR_PROJECT_ID.pso_data_validator.results

@@ -102,12 +102,12 @@ SAMPLE_THRESHOLD_CONFIG = {
 }
 
 # Grouped Column Row confg
-SAMPLE_GC_ROW_CONFIG = {
+SAMPLE_GC_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+    consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -142,12 +142,59 @@ SAMPLE_GC_ROW_CONFIG = {
     consts.CONFIG_FORMAT: "table",
 }
 
-SAMPLE_GC_ROW_CALC_CONFIG = {
+# Grouped Column Row confg
+SAMPLE_MULTI_GC_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
     "target_conn": TARGET_CONN_CONFIG,
     # Validation Type
-    consts.CONFIG_TYPE: "Column",
+    consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
+    consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "date_value",
+            consts.CONFIG_SOURCE_COLUMN: "date_value",
+            consts.CONFIG_TARGET_COLUMN: "date_value",
+            consts.CONFIG_CAST: "date",
+        },
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        }
+    ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": "text_value",
+            "target_column": "text_value",
+            "field_alias": "count_text_value",
+            "type": "count",
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
+}
+
+SAMPLE_GC_CALC_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: consts.COLUMN_VALIDATION,
     consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE: 50,
     # Configuration Required Depending on Validator Type
     "schema_name": None,
@@ -207,12 +254,12 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
         },
     ],
     consts.CONFIG_AGGREGATES: [
-        # {
-        #     "source_column": "text_value",
-        #     "target_column": "text_value",
-        #     "field_alias": "count_text_value",
-        #     "type": "count",
-        # },
+        {
+            "source_column": "text_value",
+            "target_column": "text_value",
+            "field_alias": "count_text_value",
+            "type": "count",
+        },
         {
             "source_column": "length_text_constant",
             "target_column": "length_text_constant",
@@ -237,10 +284,83 @@ SAMPLE_GC_ROW_CALC_CONFIG = {
     consts.CONFIG_FORMAT: "table",
 }
 
+# Row confg
+SAMPLE_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_COMPARISON_FIELDS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "int_value",
+            consts.CONFIG_SOURCE_COLUMN: "int_value",
+            consts.CONFIG_TARGET_COLUMN: "int_value",
+            consts.CONFIG_CAST: None,
+        },
+        {
+            consts.CONFIG_FIELD_ALIAS: "text_value",
+            consts.CONFIG_SOURCE_COLUMN: "text_value",
+            consts.CONFIG_TARGET_COLUMN: "text_value",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
+}
 
-JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
+# Row confg
+SAMPLE_JSON_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "pkey",
+            consts.CONFIG_SOURCE_COLUMN: "pkey",
+            consts.CONFIG_TARGET_COLUMN: "pkey",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_COMPARISON_FIELDS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "col_b",
+            consts.CONFIG_SOURCE_COLUMN: "col_b",
+            consts.CONFIG_TARGET_COLUMN: "col_b",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
+}
+
+JSON_DATA = """[{"col_a":1,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
+JSON_PK_DATA = (
+    """[{"pkey":1, "col_a":1,"col_b":"a"},{"pkey":2, "col_a":1,"col_b":"b"}]"""
+)
+JSON_PK_BAD_DATA = """[{"pkey":1, "col_a":0,"col_b":"b"},{"pkey":2, "col_a":1,"col_b":"c"},{"pkey":3, "col_a":2,"col_b":"d"},{"pkey":4, "col_a":3,"col_b":"e"},{"pkey":5, "col_a":4,"col_b":"f"}]"""
 
 STRING_CONSTANT = "constant"
 
@@ -405,7 +525,6 @@ def test_status_fail_validation(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
-
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
     col_a_status = col_a_result_df.status.values[0]
@@ -420,7 +539,6 @@ def test_threshold_equals_diff(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_THRESHOLD_CONFIG)
     result_df = client.execute()
-
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
@@ -431,14 +549,14 @@ def test_threshold_equals_diff(module_under_test, fs):
     assert col_a_status == "success"
 
 
-def test_row_level_validation_perfect_match(module_under_test, fs):
+def test_grouped_column_level_validation_perfect_match(module_under_test, fs):
     data = _generate_fake_data(second_range=0)
     json_data = _get_fake_json_data(data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_CONFIG)
     result_df = client.execute()
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
@@ -455,7 +573,7 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CALC_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_CALC_CONFIG)
     result_df = client.execute()
     calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
     calc_val_df2 = result_df[result_df["validation_name"] == "sum_concat_length"]
@@ -470,34 +588,26 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
     assert calc_val_df3["source_agg_value"].sum() == str(num_rows * 2)
 
 
-def test_row_level_validation_non_matching(module_under_test, fs):
+def test_grouped_column_level_validation_non_matching(module_under_test, fs):
     data = _generate_fake_data(rows=10, second_range=0)
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
-
     source_json_data = _get_fake_json_data(data)
     target_json_data = _get_fake_json_data(data + trg_data)
 
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
-
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_GC_CONFIG)
     result_df = client.execute()
     validation_df = result_df[result_df["validation_name"] == "count_text_value"]
+    # TODO: this value is 0 because a COUNT() on no rows returns Null
+    assert result_df["difference"].sum() == 1
 
-    # TODO: this value is 0 because a COUNT() on no rows returns Null.
-    # When calc fields is released, we could COALESCE(COUNT(), 0) to avoid this
-    assert result_df["difference"].sum() == 0
-
-    expected_date_result = '{"date_value": "%s", "id": "11"}' % str(
-        datetime.now().date()
-    )
-    grouped_column = validation_df[validation_df["source_table_name"].isnull()][
-        "group_by_columns"
-    ].max()
+    expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
+    grouped_column = validation_df["group_by_columns"].max()
     assert expected_date_result == grouped_column
 
 
-def test_row_level_validation_smart_count(module_under_test, fs):
+def test_grouped_column_level_validation_smart_count(module_under_test, fs):
     data = _generate_fake_data(rows=100, second_range=0)
 
     source_json_data = _get_fake_json_data(data)
@@ -506,7 +616,7 @@ def test_row_level_validation_smart_count(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG)
+    client = module_under_test.DataValidation(SAMPLE_GC_CONFIG)
     result_df = client.execute()
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
 
@@ -517,7 +627,7 @@ def test_row_level_validation_smart_count(module_under_test, fs):
     assert smart_count_df["target_agg_value"].astype(int).sum() == 200
 
 
-def test_row_level_validation_multiple_aggregations(module_under_test, fs):
+def test_grouped_column_level_validation_multiple_aggregations(module_under_test):
     data = _generate_fake_data(rows=10, second_range=0)
     trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
 
@@ -527,11 +637,61 @@ def test_row_level_validation_multiple_aggregations(module_under_test, fs):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    client = module_under_test.DataValidation(SAMPLE_GC_ROW_CONFIG, verbose=True)
+    client = module_under_test.DataValidation(SAMPLE_MULTI_GC_CONFIG)
     result_df = client.execute()
-    validation_df = result_df[result_df["validation_name"] == "count_text_value"]
-
+    validation_df = result_df  # [result_df["validation_name"] == "count_text_value"]
     # Expect 11 rows, one for each PK value
     assert len(validation_df) == 11
     assert validation_df["source_agg_value"].astype(float).sum() == 10
     assert validation_df["target_agg_value"].astype(float).sum() == 11
+
+
+def test_row_level_validation(module_under_test, fs):
+    data = _generate_fake_data(rows=100, second_range=0)
+
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    result_df = client.execute()
+
+    str_comparison_df = result_df[result_df["validation_name"] == "text_value"]
+    int_comparison_df = result_df[result_df["validation_name"] == "int_value"]
+
+    assert len(result_df) == 200
+    assert len(str_comparison_df) == 100
+    assert len(int_comparison_df) == 100
+
+
+def test_fail_row_level_validation(module_under_test, fs):
+    _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_PK_DATA)
+    _create_table_file(TARGET_TABLE_FILE_PATH, JSON_PK_BAD_DATA)
+
+    client = module_under_test.DataValidation(SAMPLE_JSON_ROW_CONFIG)
+    result_df = client.execute()
+
+    # based on shared keys
+    fail_df = result_df[result_df["status"] == "fail"]
+    assert len(fail_df) == 5
+
+
+def test_bad_join_row_level_validation(module_under_test, fs):
+    data = _generate_fake_data(rows=100, second_range=0)
+    target_data = _generate_fake_data(initial_id=100, rows=1, second_range=0)
+
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(target_data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
+    result_df = client.execute()
+
+    comparison_df = result_df[result_df["status"] == "fail"]
+    # 2 validations * (100 source + 1 target)
+    assert len(result_df) == 202
+    assert len(comparison_df) == 202

@@ -53,8 +53,6 @@ class ConfigManager(object):
         self.target_client = target_client or clients.get_data_client(
             self.get_target_connection()
         )
-        if not self.process_in_memory():
-            self.target_client = self.source_client
 
         self.verbose = verbose
         if self.validation_type not in consts.CONFIG_TYPES:
@@ -104,12 +102,7 @@ class ConfigManager(object):
         )
 
     def process_in_memory(self):
-        if (
-            self.validation_type == "Row"
-            and self.get_source_connection() == self.get_target_connection()
-        ):
-            return False
-
+        """Return whether to process in memory or on a remote platform."""
         return True
 
     @property
@@ -128,7 +121,7 @@ class ConfigManager(object):
 
     @property
     def calculated_fields(self):
-        return self._config.get(consts.CONFIG_CALCULATED_FIELDS)
+        return self._config.get(consts.CONFIG_CALCULATED_FIELDS, [])
 
     def append_calculated_fields(self, calculated_configs):
         self._config[consts.CONFIG_CALCULATED_FIELDS] = (
@@ -155,6 +148,17 @@ class ConfigManager(object):
         """Append primary key configs to existing config."""
         self._config[consts.CONFIG_PRIMARY_KEYS] = (
             self.primary_keys + primary_key_configs
+        )
+
+    @property
+    def comparison_fields(self):
+        """ Return fields from Config """
+        return self._config.get(consts.CONFIG_COMPARISON_FIELDS, [])
+
+    def append_comparison_fields(self, field_configs):
+        """Append field configs to existing config."""
+        self._config[consts.CONFIG_COMPARISON_FIELDS] = (
+            self.comparison_fields + field_configs
         )
 
     @property
@@ -232,12 +236,13 @@ class ConfigManager(object):
             )
         return self._source_ibis_table
 
-    def get_source_ibis_calculated_table(self):
-        """Return mutated IbisTable from source"""
+    def get_source_ibis_calculated_table(self, depth=None):
+        """Return mutated IbisTable from source
+           n: Int the depth of subquery requested"""
         table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.source_builder.compile_calculated_fields(table)
+            vb.source_builder.compile_calculated_fields(table, n=depth)
         )
 
         return calculated_table
@@ -250,12 +255,13 @@ class ConfigManager(object):
             )
         return self._target_ibis_table
 
-    def get_target_ibis_calculated_table(self):
-        """Return mutated IbisTable from target"""
+    def get_target_ibis_calculated_table(self, depth=None):
+        """Return mutated IbisTable from target
+           n: Int the depth of subquery requested"""
         table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.target_builder.compile_calculated_fields(table)
+            vb.target_builder.compile_calculated_fields(table, n=depth)
         )
 
         return calculated_table
@@ -347,6 +353,19 @@ class ConfigManager(object):
             verbose=verbose,
         )
 
+    def build_config_comparison_fields(self, fields, depth=None):
+        """Return list of field config objects."""
+        field_configs = []
+        for field in fields:
+            column_config = {
+                consts.CONFIG_SOURCE_COLUMN: field.casefold(),
+                consts.CONFIG_TARGET_COLUMN: field.casefold(),
+                consts.CONFIG_FIELD_ALIAS: field,
+                consts.CONFIG_CAST: None,
+            }
+            field_configs.append(column_config)
+        return field_configs
+
     def build_config_grouped_columns(self, grouped_columns):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
@@ -423,3 +442,86 @@ class ConfigManager(object):
             aggregate_configs.append(aggregate_config)
 
         return aggregate_configs
+
+    def build_config_calculated_fields(
+        self, reference, calc_type, alias, depth, supported_types, arg_value=None
+    ):
+        """Returns list of calculated fields"""
+        source_table = self.get_source_ibis_calculated_table(depth=depth)
+        target_table = self.get_target_ibis_calculated_table(depth=depth)
+
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        allowlist_columns = arg_value or casefold_source_columns
+        for column in casefold_source_columns:
+            column_type_str = str(source_table[casefold_source_columns[column]].type())
+            column_type = column_type_str.split("(")[0]
+            if column not in allowlist_columns:
+                continue
+            elif column not in casefold_target_columns:
+                logging.info(
+                    f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                )
+                continue
+            elif supported_types and column_type not in supported_types:
+                if self.verbose:
+                    msg = f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    print(msg)
+                continue
+
+        calculated_config = {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: reference,
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: reference,
+            consts.CONFIG_FIELD_ALIAS: alias,
+            consts.CONFIG_TYPE: calc_type,
+            consts.CONFIG_DEPTH: depth,
+        }
+        return calculated_config
+
+    def _build_dependent_aliases(self, calc_type):
+        """This is a utility function for determining the required depth of all fields"""
+        order_of_operations = []
+        source_table = self.get_source_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        if calc_type == "hash":
+            order_of_operations = [
+                "cast",
+                "ifnull",
+                "rstrip",
+                "upper",
+                "concat",
+                "hash",
+            ]
+        column_aliases = {}
+        col_names = []
+        for i, calc in enumerate(order_of_operations):
+            if i == 0:
+                previous_level = [x for x in casefold_source_columns.values()]
+            else:
+                previous_level = [k for k, v in column_aliases.items() if v == i - 1]
+            if calc in ["concat", "hash"]:
+                col = {}
+                col["reference"] = previous_level
+                col["name"] = f"{calc}__all"
+                col["calc_type"] = calc
+                col["depth"] = i
+                name = col["name"]
+                # need to capture all aliases at the previous level. probably name concat__all
+                column_aliases[name] = i
+                col_names.append(col)
+            else:
+                for (
+                    column
+                ) in (
+                    previous_level
+                ):  # this needs to be the previous manifest of columns
+                    col = {}
+                    col["reference"] = [column]
+                    col["name"] = f"{calc}__" + column
+                    col["calc_type"] = calc
+                    col["depth"] = i
+                    name = col["name"]
+                    column_aliases[name] = i
+                    col_names.append(col)
+        return col_names

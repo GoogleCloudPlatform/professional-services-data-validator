@@ -134,6 +134,51 @@ sum , min, etc.) is provided, the default aggregation will run.
 The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
 
+#### Row Validations
+
+Below is the command syntax for row validations. In order to run row level
+validations you need to pass a `--primary-key` flag which defines what field(s)
+the validation will be compared along, as well as a `--comparison-fields` flag
+which specifies the values (e.g. columns) whose raw values will be compared
+based on the primary key join. Additionally you can use
+[Calculated Fields](#calculated-fields) to compare derived values such as string
+counts and hashes of multiple columns.
+
+```
+data-validation (--verbose or -v) validate row
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  [--primary-keys or -pk PRIMARY_KEYS]
+                        Comma separated list of columns to use as primary keys
+  [--comparison-fields or -fields comparison-fields]
+                        Comma separated list of columns to compare. Can either be a physical column or an alias
+                        See: *Calculated Fields* section for details
+  [--hash COLUMNS]     Comma separated list of columns to perform a hash operation on or * for all columns
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--filters SOURCE_FILTER:TARGET_FILTER]
+                        Colon spearated string values of source and target filters.
+                        If target filter is not provided, the source filter will run on source and target tables.
+                        See: *Filters* section
+  [--config-file or -c CONFIG_FILE]
+                        YAML Config File Path to be used for storing validations.
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
+```
+
 #### Schema Validations
 
 Below is the syntax for schema validations. These can be used to compare column
@@ -288,6 +333,12 @@ target tables.
 Grouped Columns contain the fields you want your aggregations to be broken out
 by, e.g. `SELECT last_updated::DATE, COUNT(*) FROM my.table` will produce a
 resultset that breaks down the count of rows per calendar date.
+
+### Comparison Fields
+
+For row validations you need to specify the specific columns that you want to
+compare. These values will be compared via a JOIN on their corresponding primary
+key and will be evaluated for an exact match.
 
 ### Calculated Fields
 

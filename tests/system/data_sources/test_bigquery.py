@@ -146,9 +146,8 @@ BQ_CONN_ARGS = [
     os.environ["PROJECT_ID"],
 ]
 CLI_STORE_COLUMN_ARGS = [
-    "run",
-    "--type",
-    "Column",
+    "validate",
+    "column",
     "--source-conn",
     BQ_CONN_NAME,
     "--target-conn",
@@ -166,7 +165,7 @@ CLI_STORE_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES = 35  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
+EXPECTED_NUM_YAML_LINES = 33  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
 

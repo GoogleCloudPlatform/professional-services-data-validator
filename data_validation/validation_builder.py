@@ -45,13 +45,17 @@ class ValidationBuilder(object):
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
 
+        self.primary_keys = {}
         self.group_aliases = {}
         self.calculated_aliases = {}
+        self.comparison_fields = {}
 
         self.add_config_aggregates()
         self.add_config_query_groups()
         self.add_config_calculated_fields()
+        self.add_comparison_fields()
         self.add_config_filters()
+        self.add_primary_keys()
         self.add_query_limit()
 
     def clone(self):
@@ -61,6 +65,7 @@ class ValidationBuilder(object):
         cloned_builder.target_builder = deepcopy(self.target_builder)
         cloned_builder.group_aliases = deepcopy(self.group_aliases)
         cloned_builder.calculated_aliases = deepcopy(self.calculated_aliases)
+        cloned_builder.comparison_fields = deepcopy(self.comparison_fields)
         cloned_builder._metadata = deepcopy(self._metadata)
 
         return cloned_builder
@@ -90,11 +95,20 @@ class ValidationBuilder(object):
 
     def get_group_aliases(self):
         """ Return List of String Aliases """
-        return self.group_aliases.keys()
+        return list(self.group_aliases.keys())
+
+    def get_primary_keys(self):
+        """ Return List of String Aliases """
+        # do we need this?
+        return list(self.primary_keys.keys())
 
     def get_calculated_aliases(self):
         """ Return List of String Aliases """
         return self.calculated_aliases.keys()
+
+    def get_comparison_fields(self):
+        """ Return List of String Aliases """
+        return self.comparison_fields.keys()
 
     def get_grouped_alias_source_column(self, alias):
         return self.group_aliases[alias][consts.CONFIG_SOURCE_COLUMN]
@@ -114,6 +128,16 @@ class ValidationBuilder(object):
         if calc_fields is not None:
             for calc_field in calc_fields:
                 self.add_calc(calc_field)
+
+    def add_primary_keys(self, primary_keys=None):
+        primary_keys = primary_keys or self.config_manager.primary_keys
+        for field in primary_keys:
+            self.add_primary_key(field)
+
+    def add_comparison_fields(self, comparison_fields=None):
+        comparison_fields = comparison_fields or self.config_manager.comparison_fields
+        for field in comparison_fields:
+            self.add_comparison_field(field)
 
     def add_config_query_groups(self, query_groups=None):
         """ Add Grouped Columns to Query """
@@ -192,6 +216,21 @@ class ValidationBuilder(object):
         self.target_builder.add_grouped_field(target_field)
         self.group_aliases[alias] = grouped_field
 
+    def add_primary_key(self, primary_key):
+        """ Add ComparionField to Queries
+
+        Args:
+            primary_key (Dict): An object with source, target, and cast info
+        """
+        source_field_name = primary_key[consts.CONFIG_SOURCE_COLUMN]
+        target_field_name = primary_key[consts.CONFIG_TARGET_COLUMN]
+        # grab calc field metadata
+        alias = primary_key[consts.CONFIG_FIELD_ALIAS]
+        # check if valid calc field and return correct object
+        self.source_builder.add_comparison_field(source_field_name)
+        self.target_builder.add_comparison_field(target_field_name)
+        self.primary_keys[alias] = primary_key
+
     def add_filter(self, filter_field):
         """Add FilterField to Queries
 
@@ -227,6 +266,31 @@ class ValidationBuilder(object):
         # TODO(issues/40): Add metadata around filters
         self.source_builder.add_filter_field(source_filter)
         self.target_builder.add_filter_field(target_filter)
+
+    def add_comparison_field(self, comparison_field):
+        """ Add ComparionField to Queries
+
+        Args:
+            comparison_field (Dict): An object with source, target, and cast info
+        """
+        source_field_name = comparison_field[consts.CONFIG_SOURCE_COLUMN]
+        target_field_name = comparison_field[consts.CONFIG_TARGET_COLUMN]
+        # grab calc field metadata
+        alias = comparison_field[consts.CONFIG_FIELD_ALIAS]
+        # check if valid calc field and return correct object
+        self.source_builder.add_comparison_field(source_field_name)
+        self.target_builder.add_comparison_field(target_field_name)
+        self._metadata[alias] = metadata.ValidationMetadata(
+            aggregation_type=None,
+            validation_type=self.validation_type,
+            source_table_schema=self.config_manager.source_schema,
+            source_table_name=self.config_manager.source_table,
+            target_table_schema=self.config_manager.target_schema,
+            target_table_name=self.config_manager.target_table,
+            source_column_name=source_field_name,
+            target_column_name=target_field_name,
+            threshold=self.config_manager.threshold,
+        )
 
     def add_calc(self, calc_field):
         """ Add CalculatedField to Queries
@@ -265,6 +329,7 @@ class ValidationBuilder(object):
         }
         query = self.source_builder.compile(**source_config)
         if self.verbose:
+            print(source_config)
             print("-- ** Source Query ** --")
             print(query.compile())
 
@@ -279,6 +344,7 @@ class ValidationBuilder(object):
         }
         query = self.target_builder.compile(**target_config)
         if self.verbose:
+            print(target_config)
             print("-- ** Target Query ** --")
             print(query.compile())
 
