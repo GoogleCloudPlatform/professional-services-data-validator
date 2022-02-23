@@ -97,7 +97,10 @@ def get_calculated_config(args, config_manager):
     fields = []
     if args.hash:
         fields = config_manager._build_dependent_aliases("hash")
-    max_depth = max([x["depth"] for x in fields])
+    if len(fields) > 0:
+        max_depth = max([x["depth"] for x in fields])
+    else:
+        max_depth = 0
     for field in fields:
         calculated_configs.append(
             config_manager.build_config_calculated_fields(
