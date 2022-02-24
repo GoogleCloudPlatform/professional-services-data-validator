@@ -14,6 +14,7 @@
 
 from ibis.backends.impala import connect
 from ibis.backends.impala import udf
+from ibis.backends.impala.client import ImpalaClient
 import ibis.expr.datatypes as dt
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
@@ -61,4 +62,37 @@ def parse_type(t):
             raise Exception(t)
 
 
+def get_schema(self, table_name, database=None):
+        """
+        Return a Schema object for the indicated table and database
+
+        Parameters
+        ----------
+        table_name : string
+          May be fully qualified
+        database : string, default None
+
+        Returns
+        -------
+        schema : ibis Schema
+        """
+        qualified_name = self._fully_qualified_name(table_name, database)
+        query = 'DESCRIBE {}'.format(qualified_name)
+
+        # only pull out the first two columns which are names and types
+        #pairs = [row[:2] for row in self.con.fetchall(query)]
+        pairs=[]
+        for row in self.con.fetchall(query):
+            if row[0] == '':
+                break
+            pairs.append(row[:2])
+
+        names, types = zip(*pairs)
+        ibis_types = [parse_type(type.lower()) for type in types]
+        names = [name.lower() for name in names]
+
+        return sch.Schema(names, ibis_types)
+
+
 udf.parse_type = parse_type
+ImpalaClient.get_schema = get_schema

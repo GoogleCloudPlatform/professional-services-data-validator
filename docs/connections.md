@@ -264,6 +264,10 @@ Then `pip install pyodbc`.
 ```
 
 ## Hive
+Please note that for Group By validations, the following property must be set in Hive:
+
+`set hive:hive.groupby.orderby.position.alias=true`
+
 ```
 {
     # Hive is based off Impala connector

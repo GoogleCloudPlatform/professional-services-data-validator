@@ -73,7 +73,7 @@ After installing the CLI tool using the instructions below, you will be ready to
 
 ## Deploy Data Validation CLI on your machine
 
-The Data Validation tooling requires Python 3.6+.
+The Data Validation tooling requires Python 3.7+.
 
 ```
 sudo apt-get install python3
