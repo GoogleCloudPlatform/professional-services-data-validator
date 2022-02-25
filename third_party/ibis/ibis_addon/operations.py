@@ -126,6 +126,17 @@ def format_hashbytes_teradata(translator, expr):
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
+def format_hashbytes_hive(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    if how == "sha256":
+        return f"sha2({compiled_arg}, 256)"
+    elif how == "md5":
+        return f"md5({compiled_arg})"
+    else:
+        raise ValueError(f"unexpected value for 'how': {how}")
+
+
 def compile_raw_sql(table, sql):
     op = RawSQL(table[table.columns[0]].cast(dt.string), ibis.literal(sql))
     return op.to_expr()
@@ -153,6 +164,7 @@ BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
+ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
