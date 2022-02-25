@@ -64,7 +64,7 @@ def parse_type(t):
 
 
 def get_schema(self, table_name, database=None):
-        """
+    """
         Return a Schema object for the indicated table and database
 
         Parameters
@@ -77,22 +77,22 @@ def get_schema(self, table_name, database=None):
         -------
         schema : ibis Schema
         """
-        qualified_name = self._fully_qualified_name(table_name, database)
-        query = 'DESCRIBE {}'.format(qualified_name)
+    qualified_name = self._fully_qualified_name(table_name, database)
+    query = "DESCRIBE {}".format(qualified_name)
 
-        # only pull out the first two columns which are names and types
-        #pairs = [row[:2] for row in self.con.fetchall(query)]
-        pairs=[]
-        for row in self.con.fetchall(query):
-            if row[0] == '':
-                break
-            pairs.append(row[:2])
+    # only pull out the first two columns which are names and types
+    # pairs = [row[:2] for row in self.con.fetchall(query)]
+    pairs = []
+    for row in self.con.fetchall(query):
+        if row[0] == "":
+            break
+        pairs.append(row[:2])
 
-        names, types = zip(*pairs)
-        ibis_types = [parse_type(type.lower()) for type in types]
-        names = [name.lower() for name in names]
+    names, types = zip(*pairs)
+    ibis_types = [parse_type(type.lower()) for type in types]
+    names = [name.lower() for name in names]
 
-        return sch.Schema(names, ibis_types)
+    return sch.Schema(names, ibis_types)
 
 
 udf.parse_type = parse_type
