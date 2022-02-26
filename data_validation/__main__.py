@@ -182,7 +182,7 @@ def build_config_managers_from_args(args):
 
     # Schema validation will not accept filters, labels, or threshold as flags
     filter_config, labels, threshold = [], [], 0.0
-    if config_type != consts.COLUMN_VALIDATION:
+    if config_type != consts.SCHEMA_VALIDATION:
         if args.filters:
             filter_config = cli_tools.get_filters(args.filters)
         if args.threshold:
