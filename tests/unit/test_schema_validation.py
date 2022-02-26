@@ -143,13 +143,13 @@ def test_schema_validation_matching(module_under_test):
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
 
     expected_results = [
-        ["field1", "field1", "1", "1", "Pass", "Source_type:string Target_type:string"],
+        ["field1", "field1", "1", "1", "success", "Source_type:string Target_type:string"],
         [
             "field2",
             "field2",
             "1",
             "1",
-            "Fail",
+            "fail",
             "Data type mismatch between source and target. "
             "Source_type:datetime Target_type:timestamp",
         ],
@@ -158,7 +158,7 @@ def test_schema_validation_matching(module_under_test):
             "N/A",
             "1",
             "0",
-            "Fail",
+            "fail",
             "Target doesn't have a matching field name",
         ],
         [
@@ -166,7 +166,7 @@ def test_schema_validation_matching(module_under_test):
             "field_3",
             "0",
             "1",
-            "Fail",
+            "fail",
             "Source doesn't have a matching field name",
         ],
     ]
@@ -188,7 +188,7 @@ def test_execute(module_under_test, fs):
 
     dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
     result_df = dv_client.schema_validator.execute()
-    failures = result_df[result_df["status"].str.contains("Fail")]
+    failures = result_df[result_df["status"].str.contains("fail")]
 
     assert len(result_df) == len(source_data[0]) + 1
     assert result_df["source_agg_value"].astype(float).sum() == 7
