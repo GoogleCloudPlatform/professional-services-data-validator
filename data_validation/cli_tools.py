@@ -410,9 +410,6 @@ def _configure_row_parser(row_parser):
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     row_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
-    row_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -500,9 +497,6 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     column_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
-    column_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -541,6 +535,9 @@ def _add_common_arguments(parser):
     )
     parser.add_argument(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
+    )
+    parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
     )
     parser.add_argument(
         "--service-account",

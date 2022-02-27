@@ -51,6 +51,10 @@ SAMPLE_SCHEMA_CONFIG = {
     consts.CONFIG_AGGREGATES: [],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_LABELS: [
+        ("label_1_name", "label_1_value"),
+        ("label_2_name", "label_2_value"),
+    ],
     consts.CONFIG_FORMAT: "table",
 }
 
@@ -193,5 +197,6 @@ def test_execute(module_under_test, fs):
     assert len(result_df) == len(source_data[0]) + 1
     assert result_df["source_agg_value"].astype(float).sum() == 7
     assert result_df["target_agg_value"].astype(float).sum() == 7
+    assert result_df.labels[0] == SAMPLE_SCHEMA_CONFIG[consts.CONFIG_LABELS]
     assert failures["source_column_name"].to_list() == ["id", "N/A"]
     assert failures["target_column_name"].to_list() == ["N/A", "id_new"]
