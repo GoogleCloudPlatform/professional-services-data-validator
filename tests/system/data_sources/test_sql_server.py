@@ -87,3 +87,29 @@ def test_sql_server_count(cloud_sql):
     data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
+
+
+def test_schema_validation():
+    conn = {
+        "source_type": "MSSQL",
+        "host": SQL_SERVER_HOST,
+        "user": SQL_SERVER_USER,
+        "password": SQL_SERVER_PASSWORD,
+        "port": 1433,
+        "database": "guestbook",
+    }
+
+    config = {
+        consts.CONFIG_SOURCE_CONN: conn,
+        consts.CONFIG_TARGET_CONN: conn,
+        consts.CONFIG_TYPE: "Schema",
+        consts.CONFIG_SCHEMA_NAME: "dbo",
+        consts.CONFIG_TABLE_NAME: "entries",
+        consts.CONFIG_FORMAT: "table",
+    }
+
+    validator = data_validation.DataValidation(config, verbose=True)
+    df = validator.execute()
+
+    for validation in df.to_dict(orient="records"):
+        assert validation["status"] == "Pass"
