@@ -131,3 +131,11 @@ COLUMN_FILTER_LIST = [
     "run_id",
     "start_time",
 ]
+SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
+    "run_id",
+    "start_time",
+    "end_time",
+    "aggregation_type",
+    "source_agg_value",
+    "target_agg_value",
+]
