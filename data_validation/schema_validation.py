@@ -15,7 +15,7 @@
 import datetime
 import pandas
 
-from data_validation import metadata
+from data_validation import metadata, consts
 
 
 class SchemaValidation(object):
@@ -100,7 +100,7 @@ def schema_validation_matching(source_fields, target_fields):
                         source_field_name,
                         "1",
                         "1",
-                        "Pass",
+                        consts.VALIDATION_STATUS_SUCCESS,
                         "Source_type:{} Target_type:{}".format(
                             source_field_type, target_fields[source_field_name]
                         ),
@@ -114,7 +114,7 @@ def schema_validation_matching(source_fields, target_fields):
                         source_field_name,
                         "1",
                         "1",
-                        "Fail",
+                        consts.VALIDATION_STATUS_FAIL,
                         "Data type mismatch between source and target. Source_type:{} Target_type:{}".format(
                             source_field_type, target_fields[source_field_name]
                         ),
@@ -128,7 +128,7 @@ def schema_validation_matching(source_fields, target_fields):
                     "N/A",
                     "1",
                     "0",
-                    "Fail",
+                    consts.VALIDATION_STATUS_FAIL,
                     "Target doesn't have a matching field name",
                 ]
             )
@@ -142,7 +142,7 @@ def schema_validation_matching(source_fields, target_fields):
                     target_field_name,
                     "0",
                     "1",
-                    "Fail",
+                    consts.VALIDATION_STATUS_FAIL,
                     "Source doesn't have a matching field name",
                 ]
             )
