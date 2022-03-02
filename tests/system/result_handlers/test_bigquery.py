@@ -20,6 +20,8 @@ import google.cloud.bigquery
 import pandas
 import pandas.testing
 
+from data_validation import consts
+
 
 REPO_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 SCHEMA_PATH = REPO_ROOT / "terraform" / "results_schema.json"
@@ -134,7 +136,14 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
             "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
             "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
-            "status": ["fail", "success", _NAN, _NAN, _NAN, _NAN],
+            "status": [
+                consts.VALIDATION_STATUS_FAIL,
+                consts.VALIDATION_STATUS_SUCCESS,
+                _NAN,
+                _NAN,
+                _NAN,
+                _NAN,
+            ],
             "labels": [[{"key": "name", "value": "test_label"}]] * 6,
         }
     )
