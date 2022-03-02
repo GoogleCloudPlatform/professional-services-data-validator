@@ -140,6 +140,17 @@ class ConfigManager(object):
         )
 
     @property
+    def query_file(self):
+        """ Return SQL Query File from Config """
+        return self._config.get(consts.CONFIG_QUERY_FILE, [])
+
+    def append_query_file(self, query_file_configs):
+        """Append grouped configs to existing config."""
+        self._config[consts.CONFIG_QUERY_FILE] = (
+            self.query_file + query_file_configs
+        )
+
+    @property
     def primary_keys(self):
         """ Return Primary keys from Config """
         return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
