@@ -108,6 +108,8 @@ TARGET_COLUMN_NAME = "target_column_name"
 TARGET_AGG_VALUE = "target_agg_value"
 
 VALIDATION_STATUS = "status"
+VALIDATION_STATUS_SUCCESS = "success"
+VALIDATION_STATUS_FAIL = "fail"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
