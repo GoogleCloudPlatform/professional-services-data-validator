@@ -107,5 +107,5 @@ class ImpalaExprTranslatorHive(BaseExprTranslator):
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
-ImpalaExprTranslator = ImpalaExprTranslatorHive
+ImpalaExprTranslator.ImpalaExprTranslator = ImpalaExprTranslatorHive
 
