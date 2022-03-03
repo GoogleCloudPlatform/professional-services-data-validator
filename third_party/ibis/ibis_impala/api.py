@@ -13,15 +13,20 @@
 # limitations under the License.
 
 from ibis.backends.base_sql import fixed_arity
-from ibis.backends.impala import compiler
-from ibis.backends.impala import connect
-from ibis.backends.impala import udf
+from ibis.backends.base_sql.compiler import (
+    BaseContext,
+    BaseExprTranslator,
+)
+from ibis.backends.impala import compiler, connect, udf
 from ibis.backends.impala.client import ImpalaClient
+from ibis.backends.impala.compiler import ImpalaExprTranslator
 import ibis.expr.datatypes as dt
+import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
-
+_operation_registry = compiler._operation_registry
+compiler._operation_registry.update({ops.IfNull: fixed_arity("NVL", 2)})
 
 def impala_connect(
     host=None,
@@ -96,6 +101,10 @@ def get_schema(self, table_name, database=None):
 
     return sch.Schema(names, ibis_types)
 
+class ImpalaExprTranslator(BaseExprTranslator):
+    _registry = _operation_registry
+    context_class = BaseContext
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
+
