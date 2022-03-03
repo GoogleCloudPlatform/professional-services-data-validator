@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ibis.backends.base_sql import fixed_arity
 from ibis.backends.impala import compiler
 from ibis.backends.impala import connect
 from ibis.backends.impala import udf
