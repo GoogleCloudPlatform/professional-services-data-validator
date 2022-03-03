@@ -182,7 +182,7 @@ def build_config_managers_from_args(args):
 
     # Schema validation will not accept filters, labels, or threshold as flags
     filter_config, labels, threshold = [], [], 0.0
-    if config_type != consts.COLUMN_VALIDATION:
+    if config_type != consts.SCHEMA_VALIDATION:
         if args.filters:
             filter_config = cli_tools.get_filters(args.filters)
         if args.threshold:
@@ -194,6 +194,13 @@ def build_config_managers_from_args(args):
     target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     format = args.format if args.format else "table"
+
+    use_random_rows = (
+        None if config_type == consts.SCHEMA_VALIDATION else args.use_random_row
+    )
+    random_row_batch_size = (
+        None if config_type == consts.SCHEMA_VALIDATION else args.random_row_batch_size
+    )
 
     is_filesystem = source_client._source_type == "FileSystem"
     tables_list = cli_tools.get_tables_list(
@@ -209,8 +216,8 @@ def build_config_managers_from_args(args):
             labels,
             threshold,
             format,
-            use_random_rows=args.use_random_row,
-            random_row_batch_size=args.random_row_batch_size,
+            use_random_rows=use_random_rows,
+            random_row_batch_size=random_row_batch_size,
             source_client=source_client,
             target_client=target_client,
             result_handler_config=result_handler_config,

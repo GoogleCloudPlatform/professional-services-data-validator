@@ -516,7 +516,7 @@ def test_status_success_validation(module_under_test, fs):
     col_a_status = col_a_result_df.status.values[0]
 
     assert col_a_pct_threshold == 0.0
-    assert col_a_status == "success"
+    assert col_a_status == consts.VALIDATION_STATUS_SUCCESS
 
 
 def test_status_fail_validation(module_under_test, fs):
@@ -530,7 +530,7 @@ def test_status_fail_validation(module_under_test, fs):
     col_a_status = col_a_result_df.status.values[0]
 
     assert col_a_pct_threshold == 0.0
-    assert col_a_status == "fail"
+    assert col_a_status == consts.VALIDATION_STATUS_FAIL
 
 
 def test_threshold_equals_diff(module_under_test, fs):
@@ -546,7 +546,7 @@ def test_threshold_equals_diff(module_under_test, fs):
 
     assert col_a_pct_diff == 150.0
     assert col_a_pct_threshold == 150.0
-    assert col_a_status == "success"
+    assert col_a_status == consts.VALIDATION_STATUS_SUCCESS
 
 
 def test_grouped_column_level_validation_perfect_match(module_under_test, fs):
@@ -674,7 +674,7 @@ def test_fail_row_level_validation(module_under_test, fs):
     result_df = client.execute()
 
     # based on shared keys
-    fail_df = result_df[result_df["status"] == "fail"]
+    fail_df = result_df[result_df["status"] == consts.VALIDATION_STATUS_FAIL]
     assert len(fail_df) == 5
 
 
@@ -691,7 +691,7 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
 
-    comparison_df = result_df[result_df["status"] == "fail"]
+    comparison_df = result_df[result_df["status"] == consts.VALIDATION_STATUS_FAIL]
     # 2 validations * (100 source + 1 target)
     assert len(result_df) == 202
     assert len(comparison_df) == 202

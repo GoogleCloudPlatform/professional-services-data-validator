@@ -133,6 +133,18 @@ CONFIG_NUMERIC_AGG_VALID = {
     consts.CONFIG_FORMAT: "table",
 }
 
+CONFIG_SCHEMA_VALIDATION = {
+    # BigQuery Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
+    # Validation Type
+    consts.CONFIG_TYPE: "Schema",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_FORMAT: "table",
+}
+
 BQ_CONN_NAME = "bq-integration-test"
 CLI_CONFIG_FILE = "example_test.yaml"
 
@@ -165,7 +177,7 @@ CLI_STORE_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES = 33  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
+EXPECTED_NUM_YAML_LINES = 36  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
 
@@ -235,6 +247,14 @@ def test_numeric_types():
         assert float(validation["source_agg_value"]) == float(
             validation["target_agg_value"]
         )
+
+
+def test_schema_validation():
+    validator = data_validation.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
+    df = validator.execute()
+
+    for validation in df.to_dict(orient="records"):
+        assert validation["status"] == consts.VALIDATION_STATUS_SUCCESS
 
 
 def test_cli_store_yaml_then_run_gcs():
