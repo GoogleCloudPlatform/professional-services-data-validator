@@ -16,6 +16,7 @@ from ibis.backends.impala import compiler
 from ibis.backends.impala import connect
 from ibis.backends.impala import udf
 import ibis.expr.datatypes as dt
+import ibis.expr.operations as ops
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
 
