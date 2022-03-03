@@ -41,6 +41,7 @@ from ibis.expr.types import (
 )
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
+from ibis.backends.base_sql import fixed_arity
 from ibis.backends.base_sqlalchemy.alchemy import AlchemyExprTranslator
 
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
@@ -165,6 +166,7 @@ AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
+ImpalaExprTranslator._registry[IfNull] = fixed_arity("NVL", 2)
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
