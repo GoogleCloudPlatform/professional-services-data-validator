@@ -177,7 +177,7 @@ CLI_STORE_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES = 33  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
+EXPECTED_NUM_YAML_LINES = 36  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
 
