@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ibis.backends.impala import compiler
 from ibis.backends.impala import connect
 from ibis.backends.impala import udf
 import ibis.expr.datatypes as dt
@@ -60,5 +61,5 @@ def parse_type(t):
         else:
             raise Exception(t)
 
-
+compiler._operation_registry.update({ops.IfNull: fixed_arity("NVL", 2)}) 
 udf.parse_type = parse_type
