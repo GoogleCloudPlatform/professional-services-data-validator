@@ -70,6 +70,21 @@ class HashBytes(ValueOp):
     how = Arg(rlz.isin({'sha256', 'farm_fingerprint'}))
     output_type = rlz.shape_like('arg', 'binary')
 
+class FillNa(TableNode, sch.HasSchema):
+    """Fill null values in the table."""
+
+    table = rlz.table
+    replacements = rlz.one_of(
+        (
+            rlz.numeric,
+            rlz.string,
+            rlz.instance_of(collections.abc.Mapping),
+        )
+    )
+
+    @cached_property
+    def schema(self):
+        return self.table.schema()
 
 class RawSQL(Comparison):
     pass
@@ -95,6 +110,11 @@ def format_hash_bigquery(translator, expr):
 
 def compile_hashbytes(binary_value, how):
     return HashBytes(binary_value, how=how).to_expr()
+
+def format_nvl_impala(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    return f"NVL({compiled_arg})"
 
 def format_hash_bigquery(translator, expr):
     arg, how = expr.op().args
@@ -164,7 +184,11 @@ BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
+<<<<<<< Updated upstream
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
+=======
+ImpalaExprTranslator._registry[RawSQL] = format_nvl_impala
+>>>>>>> Stashed changes
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
