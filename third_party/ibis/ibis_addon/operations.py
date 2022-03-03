@@ -63,6 +63,16 @@ class IfNull(ValueOp):
     output_type = rlz.shape_like('args')
 
 
+class IsNull(UnaryOp):
+    """Returns true if values are null
+    Returns
+    -------
+    isnull : boolean with dimension of caller
+    """
+
+    output_type = rlz.shape_like('arg', dt.boolean)
+
+
 class BitXor(Reduction):
     """Aggregate bitwise XOR operation."""
 
