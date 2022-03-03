@@ -103,6 +103,12 @@ def compile_hash(binary_value, how):
     return Hash(binary_value, how=how).to_expr()
 
 
+def format_nvl_impala(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    return f"NVL({compiled_arg})"
+
+
 def format_hash_bigquery(translator, expr):
     op = expr.op()
     arg, how = op.args
@@ -187,8 +193,8 @@ AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
-ImpalaExprTranslator._registry[IfNull] = fixed_arity("NVL", 2)
-ImpalaExprTranslator._registry[IsNull] = fixed_arity("NVL", 2)
+ImpalaExprTranslator._registry[IfNull] = format_nvl_impala
+ImpalaExprTranslator._registry[IsNull] = format_nvl_impala
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
