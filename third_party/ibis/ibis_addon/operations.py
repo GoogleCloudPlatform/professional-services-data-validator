@@ -33,7 +33,7 @@ from ibis_bigquery.compiler import (
 )
 import ibis.expr.datatypes as dt
 from ibis.expr.operations import (
-    Arg, Comparison, Reduction, ValueOp
+    Arg, Comparison, Reduction, ValueOp, IfNull
 )
 import ibis.expr.rules as rlz
 from ibis.expr.types import (
