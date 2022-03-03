@@ -52,6 +52,17 @@ from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
 
+class IfNull(ValueOp):
+    """Equivalent to (but perhaps implemented differently):
+    case().when(expr.notnull(), expr)
+          .else_(null_substitute_expr)
+    """
+
+    arg = Arg(rlz.any)
+    ifnull_expr = Arg(rlz.any)
+    output_type = rlz.shape_like('args')
+
+
 class BitXor(Reduction):
     """Aggregate bitwise XOR operation."""
 
