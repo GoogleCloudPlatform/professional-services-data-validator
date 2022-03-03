@@ -33,7 +33,7 @@ from ibis_bigquery.compiler import (
 )
 import ibis.expr.datatypes as dt
 from ibis.expr.operations import (
-    Arg, Comparison, Reduction, ValueOp, IfNull
+    Arg, Comparison, Reduction, ValueOp, IfNull, IsNull
 )
 import ibis.expr.rules as rlz
 from ibis.expr.types import (
@@ -167,6 +167,7 @@ BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 ImpalaExprTranslator._registry[IfNull] = fixed_arity("NVL", 2)
+ImpalaExprTranslator._registry[IsNull] = fixed_arity("NVL", 2)
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
