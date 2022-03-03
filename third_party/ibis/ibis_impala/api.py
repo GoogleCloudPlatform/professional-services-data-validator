@@ -26,7 +26,7 @@ import ibis.expr.schema as sch
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
 _operation_registry = compiler._operation_registry
-compiler._operation_registry.update({ops.IfNull: fixed_arity("NVL", 2)})
+_operation_registry.update({ops.IfNull: fixed_arity("NVL", 2)})
 
 def impala_connect(
     host=None,
@@ -101,10 +101,11 @@ def get_schema(self, table_name, database=None):
 
     return sch.Schema(names, ibis_types)
 
-class ImpalaExprTranslator(BaseExprTranslator):
+class ImpalaExprTranslatorHive(BaseExprTranslator):
     _registry = _operation_registry
     context_class = BaseContext
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
+ImpalaExprTranslator = ImpalaExprTranslatorHive
 
