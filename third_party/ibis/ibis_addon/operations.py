@@ -33,11 +33,11 @@ from ibis_bigquery.compiler import (
 )
 import ibis.expr.datatypes as dt
 from ibis.expr.operations import (
-    Arg, Comparison, Reduction, ValueOp, UnaryOp
+    Arg, Comparison, Reduction, ValueOp, UnaryOp, IfNull
 )
 import ibis.expr.rules as rlz
 from ibis.expr.types import (
-    BinaryValue, IntegerColumn, StringValue
+    BinaryValue, IntegerColumn, StringValue,
 )
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
