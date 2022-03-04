@@ -19,6 +19,7 @@ from ibis.backends.base_sql.compiler import (
 )
 from ibis.backends.impala import compiler, connect, udf
 from ibis.backends.impala.client import ImpalaClient
+import ibis.backends.base_sqlalchemy.compiler as comp
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
