@@ -355,7 +355,6 @@ class CalculatedField(object):
                     compiled_fields.append(ibis_table[field].cast(self.cast))
                 else:
                     compiled_fields.append(ibis_table[field])
-        print (compiled_fields)
         return compiled_fields
 
     def compile(self, ibis_table):

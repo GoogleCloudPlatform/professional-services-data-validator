@@ -101,11 +101,7 @@ def get_schema(self, table_name, database=None):
 
     return sch.Schema(names, ibis_types)
 
-# class ImpalaExprTranslatorHive(BaseExprTranslator):
-#     _registry = _operation_registry
-#     context_class = BaseContext
-
+ImpalaExprTranslator._registry[ops.IfNull] = fixed_arity("NVL", 2)
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
-# ImpalaExprTranslator.ImpalaExprTranslator = ImpalaExprTranslatorHive
 
