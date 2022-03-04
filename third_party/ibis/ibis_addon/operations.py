@@ -51,45 +51,6 @@ from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
-
-class IfNull(ValueOp):
-    """Equivalent to (but perhaps implemented differently):
-    case().when(expr.notnull(), expr)
-          .else_(null_substitute_expr)
-    """
-
-    arg = Arg(rlz.any)
-    ifnull_expr = Arg(rlz.any)
-    output_type = rlz.shape_like('args')
-
-
-class IsNull(UnaryOp):
-    """Returns true if values are null
-    Returns
-    -------
-    isnull : boolean with dimension of caller
-    """
-
-    output_type = rlz.shape_like('arg', dt.boolean)
-
-
-class FillNa(TableNode, sch.HasSchema):
-    """Fill null values in the table."""
-
-    table = rlz.table
-    replacements = rlz.one_of(
-        (
-            rlz.numeric,
-            rlz.string,
-            rlz.instance_of(collections.abc.Mapping),
-        )
-    )
-
-    @cached_property
-    def schema(self):
-        return self.table.schema(
-        
-
 class BitXor(Reduction):
     """Aggregate bitwise XOR operation."""
 
@@ -118,6 +79,25 @@ def compile_hash(numeric_value, how):
 
 def compile_hash(binary_value, how):
     return Hash(binary_value, how=how).to_expr()
+
+
+def fillna(arg, fill_value):
+    """
+    Replace any null values with the indicated fill value
+    Parameters
+    ----------
+    fill_value : scalar / array value or expression
+    Examples
+    --------
+    >>> import ibis
+    >>> table = ibis.table([('col', 'int64'), ('other_col', 'int64')])
+    >>> result = table.col.fillna(5)
+    >>> result2 = table.col.fillna(table.other_col * 3)
+    Returns
+    -------
+    filled : type of caller
+    """
+    return ops.IfNull(arg, fill_value).to_expr()
 
 
 def format_nvl_impala(translator, expr):
@@ -210,8 +190,7 @@ AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
-ImpalaExprTranslator._registry[FillNa] = fixed_arity("NVL", 2)
-# ImpalaExprTranslator._registry[IsNull] = fixed_arity("NVL", 2)
+ImpalaExprTranslator._registry[IfNull] = fixed_arity("NVL", 2)
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
