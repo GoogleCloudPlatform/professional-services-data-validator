@@ -312,7 +312,7 @@ class CalculatedField(object):
             else config.get("default_null_string")
         )
         fields = [fields[0], config["default_string"]]
-        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
+        return CalculatedField(ibis.expr.api.ValueExpr.coalesce, config, fields,)
 
     @staticmethod
     def length(config, fields):
