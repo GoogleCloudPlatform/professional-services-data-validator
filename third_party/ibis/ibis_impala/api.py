@@ -19,7 +19,6 @@ from ibis.backends.base_sql.compiler import (
 )
 from ibis.backends.impala import compiler, connect, udf
 from ibis.backends.impala.client import ImpalaClient
-from ibis.backends.impala.compiler import ImpalaExprTranslator
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
@@ -101,7 +100,10 @@ def get_schema(self, table_name, database=None):
 
     return sch.Schema(names, ibis_types)
 
-ImpalaExprTranslator._registry[ops.IfNull] = fixed_arity("NVL", 2)
+compiler.ImpalaExprTranslator._registry[ops.IfNull] = fixed_arity("NVL", 2)
+compiler.compiles = compiler.ImpalaExprTranslator.compiles
+compiler.rewrites = compiler.ImpalaExprTranslator.rewrites
+
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
 
