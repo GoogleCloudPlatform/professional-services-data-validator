@@ -73,6 +73,23 @@ class IsNull(UnaryOp):
     output_type = rlz.shape_like('arg', dt.boolean)
 
 
+class FillNa(TableNode, sch.HasSchema):
+    """Fill null values in the table."""
+
+    table = rlz.table
+    replacements = rlz.one_of(
+        (
+            rlz.numeric,
+            rlz.string,
+            rlz.instance_of(collections.abc.Mapping),
+        )
+    )
+
+    @cached_property
+    def schema(self):
+        return self.table.schema(
+        
+
 class BitXor(Reduction):
     """Aggregate bitwise XOR operation."""
 
