@@ -478,7 +478,8 @@ class QueryBuilder(object):
 
         if self.limit:
             query = query.limit(self.limit)
-
+        
+        print (query)
         return query
 
     def add_aggregate_field(self, aggregate_field):
