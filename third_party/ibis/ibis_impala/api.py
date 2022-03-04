@@ -107,8 +107,8 @@ class ImpalaExprTranslator(BaseExprTranslator):
 
 compiler.ImpalaExprTranslator = ImpalaExprTranslator
 # compiler.ImpalaExprTranslator._registry[ops.IfNull] = fixed_arity("NVL", 2)
-# compiler.compiles = compiler.ImpalaExprTranslator.compiles
-# compiler.rewrites = compiler.ImpalaExprTranslator.rewrites
+compiler.compiles = ImpalaExprTranslator.compiles
+compiler.rewrites = ImpalaExprTranslator.rewrites
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
