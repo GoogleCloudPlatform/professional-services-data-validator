@@ -77,27 +77,9 @@ class RawSQL(Comparison):
 def compile_hash(numeric_value, how):
     return Hash(numeric_value, how=how).to_expr()
 
+
 def compile_hash(binary_value, how):
     return Hash(binary_value, how=how).to_expr()
-
-
-def fillna(arg, fill_value):
-    """
-    Replace any null values with the indicated fill value
-    Parameters
-    ----------
-    fill_value : scalar / array value or expression
-    Examples
-    --------
-    >>> import ibis
-    >>> table = ibis.table([('col', 'int64'), ('other_col', 'int64')])
-    >>> result = table.col.fillna(5)
-    >>> result2 = table.col.fillna(table.other_col * 3)
-    Returns
-    -------
-    filled : type of caller
-    """
-    return ops.IfNull(arg, fill_value).to_expr()
 
 
 def format_nvl_impala(translator, expr):
@@ -190,7 +172,7 @@ AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
-ImpalaExprTranslator._registry[IfNull] = fixed_arity("NVL", 2)
+ImpalaExprTranslator._registry[ibis.expr.operations.IfNull] = fixed_arity("NVL", 2)
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
