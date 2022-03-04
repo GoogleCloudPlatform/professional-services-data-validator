@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.backends.base_sql import fixed_arity, ifnull_workaround
+from ibis.backends.base_sql import fixed_arity
 from ibis.backends.base_sql.compiler import (
     BaseContext,
     BaseExprTranslator,
@@ -100,15 +100,22 @@ def get_schema(self, table_name, database=None):
 
     return sch.Schema(names, ibis_types)
 
-def ifnull_hive(translator, expr):
-    op = expr.op()
-    a, b = op.args
 
-    # work around per #345, #360
-    if isinstance(a, ir.DecimalValue) and isinstance(b, ir.IntegerValue):
-        b = b.cast(a.type())
+class ImpalaSelect(comp.Select):
 
-    return format_call(translator, 'nvl', a, b)
+    """
+    A SELECT statement which, after execution, might yield back to the user a
+    table, array/list, or scalar value, depending on the expression that
+    generated it
+    """
+
+    @property
+    def translator(self):
+        return ImpalaExprTranslator
+
+    @property
+    def table_set_formatter(self):
+        return compiler.ImpalaTableSetFormatter
 
 
 class ImpalaExprTranslator(BaseExprTranslator):
@@ -118,8 +125,7 @@ class ImpalaExprTranslator(BaseExprTranslator):
 
 
 compiler.ImpalaExprTranslator = ImpalaExprTranslator
-ifnull_workaround = ifnull_hive
-# compiler.ImpalaExprTranslator._registry[ops.IfNull] = fixed_arity("NVL", 2)
+compiler.ImpalaSelect = ImpalaSelect
 compiler.compiles = ImpalaExprTranslator.compiles
 compiler.rewrites = ImpalaExprTranslator.rewrites
 
