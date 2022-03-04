@@ -100,9 +100,15 @@ def get_schema(self, table_name, database=None):
 
     return sch.Schema(names, ibis_types)
 
-compiler.ImpalaExprTranslator._registry[ops.IfNull] = fixed_arity("NVL", 2)
-compiler.compiles = compiler.ImpalaExprTranslator.compiles
-compiler.rewrites = compiler.ImpalaExprTranslator.rewrites
+class ImpalaExprTranslator(BaseExprTranslator):
+    _registry = compiler._operation_registry
+    _registry[ops.IfNull] = fixed_arity("NVL", 2)
+    context_class = BaseContext
+
+compiler.ImpalaExprTranslator = ImpalaExprTranslator
+# compiler.ImpalaExprTranslator._registry[ops.IfNull] = fixed_arity("NVL", 2)
+# compiler.compiles = compiler.ImpalaExprTranslator.compiles
+# compiler.rewrites = compiler.ImpalaExprTranslator.rewrites
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
