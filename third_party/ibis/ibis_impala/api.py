@@ -25,8 +25,7 @@ import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
-# _operation_registry = compiler._operation_registry
-# _operation_registry.update({ops.IfNull: fixed_arity("NVL", 2)})
+# compiler._operation_registry.update({ops.IfNull: fixed_arity("nvl", 2)})
 
 def impala_connect(
     host=None,
@@ -100,35 +99,6 @@ def get_schema(self, table_name, database=None):
     names = [name.lower() for name in names]
 
     return sch.Schema(names, ibis_types)
-
-
-class ImpalaSelect(comp.Select):
-
-    """
-    A SELECT statement which, after execution, might yield back to the user a
-    table, array/list, or scalar value, depending on the expression that
-    generated it
-    """
-
-    @property
-    def translator(self):
-        return ImpalaExprTranslator
-
-    @property
-    def table_set_formatter(self):
-        return compiler.ImpalaTableSetFormatter
-
-
-class ImpalaExprTranslator(BaseExprTranslator):
-    _registry = compiler._operation_registry
-    _registry[ops.IfNull] = fixed_arity("NVL", 2)
-    context_class = BaseContext
-
-
-compiler.ImpalaExprTranslator = ImpalaExprTranslator
-compiler.ImpalaSelect = ImpalaSelect
-compiler.compiles = ImpalaExprTranslator.compiles
-compiler.rewrites = ImpalaExprTranslator.rewrites
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
