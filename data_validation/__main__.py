@@ -149,11 +149,16 @@ def build_config_from_args(args, config_manager):
         )
 
     # TODO(GH#18): Add query filter config logic
+
+
     if config_manager.validation_type == consts.CUSTOM_QUERY:
-        #config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        if args.qry_file is not None:
-            query_file = cli_tools.get_arg_list(args.qry_file)
-            config_manager.append_query_file(query_file)
+        config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+        if args.source_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.source_query_file)
+            config_manager.append_source_query_file(query_file)
+        if args.target_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.target_query_file)
+            config_manager.append_target_query_file(query_file)
     return config_manager
 
 
@@ -461,7 +466,7 @@ def main():
         validate(args)
     elif args.command == "deploy":
         from data_validation import app
-
+        
         app.app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")

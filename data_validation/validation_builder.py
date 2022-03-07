@@ -327,7 +327,12 @@ class ValidationBuilder(object):
             "schema_name": self.config_manager.source_schema,
             "table_name": self.config_manager.source_table,
         }
-        query = self.source_builder.compile(**source_config)
+        if self.validation_type == consts.CUSTOM_QUERY:
+            source_query = self.get_query_from_file(self.config_manager.source_query_file[0])
+            aggregate_source_query = "SELECT count(*) as count FROM (" + source_query + ")"
+            query = self.source_client.sql(aggregate_source_query)
+        else:
+            query = self.source_builder.compile(**source_config)
         if self.verbose:
             print(source_config)
             print("-- ** Source Query ** --")
@@ -342,14 +347,19 @@ class ValidationBuilder(object):
             "schema_name": self.config_manager.target_schema,
             "table_name": self.config_manager.target_table,
         }
-        query = self.target_builder.compile(**target_config)
+        if self.validation_type == consts.CUSTOM_QUERY:
+            target_query = self.get_query_from_file(self.config_manager.target_query_file[0])
+            aggregate_target_query = "SELECT count(*) as count FROM (" + target_query + ")"
+            query = self.target_client.sql(aggregate_target_query)
+        else:
+            query = self.target_builder.compile(**target_config)
         if self.verbose:
             print(target_config)
             print("-- ** Target Query ** --")
             print(query.compile())
 
         return query
-
+    
     def add_query_limit(self):
         """Add a limit to the query results
 
@@ -358,3 +368,15 @@ class ValidationBuilder(object):
         limit = self.config_manager.query_limit
         self.source_builder.limit = limit
         self.target_builder.limit = limit
+
+    def get_query_from_file(self,filename):
+        """ Return query from input file """
+        try:
+            file = open(filename, "r")
+            query = file.read()
+        except IOError:
+            print("Cannot read query file")
+            exit
+        return query
+
+    

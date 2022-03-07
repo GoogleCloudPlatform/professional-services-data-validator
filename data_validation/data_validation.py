@@ -338,7 +338,7 @@ class DataValidation(object):
             )
 
         return result_df
-
+        
     def combine_data(self, source_df, target_df, join_on_fields):
         """ TODO: Return List of Dictionaries """
         # Clean Data to Standardize

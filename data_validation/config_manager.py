@@ -140,14 +140,25 @@ class ConfigManager(object):
         )
 
     @property
-    def query_file(self):
+    def source_query_file(self):
         """ Return SQL Query File from Config """
-        return self._config.get(consts.CONFIG_QUERY_FILE, [])
+        return self._config.get(consts.CONFIG_SOURCE_QUERY_FILE, [])
 
-    def append_query_file(self, query_file_configs):
+    def append_source_query_file(self, query_file_configs):
         """Append grouped configs to existing config."""
-        self._config[consts.CONFIG_QUERY_FILE] = (
-            self.query_file + query_file_configs
+        self._config[consts.CONFIG_SOURCE_QUERY_FILE] = (
+            self.source_query_file + query_file_configs
+        )
+
+    @property
+    def target_query_file(self):
+        """ Return SQL Query File from Config """
+        return self._config.get(consts.CONFIG_TARGET_QUERY_FILE, [])
+
+    def append_target_query_file(self, query_file_configs):
+        """Append grouped configs to existing config."""
+        self._config[consts.CONFIG_TARGET_QUERY_FILE] = (
+            self.target_query_file + query_file_configs
         )
 
     @property
