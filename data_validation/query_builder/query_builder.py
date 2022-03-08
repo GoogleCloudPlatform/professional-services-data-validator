@@ -360,8 +360,6 @@ class CalculatedField(object):
     def compile(self, ibis_table):
         compiled_fields = self._compile_fields(ibis_table, self.fields)
         calc_field = self.expr(*compiled_fields, **self.kwargs)
-        if self.config["type"] == "ifnull":
-            print(calc_field)
         if self.config["field_alias"]:
             calc_field = calc_field.name(self.config["field_alias"])
 
@@ -426,6 +424,7 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.comparison_fields]
 
     def compile_calculated_fields(self, table, n=0):
+        print (field.compile(table))
         return [
             field.compile(table)
             for field in self.calculated_fields
