@@ -424,6 +424,10 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.comparison_fields]
 
     def compile_calculated_fields(self, table, n=0):
+        for field in self.calculated_fields:
+            print(field)
+            print(field.compile(table))
+
         return [
             field.compile(table)
             for field in self.calculated_fields
@@ -459,8 +463,6 @@ class QueryBuilder(object):
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
-        query_test = calc_table.compile()
-        print (query_test)
         compiled_filters = self.compile_filter_fields(table)
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
