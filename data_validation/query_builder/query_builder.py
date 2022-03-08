@@ -360,6 +360,8 @@ class CalculatedField(object):
     def compile(self, ibis_table):
         compiled_fields = self._compile_fields(ibis_table, self.fields)
         calc_field = self.expr(*compiled_fields, **self.kwargs)
+        if self.config["type"] == "ifnull":
+            print(calc_field)
         if self.config["field_alias"]:
             calc_field = calc_field.name(self.config["field_alias"])
 
