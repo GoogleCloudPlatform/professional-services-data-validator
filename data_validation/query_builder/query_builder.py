@@ -459,7 +459,7 @@ class QueryBuilder(object):
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
-        print(calc_table.compile())
+        print(calc_table.compile(table))
         compiled_filters = self.compile_filter_fields(table)
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
