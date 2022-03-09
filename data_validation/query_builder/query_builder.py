@@ -424,11 +424,6 @@ class QueryBuilder(object):
         return [field.compile(table) for field in self.comparison_fields]
 
     def compile_calculated_fields(self, table, n=0):
-        for field in self.calculated_fields:
-            if field.config[consts.CONFIG_DEPTH] == n:
-                print(field)
-                print(field.compile(table))
-
         return [
             field.compile(table)
             for field in self.calculated_fields
