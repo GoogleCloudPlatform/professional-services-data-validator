@@ -303,6 +303,8 @@ class DataValidation(object):
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )
+            source_df = self._adjust_schema(source_df)
+            target_df = self._adjust_schema(target_df)
             pandas_client = ibis.backends.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )
@@ -357,3 +359,12 @@ class DataValidation(object):
                 rsuffix=consts.OUTPUT_SUFFIX,
             )
         return df
+
+    def _adjust_schema(self,data_frame):
+        """ Fix schema differences introduced because of ibis sql function """
+        substitutions = {}
+        for column_name in data_frame.columns:
+            if 't0.' in column_name:
+                print(column_name)
+                substitutions[column_name] = column_name[3:]       
+        return data_frame.rename(columns=substitutions)

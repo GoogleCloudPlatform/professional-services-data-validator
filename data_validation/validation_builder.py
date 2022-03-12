@@ -337,7 +337,10 @@ class ValidationBuilder(object):
                     aggregate.get("type"), 
                     aggregate.get("target_column")
                 )
-            source_aggregate_query += self.get_wrapper_aggregation_query(source_input_query)
+            source_aggregate_query = self.get_wrapper_aggregation_query(
+                source_aggregate_query,
+                source_input_query
+            )
             query = self.source_client.sql(source_aggregate_query)
         else:
             query = self.source_builder.compile(**source_config)
@@ -358,14 +361,16 @@ class ValidationBuilder(object):
         if self.validation_type == consts.CUSTOM_QUERY:
             target_input_query = self.get_query_from_file(self.config_manager.target_query_file[0])
             target_aggregate_query = "SELECT "
-            #aggregate_target_query = "SELECT count(*) as count FROM (" + target_query + ")"
             for aggregate in self.config_manager.aggregates:
                 target_aggregate_query += self.get_aggregation_query(
                     aggregate.get("type"), 
                     aggregate.get("target_column")
                 )
 
-            target_aggregate_query += self.get_wrapper_aggregation_query(target_input_query)
+            target_aggregate_query = self.get_wrapper_aggregation_query(
+                target_aggregate_query,
+                target_input_query
+            )
             query = self.target_client.sql(target_aggregate_query)
         else:
             query = self.target_builder.compile(**target_config)
@@ -405,10 +410,11 @@ class ValidationBuilder(object):
             aggregation_query = agg_type + "(" + column_name + ") as " + agg_type + "__" + column_name + ","
         return aggregation_query
 
-    def get_wrapper_aggregation_query(self, base_query):
+    def get_wrapper_aggregation_query(self, aggregate_query, base_query):
         """ Return wrapper aggregation query """
         #add base_query empty logic here
-        return (" FROM (" + base_query + ")")
+
+        return (aggregate_query[:len(aggregate_query)-1] + " FROM (" + base_query + ") as base_query")
 
 
     
