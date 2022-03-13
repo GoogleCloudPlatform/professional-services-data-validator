@@ -334,7 +334,7 @@ class ValidationBuilder(object):
             source_aggregate_query = "SELECT "
             for aggregate in self.config_manager.aggregates:
                 source_aggregate_query += self.get_aggregation_query(
-                    aggregate.get("type"), 
+                    aggregate.get("type"),
                     aggregate.get("target_column")
                 )
             source_aggregate_query = self.get_wrapper_aggregation_query(
@@ -363,7 +363,7 @@ class ValidationBuilder(object):
             target_aggregate_query = "SELECT "
             for aggregate in self.config_manager.aggregates:
                 target_aggregate_query += self.get_aggregation_query(
-                    aggregate.get("type"), 
+                    aggregate.get("type"),
                     aggregate.get("target_column")
                 )
 
@@ -380,7 +380,7 @@ class ValidationBuilder(object):
             print(query.compile())
 
         return query
-    
+
     def add_query_limit(self):
         """Add a limit to the query results
 
@@ -397,28 +397,30 @@ class ValidationBuilder(object):
             file = open(filename, "r")
             query = file.read()
         except IOError:
-            print("Cannot read query file")
-            exit
+            print("Cannot read query file: ",filename)
+
         if not query or query.isspace():
             raise ValueError(
             "Expected file with sql query, got empty file or file with white spaces. "
             f"input file: {filename}"
             )
+        file.close()
         return query
 
     def get_aggregation_query(self, agg_type, column_name):
         """ Return aggregation query """
         aggregation_query = ""
         if column_name is None:
-            aggregation_query = agg_type + "(*) as " + agg_type + ","
+            aggregation_query = agg_type + "(*) as " + \
+                agg_type + ","
         else:
-            aggregation_query = agg_type + "(" + column_name + ") as " + agg_type + "__" + column_name + ","
+            aggregation_query = agg_type + \
+                "(" + column_name + ") as " + \
+                agg_type + "__" + column_name + ","
         return aggregation_query
 
     def get_wrapper_aggregation_query(self, aggregate_query, base_query):
         """ Return wrapper aggregation query """
-        
-        return (aggregate_query[:len(aggregate_query)-1] + " FROM (" + base_query + ") as base_query")
 
-
-    
+        return aggregate_query[:len(aggregate_query)-1] + \
+            " FROM (" + base_query + ") as base_query"

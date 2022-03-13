@@ -175,7 +175,7 @@ def build_config_managers_from_args(args):
         elif validate_cmd == "Row":
             config_type = consts.ROW_VALIDATION
         elif validate_cmd == "Custom-query":
-              config_type = consts.CUSTOM_QUERY
+            config_type = consts.CUSTOM_QUERY
         else:
             raise ValueError(f"Unknown Validation Type: {validate_cmd}")
     else:
@@ -466,7 +466,7 @@ def main():
         validate(args)
     elif args.command == "deploy":
         from data_validation import app
-        
+
         app.app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
