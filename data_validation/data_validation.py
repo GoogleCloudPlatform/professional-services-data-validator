@@ -365,6 +365,5 @@ class DataValidation(object):
         substitutions = {}
         for column_name in data_frame.columns:
             if 't0.' in column_name:
-                print(column_name)
                 substitutions[column_name] = column_name[3:]       
         return data_frame.rename(columns=substitutions)

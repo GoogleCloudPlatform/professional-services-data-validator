@@ -399,6 +399,11 @@ class ValidationBuilder(object):
         except IOError:
             print("Cannot read query file")
             exit
+        if not query or query.isspace():
+            raise ValueError(
+            "Expected file with sql query, got empty file or file with white spaces. "
+            f"input file: {filename}"
+            )
         return query
 
     def get_aggregation_query(self, agg_type, column_name):
@@ -412,8 +417,7 @@ class ValidationBuilder(object):
 
     def get_wrapper_aggregation_query(self, aggregate_query, base_query):
         """ Return wrapper aggregation query """
-        #add base_query empty logic here
-
+        
         return (aggregate_query[:len(aggregate_query)-1] + " FROM (" + base_query + ") as base_query")
 
 
