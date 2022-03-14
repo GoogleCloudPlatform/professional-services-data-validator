@@ -13,13 +13,8 @@
 # limitations under the License.
 
 from ibis.backends.base_sql import fixed_arity
-from ibis.backends.base_sql.compiler import (
-    BaseContext,
-    BaseExprTranslator,
-)
 from ibis.backends.impala import compiler, connect, udf
 from ibis.backends.impala.client import ImpalaClient
-import ibis.backends.base_sqlalchemy.compiler as comp
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
@@ -102,4 +97,3 @@ def get_schema(self, table_name, database=None):
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
-

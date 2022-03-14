@@ -478,7 +478,6 @@ class QueryBuilder(object):
 
         if self.limit:
             query = query.limit(self.limit)
-        
 
         return query
 

@@ -33,11 +33,11 @@ from ibis_bigquery.compiler import (
 )
 import ibis.expr.datatypes as dt
 from ibis.expr.operations import (
-    Arg, Comparison, Reduction, ValueOp, UnaryOp, IfNull
+    Arg, Comparison, Reduction, ValueOp, IfNull
 )
 import ibis.expr.rules as rlz
 from ibis.expr.types import (
-    BinaryValue, IntegerColumn, StringValue,
+    BinaryValue, IntegerColumn, StringValue
 )
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
@@ -50,6 +50,7 @@ from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 # from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator # TODO figure how to add RAWSQL
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
+
 
 class BitXor(Reduction):
     """Aggregate bitwise XOR operation."""
@@ -80,12 +81,6 @@ def compile_hash(numeric_value, how):
 
 def compile_hash(binary_value, how):
     return Hash(binary_value, how=how).to_expr()
-
-
-def format_nvl_impala(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    return f"NVL({compiled_arg})"
 
 
 def format_hash_bigquery(translator, expr):
