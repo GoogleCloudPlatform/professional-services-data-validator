@@ -95,5 +95,12 @@ def get_schema(self, table_name, database=None):
 
     return sch.Schema(names, ibis_types)
 
+
+@rewrites(ops.IfNull)
+def _if_null(expr):
+    arg, fill_value = expr.op().args
+    return arg.coalesce(fill_value)
+
+
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
