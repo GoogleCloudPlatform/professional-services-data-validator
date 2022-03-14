@@ -299,7 +299,6 @@ class DataValidation(object):
 
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)
-            print (source_df)
             target_df = self.config_manager.target_client.execute(target_query)
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
