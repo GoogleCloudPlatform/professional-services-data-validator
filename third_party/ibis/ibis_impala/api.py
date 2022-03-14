@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from ibis.backends.base_sql import fixed_arity
-from ibis.backends.impala import compiler, connect, udf
+from ibis.backends.impala import connect, udf
+from ibis.backends.impala.compiler import rewrites
 from ibis.backends.impala.client import ImpalaClient
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
