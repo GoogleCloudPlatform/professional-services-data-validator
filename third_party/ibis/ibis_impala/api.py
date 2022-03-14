@@ -21,7 +21,7 @@ import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
-# compiler._operation_registry.update({ops.IfNull: fixed_arity("nvl", 2)})
+
 
 def impala_connect(
     host=None,
