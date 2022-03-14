@@ -77,15 +77,8 @@ class RawSQL(Comparison):
 def compile_hash(numeric_value, how):
     return Hash(numeric_value, how=how).to_expr()
 
-
 def compile_hash(binary_value, how):
     return Hash(binary_value, how=how).to_expr()
-
-
-def format_nvl_impala(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    return f"NVL({compiled_arg})"
 
 
 def format_hash_bigquery(translator, expr):

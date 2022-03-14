@@ -102,4 +102,3 @@ def get_schema(self, table_name, database=None):
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
-

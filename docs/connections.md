@@ -271,8 +271,6 @@ Please note that for Group By validations, the following property must be set in
  If you are running Hive on Dataproc, you will also need to install the following:
  ```
  pip install ibis-framework[impala]
- pip install hdfs
- pip install thrift_sasl
  ```
  
 Currently, Hive aggregations support INT, BIGINT, FLOAT, and DOUBLE data types.
