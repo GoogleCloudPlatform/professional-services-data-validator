@@ -105,7 +105,6 @@ def _fetch(self, cursor):
             if name.startswith('t0.'):
                 name = name[3:]
             names.append(name)
-        names = [x[0] for x in cursor.description]
         df = _column_batches_to_dataframe(names, batches)
 
         if self.expr is not None:
