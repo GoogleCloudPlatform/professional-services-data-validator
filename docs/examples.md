@@ -43,7 +43,7 @@ data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 
 #### Run a checksum validation for all rows
 ````shell script
-data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --primary-keys station_id --hash '*'
+data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*'
 ````
 
 #### Store results in a BigQuery table
