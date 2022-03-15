@@ -269,8 +269,10 @@ Please note that for Group By validations, the following property must be set in
 
 `set hive:hive.groupby.orderby.position.alias=true`
  
- If you are running Hive on Dataproc, you will also need to run
- `pip install ibis-framework[impala]`
+If you are running Hive on Dataproc, you will also need to run
+`pip install ibis-framework[impala]`
+
+ Currently only INT, BIGINT, FLOAT, and DOUBLE data types are supported for Hive aggregation.
  
 ```
 {

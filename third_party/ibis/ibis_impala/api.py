@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.backends.impala import connect
-from ibis.backends.impala import udf
-from ibis.backends.impala.client import ImpalaClient
+from ibis.backends.base_sql import fixed_arity
+from ibis.backends.impala import connect, udf
+from ibis.backends.impala.compiler import rewrites
+from ibis.backends.impala.client import ImpalaClient, ImpalaQuery, _column_batches_to_dataframe
 import ibis.expr.datatypes as dt
+import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
@@ -95,5 +97,30 @@ def get_schema(self, table_name, database=None):
     return sch.Schema(names, ibis_types)
 
 
+def _fetch(self, cursor):
+        batches = cursor.fetchall(columnar=True)
+        names = []
+        for x in cursor.description:
+            name = x[0]
+            if name.startswith('t0.'):
+                name = name[3:]
+            names.append(name)
+        df = _column_batches_to_dataframe(names, batches)
+
+        if self.expr is not None:
+            # in case of metadata queries there is no expr and
+            # self.schema() would raise an exception
+            return self.schema().apply_to(df)
+
+        return df
+
+
+@rewrites(ops.IfNull)
+def _if_null(expr):
+    arg, fill_value = expr.op().args
+    return arg.coalesce(fill_value)
+
+
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
+ImpalaQuery._fetch = _fetch
