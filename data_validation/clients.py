@@ -30,7 +30,7 @@ from ibis.backends.postgres.client import PostgreSQLClient
 import third_party.ibis.ibis_addon.datatypes
 from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
-from third_party.ibis.ibis_DB2.api import connect as db2_connect
+
 from data_validation import client_info
 from data_validation import consts, exceptions
 
@@ -84,6 +84,12 @@ except Exception:
         "pip install snowflake-connector-python"
     )
 
+try:
+    from third_party.ibis.ibis_DB2.client import DB2Client
+    from third_party.ibis.ibis_DB2.api import connect as db2_connect
+except Exception:
+    db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+
 
 def get_bigquery_client(project_id, dataset_id=None, credentials=None):
     info = client_info.get_http_client_info()
@@ -127,7 +133,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if type(client) in [OracleClient, PostgreSQLClient]:
+    if type(client) in [OracleClient, PostgreSQLClient, DB2Client]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif type(client) in [PandasClient]:
         return client.table(table_name, schema=schema_name)
@@ -137,7 +143,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
 
 def list_schemas(client):
     """Return a list of schemas in the DB."""
-    if type(client) in [OracleClient, PostgreSQLClient]:
+    if type(client) in [OracleClient, PostgreSQLClient, DB2Client]:
         return client.list_schemas()
     elif hasattr(client, "list_databases"):
         return client.list_databases()
@@ -147,7 +153,7 @@ def list_schemas(client):
 
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
-    if type(client) in [OracleClient, PostgreSQLClient]:
+    if type(client) in [OracleClient, PostgreSQLClient, DB2Client]:
         return client.list_tables(schema=schema_name)
     elif schema_name:
         return client.list_tables(database=schema_name)
