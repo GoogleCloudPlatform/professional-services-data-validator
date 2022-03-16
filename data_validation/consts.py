@@ -116,8 +116,16 @@ RESULT_TYPE_SOURCE = "source"
 RESULT_TYPE_TARGET = "target"
 
 # Ibis Object Info
-NUMERIC_DATA_TYPES = ["float64", "int32", "int64", "decimal",
- "int32[non-nullable]", "int64[non-nullable]", "float64[non-nullable]", "decimal[non-nullable]"]
+NUMERIC_DATA_TYPES = [
+    "float64",
+    "int32",
+    "int64",
+    "decimal",
+    "int32[non-nullable]",
+    "int64[non-nullable]",
+    "float64[non-nullable]",
+    "decimal[non-nullable]",
+]
 
 FORMAT_TYPES = ["csv", "json", "table", "text"]
 
