@@ -112,6 +112,8 @@ TARGET_COLUMN_NAME = "target_column_name"
 TARGET_AGG_VALUE = "target_agg_value"
 
 VALIDATION_STATUS = "status"
+VALIDATION_STATUS_SUCCESS = "success"
+VALIDATION_STATUS_FAIL = "fail"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
@@ -134,4 +136,12 @@ COLUMN_FILTER_LIST = [
     "pct_threshold",
     "run_id",
     "start_time",
+]
+SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
+    "run_id",
+    "start_time",
+    "end_time",
+    "aggregation_type",
+    "source_agg_value",
+    "target_agg_value",
 ]

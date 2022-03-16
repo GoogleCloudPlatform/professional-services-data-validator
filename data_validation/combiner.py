@@ -90,7 +90,7 @@ def generate_report(
         print(documented.compile())
 
     result_df = client.execute(documented)
-    result_df.status.fillna("fail", inplace=True)
+    result_df.status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
 
     return result_df
 
@@ -110,8 +110,8 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         difference = pct_difference = ibis.null()
         status = (
             ibis.case()
-            .when(target_value == source_value, "success")
-            .else_("fail")
+            .when(target_value == source_value, consts.VALIDATION_STATUS_SUCCESS)
+            .else_(consts.VALIDATION_STATUS_FAIL)
             .end()
         )
     else:
@@ -130,8 +130,8 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
         status = (
             ibis.case()
-            .when(th_diff.isnan() | (th_diff > 0.0), "fail")
-            .else_("success")
+            .when(th_diff.isnan() | (th_diff > 0.0), consts.VALIDATION_STATUS_FAIL)
+            .else_(consts.VALIDATION_STATUS_SUCCESS)
             .end()
         )
 
