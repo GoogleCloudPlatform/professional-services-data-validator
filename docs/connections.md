@@ -273,8 +273,6 @@ Please note that for Group By validations, the following property must be set in
  pip install ibis-framework[impala]
  ```
  
-Currently, Hive aggregations support INT, BIGINT, FLOAT, and DOUBLE data types.
-
 ```
 {
     # Hive is based off Impala connector
