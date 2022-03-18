@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import json
-import numpy
 import pandas
 import pytest
 import random
