@@ -34,7 +34,6 @@ import ibis.expr.rules as rlz
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
-from ibis.backends.base_sql import fixed_arity
 from ibis.backends.base_sqlalchemy.alchemy import AlchemyExprTranslator
 
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
@@ -124,10 +123,6 @@ def format_hashbytes_teradata(translator, expr):
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
-<<<<<<< HEAD
-=======
-
->>>>>>> develop
 def format_hashbytes_hive(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)

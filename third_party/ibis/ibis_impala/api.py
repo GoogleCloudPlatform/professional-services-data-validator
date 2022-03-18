@@ -13,25 +13,14 @@
 # limitations under the License.
 
 from ibis.backends.base_sql import fixed_arity
-<<<<<<< HEAD
-from ibis.backends.base_sql.compiler import (
-    BaseContext,
-    BaseExprTranslator,
-)
-from ibis.backends.impala import compiler, connect, udf
-from ibis.backends.impala.client import ImpalaClient
-import ibis.backends.base_sqlalchemy.compiler as comp
-=======
 from ibis.backends.impala import connect, udf
 from ibis.backends.impala.compiler import rewrites
 from ibis.backends.impala.client import ImpalaClient, ImpalaQuery, _column_batches_to_dataframe
->>>>>>> develop
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
-# compiler._operation_registry.update({ops.IfNull: fixed_arity("nvl", 2)})
 
 def impala_connect(
     host=None,
