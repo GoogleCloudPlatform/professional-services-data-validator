@@ -1,6 +1,6 @@
 # Data Validation Tool
 
-The Data Validation Tool (DVT) is an open sourced Python CLI tool based on the
+The Data Validation Tool (Beta) is an open sourced Python CLI tool based on the
 [Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html)
 that compares heterogeneous data source tables with multi-leveled validation
 functions.
@@ -9,7 +9,7 @@ Data validation is a critical step in a Data Warehouse, Database or Data Lake
 migration project, where structured or semi-structured data from both the source
 and the destination tables are compared to ensure they are matched and correct
 after each migration step (e.g. data and schema migration, SQL script
-translation, ETL migration, etc.). The Data Validation Tool provides an
+translation, ETL migration, etc.). The Data Validation Tool (DVT) provides an
 automated and repeatable solution to perform this task.
 
 DVT supports the following validation types: * Table level * Table row count *
@@ -136,11 +136,20 @@ used to run powerful validations without writing any queries.
 
 #### Row Validations
 
+(Note: Row hash validation is currently only supported for BigQuery, Teradata, and Imapala/Hive)
+
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass a `--primary-key` flag which defines what field(s)
-the validation will be compared along, as well as a `--comparison-fields` flag
-which specifies the values (e.g. columns) whose raw values will be compared
-based on the primary key join. Additionally you can use
+the validation will be compared on, as well as either the `--comparison-fields` flag
+or the `--hash` flag.
+
+The `--comparison-fields` flag specifies the values (e.g. columns) whose raw values will be compared
+based on the primary key join. The `--hash` flag will run a checksum across all columns in
+the table. This will include casting to string, sanitizing the data, concatenating, and finally
+hashing the row. To exclude columns from the checksum, use the YAML config to customize the validation.
+
+
+Additionally you can use
 [Calculated Fields](#calculated-fields) to compare derived values such as string
 counts and hashes of multiple columns.
 
@@ -156,12 +165,12 @@ data-validation (--verbose or -v) validate row
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
-  [--primary-keys or -pk PRIMARY_KEYS]
+  --primary-keys or -pk PRIMARY_KEYS
                         Comma separated list of columns to use as primary keys
-  [--comparison-fields or -fields comparison-fields]
+  --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
-  [--hash COLUMNS]     Comma separated list of columns to perform a hash operation on or * for all columns
+  --hash '*'            '*' to hash all columns. To exclude columns, use the YAML config.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
