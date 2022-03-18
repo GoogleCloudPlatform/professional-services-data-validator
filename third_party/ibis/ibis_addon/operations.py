@@ -27,18 +27,11 @@ import ibis
 import sqlalchemy
 
 import ibis.expr.api
-from ibis_bigquery.compiler import (
-    reduction as bq_reduction,
-    BigQueryExprTranslator
-)
+from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
 import ibis.expr.datatypes as dt
-from ibis.expr.operations import (
-    Arg, Comparison, Reduction, ValueOp, UnaryOp, IfNull
-)
+from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
 import ibis.expr.rules as rlz
-from ibis.expr.types import (
-    BinaryValue, IntegerColumn, StringValue,
-)
+from ibis.expr.types import BinaryValue, IntegerColumn, StringValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
 from ibis.backends.base_sql import fixed_arity
@@ -56,26 +49,28 @@ class BitXor(Reduction):
 
     arg = Arg(rlz.column(rlz.integer))
     where = Arg(rlz.boolean, default=None)
-    output_type = rlz.scalar_like('arg')
+    output_type = rlz.scalar_like("arg")
 
 
 class Hash(ValueOp):
     arg = Arg(rlz.any)
-    how = Arg(rlz.isin({'fnv', 'farm_fingerprint'}))
-    output_type = rlz.shape_like('arg', dt.int64)
+    how = Arg(rlz.isin({"fnv", "farm_fingerprint"}))
+    output_type = rlz.shape_like("arg", dt.int64)
 
 
 class HashBytes(ValueOp):
     arg = Arg(rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)]))
-    how = Arg(rlz.isin({'sha256', 'farm_fingerprint'}))
-    output_type = rlz.shape_like('arg', 'binary')
+    how = Arg(rlz.isin({"sha256", "farm_fingerprint"}))
+    output_type = rlz.shape_like("arg", "binary")
 
 
 class RawSQL(Comparison):
     pass
 
+
 def compile_hash(numeric_value, how):
     return Hash(numeric_value, how=how).to_expr()
+
 
 def compile_hash(binary_value, how):
     return Hash(binary_value, how=how).to_expr()
@@ -87,14 +82,15 @@ def format_hash_bigquery(translator, expr):
 
     arg_formatted = translator.translate(arg)
 
-    if how == 'farm_fingerprint':
-        return f'farm_fingerprint({arg_formatted})'
+    if how == "farm_fingerprint":
+        return f"farm_fingerprint({arg_formatted})"
     else:
         raise NotImplementedError(how)
 
 
 def compile_hashbytes(binary_value, how):
     return HashBytes(binary_value, how=how).to_expr()
+
 
 def format_hash_bigquery(translator, expr):
     arg, how = expr.op().args
@@ -103,6 +99,7 @@ def format_hash_bigquery(translator, expr):
         return f"FARM_FINGERPRINT({compiled_arg})"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
+
 
 def format_hashbytes_bigquery(translator, expr):
     arg, how = expr.op().args
@@ -113,6 +110,7 @@ def format_hashbytes_bigquery(translator, expr):
         return f"FARM_FINGERPRINT({compiled_arg})"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
+
 
 def format_hashbytes_teradata(translator, expr):
     arg, how = expr.op().args
@@ -126,6 +124,10 @@ def format_hashbytes_teradata(translator, expr):
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
 def format_hashbytes_hive(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
@@ -147,26 +149,26 @@ def format_raw_sql(translator, expr):
     rand_col, raw_sql = op.args
     return raw_sql.op().args[0]
 
+
 def sa_format_raw_sql(translator, expr):
     op = expr.op()
     rand_col, raw_sql = op.args
     return sqlalchemy.text(raw_sql.op().args[0])
 
+
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
-IntegerColumn.bit_xor = ibis.expr.api._agg_function('bit_xor', BitXor, True)
+IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
 BinaryValue.hash = compile_hash
 StringValue.hash = compile_hash
 BinaryValue.hashbytes = compile_hashbytes
 StringValue.hashbytes = compile_hashbytes
-BigQueryExprTranslator._registry[BitXor] = bq_reduction('BIT_XOR')
+BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
-ImpalaExprTranslator._registry[ibis.expr.operations.IfNull] = fixed_arity("NVL", 2)
-# print (ImpalaExprTranslator._registry)
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata

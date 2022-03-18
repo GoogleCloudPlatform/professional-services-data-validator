@@ -196,3 +196,6 @@ class DB2Client(alch.AlchemyClient):
         else:
             parent = super(DB2Client, self)
             return parent.list_tables(like=like, schema=schema)
+
+    def get_schema(self, name, schema=None):
+        return self.table(name, schema=schema).schema()
