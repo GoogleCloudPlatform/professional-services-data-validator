@@ -207,6 +207,49 @@ data-validation (--verbose or -v) validate schema
                         Defaults  to table.
 ```
 
+#### Custom Query Validations
+
+Below is the command syntax for custom query validations.
+
+```
+data-validation (--verbose or -v) validate custom-query
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
+                        File containing the source sql commands
+  --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
+                        File containing the target sql commands
+  [--count COLUMNS]     Comma separated list of columns for count or * for all columns
+  [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
+  [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
+  [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
+  [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
+```
+
+The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
+sum , min, etc.) is provided, the default aggregation will run.
+
+The [Examples](docs/examples.md) page provides few examples of how this tool can
+used to run custom query validations.
+
+
 ### Running Custom SQL Exploration
 
 There are many occasions where you need to explore a data source while running
