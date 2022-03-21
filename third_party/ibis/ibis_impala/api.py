@@ -22,7 +22,6 @@ import ibis.expr.schema as sch
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
 
-
 def impala_connect(
     host=None,
     port=10000,

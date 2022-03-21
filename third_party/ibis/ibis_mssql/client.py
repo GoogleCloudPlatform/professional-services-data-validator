@@ -264,3 +264,6 @@ class MSSQLClient(alch.AlchemyClient):
                 type_map[row[1]] for row in cur.proxy._cursor_description()
             ]
         return sch.Schema(names, ibis_types)
+
+    def get_schema(self, name, schema=None):
+        return self.table(name, schema=schema).schema()
