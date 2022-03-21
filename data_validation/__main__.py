@@ -393,7 +393,7 @@ def store_yaml_config_file(args, config_managers):
 def run(args):
     """ """
     config_managers = build_config_managers_from_args(args)
-
+    print("hi world!")
     if args.config_file:
         store_yaml_config_file(args, config_managers)
     else:
