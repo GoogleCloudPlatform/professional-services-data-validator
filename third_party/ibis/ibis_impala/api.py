@@ -100,9 +100,7 @@ def _fetch(self, cursor):
         batches = cursor.fetchall(columnar=True)
         names = []
         for x in cursor.description:
-            name = x[0]
-            if name.startswith('t0.'):
-                name = name[3:]
+            name = x[0].split('.')[-1]
             names.append(name)
         df = _column_batches_to_dataframe(names, batches)
 
