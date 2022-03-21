@@ -150,7 +150,6 @@ def build_config_from_args(args, config_manager):
 
     # TODO(GH#18): Add query filter config logic
 
-
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if args.source_query_file is not None:
@@ -447,7 +446,7 @@ def run_validation_configs(args):
 
 def validate(args):
     """ Run commands related to data validation."""
-    if args.validate_cmd in ["column", "row", "schema","custom-query"]:
+    if args.validate_cmd in ["column", "row", "schema", "custom-query"]:
         run(args)
     else:
         raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")

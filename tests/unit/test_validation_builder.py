@@ -135,6 +135,7 @@ CALCULATED_MULTIPLE_TEST = [
 AGGREGATION_QUERY = "sum(starttime) as sum_starttime,"
 BASE_QUERY = "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
 
+
 class MockIbisClient(object):
     _source_type = "BigQuery"
 
@@ -227,19 +228,28 @@ def test_validation_add_filters(module_under_test):
 
     assert filter_field.left == "column_name > 100"
 
+
 def test_custom_query_validation(module_under_test):
     mock_config_manager = ConfigManager(
-        CUSTOM_QUERY_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
     )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
 
     assert not builder.verbose
-    assert builder.config_manager.source_query_file == "tests/resources/custom-query.sql"
+    assert (
+        builder.config_manager.source_query_file == "tests/resources/custom-query.sql"
+    )
 
 
 def test_custom_query_get_query_from_file(module_under_test):
     mock_config_manager = ConfigManager(
-        CUSTOM_QUERY_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
     )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
     query = builder.get_query_from_file(builder.config_manager.source_query_file)
@@ -248,18 +258,28 @@ def test_custom_query_get_query_from_file(module_under_test):
 
 def test_custom_query_get_aggregation_query(module_under_test):
     mock_config_manager = ConfigManager(
-        CUSTOM_QUERY_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
     )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
-    aggregation_query = builder.get_aggregation_query(AGGREGATES_TEST[0]['type'], AGGREGATES_TEST[0]['source_column'])
+    aggregation_query = builder.get_aggregation_query(
+        AGGREGATES_TEST[0]["type"], AGGREGATES_TEST[0]["source_column"]
+    )
     assert aggregation_query == "sum(starttime) as sum__starttime,"
 
 
 def test_custom_query_get_wrapper_aggregation_query(module_under_test):
     mock_config_manager = ConfigManager(
-        CUSTOM_QUERY_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
     )
     builder = module_under_test.ValidationBuilder(mock_config_manager)
     wrapper_query = builder.get_wrapper_aggregation_query(AGGREGATION_QUERY, BASE_QUERY)
-    assert wrapper_query == "sum(starttime) as sum_starttime FROM (SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013) as base_query"
-
+    assert (
+        wrapper_query
+        == "sum(starttime) as sum_starttime FROM (SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013) as base_query"
+    )

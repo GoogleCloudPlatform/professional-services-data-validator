@@ -389,6 +389,7 @@ def _configure_validate_parser(subparsers):
     )
     _configure_custom_query_parser(custom_query_parser)
 
+
 def _configure_row_parser(row_parser):
     """Configure arguments to run row level validations."""
     _add_common_arguments(row_parser)
@@ -533,18 +534,15 @@ def _configure_schema_parser(schema_parser):
     """Configure arguments to run column level validations."""
     _add_common_arguments(schema_parser)
 
+
 def _configure_custom_query_parser(custom_query_parser):
     """Configure arguments to run custom-query validations."""
     _add_common_arguments(custom_query_parser)
     custom_query_parser.add_argument(
-        "--source-query-file",
-        "-sqf",
-        help="File containing the source sql query",
+        "--source-query-file", "-sqf", help="File containing the source sql query",
     )
     custom_query_parser.add_argument(
-        "--target-query-file",
-        "-tqf",
-        help="File containing the target sql query",
+        "--target-query-file", "-tqf", help="File containing the target sql query",
     )
     custom_query_parser.add_argument(
         "--count",
