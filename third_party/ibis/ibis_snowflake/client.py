@@ -160,3 +160,6 @@ class SnowflakeClient(alch.AlchemyClient):
         finally:
             connection.close()
         return response
+
+    def get_schema(self, name, schema=None):
+        return self.table(name, schema=schema).schema()
