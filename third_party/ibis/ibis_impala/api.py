@@ -103,12 +103,6 @@ def _fetch(self, cursor):
             name = x[0].split('.')[-1]
             names.append(name)
         df = _column_batches_to_dataframe(names, batches)
-
-        if self.expr is not None:
-            # in case of metadata queries there is no expr and
-            # self.schema() would raise an exception
-            return self.schema().apply_to(df)
-
         return df
 
 
