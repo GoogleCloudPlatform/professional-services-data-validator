@@ -13,8 +13,6 @@
 # limitations under the License.
 
 from copy import deepcopy
-
-from sqlalchemy import column
 from data_validation import consts, metadata
 from data_validation.query_builder.query_builder import (
     QueryBuilder,
