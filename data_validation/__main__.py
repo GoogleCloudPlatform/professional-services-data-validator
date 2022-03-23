@@ -96,7 +96,8 @@ def get_calculated_config(args, config_manager):
     calculated_configs = []
     fields = []
     if args.hash:
-        fields = config_manager._build_dependent_aliases("hash")
+        col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
+        fields = config_manager._build_dependent_aliases("hash", col_list)
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
     else:

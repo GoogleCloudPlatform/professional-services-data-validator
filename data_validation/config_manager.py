@@ -507,11 +507,14 @@ class ConfigManager(object):
         }
         return calculated_config
 
-    def _build_dependent_aliases(self, calc_type):
+    def _build_dependent_aliases(self, calc_type, col_list=None):
         """This is a utility function for determining the required depth of all fields"""
         order_of_operations = []
-        source_table = self.get_source_ibis_calculated_table()
-        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        if col_list is None:
+            source_table = self.get_source_ibis_calculated_table()
+            casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        else:
+            casefold_source_columns = {x.casefold(): str(x) for x in col_list}
         if calc_type == "hash":
             order_of_operations = [
                 "cast",
