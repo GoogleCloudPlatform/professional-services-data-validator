@@ -151,7 +151,6 @@ def configure_arg_parser():
     _configure_raw_query(subparsers)
     _configure_run_parser(subparsers)
     _configure_beta_parser(subparsers)
-
     return parser
 
 
@@ -385,6 +384,11 @@ def _configure_validate_parser(subparsers):
     )
     _configure_schema_parser(schema_parser)
 
+    custom_query_parser = validate_subparsers.add_parser(
+        "custom-query", help="Run a custom query validation"
+    )
+    _configure_custom_query_parser(custom_query_parser)
+
 
 def _configure_row_parser(row_parser):
     """Configure arguments to run row level validations."""
@@ -529,6 +533,82 @@ def _configure_column_parser(column_parser):
 def _configure_schema_parser(schema_parser):
     """Configure arguments to run column level validations."""
     _add_common_arguments(schema_parser)
+
+
+def _configure_custom_query_parser(custom_query_parser):
+    """Configure arguments to run custom-query validations."""
+    _add_common_arguments(custom_query_parser)
+    custom_query_parser.add_argument(
+        "--source-query-file", "-sqf", help="File containing the source sql query",
+    )
+    custom_query_parser.add_argument(
+        "--target-query-file", "-tqf", help="File containing the target sql query",
+    )
+    custom_query_parser.add_argument(
+        "--count",
+        "-count",
+        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--sum",
+        "-sum",
+        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--avg",
+        "-avg",
+        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--min",
+        "-min",
+        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--max",
+        "-max",
+        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--bit_xor",
+        "-bit_xor",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
+    custom_query_parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
+    )
+    custom_query_parser.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    custom_query_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    custom_query_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
+    custom_query_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
 
 
 def _add_common_arguments(parser):
