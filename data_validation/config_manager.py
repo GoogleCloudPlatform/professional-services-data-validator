@@ -512,7 +512,9 @@ class ConfigManager(object):
         order_of_operations = []
         if col_list is None:
             source_table = self.get_source_ibis_calculated_table()
-            casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+            casefold_source_columns = {
+                x.casefold(): str(x) for x in source_table.columns
+            }
         else:
             casefold_source_columns = {x.casefold(): str(x) for x in col_list}
         if calc_type == "hash":
