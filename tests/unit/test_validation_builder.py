@@ -40,6 +40,22 @@ COLUMN_VALIDATION_CONFIG = {
     ],
 }
 
+CUSTOM_QUERY_VALIDATION_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": None,
+    "target_conn": None,
+    # Validation Type
+    consts.CONFIG_TYPE: "Custom-query",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_CALCULATED_FIELDS: [],
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_FILTERS: [],
+    consts.CONFIG_SOURCE_QUERY_FILE: "tests/resources/custom-query.sql",
+    consts.CONFIG_TARGET_QUERY_FILE: "tests/resources/custom-query.sql",
+}
+
 QUERY_LIMIT = 100
 COLUMN_VALIDATION_CONFIG_LIMIT = deepcopy(COLUMN_VALIDATION_CONFIG)
 COLUMN_VALIDATION_CONFIG_LIMIT[consts.CONFIG_LIMIT] = QUERY_LIMIT
@@ -115,6 +131,9 @@ CALCULATED_MULTIPLE_TEST = [
         consts.CONFIG_TYPE: "upper",
     },
 ]
+
+AGGREGATION_QUERY = "sum(starttime) as sum_starttime,"
+BASE_QUERY = "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
 
 
 class MockIbisClient(object):
@@ -208,3 +227,59 @@ def test_validation_add_filters(module_under_test):
     filter_field = builder.source_builder.filters[0]
 
     assert filter_field.left == "column_name > 100"
+
+
+def test_custom_query_validation(module_under_test):
+    mock_config_manager = ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+
+    assert not builder.verbose
+    assert (
+        builder.config_manager.source_query_file == "tests/resources/custom-query.sql"
+    )
+
+
+def test_custom_query_get_query_from_file(module_under_test):
+    mock_config_manager = ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+    query = builder.get_query_from_file(builder.config_manager.source_query_file)
+    assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+
+def test_custom_query_get_aggregation_query(module_under_test):
+    mock_config_manager = ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+    aggregation_query = builder.get_aggregation_query(
+        AGGREGATES_TEST[0]["type"], AGGREGATES_TEST[0]["source_column"]
+    )
+    assert aggregation_query == "sum(starttime) as sum__starttime,"
+
+
+def test_custom_query_get_wrapper_aggregation_query(module_under_test):
+    mock_config_manager = ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+    wrapper_query = builder.get_wrapper_aggregation_query(AGGREGATION_QUERY, BASE_QUERY)
+    assert (
+        wrapper_query
+        == "sum(starttime) as sum_starttime FROM (SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013) as base_query"
+    )
