@@ -12,10 +12,18 @@ after each migration step (e.g. data and schema migration, SQL script
 translation, ETL migration, etc.). The Data Validation Tool (DVT) provides an
 automated and repeatable solution to perform this task.
 
-DVT supports the following validation types: * Table level * Table row count *
-Group by row count * Column aggregation * Filters and limits * Column level *
-Full column data type * Row level hash comparison (BigQuery tables only) * Raw
-SQL exploration * Run custom queries on different data sources
+DVT supports the following validation types: 
+
+*   Table level
+*   Table row count
+*   Group by row count 
+*   Column aggregation 
+*   Filters and limits
+*   Column level
+*   Full column data type 
+*   Row level hash comparison (BigQuery tables only) 
+*   Raw SQL exploration 
+*   Run custom queries on different data sources
 
 DVT supports the following connection types:
 
