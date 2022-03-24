@@ -13,12 +13,25 @@
 # limitations under the License.
 
 import ibis
-from typing import List
+import ibis.expr.operations as ops
+import ibis.expr.rules as rlz
+import ibis.expr.types as ir
+from ibis.backends.pandas.client import PandasClient
 
+from typing import List
+from ibis import util
 from data_validation import clients
 
 
 """ The QueryBuilder for retreiving random row values to filter against."""
+
+
+RANDOM_SORT_SUPPORTS = [PandasClient]
+
+class RandomSortKey(ops.SortKey):
+
+    def equals(self, other, cache=None):
+        return isinstance(other, RandomSortKey)
 
 
 class RandomRowBuilder(object):
@@ -43,6 +56,53 @@ class RandomRowBuilder(object):
         table_name (String): The name of the table to query.
     """
         table = clients.get_ibis_table(data_client, schema_name, table_name)
-        query = table[self.primary_keys].limit(self.batch_size)
+        randomly_sorted_table = self.maybe_add_random_sort(data_client, table)
+        query = randomly_sorted_table[self.primary_keys].limit(self.batch_size)
 
         return query
+
+    def maybe_add_random_sort(self, data_client: ibis.client, table: ibis.Expr) -> ibis.Expr:
+        """ Return a randomly sorted query if it is supported for the client."""
+        if type(data_client) in RANDOM_SORT_SUPPORTS:
+          return table.sort_by(RandomSortKey(table[table.columns[0]], ascending=False).to_expr())
+
+        return table
+
+
+##################################
+### Custom Pandas Client Logic ###
+##################################
+import operator
+import toolz
+import random
+import ibis.backends.pandas.execution.util as pandas_util
+
+# Save old version to be wrapped
+_compute_sorted_frame = pandas_util.compute_sorted_frame
+
+class RandomColumn:
+    def __init__(self, name):
+        self._name = name
+
+    def op(self):
+        return self
+
+    def to_expr(self):
+        return self._name
+
+def build_and_assign_random_column(df, key, random_name):
+    if (not isinstance(key.op(), RandomSortKey)):
+        return key
+
+    random.shuffle(df.index.values)
+    df[random_name] = df.index.values
+    return RandomColumn(random_name)
+
+def compute_sorted_frame(
+    df, order_by, group_by=(), timecontext=None, **kwargs):
+    new_order_by = [build_and_assign_random_column(df, key, f"__random_sort_{i}__") for i, key in enumerate(order_by)]
+    sorted_results = _compute_sorted_frame(df, new_order_by, group_by=group_by, timecontext=timecontext, **kwargs)
+
+    return sorted_results
+
+pandas_util.compute_sorted_frame = compute_sorted_frame

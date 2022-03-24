@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 import numpy
 import pandas
@@ -280,6 +281,48 @@ SAMPLE_GC_CALC_CONFIG = {
             "type": "sum",
         },
     ],
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
+}
+
+SAMPLE_RANDOM_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: "Column",
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": "int_value",
+            "target_column": "int_value",
+            "field_alias": "count_int_value",
+            "type": "sum",
+        },
+    ],
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_USE_RANDOM_ROWS: True,
+    consts.CONFIG_RANDOM_ROW_BATCH_SIZE: 10,
+    consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
 }
@@ -695,3 +738,23 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     # 2 validations * (100 source + 1 target)
     assert len(result_df) == 202
     assert len(comparison_df) == 202
+
+
+def test_random_row_level_validation(module_under_test, fs):
+    data = _generate_fake_data(rows=100, second_range=0)
+
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_RANDOM_ROW_CONFIG)
+    result_df = client.execute()
+
+    # Random Row Validation with 10 rows
+    ids = [int(json.loads(c)["id"]) for c in result_df["group_by_columns"]]
+    assert len(result_df) == 10
+    assert result_df["difference"].sum() == 0
+    assert ids != [i for i in range(10)]
+    assert ids != [i for i in range(90, 100)]
