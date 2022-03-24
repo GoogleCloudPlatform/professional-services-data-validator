@@ -104,7 +104,7 @@ def format_hashbytes_bigquery(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
     if how == "sha256":
-        return f"SHA256({compiled_arg})"
+        return f"TO_HEX(SHA256({compiled_arg}))"
     elif how == "farm_fingerprint":
         return f"FARM_FINGERPRINT({compiled_arg})"
     else:
