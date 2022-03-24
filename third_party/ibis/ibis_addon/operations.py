@@ -35,7 +35,8 @@ from ibis.expr.types import BinaryValue, IntegerColumn, StringValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
 from ibis.backends.base_sqlalchemy.alchemy import AlchemyExprTranslator
-
+from ibis.backends.base_sqlalchemy.compiler import ExprTranslator
+from ibis.backends.base_sql.compiler import BaseExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 
@@ -133,6 +134,20 @@ def format_hashbytes_hive(translator, expr):
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
+def format_hashbytes_alchemy(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    if how == "sha256":
+        return f"sha2({compiled_arg}, 256)"
+    elif how == "md5":
+        return f"md5({compiled_arg})"
+    else:
+        raise ValueError(f"unexpected value for 'how': {how}")
+
+def format_hashbytes_base(translator, expr):
+    arg, how  = expr.op().args
+    compiled_arg = translator.translate(arg)
+    return f"{how}({compiled_arg})"
 
 def compile_raw_sql(table, sql):
     op = RawSQL(table[table.columns[0]].cast(dt.string), ibis.literal(sql))
@@ -161,6 +176,9 @@ BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
+AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
+BaseExprTranslator._registry[RawSQL] = format_raw_sql
+BaseExprTranslator._registry[HashBytes] = format_hashbytes_base
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
