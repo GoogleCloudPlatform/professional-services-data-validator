@@ -25,8 +25,7 @@ CONN_CONFIG = {
     "file_type": "json",
 }
 
-JSON_DATA = (
-    """
+JSON_DATA = """
 [
 {"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},
 {"col_a":3,"col_b":"a"},{"col_a":4,"col_b":"b"},{"col_a":5,"col_b":"c"},
@@ -37,7 +36,6 @@ JSON_DATA = (
 {"col_a":18,"col_b":"a"},{"col_a":19,"col_b":"b"},{"col_a":20,"col_b":"c"},
 {"col_a":21,"col_b":"a"},{"col_a":22,"col_b":"b"},{"col_a":23,"col_b":"c"}
 ]"""
-)
 
 
 @pytest.fixture
