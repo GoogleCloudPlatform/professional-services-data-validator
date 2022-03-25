@@ -15,7 +15,7 @@
 from ibis.backends.base_sql import fixed_arity
 from ibis.backends.impala import connect, udf
 from ibis.backends.impala.compiler import rewrites
-from ibis.backends.impala.client import ImpalaClient, ImpalaQuery
+from ibis.backends.impala.client import ImpalaClient, ImpalaQuery, _HS2_TTypeId_to_dtype
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
@@ -166,22 +166,6 @@ def _chunks_to_pandas_array(chunks):
         fill_nonnull(target, chunks)
 
     return target
-
-_HS2_TTypeId_to_dtype = {
-    'BOOLEAN': 'bool',
-    'TINYINT': 'int8',
-    'SMALLINT': 'int16',
-    'INT': 'int32',
-    'BIGINT': 'int64',
-    'TIMESTAMP': 'datetime64[ns]',
-    'FLOAT': 'float32',
-    'DOUBLE': 'float64',
-    'STRING': 'object',
-    'DECIMAL': 'object',
-    'BINARY': 'object',
-    'VARCHAR': 'object',
-    'CHAR': 'object',
-}
 
 @rewrites(ops.IfNull)
 def _if_null(expr):
