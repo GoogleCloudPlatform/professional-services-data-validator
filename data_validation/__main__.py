@@ -98,6 +98,14 @@ def get_calculated_config(args, config_manager):
     if args.hash:
         col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
         fields = config_manager._build_dependent_aliases("hash", col_list)
+        aliases = [field["name"] for field in fields]
+
+        # Add to list of necessary columns for selective hashing in order to drop
+        # excess columns with invalid data types (i.e structs) when generating source/target DFs
+        if col_list:
+            config_manager.append_dependent_aliases(col_list)
+            config_manager.append_dependent_aliases(aliases)
+
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
     else:
@@ -143,11 +151,13 @@ def build_config_from_args(args, config_manager):
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
+            config_manager.append_dependent_aliases(comparison_fields)
     if args.primary_keys is not None:
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_config_comparison_fields(primary_keys)
         )
+        config_manager.append_dependent_aliases(primary_keys)
 
     # TODO(GH#18): Add query filter config logic
 
