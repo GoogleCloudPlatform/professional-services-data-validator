@@ -147,7 +147,7 @@ def format_hashbytes_alchemy(translator, expr):
 def format_hashbytes_base(translator, expr):
     arg, how  = expr.op().args
     compiled_arg = translator.translate(arg)
-    return f"{how}({compiled_arg})"
+    return f"sha2({compiled_arg}, 256)"
 
 def compile_raw_sql(table, sql):
     op = RawSQL(table[table.columns[0]].cast(dt.string), ibis.literal(sql))
