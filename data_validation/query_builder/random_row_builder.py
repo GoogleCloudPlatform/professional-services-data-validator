@@ -15,22 +15,51 @@
 import random
 import ibis
 import ibis.expr.operations as ops
+import ibis.expr.types as tz
+import ibis.expr.rules as rlz
+import ibis.backends.base_sqlalchemy.compiler as sql_compiler
+from ibis_bigquery import BigQueryClient
 from ibis.backends.pandas.client import PandasClient
 import ibis.backends.pandas.execution.util as pandas_util
 
+from ibis.expr.signature import Argument as Arg
 from typing import List
 from data_validation import clients
+from io import StringIO
 
 
 """ The QueryBuilder for retreiving random row values to filter against."""
 
 
-RANDOM_SORT_SUPPORTS = [PandasClient]
+RANDOM_SORT_SUPPORTS = {
+    PandasClient: "NA",
+    BigQueryClient: "RAND()",
+}
+
+
+class RandomSortExpr(tz.AnyValue, tz.SortExpr):
+    _dtype = rlz.string
+    _name = "RandomSortExpr"
+
+    def __init__(self, arg):
+        self._arg = arg
+
+    def type(self):
+        return self._dtype
 
 
 class RandomSortKey(ops.SortKey):
+    expr = Arg(rlz.any)
+    value = None
+
     def equals(self, other, cache=None):
         return isinstance(other, RandomSortKey)
+
+    def output_type(self):
+        return RandomSortExpr
+
+    def resolve_name(self):
+        return "RandomSortKey"
 
 
 class RandomRowBuilder(object):
@@ -56,7 +85,7 @@ class RandomRowBuilder(object):
     """
         table = clients.get_ibis_table(data_client, schema_name, table_name)
         randomly_sorted_table = self.maybe_add_random_sort(data_client, table)
-        query = randomly_sorted_table[self.primary_keys].limit(self.batch_size)
+        query = randomly_sorted_table.limit(self.batch_size)[self.primary_keys]
 
         return query
 
@@ -66,7 +95,7 @@ class RandomRowBuilder(object):
         """ Return a randomly sorted query if it is supported for the client."""
         if type(data_client) in RANDOM_SORT_SUPPORTS:
             return table.sort_by(
-                RandomSortKey(table[table.columns[0]], ascending=False).to_expr()
+                RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             )
 
         return table
@@ -113,3 +142,35 @@ def compute_sorted_frame(df, order_by, group_by=(), timecontext=None, **kwargs):
 
 
 pandas_util.compute_sorted_frame = compute_sorted_frame
+
+
+#####################################
+##### Override Order By for SQL #####
+#####################################
+
+def format_order_by(self):
+    if not self.order_by:
+        return None
+
+    buf = StringIO()
+    buf.write('ORDER BY ')
+
+    formatted = []
+    for expr in self.order_by:
+        ##### ADDING CODE TO FORMAT #####
+        if isinstance(expr, RandomSortExpr):
+            literal_sql = expr.op().expr.op()
+            formatted.append(literal_sql.value)
+            continue
+        ##### END ADDING CODE TO FORMAT #####
+
+        key = expr.op()
+        translated = self._translate(key.expr)
+        if not key.ascending:
+            translated += ' DESC'
+        formatted.append(translated)
+
+    buf.write(', '.join(formatted))
+    return buf.getvalue()
+
+sql_compiler.Select.format_order_by = format_order_by
