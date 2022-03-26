@@ -31,6 +31,14 @@ from io import StringIO
 """ The QueryBuilder for retreiving random row values to filter against."""
 
 
+######################################
+### Adding new datasources should be
+### done by adding the Client and
+### syntax for random sorts in the
+### dict below. If upstream injection
+### is required, feel free to reach
+### out to dhercher
+######################################
 RANDOM_SORT_SUPPORTS = {
     PandasClient: "NA",
     BigQueryClient: "RAND()",
