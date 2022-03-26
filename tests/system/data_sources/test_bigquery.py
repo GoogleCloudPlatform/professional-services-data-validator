@@ -361,7 +361,9 @@ def _store_bq_conn():
 def test_random_row_query_builder():
     bq_client = clients.get_data_client(BQ_CONN)
     row_query_builder = random_row_builder.RandomRowBuilder(["station_id"], 10)
-    query = row_query_builder.compile(bq_client, "bigquery-public-data.new_york_citibike", "citibike_stations")
+    query = row_query_builder.compile(
+        bq_client, "bigquery-public-data.new_york_citibike", "citibike_stations"
+    )
 
     random_rows = bq_client.execute(query)
     print(random_rows)
@@ -370,4 +372,15 @@ def test_random_row_query_builder():
 
     assert query.compile() == EXPECTED_RANDOM_ROW_QUERY
     assert len(random_rows["station_id"]) == 10
-    assert list(random_rows["station_id"]) != [4683, 4676, 4675, 4674, 4673, 4671, 4670, 4666, 4665, 4664]
+    assert list(random_rows["station_id"]) != [
+        4683,
+        4676,
+        4675,
+        4674,
+        4673,
+        4671,
+        4670,
+        4666,
+        4665,
+        4664,
+    ]

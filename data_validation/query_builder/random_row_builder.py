@@ -148,12 +148,13 @@ pandas_util.compute_sorted_frame = compute_sorted_frame
 ##### Override Order By for SQL #####
 #####################################
 
+
 def format_order_by(self):
     if not self.order_by:
         return None
 
     buf = StringIO()
-    buf.write('ORDER BY ')
+    buf.write("ORDER BY ")
 
     formatted = []
     for expr in self.order_by:
@@ -167,10 +168,11 @@ def format_order_by(self):
         key = expr.op()
         translated = self._translate(key.expr)
         if not key.ascending:
-            translated += ' DESC'
+            translated += " DESC"
         formatted.append(translated)
 
-    buf.write(', '.join(formatted))
+    buf.write(", ".join(formatted))
     return buf.getvalue()
+
 
 sql_compiler.Select.format_order_by = format_order_by
