@@ -43,7 +43,6 @@ from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
-
 class BitXor(Reduction):
     """Aggregate bitwise XOR operation."""
 
@@ -105,7 +104,7 @@ def format_hashbytes_bigquery(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
     if how == "sha256":
-        return f"SHA256({compiled_arg})"
+        return f"TO_HEX(SHA256({compiled_arg}))"
     elif how == "farm_fingerprint":
         return f"FARM_FINGERPRINT({compiled_arg})"
     else:
@@ -123,7 +122,6 @@ def format_hashbytes_teradata(translator, expr):
         return f"hash_md5({compiled_arg})"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
-
 
 def format_hashbytes_hive(translator, expr):
     arg, how = expr.op().args

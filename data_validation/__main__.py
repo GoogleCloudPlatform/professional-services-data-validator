@@ -96,7 +96,16 @@ def get_calculated_config(args, config_manager):
     calculated_configs = []
     fields = []
     if args.hash:
-        fields = config_manager._build_dependent_aliases("hash")
+        col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
+        fields = config_manager._build_dependent_aliases("hash", col_list)
+        aliases = [field["name"] for field in fields]
+
+        # Add to list of necessary columns for selective hashing in order to drop
+        # excess columns with invalid data types (i.e structs) when generating source/target DFs
+        if col_list:
+            config_manager.append_dependent_aliases(col_list)
+            config_manager.append_dependent_aliases(aliases)
+
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
     else:
@@ -142,14 +151,24 @@ def build_config_from_args(args, config_manager):
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
+            config_manager.append_dependent_aliases(comparison_fields)
     if args.primary_keys is not None:
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_config_comparison_fields(primary_keys)
         )
+        config_manager.append_dependent_aliases(primary_keys)
 
     # TODO(GH#18): Add query filter config logic
 
+    if config_manager.validation_type == consts.CUSTOM_QUERY:
+        config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+        if args.source_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.source_query_file)
+            config_manager.append_source_query_file(query_file)
+        if args.target_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.target_query_file)
+            config_manager.append_target_query_file(query_file)
     return config_manager
 
 
@@ -165,6 +184,8 @@ def build_config_managers_from_args(args):
             config_type = consts.COLUMN_VALIDATION
         elif validate_cmd == "Row":
             config_type = consts.ROW_VALIDATION
+        elif validate_cmd == "Custom-query":
+            config_type = consts.CUSTOM_QUERY
         else:
             raise ValueError(f"Unknown Validation Type: {validate_cmd}")
     else:
@@ -436,7 +457,7 @@ def run_validation_configs(args):
 
 def validate(args):
     """ Run commands related to data validation."""
-    if args.validate_cmd in ["column", "row", "schema"]:
+    if args.validate_cmd in ["column", "row", "schema", "custom-query"]:
         run(args)
     else:
         raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")

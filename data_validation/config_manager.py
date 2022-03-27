@@ -129,6 +129,17 @@ class ConfigManager(object):
         )
 
     @property
+    def dependent_aliases(self):
+        """ Return all columns that are needed in final dataframe for row validations. """
+        return self._config.get(consts.CONFIG_DEPENDENT_ALIASES, [])
+
+    def append_dependent_aliases(self, dependent_aliases):
+        """ Appends columns that are needed in final dataframe for row validations. """
+        self._config[consts.CONFIG_DEPENDENT_ALIASES] = (
+            self.dependent_aliases + dependent_aliases
+        )
+
+    @property
     def query_groups(self):
         """ Return Query Groups from Config """
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
@@ -137,6 +148,28 @@ class ConfigManager(object):
         """Append grouped configs to existing config."""
         self._config[consts.CONFIG_GROUPED_COLUMNS] = (
             self.query_groups + grouped_column_configs
+        )
+
+    @property
+    def source_query_file(self):
+        """ Return SQL Query File from Config """
+        return self._config.get(consts.CONFIG_SOURCE_QUERY_FILE, [])
+
+    def append_source_query_file(self, query_file_configs):
+        """Append grouped configs to existing config."""
+        self._config[consts.CONFIG_SOURCE_QUERY_FILE] = (
+            self.source_query_file + query_file_configs
+        )
+
+    @property
+    def target_query_file(self):
+        """ Return SQL Query File from Config """
+        return self._config.get(consts.CONFIG_TARGET_QUERY_FILE, [])
+
+    def append_target_query_file(self, query_file_configs):
+        """Append grouped configs to existing config."""
+        self._config[consts.CONFIG_TARGET_QUERY_FILE] = (
+            self.target_query_file + query_file_configs
         )
 
     @property
@@ -485,11 +518,16 @@ class ConfigManager(object):
         }
         return calculated_config
 
-    def _build_dependent_aliases(self, calc_type):
+    def _build_dependent_aliases(self, calc_type, col_list=None):
         """This is a utility function for determining the required depth of all fields"""
         order_of_operations = []
-        source_table = self.get_source_ibis_calculated_table()
-        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        if col_list is None:
+            source_table = self.get_source_ibis_calculated_table()
+            casefold_source_columns = {
+                x.casefold(): str(x) for x in source_table.columns
+            }
+        else:
+            casefold_source_columns = {x.casefold(): str(x) for x in col_list}
         if calc_type == "hash":
             order_of_operations = [
                 "cast",

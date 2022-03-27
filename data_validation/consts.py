@@ -30,6 +30,7 @@ CONFIG_COMPARISON_FIELDS = "comparison_fields"
 CONFIG_FIELD_ALIAS = "field_alias"
 CONFIG_AGGREGATES = "aggregates"
 CONFIG_CALCULATED_FIELDS = "calculated_fields"
+CONFIG_DEPENDENT_ALIASES = "dependent_aliases"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
 CONFIG_CALCULATED_SOURCE_COLUMNS = "source_calculated_columns"
 CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
@@ -47,6 +48,8 @@ CONFIG_FILTERS = "filters"
 CONFIG_FILTER_SOURCE = "source"
 CONFIG_FILTER_TARGET = "target"
 CONFIG_MAX_RECURSIVE_QUERY_SIZE = "max_recursive_query_size"
+CONFIG_SOURCE_QUERY_FILE = "source_query_file"
+CONFIG_TARGET_QUERY_FILE = "target_query_file"
 
 CONFIG_FILTER_SOURCE_COLUMN = "source_column"
 CONFIG_FILTER_SOURCE_VALUE = "source_value"
@@ -71,12 +74,14 @@ COLUMN_VALIDATION = "Column"
 GROUPED_COLUMN_VALIDATION = "GroupedColumn"
 ROW_VALIDATION = "Row"
 SCHEMA_VALIDATION = "Schema"
+CUSTOM_QUERY = "Custom-query"
 
 CONFIG_TYPES = [
     COLUMN_VALIDATION,
     GROUPED_COLUMN_VALIDATION,
     ROW_VALIDATION,
     SCHEMA_VALIDATION,
+    CUSTOM_QUERY,
 ]
 
 # State Manager Fields

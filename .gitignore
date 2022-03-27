@@ -76,3 +76,7 @@ terraform.rc
 
 # Custom
 *.yaml
+
+# Test temp files
+source_table_data.json
+target_table_data.json
