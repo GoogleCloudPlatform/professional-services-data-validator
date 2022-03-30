@@ -15,6 +15,7 @@
 
 from google.cloud import bigquery
 from ibis_bigquery.client import _DTYPE_TO_IBIS_TYPE
+from ibis_bigquery.datatypes import ibis_type_to_bigquery_type, TypeTranslationContext, trans_numeric_udf
 import ibis.expr.datatypes as dt
 from ibis.backends.pandas.client import _inferable_pandas_dtypes
 import pyarrow
@@ -33,3 +34,15 @@ _inferable_pandas_dtypes['date'] = dt.date
 _inferable_pandas_dtypes['datetime64'] = dt.timestamp
 _inferable_pandas_dtypes['datetime'] = dt.timestamp
 _inferable_pandas_dtypes['time'] = dt.time
+
+# Patch Bug in Ibis BQ that was fixed in version 2.1.1
+@ibis_type_to_bigquery_type.register(dt.Decimal, TypeTranslationContext)
+def trans_numeric(t, context):
+    if (t.precision, t.scale) != (38, 9):
+        raise TypeError(
+            'BigQuery only supports decimal types with precision of 38 and '
+            'scale of 9'
+        )
+    return 'NUMERIC'
+
+trans_numeric_udf = trans_numeric

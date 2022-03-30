@@ -1,4 +1,4 @@
-# Data Validation Tool
+# Data Validation Tool (Beta)
 
 The Data Validation Tool (Beta) is an open sourced Python CLI tool based on the
 [Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html)
@@ -12,10 +12,12 @@ after each migration step (e.g. data and schema migration, SQL script
 translation, ETL migration, etc.). The Data Validation Tool (DVT) provides an
 automated and repeatable solution to perform this task.
 
-DVT supports the following validation types: * Table level * Table row count *
-Group by row count * Column aggregation * Filters and limits * Column level *
-Full column data type * Row level hash comparison (BigQuery tables only) * Raw
-SQL exploration * Run custom queries on different data sources
+DVT supports the following validations:
+* Column validation (count, sum, avg, min/max, group_by)
+* Row level hash validation
+* Schema validation 
+* Custom Query validation
+* RawSQL exploration
 
 DVT supports the following connection types:
 
@@ -34,6 +36,10 @@ DVT supports the following connection types:
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
+
+### Disclaimer
+This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly 
+(see [CONTRIBUTING.md](CONTRIBUTING.md) for details).
 
 ## Installation
 
@@ -136,7 +142,8 @@ used to run powerful validations without writing any queries.
 
 #### Row Validations
 
-(Note: Row hash validation is currently only supported for BigQuery, Teradata, and Imapala/Hive)
+(Note: Row hash validation is currently only supported for BigQuery, Teradata, and Imapala/Hive. Struct and array 
+data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass a `--primary-key` flag which defines what field(s)
