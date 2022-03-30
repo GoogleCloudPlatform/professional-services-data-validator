@@ -263,7 +263,7 @@ def test_scalar_param_date(alltypes, df, date_value):
 
 
 def test_raw_sql(client):
-    assert (client.raw_sql("SELECT 1")).iloc[0][0] == 1
+    assert (client.raw_sql("SELECT 1")).fetchall()[0][0] == 1
 
 
 def test_scalar_param_scope(alltypes):
