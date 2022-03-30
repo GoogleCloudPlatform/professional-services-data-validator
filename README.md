@@ -14,7 +14,7 @@ automated and repeatable solution to perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min/max, group_by)
-* Row level hash validation
+* Row level validation
 * Schema validation 
 * Custom Query validation
 * RawSQL exploration
