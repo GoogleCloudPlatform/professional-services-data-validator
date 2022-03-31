@@ -136,6 +136,7 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
+
     if config_manager.validation_type == consts.COLUMN_VALIDATION:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if args.grouped_columns is not None:
@@ -151,15 +152,16 @@ def build_config_from_args(args, config_manager):
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
-            config_manager.append_dependent_aliases(comparison_fields)
+            if args.hash != "*":
+                config_manager.append_dependent_aliases(comparison_fields)
+
     if args.primary_keys is not None:
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_config_comparison_fields(primary_keys)
         )
-        config_manager.append_dependent_aliases(primary_keys)
-
-    # TODO(GH#18): Add query filter config logic
+        if args.hash != "*":
+            config_manager.append_dependent_aliases(primary_keys)
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
@@ -169,6 +171,7 @@ def build_config_from_args(args, config_manager):
         if args.target_query_file is not None:
             query_file = cli_tools.get_arg_list(args.target_query_file)
             config_manager.append_target_query_file(query_file)
+
     return config_manager
 
 

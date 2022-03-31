@@ -404,13 +404,9 @@ def _configure_row_parser(row_parser):
         help="Individual columns to compare. If comparing a calculated field use the column alias.",
     )
     row_parser.add_argument(
-        "--calculated-fields",
-        "-calc-fields",
-        help="list of calculated fields to generate.",
-    )
-    row_parser.add_argument(
         "--primary-keys",
         "-pk",
+        required=True,
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     row_parser.add_argument(
@@ -487,11 +483,6 @@ def _configure_column_parser(column_parser):
         "--comparison-fields",
         "-comp-fields",
         help="list of fields to perform exact comparisons to. Use column aliases if this is calculated.",
-    )
-    column_parser.add_argument(
-        "--calculated-fields",
-        "-calc-fields",
-        help="list of calculated fields to generate.",
     )
     column_parser.add_argument(
         "--grouped-columns",
@@ -612,8 +603,12 @@ def _configure_custom_query_parser(custom_query_parser):
 
 
 def _add_common_arguments(parser):
-    parser.add_argument("--source-conn", "-sc", help="Source connection name")
-    parser.add_argument("--target-conn", "-tc", help="Target connection name")
+    parser.add_argument(
+        "--source-conn", "-sc", required=True, help="Source connection name"
+    )
+    parser.add_argument(
+        "--target-conn", "-tc", required=True, help="Target connection name"
+    )
     parser.add_argument(
         "--tables-list",
         "-tbls",
