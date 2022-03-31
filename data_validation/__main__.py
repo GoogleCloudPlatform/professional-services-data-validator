@@ -226,6 +226,10 @@ def build_config_managers_from_args(args):
         None if config_type == consts.SCHEMA_VALIDATION else args.random_row_batch_size
     )
 
+    filter_status = (
+        args.filter_status if args.filter_status in consts.VALIDATION_STATUSES else None
+    )
+
     is_filesystem = source_client._source_type == "FileSystem"
     tables_list = cli_tools.get_tables_list(
         args.tables_list, default_value=[], is_filesystem=is_filesystem
@@ -246,6 +250,7 @@ def build_config_managers_from_args(args):
             target_client=target_client,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
+            filter_status=filter_status,
             verbose=args.verbose,
         )
         if config_type != consts.SCHEMA_VALIDATION:

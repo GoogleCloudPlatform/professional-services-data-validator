@@ -41,6 +41,7 @@ SAMPLE_CONFIG = {
             "type": "custom",
         }
     ],
+    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUS_FAIL
 }
 
 SAMPLE_ROW_CONFIG = {
@@ -182,6 +183,15 @@ def test_process_in_memory(module_under_test):
     )
 
     assert config_manager.process_in_memory() is True
+
+
+def test_filter_status(module_under_test):
+    """Test getting filter_status property."""
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    assert config_manager.filter_status == SAMPLE_CONFIG[consts.CONFIG_FILTER_STATUS]
 
 
 # def test_do_not_process_in_memory(module_under_test):

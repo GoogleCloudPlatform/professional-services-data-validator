@@ -368,6 +368,12 @@ def _configure_validate_parser(subparsers):
     validate_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"
     )
+    validate_parser.add_argument(
+        "--filter-status",
+        "-fs",
+        help="filter the validation status, Supported statuses are (success, fail). It defaults "
+        "to return all"
+    )
 
     validate_subparsers = validate_parser.add_subparsers(dest="validate_cmd")
 

@@ -831,3 +831,29 @@ def test_generate_report_with_nan_agg_value(
         .reindex(sorted(expected.columns), axis=1)
     )
     pandas.testing.assert_frame_equal(report, expected)
+
+def test_generate_report_with_filter_status(module_under_test):
+    source_df = pandas.DataFrame({"count": [1, 1]})
+    target_df = pandas.DataFrame({"count": [1, 2]})
+
+    pandas_client = ibis.backends.pandas.connect(
+        {"test_source": source_df, "test_target": target_df}
+    )
+
+    fail_report = module_under_test.generate_report(
+        pandas_client,
+        EXAMPLE_RUN_METADATA,
+        source=pandas_client.table("test_source"),
+        target=pandas_client.table("test_target"),
+        filter_status=consts.VALIDATION_STATUS_FAIL,
+    )
+    success_report = module_under_test.generate_report(
+        pandas_client,
+        EXAMPLE_RUN_METADATA,
+        source=pandas_client.table("test_source"),
+        target=pandas_client.table("test_target"),
+        filter_status=consts.VALIDATION_STATUS_SUCCESS,
+    )
+
+    assert len(fail_report) == 8
+    assert len(success_report) == 8

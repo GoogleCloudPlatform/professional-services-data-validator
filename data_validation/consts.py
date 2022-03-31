@@ -50,6 +50,7 @@ CONFIG_FILTER_TARGET = "target"
 CONFIG_MAX_RECURSIVE_QUERY_SIZE = "max_recursive_query_size"
 CONFIG_SOURCE_QUERY_FILE = "source_query_file"
 CONFIG_TARGET_QUERY_FILE = "target_query_file"
+CONFIG_FILTER_STATUS = "filter_status"
 
 CONFIG_FILTER_SOURCE_COLUMN = "source_column"
 CONFIG_FILTER_SOURCE_VALUE = "source_value"
@@ -115,6 +116,10 @@ TARGET_AGG_VALUE = "target_agg_value"
 VALIDATION_STATUS = "status"
 VALIDATION_STATUS_SUCCESS = "success"
 VALIDATION_STATUS_FAIL = "fail"
+VALIDATION_STATUSES = [
+    VALIDATION_STATUS_SUCCESS,
+    VALIDATION_STATUS_FAIL,
+]
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?

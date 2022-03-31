@@ -261,6 +261,11 @@ class ConfigManager(object):
         """Return threshold from Config """
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
+    @property
+    def filter_status(self):
+        """Return filter status from Config"""
+        return self._config.get(consts.CONFIG_FILTER_STATUS)
+
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):
@@ -358,6 +363,7 @@ class ConfigManager(object):
         target_client=None,
         result_handler_config=None,
         filter_config=None,
+        filter_status=None,
         verbose=False,
     ):
         if isinstance(filter_config, dict):
@@ -383,6 +389,7 @@ class ConfigManager(object):
             consts.CONFIG_FILTERS: filter_config,
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
+            consts.CONFIG_FILTER_STATUS: filter_status,
         }
 
         return ConfigManager(

@@ -333,6 +333,7 @@ class DataValidation(object):
                     pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
                     join_on_fields=join_on_fields,
                     is_value_comparison=is_value_comparison,
+                    filter_status=self.config_manager.filter_status,
                     verbose=self.verbose,
                 )
             except Exception as e:
@@ -352,6 +353,7 @@ class DataValidation(object):
                 target_query,
                 join_on_fields=join_on_fields,
                 is_value_comparison=is_value_comparison,
+                filter_status=self.config_manager.filter_status,
                 verbose=self.verbose,
             )
 

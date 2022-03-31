@@ -39,6 +39,7 @@ def generate_report(
     target,
     join_on_fields=(),
     is_value_comparison=False,
+    filter_status=None,
     verbose=False,
 ):
     """Combine results into a report.
@@ -91,6 +92,9 @@ def generate_report(
 
     result_df = client.execute(documented)
     result_df.status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
+
+    if filter_status:
+        result_df = result_df[result_df.status == filter_status]
 
     return result_df
 
