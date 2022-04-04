@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from copy import deepcopy
+import logging
 
 import pytest
 
@@ -193,7 +194,7 @@ def test_column_validation_calculate(module_under_test):
 
     mock_config_manager.append_calculated_fields(CALCULATED_MULTIPLE_TEST)
     builder.add_config_calculated_fields()
-    print(sorted(list(builder.get_calculated_aliases())))
+    logging.info(sorted(list(builder.get_calculated_aliases())))
     assert sorted(list(builder.get_calculated_aliases())) == [
         "concat_calcs",
         "concat_start_station_name_end_station_name",

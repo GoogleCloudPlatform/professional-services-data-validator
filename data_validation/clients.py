@@ -16,6 +16,7 @@
 import pandas
 import warnings
 import copy
+import logging
 
 import google.oauth2.service_account
 
@@ -181,7 +182,7 @@ def get_all_tables(client, allowed_schemas=None):
         try:
             tables = list_tables(client, schema_name)
         except Exception as e:
-            print(f"List Tables Error: {schema_name} -> {e}")
+            logging.exception(f"List Tables Error: {schema_name} -> {e}")
             continue
 
         for table_name in tables:

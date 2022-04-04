@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import pytest
 
 from pandas import DataFrame
@@ -88,7 +89,7 @@ def test_columns_to_print(module_under_test, capsys):
 
     grid_text = "││A│C││0│0│2││1│4│6││2│8│10│"
     printed_text = capsys.readouterr().out
-    print(printed_text)
+    logging.info(printed_text)
     printed_text = (
         printed_text.replace("\n", "")
         .replace("'", "")

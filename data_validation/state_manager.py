@@ -20,6 +20,7 @@ and validation files.
 import enum
 import json
 import os
+import logging
 from google.cloud import storage
 from typing import Dict, List
 from yaml import dump, load, Dumper, Loader
@@ -160,7 +161,7 @@ class StateManager(object):
             with open(file_path, "w") as file:
                 file.write(data)
 
-        print("Success! Config output written to {}".format(file_path))
+        logging.info("Success! Config output written to {}".format(file_path))
 
     def _list_directory(self, directory_path: str) -> List[str]:
         if self.file_system == FileSystem.GCS:

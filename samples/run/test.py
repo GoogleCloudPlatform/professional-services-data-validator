@@ -15,6 +15,7 @@
 import os
 import re
 import requests
+import logging
 
 PROJECT_ID = os.environ.get("PROJECT_ID")
 
@@ -60,4 +61,4 @@ data = {
 
 url = get_cloud_run_url("data-validation", PROJECT_ID)
 res = requests.post(url, headers={"Authorization": "Bearer " + get_token()}, json=data)
-print(res.content.decode())
+logging.info(res.content.decode())

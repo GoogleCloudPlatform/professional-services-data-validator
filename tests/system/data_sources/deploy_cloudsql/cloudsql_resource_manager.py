@@ -17,6 +17,7 @@ from tests.system.data_sources.deploy_cloudsql.gcloud_context import GCloudConte
 import json
 import random
 import string
+import logging
 
 DATABASE_TYPES = ("MYSQL_5_7", "POSTGRES_12", "SQLSERVER_2017_STANDARD")
 
@@ -56,7 +57,7 @@ class CloudSQLResourceManager:
 
     def describe(self):
         """ Returns description of resource manager instance """
-        print(
+        logging.info(
             f"Creates a {self._database_type} instance in project {self._project_id} with "
             f"database_id: {self._database_id}, instance_id: {self._instance_id}."
         )
@@ -100,8 +101,8 @@ class CloudSQLResourceManager:
                         db_info.strip().split("\n")[1].split(),
                     )
                 )
-                print("CLOUDSQL_DB Info")
-                print(self.db)
+                logging.info("CLOUDSQL_DB Info")
+                logging.info(self.db)
 
                 gcloud.Run(
                     "sql",

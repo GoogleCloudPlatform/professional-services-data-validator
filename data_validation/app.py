@@ -17,6 +17,7 @@ import os
 from data_validation import data_validation
 import flask
 import pandas
+import logging
 
 app = flask.Flask(__name__)
 
@@ -62,7 +63,7 @@ def run():
         result = validate(config)
         return str(result)
     except Exception as e:
-        print(e)
+        logging.exception(e)
         return "Found Error: {}".format(e)
 
 

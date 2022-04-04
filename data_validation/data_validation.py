@@ -274,8 +274,8 @@ class DataValidation(object):
             schema_index.append(key)
         pd_schema = pandas.Series(schema_data, index=schema_index)
         if verbose:
-            print("-- ** Pandas Schema ** --")
-            print(pd_schema)
+            logging.info("-- ** Pandas Schema ** --")
+            logging.info(pd_schema)
 
         return pd_schema
 
@@ -337,12 +337,12 @@ class DataValidation(object):
                 )
             except Exception as e:
                 if self.verbose:
-                    print("-- ** Logging Source DF ** --")
-                    print(source_df.dtypes)
-                    print(source_df)
-                    print("-- ** Logging Target DF ** --")
-                    print(target_df.dtypes)
-                    print(target_df)
+                    logging.info("-- ** Logging Source DF ** --")
+                    logging.info(source_df.dtypes)
+                    logging.info(source_df)
+                    logging.info("-- ** Logging Target DF ** --")
+                    logging.info(target_df.dtypes)
+                    logging.info(target_df)
                 raise e
         else:
             result_df = combiner.generate_report(

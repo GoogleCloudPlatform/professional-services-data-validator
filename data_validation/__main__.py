@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 import json
 import sys
@@ -479,9 +480,9 @@ def main():
     elif args.command == "configs":
         run_validation_configs(args)
     elif args.command == "find-tables":
-        print(find_tables_using_string_matching(args))
+        logging.info(find_tables_using_string_matching(args))
     elif args.command == "query":
-        print(run_raw_query_against_connection(args))
+        logging.info(run_raw_query_against_connection(args))
     elif args.command == "validate":
         validate(args)
     elif args.command == "deploy":

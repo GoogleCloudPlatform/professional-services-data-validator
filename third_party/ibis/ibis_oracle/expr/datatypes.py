@@ -16,6 +16,7 @@ import collections
 import numbers
 import re
 import typing
+import logging
 
 import third_party.ibis.ibis_oracle.expr.types as ir
 from multipledispatch import Dispatcher
@@ -76,7 +77,7 @@ class Number(dt.DataType):
     def __init__(
         self, precision: int, scale: int, nullable: bool = True
     ) -> None:
-        print(precision)
+        logging.info(precision)
         if not isinstance(precision, numbers.Integral):
             raise TypeError('Number type precision must be an integer')
         if not isinstance(scale, numbers.Integral):

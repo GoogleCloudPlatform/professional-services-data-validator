@@ -1,3 +1,4 @@
+import logging
 from multipledispatch import Dispatcher
 
 import ibis.expr.datatypes as dt
@@ -39,7 +40,7 @@ class TeradataTypeTranslator(object):
         if return_ibis_type:
             return dt.string
 
-        print('Unsupported Date Type Seen: "%s"' % col_data["Type"])
+        logging.info('Unsupported Date Type Seen: "%s"' % col_data["Type"])
         return "VARCHAR"
 
     @classmethod

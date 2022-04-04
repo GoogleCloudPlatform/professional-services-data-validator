@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import pytest
 
 import ibis.expr.datatypes as dt
@@ -41,9 +42,9 @@ def next_serial(con):
 
 @pytest.fixture(scope='session')
 def test_schema(con, next_serial):
-    print(next_serial)
+    logging.info(next_serial)
     schema_name = 'udf_test_{}'.format(next_serial)
-    print(schema_name)
+    logging.info(schema_name)
     con.con.execute("CREATE SCHEMA {}".format(schema_name))
     return schema_name
 

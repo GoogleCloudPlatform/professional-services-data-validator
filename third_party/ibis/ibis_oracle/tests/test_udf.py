@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import functools
+import logging
 
 import pytest
 
@@ -43,7 +44,7 @@ def next_serial(con):
 def test_schema(con, next_serial):
     schema_name = 'udf_test_{}'.format(next_serial)
     # schema_name='"{}"'.format(schema_name)
-    print(schema_name)
+    logging.info(schema_name)
     con.con.execute("CREATE USER {}".format(schema_name))
     # con.con.execute("CREATE USER "+ schema_name)
     return schema_name
@@ -115,7 +116,7 @@ def con_for_udf(
         yield con
     finally:
         # teardown
-        print("In finally block")
+        logging.info("In finally block")
         # con.con.execute("DROP USER "+test_schema +" cascade")
         # con.con.execute("DROP USER schema CASCADE".format(test_schema))
 

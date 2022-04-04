@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import ibis
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import operations
@@ -239,7 +240,7 @@ class GroupedField(object):
         else:
             # TODO: need to build Truncation Int support
             # TODO: should be using a logger
-            print("WARNING: Unknown cast types can cause memory errors")
+            logging.warning("WARNING: Unknown cast types can cause memory errors")
 
         # The Casts require we also supply a name.
         alias = self.alias or self.field_name
