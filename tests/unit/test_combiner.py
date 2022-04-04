@@ -149,7 +149,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "difference": [1.0],
                     "pct_difference": [100.0],
                     "pct_threshold": [0.0],
-                    "status": [consts.VALIDATION_STATUS_FAIL],
+                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[("name", "test_label")]],
                 }
             ),
@@ -198,7 +198,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "difference": [0.0],
                     "pct_difference": [0.0],
                     "pct_threshold": [0.0],
-                    "status": [consts.VALIDATION_STATUS_SUCCESS],
+                    "validation_status": [consts.VALIDATION_STATUS_SUCCESS],
                     "labels": [[("name", "test_label")]],
                 }
             ),
@@ -255,7 +255,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "difference": [400000000.0],
                     "pct_difference": [25.0],
                     "pct_threshold": [0.0],
-                    "status": [consts.VALIDATION_STATUS_FAIL],
+                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[("name", "test_label")]],
                 }
             ),
@@ -317,7 +317,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "difference": [1.0, 2.0],
                     "pct_difference": [12.5, -200.0],
                     "pct_threshold": [30.0, 0.0],
-                    "status": [
+                    "validation_status": [
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
@@ -416,7 +416,7 @@ def test_generate_report_without_group_by(
                     "difference": [-1.0, -1.0, -1.0, 1.0],
                     "pct_difference": [-50.0, -25.0, -12.5, 6.25],
                     "pct_threshold": [7.0, 7.0, 7.0, 7.0],
-                    "status": [
+                    "validation_status": [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
@@ -467,7 +467,7 @@ def test_generate_report_without_group_by(
                     "difference": [2.0, 2.0],
                     "pct_difference": [200.0, 100.0],
                     "pct_threshold": [100.0, 100.0],
-                    "status": [
+                    "validation_status": [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                     ],
@@ -549,7 +549,7 @@ def test_generate_report_without_group_by(
                     "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
-                    "status": [
+                    "validation_status": [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
@@ -643,7 +643,7 @@ def test_generate_report_with_group_by(
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "status": [consts.VALIDATION_STATUS_FAIL],
+                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[("name", "test_label")]],
                 }
             ),
@@ -688,7 +688,7 @@ def test_generate_report_with_group_by(
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "status": [consts.VALIDATION_STATUS_FAIL],
+                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[("name", "test_label")]],
                 }
             ),
@@ -733,7 +733,7 @@ def test_generate_report_with_group_by(
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "status": [consts.VALIDATION_STATUS_FAIL],
+                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[("name", "test_label")]],
                 }
             ),
@@ -795,7 +795,7 @@ def test_generate_report_with_group_by(
                     "difference": [1.0, _NAN],
                     "pct_difference": [12.5, _NAN],
                     "pct_threshold": [30.0, 0.0],
-                    "status": [
+                    "validation_status": [
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
