@@ -125,7 +125,8 @@ RESULT_TYPE_SOURCE = "source"
 RESULT_TYPE_TARGET = "target"
 
 # Ibis Object Info
-NUMERIC_DATA_TYPES = ["float64", "int8", "int16", "int32", "int64", "decimal"]
+# Adding 'string' for Flipkart specific req to run aggregates over len(string)
+NUMERIC_DATA_TYPES = ["float64", "int8", "int16", "int32", "int64", "decimal", "string"]
 
 FORMAT_TYPES = ["csv", "json", "table", "text"]
 

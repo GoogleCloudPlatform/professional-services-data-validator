@@ -454,6 +454,7 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         allowlist_columns = arg_value or casefold_source_columns
+
         for column in casefold_source_columns:
             # Get column type and remove precision/scale attributes
             column_type_str = str(source_table[casefold_source_columns[column]].type())
@@ -470,6 +471,27 @@ class ConfigManager(object):
                 if self.verbose:
                     msg = f"Skipping Agg {agg_type}: {source_table.op().name}.{column} {column_type}"
                     print(msg)
+                continue
+
+            if column_type == "string":
+                calculated_config = [
+                    {
+                        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
+                        consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
+                        consts.CONFIG_FIELD_ALIAS: f"length__{column}",
+                        consts.CONFIG_TYPE: "length",
+                        consts.CONFIG_DEPTH: 0,
+                    }
+                ]
+                self.append_calculated_fields(calculated_config)
+
+                aggregate_config = {
+                    consts.CONFIG_SOURCE_COLUMN: f"length__{column}",
+                    consts.CONFIG_TARGET_COLUMN: f"length__{column}",
+                    consts.CONFIG_FIELD_ALIAS: f"{agg_type}__length__{column}",
+                    consts.CONFIG_TYPE: agg_type,
+                }
+                aggregate_configs.append(aggregate_config)
                 continue
 
             aggregate_config = {
