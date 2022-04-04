@@ -93,7 +93,9 @@ def lint(session):
     serious code quality issues.
     """
 
-    _setup_session_requirements(session, extra_packages=["flake8", "black==19.10b0"])
+    _setup_session_requirements(
+        session, extra_packages=["flake8", "black==19.10b0", "click==8.0.4"]
+    )
     session.install("--upgrade", "pip", "wheel")
     session.run("flake8", "data_validation")
     session.run("flake8", "tests")
