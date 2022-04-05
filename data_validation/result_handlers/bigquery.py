@@ -59,6 +59,14 @@ class BigQueryResultHandler(object):
             table, result_df
         )
         if any(chunk_errors):
+            if (
+                chunk_errors[0][0]["errors"][0]["message"]
+                == "no such field: validation_status."
+            ):
+                raise RuntimeError(
+                    f"Please update your BigQuery results table schema (https://cloud.google.com/bigquery/docs/manually-changing-schemas).\n"
+                    f"The lastest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
+                )
             raise RuntimeError(f"could not write rows: {chunk_errors}")
 
         return result_df
