@@ -690,7 +690,9 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
 
-    comparison_df = result_df[result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL]
+    comparison_df = result_df[
+        result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL
+    ]
     # 2 validations * (100 source + 1 target)
     assert len(result_df) == 202
     assert len(comparison_df) == 202
