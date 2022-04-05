@@ -474,6 +474,7 @@ class ConfigManager(object):
                 continue
 
             if column_type == "string":
+                # Calculate length(string) for shallow validation
                 calculated_config = [
                     {
                         consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],

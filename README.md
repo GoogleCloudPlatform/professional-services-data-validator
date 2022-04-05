@@ -93,6 +93,10 @@ grouped column validations a step further by providing the `--primary-key` flag.
 With this flag, if a mismatch was found, DVT will dive deeper into the slice
 with the error and find the row (primary key value) with the inconsistency.
 
+You can specify a list of string columns for aggregations in order to calculate
+an aggregation over the `length(string_col)`. Although running an aggregation 
+over all columns ('*') will only run over numeric columns.
+
 ```
 data-validation (--verbose or -v) validate column
   --source-conn or -sc SOURCE_CONN
