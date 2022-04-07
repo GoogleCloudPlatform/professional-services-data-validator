@@ -215,7 +215,7 @@ def build_config_managers_from_args(args):
             filter_config = cli_tools.get_filters(args.filters)
         if args.threshold:
             threshold = args.threshold
-        labels = cli_tools.get_labels(args.labels)
+    labels = cli_tools.get_labels(args.labels)
 
     mgr = state_manager.StateManager()
     source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
