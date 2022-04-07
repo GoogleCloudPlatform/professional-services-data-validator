@@ -85,9 +85,9 @@ def generate_report(
     joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
     documented = _add_metadata(joined, run_metadata)
 
-    # if verbose:
-    #     print("-- ** Combiner Query ** --")
-    #     print(documented.compile())
+    if verbose:
+        print("-- ** Combiner Query ** --")
+        print(documented.compile())
 
     result_df = client.execute(documented)
     result_df.status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
