@@ -320,6 +320,12 @@ def _configure_run_parser(subparsers):
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
     )
+    run_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
+    )
 
 
 def _configure_connection_parser(subparsers):
@@ -512,6 +518,12 @@ def _configure_column_parser(column_parser):
         "--random-row-batch-size",
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
+    )
+    column_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
     )
 
 

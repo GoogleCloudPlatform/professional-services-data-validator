@@ -444,6 +444,30 @@ class ConfigManager(object):
 
         return aggregate_config
 
+    def append_stringlen_calc_field(self, column, agg_type):
+        """ Append calculated field for length(string) for column validation"""
+        calculated_config = {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
+            consts.CONFIG_FIELD_ALIAS: f"length__{column}",
+            consts.CONFIG_TYPE: "length",
+            consts.CONFIG_DEPTH: 0,
+        }
+
+        existing_calc_fields = [
+            x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
+        ]
+        if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
+            self.append_calculated_fields([calculated_config])
+
+        aggregate_config = {
+            consts.CONFIG_SOURCE_COLUMN: f"length__{column}",
+            consts.CONFIG_TARGET_COLUMN: f"length__{column}",
+            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__length__{column}",
+            consts.CONFIG_TYPE: agg_type,
+        }
+        return aggregate_config
+
     def build_config_column_aggregates(self, agg_type, arg_value, supported_types):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
@@ -452,6 +476,9 @@ class ConfigManager(object):
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        if arg_value and supported_types:
+            supported_types.append("string")
 
         allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
@@ -463,13 +490,19 @@ class ConfigManager(object):
                 continue
             elif column not in casefold_target_columns:
                 logging.info(
-                    f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
+                    f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Skipping Agg {agg_type}: {source_table.op().name}.{column} {column_type}"
-                    print(msg)
+                    logging.info(
+                        f"Skipping {agg_type} on {column} due to data type: {column_type}"
+                    )
+                continue
+
+            if column_type == "string":
+                aggregate_config = self.append_stringlen_calc_field(column, agg_type)
+                aggregate_configs.append(aggregate_config)
                 continue
 
             aggregate_config = {
@@ -500,12 +533,12 @@ class ConfigManager(object):
                 continue
             elif column not in casefold_target_columns:
                 logging.info(
-                    f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    f"Skipping {calc_type} on {column} as column is not present in target table"
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    msg = f"Skipping {calc_type} on {column} due to data type: {column_type}"
                     print(msg)
                 continue
 
