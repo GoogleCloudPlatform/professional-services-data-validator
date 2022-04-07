@@ -570,9 +570,6 @@ def _configure_custom_query_parser(custom_query_parser):
         help="Filters in the format source_filter:target_filter",
     )
     custom_query_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
-    custom_query_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
