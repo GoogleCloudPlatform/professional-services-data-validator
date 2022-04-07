@@ -78,7 +78,7 @@ def module_under_test():
 
 
 def _create_table_file(table_path, data):
-    """ Create JSON File """
+    """Create JSON File"""
     with open(table_path, "w") as f:
         f.write(data)
 

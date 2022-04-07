@@ -53,7 +53,7 @@ def cloud_sql(request):
 
 
 def test_postgres_count(cloud_sql):
-    """ Test count validation on Postgres instance """
+    """Test count validation on Postgres instance"""
     conn = {
         "source_type": "Postgres",
         "host": POSTGRES_HOST,
@@ -83,6 +83,9 @@ def test_postgres_count(cloud_sql):
         consts.CONFIG_FORMAT: "table",
     }
 
-    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]

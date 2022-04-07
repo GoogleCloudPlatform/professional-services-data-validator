@@ -41,8 +41,14 @@ def get_cloud_run_url(service_name, project_id):
 
 
 data = {
-    "source_conn": {"source_type": "BigQuery", "project_id": PROJECT_ID,},
-    "target_conn": {"source_type": "BigQuery", "project_id": PROJECT_ID,},
+    "source_conn": {
+        "source_type": "BigQuery",
+        "project_id": PROJECT_ID,
+    },
+    "target_conn": {
+        "source_type": "BigQuery",
+        "project_id": PROJECT_ID,
+    },
     "type": "Column",
     "schema_name": "bigquery-public-data.new_york_citibike",
     "table_name": "citibike_stations",
