@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import json
+import os
 import sys
+
 from yaml import Dumper, dump
 
 from data_validation import (
@@ -26,7 +27,6 @@ from data_validation import (
 )
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
-
 
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
@@ -74,11 +74,13 @@ def get_aggregate_config(args, config_manager):
             "avg", col_args, supported_data_types
         )
     if args.min:
+        supported_data_types.append("timestamp")
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "min", col_args, supported_data_types
         )
     if args.max:
+        supported_data_types.append("timestamp")
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, supported_data_types
