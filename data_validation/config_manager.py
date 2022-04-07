@@ -471,21 +471,29 @@ class ConfigManager(object):
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    logging.info(f"Skipping {agg_type} on {column} due to data type: {column_type}")
+                    logging.info(
+                        f"Skipping {agg_type} on {column} due to data type: {column_type}"
+                    )
                 continue
 
             if column_type == "string":
                 # Calculate length(string) for shallow validation
-                calculated_config = [
-                    {
-                        consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
-                        consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
-                        consts.CONFIG_FIELD_ALIAS: f"length__{column}",
-                        consts.CONFIG_TYPE: "length",
-                        consts.CONFIG_DEPTH: 0,
-                    }
+                calculated_config = {
+                    consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
+                    consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
+                    consts.CONFIG_FIELD_ALIAS: f"length__{column}",
+                    consts.CONFIG_TYPE: "length",
+                    consts.CONFIG_DEPTH: 0,
+                }
+
+                existing_calc_fields = [
+                    x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
                 ]
-                self.append_calculated_fields(calculated_config)
+                if (
+                    calculated_config[consts.CONFIG_FIELD_ALIAS]
+                    not in existing_calc_fields
+                ):
+                    self.append_calculated_fields([calculated_config])
 
                 aggregate_config = {
                     consts.CONFIG_SOURCE_COLUMN: f"length__{column}",

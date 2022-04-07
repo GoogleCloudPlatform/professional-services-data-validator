@@ -133,33 +133,6 @@ CONFIG_NUMERIC_AGG_VALID = {
     consts.CONFIG_FORMAT: "table",
 }
 
-CONFIG_STRING_AGG_VALID = {
-    # BigQuery Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: BQ_CONN,
-    consts.CONFIG_TARGET_CONN: BQ_CONN,
-    # Validation Type
-    consts.CONFIG_TYPE: "Column",
-    # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
-    consts.CONFIG_TABLE_NAME: "test_data_types",
-    consts.CONFIG_AGGREGATES: [
-        {
-            consts.CONFIG_TYPE: "count",
-            consts.CONFIG_SOURCE_COLUMN: None,
-            consts.CONFIG_TARGET_COLUMN: None,
-            consts.CONFIG_FIELD_ALIAS: "count",
-        },
-        {
-            consts.CONFIG_TYPE: "sum",
-            consts.CONFIG_SOURCE_COLUMN: "text_type",
-            consts.CONFIG_TARGET_COLUMN: "text_type",
-            consts.CONFIG_FIELD_ALIAS: "compare_string",
-        },
-    ],
-    consts.CONFIG_GROUPED_COLUMNS: [],
-    consts.CONFIG_FORMAT: "table",
-}
-
 CONFIG_SCHEMA_VALIDATION = {
     # BigQuery Specific Connection Config
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -204,9 +177,26 @@ CLI_STORE_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES = 54  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
+EXPECTED_NUM_YAML_LINES = 47  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
+
+CLI_WILDCARD_STRING_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.new_york_citibike.citibike_trips",
+    "--sum",
+    "*",
+    "--wildcard-include-string-len",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_WILDCARD = 112
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -268,15 +258,6 @@ def test_grouped_count_validator():
 
 def test_numeric_types():
     validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
-    df = validator.execute()
-
-    for validation in df.to_dict(orient="records"):
-        assert float(validation["source_agg_value"]) == float(
-            validation["target_agg_value"]
-        )
-
-def test_string_column_validation():
-    validator = data_validation.DataValidation(CONFIG_STRING_AGG_VALID, verbose=True)
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
@@ -363,6 +344,29 @@ def test_cli_store_yaml_then_run_local():
     os.remove(yaml_file_path)
     # _remove_bq_conn()
 
+    # Re-set GCS env var
+    os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
+
+
+def test_wildcard_column_agg_yaml():
+    """Test storing column validation YAML with string fields."""
+    # Unset GCS env var so that YAML is saved locally
+    gcs_path = os.environ[consts.ENV_DIRECTORY_VAR]
+    os.environ[consts.ENV_DIRECTORY_VAR] = ""
+
+    # Store BQ Connection
+    _store_bq_conn()
+
+    # Build validation and store to file
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(CLI_WILDCARD_STRING_ARGS)
+    main.run(mock_args)
+
+    yaml_file_path = CLI_CONFIG_FILE
+    with open(yaml_file_path, "r") as yaml_file:
+        assert len(yaml_file.readlines()) == EXPECTED_NUM_YAML_LINES_WILDCARD
+
+    os.remove(yaml_file_path)
     # Re-set GCS env var
     os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
 

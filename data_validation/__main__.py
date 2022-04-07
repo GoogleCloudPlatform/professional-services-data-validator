@@ -54,9 +54,9 @@ def get_aggregate_config(args, config_manager):
     """
     aggregate_configs = [config_manager.build_config_count_aggregate()]
     supported_data_types = ["float64", "int8", "int16", "int32", "int64", "decimal"]
-    
+
     if args.wildcard_include_string_len:
-        supported_data_types.append("string")    
+        supported_data_types.append("string")
 
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
