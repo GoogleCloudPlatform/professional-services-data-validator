@@ -453,8 +453,10 @@ class ConfigManager(object):
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
-        allowlist_columns = arg_value or casefold_source_columns
+        if arg_value and supported_types:
+            supported_types.append("string")
 
+        allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
             # Get column type and remove precision/scale attributes
             column_type_str = str(source_table[casefold_source_columns[column]].type())
@@ -464,13 +466,12 @@ class ConfigManager(object):
                 continue
             elif column not in casefold_target_columns:
                 logging.info(
-                    f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
+                    f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Skipping Agg {agg_type}: {source_table.op().name}.{column} {column_type}"
-                    print(msg)
+                    logging.info(f"Skipping {agg_type} on {column} due to data type: {column_type}")
                 continue
 
             if column_type == "string":
@@ -523,12 +524,12 @@ class ConfigManager(object):
                 continue
             elif column not in casefold_target_columns:
                 logging.info(
-                    f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    f"Skipping {calc_type} on {column} since column does not exist in target."
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    msg = f"Skipping {calc_type} on {column} due to data type {column_type}"
                     print(msg)
                 continue
 

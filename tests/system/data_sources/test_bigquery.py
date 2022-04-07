@@ -133,6 +133,33 @@ CONFIG_NUMERIC_AGG_VALID = {
     consts.CONFIG_FORMAT: "table",
 }
 
+CONFIG_STRING_AGG_VALID = {
+    # BigQuery Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
+    # Validation Type
+    consts.CONFIG_TYPE: "Column",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
+    consts.CONFIG_TABLE_NAME: "test_data_types",
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+        },
+        {
+            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_SOURCE_COLUMN: "text_type",
+            consts.CONFIG_TARGET_COLUMN: "text_type",
+            consts.CONFIG_FIELD_ALIAS: "compare_string",
+        },
+    ],
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_FORMAT: "table",
+}
+
 CONFIG_SCHEMA_VALIDATION = {
     # BigQuery Specific Connection Config
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -241,6 +268,15 @@ def test_grouped_count_validator():
 
 def test_numeric_types():
     validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
+    df = validator.execute()
+
+    for validation in df.to_dict(orient="records"):
+        assert float(validation["source_agg_value"]) == float(
+            validation["target_agg_value"]
+        )
+
+def test_string_column_validation():
+    validator = data_validation.DataValidation(CONFIG_STRING_AGG_VALID, verbose=True)
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):

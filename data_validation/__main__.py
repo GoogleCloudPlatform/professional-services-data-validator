@@ -53,6 +53,10 @@ def get_aggregate_config(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     aggregate_configs = [config_manager.build_config_count_aggregate()]
+    supported_data_types = ["float64", "int8", "int16", "int32", "int64", "decimal"]
+    
+    if args.wildcard_include_string_len:
+        supported_data_types.append("string")    
 
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
@@ -62,27 +66,27 @@ def get_aggregate_config(args, config_manager):
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, consts.NUMERIC_DATA_TYPES
+            "sum", col_args, supported_data_types
         )
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, consts.NUMERIC_DATA_TYPES
+            "avg", col_args, supported_data_types
         )
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, consts.NUMERIC_DATA_TYPES
+            "min", col_args, supported_data_types
         )
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, consts.NUMERIC_DATA_TYPES
+            "max", col_args, supported_data_types
         )
     if args.bit_xor:
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "bit_xor", col_args, consts.NUMERIC_DATA_TYPES
+            "bit_xor", col_args, supported_data_types
         )
     return aggregate_configs
 
