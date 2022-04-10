@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import random
+import logging
 import ibis
 import ibis.expr.operations as ops
 import ibis.expr.types as tz
@@ -106,6 +107,7 @@ class RandomRowBuilder(object):
                 RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             )
 
+        logging.warning("Data Client %s Does Not Enforce Random Sort on Sample", str(type(data_client)))
         return table
 
 
