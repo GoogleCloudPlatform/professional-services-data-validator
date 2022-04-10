@@ -366,9 +366,6 @@ def test_random_row_query_builder():
     )
 
     random_rows = bq_client.execute(query)
-    print(random_rows)
-    print(random_rows["station_id"].values)
-    print(query.compile())
 
     assert query.compile() == EXPECTED_RANDOM_ROW_QUERY
     assert len(random_rows["station_id"]) == 10
