@@ -733,7 +733,7 @@ def test_generate_report_with_group_by(
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "status": [consts.VALIDATION_STATUS_SUCCESS],
+                    "validation_status": [consts.VALIDATION_STATUS_SUCCESS],
                     "labels": [[("name", "test_label")]],
                 }
             ),
