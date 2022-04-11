@@ -64,7 +64,7 @@ class BigQueryResultHandler(object):
                 == "no such field: validation_status."
             ):
                 raise RuntimeError(
-                    f"Please update your BigQuery results table schema using the script : data_validation/samples/bq_utils/update_schema.sh.\n"
+                    f"Please update your BigQuery results table schema using the script : samples/bq_utils/update_schema.sh.\n"
                     f"The lastest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
                 )
             raise RuntimeError(f"could not write rows: {chunk_errors}")
