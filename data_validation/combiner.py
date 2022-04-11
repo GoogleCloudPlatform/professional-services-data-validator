@@ -143,6 +143,10 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
         status = (
             ibis.case()
+            .when(
+                source_value.isnull() & target_value.isnull(),
+                consts.VALIDATION_STATUS_SUCCESS,
+            )
             .when(th_diff.isnan() | (th_diff > 0.0), consts.VALIDATION_STATUS_FAIL)
             .else_(consts.VALIDATION_STATUS_SUCCESS)
             .end()
