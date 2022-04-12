@@ -15,7 +15,8 @@
 import os
 
 from data_validation import __main__ as main
-from data_validation import cli_tools, consts, data_validation, state_manager
+from data_validation import cli_tools, clients, consts, data_validation, state_manager
+from data_validation.query_builder import random_row_builder
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
