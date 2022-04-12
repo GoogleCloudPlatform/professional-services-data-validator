@@ -465,7 +465,7 @@ def run_validation_configs(args):
 
 
 def validate(args):
-    """ Run commands related to data validation."""
+    """Run commands related to data validation."""
     if args.validate_cmd in ["column", "row", "schema", "custom-query"]:
         run(args)
     else:

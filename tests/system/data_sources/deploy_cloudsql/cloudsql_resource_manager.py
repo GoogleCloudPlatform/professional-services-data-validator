@@ -36,7 +36,7 @@ class CloudSQLResourceManager:
         enable_bin_logs=True,
         already_exists=False,
     ):
-        """Initialize a CloudSQLResourceManager """
+        """Initialize a CloudSQLResourceManager"""
         if database_type not in DATABASE_TYPES:
             raise ValueError(
                 f"Invalid database type. Must be of the form {str(DATABASE_TYPES)}"
@@ -55,14 +55,14 @@ class CloudSQLResourceManager:
         self.db = {}
 
     def describe(self):
-        """ Returns description of resource manager instance """
+        """Returns description of resource manager instance"""
         print(
             f"Creates a {self._database_type} instance in project {self._project_id} with "
             f"database_id: {self._database_id}, instance_id: {self._instance_id}."
         )
 
     def setup(self):
-        """ Creates Cloud SQL instance and database """
+        """Creates Cloud SQL instance and database"""
         with GCloudContext(self._project_id) as gcloud:
             if self._already_exists:
                 json_describe = gcloud.Run(
@@ -114,7 +114,7 @@ class CloudSQLResourceManager:
                 return self.db["PRIMARY_ADDRESS"]
 
     def add_data(self, gcs_data_path):
-        """ Adds data to Cloud SQL database """
+        """Adds data to Cloud SQL database"""
         if self._already_exists:
             return
         with GCloudContext(self._project_id) as gcloud:
@@ -129,7 +129,7 @@ class CloudSQLResourceManager:
             )
 
     def teardown(self):
-        """ Deletes Cloud SQL instance """
+        """Deletes Cloud SQL instance"""
         # If instance is deleted per integration test, instance_id will need a random
         # suffix appended since Cloud SQL cannot re-use the same instance name until
         # 1 week after deletion.
@@ -137,7 +137,7 @@ class CloudSQLResourceManager:
             gcloud.Run("--quiet", "sql", "instances", "delete", self._instance_id)
 
     def _get_random_string(self, length=5):
-        """ Returns random string
+        """Returns random string
         Args:
             length (int): Desired length of random string"""
         return "".join(random.choice(string.ascii_lowercase) for i in range(length))
