@@ -17,14 +17,14 @@ import logging
 import warnings
 
 import ibis.backends.pandas
-import pandas
 import numpy
+import pandas
 
-from data_validation import consts, combiner, metadata
+from data_validation import combiner, consts, metadata, validation_builder
 from data_validation.config_manager import ConfigManager
-from data_validation.validation_builder import ValidationBuilder
-from data_validation.schema_validation import SchemaValidation
 from data_validation.query_builder.random_row_builder import RandomRowBuilder
+from data_validation.schema_validation import SchemaValidation
+from data_validation.validation_builder import ValidationBuilder
 
 """ The DataValidation class is where the code becomes source/target aware
 
@@ -74,11 +74,12 @@ class DataValidation(object):
 
         # Initialize the default Result Handler if None was supplied
         self.result_handler = result_handler or self.config_manager.get_result_handler()
+        print("Dmedora config", config)
 
     # TODO(dhercher) we planned on shifting this to use an Execution Handler.
     # Leaving to to swast on the design of how this should look.
     def execute(self):
-        """ Execute Queries and Store Results """
+        """Execute Queries and Store Results"""
         # Apply random row filter before validations run
         if self.config_manager.use_random_rows():
             self._add_random_row_filter()
@@ -90,7 +91,7 @@ class DataValidation(object):
                 self.validation_builder, grouped_fields
             )
         elif self.config_manager.validation_type == consts.SCHEMA_VALIDATION:
-            """ Perform only schema validation """
+            """Perform only schema validation"""
             result_df = self.schema_validator.execute()
         else:
             result_df = self._execute_validation(
@@ -101,7 +102,7 @@ class DataValidation(object):
         return self.result_handler.execute(self.config, result_df)
 
     def _add_random_row_filter(self):
-        """ Add random row filters to the validation builder. """
+        """Add random row filters to the validation builder."""
         if not self.config_manager.primary_keys:
             raise ValueError("Primary Keys are required for Random Row Filters")
 
@@ -135,15 +136,15 @@ class DataValidation(object):
         self.validation_builder.add_filter(filter_field)
 
     def query_too_large(self, rows_df, grouped_fields):
-        """ Return bool to dictate if another level of recursion
-            would create a too large result set.
+        """Return bool to dictate if another level of recursion
+        would create a too large result set.
 
-            Rules to define too large are:
-                - If any grouped fields remain, return False.
-                    (assumes user added logical sized groups)
-                - Else, if next group size is larger
-                    than the limit, return True.
-                - Finally return False if no covered case occured.
+        Rules to define too large are:
+            - If any grouped fields remain, return False.
+                (assumes user added logical sized groups)
+            - Else, if next group size is larger
+                than the limit, return True.
+            - Finally return False if no covered case occured.
         """
         if len(grouped_fields) > 1:
             return False
@@ -233,7 +234,7 @@ class DataValidation(object):
         return pandas.concat(past_results)
 
     def _add_recursive_validation_filter(self, validation_builder, row):
-        """ Return ValidationBuilder Configured for Next Recursive Search """
+        """Return ValidationBuilder Configured for Next Recursive Search"""
         group_by_columns = json.loads(row[consts.GROUP_BY_COLUMNS])
         for alias, value in group_by_columns.items():
             filter_field = {
@@ -280,7 +281,7 @@ class DataValidation(object):
         return pd_schema
 
     def _execute_validation(self, validation_builder, process_in_memory=True):
-        """ Execute Against a Supplied Validation Builder """
+        """Execute Against a Supplied Validation Builder"""
         self.run_metadata.validations = validation_builder.get_metadata()
 
         source_query = validation_builder.get_source_query()
@@ -358,7 +359,7 @@ class DataValidation(object):
         return result_df
 
     def combine_data(self, source_df, target_df, join_on_fields):
-        """ TODO: Return List of Dictionaries """
+        """TODO: Return List of Dictionaries"""
         # Clean Data to Standardize
         if join_on_fields:
             df = source_df.merge(

@@ -53,7 +53,15 @@ def get_aggregate_config(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     aggregate_configs = [config_manager.build_config_count_aggregate()]
-    supported_data_types = ["float64", "int8", "int16", "int32", "int64", "decimal"]
+    supported_data_types = [
+        "float64",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "decimal",
+        "timestamp",
+    ]
 
     if args.wildcard_include_string_len:
         supported_data_types.append("string")
@@ -64,30 +72,21 @@ def get_aggregate_config(args, config_manager):
             "count", col_args, None
         )
     if args.sum:
-        supported_data_types.append(
-            "timestamp"
-        )  # dmedora maybe should just add at top. and if it's sum/avg/... hmm bitwise xor does that make sense
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "sum", col_args, supported_data_types
         )
     if args.avg:
-        supported_data_types.append("timestamp")
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "avg", col_args, supported_data_types
         )
     if args.min:
-        supported_data_types.append("timestamp")
-        print(
-            "DEBUG __main__.get_aggregate_config in min"
-        )  # dmedora this is not hit at all if you run from yaml config. But somewhere along the way need to do an implicit conversion, even if someone puts min(ts) in a config file. Ok looks like maybe not, for string you have to do it explicitly too.
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "min", col_args, supported_data_types
         )
     if args.max:
-        supported_data_types.append("timestamp")
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, supported_data_types
@@ -402,7 +401,6 @@ def run_validation(config_manager, verbose=False):
         result_handler=None,
         verbose=verbose,
     )
-    print("DEBUG __main__.run_validation about to execute")
     validator.execute()
 
 
@@ -435,7 +433,6 @@ def run(args):
     if args.config_file:
         store_yaml_config_file(args, config_managers)
     else:
-        print("DEBUG:__main__.run:", config_managers[0]._config)
         run_validations(args, config_managers)
 
 

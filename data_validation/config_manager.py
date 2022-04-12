@@ -55,7 +55,6 @@ class ConfigManager(object):
         )
 
         self.verbose = verbose
-        print("DEBUG dmedora: {}".format(self._config))
         if self.validation_type not in consts.CONFIG_TYPES:
             raise ValueError(f"Unknown Configuration Type: {self.validation_type}")
 
@@ -447,39 +446,38 @@ class ConfigManager(object):
 
         return aggregate_config
 
-    def append_stringlen_calc_field(self, column, agg_type):
-        """Append calculated field for length(string) for column validation"""
-        calculated_config = {
-            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
-            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
-            consts.CONFIG_FIELD_ALIAS: f"length__{column}",
-            consts.CONFIG_TYPE: "length",
-            consts.CONFIG_DEPTH: 0,
-        }
+    # def append_stringlen_calc_field(self, column, agg_type):
+    #     """Append calculated field for length(string) for column validation"""
+    #     calculated_config = {
+    #         consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
+    #         consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
+    #         consts.CONFIG_FIELD_ALIAS: f"length__{column}",
+    #         consts.CONFIG_TYPE: "length",
+    #         consts.CONFIG_DEPTH: 0,
+    #     }
 
-        existing_calc_fields = [
-            x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
-        ]
-        if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
-            self.append_calculated_fields([calculated_config])
+    #     existing_calc_fields = [
+    #         x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
+    #     ]
+    #     if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
+    #         self.append_calculated_fields([calculated_config])
 
-        aggregate_config = {
-            consts.CONFIG_SOURCE_COLUMN: f"length__{column}",
-            consts.CONFIG_TARGET_COLUMN: f"length__{column}",
-            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__length__{column}",
-            consts.CONFIG_TYPE: agg_type,
-        }
-        return aggregate_config
+    #     aggregate_config = {
+    #         consts.CONFIG_SOURCE_COLUMN: f"length__{column}",
+    #         consts.CONFIG_TARGET_COLUMN: f"length__{column}",
+    #         consts.CONFIG_FIELD_ALIAS: f"{agg_type}__length__{column}",
+    #         consts.CONFIG_TYPE: agg_type,
+    #     }
+    #     return aggregate_config
 
-    def append_special_calc_field(self, column, agg_type, col_type):
-        """Append calculated field for length(string) or epoch_seconds(timestamp) for column validation"""
-        if col_type == "string":
+    def append_pre_agg_calc_field(self, column, agg_type, column_type):
+        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation"""
+        if column_type == "string":
             calc_func = "length"
-        elif col_type == "timestamp":
+        elif column_type == "timestamp":
             calc_func = "epoch_seconds"
-            print("DEBUG config_manager.append_special_calc_field set epoch seconds")
         else:
-            raise Exception("oops unsupported type dmedora")
+            raise ValueError(f"Unsupported column type: {column_type}")
 
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
@@ -512,10 +510,6 @@ class ConfigManager(object):
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
-        print(
-            "DEBUG config_manager.build_config_column_aggregates arg_value:", arg_value
-        )
-        print("DEBUG config_manager.build_config_column_aggregates agg_type:", agg_type)
         if arg_value and supported_types:
             supported_types.append("string")
 
@@ -539,19 +533,16 @@ class ConfigManager(object):
                     )
                 continue
 
-            debug_val = agg_type in ("sum", "avg")
-            print(
-                f"DEBUG config_manager.build_config_column_aggregates coltype:{column_type},aggtype:{agg_type},boolresult:{debug_val}"
-            )
-            if column_type == "string":
-                aggregate_config = self.append_stringlen_calc_field(column, agg_type)
-                aggregate_configs.append(aggregate_config)
-                continue
-            elif column_type == "timestamp" and agg_type in (
-                "sum",
-                "avg",
-            ):  # no this is hitting even for min/max now, only want sum/avg
-                aggregate_config = self.append_special_calc_field(
+            if column_type == "string" or (
+                column_type == "timestamp"
+                and agg_type
+                in (
+                    "sum",
+                    "avg",
+                    "bit_xor",
+                )  # timestamps: do not convert to epoch seconds for min/max
+            ):
+                aggregate_config = self.append_pre_agg_calc_field(
                     column, agg_type, column_type
                 )
                 aggregate_configs.append(aggregate_config)
@@ -564,7 +555,6 @@ class ConfigManager(object):
                 consts.CONFIG_TYPE: agg_type,
             }
             aggregate_configs.append(aggregate_config)
-        print("DEBUG:config_manager.build_config_column_aggregates:", aggregate_configs)
         return aggregate_configs
 
     def build_config_calculated_fields(

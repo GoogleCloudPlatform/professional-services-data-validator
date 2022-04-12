@@ -52,7 +52,6 @@ class AggregateField(object):
 
     @staticmethod
     def min(field_name=None, alias=None, cast=None):
-        print("DEBUG query_builder.min:", field_name, alias, cast)
         return AggregateField(
             ibis.expr.types.ColumnExpr.min,
             field_name=field_name,
@@ -354,7 +353,7 @@ class CalculatedField(object):
     @staticmethod
     def epoch_seconds(config, fields):
         return CalculatedField(
-            ibis.expr.api.TimestampValue.epoch_seconds,  # dmedora: calls ExtractEpochSeconds, but it's not implemented in there lol https://github.com/ibis-project/ibis/blob/088169ae96c476e0363baaa1fa5f116be5d7aae6/ibis/expr/operations/temporal.py#L157
+            ibis.expr.api.TimestampValue.epoch_seconds,
             config,
             fields,
         )
