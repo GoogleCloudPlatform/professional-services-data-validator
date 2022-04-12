@@ -44,9 +44,9 @@ def validate(config):
 
 
 def main(request):
-    """ Handle incoming Data Validation requests.
+    """Handle incoming Data Validation requests.
 
-        request (flask.Request): HTTP request object.
+    request (flask.Request): HTTP request object.
     """
     try:
         config = _get_request_content(request)["config"]

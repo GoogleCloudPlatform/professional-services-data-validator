@@ -102,6 +102,10 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
+    elif isinstance(datatype, ibis.expr.datatypes.Float64):
+        # Float64 type results from AVG() aggregation
+        source_value = field_differences["differences_source_value"].round(digits=4)
+        target_value = field_differences["differences_target_value"].round(digits=4)
     else:
         source_value = field_differences["differences_source_value"]
         target_value = field_differences["differences_target_value"]
@@ -140,6 +144,10 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
         validation_status = (
             ibis.case()
+            .when(
+                source_value.isnull() & target_value.isnull(),
+                consts.VALIDATION_STATUS_SUCCESS,
+            )
             .when(th_diff.isnan() | (th_diff > 0.0), consts.VALIDATION_STATUS_FAIL)
             .else_(consts.VALIDATION_STATUS_SUCCESS)
             .end()

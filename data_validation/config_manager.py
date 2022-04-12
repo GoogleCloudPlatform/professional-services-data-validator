@@ -91,11 +91,11 @@ class ConfigManager(object):
         return self._config[consts.CONFIG_TYPE]
 
     def use_random_rows(self):
-        """ Return if the validation should use a random row filter. """
+        """Return if the validation should use a random row filter."""
         return self._config.get(consts.CONFIG_USE_RANDOM_ROWS) or False
 
     def random_row_batch_size(self):
-        """ Return if the validation should use a random row filter. """
+        """Return if the validation should use a random row filter."""
         return (
             self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
             or consts.DEFAULT_NUM_RANDOM_ROWS
@@ -107,12 +107,12 @@ class ConfigManager(object):
 
     @property
     def max_recursive_query_size(self):
-        """Return Aggregates from Config """
+        """Return Aggregates from Config"""
         return self._config.get(consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE, 50000)
 
     @property
     def aggregates(self):
-        """Return Aggregates from Config """
+        """Return Aggregates from Config"""
         return self._config.get(consts.CONFIG_AGGREGATES, [])
 
     def append_aggregates(self, aggregate_configs):
@@ -130,18 +130,18 @@ class ConfigManager(object):
 
     @property
     def dependent_aliases(self):
-        """ Return all columns that are needed in final dataframe for row validations. """
+        """Return all columns that are needed in final dataframe for row validations."""
         return self._config.get(consts.CONFIG_DEPENDENT_ALIASES, [])
 
     def append_dependent_aliases(self, dependent_aliases):
-        """ Appends columns that are needed in final dataframe for row validations. """
+        """Appends columns that are needed in final dataframe for row validations."""
         self._config[consts.CONFIG_DEPENDENT_ALIASES] = (
             self.dependent_aliases + dependent_aliases
         )
 
     @property
     def query_groups(self):
-        """ Return Query Groups from Config """
+        """Return Query Groups from Config"""
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
 
     def append_query_groups(self, grouped_column_configs):
@@ -152,7 +152,7 @@ class ConfigManager(object):
 
     @property
     def source_query_file(self):
-        """ Return SQL Query File from Config """
+        """Return SQL Query File from Config"""
         return self._config.get(consts.CONFIG_SOURCE_QUERY_FILE, [])
 
     def append_source_query_file(self, query_file_configs):
@@ -163,7 +163,7 @@ class ConfigManager(object):
 
     @property
     def target_query_file(self):
-        """ Return SQL Query File from Config """
+        """Return SQL Query File from Config"""
         return self._config.get(consts.CONFIG_TARGET_QUERY_FILE, [])
 
     def append_target_query_file(self, query_file_configs):
@@ -174,7 +174,7 @@ class ConfigManager(object):
 
     @property
     def primary_keys(self):
-        """ Return Primary keys from Config """
+        """Return Primary keys from Config"""
         return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
 
     def append_primary_keys(self, primary_key_configs):
@@ -185,7 +185,7 @@ class ConfigManager(object):
 
     @property
     def comparison_fields(self):
-        """ Return fields from Config """
+        """Return fields from Config"""
         return self._config.get(consts.CONFIG_COMPARISON_FIELDS, [])
 
     def append_comparison_fields(self, field_configs):
@@ -196,7 +196,7 @@ class ConfigManager(object):
 
     @property
     def filters(self):
-        """Return Filters from Config """
+        """Return Filters from Config"""
         return self._config.get(consts.CONFIG_FILTERS, [])
 
     @property
@@ -258,7 +258,7 @@ class ConfigManager(object):
 
     @property
     def threshold(self):
-        """Return threshold from Config """
+        """Return threshold from Config"""
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
     def get_source_ibis_table(self):
@@ -271,7 +271,7 @@ class ConfigManager(object):
 
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
-           n: Int the depth of subquery requested"""
+        n: Int the depth of subquery requested"""
         table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
@@ -290,7 +290,7 @@ class ConfigManager(object):
 
     def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
-           n: Int the depth of subquery requested"""
+        n: Int the depth of subquery requested"""
         table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
@@ -332,8 +332,10 @@ class ConfigManager(object):
                 consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
             )
             if key_path:
-                credentials = google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
+                credentials = (
+                    google.oauth2.service_account.Credentials.from_service_account_file(
+                        key_path
+                    )
                 )
             else:
                 credentials = None
@@ -444,6 +446,30 @@ class ConfigManager(object):
 
         return aggregate_config
 
+    def append_stringlen_calc_field(self, column, agg_type):
+        """Append calculated field for length(string) for column validation"""
+        calculated_config = {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
+            consts.CONFIG_FIELD_ALIAS: f"length__{column}",
+            consts.CONFIG_TYPE: "length",
+            consts.CONFIG_DEPTH: 0,
+        }
+
+        existing_calc_fields = [
+            x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
+        ]
+        if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
+            self.append_calculated_fields([calculated_config])
+
+        aggregate_config = {
+            consts.CONFIG_SOURCE_COLUMN: f"length__{column}",
+            consts.CONFIG_TARGET_COLUMN: f"length__{column}",
+            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__length__{column}",
+            consts.CONFIG_TYPE: agg_type,
+        }
+        return aggregate_config
+
     def build_config_column_aggregates(self, agg_type, arg_value, supported_types):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
@@ -452,6 +478,9 @@ class ConfigManager(object):
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        if arg_value and supported_types:
+            supported_types.append("string")
 
         allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
@@ -463,13 +492,19 @@ class ConfigManager(object):
                 continue
             elif column not in casefold_target_columns:
                 logging.info(
-                    f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
+                    f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Skipping Agg {agg_type}: {source_table.op().name}.{column} {column_type}"
-                    print(msg)
+                    logging.info(
+                        f"Skipping {agg_type} on {column} due to data type: {column_type}"
+                    )
+                continue
+
+            if column_type == "string":
+                aggregate_config = self.append_stringlen_calc_field(column, agg_type)
+                aggregate_configs.append(aggregate_config)
                 continue
 
             aggregate_config = {
@@ -500,12 +535,12 @@ class ConfigManager(object):
                 continue
             elif column not in casefold_target_columns:
                 logging.info(
-                    f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    f"Skipping {calc_type} on {column} as column is not present in target table"
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Skipping Calc {calc_type}: {source_table.op().name}.{column} {column_type}"
+                    msg = f"Skipping {calc_type} on {column} due to data type: {column_type}"
                     print(msg)
                 continue
 
