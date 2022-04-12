@@ -694,6 +694,51 @@ def test_generate_report_with_group_by(
             ),
         ),
         (
+            pandas.DataFrame({"sum": [_NAN]}),
+            pandas.DataFrame({"sum": [_NAN]}),
+            metadata.RunMetadata(
+                validations={
+                    "sum": metadata.ValidationMetadata(
+                        source_table_name="test_source",
+                        source_table_schema="bq-public.source_dataset",
+                        source_column_name="test_col",
+                        target_table_name="test_target",
+                        target_table_schema="bq-public.target_dataset",
+                        target_column_name="test_col",
+                        validation_type="Column",
+                        aggregation_type="sum",
+                        threshold=0.0,
+                    ),
+                },
+                start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+                end_time=None,
+                labels=[("name", "test_label")],
+                run_id="test-run",
+            ),
+            pandas.DataFrame(
+                {
+                    "run_id": ["test-run"],
+                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "source_table_name": ["bq-public.source_dataset.test_source"],
+                    "source_column_name": ["test_col"],
+                    "target_table_name": ["bq-public.target_dataset.test_target"],
+                    "target_column_name": ["test_col"],
+                    "validation_type": ["Column"],
+                    "aggregation_type": ["sum"],
+                    "validation_name": ["sum"],
+                    "source_agg_value": ["nan"],
+                    "target_agg_value": ["nan"],
+                    "group_by_columns": [None],
+                    "difference": [_NAN],
+                    "pct_difference": [_NAN],
+                    "pct_threshold": [0.0],
+                    "validation_status": [consts.VALIDATION_STATUS_SUCCESS],
+                    "labels": [[("name", "test_label")]],
+                }
+            ),
+        ),
+        (
             pandas.DataFrame({"count": [1]}),
             pandas.DataFrame({"count": [_NAN]}),
             metadata.RunMetadata(
