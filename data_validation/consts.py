@@ -30,6 +30,7 @@ CONFIG_COMPARISON_FIELDS = "comparison_fields"
 CONFIG_FIELD_ALIAS = "field_alias"
 CONFIG_AGGREGATES = "aggregates"
 CONFIG_CALCULATED_FIELDS = "calculated_fields"
+CONFIG_DEPENDENT_ALIASES = "dependent_aliases"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
 CONFIG_CALCULATED_SOURCE_COLUMNS = "source_calculated_columns"
 CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
@@ -111,7 +112,7 @@ TARGET_TABLE_NAME = "target_table_name"
 TARGET_COLUMN_NAME = "target_column_name"
 TARGET_AGG_VALUE = "target_agg_value"
 
-VALIDATION_STATUS = "status"
+VALIDATION_STATUS = "validation_status"
 VALIDATION_STATUS_SUCCESS = "success"
 VALIDATION_STATUS_FAIL = "fail"
 
@@ -122,9 +123,6 @@ COUNT_STAR = "{count_star}"
 # Validation metadata
 RESULT_TYPE_SOURCE = "source"
 RESULT_TYPE_TARGET = "target"
-
-# Ibis Object Info
-NUMERIC_DATA_TYPES = ["float64", "int8", "int16", "int32", "int64", "decimal"]
 
 FORMAT_TYPES = ["csv", "json", "table", "text"]
 
