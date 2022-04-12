@@ -34,7 +34,7 @@ dependencies = [
     "google-api-python-client==1.12.8",
     "ibis-framework==1.4.0",
     "ibis-bigquery==0.1.1",
-    "impyla==0.16.3",
+    "impyla==0.17.0",
     "SQLAlchemy==1.3.22",
     "PyMySQL==1.0.2",
     "psycopg2-binary==2.8.6",
@@ -91,6 +91,8 @@ setuptools.setup(
     install_requires=dependencies,
     extras_require=extras_require,
     entry_points={
-        "console_scripts": ["data-validation=data_validation.__main__:main",]
+        "console_scripts": [
+            "data-validation=data_validation.__main__:main",
+        ]
     },
 )

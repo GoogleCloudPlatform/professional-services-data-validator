@@ -33,7 +33,7 @@ class GCloudContext(object):
         pass
 
     def Run(self, *args, **kwargs):
-        """ Runs gcloud command and returns output"""
+        """Runs gcloud command and returns output"""
         env = kwargs.pop("env", None)
         if not env:
             env = os.environ.copy()
