@@ -212,7 +212,7 @@ def _pivot_result(result, join_on_fields, validations, result_type):
     all_fields = frozenset(result.schema().names)
     validation_fields = (
         all_fields - frozenset(join_on_fields)
-        if 'hash__all' not in join_on_fields 
+        if "hash__all" not in join_on_fields
         else all_fields
     )
     pivots = []

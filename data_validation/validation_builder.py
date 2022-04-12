@@ -339,22 +339,18 @@ class ValidationBuilder(object):
                 self.config_manager.source_query_file[0]
             )
             if "hash__all" in self._metadata:
-                calculated_query = CustomQueryRowBuilder(
-                ).compile_custom_query(
-                    source_input_query,
-                    source_config
+                calculated_query = CustomQueryRowBuilder().compile_custom_query(
+                    source_input_query, source_config
                 )
                 query = self.source_client.sql(calculated_query)
             else:
                 source_aggregate_query = "SELECT "
                 for aggregate in self.config_manager.aggregates:
                     source_aggregate_query += self.get_aggregation_query(
-                        aggregate.get("type"),
-                        aggregate.get("target_column")
+                        aggregate.get("type"), aggregate.get("target_column")
                     )
                 source_aggregate_query = self.get_wrapper_aggregation_query(
-                    source_aggregate_query,
-                    source_input_query
+                    source_aggregate_query, source_input_query
                 )
                 query = self.source_client.sql(source_aggregate_query)
         else:
@@ -378,23 +374,19 @@ class ValidationBuilder(object):
                 self.config_manager.target_query_file[0]
             )
             if "hash__all" in self._metadata:
-                calculated_query = CustomQueryRowBuilder(
-                ).compile_custom_query(
-                    target_input_query,
-                    target_config
+                calculated_query = CustomQueryRowBuilder().compile_custom_query(
+                    target_input_query, target_config
                 )
                 query = self.target_client.sql(calculated_query)
             else:
                 target_aggregate_query = "SELECT "
                 for aggregate in self.config_manager.aggregates:
                     target_aggregate_query += self.get_aggregation_query(
-                        aggregate.get("type"),
-                        aggregate.get("target_column")
+                        aggregate.get("type"), aggregate.get("target_column")
                     )
 
                 target_aggregate_query = self.get_wrapper_aggregation_query(
-                    target_aggregate_query,
-                    target_input_query
+                    target_aggregate_query, target_input_query
                 )
                 query = self.target_client.sql(target_aggregate_query)
         else:

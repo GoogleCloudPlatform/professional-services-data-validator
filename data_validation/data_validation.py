@@ -292,15 +292,14 @@ class DataValidation(object):
             else set(validation_builder.get_group_aliases())
         )
         if self.config_manager.validation_type == consts.CUSTOM_QUERY:
-            join_on_fields = set(['hash__all'])
-        
+            join_on_fields = set(["hash__all"])
 
         # If row validation from YAML, compare source and target agg values
         is_value_comparison = (
-            self.config_manager.validation_type == consts.ROW_VALIDATION or
-            self.config_manager.validation_type == consts.CUSTOM_QUERY
+            self.config_manager.validation_type == consts.ROW_VALIDATION
+            or self.config_manager.validation_type == consts.CUSTOM_QUERY
         )
-        
+
         if process_in_memory:
             source_df = self.config_manager.source_client.execute(source_query)
             target_df = self.config_manager.target_client.execute(target_query)

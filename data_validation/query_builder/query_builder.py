@@ -14,7 +14,6 @@
 
 import ibis
 from ibis.expr.types import StringScalar
-from pandas import concat
 from third_party.ibis.ibis_addon import operations
 
 from data_validation import clients, consts

@@ -12,21 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibis
-from typing import List
-
-from data_validation import clients
-
-
 """ The QueryBuilder for building custom query row validation."""
 
 
 class CustomQueryRowBuilder(object):
     def __init__(self):
-        """ Build a CustomQueryRowBuilder objct which is ready to build a custom query row validation nested query.
-        """
-
-        
+        """Build a CustomQueryRowBuilder objct which is ready to build a custom query row validation nested query."""
 
     def compile_custom_query(self, input_query, client_config):
         """Returns the nested sql query calculated from the input query
@@ -34,48 +25,30 @@ class CustomQueryRowBuilder(object):
         Args:
             input_query (InputQuery): User provided sql query
         """
-        base_tbl_expr = self.get_table_exapression(
-            input_query,
-            client_config
-        )
-        base_df = self.get_data_frame(
-            base_tbl_expr,
-            client_config
-        )
-        base_df_columns = self.compile_df_fields(
-            base_df
-        )
-        calculated_columns = self.get_calculated_columns(
-            base_df_columns
-        )
+        base_tbl_expr = self.get_table_exapression(input_query, client_config)
+        base_df = self.get_data_frame(base_tbl_expr, client_config)
+        base_df_columns = self.compile_df_fields(base_df)
+        calculated_columns = self.get_calculated_columns(base_df_columns)
         cast_query = self.compile_cast_df_fields(
             calculated_columns, input_query, base_df
         )
         ifnull_query = self.compile_ifnull_df_fields(
             calculated_columns, cast_query, client_config
         )
-        rstrip_query = self.compile_rstrip_df_fields(
-            calculated_columns, ifnull_query
-        )
-        upper_query = self.compile_upper_df_fields(
-            calculated_columns, rstrip_query
-        )
+        rstrip_query = self.compile_rstrip_df_fields(calculated_columns, ifnull_query)
+        upper_query = self.compile_upper_df_fields(calculated_columns, rstrip_query)
         concat_query = self.compile_concat_df_fields(
             calculated_columns, upper_query, client_config
         )
-        sha2_query = self.compile_sha2_df_fields(
-            concat_query, client_config
-        )
+        sha2_query = self.compile_sha2_df_fields(concat_query, client_config)
         return sha2_query
 
     def get_table_exapression(self, input_query, client_config):
-        """Returns the ibis table expression for the input query.
-        """
+        """Returns the ibis table expression for the input query."""
         return client_config["data_client"].sql(input_query)
 
     def get_data_frame(self, base_tbl_expr, client_config):
-        """Returns the data frame for the table expression.
-        """
+        """Returns the data frame for the table expression."""
         return client_config["data_client"].execute(base_tbl_expr)
 
     def compile_df_fields(self, data_frame):
@@ -112,40 +85,24 @@ class CustomQueryRowBuilder(object):
 
         return calculated_columns
 
-    def compile_cast_df_fields(
-        self, calculated_columns, input_query, data_frame
-    ):
+    def compile_cast_df_fields(self, calculated_columns, input_query, data_frame):
         """Returns the wrapper cast query for the input query."""
 
         query = "SELECT "
         for column in calculated_columns["cast"]:
             df_column = column[len("cast__") :]
             df_column_dtype = data_frame[df_column].dtype.name
-            if (df_column_dtype != "object" and 
-                df_column_dtype != "string"):
+            if df_column_dtype != "object" and df_column_dtype != "string":
                 query = (
-                    query
-                    + "CAST("
-                    + df_column
-                    + " AS string)"
-                    + " AS "
-                    + column
-                    + ","
+                    query + "CAST(" + df_column + " AS string)" + " AS " + column + ","
                 )
             else:
                 query += df_column + " AS " + column + ","
 
-        query = (
-            query[: len(query) - 1]
-            + " FROM ("
-            + input_query
-            + ") AS base_query"
-        )
+        query = query[: len(query) - 1] + " FROM (" + input_query + ") AS base_query"
         return query
 
-    def compile_ifnull_df_fields(
-        self, calculated_columns, cast_query, client_config
-    ):
+    def compile_ifnull_df_fields(self, calculated_columns, cast_query, client_config):
         """Returns the wrapper ifnull query for the input cast_query."""
 
         client = client_config["data_client"]._source_type
@@ -165,17 +122,10 @@ class CustomQueryRowBuilder(object):
                 + column
                 + ","
             )
-        query = (
-            query[: len(query) - 1]
-            + " FROM ("
-            + cast_query
-            + ") AS cast_query"
-        )
+        query = query[: len(query) - 1] + " FROM (" + cast_query + ") AS cast_query"
         return query
 
-    def compile_rstrip_df_fields(
-        self, calculated_columns, ifnull_query
-    ):
+    def compile_rstrip_df_fields(self, calculated_columns, ifnull_query):
         """Returns the wrapper rstrip query for the input ifnull_query."""
 
         operation = "RTRIM"
@@ -191,17 +141,10 @@ class CustomQueryRowBuilder(object):
                 + column
                 + ","
             )
-        query = (
-            query[: len(query) - 1]
-            + " FROM ("
-            + ifnull_query
-            + ") AS ifnull_query"
-        )
+        query = query[: len(query) - 1] + " FROM (" + ifnull_query + ") AS ifnull_query"
         return query
 
-    def compile_upper_df_fields(
-        self, calculated_columns, rstrip_query
-    ):
+    def compile_upper_df_fields(self, calculated_columns, rstrip_query):
         """Returns the wrapper upper query for the input rstrip_query."""
 
         query = "SELECT "
@@ -212,19 +155,13 @@ class CustomQueryRowBuilder(object):
                 + column[len("upper__") :]
                 + ")"
                 + " AS "
-                + column + ","
+                + column
+                + ","
             )
-        query = (
-            query[: len(query) - 1]
-            + " FROM ("
-            + rstrip_query
-            + ") AS rstrip_query"
-        )
+        query = query[: len(query) - 1] + " FROM (" + rstrip_query + ") AS rstrip_query"
         return query
 
-    def compile_concat_df_fields(
-        self, calculated_columns, upper_query, client_config
-    ):
+    def compile_concat_df_fields(self, calculated_columns, upper_query, client_config):
         """Returns the wrapper concat query for the input upper_query."""
 
         client = client_config["data_client"]._source_type
