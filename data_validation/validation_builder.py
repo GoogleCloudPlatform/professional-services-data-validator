@@ -21,6 +21,7 @@ from data_validation.query_builder.query_builder import (
     CalculatedField,
     FilterField,
 )
+from data_validation.query_builder.custom_query_row_builder import CustomQueryRowBuilder
 
 
 class ValidationBuilder(object):
@@ -72,7 +73,7 @@ class ValidationBuilder(object):
 
     @staticmethod
     def get_query_builder(validation_type):
-        """ Return Query Builder object given validation type """
+        """Return Query Builder object given validation type"""
         if validation_type in [
             "Column",
             "GroupedColumn",
@@ -100,20 +101,20 @@ class ValidationBuilder(object):
         return self._metadata
 
     def get_group_aliases(self):
-        """ Return List of String Aliases """
+        """Return List of String Aliases"""
         return list(self.group_aliases.keys())
 
     def get_primary_keys(self):
-        """ Return List of String Aliases """
+        """Return List of String Aliases"""
         # do we need this?
         return list(self.primary_keys.keys())
 
     def get_calculated_aliases(self):
-        """ Return List of String Aliases """
+        """Return List of String Aliases"""
         return self.calculated_aliases.keys()
 
     def get_comparison_fields(self):
-        """ Return List of String Aliases """
+        """Return List of String Aliases"""
         return self.comparison_fields.keys()
 
     def get_grouped_alias_source_column(self, alias):
@@ -123,13 +124,13 @@ class ValidationBuilder(object):
         return self.group_aliases[alias][consts.CONFIG_TARGET_COLUMN]
 
     def add_config_aggregates(self):
-        """ Add Aggregations to Query """
+        """Add Aggregations to Query"""
         aggregate_fields = self.config_manager.aggregates
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
     def add_config_calculated_fields(self):
-        """ Add calculated fields to Query """
+        """Add calculated fields to Query"""
         calc_fields = self.config_manager.calculated_fields
         if calc_fields is not None:
             for calc_field in calc_fields:
@@ -146,13 +147,13 @@ class ValidationBuilder(object):
             self.add_comparison_field(field)
 
     def add_config_query_groups(self, query_groups=None):
-        """ Add Grouped Columns to Query """
+        """Add Grouped Columns to Query"""
         grouped_fields = query_groups or self.config_manager.query_groups
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
 
     def add_config_filters(self):
-        """ Add Filters to Query """
+        """Add Filters to Query"""
         filter_fields = self.config_manager.filters
         for filter_field in filter_fields:
             self.add_filter(filter_field)
@@ -193,7 +194,7 @@ class ValidationBuilder(object):
         )
 
     def pop_grouped_fields(self):
-        """ Return grouped fields and reset configs."""
+        """Return grouped fields and reset configs."""
         self.source_builder.grouped_fields = []
         self.target_builder.grouped_fields = []
         self.group_aliases = {}
@@ -223,7 +224,7 @@ class ValidationBuilder(object):
         self.group_aliases[alias] = grouped_field
 
     def add_primary_key(self, primary_key):
-        """ Add ComparionField to Queries
+        """Add ComparionField to Queries
 
         Args:
             primary_key (Dict): An object with source, target, and cast info
@@ -274,7 +275,7 @@ class ValidationBuilder(object):
         self.target_builder.add_filter_field(target_filter)
 
     def add_comparison_field(self, comparison_field):
-        """ Add ComparionField to Queries
+        """Add ComparionField to Queries
 
         Args:
             comparison_field (Dict): An object with source, target, and cast info
@@ -299,7 +300,7 @@ class ValidationBuilder(object):
         )
 
     def add_calc(self, calc_field):
-        """ Add CalculatedField to Queries
+        """Add CalculatedField to Queries
 
         Args:
             calc_field (Dict): An object with source, target, and cast info
@@ -327,7 +328,7 @@ class ValidationBuilder(object):
         self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):
-        """ Return query for source validation """
+        """Return query for source validation"""
         source_config = {
             "data_client": self.source_client,
             "schema_name": self.config_manager.source_schema,
@@ -337,15 +338,25 @@ class ValidationBuilder(object):
             source_input_query = self.get_query_from_file(
                 self.config_manager.source_query_file[0]
             )
-            source_aggregate_query = "SELECT "
-            for aggregate in self.config_manager.aggregates:
-                source_aggregate_query += self.get_aggregation_query(
-                    aggregate.get("type"), aggregate.get("target_column")
+            if "hash__all" in self._metadata:
+                calculated_query = CustomQueryRowBuilder(
+                ).compile_custom_query(
+                    source_input_query,
+                    source_config
                 )
-            source_aggregate_query = self.get_wrapper_aggregation_query(
-                source_aggregate_query, source_input_query
-            )
-            query = self.source_client.sql(source_aggregate_query)
+                query = self.source_client.sql(calculated_query)
+            else:
+                source_aggregate_query = "SELECT "
+                for aggregate in self.config_manager.aggregates:
+                    source_aggregate_query += self.get_aggregation_query(
+                        aggregate.get("type"),
+                        aggregate.get("target_column")
+                    )
+                source_aggregate_query = self.get_wrapper_aggregation_query(
+                    source_aggregate_query,
+                    source_input_query
+                )
+                query = self.source_client.sql(source_aggregate_query)
         else:
             query = self.source_builder.compile(**source_config)
         if self.verbose:
@@ -356,7 +367,7 @@ class ValidationBuilder(object):
         return query
 
     def get_target_query(self):
-        """ Return query for source validation """
+        """Return query for source validation"""
         target_config = {
             "data_client": self.target_client,
             "schema_name": self.config_manager.target_schema,
@@ -366,16 +377,26 @@ class ValidationBuilder(object):
             target_input_query = self.get_query_from_file(
                 self.config_manager.target_query_file[0]
             )
-            target_aggregate_query = "SELECT "
-            for aggregate in self.config_manager.aggregates:
-                target_aggregate_query += self.get_aggregation_query(
-                    aggregate.get("type"), aggregate.get("target_column")
+            if "hash__all" in self._metadata:
+                calculated_query = CustomQueryRowBuilder(
+                ).compile_custom_query(
+                    target_input_query,
+                    target_config
                 )
+                query = self.target_client.sql(calculated_query)
+            else:
+                target_aggregate_query = "SELECT "
+                for aggregate in self.config_manager.aggregates:
+                    target_aggregate_query += self.get_aggregation_query(
+                        aggregate.get("type"),
+                        aggregate.get("target_column")
+                    )
 
-            target_aggregate_query = self.get_wrapper_aggregation_query(
-                target_aggregate_query, target_input_query
-            )
-            query = self.target_client.sql(target_aggregate_query)
+                target_aggregate_query = self.get_wrapper_aggregation_query(
+                    target_aggregate_query,
+                    target_input_query
+                )
+                query = self.target_client.sql(target_aggregate_query)
         else:
             query = self.target_builder.compile(**target_config)
         if self.verbose:
@@ -395,7 +416,7 @@ class ValidationBuilder(object):
         self.target_builder.limit = limit
 
     def get_query_from_file(self, filename):
-        """ Return query from input file """
+        """Return query from input file"""
         query = ""
         try:
             file = open(filename, "r")
@@ -412,7 +433,7 @@ class ValidationBuilder(object):
         return query
 
     def get_aggregation_query(self, agg_type, column_name):
-        """ Return aggregation query """
+        """Return aggregation query"""
         aggregation_query = ""
         if column_name is None:
             aggregation_query = agg_type + "(*) as " + agg_type + ","
@@ -430,7 +451,7 @@ class ValidationBuilder(object):
         return aggregation_query
 
     def get_wrapper_aggregation_query(self, aggregate_query, base_query):
-        """ Return wrapper aggregation query """
+        """Return wrapper aggregation query"""
 
         return (
             aggregate_query[: len(aggregate_query) - 1]

@@ -14,6 +14,7 @@
 
 import ibis
 from ibis.expr.types import StringScalar
+from pandas import concat
 from third_party.ibis.ibis_addon import operations
 
 from data_validation import clients, consts
@@ -250,7 +251,7 @@ class GroupedField(object):
 
 class ColumnReference(object):
     def __init__(self, column_name):
-        """ A representation of an calculated field to build a query.
+        """A representation of an calculated field to build a query.
 
         Args:
             column_name (String): The column name used in a complex expr
@@ -258,7 +259,7 @@ class ColumnReference(object):
         self.column_name = column_name
 
     def compile(self, ibis_table):
-        """ Return an ibis object referencing the column.
+        """Return an ibis object referencing the column.
 
         Args:
             ibis_table (IbisTable): The table obj reference
@@ -269,7 +270,7 @@ class ColumnReference(object):
 class CalculatedField(object):
     def __init__(self, ibis_expr, config, fields, cast=None, **kwargs):
 
-        """ A representation of an calculated field to build a query.
+        """A representation of an calculated field to build a query.
 
         Args:
             config dict: Configurations object explaining calc field details
@@ -288,7 +289,10 @@ class CalculatedField(object):
         fields = [config["default_concat_separator"], fields]
         cast = "string"
         return CalculatedField(
-            ibis.expr.api.StringValue.join, config, fields, cast=cast,
+            ibis.expr.api.StringValue.join,
+            config,
+            fields,
+            cast=cast,
         )
 
     @staticmethod
@@ -296,12 +300,18 @@ class CalculatedField(object):
         if config.get("default_hash_function") is None:
             how = "sha256"
             return CalculatedField(
-                ibis.expr.api.StringValue.hashbytes, config, fields, how=how,
+                ibis.expr.api.StringValue.hashbytes,
+                config,
+                fields,
+                how=how,
             )
         else:
             how = "farm_fingerprint"
             return CalculatedField(
-                ibis.expr.api.ValueExpr.hash, config, fields, how=how,
+                ibis.expr.api.ValueExpr.hash,
+                config,
+                fields,
+                how=how,
             )
 
     @staticmethod
@@ -312,31 +322,50 @@ class CalculatedField(object):
             else config.get("default_null_string")
         )
         fields = [fields[0], config["default_string"]]
-        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.fillna,
+            config,
+            fields,
+        )
 
     @staticmethod
     def length(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.length, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.length,
+            config,
+            fields,
+        )
 
     @staticmethod
     def rstrip(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.rstrip, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.rstrip,
+            config,
+            fields,
+        )
 
     @staticmethod
     def upper(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.upper,
+            config,
+            fields,
+        )
 
     @staticmethod
     def cast(config, fields):
         if config.get("default_cast") is None:
             target_type = "string"
         return CalculatedField(
-            ibis.expr.api.ValueExpr.cast, config, fields, target_type=target_type,
+            ibis.expr.api.ValueExpr.cast,
+            config,
+            fields,
+            target_type=target_type,
         )
 
     @staticmethod
     def custom(expr):
-        """ Returns a CalculatedField instance built for any custom SQL using a supported operator.
+        """Returns a CalculatedField instance built for any custom SQL using a supported operator.
         Args:
             expr (Str): A custom SQL expression used to filter a query
         """
@@ -376,7 +405,7 @@ class QueryBuilder(object):
         comparison_fields,
         limit=None,
     ):
-        """ Build a QueryBuilder object which can be used to build queries easily
+        """Build a QueryBuilder object which can be used to build queries easily
 
         Args:
             aggregate_fields (list[AggregateField]): AggregateField instances with Ibis expressions
@@ -394,7 +423,7 @@ class QueryBuilder(object):
 
     @staticmethod
     def build_count_validator(limit=None):
-        """ Return a basic template builder for most validations """
+        """Return a basic template builder for most validations"""
         aggregate_fields = []
         filters = []
         grouped_fields = []
@@ -503,7 +532,6 @@ class QueryBuilder(object):
         """Add a GroupedField instance to the query which
             represents adding a column to group by in the
             query being built.
-
         Args:
             grouped_field (GroupedField): A GroupedField instance
         """
@@ -513,14 +541,13 @@ class QueryBuilder(object):
         """Add a FilterField instance to your query which
             will add the desired filter to your compiled
             query (ie. WHERE query_filter=True)
-
         Args:
             filter_obj (FilterField): A FilterField instance
         """
         self.filters.append(filter_obj)
 
     def add_calculated_field(self, calculated_field):
-        """ Add a CalculatedField instance to your query which
+        """Add a CalculatedField instance to your query which
             will add the desired scalar function to your compiled
             query (ie. CONCAT(field_a, field_b))
         Args:

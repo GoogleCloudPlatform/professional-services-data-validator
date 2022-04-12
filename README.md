@@ -216,9 +216,9 @@ data-validation (--verbose or -v) validate schema
                         Defaults  to table.
 ```
 
-#### Custom Query Validations
+#### Custom Query Column Validations 
 
-Below is the command syntax for custom query validations.
+Below is the command syntax for custom query column validations.
 
 ```
 data-validation (--verbose or -v) validate custom-query
@@ -257,6 +257,48 @@ sum , min, etc.) is provided, the default aggregation will run.
 
 The [Examples](docs/examples.md) page provides few examples of how this tool can
 used to run custom query validations.
+
+
+#### Custom Query Row Validations 
+
+(Note: Row hash validation is currently only supported for BigQuery and Imapala/Hive)
+
+Below is the command syntax for row validations. In order to run row level
+validations you need to pass `--hash` flag with `*` value which means all the fields
+of the custom query result will be concatenated and hashed.
+
+Below is the command syntax for custom query row validations.
+
+```
+data-validation (--verbose or -v) validate custom-query
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
+                        File containing the source sql commands
+  --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
+                        File containing the target sql commands
+  --hash '*'            '*' to hash all columns.
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
+```
+
+The [Examples](docs/examples.md) page provides few examples of how this tool can
+used to run custom query row validations.
 
 
 ### Running Custom SQL Exploration

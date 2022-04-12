@@ -200,4 +200,9 @@ data-validation validate custom-query --source-query-file source_query.sql --tar
 data-validation validate custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --max num_bikes_available
 ````
 
+#### Run a custom query row validation
+````shell script
+data-validation validate custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations  --hash \'*\'
+````
+
 Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively.
