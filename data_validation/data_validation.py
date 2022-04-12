@@ -20,7 +20,7 @@ import ibis.backends.pandas
 import numpy
 import pandas
 
-from data_validation import combiner, consts, metadata, validation_builder
+from data_validation import combiner, consts, metadata
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.random_row_builder import RandomRowBuilder
 from data_validation.schema_validation import SchemaValidation
