@@ -43,6 +43,22 @@ SAMPLE_CONFIG = {
     ],
 }
 
+SAMPLE_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: {"type": "DNE connection"},
+    consts.CONFIG_TARGET_CONN: {"type": "DNE connection"},
+    # Validation Type
+    consts.CONFIG_TYPE: "Row",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_PRIMARY_KEYS: "id",
+    consts.CONFIG_CALCULATED_FIELDS: ["name", "station_id"],
+    consts.CONFIG_DEPENDENT_ALIASES: ["id", "name", "station_id"],
+}
+
 AGGREGATE_CONFIG_A = {
     consts.CONFIG_SOURCE_COLUMN: "a",
     consts.CONFIG_TARGET_COLUMN: "a",
@@ -277,3 +293,18 @@ def test_get_result_handler(module_under_test):
     handler = config_manager.get_result_handler()
 
     assert handler._table_id == "dataset.table_name"
+
+
+def test_dependent_aliases(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_ROW_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    config_manager.append_dependent_aliases(["location", "bike"])
+
+    assert config_manager.dependent_aliases == [
+        "id",
+        "name",
+        "station_id",
+        "location",
+        "bike",
+    ]
