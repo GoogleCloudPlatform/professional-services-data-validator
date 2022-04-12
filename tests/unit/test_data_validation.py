@@ -283,6 +283,48 @@ SAMPLE_GC_CALC_CONFIG = {
     consts.CONFIG_FORMAT: "table",
 }
 
+SAMPLE_RANDOM_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: "Column",
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_GROUPED_COLUMNS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            "source_column": "int_value",
+            "target_column": "int_value",
+            "field_alias": "count_int_value",
+            "type": "sum",
+        },
+    ],
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_USE_RANDOM_ROWS: True,
+    consts.CONFIG_RANDOM_ROW_BATCH_SIZE: 10,
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FORMAT: "table",
+}
+
 # Row confg
 SAMPLE_ROW_CONFIG = {
     # BigQuery Specific Connection Config
@@ -512,7 +554,7 @@ def test_status_success_validation(module_under_test, fs):
 
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
-    col_a_status = col_a_result_df.status.values[0]
+    col_a_status = col_a_result_df.validation_status.values[0]
 
     assert col_a_pct_threshold == 0.0
     assert col_a_status == consts.VALIDATION_STATUS_SUCCESS
@@ -526,7 +568,7 @@ def test_status_fail_validation(module_under_test, fs):
     result_df = client.execute()
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
-    col_a_status = col_a_result_df.status.values[0]
+    col_a_status = col_a_result_df.validation_status.values[0]
 
     assert col_a_pct_threshold == 0.0
     assert col_a_status == consts.VALIDATION_STATUS_FAIL
@@ -541,7 +583,7 @@ def test_threshold_equals_diff(module_under_test, fs):
     col_a_result_df = result_df[result_df.validation_name == "count_col_a"]
     col_a_pct_diff = col_a_result_df.pct_difference.values[0]
     col_a_pct_threshold = col_a_result_df.pct_threshold.values[0]
-    col_a_status = col_a_result_df.status.values[0]
+    col_a_status = col_a_result_df.validation_status.values[0]
 
     assert col_a_pct_diff == 150.0
     assert col_a_pct_threshold == 150.0
@@ -673,7 +715,7 @@ def test_fail_row_level_validation(module_under_test, fs):
     result_df = client.execute()
 
     # based on shared keys
-    fail_df = result_df[result_df["status"] == consts.VALIDATION_STATUS_FAIL]
+    fail_df = result_df[result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL]
     assert len(fail_df) == 5
 
 
@@ -690,7 +732,29 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
 
-    comparison_df = result_df[result_df["status"] == consts.VALIDATION_STATUS_FAIL]
+    comparison_df = result_df[
+        result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL
+    ]
     # 2 validations * (100 source + 1 target)
     assert len(result_df) == 202
     assert len(comparison_df) == 202
+
+
+def test_random_row_level_validation(module_under_test, fs):
+    data = _generate_fake_data(rows=100, second_range=0)
+
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data)
+
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+
+    client = module_under_test.DataValidation(SAMPLE_RANDOM_ROW_CONFIG)
+    result_df = client.execute()
+
+    # Random Row Validation with 10 rows
+    ids = [int(json.loads(c)["id"]) for c in result_df["group_by_columns"]]
+    assert len(result_df) == 10
+    assert result_df["difference"].sum() == 0
+    assert ids != [i for i in range(10)]
+    assert ids != [i for i in range(90, 100)]

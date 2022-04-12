@@ -14,7 +14,8 @@
 
 import os
 
-from data_validation import cli_tools, consts, data_validation, state_manager
+from data_validation.query_builder import random_row_builder
+from data_validation import cli_tools, consts, data_validation, state_manager, clients
 from data_validation import __main__ as main
 
 PROJECT_ID = os.environ["PROJECT_ID"]
@@ -177,9 +178,26 @@ CLI_STORE_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES = 36  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
+EXPECTED_NUM_YAML_LINES = 47  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
+
+CLI_WILDCARD_STRING_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.new_york_citibike.citibike_trips",
+    "--sum",
+    "*",
+    "--wildcard-include-string-len",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_WILDCARD = 112
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -192,6 +210,16 @@ CLI_FIND_TABLES_ARGS = [
 ]
 
 STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'
+
+EXPECTED_RANDOM_ROW_QUERY = """
+SELECT `station_id`
+FROM (
+  SELECT *
+  FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+  ORDER BY RAND()
+  LIMIT 10
+) t0
+""".strip()
 
 
 def test_count_validator():
@@ -331,6 +359,29 @@ def test_cli_store_yaml_then_run_local():
     os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
 
 
+def test_wildcard_column_agg_yaml():
+    """Test storing column validation YAML with string fields."""
+    # Unset GCS env var so that YAML is saved locally
+    gcs_path = os.environ[consts.ENV_DIRECTORY_VAR]
+    os.environ[consts.ENV_DIRECTORY_VAR] = ""
+
+    # Store BQ Connection
+    _store_bq_conn()
+
+    # Build validation and store to file
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(CLI_WILDCARD_STRING_ARGS)
+    main.run(mock_args)
+
+    yaml_file_path = CLI_CONFIG_FILE
+    with open(yaml_file_path, "r") as yaml_file:
+        assert len(yaml_file.readlines()) == EXPECTED_NUM_YAML_LINES_WILDCARD
+
+    os.remove(yaml_file_path)
+    # Re-set GCS env var
+    os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
+
+
 def test_cli_find_tables():
     _store_bq_conn()
 
@@ -340,8 +391,6 @@ def test_cli_find_tables():
     assert isinstance(tables_json, str)
     assert STRING_MATCH_RESULT in tables_json
 
-    # _remove_bq_conn()
-
 
 def _store_bq_conn():
     parser = cli_tools.configure_arg_parser()
@@ -349,6 +398,26 @@ def _store_bq_conn():
     main.run_connections(mock_args)
 
 
-# def _remove_bq_conn():
-#     file_path = cli_tools._get_connection_file(BQ_CONN_NAME)
-#     os.remove(file_path)
+def test_random_row_query_builder():
+    bq_client = clients.get_data_client(BQ_CONN)
+    row_query_builder = random_row_builder.RandomRowBuilder(["station_id"], 10)
+    query = row_query_builder.compile(
+        bq_client, "bigquery-public-data.new_york_citibike", "citibike_stations"
+    )
+
+    random_rows = bq_client.execute(query)
+
+    assert query.compile() == EXPECTED_RANDOM_ROW_QUERY
+    assert len(random_rows["station_id"]) == 10
+    assert list(random_rows["station_id"]) != [
+        4683,
+        4676,
+        4675,
+        4674,
+        4673,
+        4671,
+        4670,
+        4666,
+        4665,
+        4664,
+    ]

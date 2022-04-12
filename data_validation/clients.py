@@ -33,6 +33,8 @@ from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info
 from data_validation import consts, exceptions
 
+ibis.options.sql.default_limit = None
+
 # Our customized Ibis Datatype logic add support for new types
 third_party.ibis.ibis_addon.datatypes
 
