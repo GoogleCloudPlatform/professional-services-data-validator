@@ -31,9 +31,9 @@ def _clean_dataframe(df):
 
 
 def main(request):
-    """ Handle incoming Data Validation requests.
+    """Handle incoming Data Validation requests.
 
-        request (flask.Request): HTTP request object.
+    request (flask.Request): HTTP request object.
     """
     try:
         config = request.json["config"]

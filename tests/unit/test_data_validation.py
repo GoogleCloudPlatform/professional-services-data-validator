@@ -432,7 +432,7 @@ def module_under_test():
 
 
 def _create_table_file(table_path, data):
-    """ Create JSON File """
+    """Create JSON File"""
     with open(table_path, "w") as f:
         f.write(data)
 
@@ -488,7 +488,7 @@ def test_import(module_under_test):
 
 
 def test_data_validation_client(module_under_test, fs):
-    """ Test getting a Data Validation Client """
+    """Test getting a Data Validation Client"""
     _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
     _create_table_file(TARGET_TABLE_FILE_PATH, JSON_DATA)
 
@@ -498,7 +498,7 @@ def test_data_validation_client(module_under_test, fs):
 
 
 def test_get_pandas_schema(module_under_test):
-    """ Test extracting pandas schema from dataframes for Ibis Pandas."""
+    """Test extracting pandas schema from dataframes for Ibis Pandas."""
     pandas_schema = module_under_test.DataValidation._get_pandas_schema(
         SOURCE_DF, SOURCE_DF, JOIN_ON_FIELDS
     )
