@@ -446,30 +446,6 @@ class ConfigManager(object):
 
         return aggregate_config
 
-    # def append_stringlen_calc_field(self, column, agg_type):
-    #     """Append calculated field for length(string) for column validation"""
-    #     calculated_config = {
-    #         consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
-    #         consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
-    #         consts.CONFIG_FIELD_ALIAS: f"length__{column}",
-    #         consts.CONFIG_TYPE: "length",
-    #         consts.CONFIG_DEPTH: 0,
-    #     }
-
-    #     existing_calc_fields = [
-    #         x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
-    #     ]
-    #     if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
-    #         self.append_calculated_fields([calculated_config])
-
-    #     aggregate_config = {
-    #         consts.CONFIG_SOURCE_COLUMN: f"length__{column}",
-    #         consts.CONFIG_TARGET_COLUMN: f"length__{column}",
-    #         consts.CONFIG_FIELD_ALIAS: f"{agg_type}__length__{column}",
-    #         consts.CONFIG_TYPE: agg_type,
-    #     }
-    #     return aggregate_config
-
     def append_pre_agg_calc_field(self, column, agg_type, column_type):
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation"""
         if column_type == "string":

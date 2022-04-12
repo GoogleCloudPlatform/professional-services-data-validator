@@ -74,7 +74,6 @@ class DataValidation(object):
 
         # Initialize the default Result Handler if None was supplied
         self.result_handler = result_handler or self.config_manager.get_result_handler()
-        print("Dmedora config", config)
 
     # TODO(dhercher) we planned on shifting this to use an Execution Handler.
     # Leaving to to swast on the design of how this should look.
