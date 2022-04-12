@@ -101,13 +101,16 @@ class RandomRowBuilder(object):
     def maybe_add_random_sort(
         self, data_client: ibis.client, table: ibis.Expr
     ) -> ibis.Expr:
-        """ Return a randomly sorted query if it is supported for the client."""
+        """Return a randomly sorted query if it is supported for the client."""
         if type(data_client) in RANDOM_SORT_SUPPORTS:
             return table.sort_by(
                 RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             )
 
-        logging.warning("Data Client %s Does Not Enforce Random Sort on Sample", str(type(data_client)))
+        logging.warning(
+            "Data Client %s Does Not Enforce Random Sort on Sample",
+            str(type(data_client)),
+        )
         return table
 
 
