@@ -89,8 +89,7 @@ def generate_report(
         print(documented.compile())
 
     result_df = client.execute(documented)
-    result_df.status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
-
+    result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
     return result_df
 
 
@@ -111,7 +110,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     # Does not calculate difference between agg values for row hash due to int64 overflow
     if is_value_comparison:
         difference = pct_difference = ibis.null()
-        status = (
+        validation_status = (
             ibis.case()
             .when(target_value == source_value, consts.VALIDATION_STATUS_SUCCESS)
             .else_(consts.VALIDATION_STATUS_FAIL)
@@ -140,8 +139,12 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         )
 
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
-        status = (
+        validation_status = (
             ibis.case()
+            .when(
+                source_value.isnull() & target_value.isnull(),
+                consts.VALIDATION_STATUS_SUCCESS,
+            )
             .when(th_diff.isnan() | (th_diff > 0.0), consts.VALIDATION_STATUS_FAIL)
             .else_(consts.VALIDATION_STATUS_SUCCESS)
             .end()
@@ -151,7 +154,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         difference.name("difference"),
         pct_difference.name("pct_difference"),
         pct_threshold.name("pct_threshold"),
-        status.name("status"),
+        validation_status.name("validation_status"),
     )
 
 
@@ -285,7 +288,7 @@ def _join_pivots(source, target, differences, join_on_fields):
             differences["difference"],
             differences["pct_difference"],
             differences["pct_threshold"],
-            differences["status"],
+            differences["validation_status"],
         ]
     ]
     joined = source_difference.join(target, join_keys, how="outer")[
@@ -306,7 +309,7 @@ def _join_pivots(source, target, differences, join_on_fields):
         source_difference["difference"],
         source_difference["pct_difference"],
         source_difference["pct_threshold"],
-        source_difference["status"],
+        source_difference["validation_status"],
     ]
     return joined
 

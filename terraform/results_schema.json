@@ -80,7 +80,7 @@
     "description": "Percentage difference threshold set by the user, based on source_agg_value."
   },
   {
-    "name": "status",
+    "name": "validation_status",
     "type": "STRING",
     "description": "Status of the validation. If the pct_difference is less than pc_threshold, it is considered as success. [success, fail]"
   },

@@ -43,7 +43,15 @@ def test_get_column_name(
 
 def test_get_column_name_with_unexpected_result_type(module_under_test):
     validation = module_under_test.ValidationMetadata(
-        "", "", "", "", "", "", "", "", "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
     )
     with pytest.raises(ValueError, match="Unexpected result_type"):
         validation.get_column_name("oops_i_goofed")

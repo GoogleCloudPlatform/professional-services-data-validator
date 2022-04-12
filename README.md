@@ -158,9 +158,9 @@ the validation will be compared on, as well as either the `--comparison-fields` 
 or the `--hash` flag.
 
 The `--comparison-fields` flag specifies the values (e.g. columns) whose raw values will be compared
-based on the primary key join. The `--hash` flag will run a checksum across all columns in
-the table. This will include casting to string, sanitizing the data, concatenating, and finally
-hashing the row. To exclude columns from the checksum, use the YAML config to customize the validation.
+based on the primary key join. The `--hash` flag will run a checksum across specified columns in
+the table. This will include casting to string, sanitizing the data (ifnull, rtrim, upper), concatenating,
+and finally hashing the row.
 
 
 Additionally you can use
@@ -184,7 +184,7 @@ data-validation (--verbose or -v) validate row
   --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
-  --hash '*'            '*' to hash all columns. To exclude columns, use the YAML config.
+  --hash COLUMNS        Comma separated list of columns to hash or * for all columns 
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
