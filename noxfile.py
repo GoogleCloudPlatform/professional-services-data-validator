@@ -34,6 +34,7 @@ DEFAULT_PYTHON_VERSION = "3.9"
 PYTHON_VERSIONS = ["3.7", "3.8", "3.9"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
+LINT_PACKAGES = ["flake8", "black==22.3.0"]
 
 
 def _setup_session_requirements(session, extra_packages=[]):
@@ -93,9 +94,8 @@ def lint(session):
     serious code quality issues.
     """
 
-    _setup_session_requirements(
-        session, extra_packages=["flake8", "black==19.10b0", "click==8.0.4"]
-    )
+    _setup_session_requirements(session, extra_packages=LINT_PACKAGES)
+
     session.install("--upgrade", "pip", "wheel")
     session.run("flake8", "data_validation")
     session.run("flake8", "tests")
@@ -110,7 +110,7 @@ def blacken(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
-    session.install("black==19.10b0")
+    _setup_session_requirements(session, extra_packages=LINT_PACKAGES)
     session.run("black", *BLACK_PATHS)
 
 

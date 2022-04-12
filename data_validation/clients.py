@@ -33,6 +33,8 @@ from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info
 from data_validation import consts, exceptions
 
+ibis.options.sql.default_limit = None
+
 # Our customized Ibis Datatype logic add support for new types
 third_party.ibis.ibis_addon.datatypes
 
@@ -191,7 +193,7 @@ def get_all_tables(client, allowed_schemas=None):
 
 
 def get_data_client(connection_config):
-    """ Return DataClient client from given configuration """
+    """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
 
