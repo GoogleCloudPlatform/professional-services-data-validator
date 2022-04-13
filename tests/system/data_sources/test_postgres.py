@@ -94,11 +94,6 @@ def test_postgres_count(cloud_sql):
         ],
         consts.CONFIG_FORMAT: "table",
     }
-    expected_result = [
-        {"validation_name": "count", "source_agg_value": "7"},
-        {"validation_name": "count_guestname", "source_agg_value": "7"},
-        {"validation_name": "sum_entryid", "source_agg_value": "28"},
-    ]
 
     data_validator = data_validation.DataValidation(
         config_count_valid,
