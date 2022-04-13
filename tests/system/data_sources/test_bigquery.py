@@ -269,7 +269,7 @@ CLI_WILDCARD_STRING_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_WILDCARD = 112
+EXPECTED_NUM_YAML_LINES_WILDCARD = 134
 
 CLI_TIMESTAMP_MIN_MAX_ARGS = [
     "validate",
@@ -492,7 +492,7 @@ def test_timestamp_sum_avg_bitxor_column_agg_yaml():
 
 
 def test_cli_yaml_local_runner(cli_args, num_yaml_lines):
-    """Test storing column validation YAML with string fields."""
+    """Test storing column validation YAML."""
     # Unset GCS env var so that YAML is saved locally
     gcs_path = os.environ[consts.ENV_DIRECTORY_VAR]
     os.environ[consts.ENV_DIRECTORY_VAR] = ""
