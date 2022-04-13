@@ -609,6 +609,12 @@ def _configure_custom_query_parser(custom_query_parser):
         "-pk",
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
+    custom_query_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
+    )
 
 
 def _add_common_arguments(parser):
