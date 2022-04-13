@@ -332,103 +332,103 @@ FROM (
 """.strip()
 
 
-# def test_count_validator():
-#     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
-#     df = validator.execute()
+def test_count_validator():
+    validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
+    df = validator.execute()
 
-#     count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
-#     count_tripduration_value = df[df["validation_name"] == "count_tripduration"][
-#         "source_agg_value"
-#     ].values[0]
-#     avg_tripduration_value = df[df["validation_name"] == "avg_tripduration"][
-#         "source_agg_value"
-#     ].values[0]
-#     max_birth_year_value = df[df["validation_name"] == "max_birth_year"][
-#         "source_agg_value"
-#     ].values[0]
-#     min_birth_year_value = df[df["validation_name"] == "min_birth_year"][
-#         "source_agg_value"
-#     ].values[0]
+    count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
+    count_tripduration_value = df[df["validation_name"] == "count_tripduration"][
+        "source_agg_value"
+    ].values[0]
+    avg_tripduration_value = df[df["validation_name"] == "avg_tripduration"][
+        "source_agg_value"
+    ].values[0]
+    max_birth_year_value = df[df["validation_name"] == "max_birth_year"][
+        "source_agg_value"
+    ].values[0]
+    min_birth_year_value = df[df["validation_name"] == "min_birth_year"][
+        "source_agg_value"
+    ].values[0]
 
-#     assert float(count_value) > 0
-#     assert float(count_tripduration_value) > 0
-#     assert float(avg_tripduration_value) > 0
-#     assert float(max_birth_year_value) > 0
-#     assert float(min_birth_year_value) > 0
-#     assert (
-#         df["source_agg_value"].astype(float).sum()
-#         == df["target_agg_value"].astype(float).sum()
-#     )
-
-
-# def test_grouped_count_validator():
-#     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
-#     df = validator.execute()
-#     rows = list(df[df["validation_name"] == "count"].iterrows())
-
-#     # Check that all partitions are unique.
-#     partitions = frozenset(df["group_by_columns"])
-#     assert len(rows) == len(partitions)
-#     assert len(rows) > 1
-#     assert df["source_agg_value"].sum() == df["target_agg_value"].sum()
-
-#     for _, row in rows:
-#         assert float(row["source_agg_value"]) > 0
-#         assert row["source_agg_value"] == row["target_agg_value"]
+    assert float(count_value) > 0
+    assert float(count_tripduration_value) > 0
+    assert float(avg_tripduration_value) > 0
+    assert float(max_birth_year_value) > 0
+    assert float(min_birth_year_value) > 0
+    assert (
+        df["source_agg_value"].astype(float).sum()
+        == df["target_agg_value"].astype(float).sum()
+    )
 
 
-# def test_numeric_types():
-#     validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
-#     df = validator.execute()
+def test_grouped_count_validator():
+    validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
+    df = validator.execute()
+    rows = list(df[df["validation_name"] == "count"].iterrows())
 
-#     for validation in df.to_dict(orient="records"):
-#         assert float(validation["source_agg_value"]) == float(
-#             validation["target_agg_value"]
-#         )
+    # Check that all partitions are unique.
+    partitions = frozenset(df["group_by_columns"])
+    assert len(rows) == len(partitions)
+    assert len(rows) > 1
+    assert df["source_agg_value"].sum() == df["target_agg_value"].sum()
 
-
-# def test_schema_validation():
-#     validator = data_validation.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
-#     df = validator.execute()
-
-#     for validation in df.to_dict(orient="records"):
-#         assert validation["status"] == consts.VALIDATION_STATUS_SUCCESS
+    for _, row in rows:
+        assert float(row["source_agg_value"]) > 0
+        assert row["source_agg_value"] == row["target_agg_value"]
 
 
-# def test_cli_store_yaml_then_run_gcs():
-#     """Test storing and retrieving validation YAML when GCS env var is set."""
-#     # Store BQ Connection
-#     _store_bq_conn()
+def test_numeric_types():
+    validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
+    df = validator.execute()
 
-#     # Build validation and store to file
-#     parser = cli_tools.configure_arg_parser()
-#     mock_args = parser.parse_args(CLI_STORE_COLUMN_ARGS)
-#     main.run(mock_args)
+    for validation in df.to_dict(orient="records"):
+        assert float(validation["source_agg_value"]) == float(
+            validation["target_agg_value"]
+        )
 
-#     # Look for YAML file in GCS env directory, since that has been set
-#     yaml_file_path = os.path.join(
-#         os.environ[consts.ENV_DIRECTORY_VAR], "validations/", CLI_CONFIG_FILE
-#     )
 
-#     # The number of lines is not significant, except that it represents
-#     # the exact file expected to be created.  Any change to this value
-#     # is likely to be a breaking change and must be assessed.
-#     mgr = state_manager.StateManager()
-#     validation_bytes = mgr._read_file(yaml_file_path)
-#     yaml_file_str = validation_bytes.decode("utf-8")
-#     assert len(yaml_file_str.splitlines()) == EXPECTED_NUM_YAML_LINES
+def test_schema_validation():
+    validator = data_validation.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
+    df = validator.execute()
 
-#     # Run generated config using 'run-config' command
-#     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
-#     config_managers = main.build_config_managers_from_yaml(run_config_args)
-#     main.run_validations(run_config_args, config_managers)
+    for validation in df.to_dict(orient="records"):
+        assert validation["status"] == consts.VALIDATION_STATUS_SUCCESS
 
-#     # Run generated config using 'configs run' command
-#     run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
-#     config_managers = main.build_config_managers_from_yaml(run_config_args)
-#     main.run_validations(run_config_args, config_managers)
 
-#     # _remove_bq_conn()
+def test_cli_store_yaml_then_run_gcs():
+    """Test storing and retrieving validation YAML when GCS env var is set."""
+    # Store BQ Connection
+    _store_bq_conn()
+
+    # Build validation and store to file
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(CLI_STORE_COLUMN_ARGS)
+    main.run(mock_args)
+
+    # Look for YAML file in GCS env directory, since that has been set
+    yaml_file_path = os.path.join(
+        os.environ[consts.ENV_DIRECTORY_VAR], "validations/", CLI_CONFIG_FILE
+    )
+
+    # The number of lines is not significant, except that it represents
+    # the exact file expected to be created.  Any change to this value
+    # is likely to be a breaking change and must be assessed.
+    mgr = state_manager.StateManager()
+    validation_bytes = mgr._read_file(yaml_file_path)
+    yaml_file_str = validation_bytes.decode("utf-8")
+    assert len(yaml_file_str.splitlines()) == EXPECTED_NUM_YAML_LINES
+
+    # Run generated config using 'run-config' command
+    run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
+
+    # Run generated config using 'configs run' command
+    run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
+    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    main.run_validations(run_config_args, config_managers)
+
+    # _remove_bq_conn()
 
 
 def test_cli_store_yaml_then_run_local():
