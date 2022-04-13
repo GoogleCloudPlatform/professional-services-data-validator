@@ -107,4 +107,4 @@ def test_postgres_count(cloud_sql):
     df = data_validator.execute()
 
     assert df["source_agg_value"].equals(df["target_agg_value"])
-    assert sorted(list(df["source_agg_value"])) == ["7", "7", "28"]
+    assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
