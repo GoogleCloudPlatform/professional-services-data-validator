@@ -13,10 +13,9 @@
 # limitations under the License.
 
 import ibis
+from data_validation import clients, consts
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import operations
-
-from data_validation import clients, consts
 
 
 class AggregateField(object):
@@ -325,6 +324,14 @@ class CalculatedField(object):
     @staticmethod
     def upper(config, fields):
         return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
+
+    @staticmethod
+    def epoch_seconds(config, fields):
+        return CalculatedField(
+            ibis.expr.api.TimestampValue.epoch_seconds,
+            config,
+            fields,
+        )
 
     @staticmethod
     def cast(config, fields):

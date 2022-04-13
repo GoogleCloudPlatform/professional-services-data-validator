@@ -17,7 +17,7 @@ import logging
 
 import google.oauth2.service_account
 
-from data_validation import consts, clients, state_manager
+from data_validation import clients, consts, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 from data_validation.validation_builder import ValidationBuilder
@@ -440,13 +440,20 @@ class ConfigManager(object):
 
         return aggregate_config
 
-    def append_stringlen_calc_field(self, column, agg_type):
-        """Append calculated field for length(string) for column validation"""
+    def append_pre_agg_calc_field(self, column, agg_type, column_type):
+        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation"""
+        if column_type == "string":
+            calc_func = "length"
+        elif column_type == "timestamp":
+            calc_func = "epoch_seconds"
+        else:
+            raise ValueError(f"Unsupported column type: {column_type}")
+
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
-            consts.CONFIG_FIELD_ALIAS: f"length__{column}",
-            consts.CONFIG_TYPE: "length",
+            consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{column}",
+            consts.CONFIG_TYPE: calc_func,
             consts.CONFIG_DEPTH: 0,
         }
 
@@ -457,9 +464,9 @@ class ConfigManager(object):
             self.append_calculated_fields([calculated_config])
 
         aggregate_config = {
-            consts.CONFIG_SOURCE_COLUMN: f"length__{column}",
-            consts.CONFIG_TARGET_COLUMN: f"length__{column}",
-            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__length__{column}",
+            consts.CONFIG_SOURCE_COLUMN: f"{calc_func}__{column}",
+            consts.CONFIG_TARGET_COLUMN: f"{calc_func}__{column}",
+            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calc_func}__{column}",
             consts.CONFIG_TYPE: agg_type,
         }
         return aggregate_config
@@ -496,8 +503,18 @@ class ConfigManager(object):
                     )
                 continue
 
-            if column_type == "string":
-                aggregate_config = self.append_stringlen_calc_field(column, agg_type)
+            if column_type == "string" or (
+                column_type == "timestamp"
+                and agg_type
+                in (
+                    "sum",
+                    "avg",
+                    "bit_xor",
+                )  # timestamps: do not convert to epoch seconds for min/max
+            ):
+                aggregate_config = self.append_pre_agg_calc_field(
+                    column, agg_type, column_type
+                )
                 aggregate_configs.append(aggregate_config)
                 continue
 
@@ -508,7 +525,6 @@ class ConfigManager(object):
                 consts.CONFIG_TYPE: agg_type,
             }
             aggregate_configs.append(aggregate_config)
-
         return aggregate_configs
 
     def build_config_calculated_fields(
