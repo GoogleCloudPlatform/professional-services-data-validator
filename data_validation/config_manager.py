@@ -332,10 +332,8 @@ class ConfigManager(object):
                 consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
             )
             if key_path:
-                credentials = (
-                    google.oauth2.service_account.Credentials.from_service_account_file(
-                        key_path
-                    )
+                credentials = google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
                 )
             else:
                 credentials = None
@@ -418,13 +416,9 @@ class ConfigManager(object):
         for column in grouped_columns:
 
             if column.casefold() not in casefold_source_columns:
-                raise ValueError(
-                    f"GroupedColumn DNE in source: {source_table.op().name}.{column}"
-                )
+                raise ValueError(f"Grouped Column DNE in source: {column}")
             if column.casefold() not in casefold_target_columns:
-                raise ValueError(
-                    f"GroupedColumn DNE in target: {target_table.op().name}.{column}"
-                )
+                raise ValueError(f"Grouped Column DNE in target: {column}")
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
                 consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
