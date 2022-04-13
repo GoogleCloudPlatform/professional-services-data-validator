@@ -110,6 +110,7 @@ def blacken(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
+
     _setup_session_requirements(session, extra_packages=LINT_PACKAGES)
     session.run("black", *BLACK_PATHS)
 
