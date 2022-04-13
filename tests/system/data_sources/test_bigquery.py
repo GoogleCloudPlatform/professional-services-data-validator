@@ -14,9 +14,9 @@
 
 import os
 
-from data_validation.query_builder import random_row_builder
-from data_validation import cli_tools, consts, data_validation, state_manager, clients
 from data_validation import __main__ as main
+from data_validation import cli_tools, clients, consts, data_validation, state_manager
+from data_validation.query_builder import random_row_builder
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
@@ -99,6 +99,78 @@ CONFIG_GROUPED_COUNT_VALID = {
     ],
     consts.CONFIG_FORMAT: "table",
 }
+
+CONFIG_TIMESTAMP_AGGS = {
+    consts.CONFIG_TYPE: "Column",
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
+    consts.CONFIG_TABLE_NAME: "bikeshare_trips",
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.san_francisco_bikeshare",
+    consts.CONFIG_TARGET_SCHEMA_NAME: "bigquery-public-data.san_francisco_bikeshare",
+    consts.CONFIG_TARGET_TABLE_NAME: "bikeshare_trips",
+    consts.CONFIG_LABELS: [],
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FILTERS: [],
+    consts.CONFIG_USE_RANDOM_ROWS: False,
+    consts.CONFIG_RANDOM_ROW_BATCH_SIZE: None,
+    consts.CONFIG_CALCULATED_FIELDS: [
+        {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_date"],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_date"],
+            consts.CONFIG_FIELD_ALIAS: "epoch_seconds__start_date",
+            consts.CONFIG_TYPE: "epoch_seconds",
+            consts.CONFIG_DEPTH: 0,
+        },
+        {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["end_date"],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["end_date"],
+            consts.CONFIG_FIELD_ALIAS: "epoch_seconds__end_date",
+            consts.CONFIG_TYPE: "epoch_seconds",
+            consts.CONFIG_DEPTH: 0,
+        },
+    ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+            consts.CONFIG_TYPE: "count",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__start_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__start_date",
+            consts.CONFIG_FIELD_ALIAS: "sum__epoch_seconds__start_date",
+            consts.CONFIG_TYPE: "sum",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_FIELD_ALIAS: "avg__epoch_seconds__end_date",
+            consts.CONFIG_TYPE: "avg",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_FIELD_ALIAS: "bit_xor__epoch_seconds__end_date",
+            consts.CONFIG_TYPE: "bit_xor",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "start_date",
+            consts.CONFIG_TARGET_COLUMN: "start_date",
+            consts.CONFIG_FIELD_ALIAS: "min__start_date",
+            consts.CONFIG_TYPE: "min",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "end_date",
+            consts.CONFIG_TARGET_COLUMN: "end_date",
+            consts.CONFIG_FIELD_ALIAS: "max__end_date",
+            consts.CONFIG_TYPE: "max",
+        },
+    ],
+}
+
 
 # TODO: The definition for this table is stored in: ./tests/resources/
 CONFIG_NUMERIC_AGG_VALID = {
@@ -197,7 +269,45 @@ CLI_WILDCARD_STRING_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_WILDCARD = 112
+EXPECTED_NUM_YAML_LINES_WILDCARD = 134
+
+CLI_TIMESTAMP_MIN_MAX_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.san_francisco_bikeshare.bikeshare_trips",
+    "--min",
+    "start_date",
+    "--max",
+    "end_date",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_MIN_MAX = 29
+
+CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.san_francisco_bikeshare.bikeshare_trips",
+    "--sum",
+    "start_date",
+    "--avg",
+    "end_date",
+    "--bit_xor",
+    "end_date",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 47
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -361,6 +471,28 @@ def test_cli_store_yaml_then_run_local():
 
 def test_wildcard_column_agg_yaml():
     """Test storing column validation YAML with string fields."""
+    _test_cli_yaml_local_runner(
+        CLI_WILDCARD_STRING_ARGS, EXPECTED_NUM_YAML_LINES_WILDCARD
+    )
+
+
+def test_timestamp_min_max_column_agg_yaml():
+    """Test storing column validation YAML with timestamp fields for min, max aggregations."""
+    _test_cli_yaml_local_runner(
+        CLI_TIMESTAMP_MIN_MAX_ARGS, EXPECTED_NUM_YAML_LINES_TIMESTAMP_MIN_MAX
+    )
+
+
+def test_timestamp_sum_avg_bitxor_column_agg_yaml():
+    """Test storing column validation YAML with timestamp fields for sum, avg, bit_xor aggregations."""
+    _test_cli_yaml_local_runner(
+        CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS,
+        EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR,
+    )
+
+
+def _test_cli_yaml_local_runner(cli_args, num_yaml_lines):
+    """Test storing column validation YAML."""
     # Unset GCS env var so that YAML is saved locally
     gcs_path = os.environ[consts.ENV_DIRECTORY_VAR]
     os.environ[consts.ENV_DIRECTORY_VAR] = ""
@@ -370,16 +502,23 @@ def test_wildcard_column_agg_yaml():
 
     # Build validation and store to file
     parser = cli_tools.configure_arg_parser()
-    mock_args = parser.parse_args(CLI_WILDCARD_STRING_ARGS)
+    mock_args = parser.parse_args(cli_args)
     main.run(mock_args)
 
     yaml_file_path = CLI_CONFIG_FILE
     with open(yaml_file_path, "r") as yaml_file:
-        assert len(yaml_file.readlines()) == EXPECTED_NUM_YAML_LINES_WILDCARD
+        assert len(yaml_file.readlines()) == num_yaml_lines
 
     os.remove(yaml_file_path)
     # Re-set GCS env var
     os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
+
+
+def test_timestamp_aggs():
+    validator = data_validation.DataValidation(CONFIG_TIMESTAMP_AGGS)
+    df = validator.execute()
+    for validation in df.to_dict(orient="records"):
+        assert validation["source_agg_value"] == validation["target_agg_value"]
 
 
 def test_cli_find_tables():
