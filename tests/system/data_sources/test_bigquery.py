@@ -14,9 +14,8 @@
 
 import os
 
-import pytest
 from data_validation import __main__ as main
-from data_validation import cli_tools, clients, consts, data_validation, state_manager
+from data_validation import cli_tools, clients, consts, data_validation
 from data_validation.query_builder import random_row_builder
 
 PROJECT_ID = os.environ["PROJECT_ID"]
