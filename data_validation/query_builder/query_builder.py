@@ -287,7 +287,10 @@ class CalculatedField(object):
         fields = [config["default_concat_separator"], fields]
         cast = "string"
         return CalculatedField(
-            ibis.expr.api.StringValue.join, config, fields, cast=cast,
+            ibis.expr.api.StringValue.join,
+            config,
+            fields,
+            cast=cast,
         )
 
     @staticmethod
@@ -295,12 +298,18 @@ class CalculatedField(object):
         if config.get("default_hash_function") is None:
             how = "sha256"
             return CalculatedField(
-                ibis.expr.api.StringValue.hashbytes, config, fields, how=how,
+                ibis.expr.api.StringValue.hashbytes,
+                config,
+                fields,
+                how=how,
             )
         else:
             how = "farm_fingerprint"
             return CalculatedField(
-                ibis.expr.api.ValueExpr.hash, config, fields, how=how,
+                ibis.expr.api.ValueExpr.hash,
+                config,
+                fields,
+                how=how,
             )
 
     @staticmethod
@@ -311,19 +320,35 @@ class CalculatedField(object):
             else config.get("default_null_string")
         )
         fields = [fields[0], config["default_string"]]
-        return CalculatedField(ibis.expr.api.ValueExpr.fillna, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.ValueExpr.fillna,
+            config,
+            fields,
+        )
 
     @staticmethod
     def length(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.length, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.length,
+            config,
+            fields,
+        )
 
     @staticmethod
     def rstrip(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.rstrip, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.rstrip,
+            config,
+            fields,
+        )
 
     @staticmethod
     def upper(config, fields):
-        return CalculatedField(ibis.expr.api.StringValue.upper, config, fields,)
+        return CalculatedField(
+            ibis.expr.api.StringValue.upper,
+            config,
+            fields,
+        )
 
     @staticmethod
     def epoch_seconds(config, fields):
@@ -338,7 +363,10 @@ class CalculatedField(object):
         if config.get("default_cast") is None:
             target_type = "string"
         return CalculatedField(
-            ibis.expr.api.ValueExpr.cast, config, fields, target_type=target_type,
+            ibis.expr.api.ValueExpr.cast,
+            config,
+            fields,
+            target_type=target_type,
         )
 
     @staticmethod
