@@ -82,13 +82,11 @@ def get_aggregate_config(args, config_manager):
             "avg", col_args, supported_data_types
         )
     if args.min:
-        supported_data_types.append("timestamp")
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "min", col_args, supported_data_types
         )
     if args.max:
-        supported_data_types.append("timestamp")
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max", col_args, supported_data_types
