@@ -32,7 +32,7 @@ class SchemaValidation(object):
         self.run_metadata = run_metadata or metadata.RunMetadata()
 
     def execute(self):
-        """ Performs a validation between source and a target schema"""
+        """Performs a validation between source and a target schema"""
         ibis_source_schema = self.config_manager.source_client.get_schema(
             self.config_manager.source_table, self.config_manager.source_schema
         )
@@ -66,27 +66,32 @@ class SchemaValidation(object):
         df.insert(loc=1, column="validation_name", value="Schema")
         df.insert(loc=2, column="validation_type", value="Schema")
 
-        df.insert(loc=3, column="start_time", value=self.run_metadata.start_time)
-        df.insert(loc=4, column="end_time", value=self.run_metadata.end_time)
+        df.insert(
+            loc=3,
+            column="labels",
+            value=[self.run_metadata.labels for _ in range(len(df.index))],
+        )
+        df.insert(loc=4, column="start_time", value=self.run_metadata.start_time)
+        df.insert(loc=5, column="end_time", value=self.run_metadata.end_time)
 
         df.insert(
-            loc=5,
+            loc=6,
             column="source_table_name",
             value=self.config_manager.full_source_table,
         )
         df.insert(
-            loc=6,
+            loc=7,
             column="target_table_name",
             value=self.config_manager.full_target_table,
         )
-        df.insert(loc=9, column="aggregation_type", value="Schema")
+        df.insert(loc=10, column="aggregation_type", value="Schema")
 
         del df["error_result.details"]
         return df
 
 
 def schema_validation_matching(source_fields, target_fields):
-    """ Compare schemas between two dictionary objects """
+    """Compare schemas between two dictionary objects"""
     results = []
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields.items():

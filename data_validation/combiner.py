@@ -27,7 +27,6 @@ import ibis.expr.datatypes
 
 from data_validation import consts
 
-
 DEFAULT_SOURCE = "source"
 DEFAULT_TARGET = "target"
 
@@ -105,6 +104,10 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
+    elif isinstance(datatype, ibis.expr.datatypes.Float64):
+        # Float64 type results from AVG() aggregation
+        source_value = field_differences["differences_source_value"].round(digits=4)
+        target_value = field_differences["differences_target_value"].round(digits=4)
     else:
         source_value = field_differences["differences_source_value"]
         target_value = field_differences["differences_target_value"]
@@ -112,7 +115,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     # Does not calculate difference between agg values for row hash due to int64 overflow
     if is_value_comparison:
         difference = pct_difference = ibis.null()
-        status = (
+        validation_status = (
             ibis.case()
             .when(target_value == source_value, consts.VALIDATION_STATUS_SUCCESS)
             .else_(consts.VALIDATION_STATUS_FAIL)
@@ -141,8 +144,12 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         )
 
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
-        status = (
+        validation_status = (
             ibis.case()
+            .when(
+                source_value.isnull() & target_value.isnull(),
+                consts.VALIDATION_STATUS_SUCCESS,
+            )
             .when(th_diff.isnan() | (th_diff > 0.0), consts.VALIDATION_STATUS_FAIL)
             .else_(consts.VALIDATION_STATUS_SUCCESS)
             .end()
@@ -152,7 +159,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         difference.name("difference"),
         pct_difference.name("pct_difference"),
         pct_threshold.name("pct_threshold"),
-        status.name("status"),
+        validation_status.name("validation_status"),
     )
 
 
@@ -286,7 +293,7 @@ def _join_pivots(source, target, differences, join_on_fields):
             differences["difference"],
             differences["pct_difference"],
             differences["pct_threshold"],
-            differences["status"],
+            differences["validation_status"],
         ]
     ]
     joined = source_difference.join(target, join_keys, how="outer")[
@@ -307,7 +314,7 @@ def _join_pivots(source, target, differences, join_on_fields):
         source_difference["difference"],
         source_difference["pct_difference"],
         source_difference["pct_threshold"],
-        source_difference["status"],
+        source_difference["validation_status"],
     ]
     return joined
 

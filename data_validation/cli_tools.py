@@ -279,7 +279,9 @@ def _configure_run_parser(subparsers):
         help="Store the validation in the YAML Config File Path specified",
     )
     run_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run",
+        "--labels",
+        "-l",
+        help="Key value pair labels for validation run",
     )
     run_parser.add_argument(
         "--hash",
@@ -319,6 +321,12 @@ def _configure_run_parser(subparsers):
         "--random-row-batch-size",
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
+    )
+    run_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
     )
 
 
@@ -416,9 +424,6 @@ def _configure_row_parser(row_parser):
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     row_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
-    row_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -501,9 +506,6 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     column_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
-    column_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -525,6 +527,12 @@ def _configure_column_parser(column_parser):
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
     )
+    column_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
+    )
 
 
 def _configure_schema_parser(schema_parser):
@@ -536,10 +544,14 @@ def _configure_custom_query_parser(custom_query_parser):
     """Configure arguments to run custom-query validations."""
     _add_common_arguments(custom_query_parser)
     custom_query_parser.add_argument(
-        "--source-query-file", "-sqf", help="File containing the source sql query",
+        "--source-query-file",
+        "-sqf",
+        help="File containing the source sql query",
     )
     custom_query_parser.add_argument(
-        "--target-query-file", "-tqf", help="File containing the target sql query",
+        "--target-query-file",
+        "-tqf",
+        help="File containing the target sql query",
     )
     custom_query_parser.add_argument(
         "--count",
@@ -582,9 +594,6 @@ def _configure_custom_query_parser(custom_query_parser):
         help="Filters in the format source_filter:target_filter",
     )
     custom_query_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
-    custom_query_parser.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -622,6 +631,9 @@ def _add_common_arguments(parser):
     )
     parser.add_argument(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
+    )
+    parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
     )
     parser.add_argument(
         "--service-account",

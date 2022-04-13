@@ -99,7 +99,8 @@ CLI_FIND_TABLES_ARGS = [
 
 
 @mock.patch(
-    "argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(**CLI_ARGS),
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS),
 )
 def test_get_parsed_args(mock_args):
     """Test arg parser values with validate command."""
@@ -233,7 +234,8 @@ def test_get_labels_err(test_input):
 
 
 @pytest.mark.parametrize(
-    "test_input,expected", [(0, 0.0), (50, 50.0), (100, 100.0)],
+    "test_input,expected",
+    [(0, 0.0), (50, 50.0), (100, 100.0)],
 )
 def test_threshold_float(test_input, expected):
     """Test threshold float function."""
@@ -242,7 +244,8 @@ def test_threshold_float(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "test_input", [(-4), (float("nan")), (float("inf")), ("string")],
+    "test_input",
+    [(-4), (float("nan")), (float("inf")), ("string")],
 )
 def test_threshold_float_err(test_input):
     """Test that threshold float only accepts positive floats."""
@@ -395,7 +398,8 @@ def test_get_filters(test_input, expected):
 
 
 @pytest.mark.parametrize(
-    "test_input", [("source:"), ("invalid:filter:count")],
+    "test_input",
+    [("source:"), ("invalid:filter:count")],
 )
 def test_get_filters_err(test_input):
     """Test get filters function returns error."""
@@ -425,9 +429,12 @@ def test_split_table_no_schema():
 
 
 @pytest.mark.parametrize(
-    "test_input", [(["table"])],
+    "test_input",
+    [(["table"])],
 )
-def test_split_table_err(test_input,):
+def test_split_table_err(
+    test_input,
+):
     """Test split table throws the right errors."""
     with pytest.raises(ValueError):
         cli_tools.split_table(test_input)

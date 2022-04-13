@@ -105,7 +105,7 @@ def module_under_test():
 
 
 def test_import(module_under_test):
-    """Test import cleanly """
+    """Test import cleanly"""
     assert module_under_test is not None
 
 
@@ -212,7 +212,7 @@ def test_filter_status(module_under_test):
 
 
 def test_get_table_info(module_under_test):
-    """Test basic handler executes """
+    """Test basic handler executes"""
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
