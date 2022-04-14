@@ -230,7 +230,7 @@ data-validation (--verbose or -v) validate schema
                         Defaults  to table.
 ```
 
-#### Custom Query Column Validations 
+### Custom Query Column Validations
 
 Below is the command syntax for custom query column validations.
 
@@ -273,9 +273,9 @@ The [Examples](docs/examples.md) page provides few examples of how this tool can
 used to run custom query validations.
 
 
-#### Custom Query Row Validations 
+### Custom Query Row Validations 
 
-(Note: Row hash validation is currently only supported for BigQuery and Imapala/Hive)
+#### (Note: Row hash validation is currently only supported for BigQuery and Imapala/Hive)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag with `*` value which means all the fields

@@ -17,7 +17,7 @@
 
 class CustomQueryRowBuilder(object):
     def __init__(self):
-        """Build a CustomQueryRowBuilder objct which is ready to build a custom query row validation nested query."""
+        """Build a CustomQueryRowBuilder object which is ready to build a custom query row validation nested query."""
 
     def compile_custom_query(self, input_query, client_config):
         """Returns the nested sql query calculated from the input query
@@ -25,7 +25,7 @@ class CustomQueryRowBuilder(object):
         Args:
             input_query (InputQuery): User provided sql query
         """
-        base_tbl_expr = self.get_table_exapression(input_query, client_config)
+        base_tbl_expr = self.get_table_expression(input_query, client_config)
         base_df = self.get_data_frame(base_tbl_expr, client_config)
         base_df_columns = self.compile_df_fields(base_df)
         calculated_columns = self.get_calculated_columns(base_df_columns)
@@ -43,7 +43,7 @@ class CustomQueryRowBuilder(object):
         sha2_query = self.compile_sha2_df_fields(concat_query, client_config)
         return sha2_query
 
-    def get_table_exapression(self, input_query, client_config):
+    def get_table_expression(self, input_query, client_config):
         """Returns the ibis table expression for the input query."""
         return client_config["data_client"].sql(input_query)
 
