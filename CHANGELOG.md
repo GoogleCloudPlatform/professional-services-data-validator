@@ -2,6 +2,42 @@
 
 ## Untagged
 
+### [1.7.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.7.0...v1.7.1) (2022-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* Changed result schema 'status' column to 'validation_status' (#420)
+
+### Features
+
+* added timestamp to supported types for min and max ([#431](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/431)) ([e8b4860](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e8b48603ff851d771c01794262ab1281192dea0e))
+* Allow aggregation over length of string columns ([#430](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/430)) ([201f0a2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/201f0a2a67e79190400aba668fc34df54bf87b66))
+* Changed result schema 'status' column to 'validation_status' ([#420](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/420)) ([dfcd0d5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dfcd0d5000fb33e64a8580a0747319f5ddbec2ca))
+* hash filter support ([#408](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/408)) ([46b3723](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/46b3723390bf050ae33868517478906d63a43304))
+* Hash selective columns ([#407](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/407)) ([88b6620](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/88b66201750db3e1a0577f12965551f8955a2525))
+* Implement sum/avg/bit_xor aggs for Timestamp ([#442](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/442)) ([51f3af3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/51f3af3c6bb11beaf7bc08e6b2766e0b5a6b8600))
+* improve postgres tests ([#443](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/443)) ([6a54527](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6a54527b758c56cc1aa0a1a15b355970115fa16f))
+* Random Sort for Pandas Queries ([#404](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/404)) ([2051039](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/20510395193e831d8e3350842ce606f4adb80fcb))
+* Support for custom query ([#390](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/390)) ([7a218d2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7a218d2b516d480dad05f6fb52ed6347aef429ed))
+
+
+### Bug Fixes
+
+* bug introduced with new pr ([#429](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/429)) ([a6cf3f0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a6cf3f03e8f28eb6b3c2cfca41880d839f301637))
+* Hash all bug, noxfile updates ([#413](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/413)) ([fc73e21](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/fc73e21810ffe74459a90b79b956a91168c0dc1c))
+* Hive boolean nan to None, Unsupported ibis data types in structs and arrays ([#444](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/444)) ([e94a1da](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e94a1daabf6c5df04720e20b764a8ccf9bc63050))
+* ibis default sql option limits query results at 10k rows ([#418](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/418)) ([7539efe](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7539efe266ecea22102d775dc9ad4c8bbb9dba84))
+* Impala strings/objects now return None instead of NaN ([#406](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/406)) ([9d3c5ec](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9d3c5ecf1babae2c811a30d0820701b124ae1c50))
+* issue 265 add cloud spanner functionality ([#394](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/394)) ([783cdf8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/783cdf8810c29755b26e4894555b6dd03f4c9025))
+* support labels for schema validation ([#260](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/260)) ([#381](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/381)) ([f787701](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f787701dcb505fbced3e12b996c845148bbc1af0))
+* Treat both source and target values being NULL as a success ([#437](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/437)) ([c4da5ca](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c4da5ca18f47af3e5ebadce97d35c25ca66d4003))
+
+
+### Miscellaneous Chores
+
+* release 1.7.1 ([#446](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/446)) ([99916ba](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/99916ba2c76b8370cabd648e4d1f3c4ec15b93d7))
+
 ## [1.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.6.0...v1.7.0) (2022-03-23)
 
 
