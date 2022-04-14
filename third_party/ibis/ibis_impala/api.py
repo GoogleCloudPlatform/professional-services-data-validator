@@ -61,7 +61,20 @@ def parse_type(t):
             else:
                 return ValueError(t)
         elif "struct" in t or "array" in t or "map" in t:
-            return t.replace("int", "int32")
+            if "bigint" in t:
+                t = t.replace("bigint", "int64")
+            elif "tinyint" in t:
+                t = t.replace("tinyint", "int8")
+            elif "smallint" in t:
+                t = t.replace("smallint", "int16")
+            else:
+                t = t.replace("int", "int32")
+
+            if "varchar" in t:
+                t = t.replace("varchar", "string")
+            else:
+                t = t.replace("char","string")
+            return t
         else:
             raise Exception(t)
 
@@ -149,7 +162,7 @@ def _chunks_to_pandas_array(chunks):
     if have_nulls:
         if numpy_type in ('bool', 'datetime64[ns]'):
             target = np.empty(total_length, dtype='O')
-            na_rep = np.nan
+            na_rep = None
         elif numpy_type.startswith('int'):
             target = np.empty(total_length, dtype='f8')
             na_rep = np.nan
