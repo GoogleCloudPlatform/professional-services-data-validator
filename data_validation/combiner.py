@@ -27,7 +27,6 @@ import ibis.expr.datatypes
 
 from data_validation import consts
 
-
 DEFAULT_SOURCE = "source"
 DEFAULT_TARGET = "target"
 

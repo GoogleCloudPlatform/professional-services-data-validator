@@ -17,14 +17,14 @@ import logging
 import warnings
 
 import ibis.backends.pandas
-import pandas
 import numpy
+import pandas
 
-from data_validation import consts, combiner, metadata
+from data_validation import combiner, consts, metadata
 from data_validation.config_manager import ConfigManager
-from data_validation.validation_builder import ValidationBuilder
-from data_validation.schema_validation import SchemaValidation
 from data_validation.query_builder.random_row_builder import RandomRowBuilder
+from data_validation.schema_validation import SchemaValidation
+from data_validation.validation_builder import ValidationBuilder
 
 """ The DataValidation class is where the code becomes source/target aware
 

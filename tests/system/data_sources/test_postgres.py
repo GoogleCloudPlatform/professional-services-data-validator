@@ -79,6 +79,18 @@ def test_postgres_count(cloud_sql):
                 consts.CONFIG_TARGET_COLUMN: None,
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
+            {
+                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_SOURCE_COLUMN: "guestname",
+                consts.CONFIG_TARGET_COLUMN: "guestname",
+                consts.CONFIG_FIELD_ALIAS: "count_guestname",
+            },
+            {
+                consts.CONFIG_TYPE: "sum",
+                consts.CONFIG_SOURCE_COLUMN: "entryid",
+                consts.CONFIG_TARGET_COLUMN: "entryid",
+                consts.CONFIG_FIELD_ALIAS: "sum_entryid",
+            },
         ],
         consts.CONFIG_FORMAT: "table",
     }
@@ -88,4 +100,6 @@ def test_postgres_count(cloud_sql):
         verbose=False,
     )
     df = data_validator.execute()
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+
+    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
