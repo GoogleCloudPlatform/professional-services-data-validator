@@ -62,7 +62,8 @@ CONFIG_SCHEMA_VALID = {
 def test_mysql_count_invalid_host():
     try:
         data_validator = data_validation.DataValidation(
-            CONFIG_COUNT_VALID, verbose=False,
+            CONFIG_COUNT_VALID,
+            verbose=False,
         )
         df = data_validator.execute()
         assert df["source_agg_value"][0] == df["target_agg_value"][0]
@@ -74,7 +75,8 @@ def test_mysql_count_invalid_host():
 def test_schema_validation():
     try:
         data_validator = data_validation.DataValidation(
-            CONFIG_SCHEMA_VALID, verbose=False,
+            CONFIG_SCHEMA_VALID,
+            verbose=False,
         )
         df = data_validator.execute()
 

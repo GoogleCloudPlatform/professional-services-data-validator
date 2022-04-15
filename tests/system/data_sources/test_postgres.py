@@ -63,7 +63,7 @@ def cloud_sql(request):
 
 
 def test_postgres_count(cloud_sql):
-    """ Test count validation on Postgres instance """
+    """Test count validation on Postgres instance"""
     config_count_valid = {
         # BigQuery Specific Connection Config
         consts.CONFIG_SOURCE_CONN: CONN,
@@ -80,17 +80,34 @@ def test_postgres_count(cloud_sql):
                 consts.CONFIG_TARGET_COLUMN: None,
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
+            {
+                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_SOURCE_COLUMN: "guestname",
+                consts.CONFIG_TARGET_COLUMN: "guestname",
+                consts.CONFIG_FIELD_ALIAS: "count_guestname",
+            },
+            {
+                consts.CONFIG_TYPE: "sum",
+                consts.CONFIG_SOURCE_COLUMN: "entryid",
+                consts.CONFIG_TARGET_COLUMN: "entryid",
+                consts.CONFIG_FIELD_ALIAS: "sum_entryid",
+            },
         ],
         consts.CONFIG_FORMAT: "table",
     }
 
-    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
     df = data_validator.execute()
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+
+    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
 def test_schema_validation(cloud_sql):
-    """ Test schema validation on Postgres instance """
+    """Test schema validation on Postgres instance"""
     config_count_valid = {
         consts.CONFIG_SOURCE_CONN: CONN,
         consts.CONFIG_TARGET_CONN: CONN,
@@ -100,7 +117,10 @@ def test_schema_validation(cloud_sql):
         consts.CONFIG_FORMAT: "table",
     }
 
-    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
     df = data_validator.execute()
 
     for validation in df.to_dict(orient="records"):
