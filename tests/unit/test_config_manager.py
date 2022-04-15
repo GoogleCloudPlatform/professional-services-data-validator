@@ -291,6 +291,7 @@ def test_get_yaml_validation_block(module_under_test):
         consts.CONFIG_LABELS,
         consts.CONFIG_THRESHOLD,
         consts.CONFIG_FILTERS,
+        consts.CONFIG_FILTER_STATUS
     ]
     assert yaml_config[consts.CONFIG_TYPE] == SAMPLE_CONFIG[consts.CONFIG_TYPE]
     assert list(yaml_config.keys()) == expected_validation_keys
