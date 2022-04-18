@@ -14,8 +14,9 @@
 
 import os
 
-from data_validation import cli_tools, consts, data_validation, state_manager
 from data_validation import __main__ as main
+from data_validation import cli_tools, clients, consts, data_validation, state_manager
+from data_validation.query_builder import random_row_builder
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
@@ -99,6 +100,78 @@ CONFIG_GROUPED_COUNT_VALID = {
     consts.CONFIG_FORMAT: "table",
 }
 
+CONFIG_TIMESTAMP_AGGS = {
+    consts.CONFIG_TYPE: "Column",
+    consts.CONFIG_SOURCE_CONN: BQ_CONN,
+    consts.CONFIG_TARGET_CONN: BQ_CONN,
+    consts.CONFIG_TABLE_NAME: "bikeshare_trips",
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.san_francisco_bikeshare",
+    consts.CONFIG_TARGET_SCHEMA_NAME: "bigquery-public-data.san_francisco_bikeshare",
+    consts.CONFIG_TARGET_TABLE_NAME: "bikeshare_trips",
+    consts.CONFIG_LABELS: [],
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_RESULT_HANDLER: None,
+    consts.CONFIG_FILTERS: [],
+    consts.CONFIG_USE_RANDOM_ROWS: False,
+    consts.CONFIG_RANDOM_ROW_BATCH_SIZE: None,
+    consts.CONFIG_CALCULATED_FIELDS: [
+        {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_date"],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_date"],
+            consts.CONFIG_FIELD_ALIAS: "epoch_seconds__start_date",
+            consts.CONFIG_TYPE: "epoch_seconds",
+            consts.CONFIG_DEPTH: 0,
+        },
+        {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["end_date"],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["end_date"],
+            consts.CONFIG_FIELD_ALIAS: "epoch_seconds__end_date",
+            consts.CONFIG_TYPE: "epoch_seconds",
+            consts.CONFIG_DEPTH: 0,
+        },
+    ],
+    consts.CONFIG_AGGREGATES: [
+        {
+            consts.CONFIG_SOURCE_COLUMN: None,
+            consts.CONFIG_TARGET_COLUMN: None,
+            consts.CONFIG_FIELD_ALIAS: "count",
+            consts.CONFIG_TYPE: "count",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__start_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__start_date",
+            consts.CONFIG_FIELD_ALIAS: "sum__epoch_seconds__start_date",
+            consts.CONFIG_TYPE: "sum",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_FIELD_ALIAS: "avg__epoch_seconds__end_date",
+            consts.CONFIG_TYPE: "avg",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__end_date",
+            consts.CONFIG_FIELD_ALIAS: "bit_xor__epoch_seconds__end_date",
+            consts.CONFIG_TYPE: "bit_xor",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "start_date",
+            consts.CONFIG_TARGET_COLUMN: "start_date",
+            consts.CONFIG_FIELD_ALIAS: "min__start_date",
+            consts.CONFIG_TYPE: "min",
+        },
+        {
+            consts.CONFIG_SOURCE_COLUMN: "end_date",
+            consts.CONFIG_TARGET_COLUMN: "end_date",
+            consts.CONFIG_FIELD_ALIAS: "max__end_date",
+            consts.CONFIG_TYPE: "max",
+        },
+    ],
+}
+
+
 # TODO: The definition for this table is stored in: ./tests/resources/
 CONFIG_NUMERIC_AGG_VALID = {
     # BigQuery Specific Connection Config
@@ -177,9 +250,64 @@ CLI_STORE_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES = 36  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
+EXPECTED_NUM_YAML_LINES = 47  # Expected number of lines for validation config geenrated by CLI_STORE_COLUMN_ARGS
 CLI_RUN_CONFIG_ARGS = ["run-config", "--config-file", CLI_CONFIG_FILE]
 CLI_CONFIGS_RUN_ARGS = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
+
+CLI_WILDCARD_STRING_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.new_york_citibike.citibike_trips",
+    "--sum",
+    "*",
+    "--wildcard-include-string-len",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_WILDCARD = 134
+
+CLI_TIMESTAMP_MIN_MAX_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.san_francisco_bikeshare.bikeshare_trips",
+    "--min",
+    "start_date",
+    "--max",
+    "end_date",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_MIN_MAX = 29
+
+CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.san_francisco_bikeshare.bikeshare_trips",
+    "--sum",
+    "start_date",
+    "--avg",
+    "end_date",
+    "--bit_xor",
+    "end_date",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 47
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -192,6 +320,16 @@ CLI_FIND_TABLES_ARGS = [
 ]
 
 STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'
+
+EXPECTED_RANDOM_ROW_QUERY = """
+SELECT `station_id`
+FROM (
+  SELECT *
+  FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+  ORDER BY RAND()
+  LIMIT 10
+) t0
+""".strip()
 
 
 def test_count_validator():
@@ -331,6 +469,58 @@ def test_cli_store_yaml_then_run_local():
     os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
 
 
+def test_wildcard_column_agg_yaml():
+    """Test storing column validation YAML with string fields."""
+    _test_cli_yaml_local_runner(
+        CLI_WILDCARD_STRING_ARGS, EXPECTED_NUM_YAML_LINES_WILDCARD
+    )
+
+
+def test_timestamp_min_max_column_agg_yaml():
+    """Test storing column validation YAML with timestamp fields for min, max aggregations."""
+    _test_cli_yaml_local_runner(
+        CLI_TIMESTAMP_MIN_MAX_ARGS, EXPECTED_NUM_YAML_LINES_TIMESTAMP_MIN_MAX
+    )
+
+
+def test_timestamp_sum_avg_bitxor_column_agg_yaml():
+    """Test storing column validation YAML with timestamp fields for sum, avg, bit_xor aggregations."""
+    _test_cli_yaml_local_runner(
+        CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS,
+        EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR,
+    )
+
+
+def _test_cli_yaml_local_runner(cli_args, num_yaml_lines):
+    """Test storing column validation YAML."""
+    # Unset GCS env var so that YAML is saved locally
+    gcs_path = os.environ[consts.ENV_DIRECTORY_VAR]
+    os.environ[consts.ENV_DIRECTORY_VAR] = ""
+
+    # Store BQ Connection
+    _store_bq_conn()
+
+    # Build validation and store to file
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(cli_args)
+    main.run(mock_args)
+
+    yaml_file_path = CLI_CONFIG_FILE
+    with open(yaml_file_path, "r") as yaml_file:
+        assert len(yaml_file.readlines()) == num_yaml_lines
+
+    os.remove(yaml_file_path)
+    # Re-set GCS env var
+    os.environ[consts.ENV_DIRECTORY_VAR] = gcs_path
+
+
+def test_timestamp_aggs():
+    validator = data_validation.DataValidation(CONFIG_TIMESTAMP_AGGS)
+    df = validator.execute()
+    for validation in df.to_dict(orient="records"):
+        assert validation["source_agg_value"] == validation["target_agg_value"]
+
+
 def test_cli_find_tables():
     _store_bq_conn()
 
@@ -340,8 +530,6 @@ def test_cli_find_tables():
     assert isinstance(tables_json, str)
     assert STRING_MATCH_RESULT in tables_json
 
-    # _remove_bq_conn()
-
 
 def _store_bq_conn():
     parser = cli_tools.configure_arg_parser()
@@ -349,6 +537,26 @@ def _store_bq_conn():
     main.run_connections(mock_args)
 
 
-# def _remove_bq_conn():
-#     file_path = cli_tools._get_connection_file(BQ_CONN_NAME)
-#     os.remove(file_path)
+def test_random_row_query_builder():
+    bq_client = clients.get_data_client(BQ_CONN)
+    row_query_builder = random_row_builder.RandomRowBuilder(["station_id"], 10)
+    query = row_query_builder.compile(
+        bq_client, "bigquery-public-data.new_york_citibike", "citibike_stations"
+    )
+
+    random_rows = bq_client.execute(query)
+
+    assert query.compile() == EXPECTED_RANDOM_ROW_QUERY
+    assert len(random_rows["station_id"]) == 10
+    assert list(random_rows["station_id"]) != [
+        4683,
+        4676,
+        4675,
+        4674,
+        4673,
+        4671,
+        4670,
+        4666,
+        4665,
+        4664,
+    ]

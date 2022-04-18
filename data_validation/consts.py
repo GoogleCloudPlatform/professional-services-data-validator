@@ -112,7 +112,7 @@ TARGET_TABLE_NAME = "target_table_name"
 TARGET_COLUMN_NAME = "target_column_name"
 TARGET_AGG_VALUE = "target_agg_value"
 
-VALIDATION_STATUS = "status"
+VALIDATION_STATUS = "validation_status"
 VALIDATION_STATUS_SUCCESS = "success"
 VALIDATION_STATUS_FAIL = "fail"
 
@@ -123,18 +123,6 @@ COUNT_STAR = "{count_star}"
 # Validation metadata
 RESULT_TYPE_SOURCE = "source"
 RESULT_TYPE_TARGET = "target"
-
-# Ibis Object Info
-NUMERIC_DATA_TYPES = [
-    "float64",
-    "int32",
-    "int64",
-    "decimal",
-    "int32[non-nullable]",
-    "int64[non-nullable]",
-    "float64[non-nullable]",
-    "decimal[non-nullable]",
-]
 
 FORMAT_TYPES = ["csv", "json", "table", "text"]
 

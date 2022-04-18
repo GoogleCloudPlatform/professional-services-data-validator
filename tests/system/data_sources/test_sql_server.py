@@ -54,7 +54,7 @@ def cloud_sql(request):
 
 
 def test_sql_server_count(cloud_sql):
-    """ Test count validation on SQL Server instance """
+    """Test count validation on SQL Server instance"""
     conn = {
         "source_type": "MSSQL",
         "host": SQL_SERVER_HOST,
@@ -84,7 +84,10 @@ def test_sql_server_count(cloud_sql):
         consts.CONFIG_FORMAT: "table",
     }
 
-    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
 

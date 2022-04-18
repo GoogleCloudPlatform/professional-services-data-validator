@@ -25,9 +25,17 @@ CONN_CONFIG = {
     "file_type": "json",
 }
 
-JSON_DATA = (
-    """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"}]"""
-)
+JSON_DATA = """
+[
+{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},
+{"col_a":3,"col_b":"a"},{"col_a":4,"col_b":"b"},{"col_a":5,"col_b":"c"},
+{"col_a":6,"col_b":"a"},{"col_a":7,"col_b":"b"},{"col_a":8,"col_b":"c"},
+{"col_a":9,"col_b":"a"},{"col_a":10,"col_b":"b"},{"col_a":11,"col_b":"c"},
+{"col_a":12,"col_b":"a"},{"col_a":13,"col_b":"b"},{"col_a":14,"col_b":"c"},
+{"col_a":15,"col_b":"a"},{"col_a":16,"col_b":"b"},{"col_a":17,"col_b":"c"},
+{"col_a":18,"col_b":"a"},{"col_a":19,"col_b":"b"},{"col_a":20,"col_b":"c"},
+{"col_a":21,"col_b":"a"},{"col_a":22,"col_b":"b"},{"col_a":23,"col_b":"c"}
+]"""
 
 
 @pytest.fixture
@@ -38,7 +46,7 @@ def module_under_test():
 
 
 def _create_table_file(table_path, data):
-    """ Create JSON File """
+    """Create JSON File"""
     with open(table_path, "w") as f:
         f.write(data)
 
@@ -58,10 +66,10 @@ def test_compile(module_under_test, fs):
     _create_table_file(TABLE_FILE_PATH, JSON_DATA)
     client = clients.get_data_client(CONN_CONFIG)
     primary_keys = ["col_a"]
-    builder = module_under_test.RandomRowBuilder(primary_keys, 1)
+    builder = module_under_test.RandomRowBuilder(primary_keys, 10)
 
     query = builder.compile(client, None, CONN_CONFIG["table_name"])
     df = client.execute(query)
 
     assert list(df.columns) == primary_keys
-    assert len(df) == 1
+    assert len(df) == 10

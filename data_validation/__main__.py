@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import json
+import os
 import sys
+
 from yaml import Dumper, dump
 
 from data_validation import (
@@ -26,7 +27,6 @@ from data_validation import (
 )
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
-
 
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
@@ -53,6 +53,18 @@ def get_aggregate_config(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     aggregate_configs = [config_manager.build_config_count_aggregate()]
+    supported_data_types = [
+        "float64",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "decimal",
+        "timestamp",
+    ]
+
+    if args.wildcard_include_string_len:
+        supported_data_types.append("string")
 
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
@@ -62,27 +74,27 @@ def get_aggregate_config(args, config_manager):
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, consts.NUMERIC_DATA_TYPES
+            "sum", col_args, supported_data_types
         )
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, consts.NUMERIC_DATA_TYPES
+            "avg", col_args, supported_data_types
         )
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, consts.NUMERIC_DATA_TYPES
+            "min", col_args, supported_data_types
         )
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, consts.NUMERIC_DATA_TYPES
+            "max", col_args, supported_data_types
         )
     if args.bit_xor:
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "bit_xor", col_args, consts.NUMERIC_DATA_TYPES
+            "bit_xor", col_args, supported_data_types
         )
     return aggregate_configs
 
@@ -136,6 +148,7 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
+
     if config_manager.validation_type == consts.COLUMN_VALIDATION:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if args.grouped_columns is not None:
@@ -151,15 +164,16 @@ def build_config_from_args(args, config_manager):
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
-            config_manager.append_dependent_aliases(comparison_fields)
+            if args.hash != "*":
+                config_manager.append_dependent_aliases(comparison_fields)
+
     if args.primary_keys is not None:
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_config_comparison_fields(primary_keys)
         )
-        config_manager.append_dependent_aliases(primary_keys)
-
-    # TODO(GH#18): Add query filter config logic
+        if args.hash != "*":
+            config_manager.append_dependent_aliases(primary_keys)
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
@@ -169,6 +183,7 @@ def build_config_from_args(args, config_manager):
         if args.target_query_file is not None:
             query_file = cli_tools.get_arg_list(args.target_query_file)
             config_manager.append_target_query_file(query_file)
+
     return config_manager
 
 
@@ -208,7 +223,7 @@ def build_config_managers_from_args(args):
             filter_config = cli_tools.get_filters(args.filters)
         if args.threshold:
             threshold = args.threshold
-        labels = cli_tools.get_labels(args.labels)
+    labels = cli_tools.get_labels(args.labels)
 
     mgr = state_manager.StateManager()
     source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
@@ -456,7 +471,7 @@ def run_validation_configs(args):
 
 
 def validate(args):
-    """ Run commands related to data validation."""
+    """Run commands related to data validation."""
     if args.validate_cmd in ["column", "row", "schema", "custom-query"]:
         run(args)
     else:
