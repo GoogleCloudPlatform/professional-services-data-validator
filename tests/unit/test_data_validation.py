@@ -623,7 +623,7 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
     assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
 
     assert calc_val_df2["source_agg_value"].sum() == str(
-        num_rows * (len(STRING_CONSTANT + "," + str(len(STRING_CONSTANT))))
+        num_rows * (len(STRING_CONSTANT + str(len(STRING_CONSTANT))))
     )
 
     assert calc_val_df3["source_agg_value"].sum() == str(num_rows * 2)
