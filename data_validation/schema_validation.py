@@ -15,7 +15,7 @@
 import datetime
 import pandas
 
-from data_validation import metadata, consts
+from data_validation import metadata, consts, clients
 
 
 class SchemaValidation(object):
@@ -33,11 +33,15 @@ class SchemaValidation(object):
 
     def execute(self):
         """Performs a validation between source and a target schema"""
-        ibis_source_schema = self.config_manager.source_client.get_schema(
-            self.config_manager.source_table, self.config_manager.source_schema
+        ibis_source_schema = clients.get_ibis_table_schema(
+            self.config_manager.source_client,
+            self.config_manager.source_schema,
+            self.config_manager.source_table,
         )
-        ibis_target_schema = self.config_manager.target_client.get_schema(
-            self.config_manager.target_table, self.config_manager.target_schema
+        ibis_target_schema = clients.get_ibis_table_schema(
+            self.config_manager.target_client,
+            self.config_manager.target_schema,
+            self.config_manager.target_table,
         )
 
         source_fields = {}

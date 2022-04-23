@@ -49,6 +49,15 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_FORMAT: "table",
 }
 
+CONFIG_SCHEMA_VALID = {
+    consts.CONFIG_SOURCE_CONN: CONN,
+    consts.CONFIG_TARGET_CONN: CONN,
+    consts.CONFIG_TYPE: "Column",
+    consts.CONFIG_SCHEMA_NAME: "guestbook",
+    consts.CONFIG_TABLE_NAME: "entries",
+    consts.CONFIG_FORMAT: "table",
+}
+
 
 def test_mysql_count_invalid_host():
     try:
@@ -58,6 +67,21 @@ def test_mysql_count_invalid_host():
         )
         df = data_validator.execute()
         assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    except exceptions.DataClientConnectionFailure:
+        # Local Testing will not work for MySQL
+        pass
+
+
+def test_schema_validation():
+    try:
+        data_validator = data_validation.DataValidation(
+            CONFIG_SCHEMA_VALID,
+            verbose=False,
+        )
+        df = data_validator.execute()
+
+        for validation in df.to_dict(orient="records"):
+            assert validation["status"] == consts.VALIDATION_STATUS_SUCCESS
     except exceptions.DataClientConnectionFailure:
         # Local Testing will not work for MySQL
         pass

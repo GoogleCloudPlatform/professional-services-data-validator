@@ -140,6 +140,20 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=schema_name)
 
 
+def get_ibis_table_schema(client, schema_name, table_name):
+    """Return Ibis Table Schema for Supplied Client.
+
+    client (IbisClient): Client to use for table
+    schema_name (str): Schema name of table object
+    table_name (str): Table name of table object
+    database_name (str): Database name (generally default is used)
+    """
+    if type(client) in [MySQLClient, PostgreSQLClient]:
+        return client.schema(schema_name).table(table_name).schema()
+    else:
+        return client.get_schema(table_name, schema_name)
+
+
 def list_schemas(client):
     """Return a list of schemas in the DB."""
     if type(client) in [
