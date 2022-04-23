@@ -14,6 +14,8 @@
 
 import pytest
 
+from data_validation import consts
+
 INPUT_QUERY = "SELECT b.mascot, count(*) as count from dvt_testing.mascot b group by mascot order by 2 desc"
 DATAFRAME_COLUMNS = ["mascot", "count"]
 CALCULATED_COLUMNS = {
@@ -26,13 +28,23 @@ CALCULATED_COLUMNS = {
         "upper__rstrip__ifnull__cast__count",
     ],
 }
+AGGREGATES_TEST = [
+    {
+        consts.CONFIG_FIELD_ALIAS: "sum_starttime",
+        consts.CONFIG_SOURCE_COLUMN: "starttime",
+        consts.CONFIG_TARGET_COLUMN: "starttime",
+        consts.CONFIG_TYPE: "sum",
+    }
+]
+AGGREGATION_QUERY = "sum(starttime) as sum_starttime,"
+BASE_QUERY = "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
 
 
 @pytest.fixture
 def module_under_test():
-    import data_validation.query_builder.custom_query_row_builder
+    import data_validation.query_builder.custom_query_builder
 
-    return data_validation.query_builder.custom_query_row_builder
+    return data_validation.query_builder.custom_query_builder
 
 
 def test_import(module_under_test):
@@ -40,9 +52,26 @@ def test_import(module_under_test):
 
 
 def test_get_calculated_columns(module_under_test):
-    calculated_columns = (
-        module_under_test.CustomQueryRowBuilder().get_calculated_columns(
-            DATAFRAME_COLUMNS
-        )
+    calculated_columns = module_under_test.CustomQueryBuilder().get_calculated_columns(
+        DATAFRAME_COLUMNS
     )
     assert calculated_columns == CALCULATED_COLUMNS
+
+
+def test_custom_query_get_aggregation_query(module_under_test):
+    aggregation_query = module_under_test.CustomQueryBuilder().get_aggregation_query(
+        AGGREGATES_TEST[0]["type"], AGGREGATES_TEST[0]["source_column"]
+    )
+    assert aggregation_query == "sum(starttime) as sum__starttime,"
+
+
+def test_custom_query_get_wrapper_aggregation_query(module_under_test):
+    wrapper_query = (
+        module_under_test.CustomQueryBuilder().get_wrapper_aggregation_query(
+            AGGREGATION_QUERY, BASE_QUERY
+        )
+    )
+    assert (
+        wrapper_query
+        == "sum(starttime) as sum_starttime FROM (SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013) as base_query"
+    )

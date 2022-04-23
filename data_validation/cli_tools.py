@@ -538,6 +538,11 @@ def _configure_custom_query_parser(custom_query_parser):
     """Configure arguments to run custom-query validations."""
     _add_common_arguments(custom_query_parser)
     custom_query_parser.add_argument(
+        "--custom-query-type",
+        "-cqt",
+        help="Which type of custom query (row/column)",
+    )
+    custom_query_parser.add_argument(
         "--source-query-file",
         "-sqf",
         help="File containing the source sql query",

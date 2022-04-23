@@ -12,12 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The QueryBuilder for building custom query row validation."""
+""" The QueryBuilder for building custom query row|column validation."""
 
 
-class CustomQueryRowBuilder(object):
+class CustomQueryBuilder(object):
     def __init__(self):
-        """Build a CustomQueryRowBuilder object which is ready to build a custom query row validation nested query."""
+        """Build a CustomQueryBuilder object which is ready to build a custom query row|column validation nested query."""
+
+    def get_aggregation_query(self, agg_type, column_name):
+        """Return aggregation query"""
+        aggregation_query = ""
+        if column_name is None:
+            aggregation_query = agg_type + "(*) as " + agg_type + ","
+        else:
+            aggregation_query = (
+                agg_type
+                + "("
+                + column_name
+                + ") as "
+                + agg_type
+                + "__"
+                + column_name
+                + ","
+            )
+        return aggregation_query
+
+    def get_wrapper_aggregation_query(self, aggregate_query, base_query):
+        """Return wrapper aggregation query"""
+
+        return (
+            aggregate_query[: len(aggregate_query) - 1]
+            + " FROM ("
+            + base_query
+            + ") as base_query"
+        )
 
     def compile_custom_query(self, input_query, client_config):
         """Returns the nested sql query calculated from the input query

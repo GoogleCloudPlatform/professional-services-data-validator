@@ -246,7 +246,10 @@ data-validation (--verbose or -v) validate custom-query
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
-  --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
+  --custome-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
+                        Type of custom query validation: ('row'|'column')
+                        Enter 'column' for custom query column validation
+  --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
                         File containing the source sql commands
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql commands
@@ -295,6 +298,9 @@ data-validation (--verbose or -v) validate custom-query
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --custome-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
+                        Type of custom query validation: ('row'|'column')
+                        Enter 'row' for custom query column validation
   --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
                         File containing the source sql commands
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE

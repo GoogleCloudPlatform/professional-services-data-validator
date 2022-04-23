@@ -293,7 +293,7 @@ class DataValidation(object):
         )
         if (
             self.config_manager.validation_type == consts.CUSTOM_QUERY
-            and "hash__all" in self.run_metadata.validations
+            and self.config_manager.custom_query_type[0] == "row"
         ):
             join_on_fields = set(["hash__all"])
 
@@ -302,7 +302,7 @@ class DataValidation(object):
             self.config_manager.validation_type == consts.ROW_VALIDATION
             or (
                 self.config_manager.validation_type == consts.CUSTOM_QUERY
-                and "hash__all" in self.run_metadata.validations
+                and self.config_manager.custom_query_type[0] == "row"
             )
         )
 
