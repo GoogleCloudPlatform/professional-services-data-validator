@@ -61,7 +61,7 @@ def get_dataframe(bigquery_client, table_id):
             "source_column_name, target_table_name, target_column_name, "
             "validation_type, aggregation_type, validation_name, "
             "source_agg_value, target_agg_value, group_by_columns, "
-            "difference, pct_difference, pct_threshold, status, labels "
+            "difference, pct_difference, pct_threshold, validation_status, labels "
             f" FROM `{table_id}` ORDER BY target_agg_value ASC"
         ).to_dataframe()
 
@@ -136,7 +136,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
             "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
             "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
-            "status": [
+            "validation_status": [
                 consts.VALIDATION_STATUS_FAIL,
                 consts.VALIDATION_STATUS_SUCCESS,
                 _NAN,

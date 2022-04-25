@@ -58,7 +58,7 @@ class SchemaValidation(object):
                 "target_column_name",
                 "source_agg_value",
                 "target_agg_value",
-                "status",
+                "validation_status",
                 "error_result.details",
             ],
         )
