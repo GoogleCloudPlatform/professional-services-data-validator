@@ -20,6 +20,7 @@ import ibis.expr.types as tz
 import ibis.expr.rules as rlz
 import ibis.backends.base_sqlalchemy.compiler as sql_compiler
 from ibis_bigquery import BigQueryClient
+from ibis.backends.impala.client import ImpalaClient
 from ibis.backends.pandas.client import PandasClient
 import ibis.backends.pandas.execution.util as pandas_util
 
@@ -43,6 +44,7 @@ from io import StringIO
 RANDOM_SORT_SUPPORTS = {
     PandasClient: "NA",
     BigQueryClient: "RAND()",
+    ImpalaClient: "RAND()",
 }
 
 
