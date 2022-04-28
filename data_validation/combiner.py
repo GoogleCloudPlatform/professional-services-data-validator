@@ -118,6 +118,18 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
             .else_(consts.VALIDATION_STATUS_FAIL)
             .end()
         )
+    # String data types i.e "None" can be returned for NULL timestamp/datetime aggs
+    elif isinstance(datatype, ibis.expr.datatypes.String):
+        difference = pct_difference = ibis.null().cast("float64")
+        validation_status = (
+            ibis.case()
+            .when(
+                target_value.isnull() & source_value.isnull(),
+                consts.VALIDATION_STATUS_SUCCESS,
+            )
+            .else_(consts.VALIDATION_STATUS_FAIL)
+            .end()
+        )
     else:
         difference = (target_value - source_value).cast("float64")
 
