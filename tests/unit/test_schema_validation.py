@@ -200,7 +200,7 @@ def test_execute(module_under_test, fs):
     dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
     result_df = dv_client.schema_validator.execute()
     failures = result_df[
-        result_df["status"].str.contains(consts.VALIDATION_STATUS_FAIL)
+        result_df["validation_status"].str.contains(consts.VALIDATION_STATUS_FAIL)
     ]
 
     assert len(result_df) == len(source_data[0]) + 1
