@@ -338,12 +338,12 @@ class ValidationBuilder(object):
             source_input_query = self.get_query_from_file(
                 self.config_manager.source_query_file[0]
             )
-            if self.config_manager.custom_query_type[0] == "row":
+            if self.config_manager.custom_query_type == "row":
                 calculated_query = CustomQueryBuilder().compile_custom_query(
                     source_input_query, source_config
                 )
                 query = self.source_client.sql(calculated_query)
-            elif self.config_manager.custom_query_type[0] == "column":
+            elif self.config_manager.custom_query_type == "column":
                 source_aggregate_query = "SELECT "
                 for aggregate in self.config_manager.aggregates:
                     source_aggregate_query += (
@@ -360,7 +360,7 @@ class ValidationBuilder(object):
             else:
                 raise ValueError(
                     "Expected custom query type to be column or row, got an unacceptable value. "
-                    f"Input custom query type: {self.config_manager.custom_query_type[0]}"
+                    f"Input custom query type: {self.config_manager.custom_query_type}"
                 )
         else:
             query = self.source_builder.compile(**source_config)
@@ -382,12 +382,12 @@ class ValidationBuilder(object):
             target_input_query = self.get_query_from_file(
                 self.config_manager.target_query_file[0]
             )
-            if self.config_manager.custom_query_type[0] == "row":
+            if self.config_manager.custom_query_type == "row":
                 calculated_query = CustomQueryBuilder().compile_custom_query(
                     target_input_query, target_config
                 )
                 query = self.target_client.sql(calculated_query)
-            elif self.config_manager.custom_query_type[0] == "column":
+            elif self.config_manager.custom_query_type == "column":
                 target_aggregate_query = "SELECT "
                 for aggregate in self.config_manager.aggregates:
                     target_aggregate_query += (
@@ -404,7 +404,7 @@ class ValidationBuilder(object):
             else:
                 raise ValueError(
                     "Expected custom query type to be column or row, got an unacceptable value. "
-                    f"Input custom query type: {self.config_manager.custom_query_type[0]}"
+                    f"Input custom query type: {self.config_manager.custom_query_type}"
                 )
         else:
             query = self.target_builder.compile(**target_config)

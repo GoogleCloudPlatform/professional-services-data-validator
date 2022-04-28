@@ -152,11 +152,11 @@ class ConfigManager(object):
 
     @property
     def custom_query_type(self):
-        """Return SQL Query File from Config"""
-        return self._config.get(consts.CONFIG_CUSTOM_QUERY_TYPE, [])
+        """Return custom query type from config"""
+        return self._config.get(consts.CONFIG_CUSTOM_QUERY_TYPE, "")
 
     def append_custom_query_type(self, custom_query_type):
-        """Append grouped configs to existing config."""
+        """Append custom query type config to existing config."""
         self._config[consts.CONFIG_CUSTOM_QUERY_TYPE] = (
             self.custom_query_type + custom_query_type
         )
