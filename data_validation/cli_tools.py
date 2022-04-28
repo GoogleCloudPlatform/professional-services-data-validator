@@ -540,6 +540,7 @@ def _configure_custom_query_parser(custom_query_parser):
     custom_query_parser.add_argument(
         "--custom-query-type",
         "-cqt",
+        required=True,
         help="Which type of custom query (row/column)",
     )
     custom_query_parser.add_argument(

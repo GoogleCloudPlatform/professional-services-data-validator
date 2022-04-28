@@ -278,7 +278,7 @@ used to run custom query validations.
 
 ### Custom Query Row Validations 
 
-#### (Note: Row hash validation is currently only supported for BigQuery and Imapala/Hive)
+#### (Note: Row hash validation is currently only supported for BigQuery, Imapala/Hive and Teradata)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag with `*` value which means all the fields
