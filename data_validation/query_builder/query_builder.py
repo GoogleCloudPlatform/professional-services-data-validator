@@ -283,7 +283,7 @@ class CalculatedField(object):
     @staticmethod
     def concat(config, fields):
         if config.get("default_concat_separator") is None:
-            config["default_concat_separator"] = ibis.literal(",")
+            config["default_concat_separator"] = ibis.literal("")
         fields = [config["default_concat_separator"], fields]
         cast = "string"
         return CalculatedField(
