@@ -538,7 +538,6 @@ class QueryBuilder(object):
         """Add a GroupedField instance to the query which
             represents adding a column to group by in the
             query being built.
-
         Args:
             grouped_field (GroupedField): A GroupedField instance
         """
@@ -548,7 +547,6 @@ class QueryBuilder(object):
         """Add a FilterField instance to your query which
             will add the desired filter to your compiled
             query (ie. WHERE query_filter=True)
-
         Args:
             filter_obj (FilterField): A FilterField instance
         """

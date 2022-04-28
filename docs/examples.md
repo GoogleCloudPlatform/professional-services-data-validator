@@ -185,19 +185,24 @@ validations:
   type: Column
   ```
 
-#### Run a custom query validation
+#### Run a custom query column validation
 ````shell script
-data-validation validate custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations
+data-validation validate --custom-query-type column custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations
 ````
 
 #### Run a custom query validation with sum aggregation 
 ````shell script
-data-validation validate custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available
+data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available
 ````
 
 #### Run a custom query validation with max aggregation 
 ````shell script
-data-validation validate custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --max num_bikes_available
+data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --max num_bikes_available
+````
+
+#### Run a custom query row validation
+````shell script
+data-validation validate custom-query --custom-query-type row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations  --hash \'*\'
 ````
 
 Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively.
