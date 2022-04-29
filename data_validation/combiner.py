@@ -112,6 +112,10 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         difference = pct_difference = ibis.null()
         validation_status = (
             ibis.case()
+            .when(
+                target_value.isnull() & source_value.isnull(),
+                consts.VALIDATION_STATUS_SUCCESS,
+            )
             .when(target_value == source_value, consts.VALIDATION_STATUS_SUCCESS)
             .else_(consts.VALIDATION_STATUS_FAIL)
             .end()

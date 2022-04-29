@@ -328,6 +328,11 @@ def _configure_run_parser(subparsers):
         action="store_true",
         help="Include string fields for wildcard aggregations.",
     )
+    run_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        help="Cast any int32 fields to int64 for large aggregations.",
+    )
 
 
 def _configure_connection_parser(subparsers):
@@ -526,6 +531,11 @@ def _configure_column_parser(column_parser):
         "-wis",
         action="store_true",
         help="Include string fields for wildcard aggregations.",
+    )
+    column_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        help="Cast any int32 fields to int64 for large aggregations.",
     )
 
 
