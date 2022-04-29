@@ -548,6 +548,12 @@ def _configure_custom_query_parser(custom_query_parser):
     """Configure arguments to run custom-query validations."""
     _add_common_arguments(custom_query_parser)
     custom_query_parser.add_argument(
+        "--custom-query-type",
+        "-cqt",
+        required=True,
+        help="Which type of custom query (row/column)",
+    )
+    custom_query_parser.add_argument(
         "--source-query-file",
         "-sqf",
         help="File containing the source sql query",
@@ -618,6 +624,12 @@ def _configure_custom_query_parser(custom_query_parser):
         "--primary-keys",
         "-pk",
         help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    custom_query_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
     )
 
 

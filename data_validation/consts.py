@@ -50,7 +50,7 @@ CONFIG_FILTER_TARGET = "target"
 CONFIG_MAX_RECURSIVE_QUERY_SIZE = "max_recursive_query_size"
 CONFIG_SOURCE_QUERY_FILE = "source_query_file"
 CONFIG_TARGET_QUERY_FILE = "target_query_file"
-
+CONFIG_CUSTOM_QUERY_TYPE = "custom_query_type"
 CONFIG_FILTER_SOURCE_COLUMN = "source_column"
 CONFIG_FILTER_SOURCE_VALUE = "source_value"
 CONFIG_FILTER_TARGET_COLUMN = "target_column"

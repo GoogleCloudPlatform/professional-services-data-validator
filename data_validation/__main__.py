@@ -177,6 +177,12 @@ def build_config_from_args(args, config_manager):
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+        if args.custom_query_type is not None:
+            config_manager.append_custom_query_type(args.custom_query_type)
+        else:
+            raise ValueError(
+                "Expected custom query type to be given, got empty string."
+            )
         if args.source_query_file is not None:
             query_file = cli_tools.get_arg_list(args.source_query_file)
             config_manager.append_source_query_file(query_file)

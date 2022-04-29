@@ -73,7 +73,7 @@ class RandomSortKey(ops.SortKey):
 
 class RandomRowBuilder(object):
     def __init__(self, primary_keys: List[str], batch_size: int):
-        """Build a RandomRowBuilder objct which is ready to build a random row filter query.
+        """Build a RandomRowBuilder object which is ready to build a random row filter query.
 
         Args:
             primary_keys: A list of primary key field strings used to find random rows.
