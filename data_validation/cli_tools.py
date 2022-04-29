@@ -331,6 +331,7 @@ def _configure_run_parser(subparsers):
     run_parser.add_argument(
         "--cast-to-bigint",
         "-ctb",
+        action="store_true",
         help="Cast any int32 fields to int64 for large aggregations.",
     )
 
@@ -535,6 +536,7 @@ def _configure_column_parser(column_parser):
     column_parser.add_argument(
         "--cast-to-bigint",
         "-ctb",
+        action="store_true",
         help="Cast any int32 fields to int64 for large aggregations.",
     )
 
@@ -630,6 +632,12 @@ def _configure_custom_query_parser(custom_query_parser):
         "-wis",
         action="store_true",
         help="Include string fields for wildcard aggregations.",
+    )
+    custom_query_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
     )
 
 
