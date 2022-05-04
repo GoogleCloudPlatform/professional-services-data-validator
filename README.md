@@ -33,6 +33,7 @@ DVT supports the following connection types:
 *   [FileSystem](docs/connections.md#filesystem)
 *   [Impala](docs/connections.md#impala)
 *   [Hive](docs/connections.md#hive)
+*   [Db2](docs/connections.md#db2)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
