@@ -36,7 +36,6 @@ def _find_scalar_parameter(expr):
 class TeradataQuery(Query):
 
     NO_LOCK_SQL = "LOCKING ROW FOR ACCESS "
-    CONVERT_TO_UTC = "SET TIME ZONE 'GMT'; "
 
     def __init__(self, client, ddl):
         super().__init__(client, ddl)
@@ -45,8 +44,6 @@ class TeradataQuery(Query):
         sql = self.compiled_sql
         if self.client.use_no_lock_tables and sql.strip().startswith("SELECT"):
             sql = self.NO_LOCK_SQL + self.compiled_sql
-        if self.client.convert_to_utc:
-            sql = self.CONVERT_TO_UTC + self.sql
 
         return pandas.read_sql(sql, self.client.client)
 
@@ -99,6 +96,9 @@ class TeradataClient(SQLClient):
 
     def _execute(self, dml, results=False, **kwargs):
         query = TeradataQuery(self, dml)
+        if self.convert_to_utc:
+            utc_query = TeradataQuery(self, utc_query)
+            self._execute_query(utc_query)
         df = self._execute_query(query, **kwargs)
         if results:
             return df
