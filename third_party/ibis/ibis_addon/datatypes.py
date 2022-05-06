@@ -28,8 +28,8 @@ from ibis.backends.pandas.execution.constants import IBIS_TYPE_TO_PANDAS_TYPE
 
 # BigQuery BIGNUMERIC support needs to be pushed to Ibis
 bigquery._pandas_helpers.BQ_TO_ARROW_SCALARS["BIGNUMERIC"] = pyarrow.decimal256
-_DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.float64
-_DTYPE_TO_IBIS_TYPE["NUMERIC"] = dt.float64
+_DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.Decimal(38,9)
+_DTYPE_TO_IBIS_TYPE["NUMERIC"] = dt.Decimal(38,9)
 
 
 # Ibis Pandas Client Inference
