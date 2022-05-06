@@ -15,6 +15,10 @@ RUN apt-get update \
 RUN pip install --upgrade pip
 RUN pip install Flask gunicorn google_pso_data_validator
 
+# Hive/Impala Dependencies 
+# RUN pip install hdfs
+# RUN pip install thrift-sasl
+
 # Oracle Dependencies
 # if you are using Oracle you should add .rpm files
 # under your license to a directory called oracle/
