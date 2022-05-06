@@ -97,6 +97,7 @@ class TeradataClient(SQLClient):
     def _execute(self, dml, results=False, **kwargs):
         query = TeradataQuery(self, dml)
         if self.convert_to_utc:
+            uct_query = "SET TIME ZONE 'GMT'"
             utc_query = TeradataQuery(self, utc_query)
             self._execute_query(utc_query)
         df = self._execute_query(query, **kwargs)
