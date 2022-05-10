@@ -55,6 +55,7 @@ def get_aggregate_config(args, config_manager):
     aggregate_configs = [config_manager.build_config_count_aggregate()]
     supported_data_types = [
         "float64",
+        "float32",
         "int8",
         "int16",
         "int32",
