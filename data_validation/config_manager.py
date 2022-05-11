@@ -16,6 +16,7 @@ import copy
 import logging
 
 import google.oauth2.service_account
+from ibis_bigquery.client import BigQueryClient
 
 from data_validation import clients, consts, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
@@ -277,13 +278,21 @@ class ConfigManager(object):
         if not hasattr(self, "_source_ibis_table"):
             self._source_ibis_table = clients.get_ibis_table(
                 self.source_client, self.source_schema, self.source_table
-            )
+            )  # dmedora: it's already timestamp in this table.
+        print(
+            "DEBUG dmedora config_mgr.get_source_ibis_table:",
+            self.source_client,
+            self.source_schema,
+            self.source_table,
+            self._source_ibis_table,
+        )
         return self._source_ibis_table
 
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
         n: Int the depth of subquery requested"""
         table = self.get_source_ibis_table()
+        print("DEBUG dmedora get_source_ibis_calculated_table:", table.schema)
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.source_builder.compile_calculated_fields(table, n=depth)
@@ -489,7 +498,7 @@ class ConfigManager(object):
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
-
+        print("DEBUG dmedora: source_table.schema:", source_table.schema)
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -500,6 +509,7 @@ class ConfigManager(object):
         for column in casefold_source_columns:
             # Get column type and remove precision/scale attributes
             column_type_str = str(source_table[casefold_source_columns[column]].type())
+            print("DEBUG dmedora: column, column_type_str:", column, column_type_str)
             column_type = column_type_str.split("(")[0]
 
             if column not in allowlist_columns:
@@ -516,6 +526,11 @@ class ConfigManager(object):
                     )
                 continue
 
+            print(
+                "DEBUG dmedora finding client pls:",
+                type(self.source_client) == BigQueryClient,
+            )
+            print("DEBUG dmedora: column_type:", column_type)
             if column_type == "string" or (
                 column_type == "timestamp"
                 and agg_type
@@ -528,16 +543,15 @@ class ConfigManager(object):
                 aggregate_config = self.append_pre_agg_calc_field(
                     column, agg_type, column_type
                 )
-                aggregate_configs.append(aggregate_config)
-                continue
-
-            aggregate_config = {
-                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
-                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
-                consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
-                consts.CONFIG_TYPE: agg_type,
-            }
+            else:
+                aggregate_config = {
+                    consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
+                    consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
+                    consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
+                    consts.CONFIG_TYPE: agg_type,
+                }
             aggregate_configs.append(aggregate_config)
+
         return aggregate_configs
 
     def build_config_calculated_fields(
