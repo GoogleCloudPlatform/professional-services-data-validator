@@ -360,8 +360,7 @@ class CalculatedField(object):
 
     @staticmethod
     def cast(config, fields):
-        if config.get("default_cast") is None:
-            target_type = "string"
+        target_type = config.get("default_cast", "string")
         return CalculatedField(
             ibis.expr.api.ValueExpr.cast,
             config,

@@ -33,6 +33,7 @@ DVT supports the following connection types:
 *   [FileSystem](docs/connections.md#filesystem)
 *   [Impala](docs/connections.md#impala)
 *   [Hive](docs/connections.md#hive)
+*   [Db2](docs/connections.md#db2)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
@@ -127,6 +128,8 @@ data-validation (--verbose or -v) validate column
                         Service account to use for BigQuery result handler output.
   [--wildcard-include-string-len or -wis]
                         If flag is present, include string columns in aggregation as len(string_col)
+  [--cast-to-bigint or -ctb]
+                        If flag is present, cast all int32 columns to int64 before aggregation
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.

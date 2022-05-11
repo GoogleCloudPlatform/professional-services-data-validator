@@ -31,11 +31,11 @@ import ibis.common.geospatial as geo
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
-import ibis.sql.alchemy as alch
+import ibis.backends.base_sqlalchemy.alchemy as alch
 import third_party.ibis.ibis_DB2.alchemy as db2_alch
 
 # used for literal translate
-from ibis.sql.alchemy import (
+from ibis.backends.base_sqlalchemy.alchemy import (
     _get_sqla_table,
     _variance_reduction,
     fixed_arity,
@@ -363,6 +363,29 @@ def _reduction(func_name):
 
     return reduction_compiler
 
+def _count_start(sa_func):
+    return sa_func
+
+def _reduction_count(sa_func):
+    def formatter(t, expr):
+        op = expr.op()
+        *args, where = op.args
+
+        return _reduction_format(t, sa_func, where, *args)
+
+    return formatter
+
+def _reduction_format(t, sa_func, where, arg, *args):
+    if where is not None:
+        arg = t.translate(where.ifelse(arg, None))
+    else:
+        arg = t.translate(arg)
+
+    #Db2 doesn't allow '*' to be parameterized, probably better way to fix this... 
+    if arg == '*':
+        arg = None
+
+    return sa_func(arg, *map(t.translate, args))
 
 def _log(t, expr):
     arg, base = expr.op().args
@@ -572,6 +595,9 @@ _operation_registry.update(
         ops.CumulativeAny: unary(sa.func.bool_or),
         ops.IdenticalTo: _identical_to,
         ops.HLLCardinality: _hll_cardinality,
+        # aggregate methods
+        ops.Count: _reduction_count(sa.func.count),
+
     }
 )
 

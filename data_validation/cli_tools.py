@@ -125,6 +125,15 @@ CONNECTION_SOURCE_FIELDS = {
             "Desired Kerberos service name ('impala' if not provided)",
         ],
     ],
+    "DB2": [
+        ["host", "Desired DB2 host"],
+        ["port", "Desired DB2 port (50000 if not provided)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in DB2 to connect to"],
+        ["url", "URL link in DB2 to connect to"],
+        ["driver", "Driver link in DB2 to connect to (default ibm_db_sa)"],
+    ],
 }
 
 
@@ -328,6 +337,12 @@ def _configure_run_parser(subparsers):
         action="store_true",
         help="Include string fields for wildcard aggregations.",
     )
+    run_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
+    )
 
 
 def _configure_connection_parser(subparsers):
@@ -527,6 +542,12 @@ def _configure_column_parser(column_parser):
         action="store_true",
         help="Include string fields for wildcard aggregations.",
     )
+    column_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
+    )
 
 
 def _configure_schema_parser(schema_parser):
@@ -620,6 +641,12 @@ def _configure_custom_query_parser(custom_query_parser):
         "-wis",
         action="store_true",
         help="Include string fields for wildcard aggregations.",
+    )
+    custom_query_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
     )
 
 

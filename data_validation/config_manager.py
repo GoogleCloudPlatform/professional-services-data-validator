@@ -468,6 +468,8 @@ class ConfigManager(object):
             calc_func = "length"
         elif column_type == "timestamp":
             calc_func = "epoch_seconds"
+        elif column_type == "int32":
+            calc_func = "cast"
         else:
             raise ValueError(f"Unsupported column type: {column_type}")
 
@@ -478,6 +480,9 @@ class ConfigManager(object):
             consts.CONFIG_TYPE: calc_func,
             consts.CONFIG_DEPTH: 0,
         }
+
+        if column_type == "int32":
+            calculated_config["default_cast"] = "int64"
 
         existing_calc_fields = [
             x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
@@ -493,7 +498,9 @@ class ConfigManager(object):
         }
         return aggregate_config
 
-    def build_config_column_aggregates(self, agg_type, arg_value, supported_types):
+    def build_config_column_aggregates(
+        self, agg_type, arg_value, supported_types, cast_to_bigint=False
+    ):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
@@ -515,13 +522,13 @@ class ConfigManager(object):
             if column not in allowlist_columns:
                 continue
             elif column not in casefold_target_columns:
-                logging.info(
+                print(
                     f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    logging.info(
+                    print(
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
                     )
                 continue
@@ -531,14 +538,18 @@ class ConfigManager(object):
                 type(self.source_client) == BigQueryClient,
             )
             print("DEBUG dmedora: column_type:", column_type)
-            if column_type == "string" or (
-                column_type == "timestamp"
-                and agg_type
-                in (
-                    "sum",
-                    "avg",
-                    "bit_xor",
-                )  # timestamps: do not convert to epoch seconds for min/max
+            if (
+                column_type == "string"
+                or (cast_to_bigint and column_type == "int32")
+                or (
+                    column_type == "timestamp"
+                    and agg_type
+                    in (
+                        "sum",
+                        "avg",
+                        "bit_xor",
+                    )  # timestamps: do not convert to epoch seconds for min/max
+                )
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     column, agg_type, column_type

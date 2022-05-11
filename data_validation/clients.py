@@ -83,6 +83,12 @@ except Exception:
         "pip install snowflake-connector-python"
     )
 
+# If you have Db2 client installed
+try:
+    from third_party.ibis.ibis_DB2.client import DB2Client
+except Exception:
+    DB2Client = _raise_missing_client_error("pip install ibm_db_sa")
+
 
 def get_bigquery_client(project_id, dataset_id=None, credentials=None):
     info = client_info.get_http_client_info()
@@ -129,6 +135,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     if type(client) in [
         OracleClient,
         PostgreSQLClient,
+        DB2Client,
         MSSQLClient,
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
@@ -157,6 +164,7 @@ def list_schemas(client):
     if type(client) in [
         OracleClient,
         PostgreSQLClient,
+        DB2Client,
         MSSQLClient,
     ]:
         return client.list_schemas()
@@ -171,6 +179,7 @@ def list_tables(client, schema_name):
     if type(client) in [
         OracleClient,
         PostgreSQLClient,
+        DB2Client,
         MSSQLClient,
     ]:
         return client.list_tables(schema=schema_name)
@@ -249,4 +258,5 @@ CLIENT_LOOKUP = {
     "MSSQL": MSSQLClient,
     "Snowflake": snowflake_connect,
     "Spanner": spanner_connect,
+    "DB2": DB2Client,
 }
