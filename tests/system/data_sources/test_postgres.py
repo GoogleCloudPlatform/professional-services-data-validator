@@ -27,7 +27,17 @@ import pytest
 # Cloud SQL proxy listens to localhost
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE", "guestbook")
 PROJECT_ID = os.getenv("PROJECT_ID")
+
+CONN = {
+    "source_type": "Postgres",
+    "host": POSTGRES_HOST,
+    "user": "postgres",
+    "password": POSTGRES_PASSWORD,
+    "port": 5432,
+    "database": POSTGRES_DATABASE,
+}
 
 
 @pytest.fixture
@@ -53,20 +63,11 @@ def cloud_sql(request):
 
 
 def test_postgres_count(cloud_sql):
-    """ Test count validation on Postgres instance """
-    conn = {
-        "source_type": "Postgres",
-        "host": POSTGRES_HOST,
-        "user": "postgres",
-        "password": POSTGRES_PASSWORD,
-        "port": 5432,
-        "database": "guestbook",
-    }
-
+    """Test count validation on Postgres instance"""
     config_count_valid = {
         # BigQuery Specific Connection Config
-        consts.CONFIG_SOURCE_CONN: conn,
-        consts.CONFIG_TARGET_CONN: conn,
+        consts.CONFIG_SOURCE_CONN: CONN,
+        consts.CONFIG_TARGET_CONN: CONN,
         # Validation Type
         consts.CONFIG_TYPE: "Column",
         # Configuration Required Depending on Validator Type
@@ -79,10 +80,48 @@ def test_postgres_count(cloud_sql):
                 consts.CONFIG_TARGET_COLUMN: None,
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
+            {
+                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_SOURCE_COLUMN: "guestname",
+                consts.CONFIG_TARGET_COLUMN: "guestname",
+                consts.CONFIG_FIELD_ALIAS: "count_guestname",
+            },
+            {
+                consts.CONFIG_TYPE: "sum",
+                consts.CONFIG_SOURCE_COLUMN: "entryid",
+                consts.CONFIG_TARGET_COLUMN: "entryid",
+                consts.CONFIG_FIELD_ALIAS: "sum_entryid",
+            },
         ],
         consts.CONFIG_FORMAT: "table",
     }
 
-    data_validator = data_validation.DataValidation(config_count_valid, verbose=False,)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
     df = data_validator.execute()
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+
+    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
+
+
+def test_schema_validation(cloud_sql):
+    """Test schema validation on Postgres instance"""
+    config_count_valid = {
+        consts.CONFIG_SOURCE_CONN: CONN,
+        consts.CONFIG_TARGET_CONN: CONN,
+        consts.CONFIG_TYPE: "Schema",
+        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_TABLE_NAME: "entries",
+        consts.CONFIG_FORMAT: "table",
+    }
+
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
+    df = data_validator.execute()
+
+    for validation in df.to_dict(orient="records"):
+        assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS

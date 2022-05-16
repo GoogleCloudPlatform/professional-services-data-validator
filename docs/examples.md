@@ -41,6 +41,11 @@ data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count bikeid,gender
 ````
 
+#### Run a checksum validation for all rows
+````shell script
+data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*'
+````
+
 #### Store results in a BigQuery table
 ````shell script
 data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count tripduration,start_station_name -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
@@ -135,7 +140,7 @@ data-validation query
   --query, -q The Raw query to run against the supplied connection
 ````
 
-#### Sample YAML file (Grouped Column validation)
+#### Sample YAML Config (Grouped Column validation)
 ```yaml
 result_handler:
   project_id: my-project-id
@@ -150,19 +155,12 @@ validations:
     source_column: null
     target_column: null
     type: count
-  - field_alias: sum__num_bikes_available
-    source_column: num_bikes_available
-    target_column: num_bikes_available
-    type: sum
-    cast: float64
-  - field_alias: sum__num_docks_available
-    source_column: num_docks_available
-    target_column: num_docks_available
-    type: sum
+  calculated_fields: []
   filters:
   - source: region_id=71
     target: region_id=71
     type: custom
+  format: table
   grouped_columns:
   - cast: null
     field_alias: region_id
@@ -170,12 +168,77 @@ validations:
     target_column: region_id
   labels:
   - !!python/tuple
-    - description
+    - user
     - test
+  random_row_batch_size: null
   schema_name: bigquery-public-data.new_york_citibike
   table_name: citibike_stations
   target_schema_name: bigquery-public-data.new_york_citibike
   target_table_name: citibike_stations
   threshold: 0.0
   type: Column
+  use_random_rows: false
   ```
+
+#### Sample YAML with Calc Fields (Cast to NUMERIC before aggregation)
+
+The NUMERIC data type in BigQuery is equivalent to DECIMAL(38,9). This configuration
+will run a SUM(CAST(column to NUMERIC)) to avoid integer overflow.
+
+```yaml
+result_handler: {}
+source: my_bq_conn
+target: my_bq_conn
+validations:
+- aggregates:
+  - field_alias: count
+    source_column: null
+    target_column: null
+    type: count
+  - field_alias: sum__int
+    source_column: cast__int
+    target_column: cast__int
+    type: sum
+  calculated_fields:
+  - depth: 0
+    field_alias: cast__int
+    source_calculated_columns:
+    - int
+    target_calculated_columns:
+    - int
+    type: cast
+    default_cast: decimal(38,9)
+  filters: []
+  format: table
+  labels: []
+  random_row_batch_size: null
+  schema_name: project.dataset
+  table_name: my_table
+  target_schema_name: project.dataset
+  target_table_name: my_table
+  threshold: 0.0
+  type: Column
+  use_random_rows: false
+```
+
+#### Run a custom query column validation
+````shell script
+data-validation validate --custom-query-type column custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations
+````
+
+#### Run a custom query validation with sum aggregation 
+````shell script
+data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available
+````
+
+#### Run a custom query validation with max aggregation 
+````shell script
+data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --max num_bikes_available
+````
+
+#### Run a custom query row validation
+````shell script
+data-validation validate custom-query --custom-query-type row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations  --hash \'*\'
+````
+
+Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively.

@@ -21,6 +21,7 @@ from data_validation.query_builder.query_builder import (
     CalculatedField,
     FilterField,
 )
+from data_validation.query_builder.custom_query_builder import CustomQueryBuilder
 
 
 class ValidationBuilder(object):
@@ -45,13 +46,17 @@ class ValidationBuilder(object):
         self.source_builder = self.get_query_builder(self.validation_type)
         self.target_builder = self.get_query_builder(self.validation_type)
 
+        self.primary_keys = {}
         self.group_aliases = {}
         self.calculated_aliases = {}
+        self.comparison_fields = {}
 
         self.add_config_aggregates()
         self.add_config_query_groups()
         self.add_config_calculated_fields()
+        self.add_comparison_fields()
         self.add_config_filters()
+        self.add_primary_keys()
         self.add_query_limit()
 
     def clone(self):
@@ -61,14 +66,21 @@ class ValidationBuilder(object):
         cloned_builder.target_builder = deepcopy(self.target_builder)
         cloned_builder.group_aliases = deepcopy(self.group_aliases)
         cloned_builder.calculated_aliases = deepcopy(self.calculated_aliases)
+        cloned_builder.comparison_fields = deepcopy(self.comparison_fields)
         cloned_builder._metadata = deepcopy(self._metadata)
 
         return cloned_builder
 
     @staticmethod
     def get_query_builder(validation_type):
-        """ Return Query Builder object given validation type """
-        if validation_type in ["Column", "GroupedColumn", "Row", "Schema"]:
+        """Return Query Builder object given validation type"""
+        if validation_type in [
+            "Column",
+            "GroupedColumn",
+            "Row",
+            "Schema",
+            "Custom-query",
+        ]:
             builder = QueryBuilder.build_count_validator()
         else:
             msg = "Validation Builder supplied unknown type: %s" % validation_type
@@ -89,12 +101,21 @@ class ValidationBuilder(object):
         return self._metadata
 
     def get_group_aliases(self):
-        """ Return List of String Aliases """
-        return self.group_aliases.keys()
+        """Return List of String Aliases"""
+        return list(self.group_aliases.keys())
+
+    def get_primary_keys(self):
+        """Return List of String Aliases"""
+        # do we need this?
+        return list(self.primary_keys.keys())
 
     def get_calculated_aliases(self):
-        """ Return List of String Aliases """
+        """Return List of String Aliases"""
         return self.calculated_aliases.keys()
+
+    def get_comparison_fields(self):
+        """Return List of String Aliases"""
+        return self.comparison_fields.keys()
 
     def get_grouped_alias_source_column(self, alias):
         return self.group_aliases[alias][consts.CONFIG_SOURCE_COLUMN]
@@ -103,26 +124,36 @@ class ValidationBuilder(object):
         return self.group_aliases[alias][consts.CONFIG_TARGET_COLUMN]
 
     def add_config_aggregates(self):
-        """ Add Aggregations to Query """
+        """Add Aggregations to Query"""
         aggregate_fields = self.config_manager.aggregates
         for aggregate_field in aggregate_fields:
             self.add_aggregate(aggregate_field)
 
     def add_config_calculated_fields(self):
-        """ Add calculated fields to Query """
+        """Add calculated fields to Query"""
         calc_fields = self.config_manager.calculated_fields
         if calc_fields is not None:
             for calc_field in calc_fields:
                 self.add_calc(calc_field)
 
+    def add_primary_keys(self, primary_keys=None):
+        primary_keys = primary_keys or self.config_manager.primary_keys
+        for field in primary_keys:
+            self.add_primary_key(field)
+
+    def add_comparison_fields(self, comparison_fields=None):
+        comparison_fields = comparison_fields or self.config_manager.comparison_fields
+        for field in comparison_fields:
+            self.add_comparison_field(field)
+
     def add_config_query_groups(self, query_groups=None):
-        """ Add Grouped Columns to Query """
+        """Add Grouped Columns to Query"""
         grouped_fields = query_groups or self.config_manager.query_groups
         for grouped_field in grouped_fields:
             self.add_query_group(grouped_field)
 
     def add_config_filters(self):
-        """ Add Filters to Query """
+        """Add Filters to Query"""
         filter_fields = self.config_manager.filters
         for filter_field in filter_fields:
             self.add_filter(filter_field)
@@ -166,7 +197,7 @@ class ValidationBuilder(object):
         )
 
     def pop_grouped_fields(self):
-        """ Return grouped fields and reset configs."""
+        """Return grouped fields and reset configs."""
         self.source_builder.grouped_fields = []
         self.target_builder.grouped_fields = []
         self.group_aliases = {}
@@ -194,6 +225,21 @@ class ValidationBuilder(object):
         self.source_builder.add_grouped_field(source_field)
         self.target_builder.add_grouped_field(target_field)
         self.group_aliases[alias] = grouped_field
+
+    def add_primary_key(self, primary_key):
+        """Add ComparionField to Queries
+
+        Args:
+            primary_key (Dict): An object with source, target, and cast info
+        """
+        source_field_name = primary_key[consts.CONFIG_SOURCE_COLUMN]
+        target_field_name = primary_key[consts.CONFIG_TARGET_COLUMN]
+        # grab calc field metadata
+        alias = primary_key[consts.CONFIG_FIELD_ALIAS]
+        # check if valid calc field and return correct object
+        self.source_builder.add_comparison_field(source_field_name)
+        self.target_builder.add_comparison_field(target_field_name)
+        self.primary_keys[alias] = primary_key
 
     def add_filter(self, filter_field):
         """Add FilterField to Queries
@@ -231,8 +277,33 @@ class ValidationBuilder(object):
         self.source_builder.add_filter_field(source_filter)
         self.target_builder.add_filter_field(target_filter)
 
+    def add_comparison_field(self, comparison_field):
+        """Add ComparionField to Queries
+
+        Args:
+            comparison_field (Dict): An object with source, target, and cast info
+        """
+        source_field_name = comparison_field[consts.CONFIG_SOURCE_COLUMN]
+        target_field_name = comparison_field[consts.CONFIG_TARGET_COLUMN]
+        # grab calc field metadata
+        alias = comparison_field[consts.CONFIG_FIELD_ALIAS]
+        # check if valid calc field and return correct object
+        self.source_builder.add_comparison_field(source_field_name)
+        self.target_builder.add_comparison_field(target_field_name)
+        self._metadata[alias] = metadata.ValidationMetadata(
+            aggregation_type=None,
+            validation_type=self.validation_type,
+            source_table_schema=self.config_manager.source_schema,
+            source_table_name=self.config_manager.source_table,
+            target_table_schema=self.config_manager.target_schema,
+            target_table_name=self.config_manager.target_table,
+            source_column_name=source_field_name,
+            target_column_name=target_field_name,
+            threshold=self.config_manager.threshold,
+        )
+
     def add_calc(self, calc_field):
-        """ Add CalculatedField to Queries
+        """Add CalculatedField to Queries
 
         Args:
             calc_field (Dict): An object with source, target, and cast info
@@ -260,28 +331,88 @@ class ValidationBuilder(object):
         self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):
-        """ Return query for source validation """
+        """Return query for source validation"""
         source_config = {
             "data_client": self.source_client,
             "schema_name": self.config_manager.source_schema,
             "table_name": self.config_manager.source_table,
         }
-        query = self.source_builder.compile(**source_config)
+        if self.validation_type == consts.CUSTOM_QUERY:
+            source_input_query = self.get_query_from_file(
+                self.config_manager.source_query_file[0]
+            )
+            if self.config_manager.custom_query_type == "row":
+                calculated_query = CustomQueryBuilder().compile_custom_query(
+                    source_input_query, source_config
+                )
+                query = self.source_client.sql(calculated_query)
+            elif self.config_manager.custom_query_type == "column":
+                source_aggregate_query = "SELECT "
+                for aggregate in self.config_manager.aggregates:
+                    source_aggregate_query += (
+                        CustomQueryBuilder().get_aggregation_query(
+                            aggregate.get("type"), aggregate.get("target_column")
+                        )
+                    )
+                source_aggregate_query = (
+                    CustomQueryBuilder().get_wrapper_aggregation_query(
+                        source_aggregate_query, source_input_query
+                    )
+                )
+                query = self.source_client.sql(source_aggregate_query)
+            else:
+                raise ValueError(
+                    "Expected custom query type to be column or row, got an unacceptable value. "
+                    f"Input custom query type: {self.config_manager.custom_query_type}"
+                )
+        else:
+            query = self.source_builder.compile(**source_config)
         if self.verbose:
+            print(source_config)
             print("-- ** Source Query ** --")
             print(query.compile())
 
         return query
 
     def get_target_query(self):
-        """ Return query for source validation """
+        """Return query for source validation"""
         target_config = {
             "data_client": self.target_client,
             "schema_name": self.config_manager.target_schema,
             "table_name": self.config_manager.target_table,
         }
-        query = self.target_builder.compile(**target_config)
+        if self.validation_type == consts.CUSTOM_QUERY:
+            target_input_query = self.get_query_from_file(
+                self.config_manager.target_query_file[0]
+            )
+            if self.config_manager.custom_query_type == "row":
+                calculated_query = CustomQueryBuilder().compile_custom_query(
+                    target_input_query, target_config
+                )
+                query = self.target_client.sql(calculated_query)
+            elif self.config_manager.custom_query_type == "column":
+                target_aggregate_query = "SELECT "
+                for aggregate in self.config_manager.aggregates:
+                    target_aggregate_query += (
+                        CustomQueryBuilder().get_aggregation_query(
+                            aggregate.get("type"), aggregate.get("target_column")
+                        )
+                    )
+                target_aggregate_query = (
+                    CustomQueryBuilder().get_wrapper_aggregation_query(
+                        target_aggregate_query, target_input_query
+                    )
+                )
+                query = self.target_client.sql(target_aggregate_query)
+            else:
+                raise ValueError(
+                    "Expected custom query type to be column or row, got an unacceptable value. "
+                    f"Input custom query type: {self.config_manager.custom_query_type}"
+                )
+        else:
+            query = self.target_builder.compile(**target_config)
         if self.verbose:
+            print(target_config)
             print("-- ** Target Query ** --")
             print(query.compile())
 
@@ -295,3 +426,20 @@ class ValidationBuilder(object):
         limit = self.config_manager.query_limit
         self.source_builder.limit = limit
         self.target_builder.limit = limit
+
+    def get_query_from_file(self, filename):
+        """Return query from input file"""
+        query = ""
+        try:
+            file = open(filename, "r")
+            query = file.read()
+        except IOError:
+            print("Cannot read query file: ", filename)
+
+        if not query or query.isspace():
+            raise ValueError(
+                "Expected file with sql query, got empty file or file with white spaces. "
+                f"input file: {filename}"
+            )
+        file.close()
+        return query

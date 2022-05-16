@@ -26,9 +26,11 @@ CONFIG_TABLE_NAME = "table_name"
 CONFIG_TARGET_SCHEMA_NAME = "target_schema_name"
 CONFIG_TARGET_TABLE_NAME = "target_table_name"
 CONFIG_LABELS = "labels"
+CONFIG_COMPARISON_FIELDS = "comparison_fields"
 CONFIG_FIELD_ALIAS = "field_alias"
 CONFIG_AGGREGATES = "aggregates"
 CONFIG_CALCULATED_FIELDS = "calculated_fields"
+CONFIG_DEPENDENT_ALIASES = "dependent_aliases"
 CONFIG_GROUPED_COLUMNS = "grouped_columns"
 CONFIG_CALCULATED_SOURCE_COLUMNS = "source_calculated_columns"
 CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
@@ -39,13 +41,16 @@ CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
 CONFIG_THRESHOLD = "threshold"
 CONFIG_CAST = "cast"
+CONFIG_DEPTH = "depth"
 CONFIG_FORMAT = "format"
 CONFIG_LIMIT = "limit"
 CONFIG_FILTERS = "filters"
 CONFIG_FILTER_SOURCE = "source"
 CONFIG_FILTER_TARGET = "target"
 CONFIG_MAX_RECURSIVE_QUERY_SIZE = "max_recursive_query_size"
-
+CONFIG_SOURCE_QUERY_FILE = "source_query_file"
+CONFIG_TARGET_QUERY_FILE = "target_query_file"
+CONFIG_CUSTOM_QUERY_TYPE = "custom_query_type"
 CONFIG_FILTER_SOURCE_COLUMN = "source_column"
 CONFIG_FILTER_SOURCE_VALUE = "source_value"
 CONFIG_FILTER_TARGET_COLUMN = "target_column"
@@ -69,12 +74,14 @@ COLUMN_VALIDATION = "Column"
 GROUPED_COLUMN_VALIDATION = "GroupedColumn"
 ROW_VALIDATION = "Row"
 SCHEMA_VALIDATION = "Schema"
+CUSTOM_QUERY = "Custom-query"
 
 CONFIG_TYPES = [
     COLUMN_VALIDATION,
     GROUPED_COLUMN_VALIDATION,
     ROW_VALIDATION,
     SCHEMA_VALIDATION,
+    CUSTOM_QUERY,
 ]
 
 # State Manager Fields
@@ -105,7 +112,9 @@ TARGET_TABLE_NAME = "target_table_name"
 TARGET_COLUMN_NAME = "target_column_name"
 TARGET_AGG_VALUE = "target_agg_value"
 
-VALIDATION_STATUS = "status"
+VALIDATION_STATUS = "validation_status"
+VALIDATION_STATUS_SUCCESS = "success"
+VALIDATION_STATUS_FAIL = "fail"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
@@ -114,9 +123,6 @@ COUNT_STAR = "{count_star}"
 # Validation metadata
 RESULT_TYPE_SOURCE = "source"
 RESULT_TYPE_TARGET = "target"
-
-# Ibis Object Info
-NUMERIC_DATA_TYPES = ["float64", "int32", "int64", "decimal"]
 
 FORMAT_TYPES = ["csv", "json", "table", "text"]
 
@@ -134,4 +140,12 @@ COLUMN_FILTER_LIST = [
     "primary_keys",
     "group_by_columns",
     "num_random_rows",
+]
+SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
+    "run_id",
+    "start_time",
+    "end_time",
+    "aggregation_type",
+    "source_agg_value",
+    "target_agg_value",
 ]

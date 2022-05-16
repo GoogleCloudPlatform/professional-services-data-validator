@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import pytest
 
 from data_validation import consts
@@ -42,6 +41,22 @@ SAMPLE_CONFIG = {
             "type": "custom",
         }
     ],
+}
+
+SAMPLE_ROW_CONFIG = {
+    # BigQuery Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: {"type": "DNE connection"},
+    consts.CONFIG_TARGET_CONN: {"type": "DNE connection"},
+    # Validation Type
+    consts.CONFIG_TYPE: "Row",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_PRIMARY_KEYS: "id",
+    consts.CONFIG_CALCULATED_FIELDS: ["name", "station_id"],
+    consts.CONFIG_DEPENDENT_ALIASES: ["id", "name", "station_id"],
 }
 
 AGGREGATE_CONFIG_A = {
@@ -89,7 +104,7 @@ def module_under_test():
 
 
 def test_import(module_under_test):
-    """Test import cleanly """
+    """Test import cleanly"""
     assert module_under_test is not None
 
 
@@ -159,7 +174,9 @@ def test_get_threshold_property(module_under_test):
 
 
 def test_process_in_memory(module_under_test):
-    """Test process in memory for normal validations."""
+    """Test process in memory for normal validations.
+    TODO: emceehilton Re-enable opposite test once option is available
+    """
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
@@ -167,25 +184,25 @@ def test_process_in_memory(module_under_test):
     assert config_manager.process_in_memory() is True
 
 
-def test_do_not_process_in_memory(module_under_test):
-    """Test process in memory for normal validations."""
-    config_manager = module_under_test.ConfigManager(
-        copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
-    )
-    config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
-    config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
-        {
-            consts.CONFIG_FIELD_ALIAS: "id",
-            consts.CONFIG_SOURCE_COLUMN: "id",
-            consts.CONFIG_TARGET_COLUMN: "id",
-            consts.CONFIG_CAST: None,
-        },
-    ]
-    assert config_manager.process_in_memory() is False
+# def test_do_not_process_in_memory(module_under_test):
+#     """Test process in memory for normal validations."""
+#     config_manager = module_under_test.ConfigManager(
+#         copy.deepcopy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+#     )
+#     config_manager._config[consts.CONFIG_TYPE] = consts.ROW_VALIDATION
+#     config_manager._config[consts.CONFIG_PRIMARY_KEYS] = [
+#         {
+#             consts.CONFIG_FIELD_ALIAS: "id",
+#             consts.CONFIG_SOURCE_COLUMN: "id",
+#             consts.CONFIG_TARGET_COLUMN: "id",
+#             consts.CONFIG_CAST: None,
+#         },
+#     ]
+#     assert config_manager.process_in_memory() is True
 
 
 def test_get_table_info(module_under_test):
-    """Test basic handler executes """
+    """Test basic handler executes"""
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
@@ -298,3 +315,18 @@ def test_get_primary_keys_list(module_under_test):
     ]
     res = config_manager.get_primary_keys_list()
     assert res == ["id", "sample_id"]
+
+
+def test_dependent_aliases(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_ROW_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    config_manager.append_dependent_aliases(["location", "bike"])
+
+    assert config_manager.dependent_aliases == [
+        "id",
+        "name",
+        "station_id",
+        "location",
+        "bike",
+    ]

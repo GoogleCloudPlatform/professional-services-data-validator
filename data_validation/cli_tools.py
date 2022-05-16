@@ -61,7 +61,6 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
-        ["logmech", "Log on mechanism"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -126,6 +125,15 @@ CONNECTION_SOURCE_FIELDS = {
             "Desired Kerberos service name ('impala' if not provided)",
         ],
     ],
+    "DB2": [
+        ["host", "Desired DB2 host"],
+        ["port", "Desired DB2 port (50000 if not provided)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in DB2 to connect to"],
+        ["url", "URL link in DB2 to connect to"],
+        ["driver", "Driver link in DB2 to connect to (default ibm_db_sa)"],
+    ],
 }
 
 
@@ -152,7 +160,6 @@ def configure_arg_parser():
     _configure_raw_query(subparsers)
     _configure_run_parser(subparsers)
     _configure_beta_parser(subparsers)
-
     return parser
 
 
@@ -270,41 +277,6 @@ def _configure_run_parser(subparsers):
         help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
     )
     run_parser.add_argument(
-        "--count",
-        "-count",
-        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--sum",
-        "-sum",
-        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--avg",
-        "-avg",
-        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--min",
-        "-min",
-        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--max",
-        "-max",
-        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
-    )
-    run_parser.add_argument(
-        "--grouped-columns",
-        "-gc",
-        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
-    )
-    run_parser.add_argument(
-        "--primary-keys",
-        "-pk",
-        help="Comma separated list of primary key columns 'col_a,col_b'",
-    )
-    run_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"
     )
     run_parser.add_argument(
@@ -316,7 +288,14 @@ def _configure_run_parser(subparsers):
         help="Store the validation in the YAML Config File Path specified",
     )
     run_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run",
+        "--labels",
+        "-l",
+        help="Key value pair labels for validation run",
+    )
+    run_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hash 'col_a,col_b' or * for all columns",
     )
     run_parser.add_argument(
         "--service-account",
@@ -351,6 +330,18 @@ def _configure_run_parser(subparsers):
         "--random-row-batch-size",
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
+    )
+    run_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
+    )
+    run_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
     )
 
 
@@ -408,10 +399,66 @@ def _configure_validate_parser(subparsers):
     )
     _configure_column_parser(column_parser)
 
+    row_parser = validate_subparsers.add_parser("row", help="Run a row validation")
+    _configure_row_parser(row_parser)
+
     schema_parser = validate_subparsers.add_parser(
         "schema", help="Run a schema validation"
     )
     _configure_schema_parser(schema_parser)
+
+    custom_query_parser = validate_subparsers.add_parser(
+        "custom-query", help="Run a custom query validation"
+    )
+    _configure_custom_query_parser(custom_query_parser)
+
+
+def _configure_row_parser(row_parser):
+    """Configure arguments to run row level validations."""
+    _add_common_arguments(row_parser)
+    row_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hash 'col_a,col_b' or * for all columns",
+    )
+    row_parser.add_argument(
+        "--comparison-fields",
+        "-comp-fields",
+        help="Individual columns to compare. If comparing a calculated field use the column alias.",
+    )
+    row_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        required=True,
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    row_parser.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    row_parser.add_argument(
+        "--grouped-columns",
+        "-gc",
+        help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
+    )
+    row_parser.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
+    row_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    row_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
 
 
 def _configure_column_parser(column_parser):
@@ -443,6 +490,21 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--bit_xor",
+        "-bit_xor",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
+        "--comparison-fields",
+        "-comp-fields",
+        help="list of fields to perform exact comparisons to. Use column aliases if this is calculated.",
+    )
+    column_parser.add_argument(
         "--grouped-columns",
         "-gc",
         help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
@@ -451,9 +513,6 @@ def _configure_column_parser(column_parser):
         "--primary-keys",
         "-pk",
         help="Comma separated list of primary key columns 'col_a,col_b'",
-    )
-    column_parser.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
     )
     column_parser.add_argument(
         "--threshold",
@@ -477,6 +536,18 @@ def _configure_column_parser(column_parser):
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
     )
+    column_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
+    )
+    column_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
+    )
 
 
 def _configure_schema_parser(schema_parser):
@@ -484,9 +555,108 @@ def _configure_schema_parser(schema_parser):
     _add_common_arguments(schema_parser)
 
 
+def _configure_custom_query_parser(custom_query_parser):
+    """Configure arguments to run custom-query validations."""
+    _add_common_arguments(custom_query_parser)
+    custom_query_parser.add_argument(
+        "--custom-query-type",
+        "-cqt",
+        required=True,
+        help="Which type of custom query (row/column)",
+    )
+    custom_query_parser.add_argument(
+        "--source-query-file",
+        "-sqf",
+        help="File containing the source sql query",
+    )
+    custom_query_parser.add_argument(
+        "--target-query-file",
+        "-tqf",
+        help="File containing the target sql query",
+    )
+    custom_query_parser.add_argument(
+        "--count",
+        "-count",
+        help="Comma separated list of columns for count 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--sum",
+        "-sum",
+        help="Comma separated list of columns for sum 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--avg",
+        "-avg",
+        help="Comma separated list of columns for avg 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--min",
+        "-min",
+        help="Comma separated list of columns for min 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--max",
+        "-max",
+        help="Comma separated list of columns for max 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--bit_xor",
+        "-bit_xor",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
+    custom_query_parser.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    custom_query_parser.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    custom_query_parser.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
+    custom_query_parser.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    custom_query_parser.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
+    )
+    custom_query_parser.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
+    )
+
+
 def _add_common_arguments(parser):
-    parser.add_argument("--source-conn", "-sc", help="Source connection name")
-    parser.add_argument("--target-conn", "-tc", help="Target connection name")
+    parser.add_argument(
+        "--source-conn", "-sc", required=True, help="Source connection name"
+    )
+    parser.add_argument(
+        "--target-conn", "-tc", required=True, help="Target connection name"
+    )
     parser.add_argument(
         "--tables-list",
         "-tbls",
@@ -494,6 +664,9 @@ def _add_common_arguments(parser):
     )
     parser.add_argument(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
+    )
+    parser.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
     )
     parser.add_argument(
         "--service-account",
@@ -713,6 +886,9 @@ def get_arg_list(arg_value, default_value=None):
         return default_value
 
     try:
+        if isinstance(arg_value, list):
+            arg_value = str(arg_value)
+        # arg_value = "hash_all"
         arg_list = json.loads(arg_value)
     except json.decoder.JSONDecodeError:
         arg_list = arg_value.split(",")

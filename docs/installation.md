@@ -73,7 +73,7 @@ After installing the CLI tool using the instructions below, you will be ready to
 
 ## Deploy Data Validation CLI on your machine
 
-The Data Validation tooling requires Python 3.6+.
+The Data Validation tooling requires Python 3.7+.
 
 ```
 sudo apt-get install python3
@@ -104,6 +104,8 @@ If you require Teradata and have a license, install the `teradatasql` package.
 ```
 python -m pip install teradatasql
 ```
+
+If you plan to perform row level hashing on teradata, you will need to install a UDF that implements sha256 on your Teradata instance. An example can be found [here](.https://downloads.teradata.com/forum/extensibility/sha-2-udfs-for-teradata).
 
 After installing the Data Validation package you will
 have access to the `data-validation -h` or `python -m data_validation -h`

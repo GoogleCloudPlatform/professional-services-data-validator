@@ -2,6 +2,99 @@
 
 ## Untagged
 
+### [1.7.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.7.1...v1.7.2) (2022-05-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* Adds custom query row level hash validation feature. (#440)
+
+### Features
+
+* Add example of BigQuery cast to NUMERIC, update chore release version ([#476](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/476)) ([50fac28](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/50fac2855be4b3ca0607dd6a777699a778c56d14))
+* Adds custom query row level hash validation feature. ([#440](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/440)) ([f057fe8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f057fe8d690c78219f6341d210ba9719d4510fd6))
+* Issue356 db2 test ([#383](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/383)) ([70fb7bc](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/70fb7bc07517665eff554b341a678e00d458a2b1))
+* Support cast to BIGINT before aggregation ([#461](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/461)) ([ca598a0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ca598a0a1ca80541f98b5108d3fd358081af2c0b))
+* support float and decimal types in Hive ([#470](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/470)) ([5936f60](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5936f6046d1eef0094b0e225cd05dc4f9e150c93))
+
+
+### Bug Fixes
+
+* add get_ibis_table_schema ([#410](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/410)) ([#411](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/411)) ([4093625](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/409362510d7e405016e87e253e4127a04089fabd))
+* only replaces datatypes and not column names ([#453](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/453)) ([6143794](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6143794e90e048243f88ee811c6de5cf84a70184))
+* supports NULL datetime/timestamps, fixes bug with validation_status in PR 455 ([#460](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/460)) ([57896f4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/57896f430967f9726ccdf8c82b1c3b9833f0062c))
+* Updated schema validation logic to column as 'validation_status' ([#455](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/455)) ([e30c337](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e30c33750edc4a128e72ff2940106d4404cab0be))
+* updating teradata docs for sha256 UDF and swapping string_join for concat ([#457](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/457)) ([23dbf56](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/23dbf566dae054c1130c5192fb1a1cd7b20de501))
+
+### [1.7.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.7.0...v1.7.1) (2022-04-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* Changed result schema 'status' column to 'validation_status' (#420)
+
+### Features
+
+* added timestamp to supported types for min and max ([#431](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/431)) ([e8b4860](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e8b48603ff851d771c01794262ab1281192dea0e))
+* Allow aggregation over length of string columns ([#430](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/430)) ([201f0a2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/201f0a2a67e79190400aba668fc34df54bf87b66))
+* Changed result schema 'status' column to 'validation_status' ([#420](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/420)) ([dfcd0d5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dfcd0d5000fb33e64a8580a0747319f5ddbec2ca))
+* hash filter support ([#408](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/408)) ([46b3723](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/46b3723390bf050ae33868517478906d63a43304))
+* Hash selective columns ([#407](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/407)) ([88b6620](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/88b66201750db3e1a0577f12965551f8955a2525))
+* Implement sum/avg/bit_xor aggs for Timestamp ([#442](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/442)) ([51f3af3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/51f3af3c6bb11beaf7bc08e6b2766e0b5a6b8600))
+* improve postgres tests ([#443](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/443)) ([6a54527](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6a54527b758c56cc1aa0a1a15b355970115fa16f))
+* Random Sort for Pandas Queries ([#404](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/404)) ([2051039](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/20510395193e831d8e3350842ce606f4adb80fcb))
+* Support for custom query ([#390](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/390)) ([7a218d2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7a218d2b516d480dad05f6fb52ed6347aef429ed))
+
+
+### Bug Fixes
+
+* bug introduced with new pr ([#429](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/429)) ([a6cf3f0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a6cf3f03e8f28eb6b3c2cfca41880d839f301637))
+* Hash all bug, noxfile updates ([#413](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/413)) ([fc73e21](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/fc73e21810ffe74459a90b79b956a91168c0dc1c))
+* Hive boolean nan to None, Unsupported ibis data types in structs and arrays ([#444](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/444)) ([e94a1da](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e94a1daabf6c5df04720e20b764a8ccf9bc63050))
+* ibis default sql option limits query results at 10k rows ([#418](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/418)) ([7539efe](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7539efe266ecea22102d775dc9ad4c8bbb9dba84))
+* Impala strings/objects now return None instead of NaN ([#406](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/406)) ([9d3c5ec](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9d3c5ecf1babae2c811a30d0820701b124ae1c50))
+* issue 265 add cloud spanner functionality ([#394](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/394)) ([783cdf8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/783cdf8810c29755b26e4894555b6dd03f4c9025))
+* support labels for schema validation ([#260](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/260)) ([#381](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/381)) ([f787701](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f787701dcb505fbced3e12b996c845148bbc1af0))
+* Treat both source and target values being NULL as a success ([#437](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/437)) ([c4da5ca](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c4da5ca18f47af3e5ebadce97d35c25ca66d4003))
+
+
+### Miscellaneous Chores
+
+* release 1.7.1 ([#446](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/446)) ([99916ba](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/99916ba2c76b8370cabd648e4d1f3c4ec15b93d7))
+
+## [1.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.6.0...v1.7.0) (2022-03-23)
+
+
+### Features
+
+* deploy flask app via CLI ([#344](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/344)) ([b1dc82a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b1dc82adf92adf19702f5ef41590c62c7c128c74))
+* first class support for row level hashing ([#345](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/345)) ([3d78ee5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3d78ee578b4222a9bdb19c7091445f48f413b9a0))
+* GCS support for validation configs ([#340](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/340)) ([b09cd29](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b09cd29e6cad63462aacfbcc0c2d8fd819076f52))
+* Hive hash function support ([#392](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/392)) ([0ca0ccf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0ca0ccf88d9d6014ed363b9a6dc40d78afdf88ee))
+* Hive partitioned tables support ([#375](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/375)) ([8f1af27](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8f1af27ee57d53c736191f67219ca175e149d48f))
+* Issue339 ldap logmech ([#347](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/347)) ([ad7f1fc](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ad7f1fcfc10541cf19044a1bf88d16deb1398772))
+* Random Row Validation Logic ([#357](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/357)) ([229d870](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/229d870a4ac66fc2ff9a4ab256190a62674441ad))
+
+
+### Bug Fixes
+
+* add to_hex for bigquery hash ([#400](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/400)) ([e5c7ded](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e5c7ded2227eef97f024b93af2b949cc2cddbe93))
+* Comparison fields Key Error fix ([#396](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/396)) ([a597b56](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a597b560ec2420127186157ae6fe0aef07f3b444))
+* ensure all statuses are success or fail, particularly after _join_pivots ([#329](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/329)) ([#370](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/370)) ([310747d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/310747d4a1aa1ed82e3f403959af3592478007d8))
+* make status values consistent across validation types ([#377](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/377)) ([#378](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/378)) ([5c08463](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5c084633708b13f7eb4b505749dd52d0f43617cc))
+* Multiple updates ([#359](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/359)) ([6b2614d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6b2614dcfae3ca67d85221a9ceab3881c5c6b30d))
+* revert change from [#345](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/345) that causes filters, threshold and labels to be ignored for column validations ([#376](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/376)) ([#379](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/379)) ([8b295cf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8b295cf9746559fa48a448bd44fc6e4094820796))
+* Status when source and target agg values are 0  ([#393](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/393)) ([6a41f68](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6a41f681a4be63f0ab3afc34000d78c6f0df6087))
+* support schema validation for more clients ([#355](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/355)) ([#380](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/380)) ([ed46295](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ed4629594eeaf7ca3a3a914b4c07e1b9c977f07c))
+* supporting non default schemas for mssql ([#365](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/365)) ([100b3ea](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/100b3eabed5ca83245e10e40950e725155332dcd))
+* test for nan when calculating fail/success in combiner ([#341](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/341)) ([#366](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/366)) ([a9720c2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a9720c2cff2c3713ad1de0d6573b4e86c06bcc65))
+* use an appropriate column filter list for schema validation ([#350](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/350)) ([#371](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/371)) ([806151a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/806151a4162ae7320c602911692ee1ef861be027))
+
+
+### Documentation
+
+* Add Hive as a supported data source to docs ([#354](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/354)) ([be2a49d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/be2a49d8849982f8f75f4bddc607e744b52ec180))
+
 ## [1.6.0](https://www.github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.5.0...v1.6.0) (2021-12-01)
 
 

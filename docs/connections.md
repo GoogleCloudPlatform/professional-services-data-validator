@@ -53,6 +53,7 @@ The data validation tool supports the following connection types.
 * [FileSystem](#filesystem)
 * [Impala](#Impala)
 * [Hive](#Hive)
+* [DB2] (#DB2)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 
@@ -264,6 +265,15 @@ Then `pip install pyodbc`.
 ```
 
 ## Hive
+Please note that for Group By validations, the following property must be set in Hive:
+
+`set hive:hive.groupby.orderby.position.alias=true`
+ 
+ If you are running Hive on Dataproc, you will also need to install the following:
+ ```
+ pip install ibis-framework[impala]
+ ```
+ 
 ```
 {
     # Hive is based off Impala connector
@@ -274,5 +284,21 @@ Then `pip install pyodbc`.
     "port": 10000,
     "database": "default",
     "auth_mechanism":"PLAIN"
+}
+```
+## DB2
+```
+{
+    # Configuration Required for All Data Sources
+    "source_type": "DB2",
+
+    # Connection Details
+    "host": "localhost",
+    "port": 50000,
+    "driver": "ibm_db_sa",
+    "user": "my-username",
+    "password": "my-password",
+    "database": "my-db",
+    "url": "my-url",
 }
 ```

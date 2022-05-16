@@ -1,6 +1,6 @@
-# Data Validation Tool
+# Data Validation Tool (Beta)
 
-The Data Validation Tool (DVT) is an open sourced Python CLI tool based on the
+The Data Validation Tool (Beta) is an open sourced Python CLI tool based on the
 [Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html)
 that compares heterogeneous data source tables with multi-leveled validation
 functions.
@@ -9,13 +9,15 @@ Data validation is a critical step in a Data Warehouse, Database or Data Lake
 migration project, where structured or semi-structured data from both the source
 and the destination tables are compared to ensure they are matched and correct
 after each migration step (e.g. data and schema migration, SQL script
-translation, ETL migration, etc.). The Data Validation Tool provides an
+translation, ETL migration, etc.). The Data Validation Tool (DVT) provides an
 automated and repeatable solution to perform this task.
 
-DVT supports the following validation types: * Table level * Table row count *
-Group by row count * Column aggregation * Filters and limits * Column level *
-Full column data type * Row level hash comparison (BigQuery tables only) * Raw
-SQL exploration * Run custom queries on different data sources
+DVT supports the following validations:
+* Column validation (count, sum, avg, min/max, group_by)
+* Row level validation
+* Schema validation 
+* Custom Query validation
+* RawSQL exploration
 
 DVT supports the following connection types:
 
@@ -31,9 +33,14 @@ DVT supports the following connection types:
 *   [FileSystem](docs/connections.md#filesystem)
 *   [Impala](docs/connections.md#impala)
 *   [Hive](docs/connections.md#hive)
+*   [Db2](docs/connections.md#db2)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
+
+### Disclaimer
+This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly 
+(see [CONTRIBUTING.md](CONTRIBUTING.md) for details).
 
 ## Installation
 
@@ -87,6 +94,11 @@ grouped column validations a step further by providing the `--primary-key` flag.
 With this flag, if a mismatch was found, DVT will dive deeper into the slice
 with the error and find the row (primary key value) with the inconsistency.
 
+You can specify a list of string columns for aggregations in order to calculate
+an aggregation over the `length(string_col)`. Running an aggregation 
+over all columns ('*') will only run over numeric columns, unless the
+`--wildcard-include-string-len` flag is present.
+
 ```
 data-validation (--verbose or -v) validate column
   --source-conn or -sc SOURCE_CONN
@@ -114,6 +126,10 @@ data-validation (--verbose or -v) validate column
                         See: *Validation Reports* section
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
+  [--wildcard-include-string-len or -wis]
+                        If flag is present, include string columns in aggregation as len(string_col)
+  [--cast-to-bigint or -ctb]
+                        If flag is present, cast all int32 columns to int64 before aggregation
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
@@ -133,6 +149,61 @@ sum , min, etc.) is provided, the default aggregation will run.
 
 The [Examples](docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
+
+#### Row Validations
+
+(Note: Row hash validation is currently only supported for BigQuery, Teradata, and Imapala/Hive. Struct and array 
+data types are not currently supported.)
+
+Below is the command syntax for row validations. In order to run row level
+validations you need to pass a `--primary-key` flag which defines what field(s)
+the validation will be compared on, as well as either the `--comparison-fields` flag
+or the `--hash` flag.
+
+The `--comparison-fields` flag specifies the values (e.g. columns) whose raw values will be compared
+based on the primary key join. The `--hash` flag will run a checksum across specified columns in
+the table. This will include casting to string, sanitizing the data (ifnull, rtrim, upper), concatenating,
+and finally hashing the row.
+
+
+Additionally you can use
+[Calculated Fields](#calculated-fields) to compare derived values such as string
+counts and hashes of multiple columns.
+
+```
+data-validation (--verbose or -v) validate row
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --primary-keys or -pk PRIMARY_KEYS
+                        Comma separated list of columns to use as primary keys
+  --comparison-fields or -comp-fields FIELDS
+                        Comma separated list of columns to compare. Can either be a physical column or an alias
+                        See: *Calculated Fields* section for details
+  --hash COLUMNS        Comma separated list of columns to hash or * for all columns 
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--filters SOURCE_FILTER:TARGET_FILTER]
+                        Colon spearated string values of source and target filters.
+                        If target filter is not provided, the source filter will run on source and target tables.
+                        See: *Filters* section
+  [--config-file or -c CONFIG_FILE]
+                        YAML Config File Path to be used for storing validations.
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
+```
 
 #### Schema Validations
 
@@ -161,6 +232,97 @@ data-validation (--verbose or -v) validate schema
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
 ```
+
+### Custom Query Column Validations
+
+Below is the command syntax for custom query column validations.
+
+```
+data-validation (--verbose or -v) validate custom-query
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --custom-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
+                        Type of custom query validation: ('row'|'column')
+                        Enter 'column' for custom query column validation
+  --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
+                        File containing the source sql commands
+  --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
+                        File containing the target sql commands
+  [--count COLUMNS]     Comma separated list of columns for count or * for all columns
+  [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
+  [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
+  [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
+  [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
+```
+
+The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
+sum , min, etc.) is provided, the default aggregation will run.
+
+The [Examples](docs/examples.md) page provides few examples of how this tool can
+used to run custom query validations.
+
+
+### Custom Query Row Validations 
+
+#### (Note: Row hash validation is currently only supported for BigQuery, Imapala/Hive and Teradata)
+
+Below is the command syntax for row validations. In order to run row level
+validations you need to pass `--hash` flag with `*` value which means all the fields
+of the custom query result will be concatenated and hashed.
+
+Below is the command syntax for custom query row validations.
+
+```
+data-validation (--verbose or -v) validate custom-query
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --custom-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
+                        Type of custom query validation: ('row'|'column')
+                        Enter 'row' for custom query column validation
+  --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
+                        File containing the source sql commands
+  --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
+                        File containing the target sql commands
+  --hash '*'            '*' to hash all columns.
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
+                        Defaults to table.
+```
+
+The [Examples](docs/examples.md) page provides few examples of how this tool can
+used to run custom query row validations.
+
 
 ### Running Custom SQL Exploration
 
@@ -288,6 +450,12 @@ target tables.
 Grouped Columns contain the fields you want your aggregations to be broken out
 by, e.g. `SELECT last_updated::DATE, COUNT(*) FROM my.table` will produce a
 resultset that breaks down the count of rows per calendar date.
+
+### Comparison Fields
+
+For row validations you need to specify the specific columns that you want to
+compare. These values will be compared via a JOIN on their corresponding primary
+key and will be evaluated for an exact match.
 
 ### Calculated Fields
 

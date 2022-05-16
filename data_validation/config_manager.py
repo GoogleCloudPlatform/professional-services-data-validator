@@ -17,7 +17,7 @@ import logging
 
 import google.oauth2.service_account
 
-from data_validation import consts, clients, state_manager
+from data_validation import clients, consts, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 from data_validation.validation_builder import ValidationBuilder
@@ -53,8 +53,6 @@ class ConfigManager(object):
         self.target_client = target_client or clients.get_data_client(
             self.get_target_connection()
         )
-        if not self.process_in_memory():
-            self.target_client = self.source_client
 
         self.verbose = verbose
         if self.validation_type not in consts.CONFIG_TYPES:
@@ -93,11 +91,11 @@ class ConfigManager(object):
         return self._config[consts.CONFIG_TYPE]
 
     def use_random_rows(self):
-        """ Return if the validation should use a random row filter. """
+        """Return if the validation should use a random row filter."""
         return self._config.get(consts.CONFIG_USE_RANDOM_ROWS) or False
 
     def random_row_batch_size(self):
-        """ Return if the validation should use a random row filter. """
+        """Return if the validation should use a random row filter."""
         return (
             self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
             or consts.DEFAULT_NUM_RANDOM_ROWS
@@ -108,22 +106,17 @@ class ConfigManager(object):
         return self.random_row_batch_size() if self.use_random_rows() else None
 
     def process_in_memory(self):
-        if (
-            self.validation_type == "Row"
-            and self.get_source_connection() == self.get_target_connection()
-        ):
-            return False
-
+        """Return whether to process in memory or on a remote platform."""
         return True
 
     @property
     def max_recursive_query_size(self):
-        """Return Aggregates from Config """
+        """Return Aggregates from Config"""
         return self._config.get(consts.CONFIG_MAX_RECURSIVE_QUERY_SIZE, 50000)
 
     @property
     def aggregates(self):
-        """Return Aggregates from Config """
+        """Return Aggregates from Config"""
         return self._config.get(consts.CONFIG_AGGREGATES, [])
 
     def append_aggregates(self, aggregate_configs):
@@ -132,7 +125,7 @@ class ConfigManager(object):
 
     @property
     def calculated_fields(self):
-        return self._config.get(consts.CONFIG_CALCULATED_FIELDS)
+        return self._config.get(consts.CONFIG_CALCULATED_FIELDS, [])
 
     def append_calculated_fields(self, calculated_configs):
         self._config[consts.CONFIG_CALCULATED_FIELDS] = (
@@ -140,8 +133,19 @@ class ConfigManager(object):
         )
 
     @property
+    def dependent_aliases(self):
+        """Return all columns that are needed in final dataframe for row validations."""
+        return self._config.get(consts.CONFIG_DEPENDENT_ALIASES, [])
+
+    def append_dependent_aliases(self, dependent_aliases):
+        """Appends columns that are needed in final dataframe for row validations."""
+        self._config[consts.CONFIG_DEPENDENT_ALIASES] = (
+            self.dependent_aliases + dependent_aliases
+        )
+
+    @property
     def query_groups(self):
-        """ Return Query Groups from Config """
+        """Return Query Groups from Config"""
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])
 
     def append_query_groups(self, grouped_column_configs):
@@ -151,8 +155,41 @@ class ConfigManager(object):
         )
 
     @property
+    def custom_query_type(self):
+        """Return custom query type from config"""
+        return self._config.get(consts.CONFIG_CUSTOM_QUERY_TYPE, "")
+
+    def append_custom_query_type(self, custom_query_type):
+        """Append custom query type config to existing config."""
+        self._config[consts.CONFIG_CUSTOM_QUERY_TYPE] = (
+            self.custom_query_type + custom_query_type
+        )
+
+    @property
+    def source_query_file(self):
+        """Return SQL Query File from Config"""
+        return self._config.get(consts.CONFIG_SOURCE_QUERY_FILE, [])
+
+    def append_source_query_file(self, query_file_configs):
+        """Append grouped configs to existing config."""
+        self._config[consts.CONFIG_SOURCE_QUERY_FILE] = (
+            self.source_query_file + query_file_configs
+        )
+
+    @property
+    def target_query_file(self):
+        """Return SQL Query File from Config"""
+        return self._config.get(consts.CONFIG_TARGET_QUERY_FILE, [])
+
+    def append_target_query_file(self, query_file_configs):
+        """Append grouped configs to existing config."""
+        self._config[consts.CONFIG_TARGET_QUERY_FILE] = (
+            self.target_query_file + query_file_configs
+        )
+
+    @property
     def primary_keys(self):
-        """ Return Primary keys from Config """
+        """Return Primary keys from Config"""
         return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
 
     def append_primary_keys(self, primary_key_configs):
@@ -166,8 +203,19 @@ class ConfigManager(object):
         return [key[consts.CONFIG_SOURCE_COLUMN] for key in self.primary_keys]
 
     @property
+    def comparison_fields(self):
+        """Return fields from Config"""
+        return self._config.get(consts.CONFIG_COMPARISON_FIELDS, [])
+
+    def append_comparison_fields(self, field_configs):
+        """Append field configs to existing config."""
+        self._config[consts.CONFIG_COMPARISON_FIELDS] = (
+            self.comparison_fields + field_configs
+        )
+
+    @property
     def filters(self):
-        """Return Filters from Config """
+        """Return Filters from Config"""
         return self._config.get(consts.CONFIG_FILTERS, [])
 
     @property
@@ -229,7 +277,7 @@ class ConfigManager(object):
 
     @property
     def threshold(self):
-        """Return threshold from Config """
+        """Return threshold from Config"""
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
     def get_source_ibis_table(self):
@@ -240,12 +288,13 @@ class ConfigManager(object):
             )
         return self._source_ibis_table
 
-    def get_source_ibis_calculated_table(self):
-        """Return mutated IbisTable from source"""
+    def get_source_ibis_calculated_table(self, depth=None):
+        """Return mutated IbisTable from source
+        n: Int the depth of subquery requested"""
         table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.source_builder.compile_calculated_fields(table)
+            vb.source_builder.compile_calculated_fields(table, n=depth)
         )
 
         return calculated_table
@@ -258,12 +307,13 @@ class ConfigManager(object):
             )
         return self._target_ibis_table
 
-    def get_target_ibis_calculated_table(self):
-        """Return mutated IbisTable from target"""
+    def get_target_ibis_calculated_table(self, depth=None):
+        """Return mutated IbisTable from target
+        n: Int the depth of subquery requested"""
         table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
-            vb.target_builder.compile_calculated_fields(table)
+            vb.target_builder.compile_calculated_fields(table, n=depth)
         )
 
         return calculated_table
@@ -285,7 +335,13 @@ class ConfigManager(object):
     def get_result_handler(self):
         """Return ResultHandler instance from supplied config."""
         if not self.result_handler_config:
-            return TextResultHandler(self._config.get(consts.CONFIG_FORMAT, "table"))
+            if self.config[consts.CONFIG_TYPE] == consts.SCHEMA_VALIDATION:
+                cols_filter_list = consts.SCHEMA_VALIDATION_COLUMN_FILTER_LIST
+            else:
+                cols_filter_list = consts.COLUMN_FILTER_LIST
+            return TextResultHandler(
+                self._config.get(consts.CONFIG_FORMAT, "table"), cols_filter_list
+            )
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
         if result_type == "BigQuery":
@@ -295,8 +351,10 @@ class ConfigManager(object):
                 consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
             )
             if key_path:
-                credentials = google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
+                credentials = (
+                    google.oauth2.service_account.Credentials.from_service_account_file(
+                        key_path
+                    )
                 )
             else:
                 credentials = None
@@ -355,6 +413,19 @@ class ConfigManager(object):
             verbose=verbose,
         )
 
+    def build_config_comparison_fields(self, fields, depth=None):
+        """Return list of field config objects."""
+        field_configs = []
+        for field in fields:
+            column_config = {
+                consts.CONFIG_SOURCE_COLUMN: field.casefold(),
+                consts.CONFIG_TARGET_COLUMN: field.casefold(),
+                consts.CONFIG_FIELD_ALIAS: field,
+                consts.CONFIG_CAST: None,
+            }
+            field_configs.append(column_config)
+        return field_configs
+
     def build_config_grouped_columns(self, grouped_columns):
         """Return list of grouped column config objects."""
         grouped_column_configs = []
@@ -366,13 +437,9 @@ class ConfigManager(object):
         for column in grouped_columns:
 
             if column.casefold() not in casefold_source_columns:
-                raise ValueError(
-                    f"GroupedColumn DNE in source: {source_table.op().name}.{column}"
-                )
+                raise ValueError(f"Grouped Column DNE in source: {column}")
             if column.casefold() not in casefold_target_columns:
-                raise ValueError(
-                    f"GroupedColumn DNE in target: {target_table.op().name}.{column}"
-                )
+                raise ValueError(f"Grouped Column DNE in target: {column}")
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
                 consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
@@ -394,7 +461,45 @@ class ConfigManager(object):
 
         return aggregate_config
 
-    def build_config_column_aggregates(self, agg_type, arg_value, supported_types):
+    def append_pre_agg_calc_field(self, column, agg_type, column_type):
+        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation"""
+        if column_type == "string":
+            calc_func = "length"
+        elif column_type == "timestamp":
+            calc_func = "epoch_seconds"
+        elif column_type == "int32":
+            calc_func = "cast"
+        else:
+            raise ValueError(f"Unsupported column type: {column_type}")
+
+        calculated_config = {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
+            consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{column}",
+            consts.CONFIG_TYPE: calc_func,
+            consts.CONFIG_DEPTH: 0,
+        }
+
+        if column_type == "int32":
+            calculated_config["default_cast"] = "int64"
+
+        existing_calc_fields = [
+            x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
+        ]
+        if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
+            self.append_calculated_fields([calculated_config])
+
+        aggregate_config = {
+            consts.CONFIG_SOURCE_COLUMN: f"{calc_func}__{column}",
+            consts.CONFIG_TARGET_COLUMN: f"{calc_func}__{column}",
+            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calc_func}__{column}",
+            consts.CONFIG_TYPE: agg_type,
+        }
+        return aggregate_config
+
+    def build_config_column_aggregates(
+        self, agg_type, arg_value, supported_types, cast_to_bigint=False
+    ):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
@@ -402,6 +507,9 @@ class ConfigManager(object):
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        if arg_value and supported_types:
+            supported_types.append("string")
 
         allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
@@ -412,14 +520,34 @@ class ConfigManager(object):
             if column not in allowlist_columns:
                 continue
             elif column not in casefold_target_columns:
-                logging.info(
-                    f"Skipping Agg {agg_type}: {source_table.op().name}.{column}"
+                print(
+                    f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    msg = f"Skipping Agg {agg_type}: {source_table.op().name}.{column} {column_type}"
-                    print(msg)
+                    print(
+                        f"Skipping {agg_type} on {column} due to data type: {column_type}"
+                    )
+                continue
+
+            if (
+                column_type == "string"
+                or (cast_to_bigint and column_type == "int32")
+                or (
+                    column_type == "timestamp"
+                    and agg_type
+                    in (
+                        "sum",
+                        "avg",
+                        "bit_xor",
+                    )  # timestamps: do not convert to epoch seconds for min/max
+                )
+            ):
+                aggregate_config = self.append_pre_agg_calc_field(
+                    column, agg_type, column_type
+                )
+                aggregate_configs.append(aggregate_config)
                 continue
 
             aggregate_config = {
@@ -429,5 +557,92 @@ class ConfigManager(object):
                 consts.CONFIG_TYPE: agg_type,
             }
             aggregate_configs.append(aggregate_config)
-
         return aggregate_configs
+
+    def build_config_calculated_fields(
+        self, reference, calc_type, alias, depth, supported_types, arg_value=None
+    ):
+        """Returns list of calculated fields"""
+        source_table = self.get_source_ibis_calculated_table(depth=depth)
+        target_table = self.get_target_ibis_calculated_table(depth=depth)
+
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        allowlist_columns = arg_value or casefold_source_columns
+        for column in casefold_source_columns:
+            column_type_str = str(source_table[casefold_source_columns[column]].type())
+            column_type = column_type_str.split("(")[0]
+            if column not in allowlist_columns:
+                continue
+            elif column not in casefold_target_columns:
+                logging.info(
+                    f"Skipping {calc_type} on {column} as column is not present in target table"
+                )
+                continue
+            elif supported_types and column_type not in supported_types:
+                if self.verbose:
+                    msg = f"Skipping {calc_type} on {column} due to data type: {column_type}"
+                    print(msg)
+                continue
+
+        calculated_config = {
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: reference,
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: reference,
+            consts.CONFIG_FIELD_ALIAS: alias,
+            consts.CONFIG_TYPE: calc_type,
+            consts.CONFIG_DEPTH: depth,
+        }
+        return calculated_config
+
+    def _build_dependent_aliases(self, calc_type, col_list=None):
+        """This is a utility function for determining the required depth of all fields"""
+        order_of_operations = []
+        if col_list is None:
+            source_table = self.get_source_ibis_calculated_table()
+            casefold_source_columns = {
+                x.casefold(): str(x) for x in source_table.columns
+            }
+        else:
+            casefold_source_columns = {x.casefold(): str(x) for x in col_list}
+        if calc_type == "hash":
+            order_of_operations = [
+                "cast",
+                "ifnull",
+                "rstrip",
+                "upper",
+                "concat",
+                "hash",
+            ]
+        column_aliases = {}
+        col_names = []
+        for i, calc in enumerate(order_of_operations):
+            if i == 0:
+                previous_level = [x for x in casefold_source_columns.values()]
+            else:
+                previous_level = [k for k, v in column_aliases.items() if v == i - 1]
+            if calc in ["concat", "hash"]:
+                col = {}
+                col["reference"] = previous_level
+                col["name"] = f"{calc}__all"
+                col["calc_type"] = calc
+                col["depth"] = i
+                name = col["name"]
+                # need to capture all aliases at the previous level. probably name concat__all
+                column_aliases[name] = i
+                col_names.append(col)
+            else:
+                for (
+                    column
+                ) in (
+                    previous_level
+                ):  # this needs to be the previous manifest of columns
+                    col = {}
+                    col["reference"] = [column]
+                    col["name"] = f"{calc}__" + column
+                    col["calc_type"] = calc
+                    col["depth"] = i
+                    name = col["name"]
+                    column_aliases[name] = i
+                    col_names.append(col)
+        return col_names

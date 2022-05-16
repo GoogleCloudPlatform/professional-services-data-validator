@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
-import logging
 import json
+import os
+import sys
+
+from yaml import Dumper, dump
 
 from data_validation import (
     cli_tools,
@@ -27,8 +28,8 @@ from data_validation import (
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 
-from yaml import dump
-import sys
+# by default yaml dumps lists as pointers. This disables that feature
+Dumper.ignore_aliases = lambda *args: True
 
 
 def _get_arg_config_file(args):
@@ -52,33 +53,95 @@ def get_aggregate_config(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
     aggregate_configs = [config_manager.build_config_count_aggregate()]
+    supported_data_types = [
+        "float64",
+        "float32",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "decimal",
+        "timestamp",
+    ]
+
+    if args.wildcard_include_string_len:
+        supported_data_types.append("string")
+
+    cast_to_bigint = True if args.cast_to_bigint else False
 
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, None
+            "count", col_args, None, cast_to_bigint=cast_to_bigint
         )
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, consts.NUMERIC_DATA_TYPES
+            "sum", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
         )
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, consts.NUMERIC_DATA_TYPES
+            "avg", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
         )
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, consts.NUMERIC_DATA_TYPES
+            "min", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
         )
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, consts.NUMERIC_DATA_TYPES
+            "max", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+        )
+    if args.bit_xor:
+        col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
+        aggregate_configs += config_manager.build_config_column_aggregates(
+            "bit_xor", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
         )
     return aggregate_configs
+
+
+def get_calculated_config(args, config_manager):
+    """Return list of formatted calculated objects.
+
+    Args:
+        config_manager(ConfigManager): Validation config manager instance.
+    """
+    calculated_configs = []
+    fields = []
+    if args.hash:
+        col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
+        fields = config_manager._build_dependent_aliases("hash", col_list)
+        aliases = [field["name"] for field in fields]
+
+        # Add to list of necessary columns for selective hashing in order to drop
+        # excess columns with invalid data types (i.e structs) when generating source/target DFs
+        if col_list:
+            config_manager.append_dependent_aliases(col_list)
+            config_manager.append_dependent_aliases(aliases)
+
+    if len(fields) > 0:
+        max_depth = max([x["depth"] for x in fields])
+    else:
+        max_depth = 0
+    for field in fields:
+        calculated_configs.append(
+            config_manager.build_config_calculated_fields(
+                field["reference"],
+                field["calc_type"],
+                field["name"],
+                field["depth"],
+                None,
+            )
+        )
+    if args.hash:
+        config_manager.append_comparison_fields(
+            config_manager.build_config_comparison_fields(
+                ["hash__all"], depth=max_depth
+            )
+        )
+    return calculated_configs
 
 
 def build_config_from_args(args, config_manager):
@@ -87,24 +150,48 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
-    config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-    if args.primary_keys and not args.grouped_columns:
-        if not args.grouped_columns and not config_manager.use_random_rows():
-            logging.warning(
-                "No Grouped columns or Random Rows specified, ignoring primary keys."
-            )
-    if args.grouped_columns:
-        grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
-        config_manager.append_query_groups(
-            config_manager.build_config_grouped_columns(grouped_columns)
-        )
-    if args.primary_keys:
-        primary_keys = cli_tools.get_arg_list(args.primary_keys, default_value=[])
-        config_manager.append_primary_keys(
-            config_manager.build_config_grouped_columns(primary_keys)
-        )
+    config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
 
-    # TODO(GH#18): Add query filter config logic
+    if config_manager.validation_type == consts.COLUMN_VALIDATION:
+        config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+        if args.grouped_columns is not None:
+            grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
+            config_manager.append_query_groups(
+                config_manager.build_config_grouped_columns(grouped_columns)
+            )
+    elif config_manager.validation_type == consts.ROW_VALIDATION:
+        if args.comparison_fields is not None:
+            comparison_fields = cli_tools.get_arg_list(
+                args.comparison_fields, default_value=[]
+            )
+            config_manager.append_comparison_fields(
+                config_manager.build_config_comparison_fields(comparison_fields)
+            )
+            if args.hash != "*":
+                config_manager.append_dependent_aliases(comparison_fields)
+
+    if args.primary_keys is not None:
+        primary_keys = cli_tools.get_arg_list(args.primary_keys)
+        config_manager.append_primary_keys(
+            config_manager.build_config_comparison_fields(primary_keys)
+        )
+        if args.hash != "*":
+            config_manager.append_dependent_aliases(primary_keys)
+
+    if config_manager.validation_type == consts.CUSTOM_QUERY:
+        config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+        if args.custom_query_type is not None:
+            config_manager.append_custom_query_type(args.custom_query_type)
+        else:
+            raise ValueError(
+                "Expected custom query type to be given, got empty string."
+            )
+        if args.source_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.source_query_file)
+            config_manager.append_source_query_file(query_file)
+        if args.target_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.target_query_file)
+            config_manager.append_target_query_file(query_file)
 
     return config_manager
 
@@ -118,11 +205,11 @@ def build_config_managers_from_args(args):
         if validate_cmd == "Schema":
             config_type = consts.SCHEMA_VALIDATION
         elif validate_cmd == "Column":
-            # TODO: We need to discuss how GroupedColumn and Row are differentiated.
-            if args.grouped_columns:
-                config_type = consts.GROUPED_COLUMN_VALIDATION
-            else:
-                config_type = consts.COLUMN_VALIDATION
+            config_type = consts.COLUMN_VALIDATION
+        elif validate_cmd == "Row":
+            config_type = consts.ROW_VALIDATION
+        elif validate_cmd == "Custom-query":
+            config_type = consts.CUSTOM_QUERY
         else:
             raise ValueError(f"Unknown Validation Type: {validate_cmd}")
     else:
@@ -145,13 +232,20 @@ def build_config_managers_from_args(args):
             filter_config = cli_tools.get_filters(args.filters)
         if args.threshold:
             threshold = args.threshold
-        labels = cli_tools.get_labels(args.labels)
+    labels = cli_tools.get_labels(args.labels)
 
     mgr = state_manager.StateManager()
     source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
     target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     format = args.format if args.format else "table"
+
+    use_random_rows = (
+        None if config_type == consts.SCHEMA_VALIDATION else args.use_random_row
+    )
+    random_row_batch_size = (
+        None if config_type == consts.SCHEMA_VALIDATION else args.random_row_batch_size
+    )
 
     is_filesystem = source_client._source_type == "FileSystem"
     tables_list = cli_tools.get_tables_list(
@@ -167,8 +261,8 @@ def build_config_managers_from_args(args):
             labels,
             threshold,
             format,
-            use_random_rows=args.use_random_row,
-            random_row_batch_size=args.random_row_batch_size,
+            use_random_rows=use_random_rows,
+            random_row_batch_size=random_row_batch_size,
             source_client=source_client,
             target_client=target_client,
             result_handler_config=result_handler_config,
@@ -387,7 +481,7 @@ def run_validation_configs(args):
 
 def validate(args):
     """Run commands related to data validation."""
-    if args.validate_cmd == "column" or args.validate_cmd == "schema":
+    if args.validate_cmd in ["column", "row", "schema", "custom-query"]:
         run(args)
     else:
         raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")

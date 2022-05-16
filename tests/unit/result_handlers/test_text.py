@@ -17,9 +17,27 @@ import pytest
 from pandas import DataFrame
 
 SAMPLE_CONFIG = {}
-SAMPLE_RESULT_DATA = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]
-SAMPLE_RESULT_COLUMNS = ["A", "B", "C", "D"]
-SAMPLE_RESULT_COLUMNS_FILTER_LIST = ["B", "D"]
+SAMPLE_RESULT_DATA = [
+    [0, 1, 2, 3, "Column", "source", "target"],
+    [4, 5, 6, 7, "Column", "source", "target"],
+    [8, 9, 10, 11, "Column", "source", "target"],
+]
+SAMPLE_RESULT_COLUMNS = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "validation_type",
+    "source_agg_value",
+    "target_agg_value",
+]
+SAMPLE_RESULT_COLUMNS_FILTER_LIST = [
+    "B",
+    "D",
+    "validation_type",
+    "source_agg_value",
+    "target_agg_value",
+]
 
 
 @pytest.fixture
@@ -30,12 +48,12 @@ def module_under_test():
 
 
 def test_import(module_under_test):
-    """Test import cleanly """
+    """Test import cleanly"""
     assert module_under_test is not None
 
 
 def test_basic_result_handler(module_under_test):
-    """Test basic handler executes """
+    """Test basic handler executes"""
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
     format = "csv"
     result_handler = module_under_test.TextResultHandler(
@@ -70,6 +88,7 @@ def test_columns_to_print(module_under_test, capsys):
 
     grid_text = "│A│C││0│2││4│6││8│10│"
     printed_text = capsys.readouterr().out
+    print(printed_text)
     printed_text = (
         printed_text.replace("\n", "")
         .replace("'", "")

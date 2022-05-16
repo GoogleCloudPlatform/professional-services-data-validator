@@ -63,6 +63,14 @@ class BigQueryResultHandler(object):
             table, result_df
         )
         if any(chunk_errors):
+            if (
+                chunk_errors[0][0]["errors"][0]["message"]
+                == "no such field: validation_status."
+            ):
+                raise RuntimeError(
+                    f"Please update your BigQuery results table schema using the script : samples/bq_utils/update_schema.sh.\n"
+                    f"The lastest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
+                )
             raise RuntimeError(f"could not write rows: {chunk_errors}")
         # May need to run `bq update project-id:pso_data_validator.results terraform/results_schema.json` to update schema
 
