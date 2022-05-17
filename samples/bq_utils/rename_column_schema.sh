@@ -12,6 +12,8 @@ bq cp $CURRENT_TABLE $DEPRECATED_TABLE
 # To create a new table with column as Validation_status
 bq query \
 --destination_table $DEST_TABLE \
+--clustering_fields validation_name,run_id \
+--time_partitioning_field start_time \
 --replace \
 --use_legacy_sql=false \
 "SELECT * EXCEPT(status), status as validation_status FROM $CURRENT_TABLE"
