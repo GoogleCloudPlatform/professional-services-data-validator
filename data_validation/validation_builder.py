@@ -179,7 +179,6 @@ class ValidationBuilder(object):
             field_name=target_field_name, alias=alias, cast=cast
         )
 
-        print(self.config_manager.primary_keys)
         self.source_builder.add_aggregate_field(source_agg)
         self.target_builder.add_aggregate_field(target_agg)
         self._metadata[alias] = metadata.ValidationMetadata(

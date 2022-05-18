@@ -102,7 +102,7 @@ class ConfigManager(object):
         )
 
     def get_random_row_batch_size(self):
-        """Return number of random rows or None. """
+        """Return number of random rows or None."""
         return self.random_row_batch_size() if self.use_random_rows() else None
 
     def process_in_memory(self):

@@ -904,8 +904,6 @@ def test_generate_report_with_group_by(
         ),
     ),
 )
-
-
 def test_generate_report_with_nan_agg_value(
     module_under_test, patch_datetime_now, source_df, target_df, run_metadata, expected
 ):

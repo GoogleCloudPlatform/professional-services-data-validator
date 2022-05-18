@@ -265,7 +265,9 @@ def _pivot_result(result, join_on_fields, validations, result_type):
                         .cast("string")
                         .name("column_name"),
                         primary_keys,
-                        ibis.literal(validation.num_random_rows).name("num_random_rows"),
+                        ibis.literal(validation.num_random_rows).name(
+                            "num_random_rows"
+                        ),
                         result[field].cast("string").name("agg_value"),
                     )
                     + join_on_fields
