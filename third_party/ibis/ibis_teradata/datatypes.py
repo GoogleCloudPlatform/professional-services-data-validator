@@ -35,7 +35,7 @@ class TeradataTypeTranslator(object):
         return cls.to_ibis_from_other(col_data, return_ibis_type=True)
 
     @classmethod
-    def to_ibis_from_other(cls, col_data, return_ibis_type=True):
+    def to_ibis_from_other(cls, col_data, return_ibis_type=False):
         if return_ibis_type:
             return dt.string
 
