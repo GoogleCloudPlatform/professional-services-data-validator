@@ -32,10 +32,11 @@ class TeradataTypeTranslator(object):
         if hasattr(cls, to_ibis_func_name):
             return getattr(cls, to_ibis_func_name)(col_data, return_ibis_type=True)
 
-        return cls.to_ibis_from_other(col_data, return_ibis_type=True)
+        # return cls.to_ibis_from_other(col_data, return_ibis_type=True)
+        return "VARCHAR"
 
     @classmethod
-    def to_ibis_from_other(cls, col_data, return_ibis_type=False):
+    def to_ibis_from_other(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
             return dt.string
 
@@ -43,7 +44,7 @@ class TeradataTypeTranslator(object):
         return "VARCHAR"
 
     @classmethod
-    def to_ibis_from_CV(cls, col_data, return_ibis_type=False):
+    def to_ibis_from_CV(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
             return dt.string
 
