@@ -398,11 +398,11 @@ def _regex_replace(translator, expr):
 
 
 def _string_concat(translator, expr):
-    return "CONCAT({})".format(", ".join(map(translator.translate, expr.op().arg)))
+    return "||".join(map(translator.translate, expr.op().arg))
 
 def _string_join(translator, expr):
     sep, args = expr.op().args
-    return "CONCAT({})".format(", ".join(map(translator.translate, expr.op().arg)))
+    return "||".join(map(translator.translate, expr.op().arg))
 
 # def _string_join(translator, expr):
 #     sep, args = expr.op().args
