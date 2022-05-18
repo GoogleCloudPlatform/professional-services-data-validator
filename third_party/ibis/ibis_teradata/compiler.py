@@ -566,7 +566,7 @@ _operation_registry.update(
         ops.RegexReplace: _regex_replace,
         ops.GroupConcat: reduction("STRING_AGG"),
         ops.IfNull: fixed_arity("NVL", 2),
-        # ops.Cast: _cast,
+        ops.Cast: _cast,
         ops.StructField: _struct_field,
         ops.ArrayCollect: unary("ARRAY_AGG"),
         ops.ArrayConcat: _array_concat,
