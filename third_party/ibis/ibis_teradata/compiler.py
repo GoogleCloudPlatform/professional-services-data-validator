@@ -17,7 +17,7 @@ from ibis.backends import base_sql
 from ibis.backends.base_sql.identifiers import base_identifiers
 
 from ibis.common.exceptions import UnsupportedOperationError
-from datatypes import ibis_type_to_teradata_type
+from .datatypes import ibis_type_to_teradata_type
 from ibis.backends.base_sql import fixed_arity, literal, reduction, unary
 from ibis.backends.base_sql.compiler import (
     BaseExprTranslator,
