@@ -89,7 +89,7 @@ def generate_report(
     # if verbose:
     #     print("-- ** Combiner Query ** --")
     #     print(documented.compile())
-
+    # ^ dmedora uncomment this
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
     return result_df

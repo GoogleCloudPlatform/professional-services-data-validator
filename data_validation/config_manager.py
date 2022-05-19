@@ -467,6 +467,25 @@ class ConfigManager(object):
         if column_type == "string":
             calc_func = "length"
         elif column_type == "timestamp":
+            # how to know if the timestamp/datetime col is from source or target... Could do separately for both source and target - that's how the calculated config is written. takes both right. Or maybe one can be blank?
+            print("DEBUG dmedora: in pre agg calc timestamp")
+            if isinstance(self.source_client, BigQueryClient) or isinstance(
+                self.target_client, BigQueryClient
+            ):
+                print("DEBUG dmedora: hit my cast block")
+                calc_func = "cast"
+                pre_calculated_config = {
+                    consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
+                    consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
+                    consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{column}",
+                    consts.CONFIG_TYPE: calc_func,
+                    consts.CONFIG_DEPTH: 0,
+                }
+                pre_calculated_config[
+                    "default_cast"
+                ] = "timestamp"  # string, date work as expected. timestamp doesn't do any cast at all
+                self.append_calculated_fields([pre_calculated_config])
+
             calc_func = "epoch_seconds"
         elif column_type == "int32":
             calc_func = "cast"
@@ -496,6 +515,7 @@ class ConfigManager(object):
             consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calc_func}__{column}",
             consts.CONFIG_TYPE: agg_type,
         }
+        print(self.append_calculated_fields)
         return aggregate_config
 
     def build_config_column_aggregates(

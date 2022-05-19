@@ -360,6 +360,7 @@ class CalculatedField(object):
 
     @staticmethod
     def cast(config, fields):
+        print("DEBUG dmedora: query_builder.cast")
         target_type = config.get("default_cast", "string")
         return CalculatedField(
             ibis.expr.api.ValueExpr.cast,
