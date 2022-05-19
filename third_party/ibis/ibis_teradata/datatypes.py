@@ -120,16 +120,18 @@ ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")
 @ibis_type_to_teradata_type.register(str)
 def trans_string_default(datatype):
     return ibis_type_to_teradata_type(dt.dtype(datatype))
+    
 
 
 @ibis_type_to_teradata_type.register(dt.DataType)
 def trans_default(t):
-    return ibis_type_to_teradata_type(t, TypeTranslationContext())
+    # return ibis_type_to_teradata_type(t, TypeTranslationContext())
+    return "VARCHAR(255)"
 
 
 @ibis_type_to_teradata_type.register(str, TypeTranslationContext)
 def trans_string_context(datatype, context):
-    return ibis_type_to_teradata_type(dt.dtype(datatype), context)
+    return "VARCHAR"
 
 
 @ibis_type_to_teradata_type.register(dt.Floating, TypeTranslationContext)
