@@ -126,7 +126,7 @@ def trans_string_default(datatype):
 @ibis_type_to_teradata_type.register(dt.DataType)
 def trans_default(t):
     # return ibis_type_to_teradata_type(t, TypeTranslationContext())
-    return "VARCHAR(32000)"
+    return "VARCHAR(255)"
 
 
 @ibis_type_to_teradata_type.register(str, TypeTranslationContext)
