@@ -466,7 +466,7 @@ class ConfigManager(object):
             consts.CONFIG_DEPTH: depth,
         }
 
-        if calc_func == "cast" and cast_type != None:
+        if calc_func == "cast" and cast_type is not None:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
             calculated_config[
                 consts.CONFIG_FIELD_ALIAS
