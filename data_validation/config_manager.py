@@ -278,21 +278,13 @@ class ConfigManager(object):
         if not hasattr(self, "_source_ibis_table"):
             self._source_ibis_table = clients.get_ibis_table(
                 self.source_client, self.source_schema, self.source_table
-            )  # dmedora: it's already timestamp in this table.
-        print(
-            "DEBUG dmedora config_mgr.get_source_ibis_table:",
-            self.source_client,
-            self.source_schema,
-            self.source_table,
-            self._source_ibis_table,
-        )
+            )
         return self._source_ibis_table
 
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
         n: Int the depth of subquery requested"""
         table = self.get_source_ibis_table()
-        print("DEBUG dmedora get_source_ibis_calculated_table:", table.schema)
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.source_builder.compile_calculated_fields(table, n=depth)
@@ -462,60 +454,68 @@ class ConfigManager(object):
 
         return aggregate_config
 
-    def append_pre_agg_calc_field(self, column, agg_type, column_type):
-        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation"""
-        if column_type == "string":
-            calc_func = "length"
-        elif column_type == "timestamp":
-            # how to know if the timestamp/datetime col is from source or target... Could do separately for both source and target - that's how the calculated config is written. takes both right. Or maybe one can be blank?
-            print("DEBUG dmedora: in pre agg calc timestamp")
-            if isinstance(self.source_client, BigQueryClient) or isinstance(
-                self.target_client, BigQueryClient
-            ):
-                print("DEBUG dmedora: hit my cast block")
-                calc_func = "cast"
-                pre_calculated_config = {
-                    consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
-                    consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
-                    consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{column}",
-                    consts.CONFIG_TYPE: calc_func,
-                    consts.CONFIG_DEPTH: 0,
-                }
-                pre_calculated_config[
-                    "default_cast"
-                ] = "timestamp"  # string, date work as expected. timestamp doesn't do any cast at all
-                self.append_calculated_fields([pre_calculated_config])
-
-            calc_func = "epoch_seconds"
-        elif column_type == "int32":
-            calc_func = "cast"
-        else:
-            raise ValueError(f"Unsupported column type: {column_type}")
-
+    def build_and_append_pre_agg_calc_config(
+        self, column, calc_func, cast_type=None, depth=0
+    ):
+        """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
             consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{column}",
             consts.CONFIG_TYPE: calc_func,
-            consts.CONFIG_DEPTH: 0,
+            consts.CONFIG_DEPTH: depth,
         }
 
-        if column_type == "int32":
-            calculated_config["default_cast"] = "int64"
+        if calc_func == "cast" and cast_type != None:
+            calculated_config["default_cast"] = cast_type
 
         existing_calc_fields = [
-            x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
+            config[consts.CONFIG_FIELD_ALIAS] for config in self.calculated_fields
         ]
+
         if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
             self.append_calculated_fields([calculated_config])
+        return calculated_config
+
+    def append_pre_agg_calc_field(self, column, agg_type, column_type):
+        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
+        depth, cast_type = 0, None
+
+        if column_type == "string":
+            calc_func = "length"
+
+        elif column_type == "timestamp":
+            if isinstance(self.source_client, BigQueryClient) or isinstance(
+                self.target_client, BigQueryClient
+            ):
+                calc_func = "cast"
+                cast_type = "timestamp"
+                pre_calculated_config = self.build_and_append_pre_agg_calc_config(
+                    column, calc_func, cast_type, depth
+                )
+                column = pre_calculated_config[consts.CONFIG_FIELD_ALIAS]
+                depth = 1
+
+            calc_func = "epoch_seconds"
+
+        elif column_type == "int32":
+            calc_func = "cast"
+            cast_type = "int64"
+
+        else:
+            raise ValueError(f"Unsupported column type: {column_type}")
+
+        calculated_config = self.build_and_append_pre_agg_calc_config(
+            column, calc_func, cast_type, depth
+        )
 
         aggregate_config = {
-            consts.CONFIG_SOURCE_COLUMN: f"{calc_func}__{column}",
-            consts.CONFIG_TARGET_COLUMN: f"{calc_func}__{column}",
-            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calc_func}__{column}",
+            consts.CONFIG_SOURCE_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
+            consts.CONFIG_TARGET_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
+            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
             consts.CONFIG_TYPE: agg_type,
         }
-        print(self.append_calculated_fields)
+
         return aggregate_config
 
     def build_config_column_aggregates(
@@ -525,7 +525,7 @@ class ConfigManager(object):
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
-        print("DEBUG dmedora: source_table.schema:", source_table.schema)
+
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -536,7 +536,6 @@ class ConfigManager(object):
         for column in casefold_source_columns:
             # Get column type and remove precision/scale attributes
             column_type_str = str(source_table[casefold_source_columns[column]].type())
-            print("DEBUG dmedora: column, column_type_str:", column, column_type_str)
             column_type = column_type_str.split("(")[0]
 
             if column not in allowlist_columns:
@@ -553,11 +552,6 @@ class ConfigManager(object):
                     )
                 continue
 
-            print(
-                "DEBUG dmedora finding client pls:",
-                type(self.source_client) == BigQueryClient,
-            )
-            print("DEBUG dmedora: column_type:", column_type)
             if (
                 column_type == "string"
                 or (cast_to_bigint and column_type == "int32")
@@ -568,12 +562,13 @@ class ConfigManager(object):
                         "sum",
                         "avg",
                         "bit_xor",
-                    )  # timestamps: do not convert to epoch seconds for min/max
+                    )  # For timestamps: do not convert to epoch seconds for min/max
                 )
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     column, agg_type, column_type
                 )
+
             else:
                 aggregate_config = {
                     consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
@@ -581,6 +576,7 @@ class ConfigManager(object):
                     consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
                     consts.CONFIG_TYPE: agg_type,
                 }
+
             aggregate_configs.append(aggregate_config)
 
         return aggregate_configs
