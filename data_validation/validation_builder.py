@@ -13,15 +13,16 @@
 # limitations under the License.
 
 from copy import deepcopy
+
 from data_validation import consts, metadata
+from data_validation.query_builder.custom_query_builder import CustomQueryBuilder
 from data_validation.query_builder.query_builder import (
-    QueryBuilder,
-    GroupedField,
     AggregateField,
     CalculatedField,
     FilterField,
+    GroupedField,
+    QueryBuilder,
 )
-from data_validation.query_builder.custom_query_builder import CustomQueryBuilder
 
 
 class ValidationBuilder(object):
