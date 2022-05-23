@@ -202,7 +202,7 @@ data-validation (--verbose or -v) validate row
                         Defaults to table.
   [--use-random-row or -rr]
                         Finds a set of random rows of the first primary key supplied.
-  [--random-row-batch-size]
+  [--random-row-batch-size or -rbs]
                         Row batch size used for random row filters (default 10,000).
 ```
 
