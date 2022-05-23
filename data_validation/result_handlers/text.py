@@ -44,7 +44,7 @@ class TextResultHandler(object):
         else:
             print(
                 result_df.drop(self.cols_filter_list, axis=1).to_markdown(
-                    tablefmt="fancy_grid"
+                    tablefmt="fancy_grid", index=False
                 )
             )
 

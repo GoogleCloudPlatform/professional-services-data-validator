@@ -237,6 +237,15 @@ def _pivot_result(result, join_on_fields, validations, result_type):
             continue
         else:
             validation = validations[field]
+            if validation.primary_keys:
+                primary_keys = (
+                    ibis.literal("{")
+                    + ibis.literal(", ").join(validation.primary_keys)
+                    + ibis.literal("}")
+                ).name("primary_keys")
+            else:
+                primary_keys = ibis.literal(None).cast("string").name("primary_keys")
+
             pivots.append(
                 result.projection(
                     (
@@ -255,6 +264,10 @@ def _pivot_result(result, join_on_fields, validations, result_type):
                         ibis.literal(validation.get_column_name(result_type))
                         .cast("string")
                         .name("column_name"),
+                        primary_keys,
+                        ibis.literal(validation.num_random_rows).name(
+                            "num_random_rows"
+                        ),
                         result[field].cast("string").name("agg_value"),
                     )
                     + join_on_fields
@@ -303,6 +316,8 @@ def _join_pivots(source, target, differences, join_on_fields):
             source["aggregation_type"],
             source["table_name"],
             source["column_name"],
+            source["primary_keys"],
+            source["num_random_rows"],
             source["agg_value"],
             differences["difference"],
             differences["pct_difference"],
@@ -325,6 +340,8 @@ def _join_pivots(source, target, differences, join_on_fields):
         target["column_name"].name("target_column_name"),
         target["agg_value"].name("target_agg_value"),
         group_by_columns,
+        source_difference["primary_keys"],
+        source_difference["num_random_rows"],
         source_difference["difference"],
         source_difference["pct_difference"],
         source_difference["pct_threshold"],
