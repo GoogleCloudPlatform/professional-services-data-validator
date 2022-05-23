@@ -360,7 +360,7 @@ class CalculatedField(object):
 
     @staticmethod
     def cast(config, fields):
-        target_type = config.get("default_cast", "string")
+        target_type = config.get(consts.CONFIG_DEFAULT_CAST, "string")
         return CalculatedField(
             api.cast,
             config,

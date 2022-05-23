@@ -467,7 +467,10 @@ class ConfigManager(object):
         }
 
         if calc_func == "cast" and cast_type != None:
-            calculated_config["default_cast"] = cast_type
+            calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
+            calculated_config[
+                consts.CONFIG_FIELD_ALIAS
+            ] = f"{calc_func}_{cast_type}__{column}"
 
         existing_calc_fields = [
             config[consts.CONFIG_FIELD_ALIAS] for config in self.calculated_fields
