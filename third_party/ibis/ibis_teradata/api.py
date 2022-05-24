@@ -2,9 +2,6 @@
 
 from typing import Optional
 
-import google.auth.credentials
-import google.cloud.bigquery  # noqa: F401, fail early if bigquery is missing
-
 import ibis.common.exceptions as com
 from client import TeradataClient  # TODO make non local
 from compiler import dialect  # TODO make non local

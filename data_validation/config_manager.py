@@ -101,6 +101,10 @@ class ConfigManager(object):
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
+    def get_random_row_batch_size(self):
+        """Return number of random rows or None."""
+        return self.random_row_batch_size() if self.use_random_rows() else None
+
     def process_in_memory(self):
         """Return whether to process in memory or on a remote platform."""
         return True
@@ -193,6 +197,10 @@ class ConfigManager(object):
         self._config[consts.CONFIG_PRIMARY_KEYS] = (
             self.primary_keys + primary_key_configs
         )
+
+    def get_primary_keys_list(self):
+        """Return list of primary key column names"""
+        return [key[consts.CONFIG_SOURCE_COLUMN] for key in self.primary_keys]
 
     @property
     def comparison_fields(self):

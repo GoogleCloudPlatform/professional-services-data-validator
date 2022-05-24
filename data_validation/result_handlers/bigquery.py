@@ -17,6 +17,7 @@
 from google.cloud import bigquery
 
 from data_validation import client_info
+from data_validation.result_handlers.text import TextResultHandler
 
 
 class BigQueryResultHandler(object):
@@ -54,6 +55,9 @@ class BigQueryResultHandler(object):
         return BigQueryResultHandler(client, table_id=table_id)
 
     def execute(self, config, result_df):
+        text_handler = TextResultHandler("table")
+        text_handler.print_formatted_(result_df)
+
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df
@@ -64,8 +68,16 @@ class BigQueryResultHandler(object):
                 == "no such field: validation_status."
             ):
                 raise RuntimeError(
-                    f"Please update your BigQuery results table schema using the script : samples/bq_utils/update_schema.sh.\n"
+                    f"Please update your BigQuery results table schema using the script : samples/bq_utils/rename_column_schema.sh.\n"
                     f"The lastest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
+                )
+            elif (
+                chunk_errors[0][0]["errors"][0]["message"]
+                == "no such field: primary_keys."
+            ):
+                raise RuntimeError(
+                    f"Please update your BigQuery results table schema using the script : samples/bq_utils/add_columns_schema.sh.\n"
+                    f"The lastest release of DVT has added two fields 'primary_keys' and 'num_random_rows': {chunk_errors}"
                 )
             raise RuntimeError(f"could not write rows: {chunk_errors}")
 

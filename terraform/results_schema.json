@@ -52,7 +52,17 @@
   {
     "name": "group_by_columns",
     "type": "STRING",
-    "description": "Group by columns, stored as a key-value JSON mapping."
+    "description": "Group by columns, stored as a key-value JSON mapping"
+  },
+  {
+    "name": "primary_keys",
+    "type": "STRING",
+    "description": "Primary keys for the validation"
+  },
+  {
+    "name": "num_random_rows",
+    "type": "INTEGER",
+    "description": "Number of random row batch size"
   },
   {
     "name": "source_agg_value",

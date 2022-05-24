@@ -188,6 +188,10 @@ data-validation (--verbose or -v) validate row
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults to table.
+  [--use-random-row or -rr]
+                        Finds a set of random rows of the first primary key supplied.
+  [--random-row-batch-size or -rbs]
+                        Row batch size used for random row filters (default 10,000).
 ```
 
 #### Schema Validations

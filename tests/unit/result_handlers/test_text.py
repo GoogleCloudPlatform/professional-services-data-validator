@@ -86,16 +86,16 @@ def test_columns_to_print(module_under_test, capsys):
     )
     result_handler.execute(SAMPLE_CONFIG, result_df)
 
-    grid_text = "││A│C││0│0│2││1│4│6││2│8│10│"
+    grid_text = "│A│C││0│2││4│6││8│10│"
     printed_text = capsys.readouterr().out
     print(printed_text)
     printed_text = (
         printed_text.replace("\n", "")
         .replace("'", "")
         .replace(" ", "")
-        .replace("╒════╤═════╤═════╕", "")
-        .replace("╞════╪═════╪═════╡", "")
-        .replace("├────┼─────┼─────┤", "")
-        .replace("╘════╧═════╧═════╛", "")
+        .replace("╒═════╤═════╕", "")
+        .replace("╞═════╪═════╡", "")
+        .replace("├─────┼─────┤", "")
+        .replace("╘═════╧═════╛", "")
     )
     assert printed_text == grid_text

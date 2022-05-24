@@ -33,6 +33,8 @@ class ValidationMetadata(object):
     target_table_name: str
     source_column_name: str
     target_column_name: str
+    primary_keys: list
+    num_random_rows: int
     threshold: float
 
     def get_table_name(self, result_type):

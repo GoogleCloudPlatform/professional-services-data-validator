@@ -134,6 +134,12 @@ COLUMN_FILTER_LIST = [
     "pct_threshold",
     "run_id",
     "start_time",
+    "target_table_name",
+    "target_column_name",
+    "difference",
+    "primary_keys",
+    "group_by_columns",
+    "num_random_rows",
 ]
 SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
     "run_id",

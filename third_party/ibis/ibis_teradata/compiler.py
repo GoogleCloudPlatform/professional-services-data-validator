@@ -17,7 +17,7 @@ from ibis.backends import base_sql
 from ibis.backends.base_sql.identifiers import base_identifiers
 
 from ibis.common.exceptions import UnsupportedOperationError
-from ibis_bigquery.datatypes import ibis_type_to_bigquery_type
+from .datatypes import ibis_type_to_teradata_type
 from ibis.backends.base_sql import fixed_arity, literal, reduction, unary
 from ibis.backends.base_sql.compiler import (
     BaseExprTranslator,
@@ -126,13 +126,6 @@ class TeradataTableSetFormatter(BaseTableSetFormatter):
             return "{0}{1}{0}".format(quotechar, name)
         else:
             return name
-
-
-class BigQueryTableSetFormatter(BaseTableSetFormatter):
-    def _quote_identifier(self, name):
-        if re.match(r'^[A-Za-z][A-Za-z_0-9]*$', name):
-            return name
-        return '`{}`'.format(name)
 
 
 class TeradataUDFNode(ops.ValueOp):
@@ -256,7 +249,7 @@ class TeradataQueryBuilder(comp.QueryBuilder):
     ):  # TODO validate if I need to override this function
         queries = map(
             partial(TeradataUDFDefinition, context=self.context),
-            lin.traverse(find_bigquery_udf, self.expr),
+            lin.traverse(find_teradata_udf, self.expr),
         )
 
         # UDFs are uniquely identified by the name of the Node subclass we
@@ -300,7 +293,7 @@ def _name_expr(formatted_expr, quoted_name):
     return "{} AS {}".format(formatted_expr, quoted_name)
 
 
-def find_bigquery_udf(expr):
+def find_teradata_udf(expr):
     if isinstance(expr.op(), TeradataUDFNode):
         result = expr
     else:
@@ -323,17 +316,17 @@ def _extract_field(sql_attr):
     return extract_field_formatter
 
 
-bigquery_cast = Dispatcher("bigquery_cast")
+teradata_cast = Dispatcher("teradata_cast")
 
 
-@bigquery_cast.register(str, dt.Timestamp, dt.Integer)
-def bigquery_cast_timestamp_to_integer(compiled_arg, from_, to):
+@teradata_cast.register(str, dt.Timestamp, dt.Integer)
+def teradata_cast_timestamp_to_integer(compiled_arg, from_, to):
     return "UNIX_MICROS({})".format(compiled_arg)
 
 
-@bigquery_cast.register(str, dt.DataType, dt.DataType)
-def bigquery_cast_generate(compiled_arg, from_, to):
-    sql_type = ibis_type_to_bigquery_type(to)
+@teradata_cast.register(str, dt.DataType, dt.DataType)
+def teradata_cast_generate(compiled_arg, from_, to):
+    sql_type = ibis_type_to_teradata_type(to)
     return "CAST({} AS {})".format(compiled_arg, sql_type)
 
 
@@ -341,7 +334,7 @@ def _cast(translator, expr):
     op = expr.op()
     arg, target_type = op.args
     arg_formatted = translator.translate(arg)
-    return bigquery_cast(arg_formatted, arg.type(), target_type)
+    return teradata_cast(arg_formatted, arg.type(), target_type)
 
 
 def _struct_field(translator, expr):
@@ -375,7 +368,7 @@ def _string_find(translator, expr):
 
 
 def _translate_pattern(translator, pattern):
-    # add 'r' to string literals to indicate to BigQuery this is a raw string
+    # add 'r' to string literals to indicate to Teradata this is a raw string
     return "r" * isinstance(pattern.op(), ops.Literal) + translator.translate(pattern)
 
 
@@ -405,11 +398,11 @@ def _regex_replace(translator, expr):
 
 
 def _string_concat(translator, expr):
-    return "CONCAT({})".format(", ".join(map(translator.translate, expr.op().arg)))
+    return "||".join(map(translator.translate, expr.op().arg))
 
 def _string_join(translator, expr):
     sep, args = expr.op().args
-    return "CONCAT({})".format(", ".join(map(translator.translate, expr.op().arg)))
+    return "||".join(map(translator.translate, expr.op().arg))
 
 # def _string_join(translator, expr):
 #     sep, args = expr.op().args
@@ -484,7 +477,7 @@ def _arbitrary(translator, expr):
 
     if how not in (None, "first"):
         raise UnsupportedOperationError(
-            "{!r} value not supported for arbitrary in BigQuery".format(how)
+            "{!r} value not supported for arbitrary in Teradata".format(how)
         )
 
     return "ANY_VALUE({})".format(translator.translate(arg))
@@ -517,7 +510,7 @@ def _truncate(kind, units):
         valid_unit = units.get(unit)
         if valid_unit is None:
             raise UnsupportedOperationError(
-                "BigQuery does not support truncating {} values to unit "
+                "Teradata does not support truncating {} values to unit "
                 "{!r}".format(arg.type(), unit)
             )
         return "{}_TRUNC({}, {})".format(kind, trans_arg, valid_unit)
@@ -533,7 +526,7 @@ def _timestamp_op(func, units):
         unit = offset.type().unit
         if unit not in units:
             raise UnsupportedOperationError(
-                "BigQuery does not allow binary operation "
+                "Teradata does not allow binary operation "
                 "{} with INTERVAL offset {}".format(func, unit)
             )
         formatted_arg = translator.translate(arg)
@@ -584,7 +577,7 @@ _operation_registry.update(
         ops.Sign: unary("SIGN"),
         ops.Modulus: fixed_arity("MOD", 2),
         ops.Date: unary("DATE"),
-        # BigQuery doesn't have these operations built in.
+        # Teradata doesn't have these operations built in.
         # ops.ArrayRepeat: _array_repeat,
         # ops.ArraySlice: _array_slice,
         ops.Literal: _literal,
@@ -618,20 +611,20 @@ rewrites = TeradataExprTranslator.rewrites
 
 
 @compiles(ops.DayOfWeekIndex)
-def bigquery_day_of_week_index(t, e):
+def teradata_day_of_week_index(t, e):
     arg = e.op().args[0]
     arg_formatted = t.translate(arg)
     return "MOD(EXTRACT(DAYOFWEEK FROM {}) + 5, 7)".format(arg_formatted)
 
 
 @rewrites(ops.DayOfWeekName)
-def bigquery_day_of_week_name(e):
+def teradata_day_of_week_name(e):
     arg = e.op().args[0]
     return arg.strftime("%A")
 
 
 @compiles(ops.Divide)
-def bigquery_compiles_divide(t, e):
+def teradata_compiles_divide(t, e):
     return "IEEE_DIVIDE({}, {})".format(*map(t.translate, e.op().args))
 
 
@@ -710,9 +703,9 @@ def compiles_timestamp_from_unix(t, e):
 
 @compiles(ops.Floor)
 def compiles_floor(t, e):
-    bigquery_type = ibis_type_to_bigquery_type(e.type())
+    teradata_type = ibis_type_to_teradata_type(e.type())
     arg = e.op().arg
-    return "CAST(FLOOR({}) AS {})".format(t.translate(arg), bigquery_type)
+    return "CAST(FLOOR({}) AS {})".format(t.translate(arg), teradata_type)
 
 
 @compiles(ops.CMSMedian)
@@ -752,27 +745,27 @@ def compiles_covar(translator, expr):
 @rewrites(ops.All)
 @rewrites(ops.NotAny)
 @rewrites(ops.NotAll)
-def bigquery_any_all_no_op(expr):
+def teradata_any_all_no_op(expr):
     return expr
 
 
 @compiles(ops.Any)
-def bigquery_compile_any(translator, expr):
+def teradata_compile_any(translator, expr):
     return "LOGICAL_OR({})".format(*map(translator.translate, expr.op().args))
 
 
 @compiles(ops.NotAny)
-def bigquery_compile_notany(translator, expr):
+def teradata_compile_notany(translator, expr):
     return "LOGICAL_AND(NOT ({}))".format(*map(translator.translate, expr.op().args))
 
 
 @compiles(ops.All)
-def bigquery_compile_all(translator, expr):
+def teradata_compile_all(translator, expr):
     return "LOGICAL_AND({})".format(*map(translator.translate, expr.op().args))
 
 
 @compiles(ops.NotAll)
-def bigquery_compile_notall(translator, expr):
+def teradata_compile_notall(translator, expr):
     return "LOGICAL_OR(NOT ({}))".format(*map(translator.translate, expr.op().args))
 
 
