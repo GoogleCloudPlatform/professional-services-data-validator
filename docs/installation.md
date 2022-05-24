@@ -127,6 +127,6 @@ Here's an [example](https://github.com/GoogleCloudPlatform/professional-services
 
 
 ## Automate using Apache Airflow
-It is an option to orchestrate the validation and implement it as a task within an Airflow DAG.
+You can orchestrate DVT by running a validation as a task within an Airflow DAG.
 
 Here's a simple [example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/airflow/dvt_airflow_dag.py) on how you can execute this tool using the [PythonVirtualenvOperator](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html#pythonvirtualenvoperator).
