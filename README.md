@@ -638,36 +638,7 @@ in the Data Validation tool, it is a simple process.
 3.  You are done, you can reference the data source via the config.
 
     -   Config: {"source_type": "<RefName>", ...KV Values required in Client...}
-
-## Deploy to Composer
-
-```
-#!/bin/bash
-
-export COMPOSER_ENV=""
-export LOCATION=""
-
-echo "Creating Composer Env: $COMPOSER_ENV"
-gcloud services enable composer.googleapis.com
-gcloud composer environments create $COMPOSER_ENV --location=$LOCATION --python-version=3
-
-echo "Updating Composer Env Reqs: $COMPOSER_ENV"
-# Composer builds Pandas and BigQuery for you, these should be stripped out
-cat requirements.txt | grep -v pandas | grep -v google-cloud-bigquery > temp_reqs.txt
-gcloud composer environments update $COMPOSER_ENV --location=$LOCATION --update-pypi-packages-from-file=temp_reqs.txt
-rm temp_reqs.txt
-
-# Deploy Package to Composer (the hacky way)
-echo "Rebuilding Data Validation Package in GCS"
-export GCS_BUCKET_PATH=$(gcloud composer environments describe $COMPOSER_ENV --location=$LOCATION | grep dagGcsPrefix | awk '{print $2;}')
-gsutil rm -r $GCS_BUCKET_PATH/data_validation
-gsutil cp -r data_validation $GCS_BUCKET_PATH/data_validation
-
-# Deploy Test DAG to Composer
-echo "Pushing Data Validation Test Operator to GCS"
-gsutil cp tests/test_data_validation_operators.py $GCS_BUCKET_PATH/
-```
-
+    
 ## Contributing
 
 Contributions are welcome. See the [contributing guide](CONTRIBUTING.md) for
