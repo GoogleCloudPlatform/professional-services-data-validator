@@ -119,16 +119,17 @@ CONFIG_TIMESTAMP_AGGS = {
         {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_date"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_date"],
-            consts.CONFIG_FIELD_ALIAS: "epoch_seconds__start_date",
-            consts.CONFIG_TYPE: "epoch_seconds",
+            consts.CONFIG_FIELD_ALIAS: "cast_timestamp__start_date",
+            consts.CONFIG_TYPE: "cast",
+            consts.CONFIG_DEFAULT_CAST: "timestamp",
             consts.CONFIG_DEPTH: 0,
         },
         {
-            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["end_date"],
-            consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["end_date"],
-            consts.CONFIG_FIELD_ALIAS: "epoch_seconds__end_date",
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["cast_timestamp__start_date"],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["cast_timestamp__start_date"],
+            consts.CONFIG_FIELD_ALIAS: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TYPE: "epoch_seconds",
-            consts.CONFIG_DEPTH: 0,
+            consts.CONFIG_DEPTH: 1,
         },
     ],
     consts.CONFIG_AGGREGATES: [
@@ -139,21 +140,21 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_TYPE: "count",
         },
         {
-            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__start_date",
-            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__start_date",
-            consts.CONFIG_FIELD_ALIAS: "sum__epoch_seconds__start_date",
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
+            consts.CONFIG_FIELD_ALIAS: "sum__epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TYPE: "sum",
         },
         {
-            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__end_date",
-            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__end_date",
-            consts.CONFIG_FIELD_ALIAS: "avg__epoch_seconds__end_date",
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
+            consts.CONFIG_FIELD_ALIAS: "avg__epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TYPE: "avg",
         },
         {
-            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__end_date",
-            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__end_date",
-            consts.CONFIG_FIELD_ALIAS: "bit_xor__epoch_seconds__end_date",
+            consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
+            consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
+            consts.CONFIG_FIELD_ALIAS: "bit_xor__epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TYPE: "bit_xor",
         },
         {
@@ -163,9 +164,9 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_TYPE: "min",
         },
         {
-            consts.CONFIG_SOURCE_COLUMN: "end_date",
-            consts.CONFIG_TARGET_COLUMN: "end_date",
-            consts.CONFIG_FIELD_ALIAS: "max__end_date",
+            consts.CONFIG_SOURCE_COLUMN: "start_date",
+            consts.CONFIG_TARGET_COLUMN: "start_date",
+            consts.CONFIG_FIELD_ALIAS: "max__start_date",
             consts.CONFIG_TYPE: "max",
         },
     ],
@@ -269,7 +270,7 @@ CLI_WILDCARD_STRING_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_WILDCARD = 134
+EXPECTED_NUM_YAML_LINES_WILDCARD = 150
 
 CLI_TIMESTAMP_MIN_MAX_ARGS = [
     "validate",
@@ -301,13 +302,33 @@ CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS = [
     "--sum",
     "start_date",
     "--avg",
-    "end_date",
+    "start_date",
     "--bit_xor",
-    "end_date",
+    "start_date",
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 47
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 48
+
+CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.new_york_citibike.citibike_stations",
+    "--sum",
+    "last_reported",
+    "--avg",
+    "last_reported",
+    "--bit_xor",
+    "last_reported",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR = 48
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -488,6 +509,14 @@ def test_timestamp_sum_avg_bitxor_column_agg_yaml():
     _test_cli_yaml_local_runner(
         CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS,
         EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR,
+    )
+
+
+def test_bq_datetime_sum_avg_bitxor_column_agg_yaml():
+    """Test storing column validation YAML with datetime fields for sum, avg, bit_xor aggregations, which are cast to timestamp when using the BigQuery client."""
+    _test_cli_yaml_local_runner(
+        CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS,
+        EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR,
     )
 
 

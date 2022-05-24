@@ -15,7 +15,7 @@
 import ibis
 from data_validation import clients, consts
 from ibis.expr.types import StringScalar
-from third_party.ibis.ibis_addon import operations
+from third_party.ibis.ibis_addon import api, operations
 
 
 class AggregateField(object):
@@ -360,9 +360,9 @@ class CalculatedField(object):
 
     @staticmethod
     def cast(config, fields):
-        target_type = config.get("default_cast", "string")
+        target_type = config.get(consts.CONFIG_DEFAULT_CAST, "string")
         return CalculatedField(
-            ibis.expr.api.ValueExpr.cast,
+            api.cast,
             config,
             fields,
             target_type=target_type,

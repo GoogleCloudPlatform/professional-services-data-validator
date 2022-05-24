@@ -16,6 +16,7 @@ import copy
 import logging
 
 import google.oauth2.service_account
+from ibis_bigquery.client import BigQueryClient
 
 from data_validation import clients, consts, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
@@ -461,40 +462,71 @@ class ConfigManager(object):
 
         return aggregate_config
 
-    def append_pre_agg_calc_field(self, column, agg_type, column_type):
-        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation"""
-        if column_type == "string":
-            calc_func = "length"
-        elif column_type == "timestamp":
-            calc_func = "epoch_seconds"
-        elif column_type == "int32":
-            calc_func = "cast"
-        else:
-            raise ValueError(f"Unsupported column type: {column_type}")
-
+    def build_and_append_pre_agg_calc_config(
+        self, column, calc_func, cast_type=None, depth=0
+    ):
+        """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
             consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{column}",
             consts.CONFIG_TYPE: calc_func,
-            consts.CONFIG_DEPTH: 0,
+            consts.CONFIG_DEPTH: depth,
         }
 
-        if column_type == "int32":
-            calculated_config["default_cast"] = "int64"
+        if calc_func == "cast" and cast_type is not None:
+            calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
+            calculated_config[
+                consts.CONFIG_FIELD_ALIAS
+            ] = f"{calc_func}_{cast_type}__{column}"
 
         existing_calc_fields = [
-            x[consts.CONFIG_FIELD_ALIAS] for x in self.calculated_fields
+            config[consts.CONFIG_FIELD_ALIAS] for config in self.calculated_fields
         ]
+
         if calculated_config[consts.CONFIG_FIELD_ALIAS] not in existing_calc_fields:
             self.append_calculated_fields([calculated_config])
+        return calculated_config
+
+    def append_pre_agg_calc_field(self, column, agg_type, column_type):
+        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
+        depth, cast_type = 0, None
+
+        if column_type == "string":
+            calc_func = "length"
+
+        elif column_type == "timestamp":
+            if isinstance(self.source_client, BigQueryClient) or isinstance(
+                self.target_client, BigQueryClient
+            ):
+                calc_func = "cast"
+                cast_type = "timestamp"
+                pre_calculated_config = self.build_and_append_pre_agg_calc_config(
+                    column, calc_func, cast_type, depth
+                )
+                column = pre_calculated_config[consts.CONFIG_FIELD_ALIAS]
+                depth = 1
+
+            calc_func = "epoch_seconds"
+
+        elif column_type == "int32":
+            calc_func = "cast"
+            cast_type = "int64"
+
+        else:
+            raise ValueError(f"Unsupported column type: {column_type}")
+
+        calculated_config = self.build_and_append_pre_agg_calc_config(
+            column, calc_func, cast_type, depth
+        )
 
         aggregate_config = {
-            consts.CONFIG_SOURCE_COLUMN: f"{calc_func}__{column}",
-            consts.CONFIG_TARGET_COLUMN: f"{calc_func}__{column}",
-            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calc_func}__{column}",
+            consts.CONFIG_SOURCE_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
+            consts.CONFIG_TARGET_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
+            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
             consts.CONFIG_TYPE: agg_type,
         }
+
         return aggregate_config
 
     def build_config_column_aggregates(
@@ -541,22 +573,23 @@ class ConfigManager(object):
                         "sum",
                         "avg",
                         "bit_xor",
-                    )  # timestamps: do not convert to epoch seconds for min/max
+                    )  # For timestamps: do not convert to epoch seconds for min/max
                 )
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     column, agg_type, column_type
                 )
-                aggregate_configs.append(aggregate_config)
-                continue
 
-            aggregate_config = {
-                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
-                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
-                consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
-                consts.CONFIG_TYPE: agg_type,
-            }
+            else:
+                aggregate_config = {
+                    consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
+                    consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
+                    consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
+                    consts.CONFIG_TYPE: agg_type,
+                }
+
             aggregate_configs.append(aggregate_config)
+
         return aggregate_configs
 
     def build_config_calculated_fields(
