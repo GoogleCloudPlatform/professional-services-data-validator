@@ -22,18 +22,18 @@ DVT supports the following validations:
 DVT supports the following connection types:
 
 *   [BigQuery](docs/connections.md#google-bigquery)
+*   [Db2](docs/connections.md#db2)
+*   [FileSystem](docs/connections.md#filesystem)
+*   [Hive](docs/connections.md#hive)
+*   [Impala](docs/connections.md#impala)
+*   [MSSQL](docs/connections.md#mssql-server)
+*   [MySQL](docs/connections.md#mysql)
+*   [Oracle](docs/connections.md#oracle)
+*   [Postgres](docs/connections.md#postgres)
+*   [Redshift](docs/connections.md#redshift)
+*   [Snowflake](docs/connections.md#snowflake)
 *   [Spanner](docs/connections.md#google-spanner)
 *   [Teradata](docs/connections.md#teradata)
-*   [Oracle](docs/connections.md#oracle)
-*   [MSSQL](docs/connections.md#mssql-server)
-*   [Snowflake](docs/connections.md#snowflake)
-*   [Postgres](docs/connections.md#postgres)
-*   [MySQL](docs/connections.md#mysql)
-*   [Redshift](docs/connections.md#redshift)
-*   [FileSystem](docs/connections.md#filesystem)
-*   [Impala](docs/connections.md#impala)
-*   [Hive](docs/connections.md#hive)
-*   [Db2](docs/connections.md#db2)
 
 The [Connections](docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
