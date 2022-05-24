@@ -41,10 +41,15 @@ data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips --count bikeid,gender
 ````
 
-#### Run a checksum validation for all rows
+#### Run a row hash validation for all rows
 ````shell script
 data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*'
 ````
+
+#### Run a row level comparison field validation for 100 random rows
+````shell script
+data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id -comp-fields name -rr -rbs 100
+```
 
 #### Store results in a BigQuery table
 ````shell script

@@ -1,7 +1,7 @@
-# Data Validation Tool (Beta)
+# Data Validation Tool
 
-The Data Validation Tool (Beta) is an open sourced Python CLI tool based on the
-[Ibis framework](https://ibis-project.org/docs/tutorial/01-Introduction-to-Ibis.html)
+The Data Validation Tool is an open sourced Python CLI tool based on the
+[Ibis framework](https://ibis-project.org/docs/3.0.2/)
 that compares heterogeneous data source tables with multi-leveled validation
 functions.
 
@@ -13,86 +13,71 @@ translation, ETL migration, etc.). The Data Validation Tool (DVT) provides an
 automated and repeatable solution to perform this task.
 
 DVT supports the following validations:
-* Column validation (count, sum, avg, min/max, group_by)
-* Row level validation
+* Column validation (count, sum, avg, min, max, group by)
+* Row validation
 * Schema validation 
 * Custom Query validation
-* RawSQL exploration
+* Raw SQL exploration
 
 DVT supports the following connection types:
 
-*   [BigQuery](docs/connections.md#google-bigquery)
-*   [Spanner](docs/connections.md#google-spanner)
-*   [Teradata](docs/connections.md#teradata)
-*   [Oracle](docs/connections.md#oracle)
-*   [MSSQL](docs/connections.md#mssql-server)
-*   [Snowflake](docs/connections.md#snowflake)
-*   [Postgres](docs/connections.md#postgres)
-*   [MySQL](docs/connections.md#mysql)
-*   [Redshift](docs/connections.md#redshift)
-*   [FileSystem](docs/connections.md#filesystem)
-*   [Impala](docs/connections.md#impala)
-*   [Hive](docs/connections.md#hive)
-*   [Db2](docs/connections.md#db2)
+*   [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
+*   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
+*   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
+*   [Oracle](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#oracle)
+*   [MSSQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mssql-server)
+*   [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
+*   [Postgres](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
+*   [MySQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mysql)
+*   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
+*   [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
+*   [Impala](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#impala)
+*   [Hive](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#hive)
+*   [DB2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
 
-The [Connections](docs/connections.md) page provides details about how to create
+The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
 
 ### Disclaimer
 This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly 
-(see [CONTRIBUTING.md](CONTRIBUTING.md) for details).
+(see [CONTRIBUTING.md](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details).
 
 ## Installation
 
-The [Installation](docs/installation.md) page describes the prerequisites and
-setup steps needed to install and use the data validation tool.
+The [Installation](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md) page describes the prerequisites and
+setup steps needed to install and use the Data Validation Tool.
 
 ## Usage
 
 Before using this tool, you will need to create connections to the source and
 target tables. Once the connections are created, you can run validations on
 those tables. Validation results can be printed to stdout (default) or outputted
-to BigQuery. The validation tool also allows you to save or edit validation
+to BigQuery (recommended). DVT also allows you to save or edit validation
 configurations in a YAML file. This is useful for running common validations or
 updating the configuration.
 
 ### Managing Connections
 
-The Data Validation Tool expects to receive a source and target connection for
-each validation which is run.
+Before running validations, DVT requires setting up a source and target connection.
+These connections can be stored locally or in a GCS directory.
 
-These connections can be supplied directly to the configuration, but more often
-you want to manage connections separately and reference them by name.
+To create connections, please review the [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page.
 
-Connections can be stored locally or in a GCS directory.
+### Running Validations
 
-To create connections please review the [Connections](docs/connections.md) page.
+The CLI is the main interface to use this tool and it has several different
+commands which can be used to create and run validations. Below are the command
+syntax and options for running validations.
 
-### Running CLI Validations
+Alternatives to running DVT in the CLI include [deploying DVT to Cloud Run](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/run), [Cloud Functions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/functions), or Airflow.
 
-The data validation CLI is a main interface to use this tool.
-
-The CLI has several different commands which can be used to create and re-run
-validations.
-
-The validation tool first expects connections to be created before running
-validations. To create connections please review the
-[Connections](docs/connections.md) page.
-
-Once you have your connections set up, you are ready to run the validations.
-
-### Validation command syntax and options
-
-Below are the command syntax and options for running validations from the CLI.
-DVT supports column (including grouped column) and schema validations.
+See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic)
+section to learn more about how DVT uses the CLI to generate SQL queries.
 
 #### Column Validations
 
 Below is the command syntax for column validations. To run a grouped column
-validation, simply specify the `--grouped-columns` flag. You can also take
-grouped column validations a step further by providing the `--primary-key` flag.
-With this flag, if a mismatch was found, DVT will dive deeper into the slice
-with the error and find the row (primary key value) with the inconsistency.
+validation, simply specify the `--grouped-columns` flag.
 
 You can specify a list of string columns for aggregations in order to calculate
 an aggregation over the `length(string_col)`. Running an aggregation 
@@ -147,7 +132,7 @@ data-validation (--verbose or -v) validate column
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
 sum , min, etc.) is provided, the default aggregation will run.
 
-The [Examples](docs/examples.md) page provides many examples of how a tool can
+The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can
 used to run powerful validations without writing any queries.
 
 #### Row Validations
@@ -166,9 +151,9 @@ the table. This will include casting to string, sanitizing the data (ifnull, rtr
 and finally hashing the row.
 
 
-Additionally you can use
-[Calculated Fields](#calculated-fields) to compare derived values such as string
-counts and hashes of multiple columns.
+Under the hood, row validation uses
+[Calculated Fields](https://github.com/GoogleCloudPlatform/professional-services-data-validator#calculated-fields) to
+apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML config to customize your row validation.
 
 ```
 data-validation (--verbose or -v) validate row
@@ -233,7 +218,7 @@ data-validation (--verbose or -v) validate schema
                         Defaults  to table.
 ```
 
-### Custom Query Column Validations
+#### Custom Query Column Validations
 
 Below is the command syntax for custom query column validations.
 
@@ -275,17 +260,18 @@ data-validation (--verbose or -v) validate custom-query
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
 sum , min, etc.) is provided, the default aggregation will run.
 
-The [Examples](docs/examples.md) page provides few examples of how this tool can
-used to run custom query validations.
+The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
+page provides few examples of how this tool can be used to run custom query validations.
 
 
-### Custom Query Row Validations 
+#### Custom Query Row Validations 
 
-#### (Note: Row hash validation is currently only supported for BigQuery, Imapala/Hive and Teradata)
+(Note: Row hash validation is currently only supported for BigQuery, Teradata, and
+Imapala/Hive. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
-validations you need to pass `--hash` flag with `*` value which means all the fields
-of the custom query result will be concatenated and hashed.
+validations you need to pass `--hash` flag which will specify the fields
+of the custom query result that will be concatenated and hashed.
 
 Below is the command syntax for custom query row validations.
 
@@ -320,15 +306,14 @@ data-validation (--verbose or -v) validate custom-query
                         Defaults to table.
 ```
 
-The [Examples](docs/examples.md) page provides few examples of how this tool can
-used to run custom query row validations.
+The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
+page provides few examples of how this tool can be used to run custom query row validations.
 
-
-### Running Custom SQL Exploration
+### Ad Hoc SQL Exploration
 
 There are many occasions where you need to explore a data source while running
 validations. To avoid the need to open and install a new client, the CLI allows
-you to run custom queries.
+you to run ad hoc queries.
 
 ```
 data-validation query
@@ -338,29 +323,10 @@ data-validation query
           The raw query to run against the supplied connection
 ```
 
-### Using Beta CLI Features
-
-There may be occasions we want to release a new CLI feature under a Beta flag.
-Any features under Beta may or may not make their way to production. However, if
-there is a Beta feature you wish to use than it can be accessed using the
-following.
-
-```
-data-validation beta --help
-```
-
-#### [Beta] Deploy Data Validation as a Local Service
-
-If you wish to use Data Validation as a Flask service, the following command
-will help. This same logic is also expected to be used for Cloud Run, Cloud
-Functions, and other deployment services.
-
-`data-validation beta deploy`
-
-## Query Configurations
+## YAML Configuration Files
 
 You can customize the configuration for any given validation by providing use
-case specific CLI arguments or editing the saved YAML configuration file.
+case specific CLI arguments or editing the YAML configuration file.
 
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
@@ -381,14 +347,18 @@ validations:
     source_column: null
     target_column: null
     type: count
+  calculated_fields: []
   filters: []
+  format: table
   labels: []
+  random_row_batch_size: null
   schema_name: bigquery-public-data.new_york_citibike
   table_name: citibike_trips
   target_schema_name: bigquery-public-data.new_york_citibike
   target_table_name: citibike_trips
   threshold: 0.0
   type: Column
+  use_random_rows: false
 ```
 
 You can now edit the YAML file if, for example, the `new_york_citibike` table is
@@ -400,19 +370,19 @@ validation:
 data-validation configs run -c citibike.yaml
 ```
 
-View the complete YAML file for a GroupedColumn validation on the
-[examples](docs/examples.md#) page.
+View the complete YAML file for a Grouped Column validation on the
+[Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
 You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`. 
 
+## Validation Logic
 ### Aggregated Fields
 
 Aggregate fields contain the SQL fields that you want to produce an aggregate
-for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()` and `MAX()`
+for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()`, and `MAX()`
 are supported.
 
-#### Sample Aggregate Config
-
+Here is a sample aggregate config:
 ```
 validations:
 - aggregates:
@@ -428,10 +398,6 @@ validations:
     source_column: tripduration
     target_column: tripduration
     type: sum
-  - field_alias: bit_xor__hashed_column
-    source_column: hashed_column
-    target_column: hashed_column
-    type: bit_xor
 ```
 
 ### Filters
@@ -451,24 +417,34 @@ Grouped Columns contain the fields you want your aggregations to be broken out
 by, e.g. `SELECT last_updated::DATE, COUNT(*) FROM my.table` will produce a
 resultset that breaks down the count of rows per calendar date.
 
-### Comparison Fields
+### Hash and Comparison Fields
 
-For row validations you need to specify the specific columns that you want to
-compare. These values will be compared via a JOIN on their corresponding primary
+Row level validations can involve either a hash/checksum or comparison fields.
+A hash validation (`--hash '*'`) will first sanitize the data with the following
+operations on all or selected columns: CAST to string, IFNULL replace with a default
+replacement string, RSTRIP, and UPPER. Then, it will CONCAT() the results
+and run a SHA256() hash and compare the source/target results. Since each row will
+be returned in the result set, it is recommended to utilize the `--use-random-row` feature
+to validate a subset of the table.
+
+Comparison field validations (`--comp-fields column`) involve an value comparison of the
+column values. These values will be compared via a JOIN on their corresponding primary
 key and will be evaluated for an exact match.
+
+See hash and comparison field validations in the [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
 ### Calculated Fields
 
 Sometimes direct comparisons are not feasible between databases due to
 differences in how particular data types may be handled. These differences can
-be resolved by applying functions to columns in the source query itself.
+be resolved by applying functions to columns in the query itself.
 Examples might include trimming whitespace from a string, converting strings to
 a single case to compare case insensitivity, or rounding numeric types to a
 significant figure.
 
 Once a calculated field is defined, it can be referenced by other calculated
 fields at any "depth" or higher. Depth controls how many subqueries are executed
-in the resulting query. For example, with the following yaml config...
+in the resulting query. For example, with the following YAML config...
 
 ```
 - calculated_fields:
@@ -502,93 +478,23 @@ FROM (
   ) as table_0
 ```
 
-Calculated fields can be used by aggregate fields to produce validations on
-calculated or sanitized raw data, such as calculating the aggregate hash of a
-table. For example the following yaml config...
+If you generate the config file of a row validation, you can see that it uses
+calculated fields to generate the query. You can also use calculated fields
+in column level validations to generate the length of a string, or cast
+a INT field to BIGINT for aggregations. 
 
-```
-validations:
-- aggregates:
-  - field_alias: xor__multi_statement_hash
-    source_column: multi_statement_hash
-    target_column: multi_statement_hash
-    type: bit_xor
-  calculated_fields:
-  - field_alias: multi_statement_hash
-    source_calculated_columns: [multi_statement_concat]
-    target_calculated_columns: [multi_statement_concat]
-    type: hash
-    depth: 2
-  - field_alias: multi_statement_concat
-    source_calculated_columns: [calc_length_col_a,
-                                calc_ifnull_col_b,
-                                calc_rstrip_col_c,
-                                calc_upper_col_d]
-    target_calculated_columns: [calc_length_col_a,
-                                calc_ifnull_col_b,
-                                calc_rstrip_col_c,
-                                calc_upper_col_d]
-    type: concat
-    depth: 1
-  - field_alias: calc_length_col_a
-    source_calculated_columns: [col_a]
-    target_calculated_columns: [col_a]
-    type: length
-    depth: 0
-  - field_alias: calc_ifnull_col_b
-    source_calculated_columns: [col_b]
-    target_calculated_columns: [col_b]
-    type: ifnull
-    depth: 0
-  - field_alias: calc_rstrip_col_c
-    source_calculated_columns: [col_c]
-    target_calculated_columns: [col_c]
-    type: rstrip
-    depth: 0
-  - field_alias: calc_upper_col_d
-    source_calculated_columns: [col_d]
-    target_calculated_columns: [col_d]
-    type: upper
-    depth: 0
-```
-
-is equivalent to the following SQL query...
-
-```
-SELECT
-  BIT_XOR(multi_statement_hash) AS xor__multi_statement_hash
-FROM (
-  SELECT
-    FARM_FINGERPRINT(mult_statement_concat) AS multi_statement_hash
-  FROM (
-    SELECT
-      CONCAT(calc_length_col_a,
-             calc_ifnull_col_b,
-             calc_rstrip_col_c,
-             calc_upper_col_d) AS multi_statement_concat
-    FROM (
-      SELECT
-          CAST(LENGTH(col_a) AS STRING) AS calc_length_col_a
-        , IFNULL(col_b,
-                 'DEFAULT_REPLACEMENT_STRING') AS calc_ifnull_col_b
-        , RTRIM(col_c) AS calc_rstrip_col_c
-        , UPPER(col_d) AS calc_upper_col_d
-      FROM my.table
-      ) AS table_0
-    ) AS table_1
-  ) AS table_2
-```
+See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation) for a sample
+cast to NUMERIC.
 
 ## Validation Reports
 
-The output handlers tell the data validation tool where to store the results of
+The result handlers tell DVT where to store the results of
 each validation. The tool can write the results of a validation run to Google
-BigQuery or print to stdout (default).
+BigQuery or print to stdout (default). View the schema of the results 
+table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
 
-View the schema of the results [here](terraform/results_schema.json).
-
-### Configure tool to output to BigQuery
-
+To output to BigQuery, simply include the `-bqrh` flag during a validation run
+like so:
 ```
 data-validation validate column
   -sc bq_conn
@@ -668,7 +574,26 @@ echo "Pushing Data Validation Test Operator to GCS"
 gsutil cp tests/test_data_validation_operators.py $GCS_BUCKET_PATH/
 ```
 
+### Using Beta CLI Features
+
+There may be occasions we want to release a new CLI feature under a Beta flag.
+Any features under Beta may or may not make their way to production. However, if
+there is a Beta feature you wish to use than it can be accessed using the
+following.
+
+```
+data-validation beta --help
+```
+
+#### [Beta] Deploy Data Validation as a Local Service
+
+If you wish to use Data Validation as a Flask service, the following command
+will help. This same logic is also expected to be used for Cloud Run, Cloud
+Functions, and other deployment services.
+
+`data-validation beta deploy`
+
 ## Contributing
 
-Contributions are welcome. See the [contributing guide](CONTRIBUTING.md) for
+Contributions are welcome. See the [contributing guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for
 details.
