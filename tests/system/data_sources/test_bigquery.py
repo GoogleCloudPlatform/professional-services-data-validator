@@ -270,7 +270,7 @@ CLI_WILDCARD_STRING_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_WILDCARD = 134
+EXPECTED_NUM_YAML_LINES_WILDCARD = 150
 
 CLI_TIMESTAMP_MIN_MAX_ARGS = [
     "validate",
@@ -302,13 +302,33 @@ CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS = [
     "--sum",
     "start_date",
     "--avg",
-    "end_date",
+    "start_date",
     "--bit_xor",
-    "end_date",
+    "start_date",
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 47
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 48
+
+CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS = [
+    "validate",
+    "column",
+    "--source-conn",
+    BQ_CONN_NAME,
+    "--target-conn",
+    BQ_CONN_NAME,
+    "--tables-list",
+    "bigquery-public-data.new_york_citibike.citibike_stations",
+    "--sum",
+    "last_reported",
+    "--avg",
+    "last_reported",
+    "--bit_xor",
+    "last_reported",
+    "--config-file",
+    CLI_CONFIG_FILE,
+]
+EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR = 48
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -489,6 +509,14 @@ def test_timestamp_sum_avg_bitxor_column_agg_yaml():
     _test_cli_yaml_local_runner(
         CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS,
         EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR,
+    )
+
+
+def test_bq_datetime_sum_avg_bitxor_column_agg_yaml():
+    """Test storing column validation YAML with datetime fields for sum, avg, bit_xor aggregations, which are cast to timestamp when using the BigQuery client."""
+    _test_cli_yaml_local_runner(
+        CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS,
+        EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR,
     )
 
 
