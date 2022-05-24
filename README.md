@@ -14,7 +14,7 @@ automated and repeatable solution to perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
-* Row validation
+* Row validation (BQ, Hive, and Teradata only)
 * Schema validation 
 * Custom Query validation
 * Raw SQL exploration
