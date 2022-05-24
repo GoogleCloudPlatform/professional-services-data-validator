@@ -124,3 +124,9 @@ The unit test suite can be executed using either `pytest tests/unit` or `python 
 If native installation is not an option for you, you can create a Docker image for this tool.  
 
 Here's an [example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/README.md) on how you can create a sample docker image for this tool.
+
+
+## Automate using Apache Airflow
+You can orchestrate DVT by running a validation as a task within an Airflow DAG.
+
+Here's a simple [example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/airflow/dvt_airflow_dag.py) on how you can execute this tool using the [PythonVirtualenvOperator](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html#pythonvirtualenvoperator).
