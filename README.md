@@ -69,7 +69,7 @@ The CLI is the main interface to use this tool and it has several different
 commands which can be used to create and run validations. Below are the command
 syntax and options for running validations.
 
-Alternatives to running DVT in the CLI include [deploying DVT to Cloud Run](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/run), [Cloud Functions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/functions), or Airflow.
+Alternatives to running DVT in the CLI include [deploying DVT to Cloud Run](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/run), [Cloud Functions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/functions), or [Airflow](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/airflow).
 
 See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic)
 section to learn more about how DVT uses the CLI to generate SQL queries.
@@ -132,8 +132,7 @@ data-validation (--verbose or -v) validate column
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
 sum , min, etc.) is provided, the default aggregation will run.
 
-The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can
-used to run powerful validations without writing any queries.
+The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
 
 #### Row Validations
 
@@ -337,11 +336,12 @@ For example, the following command creates a YAML file for the validation of the
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
 citibike.yaml`. 
 
-The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME` env variable if that has been set; otherwise, it is saved to wherever the tool is run. 
+The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
+env variable if that has been set; otherwise, it is saved to wherever the tool is run. 
 
 Here is the generated YAML file named `citibike.yaml`:
 
-```
+```yaml
 result_handler: {}
 source: my_bq_conn
 target: my_bq_conn
@@ -404,6 +404,9 @@ validations:
     type: sum
 ```
 
+If you are aggregating columns with large values, you can CAST() before aggregation
+with calculated fields as shown in [this example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation).
+
 ### Filters
 
 Filters let you apply a WHERE statement to your validation query (ie. `SELECT *
@@ -427,7 +430,7 @@ Row level validations can involve either a hash/checksum or comparison fields.
 A hash validation (`--hash '*'`) will first sanitize the data with the following
 operations on all or selected columns: CAST to string, IFNULL replace with a default
 replacement string, RSTRIP, and UPPER. Then, it will CONCAT() the results
-and run a SHA256() hash and compare the source/target results. Since each row will
+and run a SHA256() hash and compare the source and target results. Since each row will
 be returned in the result set, it is recommended to utilize the `--use-random-row` feature
 to validate a subset of the table.
 
@@ -435,7 +438,7 @@ Comparison field validations (`--comp-fields column`) involve an value compariso
 column values. These values will be compared via a JOIN on their corresponding primary
 key and will be evaluated for an exact match.
 
-See hash and comparison field validations in the [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
+See hash and comparison field validations in the [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#run-a-row-hash-validation-for-all-rows) page.
 
 ### Calculated Fields
 
@@ -482,7 +485,7 @@ FROM (
   ) as table_0
 ```
 
-If you generate the config file of a row validation, you can see that it uses
+If you generate the config file for a row validation, you can see that it uses
 calculated fields to generate the query. You can also use calculated fields
 in column level validations to generate the length of a string, or cast
 a INT field to BIGINT for aggregations. 
@@ -570,5 +573,4 @@ Functions, and other deployment services.
 
 ## Contributing
 
-Contributions are welcome. See the [contributing guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for
-details.
+Contributions are welcome. See the [contributing guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details.

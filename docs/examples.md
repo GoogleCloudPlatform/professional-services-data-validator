@@ -49,7 +49,7 @@ data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public
 #### Run a row level comparison field validation for 100 random rows
 ````shell script
 data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id -comp-fields name -rr -rbs 100
-```
+````
 
 #### Store results in a BigQuery table
 ````shell script
@@ -183,7 +183,7 @@ validations:
   threshold: 0.0
   type: Column
   use_random_rows: false
-  ```
+```
 
 #### Sample YAML with Calc Fields (Cast to NUMERIC before aggregation)
 
