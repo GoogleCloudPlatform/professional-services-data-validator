@@ -5,19 +5,19 @@ The Data Validation Tool is an open sourced Python CLI tool based on the
 that compares heterogeneous data source tables with multi-leveled validation
 functions.
 
-Data validation is a critical step in a Data Warehouse, Database or Data Lake
-migration project, where structured or semi-structured data from both the source
-and the destination tables are compared to ensure they are matched and correct
-after each migration step (e.g. data and schema migration, SQL script
-translation, ETL migration, etc.). The Data Validation Tool (DVT) provides an
-automated and repeatable solution to perform this task.
+Data validation is a critical step in a data warehouse, database, or data lake
+migration project where data from both the source and the target tables are
+compared to ensure they are matched and correct after each migration step
+(e.g. data and schema migration, SQL script translation, ETL migration, etc.).
+The Data Validation Tool (DVT) provides an automated and repeatable solution to
+perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
 * Row validation (BQ, Hive, and Teradata only)
 * Schema validation 
 * Custom Query validation
-* Raw SQL exploration
+* Ad hoc SQL exploration
 
 DVT supports the following connection types:
 
@@ -59,9 +59,8 @@ updating the configuration.
 ### Managing Connections
 
 Before running validations, DVT requires setting up a source and target connection.
-These connections can be stored locally or in a GCS directory.
-
-To create connections, please review the [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page.
+These connections can be stored locally or in a GCS directory. To create connections,
+please review the [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page.
 
 ### Running Validations
 
@@ -69,10 +68,9 @@ The CLI is the main interface to use this tool and it has several different
 commands which can be used to create and run validations. Below are the command
 syntax and options for running validations.
 
-Alternatives to running DVT in the CLI include [deploying DVT to Cloud Run](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/run), [Cloud Functions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/functions), or [Airflow](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/airflow).
-
-See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic)
-section to learn more about how DVT uses the CLI to generate SQL queries.
+Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud Functions, or Airflow
+([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
+to learn more about how DVT uses the CLI to generate SQL queries.
 
 #### Column Validations
 
@@ -312,6 +310,51 @@ data-validation (--verbose or -v) validate custom-query
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
 page provides few examples of how this tool can be used to run custom query row validations.
 
+### YAML Configuration Files
+
+You can customize the configuration for any given validation by providing use
+case specific CLI arguments or editing the YAML configuration file.
+
+For example, the following command creates a YAML file for the validation of the
+`new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
+my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
+citibike.yaml`. 
+
+The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
+env variable if that has been set; otherwise, it is saved to wherever the tool is run. 
+
+You can now edit the YAML file if, for example, the `new_york_citibike` table is
+stored in datasets that have different names in the source and target systems.
+Once the file is updated and saved, the following command runs the
+validation:
+
+```
+data-validation configs run -c citibike.yaml
+```
+
+View the complete YAML file for a Grouped Column validation on the
+[Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
+
+You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`. 
+
+### Validation Reports
+
+The result handlers tell DVT where to store the results of
+each validation. The tool can write the results of a validation run to Google
+BigQuery or print to stdout (default). View the schema of the results 
+table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+
+To output to BigQuery, simply include the `-bqrh` flag during a validation run
+like so:
+```
+data-validation validate column
+  -sc bq_conn
+  -tc bq_conn
+  -tbls bigquery-public-data.new_york_citibike.citibike_trips
+  -bqrh project_id.dataset.table
+  -sa service-acct@project.iam.gserviceaccount.com
+```
+
 ### Ad Hoc SQL Exploration
 
 There are many occasions where you need to explore a data source while running
@@ -326,58 +369,45 @@ data-validation query
           The raw query to run against the supplied connection
 ```
 
-## YAML Configuration Files
+### Building Matched Table Lists
 
-You can customize the configuration for any given validation by providing use
-case specific CLI arguments or editing the YAML configuration file.
+Creating the list of matched tables can be a hassle. We have added a feature
+which may help you to match all of the tables together between source and
+target. The find-tables tool:
 
-For example, the following command creates a YAML file for the validation of the
-`new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
-my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
-citibike.yaml`. 
+-   Pulls all tables in the source (applying a supplied allowed-schemas filter)
+-   Pulls all tables from the target
+-   Uses Levenshtein distance to match tables
+-   Finally, it prints a JSON list of tables which can be a reference for the
+    validation run config.
 
-The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
-env variable if that has been set; otherwise, it is saved to wherever the tool is run. 
-
-Here is the generated YAML file named `citibike.yaml`:
-
-```yaml
-result_handler: {}
-source: my_bq_conn
-target: my_bq_conn
-validations:
-- aggregates:
-  - field_alias: count
-    source_column: null
-    target_column: null
-    type: count
-  calculated_fields: []
-  filters: []
-  format: table
-  labels: []
-  random_row_batch_size: null
-  schema_name: bigquery-public-data.new_york_citibike
-  table_name: citibike_trips
-  target_schema_name: bigquery-public-data.new_york_citibike
-  target_table_name: citibike_trips
-  threshold: 0.0
-  type: Column
-  use_random_rows: false
-```
-
-You can now edit the YAML file if, for example, the `new_york_citibike` table is
-stored in datasets that have different names in the source and target systems.
-Once the file is updated and saved, the following command runs the new
-validation:
+Note that our score cutoff default is a 0.8, which was manually tested to be an
+accurate value. If no matches occur, reduce this value.
 
 ```
-data-validation configs run -c citibike.yaml
+data-validation find-tables --source-conn source --target-conn target \
+    --allowed-schemas pso_data_validator \
+    --score-cutoff 0.8
 ```
 
-View the complete YAML file for a Grouped Column validation on the
-[Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
+### Using Beta CLI Features
 
-You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`. 
+There may be occasions we want to release a new CLI feature under a Beta flag.
+Any features under Beta may or may not make their way to production. However, if
+there is a Beta feature you wish to use than it can be accessed using the
+following.
+
+```
+data-validation beta --help
+```
+
+#### [Beta] Deploy Data Validation as a Local Service
+
+If you wish to use Data Validation as a Flask service, the following command
+will help. This same logic is also expected to be used for Cloud Run, Cloud
+Functions, and other deployment services.
+
+`data-validation beta deploy`
 
 ## Validation Logic
 ### Aggregated Fields
@@ -492,84 +522,6 @@ a INT field to BIGINT for aggregations.
 
 See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation) for a sample
 cast to NUMERIC.
-
-## Validation Reports
-
-The result handlers tell DVT where to store the results of
-each validation. The tool can write the results of a validation run to Google
-BigQuery or print to stdout (default). View the schema of the results 
-table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
-
-To output to BigQuery, simply include the `-bqrh` flag during a validation run
-like so:
-```
-data-validation validate column
-  -sc bq_conn
-  -tc bq_conn
-  -tbls bigquery-public-data.new_york_citibike.citibike_trips
-  -bqrh project_id.dataset.table
-  -sa service-acct@project.iam.gserviceaccount.com
-```
-
-## Building Matched Table Lists
-
-Creating the list of matched tables can be a hassle. We have added a feature
-which may help you to match all of the tables together between source and
-target. The find-tables tool:
-
--   Pulls all tables in the source (applying a supplied allowed-schemas filter)
--   Pulls all tables from the target
--   Uses Levenshtein distance to match tables
--   Finally, it prints a JSON list of tables which can be a reference for the
-    validation run config.
-
-Note that our score cutoff default is a 0.8, which was manually tested to be an
-accurate value. If no matches occur, reduce this value.
-
-```
-data-validation find-tables --source-conn source --target-conn target \
-    --allowed-schemas pso_data_validator \
-    --score-cutoff 0.8
-```
-
-## Add Support for an existing Ibis Data Source
-
-If you want to add an Ibis Data Source which exists, but was not yet supported
-in the Data Validation tool, it is a simple process.
-
-1.  In data_validation/data_validation.py
-
-    -   Import the extended Client for the given source (ie. from
-        ibis.sql.mysql.client import MySQLClient).
-    -   Add the "<RefName>": Client to the global CLIENT_LOOKUP dictionary.
-
-2.  In third_party/ibis/ibis_addon/operations.py
-
-    -   Add the RawSQL operator to the data source registry (for custom filter
-        support).
-
-3.  You are done, you can reference the data source via the config.
-
-    -   Config: {"source_type": "<RefName>", ...KV Values required in Client...}
-
-### Using Beta CLI Features
-
-There may be occasions we want to release a new CLI feature under a Beta flag.
-Any features under Beta may or may not make their way to production. However, if
-there is a Beta feature you wish to use than it can be accessed using the
-following.
-
-```
-data-validation beta --help
-```
-
-#### [Beta] Deploy Data Validation as a Local Service
-
-If you wish to use Data Validation as a Flask service, the following command
-will help. This same logic is also expected to be used for Cloud Run, Cloud
-Functions, and other deployment services.
-
-`data-validation beta deploy`
 
 ## Contributing
 
