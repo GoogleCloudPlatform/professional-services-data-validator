@@ -34,6 +34,8 @@ Clone repo locally and install via pip:
 ```
 git clone git@github.com:GoogleCloudPlatform/professional-services-data-validator.git
 cd professional-services-data-validator/
+python -m venv env
+source env/bin/activate
 python -m pip install --upgrade pip
 python -m pip install .
 ```

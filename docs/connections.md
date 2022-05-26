@@ -53,10 +53,9 @@ The data validation tool supports the following connection types.
 * [FileSystem](#filesystem)
 * [Impala](#Impala)
 * [Hive](#Hive)
-* [DB2] (#DB2)
+* [DB2](#DB2)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
-
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
 
 ```
@@ -233,7 +232,7 @@ Then `pip install pyodbc`.
 }
 ```
 
-## FileSystem
+## FileSystem (CSV or JSON only)
 ```
 {
     # Configuration Required for All Data Sources
@@ -245,7 +244,7 @@ Then `pip install pyodbc`.
     # The local, s3, or GCS file path to the data
     "file_path": "gs://path/to/file",
     
-    # The file type. Either 'csv' or 'json
+    # The file type. Either 'csv' or 'json'
     "file_type":"csv"
 }
 ```
