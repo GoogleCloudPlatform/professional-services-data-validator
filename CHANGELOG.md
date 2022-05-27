@@ -2,6 +2,26 @@
 
 ## Untagged
 
+## [2.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.7.2...v2.0.0) (2022-05-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* Add 'primary_keys' and 'num_random_rows' fields to result handler (#372)
+
+### Features
+
+* Add 'primary_keys' and 'num_random_rows' fields to result handler ([#372](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/372)) ([b123279](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b1232791f89fb39491a65cd1945f272d85e521b1))
+* add a new DAG example to run DVT ([#485](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/485)) ([e3dd7ed](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e3dd7ed1d524c613f9c78c36bb1ad5346c37ec62))
+* adding impala random function ([#483](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/483)) ([93d2072](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/93d2072fda050fd35505db3f04907c664e30f18c))
+* Enable sum/avg/bit_xor for BigQuery datetime type ([#488](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/488)) ([083de07](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/083de076d32e2203531de3feffb7174df6a05908))
+
+
+### Documentation
+
+* Alpha-order Connection Types ([#491](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/491)) ([39e0dd8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/39e0dd8d641347b7c4852c3784ae81b94c23f99f))
+* GA README updates ([#492](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/492)) ([b63ef3b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b63ef3b6240ea4bd550db5cf635fdcdac8bb7634))
+
 ### [1.7.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.7.1...v1.7.2) (2022-05-12)
 
 
