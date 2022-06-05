@@ -143,7 +143,7 @@ def test_import(module_under_test):
 
 
 def test_schema_validation_matching(module_under_test):
-    source_fields = {"field1": "string", "field2": "datetime", "field3": "string"}
+    source_fields = {"FIELD1": "string", "fiEld2": "datetime", "field3": "string"}
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
 
     expected_results = [
@@ -202,7 +202,6 @@ def test_execute(module_under_test, fs):
     failures = result_df[
         result_df["validation_status"].str.contains(consts.VALIDATION_STATUS_FAIL)
     ]
-
     assert len(result_df) == len(source_data[0]) + 1
     assert result_df["source_agg_value"].astype(float).sum() == 7
     assert result_df["target_agg_value"].astype(float).sum() == 7
