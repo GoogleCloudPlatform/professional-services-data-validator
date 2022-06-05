@@ -97,12 +97,26 @@ class SchemaValidation(object):
 def schema_validation_matching(source_fields, target_fields):
     """Compare schemas between two dictionary objects"""
     results = []
+    # Apply the casefold() function to lowercase the keys of source and target
+    source_fields_casefold = dict(
+        {
+            source_field_name.casefold(): source_field_type
+            for source_field_name, source_field_type in source_fields.items()
+        }
+    )
+    target_fields_casefold = dict(
+        {
+            target_field_name.casefold(): target_field_type
+            for target_field_name, target_field_type in target_fields.items()
+        }
+    )
+
     # Go through each source and check if target exists and matches
-    for source_field_name, source_field_type in source_fields.items():
+    for source_field_name, source_field_type in source_fields_casefold.items():
         # target field exists
-        if source_field_name in target_fields:
+        if source_field_name in target_fields_casefold:
             # target data type matches
-            if source_field_type == target_fields[source_field_name]:
+            if source_field_type == target_fields_casefold[source_field_name]:
                 results.append(
                     [
                         source_field_name,
@@ -111,7 +125,7 @@ def schema_validation_matching(source_fields, target_fields):
                         "1",
                         consts.VALIDATION_STATUS_SUCCESS,
                         "Source_type:{} Target_type:{}".format(
-                            source_field_type, target_fields[source_field_name]
+                            source_field_type, target_fields_casefold[source_field_name]
                         ),
                     ]
                 )
@@ -125,7 +139,7 @@ def schema_validation_matching(source_fields, target_fields):
                         "1",
                         consts.VALIDATION_STATUS_FAIL,
                         "Data type mismatch between source and target. Source_type:{} Target_type:{}".format(
-                            source_field_type, target_fields[source_field_name]
+                            source_field_type, target_fields_casefold[source_field_name]
                         ),
                     ]
                 )
@@ -143,8 +157,8 @@ def schema_validation_matching(source_fields, target_fields):
             )
 
     # source field doesn't exist
-    for target_field_name, target_field_type in target_fields.items():
-        if target_field_name not in source_fields:
+    for target_field_name, target_field_type in target_fields_casefold.items():
+        if target_field_name not in source_fields_casefold:
             results.append(
                 [
                     "N/A",
