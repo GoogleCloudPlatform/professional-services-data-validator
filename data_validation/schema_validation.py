@@ -98,18 +98,14 @@ def schema_validation_matching(source_fields, target_fields):
     """Compare schemas between two dictionary objects"""
     results = []
     # Apply the casefold() function to lowercase the keys of source and target
-    source_fields_casefold = dict(
-        {
-            source_field_name.casefold(): source_field_type
-            for source_field_name, source_field_type in source_fields.items()
-        }
-    )
-    target_fields_casefold = dict(
-        {
-            target_field_name.casefold(): target_field_type
-            for target_field_name, target_field_type in target_fields.items()
-        }
-    )
+    source_fields_casefold = {
+        source_field_name.casefold(): source_field_type
+        for source_field_name, source_field_type in source_fields.items()
+    }
+    target_fields_casefold = {
+        target_field_name.casefold(): target_field_type
+        for target_field_name, target_field_type in target_fields.items()
+    }
 
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields_casefold.items():
