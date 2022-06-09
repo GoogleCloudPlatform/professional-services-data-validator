@@ -427,15 +427,15 @@ class ConfigManager(object):
             field_configs.append(column_config)
         return field_configs
 
-    def build_config_grouped_columns(self, grouped_columns):
+    def build_column_configs(self, columns):
         """Return list of grouped column config objects."""
-        grouped_column_configs = []
+        column_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
-        for column in grouped_columns:
+        for column in columns:
 
             if column.casefold() not in casefold_source_columns:
                 raise ValueError(f"Grouped Column DNE in source: {column}")
@@ -447,9 +447,9 @@ class ConfigManager(object):
                 consts.CONFIG_FIELD_ALIAS: column,
                 consts.CONFIG_CAST: None,
             }
-            grouped_column_configs.append(column_config)
+            column_configs.append(column_config)
 
-        return grouped_column_configs
+        return column_configs
 
     def build_config_count_aggregate(self):
         """Return dict aggregate for COUNT(*)."""

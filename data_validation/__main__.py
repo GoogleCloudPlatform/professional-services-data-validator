@@ -157,7 +157,7 @@ def build_config_from_args(args, config_manager):
         if args.grouped_columns is not None:
             grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
             config_manager.append_query_groups(
-                config_manager.build_config_grouped_columns(grouped_columns)
+                config_manager.build_column_configs(grouped_columns)
             )
     elif config_manager.validation_type == consts.ROW_VALIDATION:
         if args.comparison_fields is not None:
@@ -173,7 +173,7 @@ def build_config_from_args(args, config_manager):
     if args.primary_keys is not None:
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
-            config_manager.build_config_comparison_fields(primary_keys)
+            config_manager.build_column_configs(primary_keys)
         )
         if args.hash != "*":
             config_manager.append_dependent_aliases(primary_keys)
