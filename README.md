@@ -193,7 +193,7 @@ data-validation (--verbose or -v) validate row
 
 #### Schema Validations
 
-Below is the syntax for schema validations. These can be used to compare column
+Below is the syntax for schema validations. These can be used to compare case insensitive column names and
 types between source and target.
 
 ```
