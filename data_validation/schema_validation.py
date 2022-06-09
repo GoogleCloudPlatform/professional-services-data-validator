@@ -43,7 +43,7 @@ class SchemaValidation(object):
             self.config_manager.target_schema,
             self.config_manager.target_table,
         )
-
+        #TODO(helensilva14): use the flag to exclude columns somewhere here
         source_fields = {}
         for field_name, data_type in ibis_source_schema.items():
             source_fields[field_name] = data_type
