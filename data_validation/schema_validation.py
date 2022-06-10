@@ -43,14 +43,19 @@ class SchemaValidation(object):
             self.config_manager.target_schema,
             self.config_manager.target_table,
         )
-        #TODO(helensilva14): use the flag to exclude columns somewhere here
+
         source_fields = {}
         for field_name, data_type in ibis_source_schema.items():
             source_fields[field_name] = data_type
         target_fields = {}
         for field_name, data_type in ibis_target_schema.items():
             target_fields[field_name] = data_type
-        results = schema_validation_matching(source_fields, target_fields)
+
+        results = schema_validation_matching(
+            source_fields,
+            target_fields,
+            self.config_manager.exclusion_columns
+        )
         df = pandas.DataFrame(
             results,
             columns=[
@@ -103,7 +108,7 @@ class SchemaValidation(object):
         return df
 
 
-def schema_validation_matching(source_fields, target_fields):
+def schema_validation_matching(source_fields, target_fields, exclusion_fields):
     """Compare schemas between two dictionary objects"""
     results = []
     # Apply the casefold() function to lowercase the keys of source and target
@@ -115,6 +120,11 @@ def schema_validation_matching(source_fields, target_fields):
         target_field_name.casefold(): target_field_type
         for target_field_name, target_field_type in target_fields.items()
     }
+
+    if exclusion_fields is not None:
+        for field in exclusion_fields:
+            del source_fields_casefold[field]
+            del target_fields_casefold[field]
 
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields_casefold.items():
