@@ -222,13 +222,13 @@ def test_get_table_info(module_under_test):
     assert target_table_spec == expected_table_spec
 
 
-def test_build_config_grouped_columns(module_under_test):
+def test_build_column_configs(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    column_configs = config_manager.build_config_grouped_columns(["a"])
-    lazy_column_configs = config_manager.build_config_grouped_columns(["A"])
+    column_configs = config_manager.build_column_configs(["a"])
+    lazy_column_configs = config_manager.build_column_configs(["A"])
     assert column_configs[0] == GROUPED_COLUMN_CONFIG_A
     assert (
         lazy_column_configs[0][consts.CONFIG_SOURCE_COLUMN]
