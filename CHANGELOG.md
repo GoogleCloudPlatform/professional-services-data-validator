@@ -2,6 +2,13 @@
 
 ## Untagged
 
+## [2.0.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.0.0...v2.0.1) (2022-06-10)
+
+
+### Bug Fixes
+
+* Schema validation to make case insensitive column name comparision ([#500](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/500)) ([ee8c542](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ee8c54217ecc6b739fc9f9ae6c237eb3acfe46a0))
+
 ## [2.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v1.7.2...v2.0.0) (2022-05-26)
 
 
