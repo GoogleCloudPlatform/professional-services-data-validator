@@ -55,7 +55,7 @@ Commits](https://www.conventionalcommits.org/en/v1.0.0/) to manage the
 CHANGELOG and releases.
 
 Allowed commit prefixes are defined in the [release-please source
-code](https://github.com/googleapis/release-please/blob/master/src/releasers/python.ts):
+code](https://github.com/googleapis/release-please):
 
 ### User-facing commits
 
