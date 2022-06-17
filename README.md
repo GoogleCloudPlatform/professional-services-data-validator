@@ -464,6 +464,9 @@ and run a SHA256() hash and compare the source and target results. Since each ro
 be returned in the result set, it is recommended to utilize the `--use-random-row` feature
 to validate a subset of the table.
 
+Please note that SHA256 is not a supported function on teradata systems. If you wish to perform
+this comparison on teradata you will need to [deploy a UDF to perform the conversion](https://downloads.teradata.com/forum/extensibility/sha-2-udfs-for-teradata).
+
 Comparison field validations (`--comp-fields column`) involve an value comparison of the
 column values. These values will be compared via a JOIN on their corresponding primary
 key and will be evaluated for an exact match.
