@@ -208,7 +208,8 @@ class ComparisonField(object):
         # Fields are supplied on compile or on build
         comparison_field = ibis_table[self.field_name]
         alias = self.alias or self.field_name
-        comparison_field = comparison_field.name(alias)
+        if self.cast:
+            comparison_field = comparison_field.cast(self.cast)
 
         return comparison_field
 
