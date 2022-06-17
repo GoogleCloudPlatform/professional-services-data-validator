@@ -275,7 +275,7 @@ def build_config_managers_from_args(args):
             if args.exclusion_columns is not None:
                 exclusion_columns = cli_tools.get_arg_list(args.exclusion_columns)
                 config_manager.append_exclusion_columns(
-                    col.casefold() for col in exclusion_columns
+                    [col.casefold() for col in exclusion_columns]
                 )
 
         configs.append(config_manager)
