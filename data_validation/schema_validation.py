@@ -90,7 +90,16 @@ class SchemaValidation(object):
         )
         df.insert(loc=10, column="aggregation_type", value="Schema")
 
+        # TODO: not being displayed/stored at the moment, but it would be useful
         del df["error_result.details"]
+
+        # empty columns added due to changes on the results schema
+        df.insert(loc=14, column="primary_keys", value=None)
+        df.insert(loc=15, column="num_random_rows", value=None)
+        df.insert(loc=16, column="group_by_columns", value=None)
+        df.insert(loc=17, column="difference", value=None)
+        df.insert(loc=18, column="pct_threshold", value=None)
+
         return df
 
 
