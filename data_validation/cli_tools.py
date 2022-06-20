@@ -556,7 +556,7 @@ def _configure_schema_parser(schema_parser):
     schema_parser.add_argument(
         "--exclusion-columns",
         "-ec",
-        help="Comma separated list of columns 'col_a,col_b' to be excluded from the schema validation"
+        help="Comma separated list of columns 'col_a,col_b' to be excluded from the schema validation",
     )
 
 

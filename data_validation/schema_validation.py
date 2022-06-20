@@ -52,9 +52,7 @@ class SchemaValidation(object):
             target_fields[field_name] = data_type
 
         results = schema_validation_matching(
-            source_fields,
-            target_fields,
-            self.config_manager.exclusion_columns
+            source_fields, target_fields, self.config_manager.exclusion_columns
         )
         df = pandas.DataFrame(
             results,
