@@ -182,7 +182,7 @@ def test_schema_validation_matching(module_under_test):
         ],
     ]
     assert expected_results == module_under_test.schema_validation_matching(
-        source_fields, target_fields
+        source_fields, target_fields, []
     )
 
 
