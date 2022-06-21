@@ -217,6 +217,8 @@ data-validation (--verbose or -v) validate schema
                         YAML Config File Path to be used for storing validations.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
+  [--exclusion-columns or -ec EXCLUSION_COLUMNS]
+                        Comma separated list of columns to be excluded from the schema validation, i.e col_a,col_b.                    
 ```
 
 #### Custom Query Column Validations
