@@ -69,7 +69,7 @@ class BigQueryResultHandler(object):
             ):
                 raise RuntimeError(
                     f"Please update your BigQuery results table schema using the script : samples/bq_utils/rename_column_schema.sh.\n"
-                    f"The lastest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
+                    f"The latest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
                 )
             elif (
                 chunk_errors[0][0]["errors"][0]["message"]
@@ -77,7 +77,7 @@ class BigQueryResultHandler(object):
             ):
                 raise RuntimeError(
                     f"Please update your BigQuery results table schema using the script : samples/bq_utils/add_columns_schema.sh.\n"
-                    f"The lastest release of DVT has added two fields 'primary_keys' and 'num_random_rows': {chunk_errors}"
+                    f"The latest release of DVT has added two fields 'primary_keys' and 'num_random_rows': {chunk_errors}"
                 )
             raise RuntimeError(f"could not write rows: {chunk_errors}")
 
