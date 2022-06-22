@@ -22,7 +22,7 @@ The Snowflake client is accessible through the ibis.ibis_snowflake namespace. Th
     snowflake://{user}:{password}@{account}/{database}
 
 #
-# **2.Code snippet for connecting to oracle Exadata using ibis:-**
+# **2.Code snippet for connecting to Snowflake using ibis:-**
 
     import ibis
     import os
