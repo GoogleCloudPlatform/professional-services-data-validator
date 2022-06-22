@@ -285,6 +285,8 @@ Please note that for Group By validations, the following property must be set in
     "auth_mechanism":"PLAIN"
 }
 ```
+Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
+
 ## DB2
 ```
 {
