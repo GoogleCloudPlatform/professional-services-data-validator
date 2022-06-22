@@ -281,6 +281,17 @@ class ConfigManager(object):
         """Return threshold from Config"""
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
+    @property
+    def exclusion_columns(self):
+        """Return the exclusion columns from Config"""
+        return self._config.get(consts.CONFIG_EXCLUSION_COLUMNS, [])
+
+    def append_exclusion_columns(self, column_configs):
+        """Append exclusion columns to existing config."""
+        self._config[consts.CONFIG_EXCLUSION_COLUMNS] = (
+            self.exclusion_columns + column_configs
+        )
+
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
         if not hasattr(self, "_source_ibis_table"):

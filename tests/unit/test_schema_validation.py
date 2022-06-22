@@ -182,7 +182,42 @@ def test_schema_validation_matching(module_under_test):
         ],
     ]
     assert expected_results == module_under_test.schema_validation_matching(
-        source_fields, target_fields
+        source_fields, target_fields, []
+    )
+
+
+def test_schema_validation_matching_exclusion_columns(module_under_test):
+    source_fields = {"FIELD1": "string", "fiEld2": "datetime", "field3": "string"}
+    target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
+
+    expected_results = [
+        [
+            "field1",
+            "field1",
+            "1",
+            "1",
+            consts.VALIDATION_STATUS_SUCCESS,
+            "Source_type:string Target_type:string",
+        ],
+        [
+            "field3",
+            "N/A",
+            "1",
+            "0",
+            consts.VALIDATION_STATUS_FAIL,
+            "Target doesn't have a matching field name",
+        ],
+        [
+            "N/A",
+            "field_3",
+            "0",
+            "1",
+            consts.VALIDATION_STATUS_FAIL,
+            "Source doesn't have a matching field name",
+        ],
+    ]
+    assert expected_results == module_under_test.schema_validation_matching(
+        source_fields, target_fields, ["field2"]
     )
 
 
