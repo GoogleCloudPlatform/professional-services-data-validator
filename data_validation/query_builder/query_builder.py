@@ -512,7 +512,7 @@ class QueryBuilder(object):
                 self.compile_aggregate_fields(filtered_table)
             )
         else:
-            query = filtered_table
+            query = grouped_table
 
         if self.limit:
             query = query.limit(self.limit)
