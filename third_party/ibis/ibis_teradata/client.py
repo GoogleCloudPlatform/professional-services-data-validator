@@ -93,6 +93,9 @@ class TeradataClient(SQLClient):
         self.client = teradatasql.connect(**self.teradata_config)
         self.use_no_lock_tables = use_no_lock_tables
 
+    def __del__ (self):
+        teradatasql.close()
+        
     def _execute(self, dml, results=False, **kwargs):
         query = TeradataQuery(self, dml)
         df = self._execute_query(query, **kwargs)
