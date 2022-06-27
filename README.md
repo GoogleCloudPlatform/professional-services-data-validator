@@ -135,7 +135,9 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 #### Row Validations
 
 (Note: Row hash validation is currently only supported for BigQuery, Teradata, and Imapala/Hive. Struct and array 
-data types are not currently supported.)
+data types are not currently supported. In addition, please note that SHA256 is not a supported function on teradata 
+systems. If you wish to perform this comparison on teradata you will need to 
+[deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass a `--primary-key` flag which defines what field(s)
@@ -465,6 +467,9 @@ replacement string, RSTRIP, and UPPER. Then, it will CONCAT() the results
 and run a SHA256() hash and compare the source and target results. Since each row will
 be returned in the result set, it is recommended to utilize the `--use-random-row` feature
 to validate a subset of the table.
+
+Please note that SHA256 is not a supported function on teradata systems. If you wish to perform
+this comparison on teradata you will need to [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).
 
 Comparison field validations (`--comp-fields column`) involve an value comparison of the
 column values. These values will be compared via a JOIN on their corresponding primary
