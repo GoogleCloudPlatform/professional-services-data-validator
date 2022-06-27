@@ -208,6 +208,8 @@ class ComparisonField(object):
         # Fields are supplied on compile or on build
         comparison_field = ibis_table[self.field_name]
         alias = self.alias or self.field_name
+        if self.cast:
+            comparison_field = comparison_field.cast(self.cast)
         comparison_field = comparison_field.name(alias)
 
         return comparison_field
@@ -493,6 +495,8 @@ class QueryBuilder(object):
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
+        if self.comparison_fields:
+            calc_table = calc_table.mutate(self.compile_comparison_fields(calc_table))
         compiled_filters = self.compile_filter_fields(table)
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
