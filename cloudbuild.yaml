@@ -88,3 +88,14 @@ steps:
   - 'NOX_SESSION=integration_state'
   - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
+ # Docker Build 
+- id: build_docker_image
+  name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 
+          'us-central1-docker.pkg.dev/pso-kokoro-resources/pso-dvt-docker-repo/professional-services-data-validator', 
+          '-f', '/samples/docker/', '.' ]
+# Push Docker Image
+- id: push_docker_image
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/pso-kokoro-resources/pso-dvt-docker-repo/professional-services-data-validator']
+images: ['us-central1-docker.pkg.dev/pso-kokoro-resources/pso-dvt-docker-repo/professional-services-data-validator']
