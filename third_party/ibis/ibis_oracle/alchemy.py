@@ -17,6 +17,7 @@ import third_party.ibis.ibis_oracle.expr.datatypes as dt
 from sqlalchemy.dialects.oracle.base import OracleDialect
 
 import ibis.expr.datatypes as dt11
+import ibis.expr.schema as sch
 import ibis.backends.base_sqlalchemy.alchemy as s_al
 
 _ibis_type_to_sqla = {
@@ -65,34 +66,64 @@ class AlchemyDialect(s_al.AlchemyDialect):
 
 @dt.dtype.register(OracleDialect, sa.dialects.oracle.CLOB)
 def sa_oracle_CLOB(_, satype, nullable=True):
-    return dt.CLOB(nullable=nullable)
+    return dt11.String(nullable=nullable)
 
 
 @dt.dtype.register(OracleDialect, sa.dialects.oracle.NCLOB)
 def sa_oracle_NCLOB(_, satype, nullable=True):
-    return dt.NCLOB(nullable=nullable)
+    return dt11.String(nullable=nullable)
 
 
 @dt.dtype.register(OracleDialect, sa.dialects.oracle.LONG)
 def sa_oracle_LONG(_, satype, nullable=True):
-    return dt.LONG(nullable=nullable)
+    return dt11.String(nullable=nullable)
 
 
 @dt.dtype.register(OracleDialect, sa.dialects.oracle.NUMBER)
 def sa_oracle_NUMBER(_, satype, nullable=True):
-    return dt.Number(satype.precision, satype.scale, nullable=nullable)
-
+    return dt11.Decimal(satype.precision, satype.scale, nullable=nullable)
 
 @dt.dtype.register(OracleDialect, sa.dialects.oracle.BFILE)
 def sa_oracle_BFILE(_, satype, nullable=True):
-    return dt.BFILE(nullable=nullable)
-
+    return dt11.Binary(nullable=nullable)
 
 @dt.dtype.register(OracleDialect, sa.dialects.oracle.RAW)
 def sa_oracle_RAW(_, satype, nullable=True):
-    return dt.RAW(nullable=nullable)
+    return dt11.Binary(nullable=nullable)
 
-
-@dt.dtype.register(OracleDialect, sa.types.BINARY)
+@dt.dtype.register(OracleDialect, sa.dialects.oracle.BINARY)
 def sa_oracle_LONGRAW(_, satype, nullable=True):
-    return dt.LONGRAW(nullable=nullable)
+    return dt11.Binary(nullable=nullable)
+
+@dt.dtype.register(OracleDialect, sa.dialects.oracle.DATE)
+def sa_oracle_DATE(_, satype, nullable=True):
+    return dt11.Date(nullable=nullable)
+
+@dt.dtype.register(OracleDialect, sa.dialects.oracle.VARCHAR)
+def sa_oracle_VARCHAR(_, satype, nullable=True):
+    return dt11.String(nullable=nullable)
+
+@sch.infer.register(sa.Table)
+def schema_from_table(table, schema=None):
+    """Retrieve an ibis schema from a SQLAlchemy ``Table``.
+    Parameters
+    ----------
+    table : sa.Table
+    Returns
+    -------
+    schema : ibis.expr.datatypes.Schema
+        An ibis schema corresponding to the types of the columns in `table`.
+    """
+    schema = schema if schema is not None else {}
+    pairs = []
+    for name, column in table.columns.items():
+        if name in schema:
+            dtype = dt.dtype(schema[name])
+        else:
+            dtype = dt.dtype(
+                OracleDialect(),
+                column.type,
+                nullable=column.nullable,
+            )
+        pairs.append((name, dtype))
+    return sch.schema(pairs)

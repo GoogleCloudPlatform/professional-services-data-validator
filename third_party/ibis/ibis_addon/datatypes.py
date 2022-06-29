@@ -78,6 +78,8 @@ def infer_pandas_schema_incl_decimals(df, schema=None):
                         column_name
                     )
                 )
+            elif inferred_dtype == 'floating':
+                inferred_dtype = 'decimal'
             ibis_dtype = _inferable_pandas_dtypes[inferred_dtype]
         else:
             ibis_dtype = dt.dtype(pandas_dtype)
