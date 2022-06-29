@@ -91,10 +91,6 @@ def sa_oracle_BFILE(_, satype, nullable=True):
 def sa_oracle_RAW(_, satype, nullable=True):
     return dt11.Binary(nullable=nullable)
 
-@dt.dtype.register(OracleDialect, sa.dialects.oracle.BINARY)
-def sa_oracle_LONGRAW(_, satype, nullable=True):
-    return dt11.Binary(nullable=nullable)
-
 @dt.dtype.register(OracleDialect, sa.dialects.oracle.DATE)
 def sa_oracle_DATE(_, satype, nullable=True):
     return dt11.Date(nullable=nullable)
