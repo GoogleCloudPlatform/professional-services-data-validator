@@ -18,6 +18,7 @@ from sqlalchemy.dialects.oracle.base import OracleDialect
 from sqlalchemy.dialects.mysql.base import MySQLDialect
 from sqlalchemy.dialects.postgresql.base import PGDialect as PostgreSQLDialect
 from sqlalchemy.dialects.sqlite.base import SQLiteDialect
+from sqlalchemy.dialects.mssql.pyodbc import MSDialect_pyodbc
 from sqlalchemy.engine.interfaces import Dialect as SQLAlchemyDialect
 
 import ibis.expr.datatypes as dt11
