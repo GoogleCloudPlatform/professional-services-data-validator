@@ -15,6 +15,7 @@
 import sqlalchemy as sa
 import third_party.ibis.ibis_oracle.expr.datatypes as dt
 from sqlalchemy.dialects.oracle.base import OracleDialect
+from sqlalchemy.engine.interfaces import Dialect as SQLAlchemyDialect
 
 import ibis.expr.datatypes as dt11
 import ibis.expr.schema as sch
@@ -117,7 +118,7 @@ def schema_from_table(table, schema=None):
             dtype = dt.dtype(schema[name])
         else:
             dtype = dt.dtype(
-                OracleDialect(),
+                getattr(table.bind, 'dialect', SQLAlchemyDialect()),
                 column.type,
                 nullable=column.nullable,
             )
