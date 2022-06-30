@@ -15,6 +15,9 @@
 import sqlalchemy as sa
 import third_party.ibis.ibis_oracle.expr.datatypes as dt
 from sqlalchemy.dialects.oracle.base import OracleDialect
+from sqlalchemy.dialects.mysql.base import MySQLDialect
+from sqlalchemy.dialects.postgresql.base import PGDialect as PostgreSQLDialect
+from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlalchemy.engine.interfaces import Dialect as SQLAlchemyDialect
 
 import ibis.expr.datatypes as dt11
