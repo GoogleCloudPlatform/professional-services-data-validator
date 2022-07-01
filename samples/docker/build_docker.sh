@@ -25,6 +25,6 @@ cd ../../
 python setup.py register sdist bdist_wheel
 
 cd samples/docker
-cp ../../dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl .
+cp ../../dist/google_pso_data_validator-${PACKAGE_VERSION}-py2.py3-none-any.whl .
 docker build -t data_validation:$PACKAGE_VERSION --build-arg _APP_VERSION=$PACKAGE_VERSION .
-rm google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl
+rm google_pso_data_validator-${PACKAGE_VERSION}-py2.py3-none-any.whl

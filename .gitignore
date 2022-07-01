@@ -49,7 +49,15 @@ docs/_build
 bigquery/docs/generated
 
 # Virtual environment
+.env
+.venv
 env/
+venv/
+rel_venv/
+ENV/
+env.bak/
+venv.bak/
+
 coverage.xml
 
 # System test environment variables.
