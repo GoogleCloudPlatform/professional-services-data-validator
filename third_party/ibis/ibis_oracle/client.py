@@ -38,7 +38,7 @@ def sa_oracle_NCLOB(_, satype, nullable=True):
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.LONG)
 def sa_oracle_LONG(_, satype, nullable=True):
-    return dt11.String(nullable=nullable)
+    return dt.String(nullable=nullable)
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.NUMBER)
@@ -65,6 +65,13 @@ def sa_oracle_DATE(_, satype, nullable=True):
 def sa_oracle_VARCHAR(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
+@dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.VARCHAR2)
+def sa_oracle_VARCHAR2(_, satype, nullable=True):
+    return dt.String(nullable=nullable)
+
+@dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.TIMESTAMP)
+def sa_oracle_TIMESTAMP(_, satype, nullable=True):
+    return dt.Timestamp(nullable=nullable)
 
 class OracleTable(alch.AlchemyTable):
     pass
