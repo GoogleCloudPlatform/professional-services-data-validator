@@ -105,6 +105,17 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         # Float64 type results from AVG() aggregation
         source_value = field_differences["differences_source_value"].round(digits=4)
         target_value = field_differences["differences_target_value"].round(digits=4)
+    elif isinstance(datatype, ibis.expr.datatypes.Decimal):
+        source_value = (
+            field_differences["differences_source_value"]
+            .cast("float64")
+            .round(digits=4)
+        )
+        target_value = (
+            field_differences["differences_target_value"]
+            .cast("float64")
+            .round(digits=4)
+        )
     else:
         source_value = field_differences["differences_source_value"]
         target_value = field_differences["differences_target_value"]
