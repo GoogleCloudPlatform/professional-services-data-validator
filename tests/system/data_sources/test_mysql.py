@@ -14,7 +14,7 @@
 
 import os
 
-from data_validation import data_validation, consts, exceptions
+from data_validation import consts, data_validations, exceptions
 
 
 # TODO: To use this code I would need to use the Cloud SQL Proxy.
@@ -61,7 +61,7 @@ CONFIG_SCHEMA_VALID = {
 
 def test_mysql_count_invalid_host():
     try:
-        data_validator = data_validation.DataValidation(
+        data_validator = data_validations.DataValidation(
             CONFIG_COUNT_VALID,
             verbose=False,
         )
@@ -74,7 +74,7 @@ def test_mysql_count_invalid_host():
 
 def test_schema_validation():
     try:
-        data_validator = data_validation.DataValidation(
+        data_validator = data_validations.DataValidation(
             CONFIG_SCHEMA_VALID,
             verbose=False,
         )

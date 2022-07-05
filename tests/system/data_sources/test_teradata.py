@@ -14,7 +14,7 @@
 
 import os
 
-from data_validation import data_validation, consts
+from data_validation import consts, data_validations
 
 TERADATA_USER = os.getenv("TERADATA_USER", "udf")
 TERADATA_PASSWORD = os.getenv("TERADATA_PASSWORD")
@@ -61,7 +61,7 @@ TERADATA_CONFIG = {
 
 
 def test_count_validator():
-    validator = data_validation.DataValidation(TERADATA_CONFIG, verbose=True)
+    validator = data_validations.DataValidation(TERADATA_CONFIG, verbose=True)
     df = validator.execute()
     assert int(df["source_agg_value"][0]) > 0
     assert df["source_agg_value"][0] == df["target_agg_value"][0]

@@ -14,8 +14,8 @@
 
 import os
 
-from data_validation import __main__ as main
-from data_validation import cli_tools, clients, consts, data_validation, state_manager
+from data_validation import __main__ as main, data_validations
+from data_validation import cli_tools, clients, consts, state_manager
 from data_validation.query_builder import random_row_builder
 
 PROJECT_ID = os.environ["PROJECT_ID"]
@@ -354,7 +354,7 @@ FROM (
 
 
 def test_count_validator():
-    validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
+    validator = data_validations.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
 
     count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
@@ -383,7 +383,7 @@ def test_count_validator():
 
 
 def test_grouped_count_validator():
-    validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
+    validator = data_validations.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
     rows = list(df[df["validation_name"] == "count"].iterrows())
 
@@ -399,7 +399,7 @@ def test_grouped_count_validator():
 
 
 def test_numeric_types():
-    validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
+    validator = data_validations.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
@@ -409,7 +409,7 @@ def test_numeric_types():
 
 
 def test_schema_validation():
-    validator = data_validation.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
+    validator = data_validations.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
@@ -544,7 +544,7 @@ def _test_cli_yaml_local_runner(cli_args, num_yaml_lines):
 
 
 def test_timestamp_aggs():
-    validator = data_validation.DataValidation(CONFIG_TIMESTAMP_AGGS)
+    validator = data_validations.DataValidation(CONFIG_TIMESTAMP_AGGS)
     df = validator.execute()
     for validation in df.to_dict(orient="records"):
         assert validation["source_agg_value"] == validation["target_agg_value"]

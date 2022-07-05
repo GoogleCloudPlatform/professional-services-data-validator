@@ -14,7 +14,7 @@
 
 import json
 import os
-from data_validation import data_validation
+from data_validation import data_validations
 import flask
 import pandas
 
@@ -37,7 +37,7 @@ def _get_request_content(request):
 
 def validate(config):
     """Run Data Validation against the supplied config."""
-    validator = data_validation.DataValidation(config)
+    validator = data_validations.DataValidation(config)
     df = validator.execute()
 
     return _clean_dataframe(df)

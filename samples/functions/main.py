@@ -17,7 +17,7 @@ import pandas
 import json
 from yaml import dump, load, Dumper, Loader
 
-from data_validation.data_validation import DataValidation
+from data_validation.data_validations import DataValidation
 
 
 def _clean_dataframe(df):

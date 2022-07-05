@@ -15,7 +15,7 @@
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
-from data_validation import data_validation, consts
+from data_validation import consts, data_validations
 
 import os
 
@@ -84,7 +84,7 @@ def test_sql_server_count(cloud_sql):
         consts.CONFIG_FORMAT: "table",
     }
 
-    data_validator = data_validation.DataValidation(
+    data_validator = data_validations.DataValidation(
         config_count_valid,
         verbose=False,
     )
@@ -111,7 +111,7 @@ def test_schema_validation():
         consts.CONFIG_FORMAT: "table",
     }
 
-    validator = data_validation.DataValidation(config, verbose=True)
+    validator = data_validations.DataValidation(config, verbose=True)
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):

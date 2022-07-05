@@ -51,7 +51,7 @@ with DAG(
 ) as dag:
 
     def validation_function(project):
-        from data_validation import data_validation
+        from data_validation import data_validations
         from data_validation.result_handlers import bigquery as bqhandler
 
         BQ_CONN = {"source_type": "BigQuery", "project_id": project}
@@ -77,7 +77,7 @@ with DAG(
         }
 
         handler = bqhandler.BigQueryResultHandler.get_handler_for_project(project)
-        validator = data_validation.DataValidation(
+        validator = data_validations.DataValidation(
             GROUPED_CONFIG_COUNT_VALID, verbose=True, result_handler=handler
         )
         validator.execute()

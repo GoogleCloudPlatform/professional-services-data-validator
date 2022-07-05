@@ -89,6 +89,11 @@ try:
 except Exception:
     DB2Client = _raise_missing_client_error("pip install ibm_db_sa")
 
+try:
+    from third_party.ibis.ibis_informix.client import InformixClient
+except Exception:
+    InformixClient = _raise_missing_client_error("pip install IfxPy")
+
 
 def get_bigquery_client(project_id, dataset_id=None, credentials=None):
     info = client_info.get_http_client_info()
@@ -259,4 +264,5 @@ CLIENT_LOOKUP = {
     "Snowflake": snowflake_connect,
     "Spanner": spanner_connect,
     "DB2": DB2Client,
+    "Informix": InformixClient,
 }

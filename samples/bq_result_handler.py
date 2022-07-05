@@ -14,7 +14,7 @@
 
 import os
 
-from data_validation import data_validation
+from data_validation import data_validations
 from data_validation.result_handlers import bigquery as bqhandler
 
 
@@ -76,7 +76,7 @@ CONFIG_COUNT_VALID = {
 }
 
 result_handler = bqhandler.BigQueryResultHandler.get_handler_for_project(PROJECT_ID)
-validator = data_validation.DataValidation(
+validator = data_validations.DataValidation(
     CONFIG_COUNT_VALID, verbose=True, result_handler=result_handler
 )
 df = validator.execute()

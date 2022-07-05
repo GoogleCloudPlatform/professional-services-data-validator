@@ -26,7 +26,7 @@ from data_validation import (
     state_manager,
 )
 from data_validation.config_manager import ConfigManager
-from data_validation.data_validation import DataValidation
+from data_validation.data_validations import DataValidation
 
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True

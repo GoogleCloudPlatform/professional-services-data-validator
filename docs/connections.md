@@ -54,6 +54,7 @@ The data validation tool supports the following connection types.
 * [Impala](#Impala)
 * [Hive](#Hive)
 * [DB2](#DB2)
+* [Informix](#Informix)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
@@ -301,5 +302,21 @@ Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla
     "password": "my-password",
     "database": "my-db",
     "url": "my-url",
+}
+```
+
+## Informix
+```
+{
+    # Configuration Required for All Data Sources
+    "source_type": "Informix",
+
+    # Connection Details
+    "host": "localhost",
+    "port": 9088,
+    "user": "my-username",
+    "password": "my-password",
+    "database": "my-db",
+    "server": "informix"
 }
 ```

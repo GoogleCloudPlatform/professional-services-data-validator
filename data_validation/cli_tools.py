@@ -134,6 +134,14 @@ CONNECTION_SOURCE_FIELDS = {
         ["url", "URL link in DB2 to connect to"],
         ["driver", "Driver link in DB2 to connect to (default ibm_db_sa)"],
     ],
+    "Informix": [
+        ["host", "Desired Informix host ip"],
+        ["port", "Desired Informix port (9088 if not provided)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in Informix to connect to"],
+        ["server", "Server name which hosts Informix server"],
+    ],
 }
 
 

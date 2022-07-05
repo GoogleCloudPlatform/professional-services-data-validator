@@ -426,9 +426,9 @@ RANDOM_STRINGS = ["a", "b", "c", "d"]
 
 @pytest.fixture
 def module_under_test():
-    import data_validation.data_validation
+    import data_validation.data_validations
 
-    return data_validation.data_validation
+    return data_validations.data_validations
 
 
 def _create_table_file(table_path, data):
