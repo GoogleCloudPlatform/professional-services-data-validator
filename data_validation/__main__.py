@@ -200,20 +200,17 @@ def build_config_managers_from_args(args):
     """Return a list of config managers ready to execute."""
     configs = []
 
-    if args.type is None:
-        validate_cmd = args.validate_cmd.capitalize()
-        if validate_cmd == "Schema":
-            config_type = consts.SCHEMA_VALIDATION
-        elif validate_cmd == "Column":
-            config_type = consts.COLUMN_VALIDATION
-        elif validate_cmd == "Row":
-            config_type = consts.ROW_VALIDATION
-        elif validate_cmd == "Custom-query":
-            config_type = consts.CUSTOM_QUERY
-        else:
-            raise ValueError(f"Unknown Validation Type: {validate_cmd}")
+    validate_cmd = args.validate_cmd.capitalize()
+    if validate_cmd == "Schema":
+        config_type = consts.SCHEMA_VALIDATION
+    elif validate_cmd == "Column":
+        config_type = consts.COLUMN_VALIDATION
+    elif validate_cmd == "Row":
+        config_type = consts.ROW_VALIDATION
+    elif validate_cmd == "Custom-query":
+        config_type = consts.CUSTOM_QUERY
     else:
-        config_type = args.type
+        raise ValueError(f"Unknown Validation Type: {validate_cmd}")
 
     result_handler_config = None
     if args.bq_result_handler:
@@ -497,9 +494,7 @@ def main():
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
 
-    if args.command == "run":
-        run(args)
-    elif args.command == "connections":
+    if args.command == "connections":
         run_connections(args)
     elif args.command == "run-config":
         run_config(args)

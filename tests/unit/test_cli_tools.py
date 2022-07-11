@@ -33,21 +33,6 @@ CLI_ARGS = {
     "verbose": True,
 }
 
-# Define CLI 'Run' command args for backwards compatibility
-CLI_RUN_ARGS = {
-    "command": "run",
-    "type": "Column",
-    "source_conn": TEST_CONN,
-    "target_conn": TEST_CONN,
-    "tables_list": "my_schema.my_table",
-    "sum": "col_a,col_b",
-    "count": "col_a,col_b",
-    "config_file": "example_test.yaml",
-    "labels": "name=test_run",
-    "threshold": 30.0,
-    "verbose": True,
-}
-
 CLI_ADD_CONNECTION_ARGS = [
     "connections",
     "add",
@@ -106,20 +91,6 @@ def test_get_parsed_args(mock_args):
     """Test arg parser values with validate command."""
     args = cli_tools.get_parsed_args()
     assert args.command == "validate"
-    assert args.labels == "name=test_run"
-    assert args.threshold == 30.0
-    assert args.verbose
-
-
-# Test run command for backwards compatibility
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CLI_RUN_ARGS),
-)
-def test_get_run_parsed_args(mock_args):
-    """Test arg parser values with run command."""
-    args = cli_tools.get_parsed_args()
-    assert args.command == "run"
     assert args.labels == "name=test_run"
     assert args.threshold == 30.0
     assert args.verbose
