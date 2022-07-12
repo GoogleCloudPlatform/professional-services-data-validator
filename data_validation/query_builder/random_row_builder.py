@@ -25,6 +25,7 @@ from ibis.backends.pandas.client import PandasClient
 import ibis.backends.pandas.execution.util as pandas_util
 
 from ibis.expr.signature import Argument as Arg
+from third_party.ibis.ibis_teradata.client import TeradataClient
 from typing import List
 from data_validation import clients
 from io import StringIO
@@ -109,10 +110,12 @@ class RandomRowBuilder(object):
                 RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             )
 
-        logging.warning(
-            "Data Client %s Does Not Enforce Random Sort on Sample",
-            str(type(data_client)),
-        )
+        if type(data_client) != TeradataClient:
+        # Teradata 'SAMPLE' is random by nature and does not require a sort by
+            logging.warning(
+                "Data Client %s Does Not Enforce Random Sort on Sample",
+                str(type(data_client)),
+            )
         return table
 
 
