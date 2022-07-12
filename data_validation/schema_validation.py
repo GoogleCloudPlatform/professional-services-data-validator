@@ -121,7 +121,7 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
 
     if exclusion_fields is not None:
         for field in exclusion_fields:
-            source_fields_casefold.pop(field, None) 
+            source_fields_casefold.pop(field, None)
             target_fields_casefold.pop(field, None)
 
     # Go through each source and check if target exists and matches

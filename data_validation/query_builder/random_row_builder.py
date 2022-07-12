@@ -111,7 +111,7 @@ class RandomRowBuilder(object):
             )
 
         if type(data_client) != TeradataClient:
-        # Teradata 'SAMPLE' is random by nature and does not require a sort by
+            # Teradata 'SAMPLE' is random by nature and does not require a sort by
             logging.warning(
                 "Data Client %s Does Not Enforce Random Sort on Sample",
                 str(type(data_client)),
