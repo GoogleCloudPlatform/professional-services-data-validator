@@ -25,11 +25,15 @@ from ibis.backends.pandas.client import PandasClient
 import ibis.backends.pandas.execution.util as pandas_util
 
 from ibis.expr.signature import Argument as Arg
-from third_party.ibis.ibis_teradata.client import TeradataClient
 from typing import List
 from data_validation import clients
 from io import StringIO
 
+try:
+    from third_party.ibis.ibis_teradata.client import TeradataClient
+except Exception:
+    msg = "pip install teradatasql (requires Teradata licensing)"
+    TeradataClient = clients._raise_missing_client_error(msg)
 
 """ The QueryBuilder for retreiving random row values to filter against."""
 
