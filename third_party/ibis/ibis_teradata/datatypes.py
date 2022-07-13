@@ -116,22 +116,14 @@ class TeradataTypeTranslator(object):
 
 ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")
 
-
-@ibis_type_to_teradata_type.register(str)
-def trans_string_default(datatype):
-    return ibis_type_to_teradata_type(dt.dtype(datatype))
-    
-
-
 @ibis_type_to_teradata_type.register(dt.DataType)
 def trans_default(t):
-    # return ibis_type_to_teradata_type(t, TypeTranslationContext())
-    return "VARCHAR(255)"
+    return ibis_type_to_teradata_type(t, TypeTranslationContext())
 
 
 @ibis_type_to_teradata_type.register(str, TypeTranslationContext)
 def trans_string_context(datatype, context):
-    return "VARCHAR"
+    return "VARCHAR(255)"
 
 
 @ibis_type_to_teradata_type.register(dt.Floating, TypeTranslationContext)
@@ -157,7 +149,7 @@ def trans_date(t, context):
 @ibis_type_to_teradata_type.register(dt.Timestamp, TypeTranslationContext)
 def trans_timestamp(t, context):
     if t.timezone is not None:
-        raise TypeError("BigQuery does not support timestamps with timezones")
+        return f"TIMESTAMP AT TIME ZONE '{t.timezone}'"
     return "TIMESTAMP"
 
 

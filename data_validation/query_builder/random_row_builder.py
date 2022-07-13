@@ -29,6 +29,11 @@ from typing import List
 from data_validation import clients
 from io import StringIO
 
+try:
+    from third_party.ibis.ibis_teradata.client import TeradataClient
+except Exception:
+    msg = "pip install teradatasql (requires Teradata licensing)"
+    TeradataClient = clients._raise_missing_client_error(msg)
 
 """ The QueryBuilder for retreiving random row values to filter against."""
 
@@ -109,10 +114,12 @@ class RandomRowBuilder(object):
                 RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             )
 
-        logging.warning(
-            "Data Client %s Does Not Enforce Random Sort on Sample",
-            str(type(data_client)),
-        )
+        if type(data_client) != TeradataClient:
+            # Teradata 'SAMPLE' is random by nature and does not require a sort by
+            logging.warning(
+                "Data Client %s Does Not Enforce Random Sort on Sample",
+                str(type(data_client)),
+            )
         return table
 
 

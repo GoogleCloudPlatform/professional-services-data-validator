@@ -121,15 +121,16 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
 
     if exclusion_fields is not None:
         for field in exclusion_fields:
-            del source_fields_casefold[field]
-            del target_fields_casefold[field]
+            source_fields_casefold.pop(field, None)
+            target_fields_casefold.pop(field, None)
 
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields_casefold.items():
         # target field exists
         if source_field_name in target_fields_casefold:
             # target data type matches
-            if source_field_type == target_fields_casefold[source_field_name]:
+            target_field_type = target_fields_casefold[source_field_name]
+            if source_field_type == target_field_type:
                 results.append(
                     [
                         source_field_name,
