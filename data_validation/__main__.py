@@ -245,16 +245,13 @@ def build_config_managers_from_args(args):
     )
 
     is_filesystem = source_client._source_type == "FileSystem"
-    tables_list = cli_tools.get_tables_list(
-        args.tables_list, default_value=[], is_filesystem=is_filesystem
-    )
 
-    for table_obj in tables_list:
+    if args.tables_list is None and config_type == consts.CUSTOM_QUERY:
         config_manager = ConfigManager.build_config_manager(
             config_type,
             args.source_conn,
             args.target_conn,
-            table_obj,
+            {},
             labels,
             threshold,
             format,
@@ -266,16 +263,42 @@ def build_config_managers_from_args(args):
             filter_config=filter_config,
             verbose=args.verbose,
         )
-        if config_type != consts.SCHEMA_VALIDATION:
-            config_manager = build_config_from_args(args, config_manager)
-        else:
-            if args.exclusion_columns is not None:
-                exclusion_columns = cli_tools.get_arg_list(args.exclusion_columns)
-                config_manager.append_exclusion_columns(
-                    [col.casefold() for col in exclusion_columns]
-                )
+        config_manager = build_config_from_args(args, config_manager)
 
         configs.append(config_manager)
+
+    else:
+        tables_list = cli_tools.get_tables_list(
+            args.tables_list, default_value=[], is_filesystem=is_filesystem
+        )
+
+        for table_obj in tables_list:
+            config_manager = ConfigManager.build_config_manager(
+                config_type,
+                args.source_conn,
+                args.target_conn,
+                table_obj,
+                labels,
+                threshold,
+                format,
+                use_random_rows=use_random_rows,
+                random_row_batch_size=random_row_batch_size,
+                source_client=source_client,
+                target_client=target_client,
+                result_handler_config=result_handler_config,
+                filter_config=filter_config,
+                verbose=args.verbose,
+            )
+            if config_type != consts.SCHEMA_VALIDATION:
+                config_manager = build_config_from_args(args, config_manager)
+            else:
+                if args.exclusion_columns is not None:
+                    exclusion_columns = cli_tools.get_arg_list(args.exclusion_columns)
+                    config_manager.append_exclusion_columns(
+                        [col.casefold() for col in exclusion_columns]
+                    )
+
+            configs.append(config_manager)
 
     return configs
 
