@@ -246,7 +246,7 @@ def build_config_managers_from_args(args):
 
     is_filesystem = source_client._source_type == "FileSystem"
     tables_list = cli_tools.get_tables_list(
-        args.tables_list, default_value=[], is_filesystem=is_filesystem
+        args.tables_list, default_value=[{}], is_filesystem=is_filesystem
     )
 
     for table_obj in tables_list:

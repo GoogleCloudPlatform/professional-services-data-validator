@@ -228,7 +228,7 @@ validations:
 
 #### Run a custom query column validation
 ````shell script
-data-validation validate --custom-query-type column custom-query --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations
+data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn
 ````
 
 #### Run a custom query validation with sum aggregation 
