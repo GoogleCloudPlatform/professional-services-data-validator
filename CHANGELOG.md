@@ -2,6 +2,34 @@
 
 ## Untagged
 
+## [2.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.0.1...v2.1.0) (2022-07-14)
+
+
+### Features
+
+* new flag to exclude columns from schema validation ([#507](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/507)) ([53ac41a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/53ac41a5df368cadd47298e6484d7e82823b0fbc))
+* Remove dependency on tables list for custom query ([#541](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/541)) ([7dca5bd](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7dca5bd9ca3d2701ef33e5b1a7925adc36bfd6d2))
+
+
+### Bug Fixes
+
+* added new result columns to schema validation ([#512](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/512)) ([478bb2d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/478bb2d099325c5bf49f44a4aa84f7b1a17123ac))
+* close Teradata connection via object delete ([#524](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/524)) ([181b865](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/181b8654d05da3fcea78cfadd978a28282f8736b))
+* editing contributing.md ([#509](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/509)) ([c01d730](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c01d7301129b9e42153419c85a64d59ce2f46c2b))
+* fixing teradata doc ([#513](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/513)) ([6a10356](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6a103564da6f100f9aa601089c0ab1d5962663e3))
+* issue-256-bug fixes to generate docker file ([#531](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/531)) ([adc528e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/adc528e999376cd088d833cd5f8465bed27b7acb))
+* issue-256-Release docker image for dvt repo ([#527](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/527)) ([e3d42cc](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e3d42cc9a1dea092d15687e9995fa41f18f59aeb))
+* issue-256-Release docker image for dvt repo ([#529](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/529)) ([e87d0ef](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e87d0ef54b1d3752ef3540aa5428368a778f70e5))
+* Oracle support for decimals ([#530](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/530)) ([0d73207](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0d73207bc6ddd81d94bad62251cadb52d49e64a3))
+* primary key casting ([#521](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/521)) ([1a7667b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1a7667b4196b393f0d29b62d2123b082edebd3e2))
+* support for cast to timestamp in TD, support for random row ([#538](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/538)) ([f7ed739](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f7ed739008a59e66ac8ba686ddfd7c6afced855a))
+
+
+### Documentation
+
+* fix typo on ibis_snowflake ([#516](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/516)) ([de8a4bd](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/de8a4bd6b852dc8e01e3455b65179c75c4e6d91f))
+* supported hive version ([#515](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/515)) ([923d4ff](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/923d4ffd05c436a11784f6d41918000fb877d2b1))
+
 ## [2.0.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.0.0...v2.0.1) (2022-06-10)
 
 
