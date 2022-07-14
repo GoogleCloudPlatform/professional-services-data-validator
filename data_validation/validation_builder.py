@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
 from copy import deepcopy
 
 from data_validation import consts, metadata
@@ -385,9 +385,9 @@ class ValidationBuilder(object):
         else:
             query = self.source_builder.compile(**source_config)
         if self.verbose:
-            print(source_config)
-            print("-- ** Source Query ** --")
-            print(query.compile())
+            logging.info(source_config)
+            logging.info("-- ** Source Query ** --")
+            logging.info(query.compile())
 
         return query
 
@@ -429,9 +429,9 @@ class ValidationBuilder(object):
         else:
             query = self.target_builder.compile(**target_config)
         if self.verbose:
-            print(target_config)
-            print("-- ** Target Query ** --")
-            print(query.compile())
+            logging.info(target_config)
+            logging.info("-- ** Target Query ** --")
+            logging.info(query.compile())
 
         return query
 
@@ -451,7 +451,7 @@ class ValidationBuilder(object):
             file = open(filename, "r")
             query = file.read()
         except IOError:
-            print("Cannot read query file: ", filename)
+            logging.warning("Cannot read query file: ", filename)
 
         if not query or query.isspace():
             raise ValueError(

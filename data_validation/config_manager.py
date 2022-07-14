@@ -563,7 +563,7 @@ class ConfigManager(object):
             if column not in allowlist_columns:
                 continue
             elif column not in casefold_target_columns:
-                print(
+                logging.warning(
                     f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue

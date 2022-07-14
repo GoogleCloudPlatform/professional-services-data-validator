@@ -15,7 +15,7 @@
 import json
 import os
 import sys
-
+import logging
 from yaml import Dumper, dump
 
 from data_validation import (
@@ -491,9 +491,14 @@ def validate(args):
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s-%(levelname)s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
-
+    logging.info("Getting Started")
     if args.command == "connections":
         run_connections(args)
     elif args.command == "run-config":
