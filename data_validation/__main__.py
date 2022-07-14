@@ -498,7 +498,6 @@ def main():
     )
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
-    logging.info("Getting Started")
     if args.command == "connections":
         run_connections(args)
     elif args.command == "run-config":
