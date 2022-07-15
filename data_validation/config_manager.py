@@ -569,7 +569,7 @@ class ConfigManager(object):
                 continue
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
-                    print(
+                    logging.info(
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
                     )
                 continue
@@ -627,7 +627,7 @@ class ConfigManager(object):
             elif supported_types and column_type not in supported_types:
                 if self.verbose:
                     msg = f"Skipping {calc_type} on {column} due to data type: {column_type}"
-                    print(msg)
+                    logging.info(msg)
                 continue
 
         calculated_config = {
