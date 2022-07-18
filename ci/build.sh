@@ -21,8 +21,8 @@ set -eo pipefail
 export PYTHONUNBUFFERED=1
 
 # Install nox
-python3.6 -m pip install --upgrade --quiet nox pip
-python3.6 -m nox --version
+python3.7 -m pip install --upgrade --quiet nox pip
+python3.7 -m nox --version
 
 # When NOX_SESSION is set, it only runs the specified session
 if [[ -n "${NOX_SESSION:-}" &&  ( "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" ) ]]; then
