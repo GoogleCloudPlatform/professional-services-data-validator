@@ -31,7 +31,7 @@ import nox
 DEFAULT_PYTHON_VERSION = "3.9"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.7", "3.8", "3.9"]
+PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
