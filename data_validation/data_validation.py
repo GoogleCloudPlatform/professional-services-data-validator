@@ -346,12 +346,12 @@ class DataValidation(object):
                 )
             except Exception as e:
                 if self.verbose:
-                    logging.info("-- ** Logging Source DF ** --")
-                    logging.info(source_df.dtypes)
-                    logging.info(source_df)
-                    logging.info("-- ** Logging Target DF ** --")
-                    logging.info(target_df.dtypes)
-                    logging.info(target_df)
+                    logging.error("-- ** Logging Source DF ** --")
+                    logging.error(source_df.dtypes)
+                    logging.error(source_df)
+                    logging.error("-- ** Logging Target DF ** --")
+                    logging.error(target_df.dtypes)
+                    logging.error(target_df)
                 raise e
         else:
             result_df = combiner.generate_report(
