@@ -361,6 +361,15 @@ class CalculatedField(object):
         )
 
     @staticmethod
+    def strftime_format(config, fields):
+        fields = [fields[0], config["strftime_pattern"]
+        return CalculatedField(
+            ibis.expr.api.TemporalValue.strformat,
+            config,
+            fields,
+        )
+
+    @staticmethod
     def cast(config, fields):
         target_type = config.get(consts.CONFIG_DEFAULT_CAST, "string")
         return CalculatedField(
