@@ -15,7 +15,7 @@
 import argparse
 import pytest
 from unittest import mock
-
+import logging
 from data_validation import cli_tools
 
 TEST_CONN = '{"source_type":"Example"}'
@@ -114,21 +114,20 @@ def test_get_connection_config_from_args():
     assert conn["project_id"] == "example-project"
 
 
-def test_create_and_list_connections(capsys, fs):
+def test_create_and_list_connections(caplog, fs):
+
+    caplog.set_level(logging.INFO)
     # Create Connection
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
-
     conn = cli_tools.get_connection_config_from_args(args)
     cli_tools.store_connection(args.connection_name, conn)
-    captured = capsys.readouterr()
-    assert WRITE_SUCCESS_STRING in captured.out
+
+    assert WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     # List Connection
     cli_tools.list_connections()
-    captured = capsys.readouterr()
-
-    assert captured.out == "Connection Name: test\n"
+    assert "Connection Name: test" in caplog.records[1].msg
 
 
 def test_configure_arg_parser_list_and_run_validation_configs():
@@ -144,17 +143,16 @@ def test_configure_arg_parser_list_and_run_validation_configs():
     assert args.validation_config_cmd == "run"
 
 
-def test_create_and_list_and_get_validations(capsys, fs):
+def test_create_and_list_and_get_validations(caplog, fs):
+
+    caplog.set_level(logging.INFO)
     # Create validation config file
     cli_tools.store_validation("example_validation.yaml", TEST_VALIDATION_CONFIG)
-    captured = capsys.readouterr()
-    assert WRITE_SUCCESS_STRING in captured.out
+    assert WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     # List validation configs
     cli_tools.list_validations()
-    captured = capsys.readouterr()
-
-    assert captured.out == "Validation YAMLs found:\nexample_validation.yaml\n"
+    assert "Validation YAMLs found:" in caplog.records[1].msg
 
     # Retrive the stored vaildation config
     yaml_config = cli_tools.get_validation("example_validation.yaml")

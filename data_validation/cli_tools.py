@@ -47,6 +47,7 @@ import csv
 import json
 import sys
 import uuid
+import logging
 
 from data_validation import consts
 from data_validation import state_manager
@@ -684,7 +685,7 @@ def list_connections():
     connections = mgr.list_connections()
 
     for conn_name in connections:
-        print(f"Connection Name: {conn_name}")
+        logging.info(f"Connection Name: {conn_name}")
 
 
 def get_connection(connection_name):
@@ -715,9 +716,9 @@ def list_validations():
     mgr = state_manager.StateManager()
     validations = mgr.list_validations()
 
-    print("Validation YAMLs found:")
+    logging.info("Validation YAMLs found:")
     for validation_name in validations:
-        print(f"{validation_name}.yaml")
+        logging.info(f"{validation_name}.yaml")
 
 
 def get_labels(arg_labels):

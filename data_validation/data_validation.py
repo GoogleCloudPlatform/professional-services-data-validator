@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import json
-import logging
 import warnings
 
 import ibis.backends.pandas
 import numpy
 import pandas
+import logging
 
 from data_validation import combiner, consts, metadata
 from data_validation.config_manager import ConfigManager
@@ -274,8 +274,8 @@ class DataValidation(object):
             schema_index.append(key)
         pd_schema = pandas.Series(schema_data, index=schema_index)
         if verbose:
-            print("-- ** Pandas Schema ** --")
-            print(pd_schema)
+            logging.info("-- ** Pandas Schema ** --")
+            logging.info(pd_schema)
 
         return pd_schema
 
@@ -346,12 +346,12 @@ class DataValidation(object):
                 )
             except Exception as e:
                 if self.verbose:
-                    print("-- ** Logging Source DF ** --")
-                    print(source_df.dtypes)
-                    print(source_df)
-                    print("-- ** Logging Target DF ** --")
-                    print(target_df.dtypes)
-                    print(target_df)
+                    logging.error("-- ** Logging Source DF ** --")
+                    logging.error(source_df.dtypes)
+                    logging.error(source_df)
+                    logging.error("-- ** Logging Target DF ** --")
+                    logging.error(target_df.dtypes)
+                    logging.error(target_df)
                 raise e
         else:
             result_df = combiner.generate_report(

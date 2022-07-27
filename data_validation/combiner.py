@@ -21,7 +21,7 @@ original data type is used.
 import datetime
 import functools
 import json
-
+import logging
 import ibis
 import ibis.expr.datatypes
 
@@ -87,8 +87,8 @@ def generate_report(
     documented = _add_metadata(joined, run_metadata)
 
     if verbose:
-        print("-- ** Combiner Query ** --")
-        print(documented.compile())
+        logging.info("-- ** Combiner Query ** --")
+        logging.info(documented.compile())
 
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
