@@ -107,7 +107,7 @@ class SchemaValidation(object):
 
 
 def schema_validation_matching(source_fields, target_fields, exclusion_fields):
-    """Compare schemas between two dictionary objects"""
+    """Compare schemas between two dictionary objects""" 
     results = []
     # Apply the casefold() function to lowercase the keys of source and target
     source_fields_casefold = {
