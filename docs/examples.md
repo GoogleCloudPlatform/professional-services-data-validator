@@ -243,7 +243,8 @@ data-validation validate custom-query --custom-query-type column --source-query-
 
 #### Run a custom query row validation
 ````shell script
-data-validation validate custom-query --custom-query-type row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations  --hash \'*\'
+data-validation validate custom-query --custom-query-type row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations  --hash \'*\' --primary-keys station_id
 ````
 
-Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively.
+Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively. The primary key should be included
+in the SELECT statement of both source_query.sql and target_query.sql

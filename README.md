@@ -276,7 +276,8 @@ Imapala/Hive. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields
-of the custom query result that will be concatenated and hashed.
+of the custom query result that will be concatenated and hashed. The primary key should be included
+in the SELECT statement of both source_query.sql and target_query.sql
 
 Below is the command syntax for custom query row validations.
 
@@ -300,6 +301,8 @@ data-validation (--verbose or -v) validate custom-query
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql commands
   --hash '*'            '*' to hash all columns.
+  --primary-key or -pk JOIN_KEY
+                       Common column between source and target tables for join
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
