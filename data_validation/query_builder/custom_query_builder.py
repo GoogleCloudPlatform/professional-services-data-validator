@@ -58,7 +58,7 @@ class CustomQueryBuilder(object):
         base_df_columns = self.compile_df_fields(base_df)
         calculated_columns = self.get_calculated_columns(base_df_columns)
         cast_query = self.compile_cast_df_fields(
-            calculated_columns, input_query, base_df
+            calculated_columns, input_query, base_df, client_config
         )
         ifnull_query = self.compile_ifnull_df_fields(
             calculated_columns, cast_query, client_config
@@ -113,14 +113,32 @@ class CustomQueryBuilder(object):
 
         return calculated_columns
 
-    def compile_cast_df_fields(self, calculated_columns, input_query, data_frame):
+    def compile_cast_df_fields(
+        self, calculated_columns, input_query, data_frame, client_config
+    ):
         """Returns the wrapper cast query for the input query."""
 
+        client = client_config["data_client"]._source_type
         query = "SELECT "
         for column in calculated_columns["cast"]:
             df_column = column[len("cast__") :]
             df_column_dtype = data_frame[df_column].dtype.name
-            if df_column_dtype != "object" and df_column_dtype != "string":
+            if client == "Teradata" and df_column_dtype != "VARCHAR":
+                query = (
+                    query
+                    + "CAST("
+                    + df_column
+                    + " AS VARCHAR(255))"
+                    + " AS "
+                    + column
+                    + ","
+                )
+
+            elif (
+                df_column_dtype != "object"
+                and df_column_dtype != "string"
+                and client != "Teradata"
+            ):
                 query = (
                     query + "CAST(" + df_column + " AS string)" + " AS " + column + ","
                 )
@@ -134,7 +152,7 @@ class CustomQueryBuilder(object):
         """Returns the wrapper ifnull query for the input cast_query."""
 
         client = client_config["data_client"]._source_type
-        if client == "Impala":
+        if client == "Impala" or client == "Teradata":
             operation = "COALESCE"
         elif client == "BigQuery":
             operation = "IFNULL"
@@ -215,6 +233,18 @@ class CustomQueryBuilder(object):
                 + upper_query
                 + ") AS upper_query"
             )
+        elif client == "Teradata":
+            operation = ""
+            query = "SELECT  " + operation + "("
+            for column in calculated_columns["upper"]:
+                query += column + " || "
+            query = (
+                query[: len(query) - 3]
+                + ") AS concat__all FROM("
+                + upper_query
+                + ") AS upper_query"
+            )
+
         return query
 
     def compile_sha2_df_fields(self, concat_query, client_config):
@@ -236,6 +266,15 @@ class CustomQueryBuilder(object):
                 "SELECT  "
                 + operation
                 + "(SHA256(concat__all)) AS hash__all FROM ("
+                + concat_query
+                + ") AS concat_query"
+            )
+        elif client == "Teradata":
+            operation = "hash_sha256"
+            query = (
+                "SELECT  "
+                + operation
+                + "(concat__all) AS hash__all FROM ("
                 + concat_query
                 + ") AS concat_query"
             )

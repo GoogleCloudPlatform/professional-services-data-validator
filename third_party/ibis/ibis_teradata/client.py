@@ -1,9 +1,10 @@
 """ Teradata ibis client implementation """
 
 # from typing import Optional, Tuple
+import logging
 import pandas
 import teradatasql
-
+from dateutil.parser import parse
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
@@ -117,7 +118,7 @@ class TeradataClient(SQLClient):
         """
         # Get the schema by adding a LIMIT 0 on to the end of the query. If
         # there is already a limit in the query, we find and remove it
-        limited_query = "SELECT * FROM ({}) t0 SAMPLE 0".format(query)
+        limited_query = "SELECT TOP 1 * FROM ({}) t0".format(query)
         schema = self._get_schema_using_query(limited_query)
         return ops.SQLQueryResult(query, schema, self).to_expr()
 
@@ -171,12 +172,38 @@ class TeradataClient(SQLClient):
     def _adapt_types(self, schema_df):
         names = []
         adapted_types = []
+        col = {}
+        schema_list = schema_df.to_dict(orient="record")[0]
+        for col_name in schema_list:
+            col["Type"] = self._teradata_to_ibis_type(schema_df, col_name, schema_list[col_name])
+            schema_field = {
+                "names": col_name,
+                "types": TeradataTypeTranslator.to_ibis(col)
+            }
+            names.append(schema_field["names"])
+            adapted_types.append(schema_field["types"])
         # for col_data in schema_df.to_dict(orient="record"):
         #     names.append(col_data["TODO"])
         #     typename = bigquery_field_to_ibis_dtype(col_data)
         #     adapted_types.append(typename)
 
         return names, adapted_types
+
+    def _teradata_to_ibis_type(self, schema_df, col_name, tval):
+        data_type = schema_df.dtypes[col_name]
+        if str(data_type) == "object":
+            try:
+                if parse(str(tval), fuzzy=False):
+                    data_type = "date"
+                    return _teradt_to_ibis_type[data_type]
+            except ValueError:
+                return "CV"           
+        else:
+            data_type = str(data_type)
+            if data_type in _teradt_to_ibis_type:
+                return _teradt_to_ibis_type[data_type]
+            logging.info("Need to add mapping for type {data_type}")
+            return "CV"
 
     def database(self, name=None):
         if name is None and self.dataset is None:
@@ -250,3 +277,11 @@ class TeradataClient(SQLClient):
     #         return False
     #     else:
     #         return True
+
+_teradt_to_ibis_type = {
+    "object": 'CV',
+    "int64": 'I',
+    "date": 'DA',
+    "float64": 'F',
+    "datetime64[ns]":'TS'
+}
