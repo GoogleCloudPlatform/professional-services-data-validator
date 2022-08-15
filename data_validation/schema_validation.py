@@ -54,20 +54,8 @@ class SchemaValidation(object):
         results = schema_validation_matching(
             source_fields, target_fields, self.config_manager.exclusion_columns
         )
-
-        # results = [
-        #     {
-        #         "source_column_name": "col_a",
-        #         "target_column_name": "col_a",
-        #         "source_agg_value": 1,
-        #         "target_agg_value": 1,
-        #         "validation_status": "success",
-        #         "error_result": [{"details": "message"}, {"details": "message2"}],
-        #     }
-        # ]
-
         df = pandas.DataFrame(results)
-        print(df)
+        
         # Update and Assign Metadata Values
         self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
@@ -95,9 +83,6 @@ class SchemaValidation(object):
         )
         df.insert(loc=10, column="aggregation_type", value="Schema")
 
-        # TODO: not being displayed/stored at the moment, but it would be useful
-        # del df["error_result.details"]
-
         # empty columns added due to changes on the results schema
         df.insert(loc=14, column="primary_keys", value=None)
         df.insert(loc=15, column="num_random_rows", value=None)
@@ -110,15 +95,6 @@ class SchemaValidation(object):
 
 def schema_validation_matching(source_fields, target_fields, exclusion_fields):
     """Compare schemas between two dictionary objects"""
-    # results = [{"source_column_name": "N/A",
-    #             "target_column_name": target_field_name,
-    #             "source_agg_value": "0",
-    #             "target_agg_value": "1",
-    #             "validation_status": consts.VALIDATION_STATUS_FAIL,
-    #             "error_result": [{"details": "Source doesn't have a matching field name"
-    #                         }]
-    #             }]
-
     results = []
     # Apply the casefold() function to lowercase the keys of source and target
     source_fields_casefold = {
