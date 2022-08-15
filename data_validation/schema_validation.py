@@ -150,8 +150,8 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                         "target_agg_value": "1",
                         "validation_status": consts.VALIDATION_STATUS_SUCCESS,
                         "error_result": {
-                            "code": 200,
-                            "message": "Source_type: {} Target_type: {}".format(
+                            "code": None,
+                            "message": "Source_type: {}, Target_type: {}".format(
                                 source_field_type,
                                 target_fields_casefold[source_field_name],
                             ),
@@ -170,7 +170,7 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                         "validation_status": consts.VALIDATION_STATUS_FAIL,
                         "error_result": {
                             "code": None,
-                            "message": "Data type mismatch between source and target. Source_type: {} Target_type: {}".format(
+                            "message": "Data type mismatch between source and target. Source_type: {}, Target_type: {}".format(
                                 source_field_type,
                                 target_fields_casefold[source_field_name],
                             ),
