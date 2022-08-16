@@ -147,54 +147,34 @@ def test_schema_validation_matching(module_under_test):
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
 
     expected_results = [
-        {
-            "source_column_name": "field1",
-            "target_column_name": "field1",
-            "source_agg_value": "1",
-            "target_agg_value": "1",
-            "validation_status": consts.VALIDATION_STATUS_SUCCESS,
-            "error_result": {
-                "code": None,
-                "message": "Source_type: string, Target_type: string",
-                "details": None,
-            },
-        },
-        {
-            "source_column_name": "field2",
-            "target_column_name": "field2",
-            "source_agg_value": "1",
-            "target_agg_value": "1",
-            "validation_status": consts.VALIDATION_STATUS_FAIL,
-            "error_result": {
-                "code": None,
-                "message": "Data type mismatch between source and target. Source_type: datetime, Target_type: timestamp",
-                "details": None,
-            },
-        },
-        {
-            "source_column_name": "field3",
-            "target_column_name": "N/A",
-            "source_agg_value": "1",
-            "target_agg_value": "0",
-            "validation_status": consts.VALIDATION_STATUS_FAIL,
-            "error_result": {
-                "code": None,
-                "message": "Target doesn't have a matching field name",
-                "details": None,
-            },
-        },
-        {
-            "source_column_name": "N/A",
-            "target_column_name": "field_3",
-            "source_agg_value": "0",
-            "target_agg_value": "1",
-            "validation_status": consts.VALIDATION_STATUS_FAIL,
-            "error_result": {
-                "code": None,
-                "message": "Source doesn't have a matching field name",
-                "details": None,
-            },
-        },
+        [
+            "field1",
+            "field1",
+            "string",
+            "string",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field2",
+            "field2",
+            "datetime",
+            "timestamp",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
+        [
+            "field3",
+            "N/A",
+            "string",
+            "N/A",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
+        [
+            "N/A",
+            "field_3",
+            "N/A",
+            "string",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
     ]
     assert expected_results == module_under_test.schema_validation_matching(
         source_fields, target_fields, []
@@ -206,42 +186,27 @@ def test_schema_validation_matching_exclusion_columns(module_under_test):
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
 
     expected_results = [
-        {
-            "source_column_name": "field1",
-            "target_column_name": "field1",
-            "source_agg_value": "1",
-            "target_agg_value": "1",
-            "validation_status": consts.VALIDATION_STATUS_SUCCESS,
-            "error_result": {
-                "code": None,
-                "message": "Source_type: string, Target_type: string",
-                "details": None,
-            },
-        },
-        {
-            "source_column_name": "field3",
-            "target_column_name": "N/A",
-            "source_agg_value": "1",
-            "target_agg_value": "0",
-            "validation_status": consts.VALIDATION_STATUS_FAIL,
-            "error_result": {
-                "code": None,
-                "message": "Target doesn't have a matching field name",
-                "details": None,
-            },
-        },
-        {
-            "source_column_name": "N/A",
-            "target_column_name": "field_3",
-            "source_agg_value": "0",
-            "target_agg_value": "1",
-            "validation_status": consts.VALIDATION_STATUS_FAIL,
-            "error_result": {
-                "code": None,
-                "message": "Source doesn't have a matching field name",
-                "details": None,
-            },
-        },
+        [
+            "field1",
+            "field1",
+            "string",
+            "string",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field3",
+            "N/A",
+            "string",
+            "N/A",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
+        [
+            "N/A",
+            "field_3",
+            "N/A",
+            "string",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
     ]
 
     assert expected_results == module_under_test.schema_validation_matching(
@@ -266,8 +231,6 @@ def test_execute(module_under_test, fs):
         result_df["validation_status"].str.contains(consts.VALIDATION_STATUS_FAIL)
     ]
     assert len(result_df) == len(source_data[0]) + 1
-    assert result_df["source_agg_value"].astype(float).sum() == 7
-    assert result_df["target_agg_value"].astype(float).sum() == 7
     assert result_df.labels[0] == SAMPLE_SCHEMA_CONFIG[consts.CONFIG_LABELS]
     assert failures["source_column_name"].to_list() == ["id", "N/A"]
     assert failures["target_column_name"].to_list() == ["N/A", "id_new"]

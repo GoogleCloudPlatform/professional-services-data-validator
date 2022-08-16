@@ -54,7 +54,16 @@ class SchemaValidation(object):
         results = schema_validation_matching(
             source_fields, target_fields, self.config_manager.exclusion_columns
         )
-        df = pandas.DataFrame(results)
+        df = pandas.DataFrame(
+            results,
+            columns=[
+                "source_column_name",
+                "target_column_name",
+                "source_agg_value",
+                "target_agg_value",
+                "validation_status",
+            ],
+        )
 
         # Update and Assign Metadata Values
         self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
@@ -119,73 +128,47 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
             target_field_type = target_fields_casefold[source_field_name]
             if source_field_type == target_field_type:
                 results.append(
-                    {
-                        "source_column_name": source_field_name,
-                        "target_column_name": source_field_name,
-                        "source_agg_value": "1",
-                        "target_agg_value": "1",
-                        "validation_status": consts.VALIDATION_STATUS_SUCCESS,
-                        "error_result": {
-                            "code": None,
-                            "message": "Source_type: {}, Target_type: {}".format(
-                                source_field_type,
-                                target_fields_casefold[source_field_name],
-                            ),
-                            "details": None,
-                        },
-                    }
+                    [
+                        source_field_name,
+                        source_field_name,
+                        str(source_field_type),
+                        str(target_field_type),
+                        consts.VALIDATION_STATUS_SUCCESS,
+                    ]
                 )
             # target data type mismatch
             else:
                 results.append(
-                    {
-                        "source_column_name": source_field_name,
-                        "target_column_name": source_field_name,
-                        "source_agg_value": "1",
-                        "target_agg_value": "1",
-                        "validation_status": consts.VALIDATION_STATUS_FAIL,
-                        "error_result": {
-                            "code": None,
-                            "message": "Data type mismatch between source and target. Source_type: {}, Target_type: {}".format(
-                                source_field_type,
-                                target_fields_casefold[source_field_name],
-                            ),
-                            "details": None,
-                        },
-                    }
+                    [
+                        source_field_name,
+                        source_field_name,
+                        str(source_field_type),
+                        str(target_field_type),
+                        consts.VALIDATION_STATUS_FAIL,
+                    ]
                 )
         # target field doesn't exist
         else:
             results.append(
-                {
-                    "source_column_name": source_field_name,
-                    "target_column_name": "N/A",
-                    "source_agg_value": "1",
-                    "target_agg_value": "0",
-                    "validation_status": consts.VALIDATION_STATUS_FAIL,
-                    "error_result": {
-                        "code": None,
-                        "message": "Target doesn't have a matching field name",
-                        "details": None,
-                    },
-                }
+                [
+                    source_field_name,
+                    "N/A",
+                    str(source_field_type),
+                    "N/A",
+                    consts.VALIDATION_STATUS_FAIL,
+                ]
             )
 
     # source field doesn't exist
     for target_field_name, target_field_type in target_fields_casefold.items():
         if target_field_name not in source_fields_casefold:
             results.append(
-                {
-                    "source_column_name": "N/A",
-                    "target_column_name": target_field_name,
-                    "source_agg_value": "0",
-                    "target_agg_value": "1",
-                    "validation_status": consts.VALIDATION_STATUS_FAIL,
-                    "error_result": {
-                        "code": None,
-                        "message": "Source doesn't have a matching field name",
-                        "details": None,
-                    },
-                }
+                [
+                    "N/A",
+                    target_field_name,
+                    "N/A",
+                    str(target_field_type),
+                    consts.VALIDATION_STATUS_FAIL,
+                ]
             )
     return results
