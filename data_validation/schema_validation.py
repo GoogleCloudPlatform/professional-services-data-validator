@@ -55,7 +55,7 @@ class SchemaValidation(object):
             source_fields, target_fields, self.config_manager.exclusion_columns
         )
         df = pandas.DataFrame(results)
-        
+
         # Update and Assign Metadata Values
         self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
