@@ -7,7 +7,7 @@ This tool can be natively installed on your machine or can be containerized and 
 
 ## Prerequisites
 
-- Any machine with Python 3.6+ installed.
+- Any machine with Python 3.7+ installed.
 
 ## Setup
 
