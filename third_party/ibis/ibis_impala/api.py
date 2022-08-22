@@ -24,6 +24,9 @@ import pandas as pd
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
 
+_impala_to_ibis_type["date"] = "date"
+_HS2_TTypeId_to_dtype["DATE"] = "datetime64[ns]"
+
 def impala_connect(
     host=None,
     port=10000,

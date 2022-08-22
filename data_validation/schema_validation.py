@@ -62,7 +62,6 @@ class SchemaValidation(object):
                 "source_agg_value",
                 "target_agg_value",
                 "validation_status",
-                "error_result.details",
             ],
         )
 
@@ -92,9 +91,6 @@ class SchemaValidation(object):
             value=self.config_manager.full_target_table,
         )
         df.insert(loc=10, column="aggregation_type", value="Schema")
-
-        # TODO: not being displayed/stored at the moment, but it would be useful
-        del df["error_result.details"]
 
         # empty columns added due to changes on the results schema
         df.insert(loc=14, column="primary_keys", value=None)
@@ -135,12 +131,9 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                     [
                         source_field_name,
                         source_field_name,
-                        "1",
-                        "1",
+                        str(source_field_type),
+                        str(target_field_type),
                         consts.VALIDATION_STATUS_SUCCESS,
-                        "Source_type:{} Target_type:{}".format(
-                            source_field_type, target_fields_casefold[source_field_name]
-                        ),
                     ]
                 )
             # target data type mismatch
@@ -149,12 +142,9 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                     [
                         source_field_name,
                         source_field_name,
-                        "1",
-                        "1",
+                        str(source_field_type),
+                        str(target_field_type),
                         consts.VALIDATION_STATUS_FAIL,
-                        "Data type mismatch between source and target. Source_type:{} Target_type:{}".format(
-                            source_field_type, target_fields_casefold[source_field_name]
-                        ),
                     ]
                 )
         # target field doesn't exist
@@ -163,10 +153,9 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                 [
                     source_field_name,
                     "N/A",
-                    "1",
-                    "0",
+                    str(source_field_type),
+                    "N/A",
                     consts.VALIDATION_STATUS_FAIL,
-                    "Target doesn't have a matching field name",
                 ]
             )
 
@@ -177,10 +166,9 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                 [
                     "N/A",
                     target_field_name,
-                    "0",
-                    "1",
+                    "N/A",
+                    str(target_field_type),
                     consts.VALIDATION_STATUS_FAIL,
-                    "Source doesn't have a matching field name",
                 ]
             )
     return results

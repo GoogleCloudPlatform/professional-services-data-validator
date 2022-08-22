@@ -150,35 +150,30 @@ def test_schema_validation_matching(module_under_test):
         [
             "field1",
             "field1",
-            "1",
-            "1",
+            "string",
+            "string",
             consts.VALIDATION_STATUS_SUCCESS,
-            "Source_type:string Target_type:string",
         ],
         [
             "field2",
             "field2",
-            "1",
-            "1",
+            "datetime",
+            "timestamp",
             consts.VALIDATION_STATUS_FAIL,
-            "Data type mismatch between source and target. "
-            "Source_type:datetime Target_type:timestamp",
         ],
         [
             "field3",
             "N/A",
-            "1",
-            "0",
+            "string",
+            "N/A",
             consts.VALIDATION_STATUS_FAIL,
-            "Target doesn't have a matching field name",
         ],
         [
             "N/A",
             "field_3",
-            "0",
-            "1",
+            "N/A",
+            "string",
             consts.VALIDATION_STATUS_FAIL,
-            "Source doesn't have a matching field name",
         ],
     ]
     assert expected_results == module_under_test.schema_validation_matching(
@@ -194,28 +189,26 @@ def test_schema_validation_matching_exclusion_columns(module_under_test):
         [
             "field1",
             "field1",
-            "1",
-            "1",
+            "string",
+            "string",
             consts.VALIDATION_STATUS_SUCCESS,
-            "Source_type:string Target_type:string",
         ],
         [
             "field3",
             "N/A",
-            "1",
-            "0",
+            "string",
+            "N/A",
             consts.VALIDATION_STATUS_FAIL,
-            "Target doesn't have a matching field name",
         ],
         [
             "N/A",
             "field_3",
-            "0",
-            "1",
+            "N/A",
+            "string",
             consts.VALIDATION_STATUS_FAIL,
-            "Source doesn't have a matching field name",
         ],
     ]
+
     assert expected_results == module_under_test.schema_validation_matching(
         source_fields, target_fields, ["field2"]
     )
@@ -238,8 +231,6 @@ def test_execute(module_under_test, fs):
         result_df["validation_status"].str.contains(consts.VALIDATION_STATUS_FAIL)
     ]
     assert len(result_df) == len(source_data[0]) + 1
-    assert result_df["source_agg_value"].astype(float).sum() == 7
-    assert result_df["target_agg_value"].astype(float).sum() == 7
     assert result_df.labels[0] == SAMPLE_SCHEMA_CONFIG[consts.CONFIG_LABELS]
     assert failures["source_column_name"].to_list() == ["id", "N/A"]
     assert failures["target_column_name"].to_list() == ["N/A", "id_new"]
