@@ -331,6 +331,11 @@ def _configure_row_parser(row_parser):
         help="Comma separated list of columns for hash 'col_a,col_b' or * for all columns",
     )
     row_parser.add_argument(
+        "--concat",
+        "-concat",
+        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
+    )
+    row_parser.add_argument(
         "--comparison-fields",
         "-comp-fields",
         help="Individual columns to compare. If comparing a calculated field use the column alias.",

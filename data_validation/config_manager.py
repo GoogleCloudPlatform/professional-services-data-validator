@@ -660,6 +660,14 @@ class ConfigManager(object):
                 "concat",
                 "hash",
             ]
+        elif calc_type == "concat":
+            order_of_operations = [
+                "cast",
+                "ifnull",
+                "rstrip",
+                "upper",
+                "concat",
+            ]
         column_aliases = {}
         col_names = []
         for i, calc in enumerate(order_of_operations):
