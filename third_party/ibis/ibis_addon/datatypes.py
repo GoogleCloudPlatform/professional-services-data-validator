@@ -45,6 +45,7 @@ _DTYPE_TO_IBIS_TYPE["NUMERIC"] = dt.Decimal(38, 9)
 # mixed-integer-float, complex, categorical, timedelta64, timedelta, period
 IBIS_TYPE_TO_PANDAS_TYPE[dt.Decimal(10, 0)] = np.dtype(decimal.Decimal)
 _inferable_pandas_dtypes["decimal"] = dt.Decimal(10, 0)
+_inferable_pandas_dtypes["integer"] = dt.int32
 
 _inferable_pandas_dtypes["date"] = dt.date
 _inferable_pandas_dtypes["datetime64"] = dt.timestamp
@@ -86,7 +87,7 @@ def infer_pandas_schema_incl_decimals(df, schema=None):
                 )
             elif inferred_dtype == "floating":
                 inferred_dtype = "decimal"
-            ibis_dtype = _inferable_pandas_dtypes[inferred_dtype]
+            ibis_dtype = _inferable_pandas_dtypes.get(inferred_dtype, dt.Decimal(10, 0))
         else:
             ibis_dtype = dt.dtype(pandas_dtype)
 
