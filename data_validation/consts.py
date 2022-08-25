@@ -148,6 +148,9 @@ SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
     "start_time",
     "end_time",
     "aggregation_type",
-    "source_agg_value",
-    "target_agg_value",
+    "difference",
+    "primary_keys",
+    "group_by_columns",
+    "num_random_rows",
+    "pct_threshold",
 ]

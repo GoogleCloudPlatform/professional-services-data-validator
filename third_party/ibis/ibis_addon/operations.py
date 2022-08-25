@@ -24,13 +24,14 @@ non-textual languages.
 """
 
 import ibis
-import sqlalchemy
+import sqlalchemy as sa
 
 import ibis.expr.api
-from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
 import ibis.expr.datatypes as dt
-from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
 import ibis.expr.rules as rlz
+
+from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
+from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
@@ -39,8 +40,8 @@ from ibis.backends.base_sqlalchemy.compiler import ExprTranslator
 from ibis.backends.base_sql.compiler import BaseExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
+from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 
-# from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator # TODO figure how to add RAWSQL
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
@@ -163,7 +164,14 @@ def format_raw_sql(translator, expr):
 def sa_format_raw_sql(translator, expr):
     op = expr.op()
     rand_col, raw_sql = op.args
-    return sqlalchemy.text(raw_sql.op().args[0])
+    return sa.text(raw_sql.op().args[0])
+
+def sa_format_hashbytes(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), compiled_arg)
+    hash_to_string = sa.func.convert(sa.sql.literal_column('CHAR(64)'), hash_func, sa.sql.literal_column('2'))
+    return sa.func.lower(hash_to_string)
 
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
@@ -177,6 +185,7 @@ BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
+MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes
 BaseExprTranslator._registry[RawSQL] = format_raw_sql
 BaseExprTranslator._registry[HashBytes] = format_hashbytes_base
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
