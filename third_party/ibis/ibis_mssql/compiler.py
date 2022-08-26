@@ -15,7 +15,6 @@
 
 import math
 
-import pyodbc
 import sqlalchemy as sa
 import sqlalchemy.dialects.mssql as mssql
 
@@ -469,7 +468,7 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
     _type_map = alch.AlchemyExprTranslator._type_map.copy()
     _type_map.update(
         {
-            dt.Boolean: pyodbc.SQL_BIT,
+            dt.Boolean: mssql.BIT,
             dt.Int8: mssql.TINYINT,
             dt.Int32: mssql.INTEGER,
             dt.Int64: mssql.BIGINT,
