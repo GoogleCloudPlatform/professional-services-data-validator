@@ -30,6 +30,7 @@ import ibis.expr.api
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 
+from data_validation.clients import _raise_missing_client_error
 from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
 from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue
