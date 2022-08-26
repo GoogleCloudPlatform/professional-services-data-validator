@@ -30,13 +30,14 @@ SQL_SERVER_USER = os.getenv("SQL_SERVER_USER", "sqlserver")
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
 PROJECT_ID = os.getenv("PROJECT_ID")
 CONN = {
-        "source_type": "MSSQL",
-        "host": SQL_SERVER_HOST,
-        "user": SQL_SERVER_USER,
-        "password": SQL_SERVER_PASSWORD,
-        "port": 1433,
-        "database": "guestbook",
-    }
+    "source_type": "MSSQL",
+    "host": SQL_SERVER_HOST,
+    "user": SQL_SERVER_USER,
+    "password": SQL_SERVER_PASSWORD,
+    "port": 1433,
+    "database": "guestbook",
+}
+
 
 @pytest.fixture
 def cloud_sql(request):
@@ -103,77 +104,57 @@ def test_sql_server_row(cloud_sql):
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_COMPARISON_FIELDS: [
             {
-                "source_column":"hash__all",
-                "target_column":"hash__all",
-                "field_alias":"hash__all",
-                "cast":"None"
+                "source_column": "hash__all",
+                "target_column": "hash__all",
+                "field_alias": "hash__all",
+                "cast": "None",
             }
         ],
         consts.CONFIG_CALCULATED_FIELDS: [
             {
-                "source_calculated_columns":[
-                    "content"
-                ],
-                "target_calculated_columns":[
-                    "content"
-                ],
-                "field_alias":"cast__content",
-                "type":"cast",
-                "depth":0
+                "source_calculated_columns": ["content"],
+                "target_calculated_columns": ["content"],
+                "field_alias": "cast__content",
+                "type": "cast",
+                "depth": 0,
             },
             {
-                "source_calculated_columns":[
-                    "cast__content"
-                ],
-                "target_calculated_columns":[
-                    "cast__content"
-                ],
-                "field_alias":"ifnull__cast__content",
-                "type":"ifnull",
-                "depth":1
+                "source_calculated_columns": ["cast__content"],
+                "target_calculated_columns": ["cast__content"],
+                "field_alias": "ifnull__cast__content",
+                "type": "ifnull",
+                "depth": 1,
             },
             {
-                "source_calculated_columns":[
-                    "ifnull__cast__content"
-                ],
-                "target_calculated_columns":[
-                    "ifnull__cast__content"
-                ],
-                "field_alias":"rstrip__ifnull__cast__content",
-                "type":"rstrip",
-                "depth":2
+                "source_calculated_columns": ["ifnull__cast__content"],
+                "target_calculated_columns": ["ifnull__cast__content"],
+                "field_alias": "rstrip__ifnull__cast__content",
+                "type": "rstrip",
+                "depth": 2,
             },
             {
-                "source_calculated_columns":[
-                    "rstrip__ifnull__cast__content"
-                ],
-                "target_calculated_columns":[
-                    "rstrip__ifnull__cast__content"
-                ],
-                "field_alias":"upper__rstrip__ifnull__cast__content",
-                "type":"upper",
-                "depth":3
+                "source_calculated_columns": ["rstrip__ifnull__cast__content"],
+                "target_calculated_columns": ["rstrip__ifnull__cast__content"],
+                "field_alias": "upper__rstrip__ifnull__cast__content",
+                "type": "upper",
+                "depth": 3,
             },
             {
-                "source_calculated_columns":[
-                    "upper__rstrip__ifnull__cast__content"
-                ],
-                "target_calculated_columns":[
-                    "upper__rstrip__ifnull__cast__content"
-                ],
-                "field_alias":"hash__all",
-                "type":"hash",
-                "depth":4
-            }
+                "source_calculated_columns": ["upper__rstrip__ifnull__cast__content"],
+                "target_calculated_columns": ["upper__rstrip__ifnull__cast__content"],
+                "field_alias": "hash__all",
+                "type": "hash",
+                "depth": 4,
+            },
         ],
         consts.CONFIG_PRIMARY_KEYS: [
             {
-                "source_column":"entryID",
-                "target_column":"entryID",
-                "field_alias":"entryID",
-                "cast":"None"
+                "source_column": "entryID",
+                "target_column": "entryID",
+                "field_alias": "entryID",
+                "cast": "None",
             }
-        ]
+        ],
         consts.CONFIG_FORMAT: "table",
     }
 
@@ -183,6 +164,7 @@ def test_sql_server_row(cloud_sql):
     )
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
+
 
 def test_schema_validation():
     config = {

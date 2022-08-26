@@ -40,7 +40,12 @@ from ibis.backends.base_sqlalchemy.compiler import ExprTranslator
 from ibis.backends.base_sql.compiler import BaseExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
-from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
+
+try:
+    from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
+except Exception:
+    MSSQLClient = _raise_missing_client_error("pip install pyodbc")
+
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
