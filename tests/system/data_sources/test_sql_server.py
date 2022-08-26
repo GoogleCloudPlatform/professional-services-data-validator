@@ -107,7 +107,7 @@ def test_sql_server_row(cloud_sql):
                 "source_column": "hash__all",
                 "target_column": "hash__all",
                 "field_alias": "hash__all",
-                "cast": "None",
+                "cast": None,
             }
         ],
         consts.CONFIG_CALCULATED_FIELDS: [
@@ -152,7 +152,7 @@ def test_sql_server_row(cloud_sql):
                 "source_column": "entryID",
                 "target_column": "entryID",
                 "field_alias": "entryID",
-                "cast": "None",
+                "cast": None,
             }
         ],
         consts.CONFIG_FORMAT: "table",
