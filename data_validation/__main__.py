@@ -62,6 +62,14 @@ def get_aggregate_config(args, config_manager):
         "int64",
         "decimal",
         "timestamp",
+        "float64[non-nullable]",
+        "float32[non-nullable]",
+        "int8[non-nullable]",
+        "int16[non-nullable]",
+        "int32[non-nullable]",
+        "int64[non-nullable]",
+        "decimal[non-nullable]",
+        "timestamp[non-nullable]",
     ]
 
     if args.wildcard_include_string_len:

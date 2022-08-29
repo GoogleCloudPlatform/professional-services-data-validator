@@ -176,18 +176,9 @@ class FilterField(object):
 
         if self.left_field:
             self.left = ibis_table[self.left_field]
-            # Cast All Datetime to Date (TODO this may be a bug in BQ)
-            if isinstance(
-                ibis_table[self.left_field].type(), ibis.expr.datatypes.Timestamp
-            ):
-                self.left = self.left.cast("date")
+
         if self.right_field:
             self.right = ibis_table[self.right_field]
-            # Cast All Datetime to Date (TODO this may be a bug in BQ)
-            if isinstance(
-                ibis_table[self.right_field].type(), ibis.expr.datatypes.Timestamp
-            ):
-                self.right = self.right.cast("date")
 
         return self.expr(self.left, self.right)
 
