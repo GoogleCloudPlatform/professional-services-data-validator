@@ -2,6 +2,29 @@
 
 ## Untagged
 
+## [2.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.1.0...v2.2.0) (2022-08-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* Added teradata custom query support (#547)
+
+### Features
+
+* Added teradata custom query support ([#547](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/547)) ([97c3203](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/97c320341dc6d17fc390fcd2dc503ab2411cab57))
+* Improve schema validation debugging, Support DATE for Hive validations ([#558](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/558)) ([e67de5b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e67de5b20623c59ce04d01e9f5acc8ea293809e1))
+* Support for MSSQL row validation ([#570](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/570)) ([61dabe0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/61dabe0f96192f065c67ba24af9d6764e21c53f7))
+
+
+### Bug Fixes
+
+* Issue422 replace print with logging ([#543](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/543)) ([78222b4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/78222b4d3780818112426f9e6f486301b5b9786e))
+
+
+### Miscellaneous Chores
+
+* release 2.2.0 ([#571](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/571)) ([c29b4c1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c29b4c1d9fb7d2d80079832bc139b8faa3f05826))
+
 ## [2.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.0.1...v2.1.0) (2022-07-14)
 
 
