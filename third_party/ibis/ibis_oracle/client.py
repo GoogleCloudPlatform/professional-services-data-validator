@@ -43,6 +43,8 @@ def sa_oracle_LONG(_, satype, nullable=True):
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.NUMBER)
 def sa_oracle_NUMBER(_, satype, nullable=True):
+    if not satype.precision and not satype.scale:
+        return dt.Decimal(38, 0, nullable=nullable)
     return dt.Decimal(satype.precision, satype.scale, nullable=nullable)
 
 

@@ -15,7 +15,6 @@
 
 import math
 
-import pyodbc
 import sqlalchemy as sa
 import sqlalchemy.dialects.mssql as mssql
 
@@ -27,7 +26,7 @@ import third_party.ibis.ibis_mssql.expr.operations as ms_ops
 import ibis.backends.base_sqlalchemy.alchemy as alch
 
 from ibis import literal as L
-from ibis.backends.base_sql import _cumulative_to_reduction, fixed_arity, unary
+from ibis.backends.base_sqlalchemy.alchemy import fixed_arity, unary, _cumulative_to_reduction
 
 
 def raise_unsupported_op_error(translator, expr, *args):
@@ -350,6 +349,9 @@ def _day_of_week_name(t, expr):
     (sa_arg,) = map(t.translate, expr.op().args)
     return sa.func.trim(sa.func.format(sa_arg, 'dddd'))
 
+def _string_join(t, expr):
+    sep, elements = expr.op().args
+    return sa.func.concat(*map(t.translate, elements))
 
 _operation_registry = alch._operation_registry.copy()
 
@@ -370,6 +372,7 @@ _operation_registry.update(
         ops.StringFind: _string_find,
         ops.StringLength: unary(sa.func.length),
         ops.StringReplace: fixed_arity(sa.func.replace, 3),
+        ops.StringJoin: _string_join,
         ops.Strip: unary(sa.func.trim),
         ops.Substring: _substr,
         ops.Uppercase: unary(sa.func.upper),
@@ -465,7 +468,7 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
     _type_map = alch.AlchemyExprTranslator._type_map.copy()
     _type_map.update(
         {
-            dt.Boolean: pyodbc.SQL_BIT,
+            dt.Boolean: mssql.BIT,
             dt.Int8: mssql.TINYINT,
             dt.Int32: mssql.INTEGER,
             dt.Int64: mssql.BIGINT,
