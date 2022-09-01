@@ -439,7 +439,7 @@ def _mod(t, expr):
 
 def _string_join(t, expr):
     sep, elements = expr.op().args
-    return sa.func.concat_ws(t.translate(sep), *map(t.translate, elements))
+    return sa.func.concat(t.translate(sep), *map(t.translate, elements))
 
 
 def _literal(t, expr):
