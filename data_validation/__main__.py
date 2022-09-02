@@ -128,7 +128,7 @@ def get_calculated_config(args, config_manager):
         if col_list:
             config_manager.append_dependent_aliases(col_list)
             config_manager.append_dependent_aliases(aliases)
-    if args.concat:
+    elif args.concat:
         col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
         fields = config_manager._build_dependent_aliases("concat", col_list)
         aliases = [field["name"] for field in fields]
@@ -191,9 +191,7 @@ def build_config_from_args(args, config_manager):
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
-            if args.hash != "*":
-                config_manager.append_dependent_aliases(comparison_fields)
-            if args.concat != "*":
+            if args.hash != "*" or args.concat != "*":
                 config_manager.append_dependent_aliases(comparison_fields)
 
     if args.primary_keys is not None:
@@ -201,9 +199,7 @@ def build_config_from_args(args, config_manager):
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
         )
-        if args.hash != "*":
-            config_manager.append_dependent_aliases(primary_keys)
-        if args.concat != "*":
+        if args.hash != "*" or args.concat != "*":
             config_manager.append_dependent_aliases(primary_keys)
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:

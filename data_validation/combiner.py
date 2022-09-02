@@ -71,19 +71,28 @@ def generate_report(
             "Expected source and target to have same schema, got "
             f"source: {source_names} target: {target_names}"
         )
-
-    differences_pivot = _calculate_differences(
-        source, target, join_on_fields, run_metadata.validations, is_value_comparison
-    )
-
+    print(source)
+    print(target)
+    print(join_on_fields)
+    print(run_metadata.validations)
+    print(is_value_comparison)
+    #differences_pivot = _calculate_differences(
+    #    source, target, join_on_fields, run_metadata.validations, is_value_comparison
+    #)
+    #print(differences_pivot)
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
     )
-
+    print('**********')
+    print(source_pivot)
     target_pivot = _pivot_result(
         target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
     )
+    print('**********')
+    print(target_pivot)
     joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
+    print('**********')
+    print(joined)
     documented = _add_metadata(joined, run_metadata)
 
     if verbose:
@@ -201,13 +210,16 @@ def _calculate_differences(
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
         # for the difference to be well defined.
+        print('WE GOT HERE')
         differences_joined = source.join(target, join_on_fields, how="inner")
     else:
         # When no join_on_fields are present, we expect only one row per table.
         # This is validated in generate_report before this function is called.
+        print('NOPE')
         differences_joined = source.cross_join(target)
     differences_pivots = []
     for field, field_type in schema.items():
+        print(field)
         if field not in validations:
             continue
         else:
@@ -236,13 +248,21 @@ def _calculate_differences(
 
 def _pivot_result(result, join_on_fields, validations, result_type):
     all_fields = frozenset(result.schema().names)
+    print('join_on_fields')
+    print(join_on_fields)
+    print('all_fields')
+    print(all_fields)
     validation_fields = (
         all_fields - frozenset(join_on_fields)
         if "hash__all" not in join_on_fields
         else all_fields
     )
     pivots = []
-
+    print('---------------')
+    print("validation_fields")
+    print(validation_fields)
+    print("validations")
+    print(validations)
     for field in validation_fields:
         if field not in validations:
             continue
@@ -284,7 +304,8 @@ def _pivot_result(result, join_on_fields, validations, result_type):
                     + join_on_fields
                 )
             )
-
+    print(pivots)
+    print('+++++++++++++')
     pivot = functools.reduce(lambda pivot1, pivot2: pivot1.union(pivot2), pivots)
     return pivot
 
