@@ -336,7 +336,7 @@ Once the file is updated and saved, the following command runs the
 validation:
 
 ```
-data-validation configs run -c citibike.yaml
+data-validation (--verbose or -v) (--log-level or -ll) configs run -c citibike.yaml
 ```
 
 View the complete YAML file for a Grouped Column validation on the
