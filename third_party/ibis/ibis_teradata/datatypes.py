@@ -126,6 +126,11 @@ def trans_string_context(datatype, context):
     return "VARCHAR(255)"
 
 
+@ibis_type_to_teradata_type.register(dt.String, TypeTranslationContext)
+def trans_string(t, context):
+    return "VARCHAR(255)"
+
+
 @ibis_type_to_teradata_type.register(dt.Floating, TypeTranslationContext)
 def trans_float64(t, context):
     return "FLOAT64"
