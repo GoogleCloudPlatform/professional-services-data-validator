@@ -23,7 +23,6 @@ Output validation report to text-based log
 """
 
 from data_validation import consts
-import logging
 
 
 class TextResultHandler(object):
@@ -37,13 +36,13 @@ class TextResultHandler(object):
         :param result_df
         """
         if self.format == "text":
-            logging.info(result_df.to_string(index=False))
+            print(result_df.to_string(index=False))
         elif self.format == "csv":
-            logging.info(result_df.to_csv(index=False))
+            print(result_df.to_csv(index=False))
         elif self.format == "json":
-            logging.info(result_df.to_json(orient="index"))
+            print(result_df.to_json(orient="index"))
         else:
-            logging.info(
+            print(
                 result_df.drop(self.cols_filter_list, axis=1).to_markdown(
                     tablefmt="fancy_grid", index=False
                 )
