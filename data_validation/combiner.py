@@ -247,6 +247,7 @@ def _calculate_differences(
 
 
 def _pivot_result(result, join_on_fields, validations, result_type):
+    print(result)
     all_fields = frozenset(result.schema().names)
     print('join_on_fields')
     print(join_on_fields)
