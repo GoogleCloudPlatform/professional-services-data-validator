@@ -31,13 +31,13 @@ from data_validation.data_validation import DataValidation
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
 
-#Log level mappings for the input argument of log level string
+# Log level mappings for the input argument of log level string
 LOG_LEVEL_MAP = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,
-    "WARNING":logging.WARNING,
+    "WARNING": logging.WARNING,
     "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL
+    "CRITICAL": logging.CRITICAL,
 }
 
 

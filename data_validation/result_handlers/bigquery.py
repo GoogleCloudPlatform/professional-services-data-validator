@@ -17,7 +17,6 @@
 from google.cloud import bigquery
 
 from data_validation import client_info
-from data_validation.result_handlers.text import TextResultHandler
 import logging
 from data_validation import consts
 
@@ -58,9 +57,9 @@ class BigQueryResultHandler(object):
 
     def execute(self, config, result_df):
         logging.info(
-                result_df.drop(consts.COLUMN_FILTER_LIST, axis=1).to_markdown(
-                    tablefmt="fancy_grid", index=False
-                )
+            result_df.drop(consts.COLUMN_FILTER_LIST, axis=1).to_markdown(
+                tablefmt="fancy_grid", index=False
+            )
         )
 
         table = self._bigquery_client.get_table(self._table_id)
