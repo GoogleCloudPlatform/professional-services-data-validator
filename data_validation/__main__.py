@@ -31,6 +31,15 @@ from data_validation.data_validation import DataValidation
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
 
+# Log level mappings for the input argument of log level string
+LOG_LEVEL_MAP = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL,
+}
+
 
 def _get_arg_config_file(args):
     """Return String yaml config file path."""
@@ -499,13 +508,15 @@ def validate(args):
 
 
 def main():
+
+    # Create Parser and Get Deployment Info
+    args = cli_tools.get_parsed_args()
     logging.basicConfig(
-        level=logging.INFO,
+        level=LOG_LEVEL_MAP[args.log_level],
         format="%(asctime)s-%(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
-    # Create Parser and Get Deployment Info
-    args = cli_tools.get_parsed_args()
+
     if args.command == "connections":
         run_connections(args)
     elif args.command == "run-config":
