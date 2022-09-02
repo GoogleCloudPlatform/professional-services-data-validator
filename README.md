@@ -83,7 +83,7 @@ over all columns ('*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` flag is present.
 
 ```
-data-validation (--verbose or -v) validate column
+data-validation (--verbose or -v) (--log-level or -ll) validate column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -155,7 +155,7 @@ Under the hood, row validation uses
 apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML config to customize your row validation.
 
 ```
-data-validation (--verbose or -v) validate row
+data-validation (--verbose or -v) (--log-level or -ll) validate row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -199,7 +199,7 @@ Below is the syntax for schema validations. These can be used to compare case in
 types between source and target.
 
 ```
-data-validation (--verbose or -v) validate schema
+data-validation (--verbose or -v) (--log-level or -ll) validate schema
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -228,7 +228,7 @@ data-validation (--verbose or -v) validate schema
 Below is the command syntax for custom query column validations.
 
 ```
-data-validation (--verbose or -v) validate custom-query
+data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -282,7 +282,7 @@ in the SELECT statement of both source_query.sql and target_query.sql
 Below is the command syntax for custom query row validations.
 
 ```
-data-validation (--verbose or -v) validate custom-query
+data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
