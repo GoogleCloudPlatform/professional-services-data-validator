@@ -175,6 +175,12 @@ def sa_format_hashbytes(translator, expr):
     hash_to_string = sa.func.convert(sa.sql.literal_column('CHAR(64)'), hash_func, sa.sql.literal_column('2'))
     return sa.func.lower(hash_to_string)
 
+def sa_format_hashbytes_oracle(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    hash_func = sa.func.standard_hash(compiled_arg, sa.sql.literal_column("'SHA2_256'"))
+    return sa.func.lower(hash_func)
+
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
 IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
@@ -194,5 +200,6 @@ BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
+OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
