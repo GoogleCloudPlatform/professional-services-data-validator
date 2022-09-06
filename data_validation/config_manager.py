@@ -23,6 +23,13 @@ from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 from data_validation.validation_builder import ValidationBuilder
 
+# If you have a Teradata License there is an optional teradatasql import
+try:
+    from third_party.ibis.ibis_teradata.client import TeradataClient
+except Exception:
+    msg = "pip install teradatasql (requires Teradata licensing)"
+    TeradataClient = clients._raise_missing_client_error(msg)
+
 
 class ConfigManager(object):
     _config: dict = None
@@ -685,7 +692,17 @@ class ConfigManager(object):
                 ):  # this needs to be the previous manifest of columns
                     col = {}
                     col["reference"] = [column]
-                    col["name"] = f"{calc}__" + column
+
+                    prefix = f"{calc[:3]}_"
+                    offset = len(prefix)
+                    # Teradata max column name length is 30 chars
+                    if type(self.source_client) == TeradataClient and len(column) >= (
+                        30 - offset
+                    ):
+                        col["name"] = prefix + column[:-offset]
+                    else:
+                        col["name"] = prefix + column
+
                     col["calc_type"] = calc
                     col["depth"] = i
                     name = col["name"]
