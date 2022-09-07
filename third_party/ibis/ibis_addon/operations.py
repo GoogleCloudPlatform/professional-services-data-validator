@@ -178,7 +178,7 @@ def sa_format_hashbytes(translator, expr):
 def sa_format_hashbytes_oracle(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
-    hash_func = sa.func.standard_hash(compiled_arg, sa.sql.literal_column("'SHA2_256'"))
+    hash_func = sa.func.standard_hash(compiled_arg, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
 
 
