@@ -87,8 +87,8 @@ def generate_report(
     documented = _add_metadata(joined, run_metadata)
 
     if verbose:
-        logging.info("-- ** Combiner Query ** --")
-        logging.info(documented.compile())
+        logging.debug("-- ** Combiner Query ** --")
+        logging.debug(documented.compile())
 
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
