@@ -133,11 +133,9 @@ def trans_string(t, context):
 def trans_float64(t, context):
     return "FLOAT64"
 
-
 @ibis_type_to_teradata_type.register(dt.Integer, TypeTranslationContext)
 def trans_integer(t, context):
     return "INT64"
-
 
 @ibis_type_to_teradata_type.register(dt.UInt64, (TypeTranslationContext, UDFContext))
 def trans_lossy_integer(t, context):
