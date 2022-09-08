@@ -122,22 +122,23 @@ def get_calculated_config(args, config_manager):
         col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
         fields = config_manager._build_dependent_aliases("hash", col_list)
         aliases = [field["name"] for field in fields]
-
+        config_manager.append_dependent_aliases(aliases)
         # Add to list of necessary columns for selective hashing in order to drop
         # excess columns with invalid data types (i.e structs) when generating source/target DFs
         if col_list:
             config_manager.append_dependent_aliases(col_list)
-            config_manager.append_dependent_aliases(aliases)
-    elif args.concat:
+            # config_manager.append_dependent_aliases(aliases)
+    if args.concat:
         col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
         fields = config_manager._build_dependent_aliases("concat", col_list)
         aliases = [field["name"] for field in fields]
+        config_manager.append_dependent_aliases(aliases)
 
         # Add to list of necessary columns for selective concatenation in order to drop
         # excess columns with invalid data types (i.e structs) when generating source/target DFs
         if col_list:
             config_manager.append_dependent_aliases(col_list)
-            config_manager.append_dependent_aliases(aliases)
+        # config_manager.append_dependent_aliases(aliases)
 
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
@@ -199,8 +200,8 @@ def build_config_from_args(args, config_manager):
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
         )
-        if args.hash != "*" or args.concat != "*":
-            config_manager.append_dependent_aliases(primary_keys)
+        # if args.hash != "*" or args.concat != "*":
+        config_manager.append_dependent_aliases(primary_keys)
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))

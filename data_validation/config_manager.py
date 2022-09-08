@@ -660,7 +660,7 @@ class ConfigManager(object):
                 "concat",
                 "hash",
             ]
-        elif calc_type == "concat":
+        if calc_type == "concat":
             order_of_operations = [
                 "cast",
                 "ifnull",
