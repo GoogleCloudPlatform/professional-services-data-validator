@@ -439,7 +439,8 @@ def _mod(t, expr):
 
 def _string_join(t, expr):
     sep, elements = expr.op().args
-    return sa.func.concat_ws(t.translate(sep), *map(t.translate, elements))
+    columns = [col.name for col in map(t.translate, elements)]
+    return sa.sql.literal_column(" || ".join(columns))
 
 
 def _literal(t, expr):

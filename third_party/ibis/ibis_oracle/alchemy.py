@@ -28,7 +28,7 @@ _ibis_type_to_sqla = {
     dt11.LONGRAW: sa.Binary,
 }
 _ibis_type_to_sqla.update(s_al._ibis_type_to_sqla)
-
+_ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=4000)
 
 def _to_sqla_type(itype, type_map=None):
     if type_map is None:
