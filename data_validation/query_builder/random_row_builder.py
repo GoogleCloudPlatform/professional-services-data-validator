@@ -19,6 +19,7 @@ import ibis.expr.operations as ops
 import ibis.expr.types as tz
 import ibis.expr.rules as rlz
 import ibis.backends.base_sqlalchemy.compiler as sql_compiler
+import ibis.backends.base_sqlalchemy.alchemy as sqla
 from ibis_bigquery import BigQueryClient
 from ibis.backends.impala.client import ImpalaClient
 from ibis.backends.pandas.client import PandasClient
@@ -28,6 +29,13 @@ from ibis.expr.signature import Argument as Arg
 from typing import List
 from data_validation import clients
 from io import StringIO
+
+# If you have an cx_Oracle driver installed
+try:
+    from third_party.ibis.ibis_oracle.client import OracleClient
+except Exception:
+    OracleClient = clients._raise_missing_client_error("pip install cx_Oracle")
+
 
 try:
     from third_party.ibis.ibis_teradata.client import TeradataClient
@@ -49,7 +57,9 @@ except Exception:
 RANDOM_SORT_SUPPORTS = {
     PandasClient: "NA",
     BigQueryClient: "RAND()",
+    TeradataClient: None,
     ImpalaClient: "RAND()",
+    OracleClient: "DBMS_RANDOM.VALUE",
 }
 
 
@@ -110,16 +120,18 @@ class RandomRowBuilder(object):
     ) -> ibis.Expr:
         """Return a randomly sorted query if it is supported for the client."""
         if type(data_client) in RANDOM_SORT_SUPPORTS:
+            # Teradata 'SAMPLE' is random by nature and does not require a sort by
+            if type(data_client) == TeradataClient:
+                return table
+            
             return table.sort_by(
                 RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             )
 
-        if type(data_client) != TeradataClient:
-            # Teradata 'SAMPLE' is random by nature and does not require a sort by
-            logging.warning(
-                "Data Client %s Does Not Enforce Random Sort on Sample",
-                str(type(data_client)),
-            )
+        logging.warning(
+            "Data Client %s Does Not Enforce Random Sort on Sample",
+            str(type(data_client)),
+        )
         return table
 
 
@@ -198,3 +210,39 @@ def format_order_by(self):
 
 
 sql_compiler.Select.format_order_by = format_order_by
+
+#######################################
+##### Override Order By for SQL Alchemy
+#######################################
+
+def _add_order_by(self, fragment):
+        if not len(self.order_by):
+            return fragment
+
+        clauses = []
+        for expr in self.order_by:
+            key = expr.op()
+            sort_expr = key.expr
+
+            ##### ADDING CODE TO FORMAT #####
+            if isinstance(expr, RandomSortExpr):
+                arg = sa.sql.literal_column(sort_expr.op().value)
+                clauses.append(arg)
+                continue
+            ##### END ADDING CODE TO FORMAT #####
+
+            # here we have to determine if key.expr is in the select set (as it
+            # will be in the case of order_by fused with an aggregation
+            if _can_lower_sort_column(self.table_set, sort_expr):
+                arg = sort_expr.get_name()
+            else:
+                arg = self._translate(sort_expr)
+
+            if not key.ascending:
+                arg = sa.desc(arg)
+
+            clauses.append(arg)
+
+        return fragment.order_by(*clauses)
+
+sqla.AlchemySelect._add_order_by = _add_order_by
