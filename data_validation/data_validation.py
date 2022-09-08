@@ -119,6 +119,8 @@ class DataValidation(object):
         )
 
         random_rows = self.config_manager.source_client.execute(query)
+        if len(random_rows) == 0:
+            return
         filter_field = {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
             consts.CONFIG_FILTER_SOURCE_COLUMN: primary_key_info[
