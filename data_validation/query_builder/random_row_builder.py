@@ -28,6 +28,7 @@ from ibis.expr.signature import Argument as Arg
 from typing import List
 from data_validation import clients
 from io import StringIO
+from data_validation.query_builder.query_builder import QueryBuilder
 
 try:
     from third_party.ibis.ibis_teradata.client import TeradataClient
@@ -90,7 +91,9 @@ class RandomRowBuilder(object):
         self.batch_size = batch_size
 
     def compile(
-        self, data_client: ibis.client, schema_name: str, table_name: str
+        self, data_client: ibis.client, 
+        schema_name: str, table_name: str,
+        query_builder: QueryBuilder
     ) -> ibis.Expr:
         """Return an Ibis query object
 
@@ -100,7 +103,13 @@ class RandomRowBuilder(object):
             table_name (String): The name of the table to query.
         """
         table = clients.get_ibis_table(data_client, schema_name, table_name)
-        randomly_sorted_table = self.maybe_add_random_sort(data_client, table)
+        # Build Query Expressions
+        calc_table = table
+        compiled_filters = query_builder.compile_filter_fields(table)
+        filtered_table = (
+            calc_table.filter(compiled_filters) if compiled_filters else calc_table
+        )
+        randomly_sorted_table = self.maybe_add_random_sort(data_client, filtered_table)
         query = randomly_sorted_table.limit(self.batch_size)[self.primary_keys]
 
         return query

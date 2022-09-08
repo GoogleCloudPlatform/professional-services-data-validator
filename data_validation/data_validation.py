@@ -107,6 +107,7 @@ class DataValidation(object):
 
         # Filter for only first primary key (multi-pk filter not supported)
         primary_key_info = self.config_manager.primary_keys[0]
+
         query = RandomRowBuilder(
             [primary_key_info[consts.CONFIG_SOURCE_COLUMN]],
             self.config_manager.random_row_batch_size(),
@@ -114,6 +115,7 @@ class DataValidation(object):
             self.config_manager.source_client,
             self.config_manager.source_schema,
             self.config_manager.source_table,
+            self.validation_builder.source_builder
         )
 
         random_rows = self.config_manager.source_client.execute(query)
