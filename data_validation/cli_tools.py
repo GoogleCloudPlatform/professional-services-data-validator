@@ -151,6 +151,13 @@ def configure_arg_parser():
     )
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
+    parser.add_argument(
+        "--log-level",
+        "-ll",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Log Level to be assigned. This will print logs with level same or above",
+    )
 
     subparsers = parser.add_subparsers(dest="command")
     _configure_validate_parser(subparsers)
