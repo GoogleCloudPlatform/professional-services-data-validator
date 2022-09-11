@@ -115,7 +115,7 @@ class DataValidation(object):
             self.config_manager.source_client,
             self.config_manager.source_schema,
             self.config_manager.source_table,
-            self.validation_builder.source_builder
+            self.validation_builder.source_builder,
         )
 
         random_rows = self.config_manager.source_client.execute(query)
