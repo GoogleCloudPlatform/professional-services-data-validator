@@ -451,7 +451,7 @@ class ValidationBuilder(object):
         try:
             file = open(filename, "r")
             query = file.read()
-            query = regex.sub(';', '', query)
+            query = regex.sub(";", "", query)
         except IOError:
             logging.warning("Cannot read query file: ", filename)
 
