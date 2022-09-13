@@ -17,6 +17,8 @@ import os
 from data_validation import __main__ as main
 from data_validation import cli_tools, clients, consts, data_validation, state_manager
 from data_validation.query_builder import random_row_builder
+from data_validation.query_builder.query_builder import QueryBuilder
+
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
@@ -570,7 +572,10 @@ def test_random_row_query_builder():
     bq_client = clients.get_data_client(BQ_CONN)
     row_query_builder = random_row_builder.RandomRowBuilder(["station_id"], 10)
     query = row_query_builder.compile(
-        bq_client, "bigquery-public-data.new_york_citibike", "citibike_stations"
+        bq_client,
+        "bigquery-public-data.new_york_citibike",
+        "citibike_stations",
+        QueryBuilder([], [], [], [], [], None),
     )
 
     random_rows = bq_client.execute(query)

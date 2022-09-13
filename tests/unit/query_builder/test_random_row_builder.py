@@ -15,6 +15,7 @@
 import pytest
 
 from data_validation import clients
+from data_validation.query_builder.query_builder import QueryBuilder
 
 
 TABLE_FILE_PATH = "table_data.json"
@@ -68,7 +69,9 @@ def test_compile(module_under_test, fs):
     primary_keys = ["col_a"]
     builder = module_under_test.RandomRowBuilder(primary_keys, 10)
 
-    query = builder.compile(client, None, CONN_CONFIG["table_name"])
+    query = builder.compile(
+        client, None, CONN_CONFIG["table_name"], QueryBuilder([], [], [], [], [], None)
+    )
     df = client.execute(query)
 
     assert list(df.columns) == primary_keys
