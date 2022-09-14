@@ -416,6 +416,11 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     column_parser.add_argument(
+        "--concat",
+        "-concat",
+        help="Comma separated list of columns for a concatenate operation 'col_a,col_b' or * for all columns",
+    )
+    column_parser.add_argument(
         "--bit_xor",
         "-bit_xor",
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",

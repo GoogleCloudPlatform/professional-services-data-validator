@@ -141,7 +141,6 @@ def get_calculated_config(args, config_manager):
         fields = config_manager._build_dependent_aliases("concat", col_list)
         aliases = [field["name"] for field in fields]
         config_manager.append_dependent_aliases(aliases)
-
         # Add to list of necessary columns for selective concatenation in order to drop
         # excess columns with invalid data types (i.e structs) when generating source/target DFs
         if col_list:
