@@ -133,7 +133,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Imapala/Hive, Oracle, and SQL Server.
+(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, and SQL Server.
 Struct and array data types are not currently supported and random row is not yet supported for Oracle or SQL Server.
 In addition, please note that SHA256 is not a supported function on Teradata systems. 
 If you wish to perform this comparison on Teradata you will need to 
@@ -272,7 +272,7 @@ page provides few examples of how this tool can be used to run custom query vali
 #### Custom Query Row Validations 
 
 (Note: Row hash validation is currently only supported for BigQuery, Teradata, and
-Imapala/Hive. Struct and array data types are not currently supported.)
+Impala/Hive. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields
