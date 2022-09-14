@@ -46,7 +46,6 @@ The data validation tool supports the following connection types.
 * [Teradata](#teradata)
 * [Oracle](#oracle)
 * [MSSQL](#mssql-server)
-* [Snowflake](#snowflake)
 * [Postgres](#postgres)
 * [MySQL](#mysql)
 * [Redshift](#redshift)
@@ -169,21 +168,6 @@ Then `pip install pyodbc`.
     "password": "my-password",
     "database": "my-db",
 
-}
-```
-
-## Snowflake
-```
-{
-    # Configuration Required for All Data Sources
-    "source_type": "Snowflake",
-
-    # Connection Details
-    "user": "my-user",
-    "password": "my-password",
-    "account": "Snowflake account to connect to"
-    "database":"my-db"
-    "schema": "my-schema"
 }
 ```
 
