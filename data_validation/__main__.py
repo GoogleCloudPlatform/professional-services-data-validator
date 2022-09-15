@@ -131,20 +131,24 @@ def get_calculated_config(args, config_manager):
         col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
         fields = config_manager._build_dependent_aliases("hash", col_list)
         aliases = [field["name"] for field in fields]
-        config_manager.append_dependent_aliases(aliases)
+        # config_manager.append_dependent_aliases(aliases)
         # Add to list of necessary columns for selective hashing in order to drop
         # excess columns with invalid data types (i.e structs) when generating source/target DFs
         if col_list:
             config_manager.append_dependent_aliases(col_list)
-    if args.concat:
+        else:
+            config_manager.append_dependent_aliases(aliases)
+    elif args.concat:
         col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
         fields = config_manager._build_dependent_aliases("concat", col_list)
         aliases = [field["name"] for field in fields]
-        config_manager.append_dependent_aliases(aliases)
+        # config_manager.append_dependent_aliases(aliases)
         # Add to list of necessary columns for selective concatenation in order to drop
         # excess columns with invalid data types (i.e structs) when generating source/target DFs
         if col_list:
             config_manager.append_dependent_aliases(col_list)
+        else:
+            config_manager.append_dependent_aliases(aliases)
 
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
@@ -166,7 +170,7 @@ def get_calculated_config(args, config_manager):
                 ["hash__all"], depth=max_depth
             )
         )
-    if args.concat:
+    elif args.concat:
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(
                 ["concat__all"], depth=max_depth
