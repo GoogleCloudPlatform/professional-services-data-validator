@@ -2,6 +2,28 @@
 
 ## Untagged
 
+## [2.3.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.2.0...v2.3.0) (2022-09-15)
+
+
+### Features
+
+* Addition of log level as an argument for DVT logging and replac… ([#577](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/577)) ([dbd9bc3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dbd9bc387778580a106b39f4dfb9c10fd63d2f6f))
+* Oracle row level validation support ([#583](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/583)) ([489654c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/489654ca5848b34be780a3535ecd0063075f8c97))
+
+
+### Bug Fixes
+
+* Add RawSQL support for Postgres and SQL Server ([#576](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/576)) ([0693782](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/069378271fdab08af8bfe984590b63a45c199bbb))
+* fixing String to varchar for teradata ([a979931](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a979931787bdaa04ac0f52ee2a8946eca54e8a8e))
+* random rows with filter option ([#582](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/582)) ([da4faaf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/da4faaf12ae65aa81310c872757d6ce4d7518106))
+* support NUMBER with no precision/scale ([#572](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/572)) ([03219ba](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/03219ba6d6b4e30bf24c62b57b916ff52bb85ee6))
+* Teradata limit on column name, bug when casting to VARCHAR ([#580](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/580)) ([c8700be](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c8700be79315ecf8efd1c14ab7a17d236ef53adb))
+
+
+### Documentation
+
+* remove snowflake, add row supported DBs ([#587](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/587)) ([1d923f5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1d923f54b64a30219cb9d33533ac46f9121ecf60))
+
 ## [2.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.1.0...v2.2.0) (2022-08-29)
 
 

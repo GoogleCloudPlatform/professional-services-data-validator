@@ -14,7 +14,7 @@ perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
-* Row validation (BQ, Hive, and Teradata only)
+* Row validation (BQ, Hive, Teradata, Oracle, SQL Server only)
 * Schema validation 
 * Custom Query validation
 * Ad hoc SQL exploration
@@ -31,7 +31,6 @@ DVT supports the following connection types:
 *   [Oracle](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#oracle)
 *   [Postgres](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
 *   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
-*   [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
 *   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
 *   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
 
@@ -134,9 +133,10 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently only supported for BigQuery, Teradata, and Imapala/Hive. Struct and array 
-data types are not currently supported. In addition, please note that SHA256 is not a supported function on teradata 
-systems. If you wish to perform this comparison on teradata you will need to 
+(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, and SQL Server.
+Struct and array data types are not currently supported and random row is not yet supported for Oracle or SQL Server.
+In addition, please note that SHA256 is not a supported function on Teradata systems. 
+If you wish to perform this comparison on Teradata you will need to 
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
 
 Below is the command syntax for row validations. In order to run row level
@@ -272,7 +272,7 @@ page provides few examples of how this tool can be used to run custom query vali
 #### Custom Query Row Validations 
 
 (Note: Row hash validation is currently only supported for BigQuery, Teradata, and
-Imapala/Hive. Struct and array data types are not currently supported.)
+Impala/Hive. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields
@@ -535,4 +535,4 @@ cast to NUMERIC.
 
 ## Contributing
 
-Contributions are welcome. See the [contributing guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details.
+Contributions are welcome. See the [Contributing guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details.

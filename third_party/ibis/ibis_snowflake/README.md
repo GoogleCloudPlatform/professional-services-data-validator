@@ -32,7 +32,21 @@ The Snowflake client is accessible through the ibis.ibis_snowflake namespace. Th
     result=tb_name.count().execute()
     print(result)**
 
-#
+# Snowflake DVT connection
+```
+{
+    # Configuration Required for All Data Sources
+    "source_type": "Snowflake",
+
+    # Connection Details
+    "user": "my-user",
+    "password": "my-password",
+    "account": "Snowflake account to connect to"
+    "database":"my-db"
+    "schema": "my-schema"
+}
+```
+
 # **3.Usage**
 
 - Schema for the &#39;students_pointer&#39; table:-
