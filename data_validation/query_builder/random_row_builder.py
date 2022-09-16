@@ -25,6 +25,7 @@ import ibis.backends.pandas.execution.util as pandas_util
 from ibis_bigquery import BigQueryClient
 from ibis.backends.impala.client import ImpalaClient
 from ibis.backends.pandas.client import PandasClient
+from ibis.backends.postgres.client import PostgreSQLClient
 from ibis.expr.signature import Argument as Arg
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
@@ -50,6 +51,7 @@ RANDOM_SORT_SUPPORTS = {
     PandasClient: "NA",
     BigQueryClient: "RAND()",
     ImpalaClient: "RAND()",
+    PostgreSQLClient: "RANDOM()",
 }
 
 

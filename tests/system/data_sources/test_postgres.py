@@ -65,7 +65,6 @@ def cloud_sql(request):
 def test_postgres_count(cloud_sql):
     """Test count validation on Postgres instance"""
     config_count_valid = {
-        # BigQuery Specific Connection Config
         consts.CONFIG_SOURCE_CONN: CONN,
         consts.CONFIG_TARGET_CONN: CONN,
         # Validation Type
@@ -104,6 +103,81 @@ def test_postgres_count(cloud_sql):
 
     assert df["source_agg_value"].equals(df["target_agg_value"])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
+
+
+def test_postgres_row(cloud_sql):
+    """Test row validaiton on Postgres"""
+    config_row_valid = {
+        consts.CONFIG_SOURCE_CONN: CONN,
+        consts.CONFIG_TARGET_CONN: CONN,
+        # Validation Type
+        consts.CONFIG_TYPE: "Row",
+        # Configuration Required Depending on Validator Type
+        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_TABLE_NAME: "entries",
+        consts.CONFIG_COMPARISON_FIELDS: [
+            {
+                "source_column": "hash__all",
+                "target_column": "hash__all",
+                "field_alias": "hash__all",
+                "cast": None,
+            }
+        ],
+        consts.CONFIG_CALCULATED_FIELDS: [
+            {
+                "source_calculated_columns": ["content"],
+                "target_calculated_columns": ["content"],
+                "field_alias": "cast__content",
+                "type": "cast",
+                "depth": 0,
+            },
+            {
+                "source_calculated_columns": ["cast__content"],
+                "target_calculated_columns": ["cast__content"],
+                "field_alias": "ifnull__cast__content",
+                "type": "ifnull",
+                "depth": 1,
+            },
+            {
+                "source_calculated_columns": ["ifnull__cast__content"],
+                "target_calculated_columns": ["ifnull__cast__content"],
+                "field_alias": "rstrip__ifnull__cast__content",
+                "type": "rstrip",
+                "depth": 2,
+            },
+            {
+                "source_calculated_columns": ["rstrip__ifnull__cast__content"],
+                "target_calculated_columns": ["rstrip__ifnull__cast__content"],
+                "field_alias": "upper__rstrip__ifnull__cast__content",
+                "type": "upper",
+                "depth": 3,
+            },
+            {
+                "source_calculated_columns": ["upper__rstrip__ifnull__cast__content"],
+                "target_calculated_columns": ["upper__rstrip__ifnull__cast__content"],
+                "field_alias": "hash__all",
+                "type": "hash",
+                "depth": 4,
+            },
+        ],
+        consts.CONFIG_PRIMARY_KEYS: [
+            {
+                "source_column": "entryid",
+                "target_column": "entryid",
+                "field_alias": "entryid",
+                "cast": None,
+            }
+        ],
+        consts.CONFIG_FORMAT: "table",
+    }
+
+    data_validator = data_validation.DataValidation(
+        config_row_valid,
+        verbose=False,
+    )
+    df = data_validator.execute()
+
+    assert df["source_agg_value"][0] == df["target_agg_value"][0]
 
 
 def test_schema_validation(cloud_sql):
