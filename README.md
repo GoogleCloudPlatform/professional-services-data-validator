@@ -14,7 +14,7 @@ perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
-* Row validation (BQ, Hive, Teradata, Oracle, SQL Server only)
+* Row validation (BQ, Hive, Teradata, Oracle, SQL Server, Postgres only)
 * Schema validation 
 * Custom Query validation
 * Ad hoc SQL exploration
@@ -133,7 +133,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, and SQL Server.
+(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, and Postgres.
 Struct and array data types are not currently supported and random row is not yet supported for Oracle or SQL Server.
 In addition, please note that SHA256 is not a supported function on Teradata systems. 
 If you wish to perform this comparison on Teradata you will need to 

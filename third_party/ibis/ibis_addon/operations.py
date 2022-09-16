@@ -42,6 +42,7 @@ from ibis.backends.base_sql.compiler import BaseExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
+from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
@@ -168,7 +169,7 @@ def sa_format_raw_sql(translator, expr):
     rand_col, raw_sql = op.args
     return sa.text(raw_sql.op().args[0])
 
-def sa_format_hashbytes(translator, expr):
+def sa_format_hashbytes_mssql(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
     hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), compiled_arg)
@@ -180,6 +181,13 @@ def sa_format_hashbytes_oracle(translator, expr):
     compiled_arg = translator.translate(arg)
     hash_func = sa.func.standard_hash(compiled_arg, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
+
+def sa_format_hashbytes_postgres(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    convert = sa.func.convert_to(compiled_arg, sa.sql.literal_column("'UTF8'"))
+    hash_func = sa.func.sha256(convert)
+    return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
 
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
@@ -193,7 +201,7 @@ BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
-MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes
+MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
 BaseExprTranslator._registry[RawSQL] = format_raw_sql
 BaseExprTranslator._registry[HashBytes] = format_hashbytes_base
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
@@ -203,3 +211,5 @@ OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
+PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
+
