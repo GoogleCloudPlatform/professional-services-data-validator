@@ -16,6 +16,7 @@ import random
 import logging
 from typing import List
 from io import StringIO
+import sqlalchemy as sa
 import ibis
 import ibis.expr.operations as ops
 import ibis.expr.types as tz
@@ -23,6 +24,7 @@ import ibis.expr.rules as rlz
 import ibis.backends.base_sqlalchemy.compiler as sql_compiler
 import ibis.backends.base_sqlalchemy.alchemy as sqla
 import ibis.backends.pandas.execution.util as pandas_util
+
 from ibis_bigquery import BigQueryClient
 from ibis.backends.impala.client import ImpalaClient
 from ibis.backends.pandas.client import PandasClient
@@ -129,7 +131,7 @@ class RandomRowBuilder(object):
             # Teradata 'SAMPLE' is random by nature and does not require a sort by
             if type(data_client) == TeradataClient:
                 return table
-            
+
             return table.sort_by(
                 RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             )
@@ -221,34 +223,36 @@ sql_compiler.Select.format_order_by = format_order_by
 ##### Override Order By for SQL Alchemy
 #######################################
 
+
 def _add_order_by(self, fragment):
-        if not len(self.order_by):
-            return fragment
+    if not len(self.order_by):
+        return fragment
 
-        clauses = []
-        for expr in self.order_by:
-            key = expr.op()
-            sort_expr = key.expr
+    clauses = []
+    for expr in self.order_by:
+        key = expr.op()
+        sort_expr = key.expr
 
-            ##### ADDING CODE TO FORMAT #####
-            if isinstance(expr, RandomSortExpr):
-                arg = sa.sql.literal_column(sort_expr.op().value)
-                clauses.append(arg)
-                continue
-            ##### END ADDING CODE TO FORMAT #####
-
-            # here we have to determine if key.expr is in the select set (as it
-            # will be in the case of order_by fused with an aggregation
-            if _can_lower_sort_column(self.table_set, sort_expr):
-                arg = sort_expr.get_name()
-            else:
-                arg = self._translate(sort_expr)
-
-            if not key.ascending:
-                arg = sa.desc(arg)
-
+        ##### ADDING CODE TO FORMAT #####
+        if isinstance(expr, RandomSortExpr):
+            arg = sa.sql.literal_column(sort_expr.op().value)
             clauses.append(arg)
+            continue
+        ##### END ADDING CODE TO FORMAT #####
 
-        return fragment.order_by(*clauses)
+        # here we have to determine if key.expr is in the select set (as it
+        # will be in the case of order_by fused with an aggregation
+        if sqla._can_lower_sort_column(self.table_set, sort_expr):
+            arg = sort_expr.get_name()
+        else:
+            arg = self._translate(sort_expr)
+
+        if not key.ascending:
+            arg = sa.desc(arg)
+
+        clauses.append(arg)
+
+    return fragment.order_by(*clauses)
+
 
 sqla.AlchemySelect._add_order_by = _add_order_by
