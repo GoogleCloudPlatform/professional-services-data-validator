@@ -44,7 +44,6 @@ from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 
-
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
@@ -199,12 +198,13 @@ StringValue.hashbytes = compile_hashbytes
 BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
+BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
+MSSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 BaseExprTranslator._registry[RawSQL] = format_raw_sql
 BaseExprTranslator._registry[HashBytes] = format_hashbytes_base
-BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -212,4 +212,4 @@ OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
-
+PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
