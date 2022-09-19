@@ -32,21 +32,8 @@ from ibis.expr.signature import Argument as Arg
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
-# If you have an cx_Oracle driver installed
-try:
-    from third_party.ibis.ibis_oracle.client import OracleClient
-except Exception:
-    OracleClient = clients._raise_missing_client_error("pip install cx_Oracle")
-
-
-try:
-    from third_party.ibis.ibis_teradata.client import TeradataClient
-except Exception:
-    msg = "pip install teradatasql (requires Teradata licensing)"
-    TeradataClient = clients._raise_missing_client_error(msg)
 
 """ The QueryBuilder for retreiving random row values to filter against."""
-
 
 ######################################
 ### Adding new datasources should be
@@ -59,9 +46,9 @@ except Exception:
 RANDOM_SORT_SUPPORTS = {
     PandasClient: "NA",
     BigQueryClient: "RAND()",
-    TeradataClient: None,
+    clients.TeradataClient: None,
     ImpalaClient: "RAND()",
-    OracleClient: "DBMS_RANDOM.VALUE",
+    clients.OracleClient: "DBMS_RANDOM.VALUE",
 }
 
 
@@ -129,7 +116,7 @@ class RandomRowBuilder(object):
         """Return a randomly sorted query if it is supported for the client."""
         if type(data_client) in RANDOM_SORT_SUPPORTS:
             # Teradata 'SAMPLE' is random by nature and does not require a sort by
-            if type(data_client) == TeradataClient:
+            if type(data_client) == clients.TeradataClient:
                 return table
 
             return table.sort_by(
