@@ -450,7 +450,9 @@ class ValidationBuilder(object):
         try:
             file = open(filename, "r")
             query = file.read()
-            query = query.replace(";", "")
+            query_semicolon = query[query.rfind(";") :]
+            if set(query_semicolon).issubset({";", " ", "\n"}):
+                query = query[0 : query.rfind(";")]
         except IOError:
             logging.warning("Cannot read query file: ", filename)
 
