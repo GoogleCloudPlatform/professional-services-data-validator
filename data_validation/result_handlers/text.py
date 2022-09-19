@@ -30,11 +30,20 @@ class TextResultHandler(object):
         self.format = format
         self.cols_filter_list = cols_filter_list
 
-    def print_formatted_(self, result_df):
+    def filter_validation_status(self, config_manager, result_df):
+        # filter status getting list from config manager
+        return result_df[
+            result_df.validation_status in config_manager.filter_status()
+        ]
+
+    def print_formatted_(self, config_manager, result_df):
         """
         Utility for printing formatted results
+        :param config
         :param result_df
         """
+        result_df = self.filter_validation_status(config_manager, result_df)
+
         if self.format == "text":
             print(result_df.to_string(index=False))
         elif self.format == "csv":
@@ -57,6 +66,6 @@ class TextResultHandler(object):
 
         return result_df
 
-    def execute(self, config, result_df):
-        self.print_formatted_(result_df)
+    def execute(self, config_manager, result_df):
+        self.print_formatted_(config_manager, result_df)
         return result_df

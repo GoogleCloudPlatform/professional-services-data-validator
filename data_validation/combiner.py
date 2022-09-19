@@ -91,6 +91,7 @@ def generate_report(
         logging.debug(documented.compile())
 
     result_df = client.execute(documented)
+    # TODO: ask about this line
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
     return result_df
 

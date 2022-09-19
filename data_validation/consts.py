@@ -57,6 +57,7 @@ CONFIG_FILTER_SOURCE_VALUE = "source_value"
 CONFIG_FILTER_TARGET_COLUMN = "target_column"
 CONFIG_FILTER_TARGET_VALUE = "target_value"
 CONFIG_EXCLUSION_COLUMNS = "exclusion_columns"
+CONFIG_FILTER_STATUS = "filter_status"
 
 CONFIG_RESULT_HANDLER = "result_handler"
 
@@ -117,6 +118,10 @@ TARGET_AGG_VALUE = "target_agg_value"
 VALIDATION_STATUS = "validation_status"
 VALIDATION_STATUS_SUCCESS = "success"
 VALIDATION_STATUS_FAIL = "fail"
+VALIDATION_STATUSES = [
+    VALIDATION_STATUS_SUCCESS,
+    VALIDATION_STATUS_FAIL,
+]
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
