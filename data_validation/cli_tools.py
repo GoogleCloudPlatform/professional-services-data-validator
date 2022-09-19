@@ -571,18 +571,21 @@ def _configure_custom_query_parser(custom_query_parser):
     )
 
 
-def _add_common_arguments(parser):
+def _add_common_arguments(parser, query_type="ANY"):
     parser.add_argument(
         "--source-conn", "-sc", required=True, help="Source connection name"
     )
     parser.add_argument(
         "--target-conn", "-tc", required=True, help="Target connection name"
     )
-    parser.add_argument(
-        "--tables-list",
-        "-tbls",
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
-    )
+
+    if query_type != consts.CUSTOM_QUERY:
+        parser.add_argument(
+            "--tables-list",
+            "-tbls",
+            help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+        )
+
     parser.add_argument(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
     )

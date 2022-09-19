@@ -98,8 +98,8 @@ class ConfigManager(object):
     def random_row_batch_size(self):
         """Return if the validation should use a random row filter."""
         return (
-            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
-            or consts.DEFAULT_NUM_RANDOM_ROWS
+                self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
+                or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
     def get_random_row_batch_size(self):
@@ -130,7 +130,7 @@ class ConfigManager(object):
 
     def append_calculated_fields(self, calculated_configs):
         self._config[consts.CONFIG_CALCULATED_FIELDS] = (
-            self.calculated_fields + calculated_configs
+                self.calculated_fields + calculated_configs
         )
 
     @property
@@ -141,7 +141,7 @@ class ConfigManager(object):
     def append_dependent_aliases(self, dependent_aliases):
         """Appends columns that are needed in final dataframe for row validations."""
         self._config[consts.CONFIG_DEPENDENT_ALIASES] = (
-            self.dependent_aliases + dependent_aliases
+                self.dependent_aliases + dependent_aliases
         )
 
     @property
@@ -152,7 +152,7 @@ class ConfigManager(object):
     def append_query_groups(self, grouped_column_configs):
         """Append grouped configs to existing config."""
         self._config[consts.CONFIG_GROUPED_COLUMNS] = (
-            self.query_groups + grouped_column_configs
+                self.query_groups + grouped_column_configs
         )
 
     @property
@@ -163,7 +163,7 @@ class ConfigManager(object):
     def append_custom_query_type(self, custom_query_type):
         """Append custom query type config to existing config."""
         self._config[consts.CONFIG_CUSTOM_QUERY_TYPE] = (
-            self.custom_query_type + custom_query_type
+                self.custom_query_type + custom_query_type
         )
 
     @property
@@ -174,7 +174,7 @@ class ConfigManager(object):
     def append_source_query_file(self, query_file_configs):
         """Append grouped configs to existing config."""
         self._config[consts.CONFIG_SOURCE_QUERY_FILE] = (
-            self.source_query_file + query_file_configs
+                self.source_query_file + query_file_configs
         )
 
     @property
@@ -185,7 +185,7 @@ class ConfigManager(object):
     def append_target_query_file(self, query_file_configs):
         """Append grouped configs to existing config."""
         self._config[consts.CONFIG_TARGET_QUERY_FILE] = (
-            self.target_query_file + query_file_configs
+                self.target_query_file + query_file_configs
         )
 
     @property
@@ -196,7 +196,7 @@ class ConfigManager(object):
     def append_primary_keys(self, primary_key_configs):
         """Append primary key configs to existing config."""
         self._config[consts.CONFIG_PRIMARY_KEYS] = (
-            self.primary_keys + primary_key_configs
+                self.primary_keys + primary_key_configs
         )
 
     def get_primary_keys_list(self):
@@ -211,7 +211,7 @@ class ConfigManager(object):
     def append_comparison_fields(self, field_configs):
         """Append field configs to existing config."""
         self._config[consts.CONFIG_COMPARISON_FIELDS] = (
-            self.comparison_fields + field_configs
+                self.comparison_fields + field_configs
         )
 
     @property
@@ -282,6 +282,20 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
     @property
+    def source_query(self):
+        return self._config["source_query"]
+
+    def append_source_query(self, source_query):
+        self._config["source_query"] = source_query
+
+    @property
+    def target_query(self):
+        return self._config["target_query"]
+
+    def append_target_query(self, target_query):
+        self._config["target_query"] = target_query
+
+    @property
     def exclusion_columns(self):
         """Return the exclusion columns from Config"""
         return self._config.get(consts.CONFIG_EXCLUSION_COLUMNS, [])
@@ -289,7 +303,7 @@ class ConfigManager(object):
     def append_exclusion_columns(self, column_configs):
         """Append exclusion columns to existing config."""
         self._config[consts.CONFIG_EXCLUSION_COLUMNS] = (
-            self.exclusion_columns + column_configs
+                self.exclusion_columns + column_configs
         )
 
     def get_source_ibis_table(self):
@@ -300,10 +314,18 @@ class ConfigManager(object):
             )
         return self._source_ibis_table
 
+    def get_source_ibis_table_from_query(self):
+        """Return IbisTable from source."""
+        self._source_ibis_table = clients.get_ibis_query(self.source_client, self.source_query)
+        return self._source_ibis_table
+
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
         n: Int the depth of subquery requested"""
-        table = self.get_source_ibis_table()
+        if self.source_query:
+            table = self.get_source_ibis_table_from_query()
+        else:
+            table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.source_builder.compile_calculated_fields(table, n=depth)
@@ -319,10 +341,18 @@ class ConfigManager(object):
             )
         return self._target_ibis_table
 
+    def get_target_ibis_table_from_query(self):
+        """Return IbisTable from source."""
+        self._target_ibis_table = clients.get_ibis_query(self.target_client, self.target_query)
+        return self._target_ibis_table
+
     def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
         n: Int the depth of subquery requested"""
-        table = self.get_target_ibis_table()
+        if self.target_query:
+            table = self.get_target_ibis_table_from_query()
+        else:
+            table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.target_builder.compile_calculated_fields(table, n=depth)
@@ -378,20 +408,20 @@ class ConfigManager(object):
 
     @staticmethod
     def build_config_manager(
-        config_type,
-        source_conn_name,
-        target_conn_name,
-        table_obj,
-        labels,
-        threshold,
-        format,
-        use_random_rows=None,
-        random_row_batch_size=None,
-        source_client=None,
-        target_client=None,
-        result_handler_config=None,
-        filter_config=None,
-        verbose=False,
+            config_type,
+            source_conn_name,
+            target_conn_name,
+            table_obj,
+            labels,
+            threshold,
+            format,
+            use_random_rows=None,
+            random_row_batch_size=None,
+            source_client=None,
+            target_client=None,
+            result_handler_config=None,
+            filter_config=None,
+            verbose=False,
     ):
         if isinstance(filter_config, dict):
             filter_config = [filter_config]
@@ -476,7 +506,7 @@ class ConfigManager(object):
         return aggregate_config
 
     def build_and_append_pre_agg_calc_config(
-        self, column, calc_func, cast_type=None, depth=0
+            self, column, calc_func, cast_type=None, depth=0
     ):
         """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
         calculated_config = {
@@ -510,7 +540,7 @@ class ConfigManager(object):
 
         elif column_type == "timestamp":
             if isinstance(self.source_client, BigQueryClient) or isinstance(
-                self.target_client, BigQueryClient
+                    self.target_client, BigQueryClient
             ):
                 calc_func = "cast"
                 cast_type = "timestamp"
@@ -543,7 +573,7 @@ class ConfigManager(object):
         return aggregate_config
 
     def build_config_column_aggregates(
-        self, agg_type, arg_value, supported_types, cast_to_bigint=False
+            self, agg_type, arg_value, supported_types, cast_to_bigint=False
     ):
         """Return list of aggregate objects of given agg_type."""
         aggregate_configs = []
@@ -577,17 +607,17 @@ class ConfigManager(object):
                 continue
 
             if (
-                column_type == "string"
-                or (cast_to_bigint and column_type == "int32")
-                or (
+                    column_type == "string"
+                    or (cast_to_bigint and column_type == "int32")
+                    or (
                     column_type == "timestamp"
                     and agg_type
                     in (
-                        "sum",
-                        "avg",
-                        "bit_xor",
+                            "sum",
+                            "avg",
+                            "bit_xor",
                     )  # For timestamps: do not convert to epoch seconds for min/max
-                )
+            )
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     column, agg_type, column_type
@@ -606,7 +636,7 @@ class ConfigManager(object):
         return aggregate_configs
 
     def build_config_calculated_fields(
-        self, reference, calc_type, alias, depth, supported_types, arg_value=None
+            self, reference, calc_type, alias, depth, supported_types, arg_value=None
     ):
         """Returns list of calculated fields"""
         source_table = self.get_source_ibis_calculated_table(depth=depth)
@@ -679,9 +709,9 @@ class ConfigManager(object):
                 col_names.append(col)
             else:
                 for (
-                    column
+                        column
                 ) in (
-                    previous_level
+                        previous_level
                 ):  # this needs to be the previous manifest of columns
                     col = {}
                     col["reference"] = [column]
@@ -692,3 +722,20 @@ class ConfigManager(object):
                     column_aliases[name] = i
                     col_names.append(col)
         return col_names
+
+    def get_query_from_file(self, filename):
+        """Return query from input file"""
+        query = ""
+        try:
+            file = open(filename, "r")
+            query = file.read()
+        except IOError:
+            logging.warning("Cannot read query file: ", filename)
+
+        if not query or query.isspace():
+            raise ValueError(
+                "Expected file with sql query, got empty file or file with white spaces. "
+                f"input file: {filename}"
+            )
+        file.close()
+        return query
