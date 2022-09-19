@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import regex
 from copy import deepcopy
 
 from data_validation import consts, metadata
@@ -451,7 +450,7 @@ class ValidationBuilder(object):
         try:
             file = open(filename, "r")
             query = file.read()
-            query = regex.sub(";", "", query)
+            query = query.replace(";",'') 
         except IOError:
             logging.warning("Cannot read query file: ", filename)
 
