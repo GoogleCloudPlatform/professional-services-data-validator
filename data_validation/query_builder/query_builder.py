@@ -466,15 +466,12 @@ class QueryBuilder(object):
         # else:
         #     return [field.compile(table) for field in self.calculated_fields]
 
-    def compile(self, data_client, schema_name, table_name):
+    def compile(self, table):
         """Return an Ibis query object
 
         Args:
-            data_client (IbisClient): The client used to validate the query.
-            schema_name (String): The name of the schema for the given table.
-            table_name (String): The name of the table to query.
+            table (IbisTable): The Ibis Table expression.
         """
-        table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
         calc_table = table
