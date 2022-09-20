@@ -283,14 +283,14 @@ class ConfigManager(object):
 
     @property
     def source_query(self):
-        return self._config["source_query"]
+        return self._config.get("source_query")
 
     def append_source_query(self, source_query):
         self._config["source_query"] = source_query
 
     @property
     def target_query(self):
-        return self._config["target_query"]
+        return self._config.get("target_query")
 
     def append_target_query(self, target_query):
         self._config["target_query"] = target_query
