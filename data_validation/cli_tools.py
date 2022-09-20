@@ -579,6 +579,7 @@ def _add_common_arguments(parser, query_type="ANY"):
         "--target-conn", "-tc", required=True, help="Target connection name"
     )
 
+    ##  remove tables-list from custom query validation
     if query_type != consts.CUSTOM_QUERY:
         parser.add_argument(
             "--tables-list",
