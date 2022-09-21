@@ -94,6 +94,7 @@ def test_postgres_count(cloud_sql):
             },
         ],
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
     }
 
     data_validator = data_validation.DataValidation(
@@ -115,6 +116,7 @@ def test_schema_validation(cloud_sql):
         consts.CONFIG_SCHEMA_NAME: "public",
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
     }
 
     data_validator = data_validation.DataValidation(

@@ -1,4 +1,4 @@
-#source venv/bin/activate
+# execute it after the venv3-9 activation
 
 pytest --quiet --cov=data_validation --cov=tests.unit --cov-append --cov-config=.coveragerc --cov-report=term tests/unit
 flake8 data_validation tests
