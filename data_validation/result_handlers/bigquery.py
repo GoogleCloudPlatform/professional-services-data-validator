@@ -19,6 +19,7 @@ from google.cloud import bigquery
 from data_validation import client_info
 import logging
 from data_validation import consts
+from data_validation.result_handlers.text import filter_validation_status
 
 
 class BigQueryResultHandler(object):
@@ -31,14 +32,14 @@ class BigQueryResultHandler(object):
             Fully-qualified table ID (``project-id.dataset.table``) of
             destination table for results.
     """
-    # TODO: add filter list?
-    def __init__(self, bigquery_client, table_id="pso_data_validator.results"):
+    def __init__(self, bigquery_client, status_list, table_id="pso_data_validator.results"):
         self._bigquery_client = bigquery_client
         self._table_id = table_id
+        self._status_list = status_list
 
     @staticmethod
     def get_handler_for_project(
-        project_id, table_id="pso_data_validator.results", credentials=None
+        project_id, status_list, table_id="pso_data_validator.results", credentials=None
     ):
         """Return BigQueryResultHandler instance for given project.
 
@@ -48,20 +49,22 @@ class BigQueryResultHandler(object):
             credentials (google.auth.credentials.Credentials):
                 Explicit credentials to use in case default credentials
                 aren't working properly.
+            status_list (list): provided status to filter the results with
         """
         info = client_info.get_http_client_info()
         client = bigquery.Client(
             project=project_id, client_info=info, credentials=credentials
         )
-        return BigQueryResultHandler(client, table_id=table_id)
+        return BigQueryResultHandler(client, status_list, table_id=table_id)
 
-    def execute(self, config, result_df):
+    def execute(self, result_df):
         logging.info(
             result_df.drop(consts.COLUMN_FILTER_LIST, axis=1).to_markdown(
                 tablefmt="fancy_grid", index=False
             )
         )
 
+        result_df = filter_validation_status(self._status_list, result_df)
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df

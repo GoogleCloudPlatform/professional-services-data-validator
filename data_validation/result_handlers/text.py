@@ -16,7 +16,7 @@
 
 The execute function of any result handler is used to process
 the validation results.  It expects to receive the config
-for the vlaidation and Pandas DataFrame with the results
+for the validation and Pandas DataFrame with the results
 from the validation run.
 
 Output validation report to text-based log
@@ -25,26 +25,24 @@ Output validation report to text-based log
 from data_validation import consts
 
 
+def filter_validation_status(status_list, result_df):
+    return result_df[
+        result_df.validation_status.isin(status_list)
+    ]
+
+
 class TextResultHandler(object):
-    def __init__(self, format, cols_filter_list=consts.COLUMN_FILTER_LIST):
+    def __init__(self, format, status_list, cols_filter_list=consts.COLUMN_FILTER_LIST):
         self.format = format
         self.cols_filter_list = cols_filter_list
+        self.status_list = status_list
 
-    def filter_validation_status(self, config_manager, result_df):
-        status_list = config_manager.filter_status
-        # TODO: remove later
-        print("*************** " + str(status_list))
-        return result_df[
-            result_df.validation_status.isin(status_list)
-        ]
-
-    def print_formatted_(self, config_manager, result_df):
+    def print_formatted_(self, result_df):
         """
         Utility for printing formatted results
-        :param config
         :param result_df
         """
-        result_df = self.filter_validation_status(config_manager, result_df)
+        result_df = filter_validation_status(self.status_list, result_df)
 
         if self.format == "text":
             print(result_df.to_string(index=False))
@@ -68,6 +66,6 @@ class TextResultHandler(object):
 
         return result_df
 
-    def execute(self, config_manager, result_df):
-        self.print_formatted_(config_manager, result_df)
+    def execute(self, result_df):
+        self.print_formatted_(result_df)
         return result_df

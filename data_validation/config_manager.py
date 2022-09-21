@@ -358,7 +358,9 @@ class ConfigManager(object):
                 cols_filter_list = consts.COLUMN_FILTER_LIST
             # handler that display results either to output or in a file
             return TextResultHandler(
-                self._config.get(consts.CONFIG_FORMAT, "table"), cols_filter_list
+                self._config.get(consts.CONFIG_FORMAT, "table"),
+                self.filter_status,
+                cols_filter_list
             )
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
@@ -377,7 +379,8 @@ class ConfigManager(object):
             else:
                 credentials = None
             return BigQueryResultHandler.get_handler_for_project(
-                project_id, table_id=table_id, credentials=credentials
+                project_id, self.filter_status,
+                table_id=table_id, credentials=credentials,
             )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")

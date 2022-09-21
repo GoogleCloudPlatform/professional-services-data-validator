@@ -272,8 +272,7 @@ def build_config_managers_from_args(args):
         if all(arg in filter_status for arg in arg_list):
             filter_status = arg_list
         else:
-            # TODO: better error message
-            raise ValueError(f"An unsupported status was provided")
+            raise ValueError("An unsupported status was provided")
 
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
