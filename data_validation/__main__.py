@@ -136,7 +136,6 @@ def get_calculated_config(args, config_manager):
         # excess columns with invalid data types (i.e structs) when generating source/target DFs
         if col_list:
             config_manager.append_dependent_aliases(col_list)
-        else:
             config_manager.append_dependent_aliases(aliases)
     elif args.concat:
         col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
@@ -147,7 +146,6 @@ def get_calculated_config(args, config_manager):
         # excess columns with invalid data types (i.e structs) when generating source/target DFs
         if col_list:
             config_manager.append_dependent_aliases(col_list)
-        else:
             config_manager.append_dependent_aliases(aliases)
 
     if len(fields) > 0:
@@ -195,6 +193,7 @@ def build_config_from_args(args, config_manager):
                 config_manager.build_column_configs(grouped_columns)
             )
     elif config_manager.validation_type == consts.ROW_VALIDATION:
+        calc_type = args.hash or args.concat
         if args.comparison_fields is not None:
             comparison_fields = cli_tools.get_arg_list(
                 args.comparison_fields, default_value=[]
@@ -202,7 +201,7 @@ def build_config_from_args(args, config_manager):
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
-            if args.hash != "*" or args.concat != "*":
+            if calc_type is not None and calc_type != "*":
                 config_manager.append_dependent_aliases(comparison_fields)
 
     if args.primary_keys is not None:
@@ -210,7 +209,8 @@ def build_config_from_args(args, config_manager):
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
         )
-        config_manager.append_dependent_aliases(primary_keys)
+        if calc_type is not None and calc_type != '*':
+            config_manager.append_dependent_aliases(primary_keys)
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
