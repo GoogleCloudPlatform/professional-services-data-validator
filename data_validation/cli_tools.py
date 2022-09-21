@@ -610,7 +610,7 @@ def _add_common_arguments(parser):
         "--filter-status",
         "-fs",
         # TODO: update if we start to support other statuses
-        help="Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned"
+        help="Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned",
     )
 
 

@@ -32,7 +32,10 @@ class BigQueryResultHandler(object):
             Fully-qualified table ID (``project-id.dataset.table``) of
             destination table for results.
     """
-    def __init__(self, bigquery_client, status_list, table_id="pso_data_validator.results"):
+
+    def __init__(
+        self, bigquery_client, status_list, table_id="pso_data_validator.results"
+    ):
         self._bigquery_client = bigquery_client
         self._table_id = table_id
         self._status_list = status_list

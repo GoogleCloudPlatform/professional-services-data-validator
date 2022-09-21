@@ -360,7 +360,7 @@ class ConfigManager(object):
             return TextResultHandler(
                 self._config.get(consts.CONFIG_FORMAT, "table"),
                 self.filter_status,
-                cols_filter_list
+                cols_filter_list,
             )
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
@@ -379,8 +379,10 @@ class ConfigManager(object):
             else:
                 credentials = None
             return BigQueryResultHandler.get_handler_for_project(
-                project_id, self.filter_status,
-                table_id=table_id, credentials=credentials,
+                project_id,
+                self.filter_status,
+                table_id=table_id,
+                credentials=credentials,
             )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")

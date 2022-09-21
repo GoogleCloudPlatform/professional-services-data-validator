@@ -26,9 +26,7 @@ from data_validation import consts
 
 
 def filter_validation_status(status_list, result_df):
-    return result_df[
-        result_df.validation_status.isin(status_list)
-    ]
+    return result_df[result_df.validation_status.isin(status_list)]
 
 
 class TextResultHandler(object):
