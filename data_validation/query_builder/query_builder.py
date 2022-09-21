@@ -474,10 +474,9 @@ class QueryBuilder(object):
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
         """
-        table = clients.get_ibis_table(data_client, schema_name, table_name)
+        calc_table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
-        calc_table = table
         if self.calculated_fields:
             depth_limit = max(
                 field.config.get(consts.CONFIG_DEPTH, 0)
@@ -489,7 +488,7 @@ class QueryBuilder(object):
                 )
         if self.comparison_fields:
             calc_table = calc_table.mutate(self.compile_comparison_fields(calc_table))
-        compiled_filters = self.compile_filter_fields(table)
+        compiled_filters = self.compile_filter_fields(calc_table)
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table
         )
