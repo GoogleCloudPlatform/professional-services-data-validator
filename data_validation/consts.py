@@ -118,6 +118,7 @@ TARGET_AGG_VALUE = "target_agg_value"
 VALIDATION_STATUS = "validation_status"
 VALIDATION_STATUS_SUCCESS = "success"
 VALIDATION_STATUS_FAIL = "fail"
+# TODO: update if we start to support other statuses
 VALIDATION_STATUSES = [
     VALIDATION_STATUS_SUCCESS,
     VALIDATION_STATUS_FAIL,
