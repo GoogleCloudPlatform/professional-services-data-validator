@@ -58,13 +58,13 @@ class BigQueryResultHandler(object):
         return BigQueryResultHandler(client, status_list, table_id=table_id)
 
     def execute(self, result_df):
+        result_df = filter_validation_status(self._status_list, result_df)
+        # handler also outputs the results to the console before saving to BQ
         logging.info(
             result_df.drop(consts.COLUMN_FILTER_LIST, axis=1).to_markdown(
                 tablefmt="fancy_grid", index=False
             )
         )
-
-        result_df = filter_validation_status(self._status_list, result_df)
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df
