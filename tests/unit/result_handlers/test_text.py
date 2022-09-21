@@ -20,9 +20,9 @@ from data_validation.consts import VALIDATION_STATUSES
 
 SAMPLE_CONFIG = {}
 SAMPLE_RESULT_DATA = [
-    [0, 1, 2, 3, "Column", "source", "target", ""],
-    [4, 5, 6, 7, "Column", "source", "target", ""],
-    [8, 9, 10, 11, "Column", "source", "target", ""],
+    [0, 1, 2, 3, "Column", "source", "target", "success"],
+    [4, 5, 6, 7, "Column", "source", "target", "success"],
+    [8, 9, 10, 11, "Column", "source", "target", "success"],
 ]
 SAMPLE_RESULT_COLUMNS = [
     "A",
@@ -40,6 +40,7 @@ SAMPLE_RESULT_COLUMNS_FILTER_LIST = [
     "validation_type",
     "source_agg_value",
     "target_agg_value",
+    "validation_status",
 ]
 
 
