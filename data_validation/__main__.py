@@ -209,7 +209,7 @@ def build_config_from_args(args, config_manager):
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
         )
-        if calc_type is not None and calc_type != '*':
+        if calc_type is not None and calc_type != "*":
             config_manager.append_dependent_aliases(primary_keys)
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
