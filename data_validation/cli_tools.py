@@ -307,12 +307,6 @@ def _configure_validate_parser(subparsers):
     validate_parser.add_argument(
         "--result-handler-config", "-rc", help="Result handler config details"
     )
-    validate_parser.add_argument(
-        "--filter-status",
-        "-fs",
-        # TODO: concatenate list of supported statuses
-        help="Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned"
-    )
 
     validate_subparsers = validate_parser.add_subparsers(dest="validate_cmd")
 
@@ -611,6 +605,12 @@ def _add_common_arguments(parser):
         default="table",
         help="Set the format for printing command output, Supported formats are (text, csv, json, table). Defaults "
         "to table",
+    )
+    parser.add_argument(
+        "--filter-status",
+        "-fs",
+        # TODO: concatenate list of supported statuses
+        help="Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned"
     )
 
 

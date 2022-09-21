@@ -31,9 +31,11 @@ class TextResultHandler(object):
         self.cols_filter_list = cols_filter_list
 
     def filter_validation_status(self, config_manager, result_df):
-        # filter status getting list from config manager
+        status_list = config_manager.filter_status
+        # TODO: remove later
+        print("*************** " + str(status_list))
         return result_df[
-            result_df.validation_status in config_manager.filter_status()
+            result_df.validation_status.isin(status_list)
         ]
 
     def print_formatted_(self, config_manager, result_df):
