@@ -16,6 +16,7 @@ import pytest
 
 from pandas import DataFrame
 
+from data_validation.consts import VALIDATION_STATUSES
 from data_validation.consts import VALIDATION_STATUS_FAIL
 
 SAMPLE_CONFIG = {}
@@ -65,7 +66,7 @@ def test_basic_result_handler(module_under_test):
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
     format = "csv"
     result_handler = module_under_test.TextResultHandler(
-        format, None, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+        format, [None], SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
 
     handler_output = result_handler.execute(result_df)
@@ -82,7 +83,7 @@ def test_basic_result_handler_filtered_results(module_under_test):
     )
 
     handler_output = result_handler.execute(result_df)
-    assert handler_output.count() == result_df.count()
+    assert len(handler_output.index) == 1
 
 
 def test_unsupported_result_format(module_under_test):
@@ -91,7 +92,7 @@ def test_unsupported_result_format(module_under_test):
         result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
         format = "foobar"
         result_handler = module_under_test.TextResultHandler(
-            format, None, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+            format, [None], SAMPLE_RESULT_COLUMNS_FILTER_LIST
         )
 
         handler_output = result_handler.execute(result_df)
@@ -103,7 +104,7 @@ def test_columns_to_print(module_under_test, capsys):
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
     format = "table"
     result_handler = module_under_test.TextResultHandler(
-        format, None, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+        format, VALIDATION_STATUSES, SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
     result_handler.execute(result_df)
 
