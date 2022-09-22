@@ -266,10 +266,10 @@ def build_config_managers_from_args(args):
         args.tables_list, default_value=[{}], is_filesystem=is_filesystem
     )
 
-    filter_status = consts.VALIDATION_STATUSES
+    filter_status = None
     if args.filter_status is not None:
         arg_list = cli_tools.get_arg_list(args.filter_status)
-        if all(arg in filter_status for arg in arg_list):
+        if all(arg in consts.VALIDATION_STATUSES for arg in arg_list):
             filter_status = arg_list
         else:
             raise ValueError("An unsupported status was provided")

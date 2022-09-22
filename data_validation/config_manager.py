@@ -289,7 +289,7 @@ class ConfigManager(object):
     @property
     def filter_status(self):
         """Return filter status list from Config"""
-        return self._config.get(consts.CONFIG_FILTER_STATUS)
+        return self._config.get(consts.CONFIG_FILTER_STATUS, None)
 
     def append_exclusion_columns(self, column_configs):
         """Append exclusion columns to existing config."""

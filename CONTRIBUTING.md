@@ -48,6 +48,8 @@ To run our local testing suite, use:
 
 `python3 -m nox --envdir ~/dvt/envs/ -s unit_small blacken lint`
 
+You can also use [our script](tests/local_check.sh) with all checks step by step.
+
 ## Conventional Commits
 
 This project uses [Conventional

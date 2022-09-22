@@ -67,7 +67,7 @@ SAMPLE_CONFIG = {
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 SAMPLE_THRESHOLD_CONFIG = {
@@ -99,7 +99,7 @@ SAMPLE_THRESHOLD_CONFIG = {
     consts.CONFIG_THRESHOLD: 150.0,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 # Grouped Column Row config
@@ -141,7 +141,7 @@ SAMPLE_GC_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 # Grouped Column Row config
@@ -189,7 +189,7 @@ SAMPLE_MULTI_GC_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 SAMPLE_GC_CALC_CONFIG = {
@@ -285,7 +285,7 @@ SAMPLE_GC_CALC_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 SAMPLE_RANDOM_ROW_CONFIG = {
@@ -328,7 +328,7 @@ SAMPLE_RANDOM_ROW_CONFIG = {
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 # Row config
@@ -367,7 +367,7 @@ SAMPLE_ROW_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 # Row config
@@ -400,7 +400,7 @@ SAMPLE_JSON_ROW_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 JSON_DATA = """[{"col_a":1,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""

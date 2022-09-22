@@ -46,7 +46,7 @@ data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*'
 ````
 
-#### Run a row hash validation for all rows but filters to get only the failed records 
+#### Run a row hash validation for all rows but filter only the failed records 
 ````shell script
 data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --filter-status fail --primary-keys station_id --hash '*'
 ````

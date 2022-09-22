@@ -48,7 +48,7 @@ TERADATA_CONFIG = {
         },
     ],
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
     consts.CONFIG_FILTERS: [
         {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,

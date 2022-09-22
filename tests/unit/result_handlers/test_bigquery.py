@@ -29,7 +29,7 @@ def test_get_handler_for_project_sets_user_agent(module_under_test, monkeypatch)
     mock_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_client)
     module_under_test.BigQueryResultHandler.get_handler_for_project(
-        "test-project", ["fail"], table_id="some_dataset.some_table"
+        "test-project", None, table_id="some_dataset.some_table"
     )
     mock_client.assert_called_once()
     user_agent = mock_client.call_args[1]["client_info"].to_user_agent()

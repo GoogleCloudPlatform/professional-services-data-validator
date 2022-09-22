@@ -34,7 +34,7 @@ class BigQueryResultHandler(object):
     """
 
     def __init__(
-        self, bigquery_client, status_list, table_id="pso_data_validator.results"
+        self, bigquery_client, status_list=None, table_id="pso_data_validator.results"
     ):
         self._bigquery_client = bigquery_client
         self._table_id = table_id
@@ -42,7 +42,7 @@ class BigQueryResultHandler(object):
 
     @staticmethod
     def get_handler_for_project(
-        project_id, status_list, table_id="pso_data_validator.results", credentials=None
+        project_id, status_list=None, table_id="pso_data_validator.results", credentials=None
     ):
         """Return BigQueryResultHandler instance for given project.
 
@@ -61,7 +61,10 @@ class BigQueryResultHandler(object):
         return BigQueryResultHandler(client, status_list, table_id=table_id)
 
     def execute(self, result_df):
-        result_df = filter_validation_status(self._status_list, result_df)
+
+        if self._status_list is not None:
+            result_df = filter_validation_status(self._status_list, result_df)
+
         # handler also outputs the results to the console before saving to BQ
         logging.info(
             result_df.drop(consts.COLUMN_FILTER_LIST, axis=1).to_markdown(

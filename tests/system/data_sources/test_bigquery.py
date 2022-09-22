@@ -66,7 +66,7 @@ CONFIG_COUNT_VALID = {
         },
     ],
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 CONFIG_GROUPED_COUNT_VALID = {
@@ -101,7 +101,7 @@ CONFIG_GROUPED_COUNT_VALID = {
         },
     ],
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 CONFIG_TIMESTAMP_AGGS = {
@@ -115,7 +115,7 @@ CONFIG_TIMESTAMP_AGGS = {
     consts.CONFIG_LABELS: [],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FILTERS: [],
     consts.CONFIG_USE_RANDOM_ROWS: False,
@@ -210,7 +210,7 @@ CONFIG_NUMERIC_AGG_VALID = {
     ],
     consts.CONFIG_GROUPED_COLUMNS: [],
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 CONFIG_SCHEMA_VALIDATION = {
@@ -223,7 +223,7 @@ CONFIG_SCHEMA_VALIDATION = {
     consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
     consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: consts.VALIDATION_STATUSES,
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 BQ_CONN_NAME = "bq-integration-test"
