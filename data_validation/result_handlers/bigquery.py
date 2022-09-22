@@ -42,7 +42,10 @@ class BigQueryResultHandler(object):
 
     @staticmethod
     def get_handler_for_project(
-        project_id, status_list=None, table_id="pso_data_validator.results", credentials=None
+        project_id,
+        status_list=None,
+        table_id="pso_data_validator.results",
+        credentials=None,
     ):
         """Return BigQueryResultHandler instance for given project.
 

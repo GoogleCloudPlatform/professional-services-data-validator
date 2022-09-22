@@ -71,7 +71,8 @@ def test_basic_result_handler(module_under_test):
     handler_output = result_handler.execute(result_df)
     assert handler_output["A"].sum() == result_df["A"].sum()
 
-
+# TODO(helensilva14/issue412): this unit test still needs to be fixed,
+#  right now it's failing but it doesn't affect the overall test coverage %
 def test_basic_result_handler_filtered_results(module_under_test):
     """Test basic handler executes and shows only failed records"""
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)

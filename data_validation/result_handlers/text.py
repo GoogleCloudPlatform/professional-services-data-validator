@@ -30,7 +30,9 @@ def filter_validation_status(status_list, result_df):
 
 
 class TextResultHandler(object):
-    def __init__(self, format, status_list=None, cols_filter_list=consts.COLUMN_FILTER_LIST):
+    def __init__(
+        self, format, status_list=None, cols_filter_list=consts.COLUMN_FILTER_LIST
+    ):
         self.format = format
         self.cols_filter_list = cols_filter_list
         self.status_list = status_list
