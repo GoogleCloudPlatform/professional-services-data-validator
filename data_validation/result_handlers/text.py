@@ -21,7 +21,6 @@ from the validation run.
 
 Output validation report to text-based log
 """
-
 from data_validation import consts
 
 
@@ -68,5 +67,4 @@ class TextResultHandler(object):
         return result_df
 
     def execute(self, result_df):
-        self.print_formatted_(result_df)
-        return result_df
+        return self.print_formatted_(result_df)

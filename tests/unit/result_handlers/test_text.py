@@ -16,7 +16,6 @@ import pytest
 
 from pandas import DataFrame
 
-from data_validation.consts import VALIDATION_STATUSES
 from data_validation.consts import VALIDATION_STATUS_FAIL
 
 SAMPLE_CONFIG = {}
@@ -66,14 +65,13 @@ def test_basic_result_handler(module_under_test):
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
     format = "csv"
     result_handler = module_under_test.TextResultHandler(
-        format, [None], SAMPLE_RESULT_COLUMNS_FILTER_LIST
+        format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
 
     handler_output = result_handler.execute(result_df)
     assert handler_output["A"].sum() == result_df["A"].sum()
 
-# TODO(helensilva14/issue412): this unit test still needs to be fixed,
-#  right now it's failing but it doesn't affect the overall test coverage %
+
 def test_basic_result_handler_filtered_results(module_under_test):
     """Test basic handler executes and shows only failed records"""
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
@@ -92,7 +90,7 @@ def test_unsupported_result_format(module_under_test):
         result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
         format = "foobar"
         result_handler = module_under_test.TextResultHandler(
-            format, [None], SAMPLE_RESULT_COLUMNS_FILTER_LIST
+            format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
         )
 
         handler_output = result_handler.execute(result_df)
@@ -104,7 +102,7 @@ def test_columns_to_print(module_under_test, capsys):
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
     format = "table"
     result_handler = module_under_test.TextResultHandler(
-        format, VALIDATION_STATUSES, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+        format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
     result_handler.execute(result_df)
 
