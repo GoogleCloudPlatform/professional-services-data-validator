@@ -67,6 +67,7 @@ SAMPLE_CONFIG = {
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 SAMPLE_THRESHOLD_CONFIG = {
@@ -98,9 +99,10 @@ SAMPLE_THRESHOLD_CONFIG = {
     consts.CONFIG_THRESHOLD: 150.0,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
-# Grouped Column Row confg
+# Grouped Column Row config
 SAMPLE_GC_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
@@ -139,9 +141,10 @@ SAMPLE_GC_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
-# Grouped Column Row confg
+# Grouped Column Row config
 SAMPLE_MULTI_GC_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
@@ -186,6 +189,7 @@ SAMPLE_MULTI_GC_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 SAMPLE_GC_CALC_CONFIG = {
@@ -281,6 +285,7 @@ SAMPLE_GC_CALC_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 SAMPLE_RANDOM_ROW_CONFIG = {
@@ -323,9 +328,10 @@ SAMPLE_RANDOM_ROW_CONFIG = {
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
-# Row confg
+# Row config
 SAMPLE_ROW_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
@@ -361,9 +367,10 @@ SAMPLE_ROW_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
-# Row confg
+# Row config
 SAMPLE_JSON_ROW_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": SOURCE_CONN_CONFIG,
@@ -393,6 +400,7 @@ SAMPLE_JSON_ROW_CONFIG = {
     ],
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 JSON_DATA = """[{"col_a":1,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
@@ -420,7 +428,6 @@ SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
 JOIN_ON_FIELDS = ["date"]
 NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
 
-RANDOM_STRINGS = ["a", "b", "c", "d", None]
 RANDOM_STRINGS = ["a", "b", "c", "d"]
 
 

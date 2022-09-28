@@ -124,6 +124,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
@@ -190,6 +192,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Finds a set of random rows of the first primary key supplied.
   [--random-row-batch-size or -rbs]
                         Row batch size used for random row filters (default 10,000).
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 #### Schema Validations
@@ -218,6 +222,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
                         YAML Config File Path to be used for storing validations.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
   [--exclusion-columns or -ec EXCLUSION_COLUMNS]
                         Comma separated list of columns to be excluded from the schema validation, i.e col_a,col_b.                    
 ```
@@ -259,6 +265,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
@@ -311,6 +319,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)

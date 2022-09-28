@@ -266,6 +266,14 @@ def build_config_managers_from_args(args):
         args.tables_list, default_value=[{}], is_filesystem=is_filesystem
     )
 
+    filter_status = None
+    if args.filter_status is not None:
+        arg_list = cli_tools.get_arg_list(args.filter_status)
+        if all(arg in consts.VALIDATION_STATUSES for arg in arg_list):
+            filter_status = arg_list
+        else:
+            raise ValueError("An unsupported status was provided")
+
     for table_obj in tables_list:
         config_manager = ConfigManager.build_config_manager(
             config_type,
@@ -281,6 +289,7 @@ def build_config_managers_from_args(args):
             target_client=target_client,
             result_handler_config=result_handler_config,
             filter_config=filter_config,
+            filter_status=filter_status,
             verbose=args.verbose,
         )
         if config_type != consts.SCHEMA_VALIDATION:
