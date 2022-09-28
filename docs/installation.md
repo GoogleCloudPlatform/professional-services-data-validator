@@ -7,7 +7,7 @@ This tool can be natively installed on your machine or can be containerized and 
 
 ## Prerequisites
 
-- Any machine with Python 3.6+ installed.
+- Any machine with Python 3.7+ installed.
 
 ## Setup
 
@@ -84,7 +84,7 @@ Create and activate a new virtual environment to sandbox the tool and its
 dependencies from your system installation of Python. 
 
 ```
-python3.6 -m venv venv
+python3.7 -m venv venv
 source venv/bin/activate
 ```
 

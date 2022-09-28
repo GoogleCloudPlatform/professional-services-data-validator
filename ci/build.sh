@@ -21,14 +21,14 @@ set -eo pipefail
 export PYTHONUNBUFFERED=1
 
 # Install nox
-python3.6 -m pip install --upgrade --quiet nox pip
-python3.6 -m nox --version
+python3.7 -m pip install --upgrade --quiet nox pip
+python3.7 -m nox --version
 
 # When NOX_SESSION is set, it only runs the specified session
 if [[ -n "${NOX_SESSION:-}" &&  ( "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" ) ]]; then
-    ./cloud_sql_proxy -instances="$CLOUD_SQL_CONNECTION" & python3.6 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    ./cloud_sql_proxy -instances="$CLOUD_SQL_CONNECTION" & python3.7 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 elif [[ -n "${NOX_SESSION:-}" ]]; then
-    python3.6 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    python3.7 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 else 
     echo "NOX_SESSION env var not set"
     exit 1
