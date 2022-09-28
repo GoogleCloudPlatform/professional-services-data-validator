@@ -61,7 +61,7 @@ class BigQueryResultHandler(object):
         client = bigquery.Client(
             project=project_id, client_info=info, credentials=credentials
         )
-        return BigQueryResultHandler(client, status_list, table_id=table_id)
+        return BigQueryResultHandler(client, status_list=status_list, table_id=table_id)
 
     def execute(self, result_df):
 
