@@ -188,7 +188,22 @@ def _if_null(expr):
     arg, fill_value = expr.op().args
     return arg.coalesce(fill_value)
 
+def _get_schema_using_query(self, query):
+    with self._execute(query, results=True) as cur:
+        # resets the state of the cursor and closes operation
+        cur.fetchall()
+        names, ibis_types = self._adapt_types(cur.description)
+
+    # per #321; most Impala tables will be lower case already, but Avro
+    # data, depending on the version of Impala, might have field names in
+    # the metastore cased according to the explicit case in the declared
+    # avro schema. This is very annoying, so it's easier to just conform on
+    # all lowercase fields from Impala.
+    names = [x[3:].lower() for x in names]
+
+    return sch.Schema(names, ibis_types)
 
 udf.parse_type = parse_type
 ImpalaClient.get_schema = get_schema
 ImpalaQuery._fetch = _fetch
+ImpalaClient._get_schema_using_query = _get_schema_using_query
