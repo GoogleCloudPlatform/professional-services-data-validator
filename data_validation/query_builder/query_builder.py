@@ -466,7 +466,7 @@ class QueryBuilder(object):
         # else:
         #     return [field.compile(table) for field in self.calculated_fields]
 
-    def compile(self, data_client, schema_name, table_name):
+    def compile(self, validation_type, data_client, schema_name, table_name):
         """Return an Ibis query object
 
         Args:
@@ -486,8 +486,16 @@ class QueryBuilder(object):
                 calc_table = calc_table.mutate(
                     self.compile_calculated_fields(calc_table, n)
                 )
-        if self.comparison_fields:
-            calc_table = calc_table.mutate(self.compile_comparison_fields(calc_table))
+
+        if validation_type == consts.ROW_VALIDATION:
+            calc_table = calc_table.projection(
+                self.compile_comparison_fields(calc_table)
+            )
+        else:
+            if self.comparison_fields:
+                calc_table = calc_table.mutate(
+                    self.compile_comparison_fields(calc_table)
+                )
         compiled_filters = self.compile_filter_fields(calc_table)
         filtered_table = (
             calc_table.filter(compiled_filters) if compiled_filters else calc_table

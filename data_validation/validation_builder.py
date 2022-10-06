@@ -383,7 +383,7 @@ class ValidationBuilder(object):
                     f"Input custom query type: {self.config_manager.custom_query_type}"
                 )
         else:
-            query = self.source_builder.compile(**source_config)
+            query = self.source_builder.compile(self.validation_type, **source_config)
         if self.verbose:
             logging.info(source_config)
             logging.info("-- ** Source Query ** --")
@@ -427,7 +427,7 @@ class ValidationBuilder(object):
                     f"Input custom query type: {self.config_manager.custom_query_type}"
                 )
         else:
-            query = self.target_builder.compile(**target_config)
+            query = self.target_builder.compile(self.validation_type, **target_config)
         if self.verbose:
             logging.info(target_config)
             logging.info("-- ** Target Query ** --")
