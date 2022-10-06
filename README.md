@@ -172,7 +172,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
   --hash COLUMNS        Comma separated list of columns to hash or * for all columns 
-  --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns 
+  --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
