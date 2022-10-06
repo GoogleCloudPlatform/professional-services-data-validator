@@ -2,6 +2,25 @@
 
 ## Untagged
 
+## [2.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.3.0...v2.4.0) (2022-10-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Add Python 3.10 support (#564)
+
+### Features
+
+* Add Python 3.10 support ([#564](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/564)) ([38284a5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/38284a5ed3928a21b9889c0d57f9461e98504a68))
+* New flag to filter results by status in all supported validations ([#593](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/593)) ([97e8bb0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/97e8bb056fdb89078d67d7a84adc460a821a9455))
+* Oracle random row ([#588](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/588)) ([ac3460a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ac3460af84d50c3611ab27b2861bec4c0b56e39b))
+* Postgres row hash validation support ([#589](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/589)) ([01765b3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/01765b31e507e80fc6f4db579b18ec9a8ea608f3))
+
+
+### Miscellaneous Chores
+
+* release 2.4.0 ([#600](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/600)) ([b704505](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b704505842e15625d7dc181ef7f946ac82633836))
+
 ## [2.3.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.2.0...v2.3.0) (2022-09-15)
 
 
