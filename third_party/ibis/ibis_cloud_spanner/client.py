@@ -29,12 +29,15 @@ import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
+
 from third_party.ibis.ibis_cloud_spanner import compiler as comp
 from third_party.ibis.ibis_cloud_spanner.datatypes import (
     ibis_type_to_cloud_spanner_type,
 )
-from ibis.client import Database, Query, SQLClient
+from ibis.backends.base.sql import BaseSQLBackend
+from ibis.backends.base import Database
 
+from ibis_bigquery import BigQueryCompiler
 from third_party.ibis.ibis_cloud_spanner import table
 
 from google.cloud.spanner_v1 import TypeCode
@@ -190,28 +193,6 @@ def cs_param_date(param, value):
     return final_dict
 
 
-class CloudSpannerQuery(Query):
-    def __init__(self, client, ddl, query_parameters=None):
-        super().__init__(client, ddl)
-
-        # self.expr comes from the parent class
-        query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
-
-        self.query_parameters = [
-            cloud_spanner_param(
-                param.to_expr().name(query_parameter_names[param]), value
-            )
-            for param, value in (query_parameters or {}).items()
-        ]
-
-    def execute(self):
-        dataframe_output = self.client._execute(
-            self.compiled_sql, results=True, query_parameters=self.query_parameters
-        )
-
-        return dataframe_output
-
-
 class SpannerCursor:
     """Spanner cursor.
     This allows the Spanner client to reuse machinery in
@@ -258,14 +239,15 @@ class CloudSpannerDatabase(Database):
     """A Cloud spanner dataset."""
 
 
-class CloudSpannerClient(SQLClient):
+class Backend(BaseSQLBackend):
     """An ibis CloudSpanner client implementation."""
-
-    query_class = CloudSpannerQuery
+    
+    name = "spanner"
+    compiler = BigQueryCompiler
     database_class = CloudSpannerDatabase
     table_class = CloudSpannerTable
 
-    def __init__(self, instance_id, database_id, project_id=None, credentials=None):
+    def connect(self, instance_id, database_id, project_id=None, credentials=None):
         """Construct a CloudSpannerClient.
 
         Parameters
@@ -314,9 +296,6 @@ class CloudSpannerClient(SQLClient):
     def _build_ast(self, expr, context):
         result = comp.build_ast(expr, context)
         return result
-
-    def _get_query(self, dml, **kwargs):
-        return self.query_class(self, dml, query_parameters=dml.context.params)
 
     def _fully_qualified_name(self, name, database):
         return name

@@ -18,18 +18,16 @@ import warnings
 import logging
 import google.oauth2.service_account
 import ibis
-import ibis.backends.pandas
 import ibis_bigquery
 import pandas
 import third_party.ibis.ibis_addon.datatypes
+
 from google.cloud import bigquery
-from ibis.backends.mysql.client import MySQLClient
-from ibis.backends.pandas.client import PandasClient
-from ibis.backends.postgres.client import PostgreSQLClient
 from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
-from third_party.ibis.ibis_impala.api import impala_connect
+# from third_party.ibis.ibis_impala.api import impala_connect ## TODO
 
 from data_validation import client_info, consts, exceptions
+# import ibis.backends.pandas
 
 ibis.options.sql.default_limit = None
 
@@ -119,7 +117,7 @@ def get_pandas_client(table_name, file_path, file_type):
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
-    pandas_client = ibis.backends.pandas.connect({table_name: df})
+    pandas_client = ibis.pandas.connect({table_name: df})
 
     return pandas_client
 
@@ -248,12 +246,12 @@ def get_data_client(connection_config):
 
 CLIENT_LOOKUP = {
     "BigQuery": get_bigquery_client,
-    "Impala": impala_connect,
-    "MySQL": MySQLClient,
+    # "Impala": impala_connect,
+    "MySQL": ibis.mysql.connect,
     "Oracle": OracleClient,
     "FileSystem": get_pandas_client,
-    "Postgres": PostgreSQLClient,
-    "Redshift": PostgreSQLClient,
+    "Postgres": ibis.postgres.connect,
+    "Redshift": ibis.postgres.connect,
     "Teradata": TeradataClient,
     "MSSQL": MSSQLClient,
     "Snowflake": snowflake_connect,

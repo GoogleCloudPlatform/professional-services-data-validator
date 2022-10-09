@@ -45,14 +45,11 @@ def _regex_extract(translator, expr):
     return result
 
 
-_operation_registry = bigquery_compiler._operation_registry.copy()
-_operation_registry.update(
-    {ops.RegexExtract: _regex_extract, ops.ArrayIndex: _array_index,}
-)
+# _operation_registry = bigquery_compiler._operation_registry.copy()
+# _operation_registry.update(
+#     {ops.RegexExtract: _regex_extract, ops.ArrayIndex: _array_index,}
+# )
 
 
 compiles = bigquery_compiler.BigQueryExprTranslator.compiles
 rewrites = bigquery_compiler.BigQueryExprTranslator.rewrites
-
-
-dialect = ibis_bigquery.Backend().dialect

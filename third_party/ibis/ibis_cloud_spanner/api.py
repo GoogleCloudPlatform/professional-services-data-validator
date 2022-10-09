@@ -16,8 +16,7 @@
 """CloudSpanner public API."""
 
 
-from third_party.ibis.ibis_cloud_spanner.client import CloudSpannerClient
-from third_party.ibis.ibis_cloud_spanner.compiler import dialect
+from third_party.ibis.ibis_cloud_spanner.client import Backend
 
 import google.cloud.spanner  # noqa: F401, fail early if spanner is missing
 import ibis.common.exceptions as com
@@ -25,21 +24,17 @@ import ibis.common.exceptions as com
 __all__ = ("compile", "connect", "verify")
 
 
-def compile(expr, params=None):
+def compile(expr, params=None, **kwargs):
     """Compile an expression for Cloud Spanner.
-
     Returns
     -------
     compiled : str
-
     See Also
     --------
     ibis.expr.types.Expr.compile
-
     """
-    from third_party.ibis.ibis_cloud_spanner.compiler import to_sql
-
-    return to_sql(expr, dialect.make_context(params=params))
+    backend = Backend()
+    return backend.compile(expr, params=params, **kwargs)
 
 
 def verify(expr, params=None):
@@ -55,8 +50,8 @@ def connect(
     instance_id,
     database_id,
     project_id=None,
-) -> CloudSpannerClient:
-    """Create a CloudSpannerClient for use with Ibis.
+) -> Backend:
+    """Create a CloudSpanner Backend for use with Ibis.
 
     Parameters
     ----------
@@ -69,11 +64,11 @@ def connect(
 
     Returns
     -------
-    CloudSpannerClient
+    Backend
 
     """
 
-    return CloudSpannerClient(
+    return Backend.connect(
         instance_id=instance_id,
         database_id=database_id,
         project_id=project_id,
