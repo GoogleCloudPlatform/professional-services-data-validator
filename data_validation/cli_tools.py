@@ -488,11 +488,13 @@ def _configure_custom_query_parser(custom_query_parser):
     custom_query_parser.add_argument(
         "--source-query-file",
         "-sqf",
+        required=True,
         help="File containing the source sql query",
     )
     custom_query_parser.add_argument(
         "--target-query-file",
         "-tqf",
+        required=True,
         help="File containing the target sql query",
     )
     custom_query_parser.add_argument(
@@ -555,6 +557,7 @@ def _configure_custom_query_parser(custom_query_parser):
     custom_query_parser.add_argument(
         "--primary-keys",
         "-pk",
+        required=True,
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     custom_query_parser.add_argument(
