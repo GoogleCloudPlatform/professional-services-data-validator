@@ -121,9 +121,9 @@ def format_hashbytes_teradata(translator, expr):
     if how == "sha256":
         return f"rtrim(hash_sha256({compiled_arg}))"
     elif how == "sha512":
-        return f"hash_sha512({compiled_arg})"
+        return f"rtrim(hash_sha512({compiled_arg}))"
     elif how == "md5":
-        return f"hash_md5({compiled_arg})"
+        return f"rtrim(hash_md5({compiled_arg}))"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
