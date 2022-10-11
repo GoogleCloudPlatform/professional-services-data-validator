@@ -292,7 +292,8 @@ class DataValidation(object):
 
         join_on_fields = (
             set(validation_builder.get_primary_keys())
-            if (self.config_manager.validation_type == consts.ROW_VALIDATION) or (
+            if (self.config_manager.validation_type == consts.ROW_VALIDATION)
+            or (
                 self.config_manager.validation_type == consts.CUSTOM_QUERY
                 and self.config_manager.custom_query_type == "row"
             )

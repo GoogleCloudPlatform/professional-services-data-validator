@@ -154,7 +154,9 @@ def build_config_from_args(args, config_manager):
         if args.custom_query_type is not None:
             config_manager.append_custom_query_type(args.custom_query_type)
         else:
-            raise ValueError("Expected custom query type to be given, got empty string.")
+            raise ValueError(
+                "Expected custom query type to be given, got empty string."
+            )
 
         if args.source_query_file is not None:
             query_file = cli_tools.get_arg_list(args.source_query_file)
@@ -252,7 +254,8 @@ def build_config_managers_from_args(args):
     # is_custom_query = validate_cmd == consts.CUSTOM_QUERY
     try:
         tables_list = args.tables_list
-    except:
+    except Exception as e:
+        logging.error(e)
         tables_list = None
     tables_list = cli_tools.get_tables_list(
         tables_list, default_value=[{}], is_filesystem=is_filesystem
@@ -528,5 +531,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import os
     main()
