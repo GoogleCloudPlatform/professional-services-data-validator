@@ -14,7 +14,7 @@
 
 import logging
 import ibis
-from data_validation import clients, consts
+from data_validation import consts
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
 

@@ -352,16 +352,19 @@ class ValidationBuilder(object):
             "data_client": self.source_client,
             "schema_name": self.config_manager.source_schema,
             "table_name": self.config_manager.source_table,
-            "source_query": self.config_manager.source_query
+            "source_query": self.config_manager.source_query,
         }
 
         if self.validation_type == consts.CUSTOM_QUERY:
-            table = clients.get_ibis_query(self.source_client,
-                                           self.config_manager.source_query)
+            table = clients.get_ibis_query(
+                self.source_client, self.config_manager.source_query
+            )
         else:
-            table = clients.get_ibis_table(self.source_client,
-                                           self.config_manager.source_schema,
-                                           self.config_manager.source_table)
+            table = clients.get_ibis_table(
+                self.source_client,
+                self.config_manager.source_schema,
+                self.config_manager.source_table,
+            )
 
         query = self.source_builder.compile(table)
         if self.verbose:
@@ -381,12 +384,15 @@ class ValidationBuilder(object):
         }
 
         if self.validation_type == consts.CUSTOM_QUERY:
-            table = clients.get_ibis_query(self.target_client,
-                                           self.config_manager.target_query)
+            table = clients.get_ibis_query(
+                self.target_client, self.config_manager.target_query
+            )
         else:
-            table = clients.get_ibis_table(self.target_client,
-                                           self.config_manager.target_schema,
-                                           self.config_manager.target_table)
+            table = clients.get_ibis_table(
+                self.target_client,
+                self.config_manager.target_schema,
+                self.config_manager.target_table,
+            )
 
         query = self.target_builder.compile(table)
         if self.verbose:
