@@ -1,0 +1,27 @@
+FROM gcr.io/cloud-devrel-public-resources/python-multi
+
+# Oracle Dependencies
+# if you are using Oracle you should add .rpm files
+# under your license to a directory called oracle/
+# and then uncomment the setup below.
+
+ENV ORACLE_SID oracle
+ENV ORACLE_ODBC_VERSION 12.2
+ENV ORACLE_HOME /usr/lib/oracle/${ORACLE_ODBC_VERSION}/client64
+
+RUN pip install cx_Oracle
+
+RUN apt-get update \
+    && apt-get install --fix-missing --upgrade wget -y \
+    && apt-get install --fix-missing --upgrade vim -y \
+    && apt-get install --fix-missing --upgrade alien -y \
+    && apt-get install --fix-missing --upgrade unixodbc-dev -y \
+    && apt-get install --fix-missing --upgrade libaio1 -y \
+    && apt-get install --fix-missing --upgrade libaio-dev -y \
+    && apt-get clean
+
+COPY oracle/*.rpm ./
+RUN alien -i *.rpm && rm *.rpm \
+    && echo "/usr/lib/oracle/${ORACLE_ODBC_VERSION}/client64/lib/" > /etc/ld.so.conf.d/oracle.conf \
+    && ln -s /usr/include/oracle/${ORACLE_ODBC_VERSION}/client64 $ORACLE_HOME/include \
+    && ldconfig -v

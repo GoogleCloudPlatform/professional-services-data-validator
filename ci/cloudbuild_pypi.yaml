@@ -15,7 +15,7 @@
 timeout: 7200s
 steps:
 - id: release
-  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/release_pypi.sh']
   env:
   - 'BUILD=$BUILD_ID'
