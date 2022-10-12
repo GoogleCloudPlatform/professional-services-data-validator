@@ -16,11 +16,17 @@ import pytest
 
 from pandas import DataFrame
 
+from data_validation.consts import VALIDATION_STATUS_FAIL
+
 SAMPLE_CONFIG = {}
+SAMPLE_CONFIG_FILTER_STATUS = [
+    VALIDATION_STATUS_FAIL,
+]
+
 SAMPLE_RESULT_DATA = [
-    [0, 1, 2, 3, "Column", "source", "target"],
-    [4, 5, 6, 7, "Column", "source", "target"],
-    [8, 9, 10, 11, "Column", "source", "target"],
+    [0, 1, 2, 3, "Column", "source", "target", "success"],
+    [4, 5, 6, 7, "Column", "source", "target", "success"],
+    [8, 9, 10, 11, "Column", "source", "target", "fail"],
 ]
 SAMPLE_RESULT_COLUMNS = [
     "A",
@@ -30,6 +36,7 @@ SAMPLE_RESULT_COLUMNS = [
     "validation_type",
     "source_agg_value",
     "target_agg_value",
+    "validation_status",
 ]
 SAMPLE_RESULT_COLUMNS_FILTER_LIST = [
     "B",
@@ -37,6 +44,7 @@ SAMPLE_RESULT_COLUMNS_FILTER_LIST = [
     "validation_type",
     "source_agg_value",
     "target_agg_value",
+    "validation_status",
 ]
 
 
@@ -57,11 +65,23 @@ def test_basic_result_handler(module_under_test):
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
     format = "csv"
     result_handler = module_under_test.TextResultHandler(
-        format, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+        format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
 
-    handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
+    handler_output = result_handler.execute(result_df)
     assert handler_output["A"].sum() == result_df["A"].sum()
+
+
+def test_basic_result_handler_filtered_results(module_under_test):
+    """Test basic handler executes and shows only failed records"""
+    result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
+    format = "table"
+    result_handler = module_under_test.TextResultHandler(
+        format, SAMPLE_CONFIG_FILTER_STATUS, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+    )
+
+    handler_output = result_handler.execute(result_df)
+    assert len(handler_output.index) == 1
 
 
 def test_unsupported_result_format(module_under_test):
@@ -70,10 +90,10 @@ def test_unsupported_result_format(module_under_test):
         result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
         format = "foobar"
         result_handler = module_under_test.TextResultHandler(
-            format, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+            format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
         )
 
-        handler_output = result_handler.execute(SAMPLE_CONFIG, result_df)
+        handler_output = result_handler.execute(result_df)
         assert handler_output["A"].sum() == result_df["A"].sum()
 
 
@@ -82,9 +102,9 @@ def test_columns_to_print(module_under_test, capsys):
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
     format = "table"
     result_handler = module_under_test.TextResultHandler(
-        format, SAMPLE_RESULT_COLUMNS_FILTER_LIST
+        format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
-    result_handler.execute(SAMPLE_CONFIG, result_df)
+    result_handler.execute(result_df)
 
     grid_text = "│A│C││0│2││4│6││8│10│"
     printed_text = capsys.readouterr().out

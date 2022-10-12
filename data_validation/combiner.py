@@ -71,15 +71,12 @@ def generate_report(
             "Expected source and target to have same schema, got "
             f"source: {source_names} target: {target_names}"
         )
-
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
     )
-
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
     )
-
     target_pivot = _pivot_result(
         target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
     )
@@ -245,7 +242,6 @@ def _pivot_result(result, join_on_fields, validations, result_type):
         else all_fields
     )
     pivots = []
-
     for field in validation_fields:
         if field not in validations:
             continue
@@ -287,7 +283,6 @@ def _pivot_result(result, join_on_fields, validations, result_type):
                     + join_on_fields
                 )
             )
-
     pivot = functools.reduce(lambda pivot1, pivot2: pivot1.union(pivot2), pivots)
     return pivot
 

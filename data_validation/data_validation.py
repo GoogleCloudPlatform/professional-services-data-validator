@@ -98,7 +98,7 @@ class DataValidation(object):
             )
 
         # Call Result Handler to Manage Results
-        return self.result_handler.execute(self.config, result_df)
+        return self.result_handler.execute(result_df)
 
     def _add_random_row_filter(self):
         """Add random row filters to the validation builder."""

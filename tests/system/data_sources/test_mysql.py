@@ -47,6 +47,7 @@ CONFIG_COUNT_VALID = {
         },
     ],
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 CONFIG_SCHEMA_VALID = {
@@ -56,6 +57,7 @@ CONFIG_SCHEMA_VALID = {
     consts.CONFIG_SCHEMA_NAME: "guestbook",
     consts.CONFIG_TABLE_NAME: "entries",
     consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FILTER_STATUS: None,
 }
 
 

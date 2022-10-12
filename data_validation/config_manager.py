@@ -300,6 +300,11 @@ class ConfigManager(object):
         """Return the exclusion columns from Config"""
         return self._config.get(consts.CONFIG_EXCLUSION_COLUMNS, [])
 
+    @property
+    def filter_status(self):
+        """Return filter status list from Config"""
+        return self._config.get(consts.CONFIG_FILTER_STATUS, None)
+
     def append_exclusion_columns(self, column_configs):
         """Append exclusion columns to existing config."""
         self._config[consts.CONFIG_EXCLUSION_COLUMNS] = (
@@ -385,8 +390,11 @@ class ConfigManager(object):
                 cols_filter_list = consts.SCHEMA_VALIDATION_COLUMN_FILTER_LIST
             else:
                 cols_filter_list = consts.COLUMN_FILTER_LIST
+            # handler that display results either to output or in a file
             return TextResultHandler(
-                self._config.get(consts.CONFIG_FORMAT, "table"), cols_filter_list
+                self._config.get(consts.CONFIG_FORMAT, "table"),
+                self.filter_status,
+                cols_filter_list,
             )
 
         result_type = self.result_handler_config[consts.CONFIG_TYPE]
@@ -405,7 +413,10 @@ class ConfigManager(object):
             else:
                 credentials = None
             return BigQueryResultHandler.get_handler_for_project(
-                project_id, table_id=table_id, credentials=credentials
+                project_id,
+                self.filter_status,
+                table_id=table_id,
+                credentials=credentials,
             )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")
@@ -425,6 +436,7 @@ class ConfigManager(object):
         target_client=None,
         result_handler_config=None,
         filter_config=None,
+        filter_status=None,
         verbose=False,
     ):
         if isinstance(filter_config, dict):
@@ -452,6 +464,7 @@ class ConfigManager(object):
             consts.CONFIG_FILTERS: filter_config,
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
+            consts.CONFIG_FILTER_STATUS: filter_status,
         }
 
         return ConfigManager(
@@ -693,6 +706,14 @@ class ConfigManager(object):
                 "upper",
                 "concat",
                 "hash",
+            ]
+        if calc_type == "concat":
+            order_of_operations = [
+                "cast",
+                "ifnull",
+                "rstrip",
+                "upper",
+                "concat",
             ]
         column_aliases = {}
         col_names = []

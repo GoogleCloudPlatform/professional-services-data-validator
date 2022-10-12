@@ -81,6 +81,7 @@ def test_sql_server_count(cloud_sql):
             },
         ],
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: None,
     }
 
     data_validator = data_validation.DataValidation(
@@ -94,7 +95,6 @@ def test_sql_server_count(cloud_sql):
 def test_sql_server_row(cloud_sql):
     """Test row validation on SQL Server instance"""
     config_row_valid = {
-        # BigQuery Specific Connection Config
         consts.CONFIG_SOURCE_CONN: CONN,
         consts.CONFIG_TARGET_CONN: CONN,
         # Validation Type
@@ -156,6 +156,7 @@ def test_sql_server_row(cloud_sql):
             }
         ],
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: None,
     }
 
     data_validator = data_validation.DataValidation(
@@ -174,6 +175,7 @@ def test_schema_validation():
         consts.CONFIG_SCHEMA_NAME: "dbo",
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: None,
     }
 
     validator = data_validation.DataValidation(config, verbose=True)

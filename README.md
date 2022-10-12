@@ -14,7 +14,7 @@ perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
-* Row validation (BQ, Hive, Teradata, Oracle, SQL Server only)
+* Row validation (BQ, Hive, Teradata, Oracle, SQL Server, Postgres only)
 * Schema validation 
 * Custom Query validation
 * Ad hoc SQL exploration
@@ -124,6 +124,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
@@ -133,8 +135,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, and SQL Server.
-Struct and array data types are not currently supported and random row is not yet supported for Oracle or SQL Server.
+(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, and Postgres. Struct and array data types are not currently supported and random row is not yet supported for SQL Server.
 In addition, please note that SHA256 is not a supported function on Teradata systems. 
 If you wish to perform this comparison on Teradata you will need to 
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
@@ -172,6 +173,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
   --hash COLUMNS        Comma separated list of columns to hash or * for all columns 
+  --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -191,6 +193,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Finds a set of random rows of the first primary key supplied.
   [--random-row-batch-size or -rbs]
                         Row batch size used for random row filters (default 10,000).
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 #### Schema Validations
@@ -219,6 +223,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
                         YAML Config File Path to be used for storing validations.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
   [--exclusion-columns or -ec EXCLUSION_COLUMNS]
                         Comma separated list of columns to be excluded from the schema validation, i.e col_a,col_b.                    
 ```
@@ -260,6 +266,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
@@ -312,6 +320,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)

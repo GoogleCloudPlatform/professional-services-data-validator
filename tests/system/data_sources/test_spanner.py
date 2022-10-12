@@ -114,6 +114,7 @@ def count_config(spanner_connection_config, database_id):
             },
         ],
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: None,
     }
 
 
@@ -151,6 +152,7 @@ def grouped_config(spanner_connection_config, database_id):
             },
         ],
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: None,
     }
 
 
