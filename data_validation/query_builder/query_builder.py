@@ -466,13 +466,12 @@ class QueryBuilder(object):
         # else:
         #     return [field.compile(table) for field in self.calculated_fields]
 
-    def compile(self, table):
+    def compile(self, validation_type, table):
         """Return an Ibis query object
 
         Args:
             table (IbisTable): The Ibis Table expression.
         """
-        
         calc_table = table
 
         # Build Query Expressions

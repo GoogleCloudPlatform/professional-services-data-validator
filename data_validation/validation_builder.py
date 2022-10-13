@@ -366,7 +366,7 @@ class ValidationBuilder(object):
                 self.config_manager.source_table,
             )
 
-        query = self.source_builder.compile(table)
+        query = self.source_builder.compile(self.validation_type, table)
         if self.verbose:
             logging.info(source_config)
             logging.info("-- ** Source Query ** --")
@@ -394,7 +394,7 @@ class ValidationBuilder(object):
                 self.config_manager.target_table,
             )
 
-        query = self.target_builder.compile(table)
+        query = self.target_builder.compile(self.validation_type, table)
         if self.verbose:
             logging.info(target_config)
             logging.info("-- ** Target Query ** --")
