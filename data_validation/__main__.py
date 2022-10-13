@@ -186,8 +186,11 @@ def build_config_from_args(args, config_manager):
 
         if args.custom_query_type.lower() == consts.COLUMN_VALIDATION.lower():
             config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        
-        if args.custom_query_type.lower() == consts.ROW_VALIDATION.lower() and args.primary_keys is None:
+
+        if (
+            args.custom_query_type.lower() == consts.ROW_VALIDATION.lower()
+            and args.primary_keys is None
+        ):
             raise ValueError(
                 "Expected valid primary keys for custom query row validation, got None."
             )
