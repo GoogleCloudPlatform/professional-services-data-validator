@@ -31,15 +31,6 @@ from data_validation.data_validation import DataValidation
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
 
-# Log level mappings for the input argument of log level string
-LOG_LEVEL_MAP = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL,
-}
-
 
 def _get_arg_config_file(args):
     """Return String yaml config file path."""
@@ -71,14 +62,6 @@ def get_aggregate_config(args, config_manager):
         "int64",
         "decimal",
         "timestamp",
-        "float64[non-nullable]",
-        "float32[non-nullable]",
-        "int8[non-nullable]",
-        "int16[non-nullable]",
-        "int32[non-nullable]",
-        "int64[non-nullable]",
-        "decimal[non-nullable]",
-        "timestamp[non-nullable]",
     ]
 
     if args.wildcard_include_string_len:
@@ -183,6 +166,32 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
+    if config_manager.validation_type == consts.CUSTOM_QUERY:
+        if args.custom_query_type is not None:
+            config_manager.append_custom_query_type(args.custom_query_type)
+        else:
+            raise ValueError(
+                "Expected custom query type to be given, got empty string."
+            )
+
+        if args.source_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.source_query_file)
+            source_query_str = config_manager.get_query_from_file(query_file[0])
+            config_manager.append_source_query(source_query_str)
+
+        if args.target_query_file is not None:
+            query_file = cli_tools.get_arg_list(args.target_query_file)
+            target_query_str = config_manager.get_query_from_file(query_file[0])
+            config_manager.append_target_query(target_query_str)
+
+        if args.custom_query_type.lower() == consts.COLUMN_VALIDATION.lower():
+            config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+        
+        if args.custom_query_type.lower() == consts.ROW_VALIDATION.lower() and args.primary_keys is None:
+            raise ValueError(
+                "Expected valid primary keys for custom query row validation, got None."
+            )
+
     config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
 
     if config_manager.validation_type == consts.COLUMN_VALIDATION:
@@ -209,23 +218,9 @@ def build_config_from_args(args, config_manager):
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
         )
+        calc_type = args.hash or args.concat
         if calc_type is not None and calc_type != "*":
             config_manager.append_dependent_aliases(primary_keys)
-
-    if config_manager.validation_type == consts.CUSTOM_QUERY:
-        config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        if args.custom_query_type is not None:
-            config_manager.append_custom_query_type(args.custom_query_type)
-        else:
-            raise ValueError(
-                "Expected custom query type to be given, got empty string."
-            )
-        if args.source_query_file is not None:
-            query_file = cli_tools.get_arg_list(args.source_query_file)
-            config_manager.append_source_query_file(query_file)
-        if args.target_query_file is not None:
-            query_file = cli_tools.get_arg_list(args.target_query_file)
-            config_manager.append_target_query_file(query_file)
 
     return config_manager
 
@@ -279,8 +274,14 @@ def build_config_managers_from_args(args):
     )
 
     is_filesystem = source_client._source_type == "FileSystem"
+    # is_custom_query = validate_cmd == consts.CUSTOM_QUERY
+    try:
+        tables_list = args.tables_list
+    except Exception as e:
+        logging.error(e)
+        tables_list = None
     tables_list = cli_tools.get_tables_list(
-        args.tables_list, default_value=[{}], is_filesystem=is_filesystem
+        tables_list, default_value=[{}], is_filesystem=is_filesystem
     )
 
     filter_status = None
@@ -534,15 +535,13 @@ def validate(args):
 
 
 def main():
-
-    # Create Parser and Get Deployment Info
-    args = cli_tools.get_parsed_args()
     logging.basicConfig(
-        level=LOG_LEVEL_MAP[args.log_level],
+        level=logging.INFO,
         format="%(asctime)s-%(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
-
+    # Create Parser and Get Deployment Info
+    args = cli_tools.get_parsed_args()
     if args.command == "connections":
         run_connections(args)
     elif args.command == "run-config":
