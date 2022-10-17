@@ -429,7 +429,7 @@ _operation_registry.update(
         ops.MinRank: unary(lambda arg: sa.func.rank()),
         ops.PercentRank: unary(lambda arg: sa.func.percent_rank()),
         ops.NullIf: fixed_arity(sa.func.nullif, 2),
-        ops.IfNull: fixed_arity(sa.func.coalesce, 2),
+        ops.IfNull: fixed_arity(sa.func.isnull, 2),
         ms_ops.Between: _between,
         ops.Translate: fixed_arity('translate', 3),
         ms_ops.NotAny: _not_any1,
