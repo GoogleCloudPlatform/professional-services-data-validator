@@ -179,7 +179,6 @@ def build_config_from_args(args, config_manager):
                 config_manager.build_column_configs(grouped_columns)
             )
     elif config_manager.validation_type == consts.ROW_VALIDATION:
-        calc_type = args.hash or args.concat
         if args.comparison_fields is not None:
             comparison_fields = cli_tools.get_arg_list(
                 args.comparison_fields, default_value=[]
