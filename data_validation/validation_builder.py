@@ -410,21 +410,3 @@ class ValidationBuilder(object):
         limit = self.config_manager.query_limit
         self.source_builder.limit = limit
         self.target_builder.limit = limit
-
-    def get_query_from_file(self, filename):
-        """Return query from input file"""
-        query = ""
-        try:
-            file = open(filename, "r")
-            query = file.read()
-            query = query.rstrip(";\n")
-        except IOError:
-            logging.warning("Cannot read query file: ", filename)
-
-        if not query or query.isspace():
-            raise ValueError(
-                "Expected file with sql query, got empty file or file with white spaces. "
-                f"input file: {filename}"
-            )
-        file.close()
-        return query

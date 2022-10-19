@@ -754,6 +754,7 @@ class ConfigManager(object):
         try:
             file = open(filename, "r")
             query = file.read()
+            query = query.rstrip(";\n")
         except IOError:
             logging.warning("Cannot read query file: ", filename)
 
