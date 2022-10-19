@@ -56,7 +56,6 @@ SAMPLE_ROW_CONFIG = {
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_PRIMARY_KEYS: "id",
     consts.CONFIG_CALCULATED_FIELDS: ["name", "station_id"],
-    consts.CONFIG_DEPENDENT_ALIASES: ["id", "name", "station_id"],
 }
 
 AGGREGATE_CONFIG_A = {
@@ -315,18 +314,3 @@ def test_get_primary_keys_list(module_under_test):
     ]
     res = config_manager.get_primary_keys_list()
     assert res == ["id", "sample_id"]
-
-
-def test_dependent_aliases(module_under_test):
-    config_manager = module_under_test.ConfigManager(
-        SAMPLE_ROW_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
-    )
-    config_manager.append_dependent_aliases(["location", "bike"])
-
-    assert config_manager.dependent_aliases == [
-        "id",
-        "name",
-        "station_id",
-        "location",
-        "bike",
-    ]
