@@ -488,11 +488,12 @@ def _configure_schema_parser(schema_parser):
 
 def _configure_custom_query_parser(custom_query_parser):
     """Configure arguments to run custom-query validations."""
-    _add_common_arguments(custom_query_parser)
+    _add_common_arguments(custom_query_parser, consts.CUSTOM_QUERY)
     custom_query_parser.add_argument(
         "--custom-query-type",
         "-cqt",
         required=True,
+        choices=["row", "column"],
         help="Which type of custom query (row/column)",
     )
     custom_query_parser.add_argument(

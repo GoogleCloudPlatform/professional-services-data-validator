@@ -472,7 +472,6 @@ class QueryBuilder(object):
         Args:
             table (IbisTable): The Ibis Table expression.
         """
-        calc_table = table
 
         # Build Query Expressions
         if self.calculated_fields:
@@ -481,23 +480,15 @@ class QueryBuilder(object):
                 for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
-                calc_table = calc_table.mutate(
-                    self.compile_calculated_fields(calc_table, n)
-                )
+                table = table.mutate(self.compile_calculated_fields(table, n))
 
         if validation_type == consts.ROW_VALIDATION:
-            calc_table = calc_table.projection(
-                self.compile_comparison_fields(calc_table)
-            )
+            table = table.projection(self.compile_comparison_fields(table))
         else:
             if self.comparison_fields:
-                calc_table = calc_table.mutate(
-                    self.compile_comparison_fields(calc_table)
-                )
-        compiled_filters = self.compile_filter_fields(calc_table)
-        filtered_table = (
-            calc_table.filter(compiled_filters) if compiled_filters else calc_table
-        )
+                table = table.mutate(self.compile_comparison_fields(table))
+        compiled_filters = self.compile_filter_fields(table)
+        filtered_table = table.filter(compiled_filters) if compiled_filters else table
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
             filtered_table.groupby(compiled_groups)
