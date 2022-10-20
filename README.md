@@ -297,10 +297,6 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
-  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
-                        Comma separated list of tables in the form schema.table=target_schema.target_table
-                        Target schema name and table name are optional.
-                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   --custom-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
                         Type of custom query validation: ('row'|'column')
                         Enter 'row' for custom query column validation
@@ -309,6 +305,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql commands
   --hash '*'            '*' to hash all columns.
+  --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns
+                        (use if a common hash function is not available between databases)
   --primary-key or -pk JOIN_KEY
                        Common column between source and target tables for join
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
