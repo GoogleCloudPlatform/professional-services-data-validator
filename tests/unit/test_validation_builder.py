@@ -242,4 +242,3 @@ def test_custom_query_validation(module_under_test):
     assert (
         builder.config_manager.source_query_file == "tests/resources/custom-query.sql"
     )
-

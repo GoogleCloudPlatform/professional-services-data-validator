@@ -89,6 +89,7 @@ CUSTOM_QUERY_VALIDATION_CONFIG = {
     consts.CONFIG_TARGET_QUERY_FILE: "tests/resources/custom-query.sql",
 }
 
+
 class MockIbisClient(object):
     _source_type = "BigQuery"
 
@@ -348,9 +349,11 @@ def test_dependent_aliases(module_under_test):
 
 
 def test_custom_query_get_query_from_file(module_under_test):
-    config_manager = module_under_test.ConfigManager(CUSTOM_QUERY_VALIDATION_CONFIG,
+    config_manager = module_under_test.ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
         MockIbisClient(),
         MockIbisClient(),
-        verbose=False,)
+        verbose=False,
+    )
     query = config_manager.get_query_from_file(config_manager.source_query_file)
     assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
