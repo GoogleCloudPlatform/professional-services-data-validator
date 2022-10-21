@@ -294,14 +294,13 @@ def build_config_managers_from_args(args):
     )
 
     is_filesystem = source_client._source_type == "FileSystem"
-    if config_type == consts.CUSTOM_QUERY:
-        tables_list = cli_tools.get_tables_list(
-            [], default_value=[{}], is_filesystem=is_filesystem
-        )
-    else:
-        tables_list = cli_tools.get_tables_list(
+    tables_list = (
+        cli_tools.get_tables_list(
             args.tables_list, default_value=[{}], is_filesystem=is_filesystem
         )
+        if config_type != consts.CUSTOM_QUERY
+        else [{}]
+    )
 
     filter_status = None
     if args.filter_status is not None:
