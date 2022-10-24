@@ -311,7 +311,7 @@ class CalculatedField(object):
         config["default_string"] = (
             ibis.literal("DEFAULT_REPLACEMENT_STRING")
             if config.get("default_null_string") is None
-            else config.get("default_null_string")
+            else ibis.literal(config.get("default_null_string"))
         )
         fields = [fields[0], config["default_string"]]
         return CalculatedField(
