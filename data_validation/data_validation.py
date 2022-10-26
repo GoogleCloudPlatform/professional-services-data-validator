@@ -313,22 +313,6 @@ class DataValidation(object):
             source_df = self.config_manager.source_client.execute(source_query)
             target_df = self.config_manager.target_client.execute(target_query)
 
-            # Drop excess fields for row validation to avoid pandas errors for unsupported column data types (i.e structs)
-            if (
-                self.config_manager.validation_type == consts.ROW_VALIDATION
-                and self.config_manager.dependent_aliases
-            ):
-                source_df.drop(
-                    source_df.columns.difference(self.config_manager.dependent_aliases),
-                    axis=1,
-                    inplace=True,
-                )
-                target_df.drop(
-                    target_df.columns.difference(self.config_manager.dependent_aliases),
-                    axis=1,
-                    inplace=True,
-                )
-
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose
             )

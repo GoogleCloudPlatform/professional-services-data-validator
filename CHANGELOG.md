@@ -2,6 +2,20 @@
 
 ## Untagged
 
+## [2.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.4.0...v2.5.0) (2022-10-18)
+
+
+### Features
+
+* adding scaffold for concatenate as a cli operation ([#566](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/566)) ([ec4ef33](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ec4ef33fe68051d6a00bb0eba227296a57887a6f))
+
+
+### Bug Fixes
+
+* Custom query validation throwing error with sql files ending with semicolon(;) ([#591](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/591)) ([16a89ac](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/16a89ac64489b9bff16407c6d31b6b220e24bb06))
+* Row validation optimization to avoid select all columns ([#599](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/599)) ([de3758e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/de3758ef4b40eb6c443658546d5c8f5843e58b75))
+* update function to return non-unicode string ([#615](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/615)) ([e334c65](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e334c6544a78fa384381c4e306b6b7fcb2b2eb0d))
+
 ## [2.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.3.0...v2.4.0) (2022-10-06)
 
 

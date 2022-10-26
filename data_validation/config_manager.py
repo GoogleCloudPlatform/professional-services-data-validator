@@ -134,17 +134,6 @@ class ConfigManager(object):
         )
 
     @property
-    def dependent_aliases(self):
-        """Return all columns that are needed in final dataframe for row validations."""
-        return self._config.get(consts.CONFIG_DEPENDENT_ALIASES, [])
-
-    def append_dependent_aliases(self, dependent_aliases):
-        """Appends columns that are needed in final dataframe for row validations."""
-        self._config[consts.CONFIG_DEPENDENT_ALIASES] = (
-            self.dependent_aliases + dependent_aliases
-        )
-
-    @property
     def query_groups(self):
         """Return Query Groups from Config"""
         return self._config.get(consts.CONFIG_GROUPED_COLUMNS, [])

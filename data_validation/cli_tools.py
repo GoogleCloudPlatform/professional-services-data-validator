@@ -666,21 +666,6 @@ def threshold_float(x):
     return x
 
 
-# def _get_data_validation_directory():
-#     raw_dir_path = (
-#         os.environ.get(consts.ENV_DIRECTORY_VAR) or consts.DEFAULT_ENV_DIRECTORY
-#     )
-#     dir_path = os.path.expanduser(raw_dir_path)
-#     if not os.path.exists(dir_path):
-#         os.makedirs(dir_path)
-#     return dir_path
-
-# def _get_connection_file(connection_name):
-#     dir_path = _get_data_validation_directory()
-#     file_name = f"{connection_name}.connection.json"
-#     return os.path.join(dir_path, file_name)
-
-
 def _generate_random_name(conn):
     name = f"{conn[consts.SOURCE_TYPE]}_{str(uuid.uuid4())}"
     return name
@@ -690,28 +675,6 @@ def store_connection(connection_name, conn):
     """Store the connection config under the given name."""
     mgr = state_manager.StateManager()
     mgr.create_connection(connection_name, conn)
-
-
-#     connection_name = connection_name or _generate_random_name(conn)
-#     file_path = _get_connection_file(connection_name)
-
-#     with open(file_path, "w") as file:
-#         file.write(json.dumps(conn))
-
-# def get_connections():
-#     """ Return dict with connection name and path key pairs."""
-#     connections = {}
-
-#     dir_path = _get_data_validation_directory()
-#     all_config_files = os.listdir(dir_path)
-#     for config_file in all_config_files:
-#         if config_file.endswith(".connection.json"):
-#             config_file_path = os.path.join(dir_path, config_file)
-#             conn_name = config_file.split(".")[0]
-
-#             connections[conn_name] = config_file_path
-
-#     return connections
 
 
 def list_connections():
@@ -727,11 +690,6 @@ def get_connection(connection_name):
     """Return dict connection details for a specific connection."""
     mgr = state_manager.StateManager()
     return mgr.get_connection_config(connection_name)
-
-
-#     with open(file_path, "r") as file:
-#         conn_str = file.read()
-#     return json.loads(conn_str)
 
 
 def store_validation(validation_file_name, yaml_config):
@@ -775,28 +733,25 @@ def get_filters(filter_value):
 
     filter_value (str): Filter argument specified.
     """
-    try:
-        filter_config = json.loads(filter_value)
-    except json.decoder.JSONDecodeError:
-        filter_config = []
-        filter_vals = filter_value.split(":")
-        if len(filter_vals) == 1:
-            filter_dict = {
-                "type": "custom",
-                "source": filter_vals[0],
-                "target": filter_vals[0],
-            }
-        elif len(filter_vals) == 2:
-            if not filter_vals[1]:
-                raise ValueError("Please provide valid target filter.")
-            filter_dict = {
-                "type": "custom",
-                "source": filter_vals[0],
-                "target": filter_vals[1],
-            }
-        else:
-            raise ValueError("Unable to parse filter arguments.")
-        filter_config.append(filter_dict)
+    filter_config = []
+    filter_vals = filter_value.split(":")
+    if len(filter_vals) == 1:
+        filter_dict = {
+            "type": "custom",
+            "source": filter_vals[0],
+            "target": filter_vals[0],
+        }
+    elif len(filter_vals) == 2:
+        if not filter_vals[1]:
+            raise ValueError("Please provide valid target filter.")
+        filter_dict = {
+            "type": "custom",
+            "source": filter_vals[0],
+            "target": filter_vals[1],
+        }
+    else:
+        raise ValueError("Unable to parse filter arguments.")
+    filter_config.append(filter_dict)
     return filter_config
 
 
@@ -806,21 +761,18 @@ def get_result_handler(rc_value, sa_file=None):
     rc_value (str): Result config argument specified.
     sa_file (str): SA path argument specified.
     """
-    try:
-        result_handler = json.loads(rc_value)
-    except json.decoder.JSONDecodeError:
-        config = rc_value.split(".", 1)
-        if len(config) == 2:
-            result_handler = {
-                "type": "BigQuery",
-                "project_id": config[0],
-                "table_id": config[1],
-            }
-        else:
-            raise ValueError(f"Unable to parse result handler config: `{rc_value}`")
+    config = rc_value.split(".", 1)
+    if len(config) == 2:
+        result_handler = {
+            "type": "BigQuery",
+            "project_id": config[0],
+            "table_id": config[1],
+        }
+    else:
+        raise ValueError(f"Unable to parse result handler config: `{rc_value}`")
 
-        if sa_file:
-            result_handler["google_service_account_key_path"] = sa_file
+    if sa_file:
+        result_handler["google_service_account_key_path"] = sa_file
 
     return result_handler
 
@@ -854,48 +806,44 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
     if not arg_tables:
         return default_value
 
-    try:
-        # Backwards compatibility for JSON input
-        tables_list = json.loads(arg_tables)
-    except json.decoder.JSONDecodeError:
-        tables_list = []
-        tables_mapping = list(csv.reader([arg_tables]))[0]
-        source_schema_required = False if is_filesystem else True
+    tables_list = []
+    tables_mapping = list(csv.reader([arg_tables]))[0]
+    source_schema_required = False if is_filesystem else True
 
-        for mapping in tables_mapping:
-            tables_map = mapping.split("=")
-            if len(tables_map) == 1:
-                schema, table = split_table(
-                    tables_map, schema_required=source_schema_required
-                )
-                table_dict = {
-                    "schema_name": schema,
-                    "table_name": table,
-                }
-            elif len(tables_map) == 2:
-                src_schema, src_table = split_table(
-                    [tables_map[0]], schema_required=source_schema_required
-                )
+    for mapping in tables_mapping:
+        tables_map = mapping.split("=")
+        if len(tables_map) == 1:
+            schema, table = split_table(
+                tables_map, schema_required=source_schema_required
+            )
+            table_dict = {
+                "schema_name": schema,
+                "table_name": table,
+            }
+        elif len(tables_map) == 2:
+            src_schema, src_table = split_table(
+                [tables_map[0]], schema_required=source_schema_required
+            )
 
-                table_dict = {
-                    "schema_name": src_schema,
-                    "table_name": src_table,
-                }
+            table_dict = {
+                "schema_name": src_schema,
+                "table_name": src_table,
+            }
 
-                targ_schema, targ_table = split_table(
-                    [tables_map[1]], schema_required=False
-                )
+            targ_schema, targ_table = split_table(
+                [tables_map[1]], schema_required=False
+            )
 
-                if targ_schema:
-                    table_dict["target_schema_name"] = targ_schema
-                table_dict["target_table_name"] = targ_table
+            if targ_schema:
+                table_dict["target_schema_name"] = targ_schema
+            table_dict["target_table_name"] = targ_table
 
-            else:
-                raise ValueError(
-                    "Unable to parse tables list. Please provide valid mapping."
-                )
+        else:
+            raise ValueError(
+                "Unable to parse tables list. Please provide valid mapping."
+            )
 
-            tables_list.append(table_dict)
+        tables_list.append(table_dict)
 
     return tables_list
 
