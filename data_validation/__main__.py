@@ -171,7 +171,6 @@ def build_config_from_args(args, config_manager):
     """
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
-        calc_type = args.hash or args.concat
         if args.custom_query_type is not None:
             config_manager.append_custom_query_type(args.custom_query_type)
         else:
