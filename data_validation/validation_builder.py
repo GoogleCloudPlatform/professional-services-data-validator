@@ -14,7 +14,7 @@
 import logging
 from copy import deepcopy
 
-from data_validation import consts, metadata, clients
+from data_validation import consts, metadata
 from data_validation.query_builder.query_builder import (
     AggregateField,
     CalculatedField,
@@ -356,15 +356,9 @@ class ValidationBuilder(object):
         }
 
         if self.validation_type == consts.CUSTOM_QUERY:
-            table = clients.get_ibis_query(
-                self.source_client, self.config_manager.source_query
-            )
+            table = self.config_manager.get_source_ibis_table_from_query()
         else:
-            table = clients.get_ibis_table(
-                self.source_client,
-                self.config_manager.source_schema,
-                self.config_manager.source_table,
-            )
+            table = self.config_manager.get_source_ibis_table()
 
         query = self.source_builder.compile(self.validation_type, table)
         if self.verbose:
@@ -384,15 +378,9 @@ class ValidationBuilder(object):
         }
 
         if self.validation_type == consts.CUSTOM_QUERY:
-            table = clients.get_ibis_query(
-                self.target_client, self.config_manager.target_query
-            )
+            table = self.config_manager.get_target_ibis_table_from_query()
         else:
-            table = clients.get_ibis_table(
-                self.target_client,
-                self.config_manager.target_schema,
-                self.config_manager.target_table,
-            )
+            table = self.config_manager.get_target_ibis_table()
 
         query = self.target_builder.compile(self.validation_type, table)
         if self.verbose:

@@ -184,6 +184,40 @@ def build_config_from_args(args, config_manager):
         config_manager (ConfigManager): Validation config manager instance.
     """
 
+    if config_manager.validation_type == consts.CUSTOM_QUERY:
+        calc_type = args.hash or args.concat
+        if args.custom_query_type is not None:
+            config_manager.append_custom_query_type(args.custom_query_type)
+        else:
+            raise ValueError(
+                "Expected custom query type to be given, got empty string."
+            )
+
+        if args.source_query_file is not None:
+            source_query_str = config_manager.get_query_from_file(
+                args.source_query_file
+            )
+            config_manager.append_source_query(source_query_str)
+
+        if args.target_query_file is not None:
+            target_query_str = config_manager.get_query_from_file(
+                args.target_query_file
+            )
+            config_manager.append_target_query(target_query_str)
+
+        if args.custom_query_type.lower() == consts.COLUMN_VALIDATION.lower():
+            config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+
+        if (
+            args.custom_query_type.lower() == consts.ROW_VALIDATION.lower()
+            and args.primary_keys is None
+        ):
+            raise ValueError(
+                "Expected valid primary keys for custom query row validation, got None."
+            )
+
+    config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
+
     if config_manager.validation_type == consts.COLUMN_VALIDATION:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if args.grouped_columns is not None:
@@ -202,37 +236,6 @@ def build_config_from_args(args, config_manager):
             )
             if calc_type is not None and calc_type != "*":
                 config_manager.append_dependent_aliases(comparison_fields)
-    elif config_manager.validation_type == consts.CUSTOM_QUERY:
-        calc_type = args.hash or args.concat
-        if args.custom_query_type is not None:
-            config_manager.append_custom_query_type(args.custom_query_type)
-        else:
-            raise ValueError(
-                "Expected custom query type to be given, got empty string."
-            )
-
-        if args.source_query_file is not None:
-            query_file = args.source_query_file
-            source_query_str = config_manager.get_query_from_file(query_file)
-            config_manager.append_source_query(source_query_str)
-
-        if args.target_query_file is not None:
-            query_file = args.target_query_file
-            target_query_str = config_manager.get_query_from_file(query_file)
-            config_manager.append_target_query(target_query_str)
-
-        if args.custom_query_type.lower() == consts.COLUMN_VALIDATION.lower():
-            config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-
-        if (
-            args.custom_query_type.lower() == consts.ROW_VALIDATION.lower()
-            and args.primary_keys is None
-        ):
-            raise ValueError(
-                "Expected valid primary keys for custom query row validation, got None."
-            )
-
-    config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
 
     if args.primary_keys is not None:
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
@@ -328,6 +331,7 @@ def build_config_managers_from_args(args):
             filter_status=filter_status,
             verbose=args.verbose,
         )
+
         if config_type != consts.SCHEMA_VALIDATION:
             config_manager = build_config_from_args(args, config_manager)
         else:
