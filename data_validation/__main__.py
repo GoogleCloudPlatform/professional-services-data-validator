@@ -241,6 +241,10 @@ def build_config_managers_from_args(args):
         config_type = consts.ROW_VALIDATION
     elif validate_cmd == "Custom-query":
         config_type = consts.CUSTOM_QUERY
+        if args.tables_list is not None:
+            logging.warning(
+                "tables-list/tbls flag is depcrecated for custom-query validations, supplied tables list will be ignored."
+            )
     else:
         raise ValueError(f"Unknown Validation Type: {validate_cmd}")
 
@@ -277,12 +281,8 @@ def build_config_managers_from_args(args):
     )
 
     is_filesystem = source_client._source_type == "FileSystem"
-    tables_list = (
-        cli_tools.get_tables_list(
-            args.tables_list, default_value=[{}], is_filesystem=is_filesystem
-        )
-        if config_type != consts.CUSTOM_QUERY
-        else [{}]
+    tables_list = cli_tools.get_tables_list(
+        args.tables_list, default_value=[{}], is_filesystem=is_filesystem
     )
 
     filter_status = None

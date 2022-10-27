@@ -241,10 +241,6 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
-  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
-                        Comma separated list of tables in the form schema.table=target_schema.target_table
-                        Target schema name and table name are optional.
-                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   --custom-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
                         Type of custom query validation: ('row'|'column')
                         Enter 'column' for custom query column validation
