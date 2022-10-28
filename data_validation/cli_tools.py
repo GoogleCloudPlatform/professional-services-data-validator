@@ -141,7 +141,8 @@ CONNECTION_SOURCE_FIELDS = {
 def get_parsed_args():
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
-    return parser.parse_args()
+    args = None if sys.argv[1:] else ["--help"]
+    return parser.parse_args(args)
 
 
 def configure_arg_parser():
@@ -597,7 +598,7 @@ def _add_common_arguments(parser, query_type="ANY"):
         "--target-conn", "-tc", required=True, help="Target connection name"
     )
 
-    ##  remove tables-list from custom query validation
+    # remove tables-list from custom query validation
     if query_type != consts.CUSTOM_QUERY:
         parser.add_argument(
             "--tables-list",
