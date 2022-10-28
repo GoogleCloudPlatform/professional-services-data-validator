@@ -171,32 +171,18 @@ def build_config_from_args(args, config_manager):
     """
 
     if config_manager.validation_type == consts.CUSTOM_QUERY:
-        if args.custom_query_type is not None:
-            config_manager.append_custom_query_type(args.custom_query_type)
-        else:
-            raise ValueError(
-                "Expected custom query type to be given, got empty string."
-            )
+        config_manager.append_custom_query_type(args.custom_query_type)
 
-        if args.source_query_file is not None:
-            source_query_str = config_manager.get_query_from_file(
-                args.source_query_file
-            )
-            config_manager.append_source_query(source_query_str)
+        source_query_str = config_manager.get_query_from_file(args.source_query_file)
+        config_manager.append_source_query(source_query_str)
 
-        if args.target_query_file is not None:
-            target_query_str = config_manager.get_query_from_file(
-                args.target_query_file
-            )
-            config_manager.append_target_query(target_query_str)
+        target_query_str = config_manager.get_query_from_file(args.target_query_file)
+        config_manager.append_target_query(target_query_str)
 
-        if args.custom_query_type.lower() == consts.COLUMN_VALIDATION.lower():
+        if args.custom_query_type == consts.COLUMN_VALIDATION.lower():
             config_manager.append_aggregates(get_aggregate_config(args, config_manager))
 
-        if (
-            args.custom_query_type.lower() == consts.ROW_VALIDATION.lower()
-            and args.primary_keys is None
-        ):
+        elif not args.primary_keys:
             raise ValueError(
                 "Expected valid primary keys for custom query row validation, got None."
             )
@@ -241,10 +227,6 @@ def build_config_managers_from_args(args):
         config_type = consts.ROW_VALIDATION
     elif validate_cmd == "Custom-query":
         config_type = consts.CUSTOM_QUERY
-        if args.tables_list is not None:
-            logging.warning(
-                "tables-list/tbls flag is depcrecated for custom-query validations, supplied tables list will be ignored."
-            )
     else:
         raise ValueError(f"Unknown Validation Type: {validate_cmd}")
 
@@ -281,6 +263,12 @@ def build_config_managers_from_args(args):
     )
 
     is_filesystem = source_client._source_type == "FileSystem"
+
+    if config_type == consts.CUSTOM_QUERY and args.tables_list is not None:
+        args.tables_list = None
+        logging.warning(
+            "tables-list/tbls flag is not supported for custom-query validations, supplied tables list will be ignored."
+        )
     tables_list = cli_tools.get_tables_list(
         args.tables_list, default_value=[{}], is_filesystem=is_filesystem
     )
