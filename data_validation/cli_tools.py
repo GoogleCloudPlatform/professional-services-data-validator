@@ -488,7 +488,7 @@ def _configure_schema_parser(schema_parser):
 
 def _configure_custom_query_parser(custom_query_parser):
     """Configure arguments to run custom-query validations."""
-    _add_common_arguments(custom_query_parser, consts.CUSTOM_QUERY)
+    _add_common_arguments(custom_query_parser)
     custom_query_parser.add_argument(
         "--custom-query-type",
         "-cqt",
@@ -589,7 +589,7 @@ def _configure_custom_query_parser(custom_query_parser):
     )
 
 
-def _add_common_arguments(parser, query_type="ANY"):
+def _add_common_arguments(parser):
     parser.add_argument(
         "--source-conn", "-sc", required=True, help="Source connection name"
     )
