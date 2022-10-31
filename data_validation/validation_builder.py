@@ -15,7 +15,6 @@ import logging
 from copy import deepcopy
 
 from data_validation import consts, metadata
-from data_validation.query_builder.custom_query_builder import CustomQueryBuilder
 from data_validation.query_builder.query_builder import (
     AggregateField,
     CalculatedField,
@@ -353,37 +352,15 @@ class ValidationBuilder(object):
             "data_client": self.source_client,
             "schema_name": self.config_manager.source_schema,
             "table_name": self.config_manager.source_table,
+            "source_query": self.config_manager.source_query,
         }
+
         if self.validation_type == consts.CUSTOM_QUERY:
-            source_input_query = self.get_query_from_file(
-                self.config_manager.source_query_file[0]
-            )
-            if self.config_manager.custom_query_type == "row":
-                calculated_query = CustomQueryBuilder().compile_custom_query(
-                    source_input_query, source_config
-                )
-                query = self.source_client.sql(calculated_query)
-            elif self.config_manager.custom_query_type == "column":
-                source_aggregate_query = "SELECT "
-                for aggregate in self.config_manager.aggregates:
-                    source_aggregate_query += (
-                        CustomQueryBuilder().get_aggregation_query(
-                            aggregate.get("type"), aggregate.get("target_column")
-                        )
-                    )
-                source_aggregate_query = (
-                    CustomQueryBuilder().get_wrapper_aggregation_query(
-                        source_aggregate_query, source_input_query
-                    )
-                )
-                query = self.source_client.sql(source_aggregate_query)
-            else:
-                raise ValueError(
-                    "Expected custom query type to be column or row, got an unacceptable value. "
-                    f"Input custom query type: {self.config_manager.custom_query_type}"
-                )
+            table = self.config_manager.get_source_ibis_table_from_query()
         else:
-            query = self.source_builder.compile(self.validation_type, **source_config)
+            table = self.config_manager.get_source_ibis_table()
+
+        query = self.source_builder.compile(self.validation_type, table)
         if self.verbose:
             logging.info(source_config)
             logging.info("-- ** Source Query ** --")
@@ -397,37 +374,15 @@ class ValidationBuilder(object):
             "data_client": self.target_client,
             "schema_name": self.config_manager.target_schema,
             "table_name": self.config_manager.target_table,
+            "target_query": self.config_manager.target_query,
         }
+
         if self.validation_type == consts.CUSTOM_QUERY:
-            target_input_query = self.get_query_from_file(
-                self.config_manager.target_query_file[0]
-            )
-            if self.config_manager.custom_query_type == "row":
-                calculated_query = CustomQueryBuilder().compile_custom_query(
-                    target_input_query, target_config
-                )
-                query = self.target_client.sql(calculated_query)
-            elif self.config_manager.custom_query_type == "column":
-                target_aggregate_query = "SELECT "
-                for aggregate in self.config_manager.aggregates:
-                    target_aggregate_query += (
-                        CustomQueryBuilder().get_aggregation_query(
-                            aggregate.get("type"), aggregate.get("target_column")
-                        )
-                    )
-                target_aggregate_query = (
-                    CustomQueryBuilder().get_wrapper_aggregation_query(
-                        target_aggregate_query, target_input_query
-                    )
-                )
-                query = self.target_client.sql(target_aggregate_query)
-            else:
-                raise ValueError(
-                    "Expected custom query type to be column or row, got an unacceptable value. "
-                    f"Input custom query type: {self.config_manager.custom_query_type}"
-                )
+            table = self.config_manager.get_target_ibis_table_from_query()
         else:
-            query = self.target_builder.compile(self.validation_type, **target_config)
+            table = self.config_manager.get_target_ibis_table()
+
+        query = self.target_builder.compile(self.validation_type, table)
         if self.verbose:
             logging.info(target_config)
             logging.info("-- ** Target Query ** --")
@@ -443,21 +398,3 @@ class ValidationBuilder(object):
         limit = self.config_manager.query_limit
         self.source_builder.limit = limit
         self.target_builder.limit = limit
-
-    def get_query_from_file(self, filename):
-        """Return query from input file"""
-        query = ""
-        try:
-            file = open(filename, "r")
-            query = file.read()
-            query = query.rstrip(";\n")
-        except IOError:
-            logging.warning("Cannot read query file: ", filename)
-
-        if not query or query.isspace():
-            raise ValueError(
-                "Expected file with sql query, got empty file or file with white spaces. "
-                f"input file: {filename}"
-            )
-        file.close()
-        return query

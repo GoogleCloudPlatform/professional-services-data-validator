@@ -169,6 +169,24 @@ def build_config_from_args(args, config_manager):
     Args:
         config_manager (ConfigManager): Validation config manager instance.
     """
+
+    if config_manager.validation_type == consts.CUSTOM_QUERY:
+        config_manager.append_custom_query_type(args.custom_query_type)
+
+        source_query_str = config_manager.get_query_from_file(args.source_query_file)
+        config_manager.append_source_query(source_query_str)
+
+        target_query_str = config_manager.get_query_from_file(args.target_query_file)
+        config_manager.append_target_query(target_query_str)
+
+        if args.custom_query_type == consts.COLUMN_VALIDATION.lower():
+            config_manager.append_aggregates(get_aggregate_config(args, config_manager))
+
+        elif not args.primary_keys:
+            raise ValueError(
+                "Expected valid primary keys for custom query row validation, got None."
+            )
+
     config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
 
     if config_manager.validation_type == consts.COLUMN_VALIDATION:
@@ -192,21 +210,6 @@ def build_config_from_args(args, config_manager):
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
         )
-
-    if config_manager.validation_type == consts.CUSTOM_QUERY:
-        config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        if args.custom_query_type is not None:
-            config_manager.append_custom_query_type(args.custom_query_type)
-        else:
-            raise ValueError(
-                "Expected custom query type to be given, got empty string."
-            )
-        if args.source_query_file is not None:
-            query_file = cli_tools.get_arg_list(args.source_query_file)
-            config_manager.append_source_query_file(query_file)
-        if args.target_query_file is not None:
-            query_file = cli_tools.get_arg_list(args.target_query_file)
-            config_manager.append_target_query_file(query_file)
 
     return config_manager
 
@@ -260,6 +263,12 @@ def build_config_managers_from_args(args):
     )
 
     is_filesystem = source_client._source_type == "FileSystem"
+
+    if config_type == consts.CUSTOM_QUERY and args.tables_list is not None:
+        args.tables_list = None
+        logging.warning(
+            "tables-list/tbls flag is not supported for custom-query validations, supplied tables list will be ignored."
+        )
     tables_list = cli_tools.get_tables_list(
         args.tables_list, default_value=[{}], is_filesystem=is_filesystem
     )
@@ -290,6 +299,7 @@ def build_config_managers_from_args(args):
             filter_status=filter_status,
             verbose=args.verbose,
         )
+
         if config_type != consts.SCHEMA_VALIDATION:
             config_manager = build_config_from_args(args, config_manager)
         else:
@@ -515,7 +525,6 @@ def validate(args):
 
 
 def main():
-
     # Create Parser and Get Deployment Info
     args = cli_tools.get_parsed_args()
     logging.basicConfig(
@@ -523,7 +532,6 @@ def main():
         format="%(asctime)s-%(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
-
     if args.command == "connections":
         run_connections(args)
     elif args.command == "run-config":

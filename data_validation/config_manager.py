@@ -271,6 +271,20 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_THRESHOLD, 0.0)
 
     @property
+    def source_query(self):
+        return self._config.get(consts.CONFIG_SOURCE_QUERY, None)
+
+    def append_source_query(self, source_query):
+        self._config["source_query"] = source_query
+
+    @property
+    def target_query(self):
+        return self._config.get(consts.CONFIG_TARGET_QUERY, None)
+
+    def append_target_query(self, target_query):
+        self._config["target_query"] = target_query
+
+    @property
     def exclusion_columns(self):
         """Return the exclusion columns from Config"""
         return self._config.get(consts.CONFIG_EXCLUSION_COLUMNS, [])
@@ -294,10 +308,20 @@ class ConfigManager(object):
             )
         return self._source_ibis_table
 
+    def get_source_ibis_table_from_query(self):
+        """Return IbisTable from source."""
+        self._source_ibis_table = clients.get_ibis_query(
+            self.source_client, self.source_query
+        )
+        return self._source_ibis_table
+
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
         n: Int the depth of subquery requested"""
-        table = self.get_source_ibis_table()
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.get_source_ibis_table_from_query()
+        else:
+            table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.source_builder.compile_calculated_fields(table, n=depth)
@@ -313,10 +337,20 @@ class ConfigManager(object):
             )
         return self._target_ibis_table
 
+    def get_target_ibis_table_from_query(self):
+        """Return IbisTable from source."""
+        self._target_ibis_table = clients.get_ibis_query(
+            self.target_client, self.target_query
+        )
+        return self._target_ibis_table
+
     def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
         n: Int the depth of subquery requested"""
-        table = self.get_target_ibis_table()
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.get_target_ibis_table_from_query()
+        else:
+            table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
         calculated_table = table.mutate(
             vb.target_builder.compile_calculated_fields(table, n=depth)
@@ -702,3 +736,21 @@ class ConfigManager(object):
                     column_aliases[name] = i
                     col_names.append(col)
         return col_names
+
+    def get_query_from_file(self, filename):
+        """Return query from input file"""
+        query = ""
+        try:
+            file = open(filename, "r")
+            query = file.read()
+            query = query.rstrip(";\n")
+        except IOError:
+            logging.warning("Cannot read query file: ", filename)
+
+        if not query or query.isspace():
+            raise ValueError(
+                "Expected file with sql query, got empty file or file with white spaces. "
+                f"input file: {filename}"
+            )
+        file.close()
+        return query

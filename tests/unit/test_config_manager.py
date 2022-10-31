@@ -72,6 +72,22 @@ GROUPED_COLUMN_CONFIG_A = {
     consts.CONFIG_CAST: None,
 }
 
+CUSTOM_QUERY_VALIDATION_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": None,
+    "target_conn": None,
+    # Validation Type
+    consts.CONFIG_TYPE: "Custom-query",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_CALCULATED_FIELDS: [],
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_FILTERS: [],
+    consts.CONFIG_SOURCE_QUERY_FILE: "tests/resources/custom-query.sql",
+    consts.CONFIG_TARGET_QUERY_FILE: "tests/resources/custom-query.sql",
+}
+
 
 class MockIbisClient(object):
     _source_type = "BigQuery"
@@ -314,3 +330,14 @@ def test_get_primary_keys_list(module_under_test):
     ]
     res = config_manager.get_primary_keys_list()
     assert res == ["id", "sample_id"]
+
+
+def test_custom_query_get_query_from_file(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    query = config_manager.get_query_from_file(config_manager.source_query_file)
+    assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"

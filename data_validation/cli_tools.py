@@ -493,16 +493,19 @@ def _configure_custom_query_parser(custom_query_parser):
         "--custom-query-type",
         "-cqt",
         required=True,
+        choices=["row", "column"],
         help="Which type of custom query (row/column)",
     )
     custom_query_parser.add_argument(
         "--source-query-file",
         "-sqf",
+        required=True,
         help="File containing the source sql query",
     )
     custom_query_parser.add_argument(
         "--target-query-file",
         "-tqf",
+        required=True,
         help="File containing the target sql query",
     )
     custom_query_parser.add_argument(
@@ -539,6 +542,11 @@ def _configure_custom_query_parser(custom_query_parser):
         "--hash",
         "-hash",
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    custom_query_parser.add_argument(
+        "--concat",
+        "-concat",
+        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
     )
     custom_query_parser.add_argument(
         "--filters",
@@ -588,11 +596,14 @@ def _add_common_arguments(parser):
     parser.add_argument(
         "--target-conn", "-tc", required=True, help="Target connection name"
     )
+
     parser.add_argument(
         "--tables-list",
         "-tbls",
+        default=None,
         help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
     )
+
     parser.add_argument(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
     )

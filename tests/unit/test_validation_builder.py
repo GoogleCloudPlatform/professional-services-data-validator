@@ -227,30 +227,3 @@ def test_validation_add_filters(module_under_test):
     filter_field = builder.source_builder.filters[0]
 
     assert filter_field.left == "column_name > 100"
-
-
-def test_custom_query_validation(module_under_test):
-    mock_config_manager = ConfigManager(
-        CUSTOM_QUERY_VALIDATION_CONFIG,
-        MockIbisClient(),
-        MockIbisClient(),
-        verbose=False,
-    )
-    builder = module_under_test.ValidationBuilder(mock_config_manager)
-
-    assert not builder.verbose
-    assert (
-        builder.config_manager.source_query_file == "tests/resources/custom-query.sql"
-    )
-
-
-def test_custom_query_get_query_from_file(module_under_test):
-    mock_config_manager = ConfigManager(
-        CUSTOM_QUERY_VALIDATION_CONFIG,
-        MockIbisClient(),
-        MockIbisClient(),
-        verbose=False,
-    )
-    builder = module_under_test.ValidationBuilder(mock_config_manager)
-    query = builder.get_query_from_file(builder.config_manager.source_query_file)
-    assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"

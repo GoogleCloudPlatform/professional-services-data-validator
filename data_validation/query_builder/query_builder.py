@@ -14,7 +14,7 @@
 
 import logging
 import ibis
-from data_validation import clients, consts
+from data_validation import consts
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
 
@@ -466,15 +466,12 @@ class QueryBuilder(object):
         # else:
         #     return [field.compile(table) for field in self.calculated_fields]
 
-    def compile(self, validation_type, data_client, schema_name, table_name):
+    def compile(self, validation_type, table):
         """Return an Ibis query object
 
         Args:
-            data_client (IbisClient): The client used to validate the query.
-            schema_name (String): The name of the schema for the given table.
-            table_name (String): The name of the table to query.
+            table (IbisTable): The Ibis Table expression.
         """
-        calc_table = clients.get_ibis_table(data_client, schema_name, table_name)
 
         # Build Query Expressions
         if self.calculated_fields:
@@ -483,23 +480,15 @@ class QueryBuilder(object):
                 for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
-                calc_table = calc_table.mutate(
-                    self.compile_calculated_fields(calc_table, n)
-                )
+                table = table.mutate(self.compile_calculated_fields(table, n))
 
         if validation_type == consts.ROW_VALIDATION:
-            calc_table = calc_table.projection(
-                self.compile_comparison_fields(calc_table)
-            )
+            table = table.projection(self.compile_comparison_fields(table))
         else:
             if self.comparison_fields:
-                calc_table = calc_table.mutate(
-                    self.compile_comparison_fields(calc_table)
-                )
-        compiled_filters = self.compile_filter_fields(calc_table)
-        filtered_table = (
-            calc_table.filter(compiled_filters) if compiled_filters else calc_table
-        )
+                table = table.mutate(self.compile_comparison_fields(table))
+        compiled_filters = self.compile_filter_fields(table)
+        filtered_table = table.filter(compiled_filters) if compiled_filters else table
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
             filtered_table.groupby(compiled_groups)

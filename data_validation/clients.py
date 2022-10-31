@@ -145,6 +145,11 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=schema_name)
 
 
+def get_ibis_query(client, query):
+    """Return Ibis Table from query expression for Supplied Client."""
+    return client.sql(query)
+
+
 def get_ibis_table_schema(client, schema_name, table_name):
     """Return Ibis Table Schema for Supplied Client.
 
