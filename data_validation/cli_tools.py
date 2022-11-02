@@ -141,7 +141,8 @@ CONNECTION_SOURCE_FIELDS = {
 def get_parsed_args():
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
-    return parser.parse_args()
+    args = None if sys.argv[1:] else ["--help"]
+    return parser.parse_args(args)
 
 
 def configure_arg_parser():
