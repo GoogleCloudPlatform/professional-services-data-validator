@@ -45,12 +45,11 @@ data-validation run-config -c ex_yaml.yaml
 import argparse
 import csv
 import json
+import logging
 import sys
 import uuid
-import logging
 
-from data_validation import consts
-from data_validation import state_manager
+from data_validation import consts, state_manager
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -250,6 +249,11 @@ def _configure_validation_config_parser(subparsers):
         "--config-file",
         "-c",
         help="YAML Config File Path to be used for building or running validations.",
+    )
+    run_parser.add_argument(
+        "--config-dir",
+        "-cdir",
+        help="Directory path containing YAML Config Files to be used for building or running validations.",
     )
 
     get_parser = configs_subparsers.add_parser(

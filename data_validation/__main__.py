@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import json
+import logging
 import os
 import sys
-import logging
+
 from yaml import Dumper, dump
 
 from data_validation import (
@@ -47,6 +48,14 @@ def _get_arg_config_file(args):
         raise ValueError("YAML Config File was not supplied.")
 
     return args.config_file
+
+
+def _get_arg_config_dir(args):
+    """Return String yaml config directory path."""
+    if not args.config_dir:
+        raise ValueError("YAML Config Directory was not supplied.")
+
+    return args.config_dir
 
 
 def _get_yaml_config_from_file(config_file_path):
@@ -314,11 +323,23 @@ def build_config_managers_from_args(args):
     return configs
 
 
-def build_config_managers_from_yaml(args):
-    """Returns List[ConfigManager] instances ready to be executed."""
-    config_managers = []
+def config_runner(args):
+    if args.config_dir:
+        config_files = [
+            os.path.join(args.config_dir, file)
+            for file in os.listdir(_get_arg_config_dir(args))
+            if file.lower().endswith(".yaml")
+        ]
+        print(config_files)
+        exit(1)  # IN PROGRESS
+    else:
+        config_file_path = _get_arg_config_file(args)
+        config_managers = build_config_managers_from_yaml(args, config_file_path)
+        run_validations(args, config_managers)
 
-    config_file_path = _get_arg_config_file(args)
+
+def build_config_managers_from_yaml(args, config_file_path):
+    """Returns List[ConfigManager] instances ready to be executed."""
     yaml_configs = _get_yaml_config_from_file(config_file_path)
 
     mgr = state_manager.StateManager()
@@ -328,6 +349,7 @@ def build_config_managers_from_yaml(args):
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
+    config_managers = []
     for config in yaml_configs[consts.YAML_VALIDATIONS]:
         config[consts.CONFIG_SOURCE_CONN] = source_conn
         config[consts.CONFIG_TARGET_CONN] = target_conn
@@ -497,15 +519,15 @@ def run_connections(args):
 
 def run_config(args):
     """Run commands related to validation config YAMLs (legacy - superceded by run_validation_configs)."""
-    config_managers = build_config_managers_from_yaml(args)
+    config_file_path = _get_arg_config_file(args)
+    config_managers = build_config_managers_from_yaml(args, config_file_path)
     run_validations(args, config_managers)
 
 
 def run_validation_configs(args):
     """Run commands related to validation config YAMLs."""
     if args.validation_config_cmd == "run":
-        config_managers = build_config_managers_from_yaml(args)
-        run_validations(args, config_managers)
+        config_runner(args)
     elif args.validation_config_cmd == "list":
         cli_tools.list_validations()
     elif args.validation_config_cmd == "get":

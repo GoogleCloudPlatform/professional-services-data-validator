@@ -19,7 +19,6 @@ from data_validation import cli_tools, clients, consts, data_validation, state_m
 from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 
-
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
 BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
@@ -448,12 +447,18 @@ def test_cli_store_yaml_then_run_gcs():
 
     # Run generated config using 'run-config' command
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
-    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    config_file_path = main._get_arg_config_file(run_config_args)
+    config_managers = main.build_config_managers_from_yaml(
+        run_config_args, config_file_path
+    )
     main.run_validations(run_config_args, config_managers)
 
     # Run generated config using 'configs run' command
     run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
-    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    config_file_path = main._get_arg_config_file(run_config_args)
+    config_managers = main.build_config_managers_from_yaml(
+        run_config_args, config_file_path
+    )
     main.run_validations(run_config_args, config_managers)
 
     # _remove_bq_conn()
@@ -482,12 +487,18 @@ def test_cli_store_yaml_then_run_local():
 
     # Run generated config using 'run-config' command
     run_config_args = parser.parse_args(CLI_RUN_CONFIG_ARGS)
-    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    config_file_path = main._get_arg_config_file(run_config_args)
+    config_managers = main.build_config_managers_from_yaml(
+        run_config_args, config_file_path
+    )
     main.run_validations(run_config_args, config_managers)
 
     # Run generated config using 'configs run' command
     run_config_args = parser.parse_args(CLI_CONFIGS_RUN_ARGS)
-    config_managers = main.build_config_managers_from_yaml(run_config_args)
+    config_file_path = main._get_arg_config_file(run_config_args)
+    config_managers = main.build_config_managers_from_yaml(
+        run_config_args, config_file_path
+    )
     main.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
