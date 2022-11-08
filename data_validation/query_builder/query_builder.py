@@ -307,6 +307,16 @@ class CalculatedField(object):
             )
 
     @staticmethod
+    def to_char(config, fields):
+        if config.get("default_to_char_fmt") is None:
+            fmt = "FM90.099"
+        else:
+            fmt = config.get("default_to_char_fmt")
+        return CalculatedField(
+            ibis.expr.api.NumericValue.to_char, config, fields, fmt=fmt
+        )
+
+    @staticmethod
     def ifnull(config, fields):
         config["default_string"] = (
             ibis.literal("DEFAULT_REPLACEMENT_STRING")
