@@ -521,7 +521,7 @@ class ConfigManager(object):
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
                     source_column, target_column, calc_func, cast_type, depth
                 )
-                source_column, target_column = pre_calculated_config[
+                source_column = target_column = pre_calculated_config[
                     consts.CONFIG_FIELD_ALIAS
                 ]
                 depth = 1
@@ -558,12 +558,13 @@ class ConfigManager(object):
 
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
-        arg_value_columns = [x.casefold() for x in arg_value]
 
-        if arg_value and supported_types:
-            supported_types.append("string")
+        if arg_value:
+            arg_value = [x.casefold() for x in arg_value]
+            if supported_types:
+                supported_types.append("string")
 
-        allowlist_columns = arg_value_columns or casefold_source_columns
+        allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
             # Get column type and remove precision/scale attributes
             column_type_str = str(source_table[casefold_source_columns[column]].type())
