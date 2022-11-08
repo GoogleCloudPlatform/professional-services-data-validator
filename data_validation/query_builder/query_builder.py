@@ -308,22 +308,15 @@ class CalculatedField(object):
 
     @staticmethod
     def to_char(config, fields):
-        if config.get("default_to_char_fmt") is None:
-            fmt = "FM90.099"
-        else:
-            fmt = config.get("default_to_char_fmt")
+        fmt = ibis.literal(config.get("default_to_char_fmt", "FM90.099"))
         return CalculatedField(
             ibis.expr.api.NumericValue.to_char, config, fields, fmt=fmt
         )
 
     @staticmethod
     def ifnull(config, fields):
-        config["default_string"] = (
-            ibis.literal("DEFAULT_REPLACEMENT_STRING")
-            if config.get("default_null_string") is None
-            else ibis.literal(config.get("default_null_string"))
-        )
-        fields = [fields[0], config["default_string"]]
+        default_null_string = ibis.literal(config.get("default_null_string", "DEFAULT_REPLACEMENT_STRING"))
+        fields = [fields[0], default_null_string]
         return CalculatedField(
             ibis.expr.api.ValueExpr.fillna,
             config,

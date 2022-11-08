@@ -66,9 +66,9 @@ class HashBytes(ValueOp):
     how = Arg(rlz.isin({"sha256", "farm_fingerprint"}))
     output_type = rlz.shape_like("arg", "binary")
 
-class to_char(ValueOp):
+class ToChar(ValueOp):
     arg = Arg(rlz.one_of([rlz.value(dt.Decimal), rlz.value(dt.float64)]))
-    fmt = Arg(rlz.isin({"FM90.099"}))
+    fmt = Arg(rlz.string)
     output_type = rlz.shape_like("arg", dt.string)
 
 class RawSQL(Comparison):
@@ -100,7 +100,7 @@ def compile_hashbytes(binary_value, how):
 
 
 def compile_to_char(numeric_value, fmt):
-    return to_char(numeric_value, fmt=fmt).to_expr()
+    return ToChar(numeric_value, fmt=fmt).to_expr()
     
 
 def format_hash_bigquery(translator, expr):
@@ -199,7 +199,8 @@ def sa_format_hashbytes_postgres(translator, expr):
 def sa_format_to_char(translator, expr):
     arg, fmt = expr.op().args
     compiled_arg = translator.translate(arg)
-    return sa.func.to_char(compiled_arg, fmt)
+    compiled_fmt = translator.translate(fmt)
+    return sa.func.to_char(compiled_arg, compiled_fmt)
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
 IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
@@ -222,9 +223,9 @@ ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
-OracleExprTranslator._registry[to_char] = sa_format_to_char
+OracleExprTranslator._registry[ToChar] = sa_format_to_char
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
-PostgreSQLExprTranslator._registry[to_char] = sa_format_to_char
+PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
