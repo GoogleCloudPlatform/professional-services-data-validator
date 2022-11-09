@@ -33,7 +33,7 @@ import ibis.expr.rules as rlz
 from data_validation.clients import _raise_missing_client_error
 from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
 from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
-from ibis.expr.types import BinaryValue, IntegerColumn, StringValue
+from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
 from ibis.backends.base_sqlalchemy.alchemy import AlchemyExprTranslator
@@ -66,6 +66,10 @@ class HashBytes(ValueOp):
     how = Arg(rlz.isin({"sha256", "farm_fingerprint"}))
     output_type = rlz.shape_like("arg", "binary")
 
+class ToChar(ValueOp):
+    arg = Arg(rlz.one_of([rlz.value(dt.Decimal), rlz.value(dt.float64)]))
+    fmt = Arg(rlz.string)
+    output_type = rlz.shape_like("arg", dt.string)
 
 class RawSQL(Comparison):
     pass
@@ -94,6 +98,10 @@ def format_hash_bigquery(translator, expr):
 def compile_hashbytes(binary_value, how):
     return HashBytes(binary_value, how=how).to_expr()
 
+
+def compile_to_char(numeric_value, fmt):
+    return ToChar(numeric_value, fmt=fmt).to_expr()
+    
 
 def format_hash_bigquery(translator, expr):
     arg, how = expr.op().args
@@ -188,6 +196,11 @@ def sa_format_hashbytes_postgres(translator, expr):
     hash_func = sa.func.sha256(convert)
     return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
 
+def sa_format_to_char(translator, expr):
+    arg, fmt = expr.op().args
+    compiled_arg = translator.translate(arg)
+    compiled_fmt = translator.translate(fmt)
+    return sa.func.to_char(compiled_arg, compiled_fmt)
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
 IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
@@ -195,6 +208,7 @@ BinaryValue.hash = compile_hash
 StringValue.hash = compile_hash
 BinaryValue.hashbytes = compile_hashbytes
 StringValue.hashbytes = compile_hashbytes
+NumericValue.to_char = compile_to_char
 BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
@@ -209,7 +223,9 @@ ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
+OracleExprTranslator._registry[ToChar] = sa_format_to_char
 TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
+PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
