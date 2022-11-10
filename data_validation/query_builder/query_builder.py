@@ -315,7 +315,9 @@ class CalculatedField(object):
 
     @staticmethod
     def ifnull(config, fields):
-        default_null_string = ibis.literal(config.get("default_null_string", "DEFAULT_REPLACEMENT_STRING"))
+        default_null_string = ibis.literal(
+            config.get("default_null_string", "DEFAULT_REPLACEMENT_STRING")
+        )
         fields = [fields[0], default_null_string]
         return CalculatedField(
             ibis.expr.api.ValueExpr.fillna,
