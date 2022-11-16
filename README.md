@@ -135,7 +135,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, and Postgres. Struct and array data types are not currently supported and random row is not yet supported for SQL Server.
+(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, and Postgres. Struct and array data types are not currently supported.
 In addition, please note that SHA256 is not a supported function on Teradata systems. 
 If you wish to perform this comparison on Teradata you will need to 
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)

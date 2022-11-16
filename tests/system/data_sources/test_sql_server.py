@@ -157,6 +157,8 @@ def test_sql_server_row(cloud_sql):
         ],
         consts.CONFIG_FORMAT: "table",
         consts.CONFIG_FILTER_STATUS: None,
+        consts.CONFIG_RANDOM_ROW_BATCH_SIZE: "5",
+        consts.CONFIG_USE_RANDOM_ROWS: True,
     }
 
     data_validator = data_validation.DataValidation(
@@ -165,6 +167,7 @@ def test_sql_server_row(cloud_sql):
     )
     df = data_validator.execute()
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df.shape[0] == 5
 
 
 def test_schema_validation():
