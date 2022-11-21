@@ -51,6 +51,7 @@ RANDOM_SORT_SUPPORTS = {
     ImpalaClient: "RAND()",
     clients.OracleClient: "DBMS_RANDOM.VALUE",
     PostgreSQLClient: "RANDOM()",
+    clients.MSSQLClient: "NEWID()",
 }
 
 
