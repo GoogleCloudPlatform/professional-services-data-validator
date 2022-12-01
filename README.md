@@ -480,8 +480,8 @@ to validate a subset of the table.
 Please note that SHA256 is not a supported function on Teradata systems. If you wish to perform
 this comparison on Teradata you will need to [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).
 
-The concat validation (`--concat '*'`) will do everything except the hash. It will sanitize
-and concat the whole row, and then value compare the results.
+The concat validation (`--concat '*'`) will do everything up until the hash. It will sanitize
+and concatenate the specified columns, and then value compare the results.
 
 Comparison field validations (`--comp-fields column`) involve an value comparison of the
 column values. These values will be compared via a JOIN on their corresponding primary
