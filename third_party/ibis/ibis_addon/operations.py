@@ -33,7 +33,7 @@ import ibis.expr.rules as rlz
 from data_validation.clients import _raise_missing_client_error
 from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
 from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
-from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue
+from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
 from ibis.backends.base_sqlalchemy.alchemy import AlchemyExprTranslator
@@ -67,7 +67,7 @@ class HashBytes(ValueOp):
     output_type = rlz.shape_like("arg", "binary")
 
 class ToChar(ValueOp):
-    arg = Arg(rlz.one_of([rlz.value(dt.Decimal), rlz.value(dt.float64)]))
+    arg = Arg(rlz.one_of([rlz.value(dt.Decimal), rlz.value(dt.float64), rlz.value(dt.Date), rlz.value(dt.Time), rlz.value(dt.Timestamp)]))
     fmt = Arg(rlz.string)
     output_type = rlz.shape_like("arg", dt.string)
 
