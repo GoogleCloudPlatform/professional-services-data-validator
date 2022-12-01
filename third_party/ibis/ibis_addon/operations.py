@@ -209,6 +209,7 @@ StringValue.hash = compile_hash
 BinaryValue.hashbytes = compile_hashbytes
 StringValue.hashbytes = compile_hashbytes
 NumericValue.to_char = compile_to_char
+TemporalValue.to_char = compile_to_char
 BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
