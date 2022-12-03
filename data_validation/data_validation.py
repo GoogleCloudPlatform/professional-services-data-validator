@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import json
+import logging
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 
 import ibis.backends.pandas
 import numpy
 import pandas
-import logging
 
 from data_validation import combiner, consts, metadata
 from data_validation.config_manager import ConfigManager
@@ -310,8 +311,21 @@ class DataValidation(object):
         )
 
         if process_in_memory:
-            source_df = self.config_manager.source_client.execute(source_query)
-            target_df = self.config_manager.target_client.execute(target_query)
+            futures = []
+            with ThreadPoolExecutor() as executor:
+                # Submit the two query network calls concurrently
+                futures.append(
+                    executor.submit(
+                        self.config_manager.source_client.execute, source_query
+                    )
+                )
+                futures.append(
+                    executor.submit(
+                        self.config_manager.target_client.execute, target_query
+                    )
+                )
+                source_df = futures[0].result()
+                target_df = futures[1].result()
 
             pd_schema = self._get_pandas_schema(
                 source_df, target_df, join_on_fields, verbose=self.verbose

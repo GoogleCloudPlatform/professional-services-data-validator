@@ -325,17 +325,20 @@ def build_config_managers_from_args(args):
 
 def config_runner(args):
     if args.config_dir:
-        config_files = [
+        config_file_paths = [
             os.path.join(args.config_dir, file)
             for file in os.listdir(_get_arg_config_dir(args))
             if file.lower().endswith(".yaml")
         ]
-        print(config_files)
-        exit(1)  # IN PROGRESS
+
+        config_managers = []
+        for file in config_file_paths:
+            config_managers.extend(build_config_managers_from_yaml(args, file))
     else:
         config_file_path = _get_arg_config_file(args)
         config_managers = build_config_managers_from_yaml(args, config_file_path)
-        run_validations(args, config_managers)
+
+    run_validations(args, config_managers)
 
 
 def build_config_managers_from_yaml(args, config_file_path):
