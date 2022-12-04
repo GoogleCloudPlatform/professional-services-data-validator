@@ -467,9 +467,9 @@ Grouped Columns contain the fields you want your aggregations to be broken out
 by, e.g. `SELECT last_updated::DATE, COUNT(*) FROM my.table` will produce a
 resultset that breaks down the count of rows per calendar date.
 
-### Hash and Comparison Fields
+### Hash, Concat, and Comparison Fields
 
-Row level validations can involve either a hash/checksum or comparison fields.
+Row level validations can involve either a hash/checksum, concat, or comparison fields.
 A hash validation (`--hash '*'`) will first sanitize the data with the following
 operations on all or selected columns: CAST to string, IFNULL replace with a default
 replacement string, RSTRIP, and UPPER. Then, it will CONCAT() the results
@@ -477,8 +477,11 @@ and run a SHA256() hash and compare the source and target results. Since each ro
 be returned in the result set, it is recommended to utilize the `--use-random-row` feature
 to validate a subset of the table.
 
-Please note that SHA256 is not a supported function on teradata systems. If you wish to perform
-this comparison on teradata you will need to [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).
+Please note that SHA256 is not a supported function on Teradata systems. If you wish to perform
+this comparison on Teradata you will need to [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).
+
+The concat validation (`--concat '*'`) will do everything up until the hash. It will sanitize
+and concatenate the specified columns, and then value compare the results.
 
 Comparison field validations (`--comp-fields column`) involve an value comparison of the
 column values. These values will be compared via a JOIN on their corresponding primary
@@ -499,7 +502,7 @@ Once a calculated field is defined, it can be referenced by other calculated
 fields at any "depth" or higher. Depth controls how many subqueries are executed
 in the resulting query. For example, with the following YAML config...
 
-```
+```yaml
 - calculated_fields:
     - field_alias: rtrim_col_a
       source_calculated_columns: ['col_a']
@@ -538,6 +541,34 @@ a INT field to BIGINT for aggregations.
 
 See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation) for a sample
 cast to NUMERIC.
+
+#### Custom Calculated Fields
+
+DVT supports certain functions required for row hash validation natively (i.e. CAST() and CONCAT()),
+which are listed in the CalculatedField() class methods in the [QueryBuilder](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/query_builder/query_builder.py).
+
+You can also specify custom functions (i.e. replace() or truncate()) from the Ibis expression
+[API reference](https://ibis-project.org/docs/3.2.0/api/expressions/). Keep in mind these will run
+on both source and target systems. You will need to specify the Ibis API expression and the parameters
+required, if any, with the 'params' block as shown below:
+
+```yaml
+- calculated_fields:
+  - depth: 0
+    field_alias: format_start_time
+    source_calculated_columns:
+    - start_time
+    target_calculated_columns:
+    - start_time
+    type: custom
+    ibis_expr: ibis.expr.api.TimestampValue.strftime
+    params:
+    - format_str: '%m%d%Y'
+```
+
+The above block references the [TimestampValue.strftime](https://ibis-project.org/docs/3.2.0/api/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
+See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-row-validation-yaml-with-custom-calc-field)
+for a sample YAML with a custom calculated field.
 
 ## Contributing
 
