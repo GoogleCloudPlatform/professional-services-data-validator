@@ -368,12 +368,17 @@ class CalculatedField(object):
         )
 
     @staticmethod
-    def custom(expr):
-        """Returns a CalculatedField instance built for any custom SQL using a supported operator.
+    def custom(config, fields):
+        """Returns a CalculatedField instance built for any custom ibis expression
+        i.e. 'ibis.expr.api.StringValue.replace'. For a list of supported functions,
+        see https://github.com/ibis-project/ibis/blob/1.4.0/ibis/expr/api.py
         Args:
-            expr (Str): A custom SQL expression used to filter a query
+            expr (Str): A custom ibis expression to be used as a calc field
         """
-        return CalculatedField(expr)
+        ibis_expr = config.get(consts.CONFIG_CUSTOM_IBIS_EXPR)
+        expr_params = config.get(consts.CONFIG_CUSTOM_PARAMS, [])
+        params = {k: v for d in expr_params for k, v in d.items()}
+        return CalculatedField(eval(ibis_expr), config, fields, **params)
 
     def _compile_fields(self, ibis_table, fields):
         compiled_fields = []

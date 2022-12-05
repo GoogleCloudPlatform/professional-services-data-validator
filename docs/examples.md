@@ -231,6 +231,53 @@ validations:
   use_random_rows: false
 ```
 
+#### Sample Row Validation YAML with Custom Calc Field
+
+This is a comparison field validation where DVT will first apply the
+calculated field and then value compare the result.
+
+```yaml
+result_handler: {}
+source: my_bq_conn
+target: my_bq_conn
+validations:
+- calculated_fields:
+  - depth: 0
+    field_alias: replace_name
+    source_calculated_columns:
+    - name
+    target_calculated_columns:
+    - name
+    type: custom
+    ibis_expr: ibis.expr.api.StringValue.replace
+    params:
+    - pattern: '/'
+    - replacement: '-'
+  comparison_fields:
+  - cast: null
+    field_alias: replace_name
+    source_column: replace_name
+    target_column: replace_name
+  filter_status: null
+  filters: []
+  format: table
+  labels: []
+  primary_keys:
+  - cast: null
+    field_alias: station_id
+    source_column: station_id
+    target_column: station_id
+  random_row_batch_size: '5'
+  schema_name: bigquery-public-data.new_york_citibike
+  table_name: citibike_stations
+  target_schema_name: bigquery-public-data.new_york_citibike
+  target_table_name: citibike_stations
+  threshold: 0.0
+  type: Row
+  use_random_rows: true
+```
+
+
 #### Run a custom query column validation
 ````shell script
 data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn

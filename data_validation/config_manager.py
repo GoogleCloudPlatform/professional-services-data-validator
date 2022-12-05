@@ -468,8 +468,8 @@ class ConfigManager(object):
         field_configs = []
         for field in fields:
             column_config = {
-                consts.CONFIG_SOURCE_COLUMN: field.casefold(),
-                consts.CONFIG_TARGET_COLUMN: field.casefold(),
+                consts.CONFIG_SOURCE_COLUMN: field,
+                consts.CONFIG_TARGET_COLUMN: field,
                 consts.CONFIG_FIELD_ALIAS: field,
                 consts.CONFIG_CAST: None,
             }
@@ -512,13 +512,13 @@ class ConfigManager(object):
         return aggregate_config
 
     def build_and_append_pre_agg_calc_config(
-        self, column, calc_func, cast_type=None, depth=0
+        self, source_column, target_column, calc_func, cast_type=None, depth=0
     ):
         """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
         calculated_config = {
-            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [column],
-            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [column],
-            consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{column}",
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [source_column],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [target_column],
+            consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{source_column}",
             consts.CONFIG_TYPE: calc_func,
             consts.CONFIG_DEPTH: depth,
         }
@@ -527,7 +527,7 @@ class ConfigManager(object):
             calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
             calculated_config[
                 consts.CONFIG_FIELD_ALIAS
-            ] = f"{calc_func}_{cast_type}__{column}"
+            ] = f"{calc_func}_{cast_type}__{source_column}"
 
         existing_calc_fields = [
             config[consts.CONFIG_FIELD_ALIAS] for config in self.calculated_fields
@@ -537,7 +537,9 @@ class ConfigManager(object):
             self.append_calculated_fields([calculated_config])
         return calculated_config
 
-    def append_pre_agg_calc_field(self, column, agg_type, column_type):
+    def append_pre_agg_calc_field(
+        self, source_column, target_column, agg_type, column_type
+    ):
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
 
@@ -551,9 +553,11 @@ class ConfigManager(object):
                 calc_func = "cast"
                 cast_type = "timestamp"
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
-                    column, calc_func, cast_type, depth
+                    source_column, target_column, calc_func, cast_type, depth
                 )
-                column = pre_calculated_config[consts.CONFIG_FIELD_ALIAS]
+                source_column = target_column = pre_calculated_config[
+                    consts.CONFIG_FIELD_ALIAS
+                ]
                 depth = 1
 
             calc_func = "epoch_seconds"
@@ -566,7 +570,7 @@ class ConfigManager(object):
             raise ValueError(f"Unsupported column type: {column_type}")
 
         calculated_config = self.build_and_append_pre_agg_calc_config(
-            column, calc_func, cast_type, depth
+            source_column, target_column, calc_func, cast_type, depth
         )
 
         aggregate_config = {
@@ -589,8 +593,10 @@ class ConfigManager(object):
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
-        if arg_value and supported_types:
-            supported_types.append("string")
+        if arg_value:
+            arg_value = [x.casefold() for x in arg_value]
+            if supported_types:
+                supported_types.append("string")
 
         allowlist_columns = arg_value or casefold_source_columns
         for column in casefold_source_columns:
@@ -626,7 +632,10 @@ class ConfigManager(object):
                 )
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
-                    column, agg_type, column_type
+                    casefold_source_columns[column],
+                    casefold_target_columns[column],
+                    agg_type,
+                    column_type,
                 )
 
             else:

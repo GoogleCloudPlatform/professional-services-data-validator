@@ -2,6 +2,20 @@
 
 ## Untagged
 
+## [2.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.5.0...v2.6.0) (2022-11-28)
+
+
+### Features
+
+* add random row support for MSSQL ([#633](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/633)) ([3041bd1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3041bd142ca48860a1861486dd10cdd791b7f8bf))
+* to_char support for Oracle and Postgres ([#632](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/632)) ([78f1ce9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/78f1ce9acc1e956106540a492c8d442485cd7f4c))
+
+
+### Bug Fixes
+
+* bare data-validation command throws exception ([#627](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/627)) ([7595c50](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7595c504cffd0609fd278c2889d71f5655d77592))
+* column validation casing to allow for case-insensitive match ([#626](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/626)) ([c694357](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c69435794571fe639ea215f76f496b665a928419))
+
 ## [2.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.4.0...v2.5.0) (2022-10-18)
 
 
