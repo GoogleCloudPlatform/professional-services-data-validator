@@ -22,7 +22,7 @@ import ibis.expr.schema as sch
 import ibis.expr.operations as ops
 
 
-def _schema_to_sqlalchemy_columns(schema: sch.Schema) -> list[sa.Column]:
+def _schema_to_sqlalchemy_columns(schema: sch.Schema):
     return [sa.column(n, _to_sqla_type(t)) for n, t in schema.items()]
 
 
