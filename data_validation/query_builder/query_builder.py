@@ -487,7 +487,10 @@ class QueryBuilder(object):
             for n in range(0, (depth_limit + 1)):
                 table = table.mutate(self.compile_calculated_fields(table, n))
 
-        if validation_type == consts.ROW_VALIDATION:
+        if (
+            validation_type == consts.ROW_VALIDATION
+            or validation_type == consts.CUSTOM_QUERY
+        ):
             table = table.projection(self.compile_comparison_fields(table))
         else:
             if self.comparison_fields:
