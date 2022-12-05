@@ -277,7 +277,7 @@ page provides few examples of how this tool can be used to run custom query vali
 
 #### Custom Query Row Validations 
 
-(Note: Row hash validation is currently only supported for BigQuery, Teradata, and
+(Note: Custom query row validation is currently only supported for BigQuery, Teradata, SQL Server, and
 Impala/Hive. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
