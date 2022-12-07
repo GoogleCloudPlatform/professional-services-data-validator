@@ -52,7 +52,7 @@ class SchemaValidation(object):
             target_fields[field_name] = data_type
 
         results = schema_validation_matching(
-            source_fields, target_fields, self.config_manager.exclusion_columns
+            source_fields, target_fields, self.config_manager.exclusion_columns, allow_list
         )
         df = pandas.DataFrame(
             results,
@@ -102,7 +102,7 @@ class SchemaValidation(object):
         return df
 
 
-def schema_validation_matching(source_fields, target_fields, exclusion_fields):
+def schema_validation_matching(source_fields, target_fields, exclusion_fields, allow_list):
     """Compare schemas between two dictionary objects"""
     results = []
     # Apply the casefold() function to lowercase the keys of source and target
@@ -120,6 +120,9 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
             source_fields_casefold.pop(field, None)
             target_fields_casefold.pop(field, None)
 
+    #allow list map in case of incompatible  data types in source and target
+    allow_list_map = parse_allow_list(allow_list)
+    
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields_casefold.items():
         # target field exists
@@ -136,6 +139,40 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                         consts.VALIDATION_STATUS_SUCCESS,
                     ]
                 )
+            elif source_field_type in allow_list_map:
+                target_field_type = allow_list_map[source_field_type]
+                if target_field_type == source_field_type:
+                    results.append(
+                        [
+                            source_field_name,
+                            source_field_name,
+                            str(source_field_type),
+                            str(target_field_type),
+                            consts.VALIDATION_STATUS_SUCCESS,
+                        ]
+                    ) 
+                else:                   
+                    bool_flag = parse_allowed_precision(source, target)
+                    if bool_flag:
+                        results.append(
+                            [
+                                source_field_name,
+                                source_field_name,
+                                str(source_field_type),
+                                str(target_field_type),
+                                consts.VALIDATION_STATUS_SUCCESS,
+                            ]
+                        ) 
+                    else:
+                        results.append(
+                            [
+                                source_field_name,
+                                source_field_name,
+                                str(source_field_type),
+                                str(target_field_type),
+                                consts.VALIDATION_STATUS_WARNING,
+                            ]
+                        )                                           
             # target data type mismatch
             else:
                 results.append(
@@ -172,3 +209,76 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields):
                 ]
             )
     return results
+
+def is_number(val):
+    try:
+        num = int(val)
+    except ValueError as e:
+        return False
+    return True
+
+def parse_allow_list(st):
+    output = {}
+    stack = []
+    key = None
+    for i in range(len(st)):
+        if st[i] == ":":
+            key = "".join(stack)
+            output[key] = None
+            stack = []
+            continue
+        if st[i] == "," and not is_number(st[i+1]):
+            value = "".join(stack)
+            output[key] = value
+            stack = []
+            i+=1
+            continue
+        stack.append(st[i])
+    value = "".join(stack)
+    output[key] = value
+    stack = []
+    return output
+
+def get_typea_numeric_sustr(st):
+    nums = []
+    for i in range(len(st)):
+        if is_number(st[i]):
+            nums.append(st[i])
+    num = "".join(nums)
+    if num == '':
+        return -1
+    return int(num)
+
+def get_typeb_numeric_sustr(st):
+    nums = []
+    first_half = st.split(",")[0]
+    second_half = st.split(",")[1]
+    first_half_num = get_typea_numeric_sustr(first_half)
+    second_half_num = get_typea_numeric_sustr(second_half)
+    return first_half_num, second_half_num
+
+def validate_typeb_vals(source, target):
+    if source[0] > target[0]:
+        return False
+    else:
+        if source[1] > target[1]:
+            return False
+    return True
+
+def parse_allowed_precision(source, target):
+    #Check for type of precisions supplied e.g: int8,Decimal(10,2),int
+    if "(" in source:
+        typeb_source = get_typeb_numeric_sustr(source)
+        typeb_target = get_typeb_numeric_sustr(target)
+        if validate_typeb_vals(typeb_source, typeb_target):
+            return True
+        return False
+    source_num = get_numeric_sustr(source)
+    target_num = get_numeric_sustr(target)
+    if source_num < target_num:
+        return False
+    return True
+
+
+
+
