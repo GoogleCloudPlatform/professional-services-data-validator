@@ -23,11 +23,11 @@ import ibis_bigquery
 import pandas
 import third_party.ibis.ibis_addon.datatypes
 import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
+import third_party.ibis.ibis_postgres.client
 from google.cloud import bigquery
 from ibis.backends.mysql.client import MySQLClient
 from ibis.backends.pandas.client import PandasClient
 from ibis.backends.postgres.client import PostgreSQLClient
-import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 
