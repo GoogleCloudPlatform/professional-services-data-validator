@@ -188,7 +188,7 @@ Then `pip install pyodbc`.
 ```
 
 ## AlloyDB
-Please note AlloyDB supports same connection config as Postgres
+Please note AlloyDB supports same connection config as Postgres.
 ```
 {
     # Configuration Required for All Data Sources
