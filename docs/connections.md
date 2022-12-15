@@ -53,6 +53,7 @@ The data validation tool supports the following connection types.
 * [Impala](#Impala)
 * [Hive](#Hive)
 * [DB2](#DB2)
+* [AlloyDB](#AlloyDB)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
@@ -172,6 +173,22 @@ Then `pip install pyodbc`.
 ```
 
 ## Postgres
+```
+{
+    # Configuration Required for All Data Sources
+    "source_type": "Postgres",
+
+    # Connection Details
+    "host": "127.0.0.1",
+    "port":5432,
+    "user": "my-user",
+    "password": "my-password",
+    "database":"my-db"
+}
+```
+
+## AlloyDB
+Please note AlloyDB supports same connection config as Postgres.
 ```
 {
     # Configuration Required for All Data Sources
