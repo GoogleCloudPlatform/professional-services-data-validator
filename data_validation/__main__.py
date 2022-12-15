@@ -473,7 +473,10 @@ def store_yaml_config_file(args, config_managers):
 
 
 def run(args):
-    """ """
+    """Split execution into:\n
+    1. Build and save multiple Yaml Config files\n
+    2. Build and save single Yaml Config file\n
+    3. Run Validations"""
     config_managers = build_config_managers_from_args(args)
 
     if args.config_file:
