@@ -22,6 +22,8 @@ from sqlalchemy.dialects.oracle.cx_oracle import OracleDialect_cx_oracle
 from third_party.ibis.ibis_oracle.compiler import OracleDialect
 
 import ibis.expr.datatypes as dt
+import ibis.expr.schema as sch
+import ibis.expr.operations as ops
 import ibis.backends.base_sqlalchemy.alchemy as alch
 import cx_Oracle  # NOQA fail early if the driver is missing
 
@@ -242,3 +244,36 @@ class OracleClient(alch.AlchemyClient):
 
     def get_schema(self, name, schema=None):
         return self.table(name, schema=schema).schema()
+    
+    def sql(self, query):
+        """
+        Convert a Oracle query to an Ibis table expression
+
+        Parameters
+        ----------
+        query: string
+           SQL query to execute on connection
+
+        Returns
+        -------
+        table : TableExpr
+        """
+        limited_query = "SELECT * FROM ({}) t0 WHERE ROWNUM <= 1".format(query)
+        schema = self._get_schema_using_query(limited_query)
+        return ops.SQLQueryResult(query, schema, self).to_expr()
+
+    def _get_schema_using_query(self, limited_query):
+        type_map = {
+            "DB_TYPE_NUMBER": "int64",
+            "DB_TYPE_NVARCHAR": "string",
+            "DB_TYPE_VARCHAR": "string",
+            "DB_TYPE_TIMESTAMP": "timestamp",
+            "DB_TYPE_DATE": "timestamp"
+        }
+
+        with self._execute(limited_query, results=True) as cur:
+            names = [row[0].lower() for row in cur.proxy._cursor_description()]
+            ibis_types = [
+                type_map[row[1].name] for row in cur.proxy._cursor_description()
+            ]
+        return sch.Schema(names, ibis_types)
