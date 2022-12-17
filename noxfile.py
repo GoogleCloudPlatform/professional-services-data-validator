@@ -26,7 +26,6 @@ import random
 
 import nox
 
-
 # Python version used for linting.
 DEFAULT_PYTHON_VERSION = "3.9"
 
@@ -241,6 +240,4 @@ def integration_oracle(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run(
-        "pytest", "tests/system/data_sources/test_oracle.py", *session.posargs
-    )
+    session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)
