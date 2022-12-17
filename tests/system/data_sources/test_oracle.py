@@ -13,32 +13,32 @@
 # limitations under the License.
 
 import os
-
 from data_validation import data_validation, consts
-import ipaddress
 
-ORACLE_USER = os.getenv("ORACLE_USER", "test_user")
+
+ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
 ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
-ORACLE_HOST = os.getenv("ORACLE_HOST")
-PROJECT_ID = os.getenv("PROJECT_ID")
+ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XE")
 
-conn = {
+
+CONN = {
     "source_type": "Oracle",
     "host": ORACLE_HOST,
-    "user_name": ORACLE_USER,
+    "user": "SYSTEM",
     "password": ORACLE_PASSWORD,
-    "port": 1521,
+    "port": 5432,
+    "database": ORACLE_DATABASE,
 }
 
 
 ORACLE_CONFIG = {
     # Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: conn,
-    consts.CONFIG_TARGET_CONN: conn,
+    consts.CONFIG_SOURCE_CONN: CONN,
+    consts.CONFIG_TARGET_CONN: CONN,
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "test_Schema",
+    consts.CONFIG_SCHEMA_NAME: "SYSTEM",
     consts.CONFIG_TABLE_NAME: "items_price",
     consts.CONFIG_AGGREGATES: [
         {

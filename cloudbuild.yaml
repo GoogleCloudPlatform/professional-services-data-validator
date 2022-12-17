@@ -94,5 +94,5 @@ steps:
   env:
   - 'NOX_SESSION=integration_oracle'
   - 'PROJECT_ID=pso-kokoro-resources'
-  - 'ORACLE_PASSWORD=udfs'
-  - 'ORACLE_HOST=10.128.15.235'
+  - 'ORACLE_PASSWORD=test123'
+  - 'ORACLE_HOST=34.134.58.230'
