@@ -471,15 +471,29 @@ def store_yaml_config_file(args, config_managers):
     config_file_path = _get_arg_config_file(args)
     cli_tools.store_validation(config_file_path, yaml_configs)
 
+def build_and_store_config_files(args, config_managers):
+    """Build multiple YAML Config files using user specified partition logic
+
+    Args:
+        args (Namespace): User specified Arguments
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
+    config_managers_list = partition_configs(args, config_managers)
+
+
+
 
 def run(args):
-    """Split execution into:\n
-    1. Build and save multiple Yaml Config files\n
-    2. Build and save single Yaml Config file\n
-    3. Run Validations"""
+    """Split execution into:
+    1. Build and save multiple Yaml Config files
+    2. Build and save single Yaml Config file
+    3. Run Validations
+    """
     config_managers = build_config_managers_from_args(args)
 
-    if args.config_file:
+    if args.config_folder: #Partition and produce multiple YAML-Config files
+        build_and_store_config_files(args, config_managers)
+    elif args.config_file:
         store_yaml_config_file(args, config_managers)
     else:
         run_validations(args, config_managers)
