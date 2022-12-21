@@ -353,7 +353,7 @@ class DataValidation(object):
 
         return result_df
 
-    def get_pandas_df(self) -> tuple[pandas.DataFrame, pandas.DataFrame]:
+    def get_pandas_df(self):
         """Build Source and Target Queries, Dataframe
 
         Returns:
