@@ -50,6 +50,7 @@ def _get_arg_config_file(args):
 
     return args.config_file
 
+
 def _get_arg_config_dir(args) -> str:
     """Return String yaml config folder path."""
     if not args.config_dir:
@@ -57,23 +58,25 @@ def _get_arg_config_dir(args) -> str:
 
     return args.config_dir
 
+
 def _get_arg_partition_type(args: Namespace) -> str:
     """Return the type of Partition Logic to be used from args
 
     Args:
         args (Namespace): User specified Arguments.
-    
+
     Returns:
         Type of Partition logic to be used to split Config-Files
     """
-    if not args.partition_type: #Use default Partition logic if not supplied
+    if not args.partition_type:  # Use default Partition logic if not supplied
         return consts.DEFAULT_PARTITION_TYPE
-    elif args.partition_type not in consts.PARTITION_TYPES: 
-        # Already handled in argparser argument choices, 
+    elif args.partition_type not in consts.PARTITION_TYPES:
+        # Already handled in argparser argument choices,
         # check kept for explicit calls
         raise ValueError(f"Unknown Partition Type: {args.partition_type}")
 
     return args.partition_type
+
 
 def _get_yaml_config_from_file(config_file_path):
     """Return Dict of yaml validation data."""
@@ -497,6 +500,7 @@ def store_yaml_config_file(args, config_managers):
     config_file_path = _get_arg_config_file(args)
     cli_tools.store_validation(config_file_path, yaml_configs)
 
+
 def partition_and_store_config_files(args: Namespace) -> None:
     """Build multiple YAML Config files using user specified partition logic
 
@@ -510,35 +514,35 @@ def partition_and_store_config_files(args: Namespace) -> None:
     config_managers = build_config_managers_from_args(args)
     partition_configs(args, config_managers)
 
-def partition_configs(  args: Namespace, 
-                        config_managers: list[ConfigManager]
+
+def partition_configs(
+    args: Namespace, config_managers: list[ConfigManager]
 ) -> list[list[ConfigManager]]:
-    """Takes a list of ConfigManager object and splits each it into multiple 
+    """Takes a list of ConfigManager object and splits each it into multiple
     ConfigManager objects applying supplied partition logic.
 
     Args:
         args (Namespace): User specified Arguments.
         config_managers (list[ConfigManager]): List of config manager instances.
-    
+
     Returns:
-        A list of lists of type ConfigManager, each sublist contains group of 
+        A list of lists of type ConfigManager, each sublist contains group of
         ConfigManager refering to a single table split using a partition logic.
     """
 
     config_dir = _get_arg_config_dir(args)
     partition_type = _get_arg_partition_type(args)
-    if partition_type == 'primary_key':
+    if partition_type == "primary_key":
         partition_filters = _get_primary_key_partition_filters(args)
-    elif partition_type == 'primary_key_mod':
+    elif partition_type == "primary_key_mod":
         pass
-    elif partition_type == 'hash_mod':
+    elif partition_type == "hash_mod":
         pass
-    _add_partition_filters_and_store(   config_managers, 
-                                        partition_filters,
-                                        config_dir,
-                                        args
-                                        )
-    
+    _add_partition_filters_and_store(
+        config_managers, partition_filters, config_dir, args
+    )
+
+
 def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     """Generate Partition filters for primary_key type partition for all
     Configs/Tables
@@ -549,31 +553,33 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     Returns:
         A list of lists of partition filters for each table
     """
-    
-    #Build config managers for count, min and max on primary_key
+
+    # Build config managers for count, min and max on primary_key
     agg_config_managers = build_primary_key_agg_config_managers_from_args(args)
 
     master_filter_list = []
     primary_keys = cli_tools.get_arg_list(args.primary_keys)
     for ind in range(len(agg_config_managers)):
 
-        #Retrieve source and target agg dataframes
+        # Retrieve source and target agg dataframes
         source_df, target_df = get_dataframe(agg_config_managers[ind])
 
         source_datatype = source_df[source_df.columns[-1]].dtype.name
         target_datatype = target_df[target_df.columns[-1]].dtype.name
-        accepted_datatypes = ('int64', 'int32')
-        if (source_datatype not in accepted_datatypes and 
-            target_datatype not in accepted_datatypes):
+        accepted_datatypes = ("int64", "int32")
+        if (
+            source_datatype not in accepted_datatypes
+            and target_datatype not in accepted_datatypes
+        ):
             raise ValueError(
-                'Expected primary_key for partition to be of type int.'
-                f'Got {source_df[source_df.columns[-1]].dtype.name}'
+                "Expected primary_key for partition to be of type int."
+                f"Got {source_df[source_df.columns[-1]].dtype.name}"
             )
 
-        source_count = source_df.iloc[0]['count']
-        target_count = target_df.iloc[0]['count']
+        source_count = source_df.iloc[0]["count"]
+        target_count = target_df.iloc[0]["count"]
         row_count = max(source_count, target_count)
-        
+
         # If supplied partition_num is greater than count(*) coalesce it
         if args.partition_num > row_count:
             partition_count = row_count
@@ -581,8 +587,8 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
             partition_count = args.partition_num
 
         primary_key = primary_keys[0]
-        min_column = f'min__{primary_key}'
-        max_column = f'max__{primary_key}'
+        min_column = f"min__{primary_key}"
+        max_column = f"max__{primary_key}"
 
         source_min = source_df.iloc[0][min_column]
         target_min = target_df.iloc[0][min_column]
@@ -594,7 +600,7 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
 
         upper_bound = max(source_max, target_max)
 
-        filter_list = [] # Store partition filters per config/table
+        filter_list = []  # Store partition filters per config/table
         i = 0
         marker = lower_bound
         partition_step = (upper_bound - lower_bound) // partition_count
@@ -605,19 +611,21 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
             if i == partition_count - 1:
                 upper_val = upper_bound + 1
 
-            partition_filter = f'{primary_key} >= {lower_val} and {primary_key} < {upper_val}'
+            partition_filter = (
+                f"{primary_key} >= {lower_val} and {primary_key} < {upper_val}"
+            )
             filter_list.append(partition_filter)
 
             i += 1
             marker += partition_step
 
         master_filter_list.append(filter_list)
-    
+
     return master_filter_list
 
 
-
-def get_dataframe(config_manager: ConfigManager
+def get_dataframe(
+    config_manager: ConfigManager,
 ) -> tuple[pandas.DataFrame, pandas.DataFrame]:
     """Build source and target pandas dataframes from input ConfigManager object.
 
@@ -628,19 +636,19 @@ def get_dataframe(config_manager: ConfigManager
         A tuple of source and target pandas dataframe
     """
     agg_validator = DataValidation(
-        config_manager.config,
-        validation_builder=None,
-        result_handler=None
+        config_manager.config, validation_builder=None, result_handler=None
     )
     source_df, target_df = agg_validator.get_pandas_df()
     return (source_df, target_df)
 
-def build_primary_key_agg_config_managers_from_args(args: Namespace
+
+def build_primary_key_agg_config_managers_from_args(
+    args: Namespace,
 ) -> list[ConfigManager]:
     """Build a list of ConfigManager object for finding count, min and max of primary_key.
 
-    This method is used for building ConfigManager objects for all the input 
-    tables to get count, min and max of primary_key column. Used for finding 
+    This method is used for building ConfigManager objects for all the input
+    tables to get count, min and max of primary_key column. Used for finding
     filters for primary_key type Partition.
 
     Args:
@@ -705,22 +713,24 @@ def build_primary_key_agg_config_managers_from_args(args: Namespace
             "max", [primary_key], None, None
         )
         config_manager.append_aggregates(aggregate_configs)
-        
+
         agg_config_managers.append(config_manager)
     return agg_config_managers
 
-def _add_partition_filters_and_store(   config_managers: list[ConfigManager], 
-                                        partition_filters: list[list[str]],
-                                        config_dir: str,
-                                        args: Namespace
+
+def _add_partition_filters_and_store(
+    config_managers: list[ConfigManager],
+    partition_filters: list[list[str]],
+    config_dir: str,
+    args: Namespace,
 ) -> list[ConfigManager]:
     """Add Partition Filters to ConfigManager and return a list of ConfigManager objects.
-    
+
     Args:
         config_manager (list[ConfigManager]): List of Config manager instances.
-        partition_filters (list[list[str]]): List of List of Partition filters 
+        partition_filters (list[list[str]]): List of List of Partition filters
         for all Table/ConfigManager objects
-    
+
     Returns:
         A list of lists of type ConfigManager with Partition filters appended
     """
@@ -731,21 +741,28 @@ def _add_partition_filters_and_store(   config_managers: list[ConfigManager],
         filter_list = partition_filters[ind]
 
         target_folder_name = config_manager.full_source_table
-        target_folder_path = cli_tools.get_target_table_folder_path(config_dir, target_folder_name)
-        
+        target_folder_path = cli_tools.get_target_table_folder_path(
+            config_dir, target_folder_name
+        )
+
         for pos in range(len(filter_list)):
-            filter_dict = {'type': 'custom', 'source': filter_list[pos], 'target': filter_list[pos]}
+            filter_dict = {
+                "type": "custom",
+                "source": filter_list[pos],
+                "target": filter_list[pos],
+            }
 
-            config_manager.filters.append(filter_dict) #Add new filter
+            config_manager.filters.append(filter_dict)  # Add new filter
 
-            #Save partition
+            # Save partition
             yaml_configs = convert_config_to_yaml(args, config_managers)
-            target_file_name = '0'*(4-len(str(pos))) + str(pos) + '.yaml'
+            target_file_name = "0" * (4 - len(str(pos))) + str(pos) + ".yaml"
             config_file_path = os.path.join(target_folder_path, target_file_name)
             cli_tools.store_validation(config_file_path, yaml_configs)
 
-            #Pop last filter
-            config_manager.filters.pop() 
+            # Pop last filter
+            config_manager.filters.pop()
+
 
 def run(args) -> None:
     """Splits execution into:
@@ -754,7 +771,7 @@ def run(args) -> None:
 
     Args:
         args (Namespace): User specified Arguments.
-    
+
     Returns:
         None
     """

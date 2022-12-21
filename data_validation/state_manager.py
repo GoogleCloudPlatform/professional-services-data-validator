@@ -222,26 +222,25 @@ class StateManager(object):
 
         return blobs
 
-    def create_partition_config_directory(  self, 
-                                            config_dir: str, 
-                                            target_folder_name: str
+    def create_partition_config_directory(
+        self, config_dir: str, target_folder_name: str
     ) -> str:
         """Create target table path and return the path
 
         Overwrites the target folder if exists for Local
-        
+
         Args:
             config_dir (str): User specified path to store the config files
-            target_folder_name (str): target folder for specific table to save 
+            target_folder_name (str): target folder for specific table to save
             configs
 
         Returns:
             Path to destination folder
         """
         if self.file_system == FileSystem.LOCAL:
-            dir_path = os.path.join('./', config_dir, target_folder_name)
+            dir_path = os.path.join("./", config_dir, target_folder_name)
             if os.path.exists(dir_path):
                 shutil.rmtree(dir_path)
             os.mkdir(dir_path)
-        
+
         return os.path.join(config_dir, target_folder_name)

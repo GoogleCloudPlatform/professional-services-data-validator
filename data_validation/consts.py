@@ -91,11 +91,7 @@ CONFIG_TYPES = [
 ]
 
 # Partition types
-PARTITION_TYPES = [
-    'primary_key',
-    'primary_key_mod',
-    'hash_mod'
-]
+PARTITION_TYPES = ["primary_key", "primary_key_mod", "hash_mod"]
 # State Manager Fields
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
 ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
