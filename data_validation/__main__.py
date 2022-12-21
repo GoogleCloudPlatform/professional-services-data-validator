@@ -551,7 +551,7 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
         args (Namespace): User specified Arguments.
 
     Returns:
-        A list of lists of partition filters for each table
+        A list of lists of partition filters for each table 
     """
 
     # Build config managers for count, min and max on primary_key
