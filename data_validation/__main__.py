@@ -550,7 +550,7 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     Args:
         args (Namespace): User specified Arguments.
 
-    Returns:
+    Returns: 
         A list of lists of partition filters for each table 
     """
 
