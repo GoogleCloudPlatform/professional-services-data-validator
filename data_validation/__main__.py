@@ -545,7 +545,7 @@ def partition_configs(
 
 def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     """Generate Partition filters for primary_key type partition for all
-    Configs/Tables
+    Configs/Tables.
 
     Args:
         args (Namespace): User specified Arguments.
