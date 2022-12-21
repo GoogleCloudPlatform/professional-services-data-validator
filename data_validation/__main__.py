@@ -50,6 +50,13 @@ def _get_arg_config_file(args):
 
     return args.config_file
 
+def _get_arg_config_dir(args) -> str:
+    """Return String yaml config folder path."""
+    if not args.config_dir:
+        raise ValueError("YAML Config Dir Path was not supplied.")
+
+    return args.config_dir
+
 def _get_arg_partition_type(args: Namespace) -> str:
     """Return the type of Partition Logic to be used from args
 
@@ -501,7 +508,7 @@ def partition_and_store_config_files(args: Namespace) -> None:
         None
     """
     config_managers = build_config_managers_from_args(args)
-    config_managers_list = partition_configs(args, config_managers)
+    partition_configs(args, config_managers)
 
 def partition_configs(  args: Namespace, 
                         config_managers: list[ConfigManager]
@@ -518,6 +525,7 @@ def partition_configs(  args: Namespace,
         ConfigManager refering to a single table split using a partition logic.
     """
 
+    config_dir = _get_arg_config_dir(args)
     partition_type = _get_arg_partition_type(args)
     if partition_type == 'primary_key':
         partition_filters = _get_primary_key_partition_filters(args)
@@ -525,10 +533,11 @@ def partition_configs(  args: Namespace,
         pass
     elif partition_type == 'hash_mod':
         pass
-    multi_table_config_managers_list = _add_partition_filters_to_config(
-                                        config_managers, partition_filters
+    _add_partition_filters_and_store(   config_managers, 
+                                        partition_filters,
+                                        config_dir,
+                                        args
                                         )
-    return multi_table_config_managers_list
     
 def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     """Generate Partition filters for primary_key type partition for all
@@ -545,10 +554,11 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     agg_config_managers = build_primary_key_agg_config_managers_from_args(args)
 
     master_filter_list = []
-    for agg_config_manager in agg_config_managers:
+    primary_keys = cli_tools.get_arg_list(args.primary_keys)
+    for ind in range(len(agg_config_managers)):
 
         #Retrieve source and target agg dataframes
-        source_df, target_df = get_dataframe(agg_config_manager)
+        source_df, target_df = get_dataframe(agg_config_managers[ind])
 
         source_datatype = source_df[source_df.columns[-1]].dtype.name
         target_datatype = target_df[target_df.columns[-1]].dtype.name
@@ -570,7 +580,6 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
         else:
             partition_count = args.partition_num
 
-        primary_keys = cli_tools.get_arg_list(args.primary_keys)
         primary_key = primary_keys[0]
         min_column = f'min__{primary_key}'
         max_column = f'max__{primary_key}'
@@ -644,7 +653,6 @@ def build_primary_key_agg_config_managers_from_args(args: Namespace
     config_type = consts.COLUMN_VALIDATION
     result_handler_config = None
     primary_keys = cli_tools.get_arg_list(args.primary_keys)
-    primary_key = primary_keys[0]
 
     filter_config, labels, threshold = [], [], 0.0
     if args.filters:
@@ -666,12 +674,12 @@ def build_primary_key_agg_config_managers_from_args(args: Namespace
 
     filter_status = None
 
-    for table_obj in tables_list:
+    for ind in range(len(tables_list)):
         config_manager = ConfigManager.build_config_manager(
             config_type,
             args.source_conn,
             args.target_conn,
-            table_obj,
+            tables_list[ind],
             labels,
             threshold,
             format,
@@ -685,6 +693,7 @@ def build_primary_key_agg_config_managers_from_args(args: Namespace
             verbose=args.verbose,
         )
 
+        primary_key = primary_keys[0]
         aggregate_configs = [config_manager.build_config_count_aggregate()]
         aggregate_configs += config_manager.build_config_column_aggregates(
             "count", [primary_key], None, None
@@ -700,8 +709,10 @@ def build_primary_key_agg_config_managers_from_args(args: Namespace
         agg_config_managers.append(config_manager)
     return agg_config_managers
 
-def _add_partition_filters_to_config(   config_managers: list[ConfigManager], 
-                                        partition_filters: list[list[str]]
+def _add_partition_filters_and_store(   config_managers: list[ConfigManager], 
+                                        partition_filters: list[list[str]],
+                                        config_dir: str,
+                                        args: Namespace
 ) -> list[ConfigManager]:
     """Add Partition Filters to ConfigManager and return a list of ConfigManager objects.
     
@@ -714,21 +725,27 @@ def _add_partition_filters_to_config(   config_managers: list[ConfigManager],
         A list of lists of type ConfigManager with Partition filters appended
     """
 
-    multi_table_config_managers_list = []
     table_count = len(config_managers)
     for ind in range(table_count):
         config_manager = config_managers[ind]
         filter_list = partition_filters[ind]
-        single_table_config_managers_list = []
-        for single_filter in filter_list:
-            filter_dict = {'type': 'custom', 'source': single_filter, 'target': single_filter}
-            new_filter_config_manager = copy.deepcopy(config_manager)
-            new_filter_config_manager.filters.append(filter_dict)
-            single_table_config_managers_list.append(new_filter_config_manager)
-        multi_table_config_managers_list.append(single_table_config_managers_list)
-    return multi_table_config_managers_list
 
+        target_folder_name = config_manager.full_source_table
+        target_folder_path = cli_tools.get_target_table_folder_path(config_dir, target_folder_name)
+        
+        for pos in range(len(filter_list)):
+            filter_dict = {'type': 'custom', 'source': filter_list[pos], 'target': filter_list[pos]}
 
+            config_manager.filters.append(filter_dict) #Add new filter
+
+            #Save partition
+            yaml_configs = convert_config_to_yaml(args, config_managers)
+            target_file_name = '0'*(4-len(str(pos))) + str(pos) + '.yaml'
+            config_file_path = os.path.join(target_folder_path, target_file_name)
+            cli_tools.store_validation(config_file_path, yaml_configs)
+
+            #Pop last filter
+            config_manager.filters.pop() 
 
 def run(args) -> None:
     """Splits execution into:

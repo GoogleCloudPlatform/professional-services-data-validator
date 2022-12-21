@@ -1136,3 +1136,19 @@ def split_table(table_ref, schema_required=True):
     table = table_ref_list.pop()
     schema = ".".join(table_ref_list)
     return schema.strip(), table.strip()
+
+def get_target_table_folder_path(config_dir: str, target_folder_name: str):
+    """Return the Destination folder path for either LOCAL or GCS
+    
+    Args:
+        config_dir (str): User specified path to store the config files
+        target_folder_name (str): target folder for specific table to save 
+        configs
+
+    Returns:
+        Path to destination folder"""
+    mgr = state_manager.StateManager()
+    dest_dir_path = mgr.create_partition_config_directory(  config_dir, 
+                                                            target_folder_name)
+    
+    return dest_dir_path
