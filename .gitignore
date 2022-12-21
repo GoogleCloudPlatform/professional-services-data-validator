@@ -88,3 +88,8 @@ terraform.rc
 # Test temp files
 source_table_data.json
 target_table_data.json
+data_validation/cli_tools.py
+
+# Commit msg
+commits.txt
+test.py
