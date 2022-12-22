@@ -17,6 +17,8 @@ import os
 import sys
 import logging
 from yaml import Dumper, dump
+from typing import List, Tuple
+import pandas
 from argparse import Namespace
 from data_validation import (
     cli_tools,
@@ -504,7 +506,7 @@ def partition_and_store_config_files(args: Namespace) -> None:
 
     Args:
         args (Namespace): User specified Arguments
-        config_managers (list[ConfigManager]): List of config manager instances.
+        config_managers (List[ConfigManager]): List of config manager instances.
 
     Returns:
         None
@@ -514,14 +516,14 @@ def partition_and_store_config_files(args: Namespace) -> None:
 
 
 def partition_configs(
-    args: Namespace, config_managers: list[ConfigManager]
-) -> list[list[ConfigManager]]:
+    args: Namespace, config_managers: List[ConfigManager]
+) -> List[List[ConfigManager]]:
     """Takes a list of ConfigManager object and splits each it into multiple
     ConfigManager objects applying supplied partition logic.
 
     Args:
         args (Namespace): User specified Arguments.
-        config_managers (list[ConfigManager]): List of config manager instances.
+        config_managers (List[ConfigManager]): List of config manager instances.
 
     Returns:
         A list of lists of type ConfigManager, each sublist contains group of
@@ -541,7 +543,7 @@ def partition_configs(
     )
 
 
-def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
+def _get_primary_key_partition_filters(args: Namespace) -> List[List[str]]:
     """Generate Partition filters for primary_key type partition for all
     Configs/Tables.
 
@@ -622,7 +624,9 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     return master_filter_list
 
 
-def get_dataframe(config_manager: ConfigManager):
+def get_dataframe(
+    config_manager: ConfigManager,
+) -> Tuple[pandas.DataFrame, pandas.DataFrame]:
     """Build source and target pandas dataframes from input ConfigManager object.
 
     Args:
@@ -640,7 +644,7 @@ def get_dataframe(config_manager: ConfigManager):
 
 def build_primary_key_agg_config_managers_from_args(
     args: Namespace,
-) -> list[ConfigManager]:
+) -> List[ConfigManager]:
     """Build a list of ConfigManager object for finding count, min and max of primary_key.
 
     This method is used for building ConfigManager objects for all the input
@@ -715,16 +719,16 @@ def build_primary_key_agg_config_managers_from_args(
 
 
 def _add_partition_filters_and_store(
-    config_managers: list[ConfigManager],
-    partition_filters: list[list[str]],
+    config_managers: List[ConfigManager],
+    partition_filters: List[List[str]],
     config_dir: str,
     args: Namespace,
-) -> list[ConfigManager]:
+) -> List[ConfigManager]:
     """Add Partition Filters to ConfigManager and return a list of ConfigManager objects.
 
     Args:
-        config_manager (list[ConfigManager]): List of Config manager instances.
-        partition_filters (list[list[str]]): List of List of Partition filters
+        config_manager (List[ConfigManager]): List of Config manager instances.
+        partition_filters (List[List[str]]): List of List of Partition filters
         for all Table/ConfigManager objects
 
     Returns:

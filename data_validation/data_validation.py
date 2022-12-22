@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+from typing import Tuple
 import warnings
 
 import ibis.backends.pandas
@@ -353,7 +354,7 @@ class DataValidation(object):
 
         return result_df
 
-    def get_pandas_df(self):
+    def get_pandas_df(self) -> Tuple[pandas.DataFrame, pandas.DataFrame]:
         """Build Source and Target Queries, Dataframe
 
         Returns:
