@@ -511,13 +511,14 @@ def partition_and_store_config_files(args: Namespace) -> None:
     Returns:
         None
     """
-    config_managers = build_config_managers_from_args(args)
-    partition_configs(args, config_managers)
+    if args.validate_cmd == "row":
+        config_managers = build_config_managers_from_args(args)
+        partition_configs(args, config_managers)
+    else:
+        raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
 
 
-def partition_configs(
-    args: Namespace, config_managers: List[ConfigManager]
-) -> List[List[ConfigManager]]:
+def partition_configs(args: Namespace, config_managers: List[ConfigManager]):
     """Takes a list of ConfigManager object and splits each it into multiple
     ConfigManager objects applying supplied partition logic.
 
@@ -526,8 +527,7 @@ def partition_configs(
         config_managers (List[ConfigManager]): List of config manager instances.
 
     Returns:
-        A list of lists of type ConfigManager, each sublist contains group of
-        ConfigManager refering to a single table split using a partition logic.
+        None
     """
 
     config_dir = _get_arg_config_dir(args)
@@ -535,9 +535,12 @@ def partition_configs(
     if partition_type == "primary_key":
         partition_filters = _get_primary_key_partition_filters(args)
     elif partition_type == "primary_key_mod":
-        pass
+        # TODO: Add support for Primary_key + Mod
+        raise ValueError(f"Partition Type: '{partition_type}' is not supported")
     elif partition_type == "hash_mod":
-        pass
+        # TODO: Add support for Hash + Mod
+        raise ValueError(f"Partition Type: '{partition_type}' is not supported")
+
     _add_partition_filters_and_store(
         config_managers, partition_filters, config_dir, args
     )
@@ -723,7 +726,7 @@ def _add_partition_filters_and_store(
     partition_filters: List[List[str]],
     config_dir: str,
     args: Namespace,
-) -> List[ConfigManager]:
+):
     """Add Partition Filters to ConfigManager and return a list of ConfigManager objects.
 
     Args:
@@ -732,7 +735,7 @@ def _add_partition_filters_and_store(
         for all Table/ConfigManager objects
 
     Returns:
-        A list of lists of type ConfigManager with Partition filters appended
+        None
     """
 
     table_count = len(config_managers)
@@ -751,8 +754,8 @@ def _add_partition_filters_and_store(
                 "source": filter_list[pos],
                 "target": filter_list[pos],
             }
-
-            config_manager.filters.append(filter_dict)  # Add new filter
+            # Append partition new filter
+            config_manager.filters.append(filter_dict)
 
             # Save partition
             yaml_configs = convert_config_to_yaml(args, config_managers)
@@ -760,7 +763,7 @@ def _add_partition_filters_and_store(
             config_file_path = os.path.join(target_folder_path, target_file_name)
             cli_tools.store_validation(config_file_path, yaml_configs)
 
-            # Pop last filter
+            # Pop last partition filter
             config_manager.filters.pop()
 
 
