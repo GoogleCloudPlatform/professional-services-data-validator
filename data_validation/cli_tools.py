@@ -173,10 +173,12 @@ def configure_arg_parser():
     _configure_get_partition_parser(subparsers)
     return parser
 
+
 def _configure_get_partition_parser(subparsers):
     """Configure arguments to generate partitioned config files."""
     validate_parser = subparsers.add_parser(
-        "get-partitions", help="Generate partitions for validation and store the Config files in a directory"
+        "get-partitions",
+        help="Generate partitions for validation and store the Config files in a directory",
     )
 
     # Keep these in order to support data-validation run command for backwards-compatibility
@@ -187,7 +189,8 @@ def _configure_get_partition_parser(subparsers):
 
     validate_subparsers = validate_parser.add_subparsers(
         # TODO: Update help desc when support for custom-query is added
-        dest="validate_cmd", help="Type of Validation. Note: Only row validation is supported as of now"
+        dest="validate_cmd",
+        help="Type of Validation. Note: Only row validation is supported as of now",
     )
 
     row_partition_parser = validate_subparsers.add_parser(
@@ -359,15 +362,12 @@ def _configure_validate_parser(subparsers):
     )
     _configure_custom_query_parser(custom_query_parser)
 
+
 def _configure_row_partition_parser(row_partition_parser) -> None:
-    """Configure arguments to generate partitions for row based validation.
-    """
-
-
-
+    """Configure arguments to generate partitions for row based validation."""
 
     # Group all required arguments together
-    required_arguments = row_partition_parser.add_argument_group('required arguments')
+    required_arguments = row_partition_parser.add_argument_group("required arguments")
     required_arguments.add_argument(
         "--primary-keys",
         "-pk",
@@ -376,7 +376,9 @@ def _configure_row_partition_parser(row_partition_parser) -> None:
     )
 
     # Group for mutually exclusive arguments. Either must be supplied
-    mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(required=True)
+    mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
     mutually_exclusive_arguments.add_argument(
         "--hash",
         "-hash",
@@ -424,9 +426,10 @@ def _configure_row_partition_parser(row_partition_parser) -> None:
 
 
 def _configure_custom_query_partition_parser(custom_query_partition_parser) -> None:
-    """Configure arguments to generate partitions for custom-query based validation.
-    """
-    required_arguments = custom_query_partition_parser.add_argument_group('required arguments')
+    """Configure arguments to generate partitions for custom-query based validation."""
+    required_arguments = custom_query_partition_parser.add_argument_group(
+        "required arguments"
+    )
     _add_common_partition_arguments(custom_query_partition_parser, required_arguments)
 
     # Group all Required Arguments together
@@ -528,6 +531,7 @@ def _configure_custom_query_partition_parser(custom_query_partition_parser) -> N
         action="store_true",
         help="Cast any int32 fields to int64 for large aggregations.",
     )
+
 
 def _configure_row_parser(row_parser):
     """Configure arguments to run row level validations."""
@@ -834,13 +838,13 @@ def _add_common_arguments(parser):
         help="Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned",
     )
 
-def _add_common_partition_arguments(parser, required_arguments = None):
-    """Add all arguments common to get-partition command
-    """
+
+def _add_common_partition_arguments(parser, required_arguments=None):
+    """Add all arguments common to get-partition command"""
 
     # Group all Required Arguments together
     if required_arguments is None:
-        required_arguments = parser.add_argument_group('required arguments')
+        required_arguments = parser.add_argument_group("required arguments")
 
     required_arguments.add_argument(
         "--source-conn", "-sc", required=True, help="Source connection name"
@@ -861,7 +865,7 @@ def _add_common_partition_arguments(parser, required_arguments = None):
         # TODO: Update help desc when support for other partition types are added
         help="Partition logic to split and generate multiple Config Files.  \
             Note: Only primary_key is supported as of now",
-        choices=consts.PARTITION_TYPES
+        choices=consts.PARTITION_TYPES,
     )
     required_arguments.add_argument(
         "--partition-num",
@@ -869,11 +873,11 @@ def _add_common_partition_arguments(parser, required_arguments = None):
         required=True,
         help="Number of partitions/config files to generate",
         type=int,
-        choices=range(1,1001),
-        metavar="[1-1000]"
+        choices=range(1, 1001),
+        metavar="[1-1000]",
     )
 
-    #Optional arguments
+    # Optional arguments
     parser.add_argument(
         "--tables-list",
         "-tbls",
@@ -1137,18 +1141,20 @@ def split_table(table_ref, schema_required=True):
     schema = ".".join(table_ref_list)
     return schema.strip(), table.strip()
 
+
 def get_target_table_folder_path(config_dir: str, target_folder_name: str):
     """Return the Destination folder path for either LOCAL or GCS
-    
+
     Args:
         config_dir (str): User specified path to store the config files
-        target_folder_name (str): target folder for specific table to save 
+        target_folder_name (str): target folder for specific table to save
         configs
 
     Returns:
         Path to destination folder"""
     mgr = state_manager.StateManager()
-    dest_dir_path = mgr.create_partition_config_directory(  config_dir, 
-                                                            target_folder_name)
-    
+    dest_dir_path = mgr.create_partition_config_directory(
+        config_dir, target_folder_name
+    )
+
     return dest_dir_path

@@ -15,8 +15,6 @@
 import json
 import os
 import sys
-import copy
-import pandas
 import logging
 from yaml import Dumper, dump
 from argparse import Namespace
@@ -550,8 +548,8 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     Args:
         args (Namespace): User specified Arguments.
 
-    Returns: 
-        A list of lists of partition filters for each table 
+    Returns:
+        A list of lists of partition filters for each table
     """
 
     # Build config managers for count, min and max on primary_key
@@ -624,9 +622,7 @@ def _get_primary_key_partition_filters(args: Namespace) -> list[list[str]]:
     return master_filter_list
 
 
-def get_dataframe(
-    config_manager: ConfigManager,
-) -> tuple[pandas.DataFrame, pandas.DataFrame]:
+def get_dataframe(config_manager: ConfigManager):
     """Build source and target pandas dataframes from input ConfigManager object.
 
     Args:
