@@ -91,4 +91,4 @@ def test_create_and_list_validation(capsys, fs):
     manager.create_validation_yaml(TEST_VALIDATION_NAME, TEST_VALIDATION_CONFIG)
 
     validations = manager.list_validations()
-    assert validations == [TEST_VALIDATION_NAME.split(".")[0]]
+    assert validations == [TEST_VALIDATION_NAME]

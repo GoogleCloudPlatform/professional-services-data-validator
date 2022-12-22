@@ -58,12 +58,6 @@ def _get_arg_config_dir(args):
     return args.config_dir
 
 
-def _get_yaml_config_from_file(config_file_path):
-    """Return Dict of yaml validation data."""
-    yaml_config = cli_tools.get_validation(config_file_path)
-    return yaml_config
-
-
 def get_aggregate_config(args, config_manager):
     """Return list of formated aggregation objects.
 
@@ -325,14 +319,11 @@ def build_config_managers_from_args(args):
 
 def config_runner(args):
     if args.config_dir:
-        config_file_paths = [
-            os.path.join(args.config_dir, file)
-            for file in os.listdir(_get_arg_config_dir(args))
-            if file.lower().endswith(".yaml")
-        ]
+        mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
+        config_file_names = mgr.list_validations_in_dir(args.config_dir)
 
         config_managers = []
-        for file in config_file_paths:
+        for file in config_file_names:
             config_managers.extend(build_config_managers_from_yaml(args, file))
     else:
         config_file_path = _get_arg_config_file(args)
@@ -343,7 +334,10 @@ def config_runner(args):
 
 def build_config_managers_from_yaml(args, config_file_path):
     """Returns List[ConfigManager] instances ready to be executed."""
-    yaml_configs = _get_yaml_config_from_file(config_file_path)
+    if "config_dir" in args and args.config_dir:
+        yaml_configs = cli_tools.get_validation(config_file_path, args.config_dir)
+    else:
+        yaml_configs = cli_tools.get_validation(config_file_path)
 
     mgr = state_manager.StateManager()
     source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE])
@@ -521,7 +515,7 @@ def run_connections(args):
 
 
 def run_config(args):
-    """Run commands related to validation config YAMLs (legacy - superceded by run_validation_configs)."""
+    """Run commands related to validation config YAMLs (LEGACY - superceded by run_validation_configs)."""
     config_file_path = _get_arg_config_file(args)
     config_managers = build_config_managers_from_yaml(args, config_file_path)
     run_validations(args, config_managers)
