@@ -45,6 +45,21 @@ data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 ````shell script
 data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*'
 ````
+#### Run a row hash validation for all rows when database is Oracle and primary key is of Numeric Datatype
+Typecast Numeric to String by either of following: 
+* Adding the code snippet above [this](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/63d6303ae08e4f8eb9a663a14d6d60828947f027/data_validation/config_manager.py#L187):
+    ````shell script
+primary_key_configs[0]['cast'] = 'string'
+````
+* When validating with yaml file update ````cast: null```` to ````cast: string````
+    ````shell script
+primary_keys:
+  - cast: null
+    field_alias: dept_no
+    source_column: dept_no
+    target_column: dept_no
+````
+
 
 #### Run a row hash validation for all rows but filter only the failed records 
 ````shell script
