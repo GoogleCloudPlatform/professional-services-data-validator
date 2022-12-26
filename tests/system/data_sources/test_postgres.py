@@ -413,6 +413,14 @@ def test_postgres_row(cloud_sql):
                 "depth": 5,
             },
         ],
+        consts.CONFIG_PRIMARY_KEYS: [
+            {
+                "source_column": "serial_col",
+                "target_column": "serial_col",
+                "field_alias": "serial_col",
+                "cast": None,
+            }
+        ],
         consts.CONFIG_FORMAT: "table",
     }
 
