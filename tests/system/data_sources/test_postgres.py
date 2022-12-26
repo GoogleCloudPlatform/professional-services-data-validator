@@ -422,6 +422,9 @@ def test_postgres_row(cloud_sql):
             }
         ],
         consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: None,
+        consts.CONFIG_RANDOM_ROW_BATCH_SIZE: "5",
+        consts.CONFIG_USE_RANDOM_ROWS: True,
     }
 
     data_validator = data_validation.DataValidation(
