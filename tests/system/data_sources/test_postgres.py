@@ -59,8 +59,12 @@ def cloud_sql(request):
 
         # If instance already exists, returns host IP and does not add new data
         postgres_instance.setup()
-        postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data.sql")
-        postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data_row.sql")
+        postgres_instance.add_data(
+            "gs://pso-kokoro-resources/test/postgres/system_integration/postgres_data.sql"
+        )
+        postgres_instance.add_data(
+            "gs://pso-kokoro-resources/test/postgres/system_integration/postgres_data_row.sql"
+        )
 
 
 def test_postgres_count(cloud_sql):
