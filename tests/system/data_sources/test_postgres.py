@@ -60,26 +60,6 @@ def cloud_sql(request):
         # If instance already exists, returns host IP and does not add new data
         postgres_instance.setup()
         postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data.sql")
-
-
-def cloud_sql_row(request):
-    if not request.config.getoption("--no-cloud-sql"):
-        postgres_instance = CloudSQLResourceManager(
-            PROJECT_ID,
-            "POSTGRES_12",
-            "data-validator-postgres12",
-            POSTGRES_PASSWORD,
-            database_id="guestbook",
-            assign_public_ip=True,
-            authorized_networks=None,
-            cpu=1,
-            memory="4GB",
-            enable_bin_logs=False,
-            already_exists=True,
-        )
-
-        # If instance already exists, returns host IP and does not add new data
-        postgres_instance.setup()
         postgres_instance.add_data("gs://pso-kokoro-resources/postgres_data_row.sql")
 
 
@@ -127,7 +107,7 @@ def test_postgres_count(cloud_sql):
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
-def test_postgres_row(cloud_sql_row):
+def test_postgres_row(cloud_sql):
     """Test row validaiton on Postgres"""
     config_row_valid = {
         consts.CONFIG_SOURCE_CONN: CONN,
