@@ -897,7 +897,7 @@ def main():
         from data_validation import app
 
         app.app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-    elif args.command == "get-partitions":
+    elif args.command == "generate-partitions":
         partition_and_store_config_files(args)
     else:
         raise ValueError(f"Positional Argument '{args.command}' is not supported")
