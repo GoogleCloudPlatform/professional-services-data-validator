@@ -45,12 +45,11 @@ data-validation run-config -c ex_yaml.yaml
 import argparse
 import csv
 import json
+import logging
 import sys
 import uuid
-import logging
 
-from data_validation import consts
-from data_validation import state_manager
+from data_validation import consts, state_manager
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -251,6 +250,11 @@ def _configure_validation_config_parser(subparsers):
         "--config-file",
         "-c",
         help="YAML Config File Path to be used for building or running validations.",
+    )
+    run_parser.add_argument(
+        "--config-dir",
+        "-cdir",
+        help="Directory path containing YAML Config Files to be used for running validations.",
     )
 
     get_parser = configs_subparsers.add_parser(
@@ -699,10 +703,14 @@ def store_validation(validation_file_name, yaml_config):
     mgr.create_validation_yaml(validation_file_name, yaml_config)
 
 
-def get_validation(validation_name):
+def get_validation(validation_name, config_dir=None):
     """Return validation YAML for a specific connection."""
-    mgr = state_manager.StateManager()
-    return mgr.get_validation_config(validation_name)
+    if config_dir:
+        mgr = state_manager.StateManager(file_system_root_path=config_dir)
+        return mgr.get_validation_config(validation_name, config_dir)
+    else:
+        mgr = state_manager.StateManager()
+        return mgr.get_validation_config(validation_name)
 
 
 def list_validations():
@@ -712,7 +720,7 @@ def list_validations():
 
     logging.info("Validation YAMLs found:")
     for validation_name in validations:
-        logging.info(f"{validation_name}.yaml")
+        logging.info(validation_name)
 
 
 def get_labels(arg_labels):

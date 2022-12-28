@@ -345,6 +345,15 @@ validation:
 data-validation (--verbose or -v) (--log-level or -ll) configs run -c citibike.yaml
 ```
 
+You can also specify a directory to read from using the --config-dir (or -cdir) flag. All yaml files in that directory will be run as validations. Support both local and GCS paths. For example:
+```
+data-validation configs run -cdir ./my-validations/
+
+OR
+
+data-validation configs run -cdir gs://my-bucket/my-validations/
+```
+
 View the complete YAML file for a Grouped Column validation on the
 [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
