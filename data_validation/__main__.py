@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import json
+import logging
 import os
 import sys
-import logging
+
 from yaml import Dumper, dump
 from typing import List, Tuple
 import pandas
@@ -78,10 +79,39 @@ def _get_arg_partition_type(args: Namespace) -> str:
     return args.partition_type
 
 
-def _get_yaml_config_from_file(config_file_path):
-    """Return Dict of yaml validation data."""
-    yaml_config = cli_tools.get_validation(config_file_path)
-    return yaml_config
+def _get_arg_config_dir(args) -> str:
+    """Return String yaml config folder path."""
+    if not args.config_dir:
+        raise ValueError("YAML Config Dir Path was not supplied.")
+
+    return args.config_dir
+
+
+def _get_arg_partition_type(args: Namespace) -> str:
+    """Return the type of Partition Logic to be used from args
+
+    Args:
+        args (Namespace): User specified Arguments.
+
+    Returns:
+        Type of Partition logic to be used to split Config-Files
+    """
+    if not args.partition_type:  # Use default Partition logic if not supplied
+        return consts.DEFAULT_PARTITION_TYPE
+    elif args.partition_type not in consts.PARTITION_TYPES:
+        # Already handled in argparser argument choices,
+        # check kept for explicit calls
+        raise ValueError(f"Unknown Partition Type: {args.partition_type}")
+
+    return args.partition_type
+
+
+def _get_arg_config_dir(args):
+    """Return String yaml config directory path."""
+    if not args.config_dir:
+        raise ValueError("YAML Config Directory was not supplied.")
+
+    return args.config_dir
 
 
 def get_aggregate_config(args, config_manager: ConfigManager):
@@ -343,12 +373,27 @@ def build_config_managers_from_args(args):
     return configs
 
 
-def build_config_managers_from_yaml(args):
-    """Returns List[ConfigManager] instances ready to be executed."""
-    config_managers = []
+def config_runner(args):
+    if args.config_dir:
+        mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
+        config_file_names = mgr.list_validations_in_dir(args.config_dir)
 
-    config_file_path = _get_arg_config_file(args)
-    yaml_configs = _get_yaml_config_from_file(config_file_path)
+        config_managers = []
+        for file in config_file_names:
+            config_managers.extend(build_config_managers_from_yaml(args, file))
+    else:
+        config_file_path = _get_arg_config_file(args)
+        config_managers = build_config_managers_from_yaml(args, config_file_path)
+
+    run_validations(args, config_managers)
+
+
+def build_config_managers_from_yaml(args, config_file_path):
+    """Returns List[ConfigManager] instances ready to be executed."""
+    if "config_dir" in args and args.config_dir:
+        yaml_configs = cli_tools.get_validation(config_file_path, args.config_dir)
+    else:
+        yaml_configs = cli_tools.get_validation(config_file_path)
 
     mgr = state_manager.StateManager()
     source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE])
@@ -357,6 +402,7 @@ def build_config_managers_from_yaml(args):
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
 
+    config_managers = []
     for config in yaml_configs[consts.YAML_VALIDATIONS]:
         config[consts.CONFIG_SOURCE_CONN] = source_conn
         config[consts.CONFIG_TARGET_CONN] = target_conn
@@ -799,16 +845,16 @@ def run_connections(args):
 
 
 def run_config(args):
-    """Run commands related to validation config YAMLs (legacy - superceded by run_validation_configs)."""
-    config_managers = build_config_managers_from_yaml(args)
+    """Run commands related to validation config YAMLs (LEGACY - superceded by run_validation_configs)."""
+    config_file_path = _get_arg_config_file(args)
+    config_managers = build_config_managers_from_yaml(args, config_file_path)
     run_validations(args, config_managers)
 
 
 def run_validation_configs(args):
     """Run commands related to validation config YAMLs."""
     if args.validation_config_cmd == "run":
-        config_managers = build_config_managers_from_yaml(args)
-        run_validations(args, config_managers)
+        config_runner(args)
     elif args.validation_config_cmd == "list":
         cli_tools.list_validations()
     elif args.validation_config_cmd == "get":

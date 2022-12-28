@@ -19,15 +19,19 @@ and validation files.
 
 import enum
 import json
-import os
 import logging
+import os
+from typing import Dict, List
+
 import shutil
 from google.cloud import storage
+import os
 from typing import Dict, List
-from yaml import dump, load, Dumper, Loader
 
-from data_validation import client_info
-from data_validation import consts
+from google.cloud import storage
+from yaml import Dumper, Loader, dump, load
+
+from data_validation import client_info, consts
 
 
 class FileSystem(enum.Enum):
@@ -114,7 +118,7 @@ class StateManager(object):
         yaml_config_str = dump(yaml_config, Dumper=Dumper)
         self._write_file(validation_path, yaml_config_str)
 
-    def get_validation_config(self, name: str) -> Dict[str, str]:
+    def get_validation_config(self, name: str, config_dir=None) -> Dict[str, str]:
         """Get a validation configuration from the expected file.
 
         Args:
@@ -122,17 +126,28 @@ class StateManager(object):
         Returns:
             A dict of the validation values from the file.
         """
-        validation_path = self._get_validation_path(name)
+        if config_dir:
+            validation_path = os.path.join(config_dir, name)
+        else:
+            validation_path = self._get_validation_path(name)
+
         validation_bytes = self._read_file(validation_path)
         return load(validation_bytes, Loader=Loader)
 
     def list_validations(self):
         file_names = self._list_directory(self._get_validations_directory())
-        return [
-            file_name.split(".")[0]
-            for file_name in file_names
-            if file_name.endswith(".yaml")
-        ]
+        return [file_name for file_name in file_names if file_name.endswith(".yaml")]
+
+    def list_validations_in_dir(self, config_dir):
+        logging.info(f"Looking for validations in path {config_dir}")
+        if config_dir.startswith("gs://"):
+            if not config_dir.endswith("/"):
+                config_dir += "/"
+            files = self._list_gcs_directory(config_dir)
+        else:
+            files = os.listdir(config_dir)
+
+        return [file_name for file_name in files if file_name.endswith(".yaml")]
 
     def _get_validations_directory(self):
         """Returns the validations directory path."""
