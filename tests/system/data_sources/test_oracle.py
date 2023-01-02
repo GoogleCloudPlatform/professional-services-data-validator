@@ -24,7 +24,7 @@ ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XE")
 CONN = {
     "source_type": "Oracle",
     "host": ORACLE_HOST,
-    "user": "SYSTEM",
+    "user": "System",
     "password": ORACLE_PASSWORD,
     "port": 5432,
     "database": ORACLE_DATABASE,
