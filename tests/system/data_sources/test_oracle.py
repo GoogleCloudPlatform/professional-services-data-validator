@@ -26,7 +26,7 @@ CONN = {
     "host": ORACLE_HOST,
     "user": "System",
     "password": ORACLE_PASSWORD,
-    "port": 5432,
+    "port": 1521,
     "database": ORACLE_DATABASE,
 }
 
