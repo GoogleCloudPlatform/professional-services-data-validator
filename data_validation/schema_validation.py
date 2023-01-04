@@ -14,6 +14,7 @@
 
 import datetime
 import pandas
+import logging
 
 from data_validation import metadata, consts, clients
 
@@ -101,7 +102,6 @@ class SchemaValidation(object):
 
         return df
 
-
 def schema_validation_matching(source_fields, target_fields, exclusion_fields, allow_list):
     """Compare schemas between two dictionary objects"""
     results = []
@@ -141,7 +141,20 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields, a
                 )
             elif source_field_type in allow_list_map:
                 target_field_type = allow_list_map[source_field_type]
-                if target_field_type == source_field_type:
+                name_mismatch, higher_precision, lower_precision = parse_n_validate_datatypes(source_field_type, target_field_type)                 
+                if name_mismatch or lower_precision:
+                    results.append(
+                        [
+                            source_field_name,
+                            source_field_name,
+                            str(source_field_type),
+                            str(target_field_type),
+                            consts.VALIDATION_STATUS_FAIL,
+                        ]
+                    )
+                else:
+                    if higher_precision:
+                        logging.warning("Source and target data type has precision mismatch: %s - %s", source_field_type, target_field_type)
                     results.append(
                         [
                             source_field_name,
@@ -150,29 +163,7 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields, a
                             str(target_field_type),
                             consts.VALIDATION_STATUS_SUCCESS,
                         ]
-                    ) 
-                else:                   
-                    bool_flag = parse_allowed_precision(source, target)
-                    if bool_flag:
-                        results.append(
-                            [
-                                source_field_name,
-                                source_field_name,
-                                str(source_field_type),
-                                str(target_field_type),
-                                consts.VALIDATION_STATUS_SUCCESS,
-                            ]
-                        ) 
-                    else:
-                        results.append(
-                            [
-                                source_field_name,
-                                source_field_name,
-                                str(source_field_type),
-                                str(target_field_type),
-                                consts.VALIDATION_STATUS_WARNING,
-                            ]
-                        )                                           
+                    )                      
             # target data type mismatch
             else:
                 results.append(
@@ -239,6 +230,17 @@ def parse_allow_list(st):
     stack = []
     return output
 
+def get_datatype_name(st):
+    chars = []
+    for i in range(len(st)):
+        if ord(st[i].lower()) >= 97 and ord(st[i].lower()) <= 122:
+            chars.append(st[i].lower())
+    out = "".join(chars)
+    if num == '':
+        return -1
+    return out
+
+#typea data types: int8,int16
 def get_typea_numeric_sustr(st):
     nums = []
     for i in range(len(st)):
@@ -249,6 +251,7 @@ def get_typea_numeric_sustr(st):
         return -1
     return int(num)
 
+#typeb data types: Decimal(10,2)
 def get_typeb_numeric_sustr(st):
     nums = []
     first_half = st.split(",")[0]
@@ -258,26 +261,34 @@ def get_typeb_numeric_sustr(st):
     return first_half_num, second_half_num
 
 def validate_typeb_vals(source, target):
-    if source[0] > target[0]:
-        return False
-    else:
-        if source[1] > target[1]:
-            return False
-    return True
+    if source[0] > target[0] or source[1] > target[1]:
+        return False, True 
+    elif source[0] == target[0] and source[1] == target[1]:
+        return False, False
+    return True, False
 
-def parse_allowed_precision(source, target):
+'''
+@returns
+bool:source and target datatype names matched or not
+bool:target has higher precision value
+bool:target has lower precision value
+'''
+def parse_n_validate_datatypes(source, target):
+    if get_datatype_name(source) != get_datatype_name(target):
+        return True, None, None
     #Check for type of precisions supplied e.g: int8,Decimal(10,2),int
     if "(" in source:
         typeb_source = get_typeb_numeric_sustr(source)
         typeb_target = get_typeb_numeric_sustr(target)
-        if validate_typeb_vals(typeb_source, typeb_target):
-            return True
-        return False
-    source_num = get_numeric_sustr(source)
-    target_num = get_numeric_sustr(target)
-    if source_num < target_num:
-        return False
-    return True
+        higher_precision, lower_precision = validate_typeb_vals(typeb_source, typeb_target):
+        return False, higher_precision, lower_precision
+    source_num = get_typea_numeric_sustr(source)
+    target_num = get_typea_numeric_sustr(target)
+    if source_num == target_num:
+        return False, False, False
+    elif source_num > target_num:
+        return False, False, True
+    return False, True, False
 
 
 
