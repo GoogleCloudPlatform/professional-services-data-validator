@@ -14,7 +14,6 @@
 
 import json
 import logging
-from typing import Tuple
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 

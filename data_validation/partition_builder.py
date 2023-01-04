@@ -14,16 +14,17 @@
 
 from argparse import Namespace
 import os
-from typing import List
-import ibis
-from data_validation import cli_tools, clients, consts
+from typing import List, Dict
+from data_validation import cli_tools, consts
 from data_validation.config_manager import ConfigManager
-from data_validation.query_builder.query_builder import QueryBuilder
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
 from data_validation.validation_builder import ValidationBuilder
 
+
 class PartitionBuilder:
-    def __init__(self, config_managers, validation_type, args) -> None:
+    def __init__(
+        self, config_managers: ConfigManager, validation_type: str, args: Namespace
+    ) -> None:
 
         self.config_managers = config_managers
         self.table_count = len(config_managers)
@@ -31,7 +32,7 @@ class PartitionBuilder:
         self.args = args
         self.config_dir = self._get_arg_config_dir()
         self.partition_type = self._get_arg_partition_type()
-        
+
     def _get_arg_config_dir(self) -> str:
         """Return String yaml config folder path."""
         if not self.args.config_dir:
@@ -54,7 +55,7 @@ class PartitionBuilder:
 
         return self.args.partition_type
 
-    def _get_yaml_from_config(self, config_manager):
+    def _get_yaml_from_config(self, config_manager: ConfigManager) -> Dict:
         """Return dict objects formatted for yaml validations.
 
         Args:
@@ -68,7 +69,7 @@ class PartitionBuilder:
         }
         return yaml_config
 
-    def partition_configs(self):
+    def partition_configs(self) -> None:
         """Takes a list of ConfigManager object and splits each it into multiple
         ConfigManager objects applying supplied partition logic.
 
@@ -84,13 +85,16 @@ class PartitionBuilder:
             partition_filters = self._get_primary_key_partition_filters()
         elif self.partition_type == "primary_key_mod":
             # TODO: Add support for Primary_key + Mod
-            raise ValueError(f"Partition Type: '{self.partition_type}' is not supported")
+            raise ValueError(
+                f"Partition Type: '{self.partition_type}' is not supported"
+            )
         elif self.partition_type == "hash_mod":
             # TODO: Add support for Hash + Mod
-            raise ValueError(f"Partition Type: '{self.partition_type}' is not supported")
+            raise ValueError(
+                f"Partition Type: '{self.partition_type}' is not supported"
+            )
 
         self._add_partition_filters_and_store(partition_filters)
-
 
     def _get_primary_key_partition_filters(self) -> List[List[str]]:
         """Generate Partition filters for primary_key type partition for all
@@ -195,7 +199,7 @@ class PartitionBuilder:
     def _add_partition_filters_and_store(
         self,
         partition_filters: List[List[str]],
-    ):
+    ) -> None:
         """Add Partition Filters to ConfigManager and return a list of ConfigManager objects.
 
         Args:

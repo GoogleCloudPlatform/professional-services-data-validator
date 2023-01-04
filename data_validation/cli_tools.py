@@ -196,6 +196,7 @@ def _configure_partition_parser(subparsers):
     )
     _configure_row_partition_parser(row_partition_parser)
 
+
 def _configure_beta_parser(subparsers):
     """Configure beta commands for the parser."""
     connection_parser = subparsers.add_parser(
@@ -415,6 +416,7 @@ def _configure_row_partition_parser(row_partition_parser) -> None:
         help="Row batch size used for random row filters (default 10,000).",
     )
     _add_common_partition_arguments(row_partition_parser, required_arguments)
+
 
 def _configure_row_parser(row_parser):
     """Configure arguments to run row level validations."""

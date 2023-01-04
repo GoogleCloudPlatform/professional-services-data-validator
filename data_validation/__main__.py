@@ -18,8 +18,6 @@ import os
 import sys
 
 from yaml import Dumper, dump
-from typing import List, Tuple
-import pandas
 from argparse import Namespace
 from data_validation import (
     cli_tools,
@@ -51,48 +49,6 @@ def _get_arg_config_file(args):
         raise ValueError("YAML Config File was not supplied.")
 
     return args.config_file
-
-
-def _get_arg_config_dir(args) -> str:
-    """Return String yaml config folder path."""
-    if not args.config_dir:
-        raise ValueError("YAML Config Dir Path was not supplied.")
-
-    return args.config_dir
-
-def _get_arg_config_dir(args) -> str:
-    """Return String yaml config folder path."""
-    if not args.config_dir:
-        raise ValueError("YAML Config Dir Path was not supplied.")
-
-    return args.config_dir
-
-
-def _get_arg_partition_type(args: Namespace) -> str:
-    """Return the type of Partition Logic to be used from args
-
-    Args:
-        args (Namespace): User specified Arguments.
-
-    Returns:
-        Type of Partition logic to be used to split Config-Files
-    """
-    if not args.partition_type:  # Use default Partition logic if not supplied
-        return consts.DEFAULT_PARTITION_TYPE
-    elif args.partition_type not in consts.PARTITION_TYPES:
-        # Already handled in argparser argument choices,
-        # check kept for explicit calls
-        raise ValueError(f"Unknown Partition Type: {args.partition_type}")
-
-    return args.partition_type
-
-
-def _get_arg_config_dir(args):
-    """Return String yaml config directory path."""
-    if not args.config_dir:
-        raise ValueError("YAML Config Directory was not supplied.")
-
-    return args.config_dir
 
 
 def get_aggregate_config(args, config_manager: ConfigManager):
