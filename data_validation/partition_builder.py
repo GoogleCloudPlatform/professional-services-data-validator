@@ -75,10 +75,6 @@ class PartitionBuilder:
         """Takes a list of ConfigManager object and splits each it into multiple
         ConfigManager objects applying supplied partition logic.
 
-        Args:
-            args (Namespace): User specified Arguments.
-            config_managers (List[ConfigManager]): List of config manager instances.
-
         Returns:
             None
         """
@@ -231,7 +227,6 @@ class PartitionBuilder:
         """Add Partition Filters to ConfigManager and return a list of ConfigManager objects.
 
         Args:
-            config_manager (List[ConfigManager]): List of Config manager instances.
             partition_filters (List[List[str]]): List of List of Partition filters
             for all Table/ConfigManager objects
 
