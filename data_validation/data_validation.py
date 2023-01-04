@@ -368,22 +368,6 @@ class DataValidation(object):
 
         return result_df
 
-    def get_pandas_df(self) -> Tuple[pandas.DataFrame, pandas.DataFrame]:
-        """Build Source and Target Queries, Dataframe
-
-        Returns:
-            A tuple of source and target pandas dataframe
-        """
-        self.run_metadata.validations = self.validation_builder.get_metadata()
-
-        source_query = self.validation_builder.get_source_query()
-        target_query = self.validation_builder.get_target_query()
-
-        source_df = self.config_manager.source_client.execute(source_query)
-        target_df = self.config_manager.target_client.execute(target_query)
-
-        return (source_df, target_df)
-
     def combine_data(self, source_df, target_df, join_on_fields):
         """TODO: Return List of Dictionaries"""
         # Clean Data to Standardize
