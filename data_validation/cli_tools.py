@@ -40,6 +40,9 @@ data-validation validate column \
 -c ex_yaml.yaml
 
 data-validation run-config -c ex_yaml.yaml
+
+command:
+data-validation
 """
 
 import argparse
@@ -739,7 +742,7 @@ def _add_common_partition_arguments(parser, required_arguments=None):
     )
     required_arguments.add_argument(
         "--config-dir",
-        "-cd",
+        "-cdir",
         required=True,
         help="Directory Path to store YAML Config Files",
     )

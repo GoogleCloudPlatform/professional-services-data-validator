@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import Namespace
 import os
+import logging
 from typing import List, Dict
+from argparse import Namespace
+
 from data_validation import cli_tools, consts
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
@@ -147,11 +149,20 @@ class PartitionBuilder:
             target_count_query = target_partition_row_builder.get_count_query()
             target_count = target_count_query.execute()
 
+            if source_count != target_count:
+                logging.warning(
+                    "Source and Target table row counts do not match,"
+                    "proceeding with max(source_count, target_count)"
+                )
             row_count = max(source_count, target_count)
 
             # If supplied partition_num is greater than count(*) coalesce it
             if self.args.partition_num > row_count:
                 partition_count = row_count
+                logging.warning(
+                    "Supplied partition num is greater than row count, "
+                    "truncating it to row count"
+                )
             else:
                 partition_count = self.args.partition_num
 
@@ -162,6 +173,17 @@ class PartitionBuilder:
             target_min_query = target_partition_row_builder.get_min_query()
             target_min = target_min_query.execute()
 
+            # If Primary key is non numeric, raise Type Error
+            if not (source_min.is_integer() and target_min.is_integer()):
+                raise TypeError(
+                    f"Supplied Primary key is not of type Numeric: {primary_key}"
+                )
+
+            if source_min != target_min:
+                logging.warning(
+                    "min(primary_key) for Source and Target tables do not"
+                    "match, proceeding with min(source_min, target_min)"
+                )
             lower_bound = min(source_min, target_min)
 
             # Get Source and Target Primary key Max
@@ -170,6 +192,12 @@ class PartitionBuilder:
 
             target_max_query = target_partition_row_builder.get_max_query()
             target_max = target_max_query.execute()
+
+            if source_min != target_min:
+                logging.warning(
+                    "max(primary_key) for Source and Target tables do not"
+                    "match, proceeding with max(source_max, target_max)"
+                )
 
             upper_bound = max(source_max, target_max)
 
