@@ -45,6 +45,16 @@ data-validation validate column -sc my_bq_conn -tc my_bq_conn -tbls bigquery-pub
 ````shell script
 data-validation validate row -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*'
 ````
+#### Run a row hash validation with a **NUMERIC** primary key
+For Oracle and Postgres connections, numeric primary keys may not match between source and target data types due to precision or scale discrepancies. You may need to cast the primary key to a string for a valid match, which can be done by updating ````cast: null```` to ````cast: string```` in yaml file. 
+  ````yaml
+    primary_keys:
+      - cast: string
+        field_alias: dept_no
+        source_column: dept_no
+        target_column: dept_no
+  ````
+
 
 #### Run a row hash validation for all rows but filter only the failed records 
 ````shell script
