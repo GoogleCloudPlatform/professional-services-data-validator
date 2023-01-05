@@ -264,7 +264,6 @@ class OracleClient(alch.AlchemyClient):
 
     def _get_schema_using_query(self, limited_query):
         type_map = {
-            "DB_TYPE_NUMBER": "int64",
             "DB_TYPE_NVARCHAR": "string",
             "DB_TYPE_VARCHAR": "string",
             "DB_TYPE_TIMESTAMP": "timestamp",
@@ -273,7 +272,16 @@ class OracleClient(alch.AlchemyClient):
 
         with self._execute(limited_query, results=True) as cur:
             names = [row[0].lower() for row in cur.proxy._cursor_description()]
-            ibis_types = [
-                type_map[row[1].name] for row in cur.proxy._cursor_description()
-            ]
+            ibis_types = []
+            for row in cur.proxy._cursor_description():
+                if row[1].name == "DB_TYPE_NUMBER":
+                    precision, scale = row[4], row[5]
+                    if scale > 0:
+                        ibis_datatype = "float64"
+                    else:
+                        ibis_datatype = "int64"
+                else:
+                    ibis_datatype = type_map[row[1].name]
+                ibis_types.append(ibis_datatype)
+                
         return sch.Schema(names, ibis_types)
