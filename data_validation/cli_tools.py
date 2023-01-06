@@ -375,6 +375,12 @@ def _configure_row_partition_parser(row_partition_parser) -> None:
         required=True,
         help="Comma separated list of primary key columns 'col_a,col_b'",
     )
+    required_arguments.add_argument(
+        "--tables-list",
+        "-tbls",
+        required=True,
+        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+    )
 
     # Group for mutually exclusive arguments. Either must be supplied
     mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(
@@ -766,13 +772,6 @@ def _add_common_partition_arguments(parser, required_arguments=None):
     )
 
     # Optional arguments
-    parser.add_argument(
-        "--tables-list",
-        "-tbls",
-        default=None,
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
-    )
-
     parser.add_argument(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
     )
