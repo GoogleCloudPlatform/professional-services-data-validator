@@ -88,3 +88,11 @@ steps:
   - 'NOX_SESSION=integration_state'
   - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
+- id: integration_oracle
+  name: 'gcr.io/pso-kokoro-resources/python-multi-oracle-21client'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_oracle'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'ORACLE_PASSWORD=Oracle123'
+  - 'ORACLE_HOST=10.128.15.246'

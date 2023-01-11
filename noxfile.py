@@ -26,7 +26,6 @@ import random
 
 import nox
 
-
 # Python version used for linting.
 DEFAULT_PYTHON_VERSION = "3.9"
 
@@ -227,3 +226,18 @@ def integration_state(session):
 
     test_path = "tests/system/test_state_manager.py"
     session.run("pytest", test_path, *session.posargs)
+
+
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+def integration_oracle(session):
+    """Run Oracle integration tests.
+    Ensure Oracle validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=["cx_Oracle"])
+
+    expected_env_vars = ["PROJECT_ID", "ORACLE_PASSWORD", "ORACLE_HOST"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)

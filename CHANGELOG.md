@@ -2,6 +2,20 @@
 
 ## Untagged
 
+## [2.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.6.0...v2.7.0) (2023-01-06)
+
+
+### Features
+
+* Add AlloyDB support ([#645](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/645)) ([cfedc22](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cfedc224a21633046ff7551070c88cd79f7e754e))
+* Add Integration test for Oracle ([#651](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/651)) ([de3bbcc](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/de3bbccb6dea5b83f2106692da9de6b4b89310dd))
+* Added custom query support for Oracle ([#646](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/646)) ([3f8771a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3f8771a8969b393324b5f831573ba7436f819eb8))
+* Added custom query support for PostgreSQL ([#644](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/644)) ([88dcfd3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/88dcfd3690c789d09bef3665d85ecf518fd6fa47))
+* extend TO_CHAR to cover date, time and timestamp types ([#641](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/641)) ([e0c184f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e0c184fadf91c396c4815b0de2f6e0359643deb2))
+* SQL Server custom query support ([#640](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/640)) ([98ab010](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/98ab01028f3d4e3a62f410a44ff9b315d3e6228e))
+* Support config directory for running validations and add multithreading for DB queries ([#654](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/654)) ([c67b51a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c67b51a9e1af570339a0457a549d540680984c5e))
+* Support custom calculated fields ([#637](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/637)) ([14b506b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/14b506b34ef23fce6764ad62e763b15aac881ccc))
+
 ## [2.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.5.0...v2.6.0) (2022-11-28)
 
 
