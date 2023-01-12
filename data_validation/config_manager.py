@@ -290,6 +290,11 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_EXCLUSION_COLUMNS, [])
 
     @property
+    def allow_list(self):
+        """Return the allow_list from Config"""
+        return self._config.get(consts.CONFIG_ALLOW_LIST, "")
+
+    @property
     def filter_status(self):
         """Return filter status list from Config"""
         return self._config.get(consts.CONFIG_FILTER_STATUS, None)
@@ -299,6 +304,10 @@ class ConfigManager(object):
         self._config[consts.CONFIG_EXCLUSION_COLUMNS] = (
             self.exclusion_columns + column_configs
         )
+
+    def append_allow_list(self, allow_list):
+        """Append allow_list of datatype to existing config."""
+        self._config[consts.CONFIG_ALLOW_LIST] = allow_list
 
     def get_source_ibis_table(self):
         """Return IbisTable from source."""

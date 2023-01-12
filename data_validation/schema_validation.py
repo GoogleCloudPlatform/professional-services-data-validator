@@ -51,9 +51,11 @@ class SchemaValidation(object):
         target_fields = {}
         for field_name, data_type in ibis_target_schema.items():
             target_fields[field_name] = data_type
-
         results = schema_validation_matching(
-            source_fields, target_fields, self.config_manager.exclusion_columns, allow_list
+            source_fields,
+            target_fields,
+            self.config_manager.exclusion_columns,
+            self.config_manager.allow_list,
         )
         df = pandas.DataFrame(
             results,
@@ -102,7 +104,10 @@ class SchemaValidation(object):
 
         return df
 
-def schema_validation_matching(source_fields, target_fields, exclusion_fields, allow_list):
+
+def schema_validation_matching(
+    source_fields, target_fields, exclusion_fields, allow_list
+):
     """Compare schemas between two dictionary objects"""
     results = []
     # Apply the casefold() function to lowercase the keys of source and target
@@ -120,9 +125,8 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields, a
             source_fields_casefold.pop(field, None)
             target_fields_casefold.pop(field, None)
 
-    #allow list map in case of incompatible  data types in source and target
+    # allow list map in case of incompatible  data types in source and target
     allow_list_map = parse_allow_list(allow_list)
-    
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields_casefold.items():
         # target field exists
@@ -139,9 +143,17 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields, a
                         consts.VALIDATION_STATUS_SUCCESS,
                     ]
                 )
-            elif source_field_type in allow_list_map:
-                target_field_type = allow_list_map[source_field_type]
-                name_mismatch, higher_precision, lower_precision = parse_n_validate_datatypes(source_field_type, target_field_type)                 
+            elif string_val(source_field_type) in allow_list_map:
+                allowed_target_field_type = allow_list_map[
+                    string_val(source_field_type)
+                ]
+                (
+                    name_mismatch,
+                    higher_precision,
+                    lower_precision,
+                ) = parse_n_validate_datatypes(
+                    string_val(source_field_type), allowed_target_field_type
+                )
                 if name_mismatch or lower_precision:
                     results.append(
                         [
@@ -154,16 +166,20 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields, a
                     )
                 else:
                     if higher_precision:
-                        logging.warning("Source and target data type has precision mismatch: %s - %s", source_field_type, target_field_type)
+                        logging.warning(
+                            "Source and target data type has precision mismatch: %s - %s",
+                            string_val(source_field_type),
+                            str(target_field_type),
+                        )
                     results.append(
                         [
                             source_field_name,
                             source_field_name,
-                            str(source_field_type),
+                            string_val(source_field_type),
                             str(target_field_type),
                             consts.VALIDATION_STATUS_SUCCESS,
                         ]
-                    )                      
+                    )
             # target data type mismatch
             else:
                 results.append(
@@ -201,12 +217,6 @@ def schema_validation_matching(source_fields, target_fields, exclusion_fields, a
             )
     return results
 
-def is_number(val):
-    try:
-        num = int(val)
-    except ValueError as e:
-        return False
-    return True
 
 def parse_allow_list(st):
     output = {}
@@ -218,11 +228,11 @@ def parse_allow_list(st):
             output[key] = None
             stack = []
             continue
-        if st[i] == "," and not is_number(st[i+1]):
+        if st[i] == "," and not st[i + 1].isdigit():
             value = "".join(stack)
             output[key] = value
             stack = []
-            i+=1
+            i += 1
             continue
         stack.append(st[i])
     value = "".join(stack)
@@ -230,57 +240,69 @@ def parse_allow_list(st):
     stack = []
     return output
 
+
 def get_datatype_name(st):
     chars = []
     for i in range(len(st)):
         if ord(st[i].lower()) >= 97 and ord(st[i].lower()) <= 122:
             chars.append(st[i].lower())
     out = "".join(chars)
-    if num == '':
+    if out == "":
         return -1
     return out
 
-#typea data types: int8,int16
+
+# typea data types: int8,int16
 def get_typea_numeric_sustr(st):
     nums = []
     for i in range(len(st)):
-        if is_number(st[i]):
+        if st[i].isdigit():
             nums.append(st[i])
     num = "".join(nums)
-    if num == '':
+    if num == "":
         return -1
     return int(num)
 
-#typeb data types: Decimal(10,2)
+
+# typeb data types: Decimal(10,2)
 def get_typeb_numeric_sustr(st):
-    nums = []
     first_half = st.split(",")[0]
     second_half = st.split(",")[1]
     first_half_num = get_typea_numeric_sustr(first_half)
     second_half_num = get_typea_numeric_sustr(second_half)
     return first_half_num, second_half_num
 
+
+def string_val(st):
+    return str(st).replace(" ", "")
+
+
 def validate_typeb_vals(source, target):
     if source[0] > target[0] or source[1] > target[1]:
-        return False, True 
+        return False, True
     elif source[0] == target[0] and source[1] == target[1]:
         return False, False
     return True, False
 
-'''
+
+"""
 @returns
 bool:source and target datatype names matched or not
 bool:target has higher precision value
 bool:target has lower precision value
-'''
+"""
+
+
 def parse_n_validate_datatypes(source, target):
     if get_datatype_name(source) != get_datatype_name(target):
         return True, None, None
-    #Check for type of precisions supplied e.g: int8,Decimal(10,2),int
+    # Check for type of precisions supplied e.g: int8,Decimal(10,2),int
     if "(" in source:
         typeb_source = get_typeb_numeric_sustr(source)
         typeb_target = get_typeb_numeric_sustr(target)
-        higher_precision, lower_precision = validate_typeb_vals(typeb_source, typeb_target):
+        higher_precision, lower_precision = validate_typeb_vals(
+            typeb_source, typeb_target
+        )
         return False, higher_precision, lower_precision
     source_num = get_typea_numeric_sustr(source)
     target_num = get_typea_numeric_sustr(target)
@@ -289,7 +311,3 @@ def parse_n_validate_datatypes(source, target):
     elif source_num > target_num:
         return False, False, True
     return False, True, False
-
-
-
-
