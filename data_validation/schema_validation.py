@@ -291,15 +291,16 @@ def strip_null(st):
     return st.replace("[non-nullable]", "")
 
 
-"""
-@returns
-bool:source and target datatype names are missmatched or not
-bool:target has higher precision value
-bool:target has lower precision value
-"""
-
-
 def parse_n_validate_datatypes(source, target):
+    """
+    Args:
+        source: Source table datatype string
+        target: Target table datatype string
+    Returns:
+        bool:source and target datatype names are missmatched or not
+        bool:target has higher precision value
+        bool:target has lower precision value
+    """
     if strip_null(source) == target:
         return False, False, False
     if get_datatype_name(source) != get_datatype_name(target):
