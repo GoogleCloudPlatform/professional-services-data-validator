@@ -286,8 +286,10 @@ def validate_typeb_vals(source, target):
         return False, False
     return True, False
 
+
 def strip_null(st):
-    return st.replace("[non-nullable]","")
+    return st.replace("[non-nullable]", "")
+
 
 """
 @returns
