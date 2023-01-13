@@ -796,9 +796,7 @@ def get_arg_list(arg_value, default_value=None):
             arg_value = str(arg_value)
         # arg_value = "hash_all"
         arg_list = json.loads(arg_value)
-        print(799)
     except json.decoder.JSONDecodeError:
-        print(800)
         arg_list = arg_value.split(",")
     return arg_list
 

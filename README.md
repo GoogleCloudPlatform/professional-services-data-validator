@@ -229,7 +229,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
                         Comma separated list of columns to be excluded from the schema validation, i.e col_a,col_b.
 
   [--allow-list or -al ALLOW_LIST]
-                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source.                    
+                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),string[non-nullable]:string"                 
 ```
 
 #### Custom Query Column Validations

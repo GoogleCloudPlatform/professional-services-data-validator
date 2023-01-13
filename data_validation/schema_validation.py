@@ -144,9 +144,11 @@ def schema_validation_matching(
                     ]
                 )
             elif string_val(source_field_type) in allow_list_map:
+
                 allowed_target_field_type = allow_list_map[
                     string_val(source_field_type)
                 ]
+
                 (
                     name_mismatch,
                     higher_precision,
@@ -284,16 +286,20 @@ def validate_typeb_vals(source, target):
         return False, False
     return True, False
 
+def strip_null(st):
+    return st.replace("[non-nullable]","")
 
 """
 @returns
-bool:source and target datatype names matched or not
+bool:source and target datatype names are missmatched or not
 bool:target has higher precision value
 bool:target has lower precision value
 """
 
 
 def parse_n_validate_datatypes(source, target):
+    if strip_null(source) == target:
+        return False, False, False
     if get_datatype_name(source) != get_datatype_name(target):
         return True, None, None
     # Check for type of precisions supplied e.g: int8,Decimal(10,2),int
