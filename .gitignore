@@ -89,7 +89,6 @@ partitions_dir
 # Test temp files
 source_table_data.json
 target_table_data.json
-data_validation/cli_tools.py
 source-sql.sql
 
 # Commit msg

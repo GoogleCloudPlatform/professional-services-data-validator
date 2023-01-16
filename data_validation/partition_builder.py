@@ -24,16 +24,14 @@ from data_validation.validation_builder import ValidationBuilder
 
 
 class PartitionBuilder:
-    def __init__(
-        self, config_managers: ConfigManager, validation_type: str, args: Namespace
-    ) -> None:
+    def __init__(self, config_managers: ConfigManager, args: Namespace) -> None:
 
         self.config_managers = config_managers
         self.table_count = len(config_managers)
-        self.validation_type = validation_type
         self.args = args
         self.config_dir = self._get_arg_config_dir()
-        self.partition_type = self._get_arg_partition_type()
+        self.primary_key = self._get_primary_key()
+        self.partition_key = self._get_arg_partition_key()
 
     def _get_arg_config_dir(self) -> str:
         """Return String yaml config folder path."""
@@ -42,20 +40,22 @@ class PartitionBuilder:
 
         return self.args.config_dir
 
-    def _get_arg_partition_type(self) -> str:
-        """Return the type of Partition Logic to be used from args
+    def _get_primary_key(self) -> str:
+        """Return the first Primary Key"""
+        # Filter for only first primary key (multi-pk filter not supported)
+        primary_keys = cli_tools.get_arg_list(self.args.primary_keys)
+        primary_key = primary_keys[0]
+        return primary_key
 
-        Returns:
-            Type of Partition logic to be used to split Config-Files
-        """
-        if not self.args.partition_type:  # Use default Partition logic if not supplied
-            return consts.DEFAULT_PARTITION_TYPE
-        elif self.args.partition_type not in consts.PARTITION_TYPES:
-            # Already handled in argparser argument choices,
-            # check kept for explicit calls
-            raise ValueError(f"Unknown Partition Type: {self.args.partition_type}")
+    def _get_arg_partition_key(self) -> str:
+        """Return Partition Key. If not supplied, defaults to Primary Key"""
+        if not self.args.partition_key:
+            logging.warning(
+                "Partition key cannot be found. Will default to Primary key"
+            )
+            return self.primary_key
 
-        return self.args.partition_type
+        return self.args.partition_key
 
     def _get_yaml_from_config(self, config_manager: ConfigManager) -> Dict:
         """Return dict objects formatted for yaml validations.
@@ -79,22 +79,12 @@ class PartitionBuilder:
             None
         """
 
-        if self.partition_type == "primary_key":
-            partition_filters = self._get_primary_key_partition_filters()
-        elif self.partition_type == "primary_key_mod":
-            # TODO: Add support for Primary_key + Mod
-            raise ValueError(
-                f"Partition Type: '{self.partition_type}' is not supported"
-            )
-        elif self.partition_type == "hash_mod":
-            # TODO: Add support for Hash + Mod
-            raise ValueError(
-                f"Partition Type: '{self.partition_type}' is not supported"
-            )
-
+        # Default partition logic: Partition key
+        # Add necessary checks and routes when support for hashmod or partitionkeymod is added
+        partition_filters = self._get_partition_key_filters()
         self._add_partition_filters_and_store(partition_filters)
 
-    def _get_primary_key_partition_filters(self) -> List[List[str]]:
+    def _get_partition_key_filters(self) -> List[List[str]]:
         """Generate Partition filters for primary_key type partition for all
         Configs/Tables.
 
@@ -104,16 +94,12 @@ class PartitionBuilder:
 
         master_filter_list = []
 
-        # Filter for only first primary key (multi-pk filter not supported)
-        primary_keys = cli_tools.get_arg_list(self.args.primary_keys)
-        primary_key = primary_keys[0]
-
         for config_manager in self.config_managers:
 
             validation_builder = ValidationBuilder(config_manager)
 
             source_partition_row_builder = PartitionRowBuilder(
-                primary_key,
+                self.partition_key,
                 config_manager.source_client,
                 config_manager.source_schema,
                 config_manager.source_table,
@@ -121,22 +107,12 @@ class PartitionBuilder:
             )
 
             target_partition_row_builder = PartitionRowBuilder(
-                primary_key,
+                self.partition_key,
                 config_manager.target_client,
                 config_manager.target_schema,
                 config_manager.target_table,
                 validation_builder.target_builder,
             )
-
-            # accepted_datatypes = ("int64", "int32")
-            # if (
-            #     source_datatype not in accepted_datatypes
-            #     and target_datatype not in accepted_datatypes
-            # ):
-            #     raise ValueError(
-            #         "Expected primary_key for partition to be of type int."
-            #         f"Got {source_df[source_df.columns[-1]].dtype.name}"
-            #     )
 
             # Get Source and Target row Count
             source_count_query = source_partition_row_builder.get_count_query()
@@ -172,12 +148,13 @@ class PartitionBuilder:
             # If Primary key is non numeric, raise Type Error
             if not (source_min.is_integer() and target_min.is_integer()):
                 raise TypeError(
-                    f"Supplied Primary key is not of type Numeric: {primary_key}"
+                    f"Supplied Partition key is not of type Numeric: "
+                    f"{self.partition_key}"
                 )
 
             if source_min != target_min:
                 logging.warning(
-                    "min(primary_key) for Source and Target tables do not"
+                    "min(partition_key) for Source and Target tables do not"
                     "match, proceeding with min(source_min, target_min)"
                 )
             lower_bound = min(source_min, target_min)
@@ -191,7 +168,7 @@ class PartitionBuilder:
 
             if source_min != target_min:
                 logging.warning(
-                    "max(primary_key) for Source and Target tables do not"
+                    "max(partition_key) for Source and Target tables do not"
                     "match, proceeding with max(source_max, target_max)"
                 )
 
@@ -209,7 +186,8 @@ class PartitionBuilder:
                     upper_val = upper_bound + 1
 
                 partition_filter = (
-                    f"{primary_key} >= {lower_val} and {primary_key} < {upper_val}"
+                    f"{self.partition_key} >= {lower_val} "
+                    f"and {self.partition_key} < {upper_val}"
                 )
                 filter_list.append(partition_filter)
 

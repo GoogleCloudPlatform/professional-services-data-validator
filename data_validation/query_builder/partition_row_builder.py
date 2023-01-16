@@ -20,7 +20,7 @@ from data_validation.query_builder.query_builder import QueryBuilder
 class PartitionRowBuilder(object):
     def __init__(
         self,
-        primary_key: str,
+        partition_key: str,
         data_client: ibis.client,
         schema_name: str,
         table_name: str,
@@ -29,13 +29,13 @@ class PartitionRowBuilder(object):
         """Build a PartitionRowBuilder object which is ready to build a partition row filter query.
 
         Args:
-            primary_key (str): Primary key used to generate Partitions.
+            partition_key (str): Partition key used to generate Partitions.
             data_client (IbisClient): The client used to query random rows.
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
             query_builder (QueryBuilder): QueryBuilder object.
         """
-        self.primary_key = primary_key
+        self.partition_key = partition_key
         self.query = self._compile_query(
             data_client, schema_name, table_name, query_builder
         )
@@ -62,12 +62,12 @@ class PartitionRowBuilder(object):
 
     def get_max_query(self) -> ibis.Expr:
         """Return an Ibis query object to get Max of Primary Key column"""
-        return self.query[self.primary_key].max()
+        return self.query[self.partition_key].max()
 
     def get_min_query(self) -> ibis.Expr:
         """Return an Ibis query object to get Min of Primary Key column"""
-        return self.query[self.primary_key].min()
+        return self.query[self.partition_key].min()
 
     def get_count_query(self) -> ibis.Expr:
         """Return an Ibis query object to get count of Primary Key column"""
-        return self.query[self.primary_key].count()
+        return self.query[self.partition_key].count()

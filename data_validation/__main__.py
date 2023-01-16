@@ -210,11 +210,15 @@ def build_config_from_args(args, config_manager):
     return config_manager
 
 
-def build_config_managers_from_args(args):
+def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
     """Return a list of config managers ready to execute."""
     configs = []
 
-    validate_cmd = args.validate_cmd.capitalize()
+    # Since `generate-table-partitions` is default to `validate_cmd=row`,
+    # `validate_cmd` is passed along while calling this method
+    if validate_cmd is None:
+        validate_cmd = args.validate_cmd.capitalize()
+
     if validate_cmd == "Schema":
         config_type = consts.SCHEMA_VALIDATION
     elif validate_cmd == "Column":
@@ -489,18 +493,15 @@ def partition_and_store_config_files(args: Namespace) -> None:
 
     Args:
         args (Namespace): User specified Arguments
-        config_managers (List[ConfigManager]): List of config manager instances.
 
     Returns:
         None
     """
-    if args.validate_cmd == "row":
-        validation_type = args.validate_cmd
-        config_managers = build_config_managers_from_args(args)
-        partition_builder = PartitionBuilder(config_managers, validation_type, args)
-        partition_builder.partition_configs()
-    else:
-        raise ValueError(f"Validation Argument '{args.validate_cmd}' is not supported")
+    # Default Validate Type
+    validate_cmd = consts.ROW_VALIDATION
+    config_managers = build_config_managers_from_args(args, validate_cmd)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_builder.partition_configs()
 
 
 def run(args) -> None:
@@ -583,7 +584,7 @@ def main():
         print(run_raw_query_against_connection(args))
     elif args.command == "validate":
         validate(args)
-    elif args.command == "generate-partitions":
+    elif args.command == "generate-table-partitions":
         partition_and_store_config_files(args)
     elif args.command == "deploy":
         from data_validation import app
