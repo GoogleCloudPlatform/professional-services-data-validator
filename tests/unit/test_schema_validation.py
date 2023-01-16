@@ -177,7 +177,7 @@ def test_schema_validation_matching(module_under_test):
         ],
     ]
     assert expected_results == module_under_test.schema_validation_matching(
-        source_fields, target_fields, []
+        source_fields, target_fields, [], ""
     )
 
 
@@ -210,7 +210,7 @@ def test_schema_validation_matching_exclusion_columns(module_under_test):
     ]
 
     assert expected_results == module_under_test.schema_validation_matching(
-        source_fields, target_fields, ["field2"]
+        source_fields, target_fields, ["field2"], ""
     )
 
 

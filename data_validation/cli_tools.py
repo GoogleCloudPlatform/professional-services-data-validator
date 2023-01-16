@@ -490,6 +490,11 @@ def _configure_schema_parser(schema_parser):
         "-ec",
         help="Comma separated list of columns 'col_a,col_b' to be excluded from the schema validation",
     )
+    schema_parser.add_argument(
+        "--allow-list",
+        "-al",
+        help="Comma separated list of datatype mappings due to incompatible datatypes in source and target. e.g: decimal(12,2):decimal(38,9),string[non-nullable]:string",
+    )
 
 
 def _configure_custom_query_parser(custom_query_parser):
