@@ -220,16 +220,51 @@ def get_all_tables(client, allowed_schemas=None):
     return table_objs
 
 
+def maybe_gcp_secret(project_id, secret_id, version_id="latest"):
+    """
+    Get information about the given secret. This only returns metadata about
+    the secret container, not any secret material.
+    """
+    try:
+        # Import the Secret Manager client library.
+        from google.cloud import secretmanager
+
+        # Create the Secret Manager client.
+        client = secretmanager.SecretManagerServiceClient()
+
+        # Build the resource name of the secret.
+        name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+
+        # Access the secret version.
+        response = client.access_secret_version(name=name)
+
+        # Return the decoded payload.
+        payload = response.payload.data.decode('UTF-8')
+        return payload
+    except Exception as e:
+        print(e)
+        return secret_id
+
+
 def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
+    secret_manger_type = connection_config.pop(consts.SECRET_MANGER_TYPE)
+    secret_manger_project_id = connection_config.pop(consts.SECRET_MANGER_PROJECT_ID)
+
+    decrypted_connection_config = {}
+    if secret_manger_type == "gcp":
+        for config_item in connection_config:
+            decrypted_connection_config[config_item] = maybe_gcp_secret(secret_manger_project_id, connection_config[config_item])
+    else:
+        decrypted_connection_config = connection_config
 
     # The ibis_bigquery.connect expects a credentials object, not a string.
-    if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
-        key_path = connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
+    if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in decrypted_connection_config:
+        key_path = decrypted_connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
         if key_path:
-            connection_config[
+            decrypted_connection_config[
                 "credentials"
             ] = google.oauth2.service_account.Credentials.from_service_account_file(
                 key_path
@@ -242,7 +277,7 @@ def get_data_client(connection_config):
         raise Exception(msg)
 
     try:
-        data_client = CLIENT_LOOKUP[source_type](**connection_config)
+        data_client = CLIENT_LOOKUP[source_type](**decrypted_connection_config)
         data_client._source_type = source_type
     except Exception as e:
         msg = 'Connection Type "{source_type}" could not connect: {error}'.format(

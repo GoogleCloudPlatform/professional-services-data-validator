@@ -15,6 +15,8 @@
 
 # Configuration Fields
 SOURCE_TYPE = "source_type"
+SECRET_MANGER_TYPE = "secret_manger_type"
+SECRET_MANGER_PROJECT_ID = "secret_manger_project_id"
 CONFIG = "config"
 CONFIG_SOURCE_CONN_NAME = "source_conn_name"
 CONFIG_TARGET_CONN_NAME = "target_conn_name"
