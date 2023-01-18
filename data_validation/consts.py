@@ -59,6 +59,7 @@ CONFIG_FILTER_SOURCE_VALUE = "source_value"
 CONFIG_FILTER_TARGET_COLUMN = "target_column"
 CONFIG_FILTER_TARGET_VALUE = "target_value"
 CONFIG_EXCLUSION_COLUMNS = "exclusion_columns"
+CONFIG_ALLOW_LIST = "allow_list"
 CONFIG_FILTER_STATUS = "filter_status"
 
 CONFIG_RESULT_HANDLER = "result_handler"

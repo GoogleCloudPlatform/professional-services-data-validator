@@ -320,7 +320,8 @@ def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
                 config_manager.append_exclusion_columns(
                     [col.casefold() for col in exclusion_columns]
                 )
-
+            if args.allow_list is not None:
+                config_manager.append_allow_list(args.allow_list)
         configs.append(config_manager)
 
     return configs
