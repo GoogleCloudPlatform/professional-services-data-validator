@@ -122,7 +122,7 @@ class StateManager(object):
         """
         partition_path = self._get_partition_path(target_file_path)
         yaml_config_str = dump(yaml_config, Dumper=Dumper)
-        self._write_file(partition_path, yaml_config_str)
+        self._write_partition(partition_path, yaml_config_str)
 
     def get_validation_config(self, name: str, config_dir=None) -> Dict[str, str]:
         """Get a validation configuration from the expected file.
@@ -187,6 +187,15 @@ class StateManager(object):
             return open(file_path, "r").read()
 
     def _write_file(self, file_path: str, data: str):
+        if self.file_system == FileSystem.GCS:
+            self._write_gcs_file(file_path, data)
+        else:
+            with open(file_path, "w") as file:
+                file.write(data)
+
+        logging.info("Success! Config output written to {}".format(file_path))
+
+    def _write_partition(self, file_path: str, data: str):
         if self.file_system == FileSystem.GCS:
             self._write_gcs_file(file_path, data)
         else:
