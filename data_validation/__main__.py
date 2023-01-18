@@ -51,6 +51,11 @@ def _get_arg_config_file(args):
     return args.config_file
 
 
+def _get_folder_path_from_file(config_file_path: str):
+    """Extract and return the folder path from file path"""
+    return ("/").join(config_file_path.split("/")[:-1])
+
+
 def get_aggregate_config(args, config_manager: ConfigManager):
     """Return list of formated aggregation objects.
 
@@ -214,7 +219,7 @@ def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
     """Return a list of config managers ready to execute."""
     configs = []
 
-    # Since `generate-table-partitions` is default to `validate_cmd=row`,
+    # Since `generate-table-partitions` defaults to `validate_cmd=row`,
     # `validate_cmd` is passed along while calling this method
     if validate_cmd is None:
         validate_cmd = args.validate_cmd.capitalize()
@@ -245,7 +250,8 @@ def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
     if config_type != consts.SCHEMA_VALIDATION:
         if args.filters:
             filter_config = cli_tools.get_filters(args.filters)
-        if args.threshold:
+        # Threshold is not supported for generate-table-partitions command
+        if args.command != "generate-table-partitions" and args.threshold:
             threshold = args.threshold
     labels = cli_tools.get_labels(args.labels)
 
@@ -255,12 +261,18 @@ def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
 
     format = args.format if args.format else "table"
 
-    use_random_rows = (
-        None if config_type == consts.SCHEMA_VALIDATION else args.use_random_row
-    )
-    random_row_batch_size = (
-        None if config_type == consts.SCHEMA_VALIDATION else args.random_row_batch_size
-    )
+    # Random row validation is not supported for schema validation and
+    # generate-table-partitions
+    use_random_rows = None
+    random_row_batch_size = None
+    if (
+        args.command != "generate-table-partitions"
+        and config_type != consts.SCHEMA_VALIDATION
+    ):
+        if args.use_random_row:
+            use_random_rows = args.use_random_row
+        if args.random_row_batch_size:
+            random_row_batch_size = args.random_row_batch_size
 
     is_filesystem = source_client._source_type == "FileSystem"
 
@@ -485,7 +497,9 @@ def store_yaml_config_file(args, config_managers):
     """
     yaml_configs = convert_config_to_yaml(args, config_managers)
     config_file_path = _get_arg_config_file(args)
-    cli_tools.store_validation(config_file_path, yaml_configs)
+    config_folder_path = _get_folder_path_from_file(config_file_path)
+    cli_tools.store_validation(config_file_path, yaml_configs, config_folder_path)
+    logging.info("Success! Config output written to {}".format(config_file_path))
 
 
 def partition_and_store_config_files(args: Namespace) -> None:
@@ -498,8 +512,7 @@ def partition_and_store_config_files(args: Namespace) -> None:
         None
     """
     # Default Validate Type
-    validate_cmd = consts.ROW_VALIDATION
-    config_managers = build_config_managers_from_args(args, validate_cmd)
+    config_managers = build_config_managers_from_args(args, consts.ROW_VALIDATION)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_builder.partition_configs()
 

@@ -82,7 +82,8 @@ class PartitionBuilder:
         # Default partition logic: Partition key
         # Add necessary checks and routes when support for hashmod or partitionkeymod is added
         partition_filters = self._get_partition_key_filters()
-        self._add_partition_filters_and_store(partition_filters)
+        yaml_configs_list = self._add_partition_filters(partition_filters)
+        self._store_partitions(yaml_configs_list)
 
     def _get_partition_key_filters(self) -> List[List[str]]:
         """Generate Partition filters for primary_key type partition for all
@@ -198,30 +199,31 @@ class PartitionBuilder:
 
         return master_filter_list
 
-    def _add_partition_filters_and_store(
+    def _add_partition_filters(
         self,
         partition_filters: List[List[str]],
-    ) -> None:
-        """Add Partition Filters to ConfigManager and return a list of ConfigManager objects.
+    ) -> List[Dict]:
+        """Add Partition Filters to ConfigManager and return a list of dict
+        ConfigManager objects.
 
         Args:
             partition_filters (List[List[str]]): List of List of Partition filters
             for all Table/ConfigManager objects
 
         Returns:
-            None
+            yaml_configs_list (List[Dict]): List of YAML configs for all tables
         """
 
         table_count = len(self.config_managers)
+        yaml_configs_list = [None] * table_count
         for ind in range(table_count):
             config_manager = self.config_managers[ind]
             filter_list = partition_filters[ind]
 
-            target_folder_name = config_manager.full_source_table
-            target_folder_path = cli_tools.get_target_table_folder_path(
-                self.config_dir, target_folder_name
-            )
-
+            yaml_configs_list[ind] = {
+                "target_folder_name": config_manager.full_source_table,
+                "partitions": [],
+            }
             for pos in range(len(filter_list)):
                 filter_dict = {
                     "type": "custom",
@@ -231,11 +233,37 @@ class PartitionBuilder:
                 # Append partition new filter
                 config_manager.filters.append(filter_dict)
 
-                # Save partition
-                yaml_configs = self._get_yaml_from_config(config_manager)
+                # Build and append partition YAML
+                yaml_config = self._get_yaml_from_config(config_manager)
                 target_file_name = "0" * (4 - len(str(pos))) + str(pos) + ".yaml"
-                config_file_path = os.path.join(target_folder_path, target_file_name)
-                cli_tools.store_validation(config_file_path, yaml_configs)
+                yaml_configs_list[ind]["partitions"].append(
+                    {"target_file_name": target_file_name, "yaml_config": yaml_config}
+                )
 
                 # Pop last partition filter
                 config_manager.filters.pop()
+
+        return yaml_configs_list
+
+    def _store_partitions(self, yaml_configs_list: List[Dict]) -> None:
+        """Save Partitions to target folder
+
+        Args:
+            yaml_configs_list (List[Dict]): List of YAML configs for all tables
+
+        Returns:
+            None
+        """
+
+        for table in yaml_configs_list:
+            target_folder_name = table["target_folder_name"]
+            target_folder_path = os.path.join(self.config_dir, target_folder_name)
+            for partition in table["partitions"]:
+                yaml_config = partition["yaml_config"]
+                target_file_name = partition["target_file_name"]
+                target_file_path = os.path.join(target_folder_path, target_file_name)
+                cli_tools.store_validation(
+                    target_file_path, yaml_config, target_folder_path
+                )
+
+        logging.info(f"Success! Table partition configs written to {self.config_dir}")

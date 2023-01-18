@@ -189,26 +189,9 @@ def _configure_partition_parser(subparsers):
     # Group all optional arguments together
     optional_arguments = partition_parser.add_argument_group("optional arguments")
     optional_arguments.add_argument(
-        "--threshold",
-        "-th",
-        type=threshold_float,
-        help="Float max threshold for percent difference",
-    )
-    optional_arguments.add_argument(
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
-    )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
     )
     # Keep these in order to support data-validation run command for
     # backwards-compatibility
@@ -754,7 +737,11 @@ def _add_common_partition_arguments(optional_arguments, required_arguments=None)
         "--config-dir",
         "-cdir",
         required=True,
-        help="Directory Path to store YAML Config Files",
+        help="Directory Path to store YAML Config Files. "
+        "GCS: Provide a full gs:// path of the target directory. "
+        "Eg: `gs://<BUCKET>/partiitons_dir`. "
+        "Local: Provide a relative path of the target directory. "
+        "Eg: `partitions_dir`",
     )
     required_arguments.add_argument(
         "--partition-num",
@@ -865,9 +852,9 @@ def get_connection(connection_name):
     return mgr.get_connection_config(connection_name)
 
 
-def store_validation(validation_file_name, yaml_config):
+def store_validation(validation_file_name, yaml_config, target_folder_path=None):
     """Store the validation YAML config under the given name."""
-    mgr = state_manager.StateManager()
+    mgr = state_manager.StateManager(target_folder_path)
     mgr.create_validation_yaml(validation_file_name, yaml_config)
 
 
@@ -877,7 +864,9 @@ def get_validation(validation_name, config_dir=None):
         mgr = state_manager.StateManager(file_system_root_path=config_dir)
         return mgr.get_validation_config(validation_name, config_dir)
     else:
-        mgr = state_manager.StateManager()
+        # Get Folder path from File path
+        config_dir = ("/").join(validation_name.split("/")[:-1])
+        mgr = state_manager.StateManager(file_system_root_path=config_dir)
         return mgr.get_validation_config(validation_name)
 
 
@@ -1042,21 +1031,3 @@ def split_table(table_ref, schema_required=True):
     table = table_ref_list.pop()
     schema = ".".join(table_ref_list)
     return schema.strip(), table.strip()
-
-
-def get_target_table_folder_path(config_dir: str, target_folder_name: str):
-    """Return the Destination folder path for either LOCAL or GCS
-
-    Args:
-        config_dir (str): User specified path to store the config files
-        target_folder_name (str): target folder for specific table to save
-        configs
-
-    Returns:
-        Path to destination folder"""
-    mgr = state_manager.StateManager()
-    dest_dir_path = mgr.create_partition_config_directory(
-        config_dir, target_folder_name
-    )
-
-    return dest_dir_path

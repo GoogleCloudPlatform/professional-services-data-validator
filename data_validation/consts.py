@@ -68,7 +68,6 @@ CONFIG_TYPE_SUM = "sum"
 
 # Default values
 DEFAULT_NUM_RANDOM_ROWS = 10000
-DEFAULT_PARTITION_TYPE = "primary_key"
 
 # Filter Type Options
 FILTER_TYPE_CUSTOM = "custom"
@@ -90,8 +89,6 @@ CONFIG_TYPES = [
     CUSTOM_QUERY,
 ]
 
-# Partition types
-PARTITION_TYPES = ["primary_key", "primary_key_mod", "hash_mod"]
 # State Manager Fields
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
 ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
