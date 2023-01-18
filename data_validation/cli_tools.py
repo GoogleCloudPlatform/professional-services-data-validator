@@ -857,10 +857,16 @@ def get_connection(connection_name):
     return mgr.get_connection_config(connection_name)
 
 
-def store_validation(validation_file_name, yaml_config, target_folder_path=None):
+def store_validation(validation_file_name, yaml_config):
     """Store the validation YAML config under the given name."""
-    mgr = state_manager.StateManager(target_folder_path)
+    mgr = state_manager.StateManager()
     mgr.create_validation_yaml(validation_file_name, yaml_config)
+
+
+def store_partition(target_file_path, yaml_config, target_folder_path=None):
+    """Store the partition YAML config under the given name."""
+    mgr = state_manager.StateManager(target_folder_path)
+    mgr.create_partition_yaml(target_file_path, yaml_config)
 
 
 def get_validation(validation_name, config_dir=None):
@@ -869,9 +875,7 @@ def get_validation(validation_name, config_dir=None):
         mgr = state_manager.StateManager(file_system_root_path=config_dir)
         return mgr.get_validation_config(validation_name, config_dir)
     else:
-        # Get Folder path from File path
-        config_dir = ("/").join(validation_name.split("/")[:-1])
-        mgr = state_manager.StateManager(file_system_root_path=config_dir)
+        mgr = state_manager.StateManager()
         return mgr.get_validation_config(validation_name)
 
 

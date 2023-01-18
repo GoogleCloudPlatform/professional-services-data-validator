@@ -262,8 +262,10 @@ class PartitionBuilder:
                 yaml_config = partition["yaml_config"]
                 target_file_name = partition["target_file_name"]
                 target_file_path = os.path.join(target_folder_path, target_file_name)
-                cli_tools.store_validation(
+                cli_tools.store_partition(
                     target_file_path, yaml_config, target_folder_path
                 )
 
-        logging.info(f"Success! Table partition configs written to {self.config_dir}")
+        logging.info(
+            f"Success! Table partition configs written to directory: {self.config_dir}"
+        )

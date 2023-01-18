@@ -498,8 +498,7 @@ def store_yaml_config_file(args, config_managers):
     """
     yaml_configs = convert_config_to_yaml(args, config_managers)
     config_file_path = _get_arg_config_file(args)
-    config_folder_path = _get_folder_path_from_file(config_file_path)
-    cli_tools.store_validation(config_file_path, yaml_configs, config_folder_path)
+    cli_tools.store_validation(config_file_path, yaml_configs)
     logging.info("Success! Config output written to {}".format(config_file_path))
 
 

@@ -113,6 +113,17 @@ class StateManager(object):
         yaml_config_str = dump(yaml_config, Dumper=Dumper)
         self._write_file(validation_path, yaml_config_str)
 
+    def create_partition_yaml(self, target_file_path: str, yaml_config: Dict[str, str]):
+        """Create a validation file and store the given config as YAML.
+
+        Args:
+            name (String): The name of the validation.
+            yaml_config (Dict): A dictionary with the validation details.
+        """
+        partition_path = self._get_partition_path(target_file_path)
+        yaml_config_str = dump(yaml_config, Dumper=Dumper)
+        self._write_file(partition_path, yaml_config_str)
+
     def get_validation_config(self, name: str, config_dir=None) -> Dict[str, str]:
         """Get a validation configuration from the expected file.
 
@@ -152,6 +163,14 @@ class StateManager(object):
         return os.path.join(self.file_system_root_path, "validations/")
 
     def _get_validation_path(self, name: str) -> str:
+        """Returns the full path to a validation.
+
+        Args:
+            name: The name of the validation.
+        """
+        return os.path.join(self._get_validations_directory(), f"{name}")
+
+    def _get_partition_path(self, name: str) -> str:
         """Returns the full path to a validation.
 
         Args:
