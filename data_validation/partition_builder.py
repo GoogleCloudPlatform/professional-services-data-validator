@@ -14,6 +14,7 @@
 
 import os
 import logging
+import numpy
 from typing import List, Dict
 from argparse import Namespace
 
@@ -147,7 +148,11 @@ class PartitionBuilder:
             target_min = target_min_query.execute()
 
             # If Primary key is non numeric, raise Type Error
-            if not (source_min.is_integer() and target_min.is_integer()):
+            accepted_data_types = [int, numpy.int32, numpy.int64]
+            if not (
+                type(source_min) in accepted_data_types
+                and type(target_min) in accepted_data_types
+            ):
                 raise TypeError(
                     f"Supplied Partition key is not of type Numeric: "
                     f"{self.partition_key}"
