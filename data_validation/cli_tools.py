@@ -655,7 +655,7 @@ def get_connection_config_from_args(args):
 
     for field_obj in CONNECTION_SOURCE_FIELDS[args.connect_type]:
         field = field_obj[0]
-        if field == "logmech" and getattr(args, field) is None:
+        if getattr(args, field) is None:
             continue
         config[field] = getattr(args, field)
 
