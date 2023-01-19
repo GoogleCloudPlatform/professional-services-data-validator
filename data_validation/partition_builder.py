@@ -24,7 +24,7 @@ from data_validation.validation_builder import ValidationBuilder
 
 
 class PartitionBuilder:
-    def __init__(self, config_managers: ConfigManager, args: Namespace) -> None:
+    def __init__(self, config_managers: List[ConfigManager], args: Namespace) -> None:
 
         self.config_managers = config_managers
         self.table_count = len(config_managers)

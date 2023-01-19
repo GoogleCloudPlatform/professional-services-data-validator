@@ -229,7 +229,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
   --config-dir CONFIG_DIR, -cdir CONFIG_DIR
                         Directory Path to store YAML Config Files
-                        GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partiitons_dir`
+                        GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
   --partition-num [1-1000], -pn [1-1000]
                         Number of partitions/config files to generate

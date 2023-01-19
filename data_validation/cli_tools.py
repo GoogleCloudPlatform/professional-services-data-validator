@@ -189,9 +189,26 @@ def _configure_partition_parser(subparsers):
     # Group all optional arguments together
     optional_arguments = partition_parser.add_argument_group("optional arguments")
     optional_arguments.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    optional_arguments.add_argument(
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
+    )
+    optional_arguments.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    optional_arguments.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
     )
     # Keep these in order to support data-validation run command for
     # backwards-compatibility

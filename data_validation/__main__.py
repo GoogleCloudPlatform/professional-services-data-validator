@@ -51,11 +51,6 @@ def _get_arg_config_file(args):
     return args.config_file
 
 
-def _get_folder_path_from_file(config_file_path: str):
-    """Extract and return the folder path from file path"""
-    return ("/").join(config_file_path.split("/")[:-1])
-
-
 def get_aggregate_config(args, config_manager: ConfigManager):
     """Return list of formated aggregation objects.
 
@@ -250,8 +245,7 @@ def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
     if config_type != consts.SCHEMA_VALIDATION:
         if args.filters:
             filter_config = cli_tools.get_filters(args.filters)
-        # Threshold is not supported for generate-table-partitions command
-        if args.command != "generate-table-partitions" and args.threshold:
+        if args.threshold:
             threshold = args.threshold
     labels = cli_tools.get_labels(args.labels)
 
@@ -261,18 +255,12 @@ def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
 
     format = args.format if args.format else "table"
 
-    # Random row validation is not supported for schema validation and
-    # generate-table-partitions
-    use_random_rows = None
-    random_row_batch_size = None
-    if (
-        args.command != "generate-table-partitions"
-        and config_type != consts.SCHEMA_VALIDATION
-    ):
-        if args.use_random_row:
-            use_random_rows = args.use_random_row
-        if args.random_row_batch_size:
-            random_row_batch_size = args.random_row_batch_size
+    use_random_rows = (
+        None if config_type == consts.SCHEMA_VALIDATION else args.use_random_row
+    )
+    random_row_batch_size = (
+        None if config_type == consts.SCHEMA_VALIDATION else args.random_row_batch_size
+    )
 
     is_filesystem = source_client._source_type == "FileSystem"
 
