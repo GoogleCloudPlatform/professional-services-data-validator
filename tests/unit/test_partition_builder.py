@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import shutil
 import pytest
 import json
 import random
+from typing import Dict, List
 from datetime import datetime, timedelta
 
 from data_validation import cli_tools
@@ -70,48 +73,9 @@ GENERATE_TABLE_PARTITIONS_CONFIG = {
     ],
 }
 
-# Row config
-SAMPLE_ROW_CONFIG = {
-    # BigQuery Specific Connection Config
-    "source_conn": SOURCE_CONN_CONFIG,
-    "target_conn": TARGET_CONN_CONFIG,
-    # Validation Type
-    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
-    # Configuration Required Depending on Validator Type
-    "schema_name": None,
-    "table_name": "my_table",
-    "target_schema_name": None,
-    "target_table_name": "my_table",
-    consts.CONFIG_PRIMARY_KEYS: [
-        {
-            consts.CONFIG_FIELD_ALIAS: "id",
-            consts.CONFIG_SOURCE_COLUMN: "id",
-            consts.CONFIG_TARGET_COLUMN: "id",
-            consts.CONFIG_CAST: None,
-        },
-    ],
-    consts.CONFIG_COMPARISON_FIELDS: [
-        {
-            consts.CONFIG_FIELD_ALIAS: "int_value",
-            consts.CONFIG_SOURCE_COLUMN: "int_value",
-            consts.CONFIG_TARGET_COLUMN: "int_value",
-            consts.CONFIG_CAST: None,
-        },
-        {
-            consts.CONFIG_FIELD_ALIAS: "text_value",
-            consts.CONFIG_SOURCE_COLUMN: "text_value",
-            consts.CONFIG_TARGET_COLUMN: "text_value",
-            consts.CONFIG_CAST: None,
-        },
-    ],
-    consts.CONFIG_RESULT_HANDLER: None,
-    consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: None,
-    consts.CONFIG_FILTERS: [],
-}
-
 TEST_CONN = '{"source_type":"Example"}'
-PARTITION_NUM = "20"
+PARTITION_NUM = 20
+PARTITIONS_DIR = "test_partitions_dir"
 CLI_ARGS = [
     "generate-table-partitions",
     "-sc",
@@ -129,9 +93,9 @@ CLI_ARGS = [
     "--filters",
     "station_id>3000",
     "-cdir",
-    "partitions_dir",
+    PARTITIONS_DIR,
     "--partition-num",
-    PARTITION_NUM,
+    f"{PARTITION_NUM}",
     "--partition-key",
     "bike_id",
     "--labels",
@@ -145,15 +109,15 @@ CLI_ARGS_JSON_SOURCE = [
     "-tc",
     TEST_CONN,
     "-tbls",
-    "my_table",
+    "test_table1,test_table2",
     "--primary-keys",
     "id",
     "--hash",
     "*",
     "-cdir",
-    "partitions_dir",
+    PARTITIONS_DIR,
     "--partition-num",
-    PARTITION_NUM,
+    f"{PARTITION_NUM}",
     "--partition-key",
     "id",
 ]
@@ -176,82 +140,10 @@ CLI_ARGS_ABSENT = [
     "-cdir",
     "partitions_dir",
     "--partition-num",
-    "20",
+    f"{PARTITION_NUM}",
     "--labels",
     "name=test_run",
 ]
-
-SAMPLE_PARTITION_FILTERS = [
-    "id >= 0 and id < 49",
-    "id >= 49 and id < 98",
-    "id >= 98 and id < 147",
-    "id >= 147 and id < 196",
-    "id >= 196 and id < 245",
-    "id >= 245 and id < 294",
-    "id >= 294 and id < 343",
-    "id >= 343 and id < 392",
-    "id >= 392 and id < 441",
-    "id >= 441 and id < 490",
-    "id >= 490 and id < 539",
-    "id >= 539 and id < 588",
-    "id >= 588 and id < 637",
-    "id >= 637 and id < 686",
-    "id >= 686 and id < 735",
-    "id >= 735 and id < 784",
-    "id >= 784 and id < 833",
-    "id >= 833 and id < 882",
-    "id >= 882 and id < 931",
-    "id >= 931 and id < 1000",
-]
-
-SAMPLE_PARTITION_YAML_CONFIG = {
-    "target_file_name": "0000.yaml",
-    "yaml_config": {
-        "source": '{"source_type":"Example"}',
-        "target": '{"source_type":"Example"}',
-        "result_handler": {},
-        "validations": [
-            {
-                "type": "Row",
-                "schema_name": None,
-                "table_name": "my_table",
-                "target_schema_name": None,
-                "target_table_name": "my_table",
-                "primary_keys": [
-                    {
-                        "field_alias": "id",
-                        "source_column": "id",
-                        "target_column": "id",
-                        "cast": None,
-                    }
-                ],
-                "comparison_fields": [
-                    {
-                        "field_alias": "int_value",
-                        "source_column": "int_value",
-                        "target_column": "int_value",
-                        "cast": None,
-                    },
-                    {
-                        "field_alias": "text_value",
-                        "source_column": "text_value",
-                        "target_column": "text_value",
-                        "cast": None,
-                    },
-                ],
-                "format": "table",
-                "filter_status": None,
-                "filters": [
-                    {
-                        "type": "custom",
-                        "source": "id >= 0 and id < 49",
-                        "target": "id >= 0 and id < 49",
-                    }
-                ],
-            }
-        ],
-    },
-}
 
 
 class MockIbisClient(object):
@@ -263,6 +155,12 @@ def module_under_test():
     import data_validation.partition_builder
 
     return data_validation.partition_builder
+
+def teardown_module(module):
+    # Clean up: Delete test partitions directory and its contents
+    folder_path = os.path.join("./", PARTITIONS_DIR)
+    if os.path.exists(folder_path):
+        shutil.rmtree(folder_path)
 
 
 def _generate_fake_data(
@@ -297,6 +195,142 @@ def _generate_fake_data(
         data.append(row)
 
     return data
+
+
+def _generate_config_manager(table_name: str = "my_table") -> ConfigManager:
+    """Returns a Dummy ConfigManager Object"""
+
+    row_config = {
+        # BigQuery Specific Connection Config
+        "source_conn": SOURCE_CONN_CONFIG,
+        "target_conn": TARGET_CONN_CONFIG,
+        # Validation Type
+        consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+        # Configuration Required Depending on Validator Type
+        "schema_name": None,
+        "table_name": table_name,
+        "target_schema_name": None,
+        "target_table_name": table_name,
+        consts.CONFIG_PRIMARY_KEYS: [
+            {
+                consts.CONFIG_FIELD_ALIAS: "id",
+                consts.CONFIG_SOURCE_COLUMN: "id",
+                consts.CONFIG_TARGET_COLUMN: "id",
+                consts.CONFIG_CAST: None,
+            },
+        ],
+        consts.CONFIG_COMPARISON_FIELDS: [
+            {
+                consts.CONFIG_FIELD_ALIAS: "int_value",
+                consts.CONFIG_SOURCE_COLUMN: "int_value",
+                consts.CONFIG_TARGET_COLUMN: "int_value",
+                consts.CONFIG_CAST: None,
+            },
+            {
+                consts.CONFIG_FIELD_ALIAS: "text_value",
+                consts.CONFIG_SOURCE_COLUMN: "text_value",
+                consts.CONFIG_TARGET_COLUMN: "text_value",
+                consts.CONFIG_CAST: None,
+            },
+        ],
+        consts.CONFIG_RESULT_HANDLER: None,
+        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FILTER_STATUS: None,
+        consts.CONFIG_FILTERS: [],
+    }
+    return ConfigManager(row_config)
+
+
+def _generate_fake_partition_filters(
+    partition_key: str = "id",
+    partitions: int = 20,
+    upper_bound: int = 1000,
+    lower_bound: int = 0,
+):
+    filter_list = []
+    i = 0
+    marker = lower_bound
+    partition_step = (upper_bound - lower_bound) // partitions
+    while i < partitions:
+        lower_val = marker
+        upper_val = marker + partition_step
+
+        if i == partitions - 1:
+            upper_val = upper_bound + 1
+
+        partition_filter = (
+            f"{partition_key} >= {lower_val} " f"and {partition_key} < {upper_val}"
+        )
+        filter_list.append(partition_filter)
+
+        i += 1
+        marker += partition_step
+    return filter_list
+
+
+def _generate_fake_yaml_configs(partition_filters) -> List[Dict]:
+    """Returns a list of YAML configs"""
+    table_count = len(partition_filters)
+    partitions = len(partition_filters[0])
+    yaml_configs_list = [None] * table_count
+    for ind in range(table_count):
+        filter_list = partition_filters[ind]
+        yaml_configs_list[ind] = {
+            "target_folder_name": f"test_table{ind+1}",
+            "partitions": [],
+        }
+        for pos in range(partitions):
+            yaml_config = {
+                "source": '{"source_type":"Example"}',
+                "target": '{"source_type":"Example"}',
+                "result_handler": {},
+                "validations": [
+                    {
+                        "type": "Row",
+                        "schema_name": None,
+                        "table_name": f"test_table{ind+1}",
+                        "target_schema_name": None,
+                        "target_table_name": f"test_table{ind+1}",
+                        "primary_keys": [
+                            {
+                                "field_alias": "id",
+                                "source_column": "id",
+                                "target_column": "id",
+                                "cast": None,
+                            }
+                        ],
+                        "comparison_fields": [
+                            {
+                                "field_alias": "int_value",
+                                "source_column": "int_value",
+                                "target_column": "int_value",
+                                "cast": None,
+                            },
+                            {
+                                "field_alias": "text_value",
+                                "source_column": "text_value",
+                                "target_column": "text_value",
+                                "cast": None,
+                            },
+                        ],
+                        "format": "table",
+                        "filter_status": None,
+                        "filters": [
+                            {
+                                "type": "custom",
+                                "source": filter_list[pos],
+                                "target": filter_list[pos],
+                            }
+                        ],
+                    }
+                ],
+            }
+            target_file_name = "0" * (4 - len(str(pos))) + str(pos) + ".yaml"
+            yaml_configs_list[ind]["partitions"].append(
+                {"target_file_name": target_file_name, "yaml_config": yaml_config}
+            )
+
+    return yaml_configs_list
 
 
 def _get_fake_json_data(data):
@@ -365,7 +399,7 @@ def test_get_partition_key_filters(module_under_test):
     2. Filters count
     3. Partition filters
     """
-    data = _generate_fake_data(rows=1000, second_range=0)
+    data = _generate_fake_data(rows=1001, second_range=0)
 
     source_json_data = _get_fake_json_data(data)
     target_json_data = _get_fake_json_data(data)
@@ -373,30 +407,84 @@ def test_get_partition_key_filters(module_under_test):
     _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
 
-    config_manager = ConfigManager(SAMPLE_ROW_CONFIG)
+    config_manager = _generate_config_manager("my_table")
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
+    mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
-    builder = module_under_test.PartitionBuilder(config_managers, args)
-    partition_filters = builder._get_partition_key_filters()
-    assert len(partition_filters) == len(config_managers)
-    assert len(partition_filters[0]) == args.partition_num
-    assert partition_filters[0] == SAMPLE_PARTITION_FILTERS
+    mock_partition_filters = _generate_fake_partition_filters(
+        partitions=PARTITION_NUM, lower_bound=0, upper_bound=1000
+    )
+
+    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
+    partition_filters_list = builder._get_partition_key_filters()
+    assert len(partition_filters_list) == len(config_managers)
+    assert len(partition_filters_list[0]) == mock_args.partition_num
+    assert partition_filters_list[0] == mock_partition_filters
 
 
 def test_add_partition_filters_to_config(module_under_test):
     """Add partition filters to ConfigManager object, build YAML config list
-    and assert sample YAML config
+    and assert YAML configs
     """
-
-    config_manager = ConfigManager(SAMPLE_ROW_CONFIG)
-    config_managers = [config_manager]
+    # Generate dummy YAML configs list
+    config_manager1 = _generate_config_manager("test_table1")
+    config_manager2 = _generate_config_manager("test_table2")
+    config_managers = [config_manager1, config_manager2]
 
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
+    mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
-    builder = module_under_test.PartitionBuilder(config_managers, args)
-    yaml_configs_list = builder._add_partition_filters([SAMPLE_PARTITION_FILTERS])
-    assert yaml_configs_list[0]["partitions"][0] == SAMPLE_PARTITION_YAML_CONFIG
+    partition_filters1 = _generate_fake_partition_filters(
+        partitions=PARTITION_NUM, upper_bound=1000
+    )
+    partition_filters2 = _generate_fake_partition_filters(
+        partitions=PARTITION_NUM, upper_bound=10000
+    )
+    master_filter_list = [partition_filters1, partition_filters2]
+    fake_yaml_configs_list = _generate_fake_yaml_configs(master_filter_list)
+
+    # Create PartitionBuilder object and get YAML configs list
+    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
+    yaml_configs_list = builder._add_partition_filters(master_filter_list)
+    assert yaml_configs_list == fake_yaml_configs_list
+
+
+def test_store_yaml_partitions_local(module_under_test):
+    """Store all the Partition YAMLs for 2 tables to specified local directory"""
+
+    # Generate dummy YAML configs list
+    config_manager1 = _generate_config_manager("test_table1")
+    config_manager2 = _generate_config_manager("test_table2")
+    config_managers = [config_manager1, config_manager2]
+
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
+
+    partition_filters1 = _generate_fake_partition_filters(
+        partitions=PARTITION_NUM, upper_bound=1000
+    )
+    partition_filters2 = _generate_fake_partition_filters(
+        partitions=PARTITION_NUM, upper_bound=10000
+    )
+    master_filter_list = [partition_filters1, partition_filters2]
+    fake_yaml_configs_list = _generate_fake_yaml_configs(master_filter_list)
+
+    # Create test partitions directory to store results
+    folder_path = os.path.join("./", PARTITIONS_DIR)
+    if not os.path.exists(folder_path):
+        os.mkdir(folder_path)
+
+    # Store YAML partition configs to local directory
+    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
+    builder._store_partitions(fake_yaml_configs_list)
+
+    # Assert file count for 2 tables and sample file names
+    partition_dir1_contents = os.listdir(os.path.join(PARTITIONS_DIR, "test_table1"))
+    partition_dir2_contents = os.listdir(os.path.join(PARTITIONS_DIR, "test_table2"))
+
+    assert len(partition_dir1_contents) == PARTITION_NUM
+    assert len(partition_dir2_contents) == PARTITION_NUM
+    assert "0000.yaml" in partition_dir1_contents
+    assert "0019.yaml" in partition_dir2_contents
