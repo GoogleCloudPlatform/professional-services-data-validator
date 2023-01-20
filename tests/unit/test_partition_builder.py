@@ -156,6 +156,7 @@ def module_under_test():
 
     return data_validation.partition_builder
 
+
 def teardown_module(module):
     # Clean up: Delete test partitions directory and its contents
     folder_path = os.path.join("./", PARTITIONS_DIR)
