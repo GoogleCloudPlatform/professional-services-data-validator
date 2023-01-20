@@ -65,7 +65,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
-        ["logmech", "Log on mechanism"],
+        ["logmech", "(Optional) Log on mechanism"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -827,6 +827,8 @@ def get_connection_config_from_args(args):
 
     for field_obj in CONNECTION_SOURCE_FIELDS[args.connect_type]:
         field = field_obj[0]
+        if getattr(args, field) is None:
+            continue
         config[field] = getattr(args, field)
 
     return config
