@@ -164,6 +164,7 @@ def module_under_test():
 
 @pytest.fixture
 def test_inputs():
+    # Read and return test inputs stored in file TEST_INPUT_FILE_PATH
     fin = open(TEST_INPUT_FILE_PATH)
     return json.load(fin)
 
