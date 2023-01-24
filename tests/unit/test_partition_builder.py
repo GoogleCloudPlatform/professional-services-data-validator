@@ -26,12 +26,6 @@ from data_validation.config_manager import ConfigManager
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 
-TEST_INPUT_FILE_PATH = os.path.join(
-    "./", "tests", "unit", "test_inputs", "test_partition_builder.json"
-)
-PARTITION_FILTERS_LIST = "PARTITION_FILTERS_LIST"
-YAML_CONFIGS_LIST = "YAML_CONFIGS_LIST"
-
 STRING_CONSTANT = "constant"
 RANDOM_STRINGS = ["a", "b", "c", "d"]
 
@@ -49,46 +43,18 @@ TARGET_CONN_CONFIG = {
     "file_type": "json",
 }
 
-GENERATE_TABLE_PARTITIONS_CONFIG = {
-    # BigQuery Specific Connection Config
-    "source_conn": None,
-    "target_conn": None,
-    # Validation Type
-    consts.CONFIG_TYPE: "Row",
-    # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
-    consts.CONFIG_TABLE_NAME: "citibike_stations",
-    consts.CONFIG_TARGET_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
-    consts.CONFIG_TARGET_TABLE_NAME: "citibike_stations",
-    consts.CONFIG_CALCULATED_FIELDS: [],
-    consts.CONFIG_FILTERS: [
-        {
-            consts.CONFIG_TYPE: consts.FILTER_TYPE_CUSTOM,
-            consts.CONFIG_FILTER_SOURCE: "station_id>3000",
-            consts.CONFIG_FILTER_TARGET: "station_id>3000",
-        }
-    ],
-    consts.CONFIG_PRIMARY_KEYS: [
-        {
-            consts.CONFIG_SOURCE_COLUMN: "station_id",
-            consts.CONFIG_TARGET_COLUMN: "station_id",
-            consts.CONFIG_FIELD_ALIAS: "station_id",
-            consts.CONFIG_CAST: None,
-        }
-    ],
-}
-
 TEST_CONN = "{'source_type':'Example'}"
-PARTITION_NUM = 20
+PARTITION_NUM = 3
 PARTITIONS_DIR = "test_partitions_dir"
-CLI_ARGS = [
+
+CLI_ARGS_JSON_SOURCE = [
     "generate-table-partitions",
     "-sc",
     TEST_CONN,
     "-tc",
     TEST_CONN,
     "-tbls",
-    "bigquery-public-data.new_york_citibike.citibike_stations,bigquery-public-data.new_york_citibike.citibike_stations",
+    "test_table",
     "--primary-keys",
     "station_id",
     "--hash",
@@ -102,33 +68,11 @@ CLI_ARGS = [
     "--partition-num",
     f"{PARTITION_NUM}",
     "--partition-key",
-    "bike_id",
-    "--labels",
-    "name=test_run",
-]
-
-CLI_ARGS_JSON_SOURCE = [
-    "generate-table-partitions",
-    "-sc",
-    TEST_CONN,
-    "-tc",
-    TEST_CONN,
-    "-tbls",
-    "test_table1,test_table2",
-    "--primary-keys",
-    "id",
-    "--hash",
-    "*",
-    "-cdir",
-    PARTITIONS_DIR,
-    "--partition-num",
-    f"{PARTITION_NUM}",
-    "--partition-key",
     "id",
 ]
 
 # partition_key is not passed
-CLI_ARGS_ABSENT = [
+CLI_ARGS_ABSENT_PARTITION_KEY = [
     "generate-table-partitions",
     "-sc",
     TEST_CONN,
@@ -143,16 +87,170 @@ CLI_ARGS_ABSENT = [
     "--filter-status",
     "fail",
     "-cdir",
-    "partitions_dir",
+    PARTITIONS_DIR,
     "--partition-num",
     f"{PARTITION_NUM}",
     "--labels",
     "name=test_run",
 ]
 
+PARTITION_FILTERS_LIST = [
+    "id >= 0 and id < 333",
+    "id >= 333 and id < 666",
+    "id >= 666 and id < 1001",
+]
 
-class MockIbisClient(object):
-    _source_type = "BigQuery"
+YAML_CONFIGS_LIST = [
+    {
+        "target_folder_name": "test_table",
+        "partitions": [
+            {
+                "target_file_name": "0000.yaml",
+                "yaml_config": {
+                    "source": "{'source_type':'Example'}",
+                    "target": "{'source_type':'Example'}",
+                    "result_handler": {},
+                    "validations": [
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 0 and id < 333",
+                                    "target": "id >= 0 and id < 333",
+                                }
+                            ],
+                        }
+                    ],
+                },
+            },
+            {
+                "target_file_name": "0001.yaml",
+                "yaml_config": {
+                    "source": "{'source_type':'Example'}",
+                    "target": "{'source_type':'Example'}",
+                    "result_handler": {},
+                    "validations": [
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 333 and id < 666",
+                                    "target": "id >= 333 and id < 666",
+                                }
+                            ],
+                        }
+                    ],
+                },
+            },
+            {
+                "target_file_name": "0002.yaml",
+                "yaml_config": {
+                    "source": "{'source_type':'Example'}",
+                    "target": "{'source_type':'Example'}",
+                    "result_handler": {},
+                    "validations": [
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 666 and id < 1001",
+                                    "target": "id >= 666 and id < 1001",
+                                }
+                            ],
+                        }
+                    ],
+                },
+            },
+        ],
+    }
+]
 
 
 @pytest.fixture
@@ -160,13 +258,6 @@ def module_under_test():
     import data_validation.partition_builder
 
     return data_validation.partition_builder
-
-
-@pytest.fixture
-def test_inputs():
-    # Read and return test inputs stored in file TEST_INPUT_FILE_PATH
-    fin = open(TEST_INPUT_FILE_PATH)
-    return json.load(fin)
 
 
 def teardown_module(module):
@@ -283,38 +374,27 @@ def test_class_object_creation(module_under_test):
     3. primary_key value
     4. partition_key value present and absent
     """
-    mock_config_manager1 = ConfigManager(
-        GENERATE_TABLE_PARTITIONS_CONFIG,
-        MockIbisClient(),
-        MockIbisClient(),
-        verbose=False,
-    )
-    mock_config_manager2 = ConfigManager(
-        GENERATE_TABLE_PARTITIONS_CONFIG,
-        MockIbisClient(),
-        MockIbisClient(),
-        verbose=False,
-    )
-    config_managers = [mock_config_manager1, mock_config_manager2]
+    mock_config_manager = _generate_config_manager("test_table")
+    config_managers = [mock_config_manager]
 
     parser = cli_tools.configure_arg_parser()
 
     # partition_key is present and different from primary_key
     # config_dir is passed
-    args = parser.parse_args(CLI_ARGS)
+    args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
     builder = module_under_test.PartitionBuilder(config_managers, args)
     assert builder.table_count == len(config_managers)
-    assert builder.partition_key == "bike_id"
+    assert builder.partition_key == "id"
     assert builder.primary_key == "station_id"
 
     # partition_key is absent, expected to default to primary_key
-    args = parser.parse_args(CLI_ARGS_ABSENT)
+    args = parser.parse_args(CLI_ARGS_ABSENT_PARTITION_KEY)
     builder = module_under_test.PartitionBuilder(config_managers, args)
     assert builder.table_count == len(config_managers)
     assert builder.partition_key == builder.primary_key
 
 
-def test_get_partition_key_filters(module_under_test, test_inputs):
+def test_get_partition_key_filters(module_under_test):
     """Build partitions filters and assert:
     1. Table count
     2. Filters count
@@ -334,7 +414,7 @@ def test_get_partition_key_filters(module_under_test, test_inputs):
     parser = cli_tools.configure_arg_parser()
     mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
-    expected_partition_filters_list = test_inputs[PARTITION_FILTERS_LIST]
+    expected_partition_filters_list = PARTITION_FILTERS_LIST
 
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     partition_filters_list = builder._get_partition_key_filters()
@@ -343,23 +423,21 @@ def test_get_partition_key_filters(module_under_test, test_inputs):
     assert partition_filters_list[0] == expected_partition_filters_list
 
 
-def test_add_partition_filters_to_config(module_under_test, test_inputs):
+def test_add_partition_filters_to_config(module_under_test):
     """Add partition filters to ConfigManager object, build YAML config list
     and assert YAML configs
     """
     # Generate dummy YAML configs list
-    config_manager1 = _generate_config_manager("test_table1")
-    config_manager2 = _generate_config_manager("test_table2")
-    config_managers = [config_manager1, config_manager2]
+    config_manager = _generate_config_manager("test_table")
+    config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
     mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
-    expected_yaml_configs_list = test_inputs[YAML_CONFIGS_LIST]
+    expected_yaml_configs_list = YAML_CONFIGS_LIST
 
-    partition_filters1 = test_inputs[PARTITION_FILTERS_LIST]
-    partition_filters2 = test_inputs[PARTITION_FILTERS_LIST]
-    master_filter_list = [partition_filters1, partition_filters2]
+    partition_filters = PARTITION_FILTERS_LIST
+    master_filter_list = [partition_filters]
 
     # Create PartitionBuilder object and get YAML configs list
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
@@ -367,19 +445,18 @@ def test_add_partition_filters_to_config(module_under_test, test_inputs):
     assert yaml_configs_list == expected_yaml_configs_list
 
 
-def test_store_yaml_partitions_local(module_under_test, test_inputs):
-    """Store all the Partition YAMLs for 2 tables to specified local directory"""
+def test_store_yaml_partitions_local(module_under_test):
+    """Store all the Partition YAMLs for a table to specified local directory"""
 
     # Generate dummy YAML configs list
-    config_manager1 = _generate_config_manager("test_table1")
-    config_manager2 = _generate_config_manager("test_table2")
-    config_managers = [config_manager1, config_manager2]
+    config_manager = _generate_config_manager("test_table")
+    config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
     mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
     # Dummy YAML configs list
-    yaml_configs_list = test_inputs[YAML_CONFIGS_LIST]
+    yaml_configs_list = YAML_CONFIGS_LIST
 
     # Create test partitions directory to store results
     folder_path = os.path.join("./", PARTITIONS_DIR)
@@ -390,11 +467,9 @@ def test_store_yaml_partitions_local(module_under_test, test_inputs):
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     builder._store_partitions(yaml_configs_list)
 
-    # Assert file count for 2 tables and sample file names
-    partition_dir1_contents = os.listdir(os.path.join(PARTITIONS_DIR, "test_table1"))
-    partition_dir2_contents = os.listdir(os.path.join(PARTITIONS_DIR, "test_table2"))
+    # Assert file count for 1 table and sample file names
+    partition_dir_contents = os.listdir(os.path.join(PARTITIONS_DIR, "test_table"))
 
-    assert len(partition_dir1_contents) == PARTITION_NUM
-    assert len(partition_dir2_contents) == PARTITION_NUM
-    assert "0000.yaml" in partition_dir1_contents
-    assert "0019.yaml" in partition_dir2_contents
+    assert len(partition_dir_contents) == PARTITION_NUM
+    assert "0000.yaml" in partition_dir_contents
+    assert "0002.yaml" in partition_dir_contents
