@@ -259,6 +259,7 @@ class PartitionBuilder:
         Returns:
             None
         """
+        logging.info(f"Writing table partition configs to directory: {self.config_dir}")
 
         for table in yaml_configs_list:
             target_folder_name = table["target_folder_name"]
