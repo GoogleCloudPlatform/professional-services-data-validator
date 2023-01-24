@@ -17,7 +17,6 @@ import shutil
 import pytest
 import json
 import random
-from typing import Dict, List
 from datetime import datetime, timedelta
 
 from data_validation import cli_tools
@@ -26,6 +25,12 @@ from data_validation.config_manager import ConfigManager
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
+
+TEST_INPUT_FILE_PATH = os.path.join(
+    "./", "tests", "unit", "test_inputs", "test_partition_builder.json"
+)
+PARTITION_FILTERS_LIST = "PARTITION_FILTERS_LIST"
+YAML_CONFIGS_LIST = "YAML_CONFIGS_LIST"
 
 STRING_CONSTANT = "constant"
 RANDOM_STRINGS = ["a", "b", "c", "d"]
@@ -73,7 +78,7 @@ GENERATE_TABLE_PARTITIONS_CONFIG = {
     ],
 }
 
-TEST_CONN = '{"source_type":"Example"}'
+TEST_CONN = "{'source_type':'Example'}"
 PARTITION_NUM = 20
 PARTITIONS_DIR = "test_partitions_dir"
 CLI_ARGS = [
@@ -155,6 +160,12 @@ def module_under_test():
     import data_validation.partition_builder
 
     return data_validation.partition_builder
+
+
+@pytest.fixture
+def test_inputs():
+    fin = open(TEST_INPUT_FILE_PATH)
+    return json.load(fin)
 
 
 def teardown_module(module):
@@ -242,98 +253,6 @@ def _generate_config_manager(table_name: str = "my_table") -> ConfigManager:
     return ConfigManager(row_config)
 
 
-def _generate_fake_partition_filters(
-    partition_key: str = "id",
-    partitions: int = 20,
-    upper_bound: int = 1000,
-    lower_bound: int = 0,
-):
-    filter_list = []
-    i = 0
-    marker = lower_bound
-    partition_step = (upper_bound - lower_bound) // partitions
-    while i < partitions:
-        lower_val = marker
-        upper_val = marker + partition_step
-
-        if i == partitions - 1:
-            upper_val = upper_bound + 1
-
-        partition_filter = (
-            f"{partition_key} >= {lower_val} " f"and {partition_key} < {upper_val}"
-        )
-        filter_list.append(partition_filter)
-
-        i += 1
-        marker += partition_step
-    return filter_list
-
-
-def _generate_fake_yaml_configs(partition_filters) -> List[Dict]:
-    """Returns a list of YAML configs"""
-    table_count = len(partition_filters)
-    partitions = len(partition_filters[0])
-    yaml_configs_list = [None] * table_count
-    for ind in range(table_count):
-        filter_list = partition_filters[ind]
-        yaml_configs_list[ind] = {
-            "target_folder_name": f"test_table{ind+1}",
-            "partitions": [],
-        }
-        for pos in range(partitions):
-            yaml_config = {
-                "source": '{"source_type":"Example"}',
-                "target": '{"source_type":"Example"}',
-                "result_handler": {},
-                "validations": [
-                    {
-                        "type": "Row",
-                        "schema_name": None,
-                        "table_name": f"test_table{ind+1}",
-                        "target_schema_name": None,
-                        "target_table_name": f"test_table{ind+1}",
-                        "primary_keys": [
-                            {
-                                "field_alias": "id",
-                                "source_column": "id",
-                                "target_column": "id",
-                                "cast": None,
-                            }
-                        ],
-                        "comparison_fields": [
-                            {
-                                "field_alias": "int_value",
-                                "source_column": "int_value",
-                                "target_column": "int_value",
-                                "cast": None,
-                            },
-                            {
-                                "field_alias": "text_value",
-                                "source_column": "text_value",
-                                "target_column": "text_value",
-                                "cast": None,
-                            },
-                        ],
-                        "format": "table",
-                        "filter_status": None,
-                        "filters": [
-                            {
-                                "type": "custom",
-                                "source": filter_list[pos],
-                                "target": filter_list[pos],
-                            }
-                        ],
-                    }
-                ],
-            }
-            target_file_name = "0" * (4 - len(str(pos))) + str(pos) + ".yaml"
-            yaml_configs_list[ind]["partitions"].append(
-                {"target_file_name": target_file_name, "yaml_config": yaml_config}
-            )
-
-    return yaml_configs_list
-
-
 def _get_fake_json_data(data):
     for row in data:
         row["date_value"] = str(row["date_value"])
@@ -394,7 +313,7 @@ def test_class_object_creation(module_under_test):
     assert builder.partition_key == builder.primary_key
 
 
-def test_get_partition_key_filters(module_under_test):
+def test_get_partition_key_filters(module_under_test, test_inputs):
     """Build partitions filters and assert:
     1. Table count
     2. Filters count
@@ -414,18 +333,16 @@ def test_get_partition_key_filters(module_under_test):
     parser = cli_tools.configure_arg_parser()
     mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
-    mock_partition_filters = _generate_fake_partition_filters(
-        partitions=PARTITION_NUM, lower_bound=0, upper_bound=1000
-    )
+    expected_partition_filters_list = test_inputs[PARTITION_FILTERS_LIST]
 
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     partition_filters_list = builder._get_partition_key_filters()
     assert len(partition_filters_list) == len(config_managers)
     assert len(partition_filters_list[0]) == mock_args.partition_num
-    assert partition_filters_list[0] == mock_partition_filters
+    assert partition_filters_list[0] == expected_partition_filters_list
 
 
-def test_add_partition_filters_to_config(module_under_test):
+def test_add_partition_filters_to_config(module_under_test, test_inputs):
     """Add partition filters to ConfigManager object, build YAML config list
     and assert YAML configs
     """
@@ -437,22 +354,19 @@ def test_add_partition_filters_to_config(module_under_test):
     parser = cli_tools.configure_arg_parser()
     mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
-    partition_filters1 = _generate_fake_partition_filters(
-        partitions=PARTITION_NUM, upper_bound=1000
-    )
-    partition_filters2 = _generate_fake_partition_filters(
-        partitions=PARTITION_NUM, upper_bound=10000
-    )
+    expected_yaml_configs_list = test_inputs[YAML_CONFIGS_LIST]
+
+    partition_filters1 = test_inputs[PARTITION_FILTERS_LIST]
+    partition_filters2 = test_inputs[PARTITION_FILTERS_LIST]
     master_filter_list = [partition_filters1, partition_filters2]
-    fake_yaml_configs_list = _generate_fake_yaml_configs(master_filter_list)
 
     # Create PartitionBuilder object and get YAML configs list
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     yaml_configs_list = builder._add_partition_filters(master_filter_list)
-    assert yaml_configs_list == fake_yaml_configs_list
+    assert yaml_configs_list == expected_yaml_configs_list
 
 
-def test_store_yaml_partitions_local(module_under_test):
+def test_store_yaml_partitions_local(module_under_test, test_inputs):
     """Store all the Partition YAMLs for 2 tables to specified local directory"""
 
     # Generate dummy YAML configs list
@@ -463,14 +377,8 @@ def test_store_yaml_partitions_local(module_under_test):
     parser = cli_tools.configure_arg_parser()
     mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
 
-    partition_filters1 = _generate_fake_partition_filters(
-        partitions=PARTITION_NUM, upper_bound=1000
-    )
-    partition_filters2 = _generate_fake_partition_filters(
-        partitions=PARTITION_NUM, upper_bound=10000
-    )
-    master_filter_list = [partition_filters1, partition_filters2]
-    fake_yaml_configs_list = _generate_fake_yaml_configs(master_filter_list)
+    # Dummy YAML configs list
+    yaml_configs_list = test_inputs[YAML_CONFIGS_LIST]
 
     # Create test partitions directory to store results
     folder_path = os.path.join("./", PARTITIONS_DIR)
@@ -479,7 +387,7 @@ def test_store_yaml_partitions_local(module_under_test):
 
     # Store YAML partition configs to local directory
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
-    builder._store_partitions(fake_yaml_configs_list)
+    builder._store_partitions(yaml_configs_list)
 
     # Assert file count for 2 tables and sample file names
     partition_dir1_contents = os.listdir(os.path.join(PARTITIONS_DIR, "test_table1"))

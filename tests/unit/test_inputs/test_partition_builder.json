@@ -1,0 +1,1956 @@
+{
+    "PARTITION_FILTERS_LIST": [
+        "id >= 0 and id < 50",
+        "id >= 50 and id < 100",
+        "id >= 100 and id < 150",
+        "id >= 150 and id < 200",
+        "id >= 200 and id < 250",
+        "id >= 250 and id < 300",
+        "id >= 300 and id < 350",
+        "id >= 350 and id < 400",
+        "id >= 400 and id < 450",
+        "id >= 450 and id < 500",
+        "id >= 500 and id < 550",
+        "id >= 550 and id < 600",
+        "id >= 600 and id < 650",
+        "id >= 650 and id < 700",
+        "id >= 700 and id < 750",
+        "id >= 750 and id < 800",
+        "id >= 800 and id < 850",
+        "id >= 850 and id < 900",
+        "id >= 900 and id < 950",
+        "id >= 950 and id < 1001"
+    ],
+    "YAML_CONFIGS_LIST": [
+        {
+            "target_folder_name": "test_table1",
+            "partitions": [
+                {
+                    "target_file_name": "0000.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 0 and id < 50",
+                                        "target": "id >= 0 and id < 50"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0001.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 50 and id < 100",
+                                        "target": "id >= 50 and id < 100"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0002.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 100 and id < 150",
+                                        "target": "id >= 100 and id < 150"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0003.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 150 and id < 200",
+                                        "target": "id >= 150 and id < 200"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0004.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 200 and id < 250",
+                                        "target": "id >= 200 and id < 250"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0005.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 250 and id < 300",
+                                        "target": "id >= 250 and id < 300"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0006.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 300 and id < 350",
+                                        "target": "id >= 300 and id < 350"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0007.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 350 and id < 400",
+                                        "target": "id >= 350 and id < 400"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0008.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 400 and id < 450",
+                                        "target": "id >= 400 and id < 450"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0009.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 450 and id < 500",
+                                        "target": "id >= 450 and id < 500"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0010.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 500 and id < 550",
+                                        "target": "id >= 500 and id < 550"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0011.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 550 and id < 600",
+                                        "target": "id >= 550 and id < 600"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0012.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 600 and id < 650",
+                                        "target": "id >= 600 and id < 650"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0013.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 650 and id < 700",
+                                        "target": "id >= 650 and id < 700"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0014.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 700 and id < 750",
+                                        "target": "id >= 700 and id < 750"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0015.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 750 and id < 800",
+                                        "target": "id >= 750 and id < 800"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0016.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 800 and id < 850",
+                                        "target": "id >= 800 and id < 850"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0017.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 850 and id < 900",
+                                        "target": "id >= 850 and id < 900"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0018.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 900 and id < 950",
+                                        "target": "id >= 900 and id < 950"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0019.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table1",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table1",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 950 and id < 1001",
+                                        "target": "id >= 950 and id < 1001"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "target_folder_name": "test_table2",
+            "partitions": [
+                {
+                    "target_file_name": "0000.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 0 and id < 50",
+                                        "target": "id >= 0 and id < 50"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0001.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 50 and id < 100",
+                                        "target": "id >= 50 and id < 100"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0002.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 100 and id < 150",
+                                        "target": "id >= 100 and id < 150"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0003.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 150 and id < 200",
+                                        "target": "id >= 150 and id < 200"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0004.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 200 and id < 250",
+                                        "target": "id >= 200 and id < 250"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0005.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 250 and id < 300",
+                                        "target": "id >= 250 and id < 300"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0006.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 300 and id < 350",
+                                        "target": "id >= 300 and id < 350"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0007.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 350 and id < 400",
+                                        "target": "id >= 350 and id < 400"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0008.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 400 and id < 450",
+                                        "target": "id >= 400 and id < 450"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0009.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 450 and id < 500",
+                                        "target": "id >= 450 and id < 500"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0010.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 500 and id < 550",
+                                        "target": "id >= 500 and id < 550"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0011.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 550 and id < 600",
+                                        "target": "id >= 550 and id < 600"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0012.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 600 and id < 650",
+                                        "target": "id >= 600 and id < 650"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0013.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 650 and id < 700",
+                                        "target": "id >= 650 and id < 700"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0014.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 700 and id < 750",
+                                        "target": "id >= 700 and id < 750"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0015.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 750 and id < 800",
+                                        "target": "id >= 750 and id < 800"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0016.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 800 and id < 850",
+                                        "target": "id >= 800 and id < 850"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0017.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 850 and id < 900",
+                                        "target": "id >= 850 and id < 900"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0018.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 900 and id < 950",
+                                        "target": "id >= 900 and id < 950"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "target_file_name": "0019.yaml",
+                    "yaml_config": {
+                        "source": "{'source_type':'Example'}",
+                        "target": "{'source_type':'Example'}",
+                        "result_handler": {},
+                        "validations": [
+                            {
+                                "type": "Row",
+                                "schema_name": null,
+                                "table_name": "test_table2",
+                                "target_schema_name": null,
+                                "target_table_name": "test_table2",
+                                "primary_keys": [
+                                    {
+                                        "field_alias": "id",
+                                        "source_column": "id",
+                                        "target_column": "id",
+                                        "cast": null
+                                    }
+                                ],
+                                "comparison_fields": [
+                                    {
+                                        "field_alias": "int_value",
+                                        "source_column": "int_value",
+                                        "target_column": "int_value",
+                                        "cast": null
+                                    },
+                                    {
+                                        "field_alias": "text_value",
+                                        "source_column": "text_value",
+                                        "target_column": "text_value",
+                                        "cast": null
+                                    }
+                                ],
+                                "format": "table",
+                                "filter_status": null,
+                                "filters": [
+                                    {
+                                        "type": "custom",
+                                        "source": "id >= 950 and id < 1001",
+                                        "target": "id >= 950 and id < 1001"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
