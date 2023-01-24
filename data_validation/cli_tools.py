@@ -293,7 +293,7 @@ def _configure_connection_parser(subparsers):
     add_parser.add_argument(
         "--secret-manger-type",
         "-sm",
-        default="plain",
+        default=None,
         help="Secret manger type to store credentials by default will be plain "
     )
     add_parser.add_argument(
