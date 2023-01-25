@@ -40,6 +40,9 @@ data-validation validate column \
 -c ex_yaml.yaml
 
 data-validation run-config -c ex_yaml.yaml
+
+command:
+data-validation
 """
 
 import argparse
@@ -48,6 +51,7 @@ import json
 import logging
 import sys
 import uuid
+from argparse import Namespace
 
 from data_validation import consts, state_manager
 
@@ -61,7 +65,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
-        ["logmech", "Log on mechanism"],
+        ["logmech", "(Optional) Log on mechanism"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -138,7 +142,7 @@ CONNECTION_SOURCE_FIELDS = {
 }
 
 
-def get_parsed_args():
+def get_parsed_args() -> Namespace:
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
     args = ["--help"] if len(sys.argv) == 1 else None
@@ -168,7 +172,102 @@ def configure_arg_parser():
     _configure_find_tables(subparsers)
     _configure_raw_query(subparsers)
     _configure_beta_parser(subparsers)
+    _configure_partition_parser(subparsers)
     return parser
+
+
+def _configure_partition_parser(subparsers):
+    """Configure arguments to generate partitioned config files."""
+    partition_parser = subparsers.add_parser(
+        "generate-table-partitions",
+        help=(
+            "Generate partitions for validation and store the Config files in "
+            "a directory"
+        ),
+    )
+
+    # Group all optional arguments together
+    optional_arguments = partition_parser.add_argument_group("optional arguments")
+    optional_arguments.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    optional_arguments.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
+    optional_arguments.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    optional_arguments.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
+    # Keep these in order to support data-validation run command for
+    # backwards-compatibility
+    optional_arguments.add_argument("--type", "-t", help="Type of Validation")
+    optional_arguments.add_argument(
+        "--result-handler-config", "-rc", help="Result handler config details"
+    )
+
+    """Configure arguments to generate partitions for row based validation."""
+
+    # Group all required arguments together
+    required_arguments = partition_parser.add_argument_group("required arguments")
+    required_arguments.add_argument(
+        "--primary-keys",
+        "-pk",
+        required=True,
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    required_arguments.add_argument(
+        "--tables-list",
+        "-tbls",
+        required=True,
+        help=(
+            "Comma separated tables list in the form "
+            "'schema.table=target_schema.target_table'"
+        ),
+    )
+
+    # Group for mutually exclusive required arguments. Either must be supplied
+    mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    mutually_exclusive_arguments.add_argument(
+        "--hash",
+        "-hash",
+        help=(
+            "Comma separated list of columns for hash 'col_a,col_b' or * for "
+            "all columns"
+        ),
+    )
+    mutually_exclusive_arguments.add_argument(
+        "--concat",
+        "-concat",
+        help=(
+            "Comma separated list of columns for concat 'col_a,col_b' or * "
+            "for all columns"
+        ),
+    )
+
+    mutually_exclusive_arguments.add_argument(
+        "--comparison-fields",
+        "-comp-fields",
+        help=(
+            "Individual columns to compare. If comparing a calculated field use "
+            "the column alias."
+        ),
+    )
+
+    _add_common_partition_arguments(optional_arguments, required_arguments)
 
 
 def _configure_beta_parser(subparsers):
@@ -490,6 +589,11 @@ def _configure_schema_parser(schema_parser):
         "-ec",
         help="Comma separated list of columns 'col_a,col_b' to be excluded from the schema validation",
     )
+    schema_parser.add_argument(
+        "--allow-list",
+        "-al",
+        help="Comma separated list of datatype mappings due to incompatible datatypes in source and target. e.g: decimal(12,2):decimal(38,9),string[non-nullable]:string",
+    )
 
 
 def _configure_custom_query_parser(custom_query_parser):
@@ -641,6 +745,79 @@ def _add_common_arguments(parser):
     )
 
 
+def _add_common_partition_arguments(optional_arguments, required_arguments=None):
+    """Add all arguments common to get-partition command"""
+
+    # Group all Required Arguments together
+    required_arguments.add_argument(
+        "--source-conn", "-sc", required=True, help="Source connection name"
+    )
+    required_arguments.add_argument(
+        "--target-conn", "-tc", required=True, help="Target connection name"
+    )
+    required_arguments.add_argument(
+        "--config-dir",
+        "-cdir",
+        required=True,
+        help="Directory Path to store YAML Config Files. "
+        "GCS: Provide a full gs:// path of the target directory. "
+        "Eg: `gs://<BUCKET>/partiitons_dir`. "
+        "Local: Provide a relative path of the target directory. "
+        "Eg: `partitions_dir`",
+    )
+    required_arguments.add_argument(
+        "--partition-num",
+        "-pn",
+        required=True,
+        help="Number of partitions/config files to generate",
+        type=int,
+        choices=range(1, 1001),
+        metavar="[1-1000]",
+    )
+
+    # Optional arguments
+    optional_arguments.add_argument(
+        "--bq-result-handler",
+        "-bqrh",
+        help="BigQuery result handler config details",
+    )
+    optional_arguments.add_argument(
+        "--labels", "-l", help="Key value pair labels for validation run"
+    )
+    optional_arguments.add_argument(
+        "--service-account",
+        "-sa",
+        help="Path to SA key file for result handler output",
+    )
+    optional_arguments.add_argument(
+        "--format",
+        "-fmt",
+        default="table",
+        help=(
+            "Set the format for printing command output, Supported formats are "
+            "(text, csv, json, table). Defaults to table"
+        ),
+    )
+    optional_arguments.add_argument(
+        "--filter-status",
+        "-fs",
+        # TODO: update if we start to support other statuses
+        help=(
+            "Comma separated list of statuses to filter the validation results. "
+            "Supported statuses are (success, fail). If no list is provided, "
+            "all statuses are returned"
+        ),
+    )
+    optional_arguments.add_argument(
+        "--partition-key",
+        "-partkey",
+        help=(
+            "Column on which the partitions would be generated. "
+            "Column type must be integer. Defaults to Primary key"
+        ),
+    )
+
+
 def get_connection_config_from_args(args):
     """Return dict with connection config supplied."""
     config = {consts.SOURCE_TYPE: args.connect_type}
@@ -650,6 +827,8 @@ def get_connection_config_from_args(args):
 
     for field_obj in CONNECTION_SOURCE_FIELDS[args.connect_type]:
         field = field_obj[0]
+        if getattr(args, field) is None:
+            continue
         config[field] = getattr(args, field)
 
     return config
@@ -701,6 +880,12 @@ def store_validation(validation_file_name, yaml_config):
     """Store the validation YAML config under the given name."""
     mgr = state_manager.StateManager()
     mgr.create_validation_yaml(validation_file_name, yaml_config)
+
+
+def store_partition(target_file_path, yaml_config, target_folder_path=None):
+    """Store the partition YAML config under the given name."""
+    mgr = state_manager.StateManager(target_folder_path)
+    mgr.create_partition_yaml(target_file_path, yaml_config)
 
 
 def get_validation(validation_name, config_dir=None):

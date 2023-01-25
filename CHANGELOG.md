@@ -2,6 +2,18 @@
 
 ## Untagged
 
+## [2.8.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.7.0...v2.8.0) (2023-01-19)
+
+
+### Features
+
+* Logic to add allow-list to support datatype matching with a provided list in case of mismatched datatypes between source and target ([#643](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/643)) ([269f8dc](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/269f8dc7d8afa78fe8ecc8c79b0eb3d197d1e8f0))
+
+
+### Bug Fixes
+
+* making logmech as optional for TD connection ([#665](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/665)) ([500caa3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/500caa33aa5a8983277e73c39bc0733dd684161b))
+
 ## [2.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.6.0...v2.7.0) (2023-01-06)
 
 

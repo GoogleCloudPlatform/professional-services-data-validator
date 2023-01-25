@@ -113,6 +113,17 @@ class StateManager(object):
         yaml_config_str = dump(yaml_config, Dumper=Dumper)
         self._write_file(validation_path, yaml_config_str)
 
+    def create_partition_yaml(self, target_file_path: str, yaml_config: Dict[str, str]):
+        """Create a validation file and store the given config as YAML.
+
+        Args:
+            name (String): The name of the validation.
+            yaml_config (Dict): A dictionary with the validation details.
+        """
+        partition_path = self._get_partition_path(target_file_path)
+        yaml_config_str = dump(yaml_config, Dumper=Dumper)
+        self._write_partition(partition_path, yaml_config_str)
+
     def get_validation_config(self, name: str, config_dir=None) -> Dict[str, str]:
         """Get a validation configuration from the expected file.
 
@@ -159,6 +170,16 @@ class StateManager(object):
         """
         return os.path.join(self._get_validations_directory(), f"{name}")
 
+    def _get_partition_path(self, name: str) -> str:
+        """Returns the full path to a validation.
+
+        Args:
+            name: The name of the validation.
+        """
+        if self.file_system == FileSystem.LOCAL:
+            return os.path.join("./", name)
+        return name
+
     def _read_file(self, file_path: str) -> str:
         if self.file_system == FileSystem.GCS:
             return self._read_gcs_file(file_path)
@@ -173,6 +194,13 @@ class StateManager(object):
                 file.write(data)
 
         logging.info("Success! Config output written to {}".format(file_path))
+
+    def _write_partition(self, file_path: str, data: str):
+        if self.file_system == FileSystem.GCS:
+            self._write_gcs_file(file_path, data)
+        else:
+            with open(file_path, "w") as file:
+                file.write(data)
 
     def _list_directory(self, directory_path: str) -> List[str]:
         if self.file_system == FileSystem.GCS:
