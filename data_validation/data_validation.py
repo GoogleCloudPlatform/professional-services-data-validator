@@ -256,7 +256,7 @@ class DataValidation(object):
 
     @classmethod
     def _get_pandas_schema(self, source_df, target_df, join_on_fields, verbose=False):
-        """Return a pandas schema which aligns source and targe for joins."""
+        """Return a pandas schema which aligns source and target for joins."""
         # TODO(dhercher): We are experiencing issues around datetime coming as sring and not matching
         # currently the hack to cast it to string works, but is not ideal.
         # We should look at both types, and if 1 is
@@ -327,11 +327,11 @@ class DataValidation(object):
                 source_df = futures[0].result()
                 target_df = futures[1].result()
 
-            pd_schema = self._get_pandas_schema(
-                source_df, target_df, join_on_fields, verbose=self.verbose
-            )
+            # pd_schema = self._get_pandas_schema(
+            #     source_df, target_df, join_on_fields, verbose=self.verbose
+            # )
 
-            pandas_client = ibis.backends.pandas.connect(
+            pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )
 
@@ -339,8 +339,8 @@ class DataValidation(object):
                 result_df = combiner.generate_report(
                     pandas_client,
                     self.run_metadata,
-                    pandas_client.table(combiner.DEFAULT_SOURCE, schema=pd_schema),
-                    pandas_client.table(combiner.DEFAULT_TARGET, schema=pd_schema),
+                    pandas_client.table(combiner.DEFAULT_SOURCE),
+                    pandas_client.table(combiner.DEFAULT_TARGET),
                     join_on_fields=join_on_fields,
                     is_value_comparison=is_value_comparison,
                     verbose=self.verbose,

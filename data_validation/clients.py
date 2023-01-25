@@ -18,25 +18,18 @@ import warnings
 import logging
 import google.oauth2.service_account
 import ibis
-import ibis.backends.pandas
 import ibis_bigquery
 import pandas
-import third_party.ibis.ibis_addon.datatypes
-import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
-import third_party.ibis.ibis_postgres.client
+# import third_party.ibis.ibis_addon.datatypes
+# import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 from google.cloud import bigquery
-from ibis.backends.mysql.client import MySQLClient
-from ibis.backends.pandas.client import PandasClient
-from ibis.backends.postgres.client import PostgreSQLClient
-from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
-from third_party.ibis.ibis_impala.api import impala_connect
+# from ibis.backends.mysql.client import MySQLClient
+# from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
+# from third_party.ibis.ibis_impala.api import impala_connect
 
 from data_validation import client_info, consts, exceptions
 
 ibis.options.sql.default_limit = None
-
-# Our customized Ibis Datatype logic add support for new types
-third_party.ibis.ibis_addon.datatypes
 
 # TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
 warnings.filterwarnings(
@@ -92,16 +85,17 @@ except Exception:
     DB2Client = _raise_missing_client_error("pip install ibm_db_sa")
 
 
-def get_bigquery_client(project_id, dataset_id=None, credentials=None):
+def get_bigquery_client(project_id, dataset_id="", credentials=None):
     info = client_info.get_http_client_info()
     google_client = bigquery.Client(
         project=project_id, client_info=info, credentials=credentials
     )
+
     ibis_client = ibis_bigquery.connect(
-        project_id, dataset_id=dataset_id, credentials=credentials
+        project_id=project_id, dataset_id=dataset_id, credentials=credentials
     )
 
-    # Override the BigQuery client object to ensure the correct user agent is
+    # # Override the BigQuery client object to ensure the correct user agent is
     # included.
     ibis_client.client = google_client
     return ibis_client
@@ -121,7 +115,7 @@ def get_pandas_client(table_name, file_path, file_type):
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
-    pandas_client = ibis.backends.pandas.connect({table_name: df})
+    pandas_client = ibis.pandas.connect({table_name: df})
 
     return pandas_client
 
@@ -135,13 +129,13 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     database_name (str): Database name (generally default is used)
     """
     if type(client) in [
-        OracleClient,
-        PostgreSQLClient,
-        DB2Client,
-        MSSQLClient,
+        # OracleClient,
+        ibis.backends.postgres.Backend,
+        # DB2Client,
+        # MSSQLClient,
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
-    elif type(client) in [PandasClient]:
+    elif type(client) in [ibis.backends.pandas.Backend]:
         return client.table(table_name, schema=schema_name)
     else:
         return client.table(table_name, database=schema_name)
@@ -156,45 +150,36 @@ def get_ibis_table_schema(client, schema_name, table_name):
     """Return Ibis Table Schema for Supplied Client.
 
     client (IbisClient): Client to use for table
-    schema_name (str): Schema name of table object
+    schema_name (str): Schema name of table object, may not need this since Backend uses database
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if type(client) in [MySQLClient, PostgreSQLClient]:
-        return client.schema(schema_name).table(table_name).schema()
+    if type(client) in [
+        # MySQLClient, 
+        ibis.backends.postgres.Backend,
+    ]:
+        return client.table(table_name).schema()
     else:
         return client.get_schema(table_name, schema_name)
 
 
 def list_schemas(client):
     """Return a list of schemas in the DB."""
-    if type(client) in [
-        OracleClient,
-        PostgreSQLClient,
-        DB2Client,
-        MSSQLClient,
-    ]:
-        return client.list_schemas()
-    elif hasattr(client, "list_databases"):
+    if hasattr(client, "list_databases"):
         return client.list_databases()
     else:
         return [None]
 
-
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
     if type(client) in [
-        OracleClient,
-        PostgreSQLClient,
-        DB2Client,
-        MSSQLClient,
+        # OracleClient,
+        ibis.backends.postgres.Backend,
+        # DB2Client,
+        # MSSQLClient,
     ]:
-        return client.list_tables(schema=schema_name)
-    elif schema_name:
-        return client.list_tables(database=schema_name)
-    else:
         return client.list_tables()
-
+    return client.list_tables(database=schema_name)
 
 def get_all_tables(client, allowed_schemas=None):
     """Return a list of tuples with database and table names.
@@ -204,7 +189,6 @@ def get_all_tables(client, allowed_schemas=None):
     """
     table_objs = []
     schemas = list_schemas(client)
-
     for schema_name in schemas:
         if allowed_schemas and schema_name not in allowed_schemas:
             continue
@@ -255,15 +239,15 @@ def get_data_client(connection_config):
 
 CLIENT_LOOKUP = {
     "BigQuery": get_bigquery_client,
-    "Impala": impala_connect,
-    "MySQL": MySQLClient,
+    # "Impala": impala_connect,
+    "MySQL": ibis.mysql.connect,
     "Oracle": OracleClient,
     "FileSystem": get_pandas_client,
-    "Postgres": PostgreSQLClient,
-    "Redshift": PostgreSQLClient,
+    "Postgres": ibis.postgres.connect,
+    "Redshift": ibis.postgres.connect,
     "Teradata": TeradataClient,
     "MSSQL": MSSQLClient,
     "Snowflake": snowflake_connect,
-    "Spanner": spanner_connect,
+    # "Spanner": spanner_connect,
     "DB2": DB2Client,
 }

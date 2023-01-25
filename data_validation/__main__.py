@@ -74,14 +74,14 @@ def get_aggregate_config(args, config_manager):
         "int64",
         "decimal",
         "timestamp",
-        "float64[non-nullable]",
-        "float32[non-nullable]",
-        "int8[non-nullable]",
-        "int16[non-nullable]",
-        "int32[non-nullable]",
-        "int64[non-nullable]",
-        "decimal[non-nullable]",
-        "timestamp[non-nullable]",
+        "!float64",
+        "!float32",
+        "!int8",
+        "!int16",
+        "!int32",
+        "!int64",
+        "!decimal",
+        "!timestamp",
     ]
 
     if args.wildcard_include_string_len:
@@ -425,12 +425,10 @@ def find_tables_using_string_matching(args):
 
 
 def run_raw_query_against_connection(args):
-    """Return results of raw query for adhoc usage."""
+    """Return results of raw query for ad hoc usage."""
     mgr = state_manager.StateManager()
     client = clients.get_data_client(mgr.get_connection_config(args.conn))
-
-    with client.raw_sql(args.query, results=True) as cur:
-        return cur.fetchall()
+    return client.raw_sql(args.query).fetchall()
 
 
 def convert_config_to_yaml(args, config_managers):

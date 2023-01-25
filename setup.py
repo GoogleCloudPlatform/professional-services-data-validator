@@ -32,10 +32,10 @@ dependencies = [
     "marshmallow==3.10.0",
     # Core dependencies
     "google-api-python-client==1.12.8",
-    "ibis-framework==1.4.0",
-    "ibis-bigquery==1.0.0",
+    "ibis-framework==3.2.0",
+    "ibis-bigquery==2.2.1",
     "impyla==0.17.0",
-    "SQLAlchemy==1.3.22",
+    "SQLAlchemy==1.4.45",
     "PyMySQL==1.0.2",
     "psycopg2-binary==2.9.3",
     "PyYAML==6.0",

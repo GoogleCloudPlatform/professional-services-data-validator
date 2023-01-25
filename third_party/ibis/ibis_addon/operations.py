@@ -31,72 +31,48 @@ import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 
 from data_validation.clients import _raise_missing_client_error
-from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
-from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
+from ibis_bigquery.compiler import BigQueryExprTranslator
+from ibis.expr.operations import Value, Reduction, Comparison, HashBytes
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
-from ibis.backends.base_sqlalchemy.alchemy import AlchemyExprTranslator
-from ibis.backends.base_sqlalchemy.compiler import ExprTranslator
-from ibis.backends.base_sql.compiler import BaseExprTranslator
-from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
-from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
-from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
+from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
+from ibis.backends.base.sql.compiler.translator import ExprTranslator
+
+
+# from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
+# from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
+# from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
-class BitXor(Reduction):
-    """Aggregate bitwise XOR operation."""
 
-    arg = Arg(rlz.column(rlz.integer))
-    where = Arg(rlz.boolean, default=None)
-    output_type = rlz.scalar_like("arg")
+# class HashBytes(ValueOp):
+#     arg = rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)])
+#     how = rlz.isin({"sha256", "farm_fingerprint"})
+#     output_type = rlz.shape_like("arg", "binary")
 
-
-class Hash(ValueOp):
-    arg = Arg(rlz.any)
-    how = Arg(rlz.isin({"fnv", "farm_fingerprint"}))
-    output_type = rlz.shape_like("arg", dt.int64)
-
-
-class HashBytes(ValueOp):
-    arg = Arg(rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)]))
-    how = Arg(rlz.isin({"sha256", "farm_fingerprint"}))
-    output_type = rlz.shape_like("arg", "binary")
-
-class ToChar(ValueOp):
-    arg = Arg(rlz.one_of([rlz.value(dt.Decimal), rlz.value(dt.float64), rlz.value(dt.Date), rlz.value(dt.Time), rlz.value(dt.Timestamp)]))
-    fmt = Arg(rlz.string)
-    output_type = rlz.shape_like("arg", dt.string)
+class ToChar(Value):
+    arg = rlz.one_of([rlz.value(dt.Decimal), rlz.value(dt.float64), rlz.value(dt.Date), rlz.value(dt.Time), rlz.value(dt.Timestamp)])
+    fmt = rlz.string
+    output_type = rlz.shape_like("arg")
 
 class RawSQL(Comparison):
     pass
 
 
-def compile_hash(numeric_value, how):
-    return Hash(numeric_value, how=how).to_expr()
+# def compile_hash(numeric_value, how):
+#     return Hash(numeric_value, how=how).to_expr()
 
 
-def compile_hash(binary_value, how):
-    return Hash(binary_value, how=how).to_expr()
+# def compile_hash(binary_value, how):
+#     return Hash(binary_value, how=how).to_expr()
 
 
-def format_hash_bigquery(translator, expr):
-    op = expr.op()
-    arg, how = op.args
-
-    arg_formatted = translator.translate(arg)
-
-    if how == "farm_fingerprint":
-        return f"farm_fingerprint({arg_formatted})"
-    else:
-        raise NotImplementedError(how)
-
-
-def compile_hashbytes(binary_value, how):
-    return HashBytes(binary_value, how=how).to_expr()
+# def compile_hashbytes(binary_value, how):
+#     return HashBytes(binary_value, how=how).to_expr()
 
 
 def compile_to_char(numeric_value, fmt):
@@ -203,30 +179,27 @@ def sa_format_to_char(translator, expr):
     return sa.func.to_char(compiled_arg, compiled_fmt)
 
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
-IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
-BinaryValue.hash = compile_hash
-StringValue.hash = compile_hash
-BinaryValue.hashbytes = compile_hashbytes
-StringValue.hashbytes = compile_hashbytes
+# BinaryValue.hash = compile_hash
+# StringValue.hash = compile_hash
+# BinaryValue.hashbytes = compile_hashbytes
+# StringValue.hashbytes = compile_hashbytes
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
-BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
-BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
-MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
-MSSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
-BaseExprTranslator._registry[RawSQL] = format_raw_sql
-BaseExprTranslator._registry[HashBytes] = format_hashbytes_base
-ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
-ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
-OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
-OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
-OracleExprTranslator._registry[ToChar] = sa_format_to_char
-TeradataExprTranslator._registry[RawSQL] = format_raw_sql
-TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
+ExprTranslator._registry[RawSQL] = format_raw_sql
+ExprTranslator._registry[HashBytes] = format_hashbytes_base
+# ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
+# ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
+# OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
+# OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
+# OracleExprTranslator._registry[ToChar] = sa_format_to_char
+# TeradataExprTranslator._registry[RawSQL] = format_raw_sql
+# TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
+# MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
+# MSSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql

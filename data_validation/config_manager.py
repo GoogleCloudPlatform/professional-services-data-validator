@@ -16,7 +16,9 @@ import copy
 import logging
 
 import google.oauth2.service_account
-from ibis_bigquery.client import BigQueryClient
+
+from google.cloud.bigquery import Client
+#from ibis_bigquery.client import BigQueryClient
 
 from data_validation import clients, consts, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
@@ -98,7 +100,7 @@ class ConfigManager(object):
     def random_row_batch_size(self):
         """Return if the validation should use a random row filter."""
         return (
-            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
+            int(self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE))
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
@@ -547,8 +549,8 @@ class ConfigManager(object):
             calc_func = "length"
 
         elif column_type == "timestamp":
-            if isinstance(self.source_client, BigQueryClient) or isinstance(
-                self.target_client, BigQueryClient
+            if isinstance(self.source_client, Client) or isinstance(
+                self.target_client, Client
             ):
                 calc_func = "cast"
                 cast_type = "timestamp"

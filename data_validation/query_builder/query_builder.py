@@ -320,7 +320,7 @@ class CalculatedField(object):
         )
         fields = [fields[0], default_null_string]
         return CalculatedField(
-            ibis.expr.api.ValueExpr.fillna,
+            ibis.expr.types.Value.fillna,
             config,
             fields,
         )
@@ -328,7 +328,7 @@ class CalculatedField(object):
     @staticmethod
     def length(config, fields):
         return CalculatedField(
-            ibis.expr.api.StringValue.length,
+            ibis.expr.types.StringValue.length,
             config,
             fields,
         )

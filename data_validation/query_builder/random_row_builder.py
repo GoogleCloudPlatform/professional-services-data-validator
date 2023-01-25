@@ -18,18 +18,17 @@ from typing import List
 from io import StringIO
 import sqlalchemy as sa
 import ibis
+import ibis_bigquery
 import ibis.expr.operations as ops
 import ibis.expr.types as tz
 import ibis.expr.rules as rlz
-import ibis.backends.base_sqlalchemy.compiler as sql_compiler
-import ibis.backends.base_sqlalchemy.alchemy as sqla
+import ibis.backends.base.sql.compiler as sql_compiler
+import ibis.backends.base.sql.alchemy as sqla
 import ibis.backends.pandas.execution.util as pandas_util
 
-from ibis_bigquery import BigQueryClient
-from ibis.backends.impala.client import ImpalaClient
-from ibis.backends.pandas.client import PandasClient
-from ibis.backends.postgres.client import PostgreSQLClient
-from ibis.expr.signature import Argument as Arg
+# from google.cloud.bigquery import Client
+# from ibis.backends.impala.client import ImpalaClient
+# from ibis.backends.postgres.client import PostgreSQLClient
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
@@ -45,13 +44,13 @@ from data_validation.query_builder.query_builder import QueryBuilder
 ### out to dhercher
 ######################################
 RANDOM_SORT_SUPPORTS = {
-    PandasClient: "NA",
-    BigQueryClient: "RAND()",
-    clients.TeradataClient: None,
-    ImpalaClient: "RAND()",
-    clients.OracleClient: "DBMS_RANDOM.VALUE",
-    PostgreSQLClient: "RANDOM()",
-    clients.MSSQLClient: "NEWID()",
+    ibis.backends.pandas.Backend: "NA",
+    ibis_bigquery.Backend: "RAND()",
+    # clients.TeradataClient: None,
+    # ImpalaClient: "RAND()",
+    # clients.OracleClient: "DBMS_RANDOM.VALUE",
+    ibis.backends.postgres.Backend: "RANDOM()",
+    # clients.MSSQLClient: "NEWID()",
 }
 
 
@@ -67,14 +66,14 @@ class RandomSortExpr(tz.AnyValue, tz.SortExpr):
 
 
 class RandomSortKey(ops.SortKey):
-    expr = Arg(rlz.any)
+    expr = rlz.any
     value = None
 
     def equals(self, other, cache=None):
         return isinstance(other, RandomSortKey)
 
-    def output_type(self):
-        return RandomSortExpr
+    def output_type(self, expr):
+        return RandomSortExpr(expr)
 
     def resolve_name(self):
         return "RandomSortKey"
@@ -93,7 +92,7 @@ class RandomRowBuilder(object):
 
     def compile(
         self,
-        data_client: ibis.client,
+        data_client,
         schema_name: str,
         table_name: str,
         query_builder: QueryBuilder,
@@ -109,12 +108,12 @@ class RandomRowBuilder(object):
         compiled_filters = query_builder.compile_filter_fields(table)
         filtered_table = table.filter(compiled_filters) if compiled_filters else table
         randomly_sorted_table = self.maybe_add_random_sort(data_client, filtered_table)
-        query = randomly_sorted_table.limit(self.batch_size)[self.primary_keys]
+        query = randomly_sorted_table[self.primary_keys].limit(self.batch_size)
 
         return query
 
     def maybe_add_random_sort(
-        self, data_client: ibis.client, table: ibis.Expr
+        self, data_client, table: ibis.Expr
     ) -> ibis.Expr:
         """Return a randomly sorted query if it is supported for the client."""
         if type(data_client) in RANDOM_SORT_SUPPORTS:
@@ -245,4 +244,4 @@ def _add_order_by(self, fragment):
     return fragment.order_by(*clauses)
 
 
-sqla.AlchemySelect._add_order_by = _add_order_by
+sqla.query_builder.AlchemySelect._add_order_by = _add_order_by
