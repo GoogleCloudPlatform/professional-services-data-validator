@@ -197,7 +197,50 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
+#### Generate Table Partitions for Large Table Row Validations
 
+Below is the command syntax for generating table partitions in order to perform row validations on large tables with memory constraints. 
+
+The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE partition_key > X AND partition_key < Y`). You can then run the configs in the directory serially with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+
+The command takes the same parameters as required for `Row Validation` *plus* few commands to implement the partitioning logic.
+
+(Note: As of now, only monotonically increasing key is supported for `--partition-key`.)
+
+```
+data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
+
+  --source-conn or -sc SOURCE_CONN
+                        Source connection details
+                        See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN
+                        Target connection details
+                        See: *Connections* section for each data source
+  --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
+                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Target schema name and table name are optional.
+                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+  --primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS
+                        Comma separated list of primary key columns 'col_a,col_b'
+  --comparison-fields or -comp-fields FIELDS
+                        Comma separated list of columns to compare. Can either be a physical column or an alias
+                        See: *Calculated Fields* section for details
+  --hash COLUMNS        Comma separated list of columns to hash or * for all columns 
+  --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
+  --config-dir CONFIG_DIR, -cdir CONFIG_DIR
+                        Directory Path to store YAML Config Files
+                        GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
+                        Local: Provide a relative path of the target directory. Eg: `partitions_dir`
+  --partition-num [1-1000], -pn [1-1000]
+                        Number of partitions/config files to generate
+                        In case this value exceeds the row count of the source/target table, its will be decreased to max(source_row_count, target_row_count)
+  [--partition-key PARTITION_KEY, -partkey PARTITION_KEY]
+                        Column on which the partitions would be generated. Column type must be integer. Defaults to Primary key
+  [--filters SOURCE_FILTER:TARGET_FILTER]
+                        Colon spearated string values of source and target filters.
+                        If target filter is not provided, the source filter will run on source and target tables.
+                        See: *Filters* section
+```
 #### Schema Validations
 
 Below is the syntax for schema validations. These can be used to compare case insensitive column names and

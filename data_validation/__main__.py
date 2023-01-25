@@ -18,7 +18,7 @@ import os
 import sys
 
 from yaml import Dumper, dump
-
+from argparse import Namespace
 from data_validation import (
     cli_tools,
     clients,
@@ -28,6 +28,7 @@ from data_validation import (
 )
 from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
+from data_validation.partition_builder import PartitionBuilder
 
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
@@ -50,15 +51,7 @@ def _get_arg_config_file(args):
     return args.config_file
 
 
-def _get_arg_config_dir(args):
-    """Return String yaml config directory path."""
-    if not args.config_dir:
-        raise ValueError("YAML Config Directory was not supplied.")
-
-    return args.config_dir
-
-
-def get_aggregate_config(args, config_manager):
+def get_aggregate_config(args, config_manager: ConfigManager):
     """Return list of formated aggregation objects.
 
     Args:
@@ -217,11 +210,15 @@ def build_config_from_args(args, config_manager):
     return config_manager
 
 
-def build_config_managers_from_args(args):
+def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
     """Return a list of config managers ready to execute."""
     configs = []
 
-    validate_cmd = args.validate_cmd.capitalize()
+    # Since `generate-table-partitions` defaults to `validate_cmd=row`,
+    # `validate_cmd` is passed along while calling this method
+    if validate_cmd is None:
+        validate_cmd = args.validate_cmd.capitalize()
+
     if validate_cmd == "Schema":
         config_type = consts.SCHEMA_VALIDATION
     elif validate_cmd == "Column":
@@ -492,10 +489,33 @@ def store_yaml_config_file(args, config_managers):
     cli_tools.store_validation(config_file_path, yaml_configs)
 
 
-def run(args):
-    """ """
-    config_managers = build_config_managers_from_args(args)
+def partition_and_store_config_files(args: Namespace) -> None:
+    """Build multiple YAML Config files using user specified partition logic
 
+    Args:
+        args (Namespace): User specified Arguments
+
+    Returns:
+        None
+    """
+    # Default Validate Type
+    config_managers = build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_builder.partition_configs()
+
+
+def run(args) -> None:
+    """Splits execution into:
+    1. Build and save single Yaml Config file
+    2. Run Validations
+
+    Args:
+        args (Namespace): User specified Arguments.
+
+    Returns:
+        None
+    """
+    config_managers = build_config_managers_from_args(args)
     if args.config_file:
         store_yaml_config_file(args, config_managers)
     else:
@@ -564,6 +584,8 @@ def main():
         print(run_raw_query_against_connection(args))
     elif args.command == "validate":
         validate(args)
+    elif args.command == "generate-table-partitions":
+        partition_and_store_config_files(args)
     elif args.command == "deploy":
         from data_validation import app
 
