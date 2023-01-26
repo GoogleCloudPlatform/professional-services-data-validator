@@ -16,8 +16,13 @@ eg.
 The following commands can be used to create connections:
 
 ## Command template to create a connection:
+Secret Manger flags are optional 
+
+--secret-manger-type <None|GCP>  
+--secret-manger-project-id <SECRET_PROJECT_ID>
+
 ```
-data-validation connections add --connection-name CONN_NAME source_type 
+data-validation connections add --connection-name CONN_NAME source_type --secret-manger-type <None|GCP> --secret-manger-project-id <SECRET_PROJECT_ID>
 ```
 
 ## Create a sample BigQuery connection:
@@ -59,7 +64,7 @@ As you see above, Teradata and BigQuery have different sets of custom arguments 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
 
 ```
-data-validation connections add -c CONN_NAME <connection type> -h
+data-validation connections add -c  CONN_NAME <connection type> -h
 ```
 
 Below is the expected configuration for each type.
@@ -68,13 +73,19 @@ Below is the expected configuration for each type.
 ```
 {
     # Raw JSON config for a connection
-    "json": '{"source_type": "BigQuery", "project_id": "pso-kokoro-resources", "google_service_account_key_path": null}'
+    "json": '{  "secret_manger_type": null, "secret_manger_project_id": null, "source_type": "BigQuery", "project_id": "pso-kokoro-resources", "google_service_account_key_path": null}'
 }
 ```
 
 ## Google BigQuery
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "BigQuery",
 
@@ -99,6 +110,12 @@ Below is the expected configuration for each type.
 ## Google Spanner
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger type
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "Spanner",
 
@@ -124,6 +141,13 @@ Please note that Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
+    
     # Configuration Required for All Data Sources
     "source_type": "Teradata",
 
@@ -141,6 +165,12 @@ Please note the Oracle package is not installed by default. You will need to fol
 Then `pip install cx_Oracle`.
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "Oracle",
 
@@ -159,6 +189,12 @@ Please note the MSSQL Server package is not installed by default. You will need 
 Then `pip install pyodbc`.
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+    # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "MSSQL",
 
@@ -175,6 +211,12 @@ Then `pip install pyodbc`.
 ## Postgres
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "Postgres",
 
@@ -191,6 +233,12 @@ Then `pip install pyodbc`.
 Please note AlloyDB supports same connection config as Postgres.
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "Postgres",
 
@@ -206,6 +254,12 @@ Please note AlloyDB supports same connection config as Postgres.
 ## MySQL
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+    # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "MySQL",
 
@@ -221,6 +275,12 @@ Please note AlloyDB supports same connection config as Postgres.
 ## Redshift
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "Redshift",
 
@@ -253,6 +313,12 @@ Please note AlloyDB supports same connection config as Postgres.
 ## Impala
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "Impala",
 
@@ -276,6 +342,13 @@ Please note that for Group By validations, the following property must be set in
  
 ```
 {
+
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Hive is based off Impala connector
     "source_type": "Impala",
 
@@ -291,6 +364,12 @@ Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla
 ## DB2
 ```
 {
+    # secret manger type
+    "secret_manger_type": "GCP", 
+    
+     # secret manger project id
+    "secret_manger_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source_type": "DB2",
 
