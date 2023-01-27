@@ -355,7 +355,7 @@ def build_config_managers_from_yaml(args, config_file_path):
         config_manager = ConfigManager(
             config, source_client, target_client, verbose=args.verbose
         )
-
+        config_manager.config[consts.CONFIG_FILE] = config_file_path
         config_managers.append(config_manager)
 
     return config_managers
