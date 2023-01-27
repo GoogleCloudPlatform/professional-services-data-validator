@@ -15,14 +15,14 @@
 DROP TABLE IF EXISTS test_data_types_mysql_row;
 CREATE TABLE test_data_types_mysql_row(
 	serial_col int AUTO_INCREMENT ,
-    int_col int(3),
+	int_col int(3),
 	text_col  char(100),
-    char_col  char(30),
-    varchar_col  varchar(255),
+	char_col  char(30),
+	varchar_col  varchar(255),
 	float_col float(5,2),
 	decimal_col  decimal(5, 2),
 	datetime_col datetime,
-    date_col date,
+	date_col date,
 	PRIMARY KEY (serial_col)
 );
 INSERT INTO test_data_types_mysql_row(int_col, text_col, char_col, varchar_col, float_col, decimal_col, datetime_col, date_col) values (10, 'row1_text', '1', 'row1_varchar', 10.10, 10.101, '2016-06-22 19:10:25','2020-01-01');
