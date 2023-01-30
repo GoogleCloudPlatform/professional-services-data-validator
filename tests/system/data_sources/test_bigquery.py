@@ -990,6 +990,7 @@ def test_bigquery_row():
 
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
 
+
 def test_custom_query():
     SAMPLE_CUSTOMQUERY_CONFIG = {
         "type": "Custom-query",
