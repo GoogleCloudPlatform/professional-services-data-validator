@@ -13,10 +13,72 @@
 # limitations under the License.
 
 # from ibis.backends.postgres.client import PostgreSQLClient
+from __future__ import annotations
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from ibis import util
 from ibis.backends.postgres.client import PostgreSQLClient
+import toolz
+import parsy
+
+from third_party.ibis.ibis_postgres.parsing import (
+    COMMA,
+    LBRACKET,
+    LPAREN,
+    PRECISION,
+    RBRACKET,
+    RPAREN,
+    SCALE,
+    spaceless,
+    spaceless_string,
+)
+
+_BRACKETS = "[]"
+
+
+def _parse_numeric(
+    text: str, default_decimal_parameters: tuple[int | None, int | None] = (None, None)
+):
+    @parsy.generate
+    def decimal():
+        yield spaceless_string("decimal", "numeric")
+        prec_scale = (
+            yield LPAREN.then(
+                parsy.seq(PRECISION.skip(COMMA), SCALE).combine(
+                    lambda prec, scale: (prec, scale)
+                )
+            )
+            .skip(RPAREN)
+            .optional()
+        ) or default_decimal_parameters
+        return dt.Decimal(*prec_scale)
+
+    @parsy.generate
+    def brackets():
+        yield spaceless(LBRACKET)
+        yield spaceless(RBRACKET)
+
+    @parsy.generate
+    def pg_array():
+        value_type = yield decimal
+        n = len((yield brackets.at_least(1)))
+        return toolz.nth(n, toolz.iterate(dt.Array, value_type))
+
+    ty = pg_array | decimal
+    return ty.parse(text)
+
+
+def _get_type(typestr: str) -> dt.DataType:
+    is_array = typestr.endswith(_BRACKETS)
+    if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
+        return dt.Array(typ) if is_array else typ
+    return _parse_numeric(typestr)
+
+def _get_type(self,typestr: str) -> dt.DataType:
+    try:
+        return _type_mapping[typestr]
+    except KeyError:
+        return 
 
 def _get_schema_using_query(self, query: str) -> sch.Schema:
     raw_name = util.guid()
@@ -40,8 +102,7 @@ ORDER BY attnum
     tuples = [(col, self._get_type(typestr)) for col, typestr in type_info]
     return sch.Schema.from_tuples(tuples)
 
-def _get_type(self,typestr: str) -> dt.DataType:
-    _type_mapping = {
+_type_mapping = {
     # "boolean": dt.bool,
     "boolean": dt.boolean,
     "boolean[]": dt.Array(dt.boolean),
@@ -91,8 +152,8 @@ def _get_type(self,typestr: str) -> dt.DataType:
     "interval[]": dt.Array(dt.interval),
     # NB: this isn"t correct, but we try not to fail
     "time with time zone": "time",
-    "numeric": dt.float64,
-    "numeric[]": dt.Array(dt.float64),
+    "numeric": dt.decimal,
+    "numeric[]": dt.Array(dt.decimal),
     "uuid": dt.uuid,
     "uuid[]": dt.Array(dt.uuid),
     "jsonb": dt.jsonb,
@@ -101,11 +162,7 @@ def _get_type(self,typestr: str) -> dt.DataType:
     "geometry[]": dt.Array(dt.geometry),
     "geography": dt.geography,
     "geography[]": dt.Array(dt.geography),
-    }
-    try:
-        return _type_mapping[typestr]
-    except KeyError:
-        return 
+}
 
 PostgreSQLClient._get_schema_using_query = _get_schema_using_query
 PostgreSQLClient._get_type = _get_type

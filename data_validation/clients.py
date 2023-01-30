@@ -24,6 +24,8 @@ import pandas
 import third_party.ibis.ibis_addon.datatypes
 import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 import third_party.ibis.ibis_postgres.client
+import third_party.ibis.ibis_postgres.parsing
+import third_party.ibis.ibis_postgres.numeric
 from google.cloud import bigquery
 from ibis.backends.mysql.client import MySQLClient
 from ibis.backends.pandas.client import PandasClient
