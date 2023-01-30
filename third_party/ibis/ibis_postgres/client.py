@@ -14,6 +14,7 @@
 
 # from ibis.backends.postgres.client import PostgreSQLClient
 from __future__ import annotations
+import third_party.ibis.ibis_postgres.numeric
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from ibis import util

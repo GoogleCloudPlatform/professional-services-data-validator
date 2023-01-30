@@ -67,4 +67,4 @@ class Decimal(Numeric):
 
 
 # decimal = Decimal()
-dt.decimal = Decimal()
+dt.Decimal = Decimal()
