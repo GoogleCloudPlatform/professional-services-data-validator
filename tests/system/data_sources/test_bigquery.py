@@ -1109,5 +1109,4 @@ def test_custom_query():
 
     client = data_validation.DataValidation(SAMPLE_CUSTOMQUERY_CONFIG)
     result_df = client.execute()
-    print(result_df)
     assert result_df.source_agg_value.equals(result_df.target_agg_value)
