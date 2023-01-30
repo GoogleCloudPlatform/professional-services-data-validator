@@ -989,3 +989,124 @@ def test_bigquery_row():
     df = data_validator.execute()
 
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
+
+def test_custom_query():
+    SAMPLE_CUSTOMQUERY_CONFIG = {
+        "type": "Custom-query",
+        "source_conn_name": BQ_CONN_NAME,
+        "target_conn_name": BQ_CONN_NAME,
+        "table_name": None,
+        "schema_name": None,
+        "target_schema_name": None,
+        "target_table_name": None,
+        "labels": [],
+        "threshold": 0.0,
+        "format": "table",
+        "result_handler": None,
+        "filters": [],
+        "use_random_rows": False,
+        "random_row_batch_size": None,
+        "filter_status": None,
+        "custom_query_type": "row",
+        "source_query": "select object_id,faa_identifier from bigquery-public-data.faa.us_airports limit 100",
+        "target_query": "select object_id,faa_identifier from bigquery-public-data.faa.us_airports limit 100",
+        "comparison_fields": [
+            {
+                "source_column": "hash__all",
+                "target_column": "hash__all",
+                "field_alias": "hash__all",
+                "cast": None,
+            }
+        ],
+        "calculated_fields": [
+            {
+                "source_calculated_columns": ["object_id"],
+                "target_calculated_columns": ["object_id"],
+                "field_alias": "cast__object_id",
+                "type": "cast",
+                "depth": 0,
+            },
+            {
+                "source_calculated_columns": ["faa_identifier"],
+                "target_calculated_columns": ["faa_identifier"],
+                "field_alias": "cast__faa_identifier",
+                "type": "cast",
+                "depth": 0,
+            },
+            {
+                "source_calculated_columns": ["cast__object_id"],
+                "target_calculated_columns": ["cast__object_id"],
+                "field_alias": "ifnull__cast__object_id",
+                "type": "ifnull",
+                "depth": 1,
+            },
+            {
+                "source_calculated_columns": ["cast__faa_identifier"],
+                "target_calculated_columns": ["cast__faa_identifier"],
+                "field_alias": "ifnull__cast__faa_identifier",
+                "type": "ifnull",
+                "depth": 1,
+            },
+            {
+                "source_calculated_columns": ["ifnull__cast__object_id"],
+                "target_calculated_columns": ["ifnull__cast__object_id"],
+                "field_alias": "rstrip__ifnull__cast__object_id",
+                "type": "rstrip",
+                "depth": 2,
+            },
+            {
+                "source_calculated_columns": ["ifnull__cast__faa_identifier"],
+                "target_calculated_columns": ["ifnull__cast__faa_identifier"],
+                "field_alias": "rstrip__ifnull__cast__faa_identifier",
+                "type": "rstrip",
+                "depth": 2,
+            },
+            {
+                "source_calculated_columns": ["rstrip__ifnull__cast__object_id"],
+                "target_calculated_columns": ["rstrip__ifnull__cast__object_id"],
+                "field_alias": "upper__rstrip__ifnull__cast__object_id",
+                "type": "upper",
+                "depth": 3,
+            },
+            {
+                "source_calculated_columns": ["rstrip__ifnull__cast__faa_identifier"],
+                "target_calculated_columns": ["rstrip__ifnull__cast__faa_identifier"],
+                "field_alias": "upper__rstrip__ifnull__cast__faa_identifier",
+                "type": "upper",
+                "depth": 3,
+            },
+            {
+                "source_calculated_columns": [
+                    "upper__rstrip__ifnull__cast__object_id",
+                    "upper__rstrip__ifnull__cast__faa_identifier",
+                ],
+                "target_calculated_columns": [
+                    "upper__rstrip__ifnull__cast__object_id",
+                    "upper__rstrip__ifnull__cast__faa_identifier",
+                ],
+                "field_alias": "concat__all",
+                "type": "concat",
+                "depth": 4,
+            },
+            {
+                "source_calculated_columns": ["concat__all"],
+                "target_calculated_columns": ["concat__all"],
+                "field_alias": "hash__all",
+                "type": "hash",
+                "depth": 5,
+            },
+        ],
+        "primary_keys": [
+            {
+                "source_column": "object_id",
+                "target_column": "object_id",
+                "field_alias": "object_id",
+                "cast": None,
+            }
+        ],
+    }
+
+    client = data_validation.DataValidation(SAMPLE_CUSTOMQUERY_CONFIG)
+    result_df = client.execute()
+    print(result_df)
+    assert result_df.source_agg_value.equals(result_df.target_agg_value)
