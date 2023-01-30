@@ -6,10 +6,10 @@ import ibis.expr.datatypes as dt
 class Decimal(Numeric):
     """Fixed-precision decimal values."""
 
-    precision = optional(instance_of(int))
+    # precision = optional(instance_of(int))
     """The number of decimal places values of this type can hold."""
 
-    scale = optional(instance_of(int))
+    # scale = optional(instance_of(int))
     """The number of values after the decimal point."""
 
     scalar = ir.DecimalScalar
