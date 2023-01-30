@@ -153,8 +153,8 @@ _type_mapping = {
     "interval[]": dt.Array(dt.interval),
     # NB: this isn"t correct, but we try not to fail
     "time with time zone": "time",
-    "numeric": dt.decimal,
-    "numeric[]": dt.Array(dt.decimal),
+    "numeric": dt.Decimal,
+    "numeric[]": dt.Array(dt.Decimal),
     "uuid": dt.uuid,
     "uuid[]": dt.Array(dt.uuid),
     "jsonb": dt.jsonb,
