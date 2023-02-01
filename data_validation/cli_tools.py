@@ -585,6 +585,7 @@ def _configure_custom_query_parser(custom_query_parser):
         "--primary-keys",
         "-pk",
         help="Comma separated list of primary key columns 'col_a,col_b'",
+        required=True,
     )
     custom_query_parser.add_argument(
         "--wildcard-include-string-len",

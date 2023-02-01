@@ -264,10 +264,15 @@ class OracleClient(alch.AlchemyClient):
 
     def _get_schema_using_query(self, limited_query):
         type_map = {
+            "DB_TYPE_CHAR": "string",
+            "DB_TYPE_LONG": "string",
             "DB_TYPE_NVARCHAR": "string",
             "DB_TYPE_VARCHAR": "string",
             "DB_TYPE_TIMESTAMP": "timestamp",
-            "DB_TYPE_DATE": "timestamp"
+            "DB_TYPE_DATE": "timestamp",
+            "DB_TYPE_BOOLEAN": "boolean",
+            "DB_TYPE_BINARY_DOUBLE": "float64",
+            "DB_TYPE_BINARY_FLOAT": "float64",
         }
 
         with self._execute(limited_query, results=True) as cur:
