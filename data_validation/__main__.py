@@ -160,7 +160,7 @@ def get_calculated_config(args, config_manager):
     return calculated_configs
 
 
-def build_config_from_args(args, config_manager):
+def build_config_from_args(args: Namespace, config_manager: ConfigManager):
     """Append build configs to ConfigManager object.
 
     Args:
@@ -202,9 +202,6 @@ def build_config_from_args(args, config_manager):
 
     # Append COLUMN_VALIDATION configs
     if config_manager.validation_type == consts.COLUMN_VALIDATION:
-        config_manager.append_calculated_fields(
-            get_calculated_config(args, config_manager)
-        )
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if args.grouped_columns is not None:
             grouped_columns = cli_tools.get_arg_list(args.grouped_columns)

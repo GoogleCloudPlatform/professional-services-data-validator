@@ -27,13 +27,13 @@ Above command creates a YAML file named citibike.yaml that can be used to run va
  
 #### Run validations from a configuration file
 ````shell script
-data-validation run-config -c citibike.yaml
+data-validation configs run -c citibike.yaml
 ````
 Above command executes validations stored in a config file named citibike.yaml. 
 
 #### Generate partitions and save as multiple configuration files
 ````shell script
-data-validation generate-table-partitions -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*' --filters 'station_id>3000' -cdir partitions_dir --partition-key station_id --partition-num 200
+data-validation generate-table-partitions -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_trees.tree_census_2015 --primary-keys tree_id --hash '*' --filters 'tree_id>3000' -cdir partitions_dir --partition-key tree_id --partition-num 200
 ````
 Above command creates multiple partitions based on `--partition-key`. Number of generated configuration files is decided by `--partition-num`
  
