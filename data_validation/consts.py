@@ -144,7 +144,6 @@ COLUMN_FILTER_LIST = [
     "end_time",
     "labels",
     "pct_threshold",
-    "run_id",
     "start_time",
     "target_table_name",
     "target_column_name",
