@@ -16,6 +16,7 @@
 # Configuration Fields
 SOURCE_TYPE = "source_type"
 CONFIG = "config"
+CONFIG_FILE = "config_file"
 CONFIG_SOURCE_CONN_NAME = "source_conn_name"
 CONFIG_TARGET_CONN_NAME = "target_conn_name"
 CONFIG_SOURCE_CONN = "source_conn"
