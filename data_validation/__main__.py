@@ -535,13 +535,6 @@ def run_connections(args):
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 
 
-def run_config(args):
-    """Run commands related to validation config YAMLs (LEGACY - superceded by run_validation_configs)."""
-    config_file_path = _get_arg_config_file(args)
-    config_managers = build_config_managers_from_yaml(args, config_file_path)
-    run_validations(args, config_managers)
-
-
 def run_validation_configs(args):
     """Run commands related to validation config YAMLs."""
     if args.validation_config_cmd == "run":
@@ -574,8 +567,6 @@ def main():
     )
     if args.command == "connections":
         run_connections(args)
-    elif args.command == "run-config":
-        run_config(args)
     elif args.command == "configs":
         run_validation_configs(args)
     elif args.command == "find-tables":

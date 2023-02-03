@@ -39,8 +39,6 @@ data-validation validate column \
 -bqrh pso-kokoro-resources.pso_data_validator.results
 -c ex_yaml.yaml
 
-data-validation run-config -c ex_yaml.yaml
-
 command:
 data-validation
 """
@@ -166,7 +164,6 @@ def configure_arg_parser():
 
     subparsers = parser.add_subparsers(dest="command")
     _configure_validate_parser(subparsers)
-    _configure_run_config_parser(subparsers)
     _configure_validation_config_parser(subparsers)
     _configure_connection_parser(subparsers)
     _configure_find_tables(subparsers)
@@ -317,20 +314,6 @@ def _configure_raw_query(subparsers):
     )
     query_parser.add_argument("--conn", "-c", help="Connection name to query")
     query_parser.add_argument("--query", "-q", help="Raw query to execute")
-
-
-def _configure_run_config_parser(subparsers):
-    """Configure arguments to run a data validation YAML config using the legacy run-config command."""
-    run_config_parser = subparsers.add_parser(
-        "run-config",
-        help="Run validations stored in a YAML config file. Note: the 'configs run' command is now the recommended approach",
-    )
-
-    run_config_parser.add_argument(
-        "--config-file",
-        "-c",
-        help="YAML Config File Path to be used for building or running validations.",
-    )
 
 
 def _configure_validation_config_parser(subparsers):
