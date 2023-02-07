@@ -250,7 +250,7 @@ def integration_hive(session):
     """
     _setup_session_requirements(session, extra_packages=["PyHive"])
 
-    expected_env_vars = ["PROJECT_ID", "ORACLE_PASSWORD", "ORACLE_HOST"]
+    expected_env_vars = ["PROJECT_ID", "HIVE_HOST"]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
