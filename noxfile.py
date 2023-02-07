@@ -248,9 +248,9 @@ def integration_hive(session):
     """Run Hive integration tests.
     Ensure Hive validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["pyhive"])
+    _setup_session_requirements(session, extra_packages=["PyHive"])
 
-    expected_env_vars = ["PROJECT_ID","HIVE_HOST"]
+    expected_env_vars = ["PROJECT_ID", "ORACLE_PASSWORD", "ORACLE_HOST"]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
