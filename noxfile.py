@@ -248,7 +248,7 @@ def integration_hive(session):
     """Run Hive integration tests.
     Ensure Hive validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["PyHive","hdfs"])
+    _setup_session_requirements(session, extra_packages=["PyHive", "hdfs"])
 
     expected_env_vars = ["PROJECT_ID", "HIVE_HOST"]
     for env_var in expected_env_vars:
