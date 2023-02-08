@@ -220,8 +220,6 @@ def get_all_tables(client, allowed_schemas=None):
     return table_objs
 
 
-
-
 def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
