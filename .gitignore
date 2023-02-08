@@ -85,6 +85,7 @@ terraform.rc
 # Custom
 *.yaml
 partitions_dir
+setup.sh
 
 # Test temp files
 source_table_data.json

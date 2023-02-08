@@ -31,7 +31,7 @@ import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 
 from data_validation.clients import _raise_missing_client_error
-from ibis_bigquery.compiler import BigQueryExprTranslator
+from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.expr.operations import Value, Reduction, Comparison, HashBytes
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
@@ -79,106 +79,94 @@ def compile_to_char(numeric_value, fmt):
     return ToChar(numeric_value, fmt=fmt).to_expr()
     
 
-def format_hash_bigquery(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    if how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({compiled_arg})"
+def format_hash_bigquery(translator, op):
+    arg = translator.translate(op.arg)
+    if op.how == "farm_fingerprint":
+        return f"FARM_FINGERPRINT({rg})"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
 
-def format_hashbytes_bigquery(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    if how == "sha256":
-        return f"TO_HEX(SHA256({compiled_arg}))"
+def format_hashbytes_bigquery(translator, op):
+    arg = translator.translate(op.arg)
+    if op.how == "sha256":
+        return f"TO_HEX(SHA256({arg}))"
     elif how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({compiled_arg})"
+        return f"FARM_FINGERPRINT({arg})"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
 
-def format_hashbytes_teradata(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    if how == "sha256":
-        return f"rtrim(hash_sha256({compiled_arg}))"
-    elif how == "sha512":
-        return f"rtrim(hash_sha512({compiled_arg}))"
-    elif how == "md5":
-        return f"rtrim(hash_md5({compiled_arg}))"
+def format_hashbytes_teradata(translator, op):
+    arg = translator.translate(op.arg)
+    if op.how == "sha256":
+        return f"rtrim(hash_sha256({arg}))"
+    elif op.how == "sha512":
+        return f"rtrim(hash_sha512({arg}))"
+    elif op.how == "md5":
+        return f"rtrim(hash_md5({arg}))"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
 
-def format_hashbytes_hive(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    if how == "sha256":
-        return f"sha2({compiled_arg}, 256)"
-    elif how == "md5":
-        return f"md5({compiled_arg})"
+def format_hashbytes_hive(translator, op):
+    arg = translator.translate(op.arg)
+    if op.how == "sha256":
+        return f"sha2({arg}, 256)"
+    elif op.how == "md5":
+        return f"md5({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
-def format_hashbytes_alchemy(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    if how == "sha256":
-        return f"sha2({compiled_arg}, 256)"
-    elif how == "md5":
-        return f"md5({compiled_arg})"
+def format_hashbytes_alchemy(translator, op):
+    arg = translator.translate(op.arg)
+    if op.how == "sha256":
+        return f"sha2({arg}, 256)"
+    elif op.how == "md5":
+        return f"md5({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
-def format_hashbytes_base(translator, expr):
-    arg, how  = expr.op().args
-    compiled_arg = translator.translate(arg)
-    return f"sha2({compiled_arg}, 256)"
+def format_hashbytes_base(translator, op):
+    arg = translator.translate(op.arg)
+    return f"sha2({arg}, 256)"
 
 def compile_raw_sql(table, sql):
     op = RawSQL(table[table.columns[0]].cast(dt.string), ibis.literal(sql))
     return op.to_expr()
 
 
-def format_raw_sql(translator, expr):
-    op = expr.op()
+def format_raw_sql(translator, op):
     rand_col, raw_sql = op.args
     return raw_sql.op().args[0]
 
 
-def sa_format_raw_sql(translator, expr):
-    op = expr.op()
+def sa_format_raw_sql(translator, op):
     rand_col, raw_sql = op.args
     return sa.text(raw_sql.op().args[0])
 
-def sa_format_hashbytes_mssql(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), compiled_arg)
+def sa_format_hashbytes_mssql(translator, op):
+    arg = translator.translate(op.arg)
+    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), arg)
     hash_to_string = sa.func.convert(sa.sql.literal_column('CHAR(64)'), hash_func, sa.sql.literal_column('2'))
     return sa.func.lower(hash_to_string)
 
-def sa_format_hashbytes_oracle(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    hash_func = sa.func.standard_hash(compiled_arg, sa.sql.literal_column("'SHA256'"))
+def sa_format_hashbytes_oracle(translator, op):
+    arg = translator.translate(op.arg)
+    hash_func = sa.func.standard_hash(arg, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
 
-def sa_format_hashbytes_postgres(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    convert = sa.func.convert_to(compiled_arg, sa.sql.literal_column("'UTF8'"))
+def sa_format_hashbytes_postgres(translator, op):
+    arg = translator.translate(op.arg)
+    convert = sa.func.convert_to(arg, sa.sql.literal_column("'UTF8'"))
     hash_func = sa.func.sha256(convert)
     return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
 
-def sa_format_to_char(translator, expr):
-    arg, fmt = expr.op().args
-    compiled_arg = translator.translate(arg)
-    compiled_fmt = translator.translate(fmt)
-    return sa.func.to_char(compiled_arg, compiled_fmt)
+def sa_format_to_char(translator, op):
+    arg = translator.translate(op.arg)
+    fmt = translator.translate(op.fmt)
+    return sa.func.to_char(arg, fmt)
 
-_pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
+# _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
 # BinaryValue.hash = compile_hash
 # StringValue.hash = compile_hash
 # BinaryValue.hashbytes = compile_hashbytes

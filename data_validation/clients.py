@@ -18,9 +18,9 @@ import warnings
 import logging
 import google.oauth2.service_account
 import ibis
-import ibis_bigquery
+# import ibis_bigquery
 import pandas
-# import third_party.ibis.ibis_addon.datatypes
+import third_party.ibis.ibis_addon.datatypes
 # import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 from google.cloud import bigquery
 # from ibis.backends.mysql.client import MySQLClient
@@ -65,7 +65,7 @@ except Exception:
     OracleClient = _raise_missing_client_error("pip install cx_Oracle")
 
 try:
-    from third_party.ibis.ibis_mssql.client import MSSQLClient
+from third_party.ibis.ibis_mssql.client import MSSQLClient
 except Exception:
     MSSQLClient = _raise_missing_client_error("pip install pyodbc")
 
@@ -91,7 +91,7 @@ def get_bigquery_client(project_id, dataset_id="", credentials=None):
         project=project_id, client_info=info, credentials=credentials
     )
 
-    ibis_client = ibis_bigquery.connect(
+    ibis_client = ibis.bigquery.connect(
         project_id=project_id, dataset_id=dataset_id, credentials=credentials
     )
 

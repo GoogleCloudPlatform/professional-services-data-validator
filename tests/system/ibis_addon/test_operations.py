@@ -15,7 +15,7 @@
 import textwrap
 
 import pytest
-import ibis_bigquery
+import ibis
 import ibis.expr.datatypes as dt
 
 # Import required in order to register operations.
@@ -25,7 +25,7 @@ from third_party.ibis import ibis_teradata
 
 @pytest.fixture
 def bigquery_client():
-    return ibis_bigquery.connect()
+    return ibis.bigquery.connect()
 
 
 @pytest.fixture

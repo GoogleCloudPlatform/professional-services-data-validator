@@ -18,14 +18,14 @@ from typing import List
 from io import StringIO
 import sqlalchemy as sa
 import ibis
-import ibis_bigquery
+# import ibis_bigquery
 import ibis.expr.operations as ops
-import ibis.expr.types as tz
 import ibis.expr.rules as rlz
 import ibis.backends.base.sql.compiler as sql_compiler
 import ibis.backends.base.sql.alchemy as sqla
 import ibis.backends.pandas.execution.util as pandas_util
 
+#from ibis.expr.types import Value, SortExpr
 # from google.cloud.bigquery import Client
 # from ibis.backends.impala.client import ImpalaClient
 # from ibis.backends.postgres.client import PostgreSQLClient
@@ -45,7 +45,7 @@ from data_validation.query_builder.query_builder import QueryBuilder
 ######################################
 RANDOM_SORT_SUPPORTS = {
     ibis.backends.pandas.Backend: "NA",
-    ibis_bigquery.Backend: "RAND()",
+    ibis.backends.bigquery.Backend: "RAND()",
     # clients.TeradataClient: None,
     # ImpalaClient: "RAND()",
     # clients.OracleClient: "DBMS_RANDOM.VALUE",
@@ -54,29 +54,29 @@ RANDOM_SORT_SUPPORTS = {
 }
 
 
-class RandomSortExpr(tz.AnyValue, tz.SortExpr):
-    _dtype = rlz.string
-    _name = "RandomSortExpr"
+# class RandomSortExpr(Value, SortExpr):
+#     _dtype = rlz.string
+#     _name = "RandomSortExpr"
 
-    def __init__(self, arg):
-        self._arg = arg
+#     def __init__(self, arg):
+#         self._arg = arg
 
-    def type(self):
-        return self._dtype
+#     def type(self):
+#         return self._dtype
 
 
-class RandomSortKey(ops.SortKey):
-    expr = rlz.any
-    value = None
+# class RandomSortKey(ops.SortKey):
+#     expr = rlz.any
+#     value = None
 
-    def equals(self, other, cache=None):
-        return isinstance(other, RandomSortKey)
+#     def equals(self, other, cache=None):
+#         return isinstance(other, RandomSortKey)
 
-    def output_type(self, expr):
-        return RandomSortExpr(expr)
+#     def output_type(self, expr):
+#         return RandomSortExpr(expr)
 
-    def resolve_name(self):
-        return "RandomSortKey"
+#     def resolve_name(self):
+#         return "RandomSortKey"
 
 
 class RandomRowBuilder(object):
@@ -121,8 +121,8 @@ class RandomRowBuilder(object):
             if type(data_client) == clients.TeradataClient:
                 return table
 
-            return table.sort_by(
-                RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
+            return table.order_by(
+                ibis.random()
             )
 
         logging.warning(
@@ -137,111 +137,111 @@ class RandomRowBuilder(object):
 ##################################
 
 # Save old version to be wrapped
-_compute_sorted_frame = pandas_util.compute_sorted_frame
+# _compute_sorted_frame = pandas_util.compute_sorted_frame
 
 
-class RandomColumn:
-    def __init__(self, name):
-        self._name = name
+# class RandomColumn:
+#     def __init__(self, name):
+#         self._name = name
 
-    def op(self):
-        return self
+#     def op(self):
+#         return self
 
-    def to_expr(self):
-        return self._name
-
-
-def build_and_assign_random_column(df, key, random_name):
-    if not isinstance(key.op(), RandomSortKey):
-        return key
-
-    random.shuffle(df.index.values)
-    df[random_name] = df.index.values
-    return RandomColumn(random_name)
+#     def to_expr(self):
+#         return self._name
 
 
-def compute_sorted_frame(df, order_by, group_by=(), timecontext=None, **kwargs):
-    new_order_by = [
-        build_and_assign_random_column(df, key, f"__random_sort_{i}__")
-        for i, key in enumerate(order_by)
-    ]
-    sorted_results = _compute_sorted_frame(
-        df, new_order_by, group_by=group_by, timecontext=timecontext, **kwargs
-    )
+# def build_and_assign_random_column(df, key, random_name):
+#     if not isinstance(key.op(), RandomSortKey):
+#         return key
 
-    return sorted_results
+#     random.shuffle(df.index.values)
+#     df[random_name] = df.index.values
+#     return RandomColumn(random_name)
 
 
-pandas_util.compute_sorted_frame = compute_sorted_frame
+# def compute_sorted_frame(df, order_by, group_by=(), timecontext=None, **kwargs):
+#     new_order_by = [
+#         build_and_assign_random_column(df, key, f"__random_sort_{i}__")
+#         for i, key in enumerate(order_by)
+#     ]
+#     sorted_results = _compute_sorted_frame(
+#         df, new_order_by, group_by=group_by, timecontext=timecontext, **kwargs
+#     )
+
+#     return sorted_results
 
 
-#####################################
-##### Override Order By for SQL #####
-#####################################
+# pandas_util.compute_sorted_frame = compute_sorted_frame
 
 
-def format_order_by(self):
-    if not self.order_by:
-        return None
-
-    buf = StringIO()
-    buf.write("ORDER BY ")
-
-    formatted = []
-    for expr in self.order_by:
-        ##### ADDING CODE TO FORMAT #####
-        if isinstance(expr, RandomSortExpr):
-            literal_sql = expr.op().expr.op()
-            formatted.append(literal_sql.value)
-            continue
-        ##### END ADDING CODE TO FORMAT #####
-
-        key = expr.op()
-        translated = self._translate(key.expr)
-        if not key.ascending:
-            translated += " DESC"
-        formatted.append(translated)
-
-    buf.write(", ".join(formatted))
-    return buf.getvalue()
+# #####################################
+# ##### Override Order By for SQL #####
+# #####################################
 
 
-sql_compiler.Select.format_order_by = format_order_by
+# def format_order_by(self):
+#     if not self.order_by:
+#         return None
 
-#######################################
-##### Override Order By for SQL Alchemy
-#######################################
+#     buf = StringIO()
+#     buf.write("ORDER BY ")
 
+#     formatted = []
+#     for expr in self.order_by:
+#         ##### ADDING CODE TO FORMAT #####
+#         if isinstance(expr, RandomSortExpr):
+#             literal_sql = expr.op().expr.op()
+#             formatted.append(literal_sql.value)
+#             continue
+#         ##### END ADDING CODE TO FORMAT #####
 
-def _add_order_by(self, fragment):
-    if not len(self.order_by):
-        return fragment
+#         key = expr.op()
+#         translated = self._translate(key.expr)
+#         if not key.ascending:
+#             translated += " DESC"
+#         formatted.append(translated)
 
-    clauses = []
-    for expr in self.order_by:
-        key = expr.op()
-        sort_expr = key.expr
-
-        ##### ADDING CODE TO FORMAT #####
-        if isinstance(expr, RandomSortExpr):
-            arg = sa.sql.literal_column(sort_expr.op().value)
-            clauses.append(arg)
-            continue
-        ##### END ADDING CODE TO FORMAT #####
-
-        # here we have to determine if key.expr is in the select set (as it
-        # will be in the case of order_by fused with an aggregation
-        if sqla._can_lower_sort_column(self.table_set, sort_expr):
-            arg = sort_expr.get_name()
-        else:
-            arg = self._translate(sort_expr)
-
-        if not key.ascending:
-            arg = sa.desc(arg)
-
-        clauses.append(arg)
-
-    return fragment.order_by(*clauses)
+#     buf.write(", ".join(formatted))
+#     return buf.getvalue()
 
 
-sqla.query_builder.AlchemySelect._add_order_by = _add_order_by
+# sql_compiler.Select.format_order_by = format_order_by
+
+# #######################################
+# ##### Override Order By for SQL Alchemy
+# #######################################
+
+
+# def _add_order_by(self, fragment):
+#     if not len(self.order_by):
+#         return fragment
+
+#     clauses = []
+#     for expr in self.order_by:
+#         key = expr.op()
+#         sort_expr = key.expr
+
+#         ##### ADDING CODE TO FORMAT #####
+#         if isinstance(expr, RandomSortExpr):
+#             arg = sa.sql.literal_column(sort_expr.op().value)
+#             clauses.append(arg)
+#             continue
+#         ##### END ADDING CODE TO FORMAT #####
+
+#         # here we have to determine if key.expr is in the select set (as it
+#         # will be in the case of order_by fused with an aggregation
+#         if sqla._can_lower_sort_column(self.table_set, sort_expr):
+#             arg = sort_expr.get_name()
+#         else:
+#             arg = self._translate(sort_expr)
+
+#         if not key.ascending:
+#             arg = sa.desc(arg)
+
+#         clauses.append(arg)
+
+#     return fragment.order_by(*clauses)
+
+
+# sqla.query_builder.AlchemySelect._add_order_by = _add_order_by

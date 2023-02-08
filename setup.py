@@ -18,8 +18,8 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "2.8.0"
-release_status = "Development Status :: 3 - Alpha"
+version = "2.9.0"
+release_status = "Development Status :: 5 - Production/Stable"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -31,9 +31,9 @@ dependencies = [
     "lazy-object-proxy==1.7.1",
     "marshmallow==3.10.0",
     # Core dependencies
+    "fsspec==2023.1.0",
     "google-api-python-client==1.12.8",
-    "ibis-framework==3.2.0",
-    "ibis-bigquery==2.2.1",
+    "ibis-framework==4.1.0",
     "impyla==0.17.0",
     "SQLAlchemy==1.4.45",
     "PyMySQL==1.0.2",
@@ -82,12 +82,12 @@ setuptools.setup(
         release_status,
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=dependencies,
     extras_require=extras_require,
     entry_points={
