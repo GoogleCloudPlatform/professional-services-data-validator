@@ -226,8 +226,8 @@ def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
-    secret_manger_type = connection_config.pop(consts.SECRET_MANGER_TYPE, None)
-    secret_manger_project_id = connection_config.pop(consts.SECRET_MANGER_PROJECT_ID, None)
+    secret_manger_type = connection_config.pop(consts.SECRET_MANGER_TYPE)
+    secret_manger_project_id = connection_config.pop(consts.SECRET_MANGER_PROJECT_ID)
 
     decrypted_connection_config = {}
     if secret_manger_type is not None:
