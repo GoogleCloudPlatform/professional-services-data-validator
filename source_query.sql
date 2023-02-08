@@ -1,0 +1,1 @@
+select * from ma-sabre-sandbox-01.test_sabre.persons
