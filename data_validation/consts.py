@@ -153,7 +153,6 @@ COLUMN_FILTER_LIST = [
     "num_random_rows",
 ]
 SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
-    "run_id",
     "start_time",
     "end_time",
     "aggregation_type",
