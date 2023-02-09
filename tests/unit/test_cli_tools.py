@@ -115,7 +115,6 @@ def test_get_connection_config_from_args():
 
 
 def test_create_and_list_connections(caplog, fs):
-
     caplog.set_level(logging.INFO)
     # Create Connection
     parser = cli_tools.configure_arg_parser()
@@ -144,7 +143,6 @@ def test_configure_arg_parser_list_and_run_validation_configs():
 
 
 def test_create_and_list_and_get_validations(caplog, fs):
-
     caplog.set_level(logging.INFO)
     # Create validation config file
     cli_tools.store_validation("example_validation.yaml", TEST_VALIDATION_CONFIG)

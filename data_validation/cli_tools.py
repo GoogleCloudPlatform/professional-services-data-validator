@@ -370,36 +370,25 @@ def _configure_connection_parser(subparsers):
     """Configure the Parser for Connection Management."""
 
     connection_parser = subparsers.add_parser(
-        "connections",
-        help="Manage & Store connections to your Databases"
+        "connections", help="Manage & Store connections to your Databases"
     )
-    connect_subparsers = connection_parser.add_subparsers(
-        dest="connect_cmd"
-    )
-    _ = connect_subparsers.add_parser(
-        "list",
-        help="List your connections"
-    )
-    add_parser = connect_subparsers.add_parser(
-        "add",
-        help="Store a new connection"
-    )
+    connect_subparsers = connection_parser.add_subparsers(dest="connect_cmd")
+    _ = connect_subparsers.add_parser("list", help="List your connections")
+    add_parser = connect_subparsers.add_parser("add", help="Store a new connection")
     add_parser.add_argument(
-        "--connection-name",
-        "-c",
-        help="Name of connection used as reference"
+        "--connection-name", "-c", help="Name of connection used as reference"
     )
     add_parser.add_argument(
         "--secret-manger-type",
         "-sm",
         default=None,
-        help="Secret manger type to store credentials by default will be plain "
+        help="Secret manger type to store credentials by default will be plain ",
     )
     add_parser.add_argument(
         "--secret-manger-project-id",
         "-sm-prj-id",
         default=None,
-        help="Secret manger type to store credentials by default will be plain "
+        help="Secret manger type to store credentials by default will be plain ",
     )
     _configure_database_specific_parsers(add_parser)
 
@@ -846,7 +835,7 @@ def get_connection_config_from_args(args):
     config = {
         consts.SOURCE_TYPE: args.connect_type,
         consts.SECRET_MANGER_TYPE: getattr(args, consts.SECRET_MANGER_TYPE),
-        consts.SECRET_MANGER_PROJECT_ID: getattr(args, consts.SECRET_MANGER_PROJECT_ID)
+        consts.SECRET_MANGER_PROJECT_ID: getattr(args, consts.SECRET_MANGER_PROJECT_ID),
     }
 
     if args.connect_type == "Raw":

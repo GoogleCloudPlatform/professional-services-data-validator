@@ -225,20 +225,25 @@ def get_data_client(connection_config):
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
     secret_manger_type = connection_config.pop(consts.SECRET_MANGER_TYPE, None)
-    secret_manger_project_id = connection_config.pop(consts.SECRET_MANGER_PROJECT_ID, None)
+    secret_manger_project_id = connection_config.pop(
+        consts.SECRET_MANGER_PROJECT_ID, None
+    )
 
     decrypted_connection_config = {}
     if secret_manger_type is not None:
         sm = SecretMangerBuilder().build(secret_manger_type.lower())
         for config_item in connection_config:
-            decrypted_connection_config[config_item] = sm.maybe_secret(secret_manger_project_id,
-                                                                       connection_config[config_item])
+            decrypted_connection_config[config_item] = sm.maybe_secret(
+                secret_manger_project_id, connection_config[config_item]
+            )
     else:
         decrypted_connection_config = connection_config
 
     # The ibis_bigquery.connect expects a credentials object, not a string.
     if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in decrypted_connection_config:
-        key_path = decrypted_connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
+        key_path = decrypted_connection_config.pop(
+            consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
+        )
         if key_path:
             decrypted_connection_config[
                 "credentials"

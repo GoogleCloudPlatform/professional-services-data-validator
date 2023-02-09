@@ -144,7 +144,6 @@ def schema_validation_matching(
                     ]
                 )
             elif string_val(source_field_type) in allow_list_map:
-
                 allowed_target_field_type = allow_list_map[
                     string_val(source_field_type)
                 ]

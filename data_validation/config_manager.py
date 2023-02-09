@@ -494,7 +494,6 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for column in columns:
-
             if column.casefold() not in casefold_source_columns:
                 raise ValueError(f"Grouped Column DNE in source: {column}")
             if column.casefold() not in casefold_target_columns:
