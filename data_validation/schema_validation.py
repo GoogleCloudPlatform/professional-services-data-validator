@@ -143,20 +143,20 @@ def schema_validation_matching(
                         consts.VALIDATION_STATUS_SUCCESS,
                     ]
                 )
-            elif string_val(source_field_type) in allow_list_map:
+            elif (
+                string_val(source_field_type) in allow_list_map
+                and string_val(target_field_type)
+                == allow_list_map[string_val(source_field_type)]
+            ):
 
                 allowed_target_field_type = allow_list_map[
                     string_val(source_field_type)
                 ]
 
-                (
-                    name_mismatch,
-                    higher_precision,
-                    lower_precision,
-                ) = parse_n_validate_datatypes(
+                (higher_precision, lower_precision,) = parse_n_validate_datatypes(
                     string_val(source_field_type), allowed_target_field_type
                 )
-                if name_mismatch or lower_precision:
+                if lower_precision:
                     results.append(
                         [
                             source_field_name,
@@ -257,6 +257,8 @@ def get_datatype_name(st):
 # typea data types: int8,int16
 def get_typea_numeric_sustr(st):
     nums = []
+    if "(" in st:
+        return -1
     for i in range(len(st)):
         if st[i].isdigit():
             nums.append(st[i])
@@ -297,26 +299,25 @@ def parse_n_validate_datatypes(source, target):
         source: Source table datatype string
         target: Target table datatype string
     Returns:
-        bool:source and target datatype names are missmatched or not
         bool:target has higher precision value
         bool:target has lower precision value
     """
     if strip_null(source) == target:
-        return False, False, False
-    if get_datatype_name(source) != get_datatype_name(target):
-        return True, None, None
-    # Check for type of precisions supplied e.g: int8,Decimal(10,2),int
-    if "(" in source:
+        return False, False
+    if "(" in source and "(" in target:
         typeb_source = get_typeb_numeric_sustr(source)
         typeb_target = get_typeb_numeric_sustr(target)
         higher_precision, lower_precision = validate_typeb_vals(
             typeb_source, typeb_target
         )
-        return False, higher_precision, lower_precision
+        return higher_precision, lower_precision
     source_num = get_typea_numeric_sustr(source)
     target_num = get_typea_numeric_sustr(target)
+    # In case of no bits specified, we will not match for precisions
+    if source_num == -1 or target_num == -1:
+        return False, False
     if source_num == target_num:
-        return False, False, False
+        return False, False
     elif source_num > target_num:
-        return False, False, True
-    return False, True, False
+        return False, True
+    return False, False
