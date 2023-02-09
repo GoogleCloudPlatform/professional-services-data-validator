@@ -145,7 +145,6 @@ COLUMN_FILTER_LIST = [
     "end_time",
     "labels",
     "pct_threshold",
-    "run_id",
     "start_time",
     "target_table_name",
     "target_column_name",
@@ -155,7 +154,6 @@ COLUMN_FILTER_LIST = [
     "num_random_rows",
 ]
 SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
-    "run_id",
     "start_time",
     "end_time",
     "aggregation_type",
