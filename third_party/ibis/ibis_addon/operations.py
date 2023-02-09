@@ -18,7 +18,7 @@ when required before they can be pushed upstream to Ibis.
 Raw SQL Filters:
 The ability to inject RawSQL into a query DNE in Ibis.  It must be built out
 and applied to each Ibis Data Source directly as each has
-extended it's own registry.  Eventually this can potentially be pushed to
+extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
@@ -32,7 +32,7 @@ import ibis.expr.rules as rlz
 
 from data_validation.clients import _raise_missing_client_error
 from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
-from ibis.expr.operations import Arg, Comparison, Reduction, ValueOp
+from ibis.expr.operations import Arg, Cast, Comparison, Reduction, ValueOp
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
@@ -101,7 +101,7 @@ def compile_hashbytes(binary_value, how):
 
 def compile_to_char(numeric_value, fmt):
     return ToChar(numeric_value, fmt=fmt).to_expr()
-    
+
 
 def format_hash_bigquery(translator, expr):
     arg, how = expr.op().args
@@ -202,6 +202,37 @@ def sa_format_to_char(translator, expr):
     compiled_fmt = translator.translate(fmt)
     return sa.func.to_char(compiled_arg, compiled_fmt)
 
+
+def sa_cast_postgres(t, expr):
+    arg, typ = expr.op().args
+
+    sa_arg = t.translate(arg)
+    sa_type = t.get_sqla_type(typ)
+
+    # Specialize going from an integer type to a timestamp
+    if isinstance(arg.type(), dt.Integer) and isinstance(sa_type, sa.DateTime):
+        return sa.func.timezone('UTC', sa.func.to_timestamp(sa_arg))
+
+    # Specialize going from numeric(p,s>0) to string
+    if isinstance(arg.type(), dt.Decimal) and arg.type().scale > 0 and typ.equals(dt.string):
+        # When casting a number to string PostgreSQL includes the full scale, e.g.:
+        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
+        #     100.00
+        # This doesn't match most engines which would return "100".
+        # Using trim_scale() function inside cast to return a more typical value.
+        return sa.cast(sa.func.trim_scale(sa_arg), sa_type)
+
+    if arg.type().equals(dt.binary) and typ.equals(dt.string):
+        return sa.func.encode(sa_arg, 'escape')
+
+    if typ.equals(dt.binary):
+        # Decode yields a column of memoryview which is annoying to deal with
+        # in pandas. CAST(expr AS BYTEA) is correct and returns byte strings.
+        return sa.cast(sa_arg, sa.LargeBinary())
+
+    return sa.cast(sa_arg, sa_type)
+
+
 _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
 IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
 BinaryValue.hash = compile_hash
@@ -230,3 +261,4 @@ TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
+PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
