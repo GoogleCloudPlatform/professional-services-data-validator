@@ -35,7 +35,7 @@ HIVE_CONFIG = {
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "SYSTEM",
+    consts.CONFIG_SCHEMA_NAME: "default",
     consts.CONFIG_TABLE_NAME: "hive_data",
     consts.CONFIG_AGGREGATES: [
         {
