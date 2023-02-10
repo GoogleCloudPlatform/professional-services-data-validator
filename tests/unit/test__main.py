@@ -21,6 +21,7 @@ from data_validation import __main__ as main
 
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
+    "command": "validate",
     "validate_cmd": "column",
     "source_conn": TEST_CONN,
     "target_conn": TEST_CONN,
