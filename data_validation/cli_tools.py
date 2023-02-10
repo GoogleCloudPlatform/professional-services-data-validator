@@ -145,7 +145,29 @@ def get_parsed_args() -> Namespace:
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
     args = ["--help"] if len(sys.argv) == 1 else None
-    return parser.parse_args(args)
+    parsed_args = apply_post_parse_checks(parser.parse_args(args), parser)
+    return parsed_args
+
+
+def apply_post_parse_checks(args: Namespace, parser) -> Namespace:
+    """Apply post parse checks for logical errors
+
+    Returns:
+        args(Namespace)
+    """
+    # Validate custom-query check for primary-keys
+    if (
+        args.command == "validate"
+        and args.validate_cmd == "custom-query"
+        and args.custom_query_type is not None
+        and args.primary_keys is None
+    ):
+        parser.error(
+            "the following argument is required with "
+            "--custom-query-type/-cqt='row': --primary_keys/-pk"
+        )
+
+    return args
 
 
 def configure_arg_parser():
@@ -153,7 +175,6 @@ def configure_arg_parser():
     parser = argparse.ArgumentParser(
         usage=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
     parser.add_argument(
         "--log-level",
@@ -623,16 +644,6 @@ def _configure_custom_query_parser(custom_query_parser):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     optional_arguments.add_argument(
-        "--hash",
-        "-hash",
-        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
-    )
-    optional_arguments.add_argument(
-        "--concat",
-        "-concat",
-        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
-    )
-    optional_arguments.add_argument(
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
@@ -666,6 +677,26 @@ def _configure_custom_query_parser(custom_query_parser):
         action="store_true",
         help="Cast any int32 fields to int64 for large aggregations.",
     )
+    optional_arguments.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+
+    # Group for mutually exclusive optional arguments. Either must be supplied
+    optional_mutually_exclusive = optional_arguments.add_mutually_exclusive_group(
+        required=False
+    )
+    optional_mutually_exclusive.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    optional_mutually_exclusive.add_argument(
+        "--concat",
+        "-concat",
+        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
+    )
 
     # Group required arguments
     required_arguments = custom_query_parser.add_argument_group("required arguments")
@@ -687,12 +718,6 @@ def _configure_custom_query_parser(custom_query_parser):
         "-tqf",
         required=True,
         help="File containing the target sql query",
-    )
-    required_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
-        required=True,
-        help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     _add_common_arguments(optional_arguments, required_arguments)
 
