@@ -248,6 +248,7 @@ def build_config_managers_from_args(
         # Append post build configs to ConfigManager object
         config_manager = build_config_from_args(args, config_manager)
 
+        # Append ConfigManager object to configs list
         configs.append(config_manager)
 
     return configs
