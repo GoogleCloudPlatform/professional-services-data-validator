@@ -16,6 +16,7 @@
 # Configuration Fields
 SOURCE_TYPE = "source_type"
 CONFIG = "config"
+CONFIG_FILE = "config_file"
 CONFIG_SOURCE_CONN_NAME = "source_conn_name"
 CONFIG_TARGET_CONN_NAME = "target_conn_name"
 CONFIG_SOURCE_CONN = "source_conn"
@@ -144,7 +145,6 @@ COLUMN_FILTER_LIST = [
     "end_time",
     "labels",
     "pct_threshold",
-    "run_id",
     "start_time",
     "target_table_name",
     "target_column_name",
@@ -154,7 +154,6 @@ COLUMN_FILTER_LIST = [
     "num_random_rows",
 ]
 SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
-    "run_id",
     "start_time",
     "end_time",
     "aggregation_type",

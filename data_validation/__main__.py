@@ -290,7 +290,7 @@ def build_config_managers_from_yaml(args, config_file_path):
         config_manager = ConfigManager(
             config, source_client, target_client, verbose=args.verbose
         )
-
+        config_manager.config[consts.CONFIG_FILE] = config_file_path
         config_managers.append(config_manager)
 
     return config_managers
@@ -413,7 +413,21 @@ def run_validations(args, config_managers):
     """
     # TODO(issue/31): Add parallel execution logic
     for config_manager in config_managers:
-        run_validation(config_manager, verbose=args.verbose)
+        if config_manager.config and consts.CONFIG_FILE in config_manager.config:
+            logging.info(
+                "Currently running the validation for yml file: %s",
+                config_manager.config[consts.CONFIG_FILE],
+            )
+            try:
+                run_validation(config_manager, verbose=args.verbose)
+            except Exception as e:
+                logging.error(
+                    "Error %s occured while running config file %s. Skipping it for now.",
+                    str(e),
+                    config_manager.config[consts.CONFIG_FILE],
+                )
+        else:
+            run_validation(config_manager, verbose=args.verbose)
 
 
 def store_yaml_config_file(args, config_managers):
