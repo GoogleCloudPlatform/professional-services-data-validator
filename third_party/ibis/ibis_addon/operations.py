@@ -219,8 +219,12 @@ def sa_cast_postgres(t, expr):
         #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
         #     100.00
         # This doesn't match most engines which would return "100".
-        # Using trim_scale() function inside cast to return a more typical value.
-        return sa.cast(sa.func.trim_scale(sa_arg), sa_type)
+        # Using to_char() function instead of cast to return a more typical value.
+        # Would have liked to use trim_scale but this is only available in PostgreSQL 13+
+        #     return (sa.cast(sa.func.trim_scale(sa_arg), sa_type))
+        precision = arg.type().precision or 38
+        fmt = "FM" + ("9" * (precision - arg.type().scale)) + "." + ("9" * arg.type().scale)
+        return sa.func.to_char(sa_arg, fmt)
 
     if arg.type().equals(dt.binary) and typ.equals(dt.string):
         return sa.func.encode(sa_arg, 'escape')
