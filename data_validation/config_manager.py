@@ -19,7 +19,6 @@ from typing import Optional, Union
 import google.oauth2.service_account
 from ibis_bigquery.client import BigQueryClient
 import ibis.expr.datatypes as dt
-from third_party.ibis.ibis_oracle.client import OracleClient
 
 from data_validation import clients, consts, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
@@ -714,7 +713,7 @@ class ConfigManager(object):
     ) -> str:
         if isinstance(column_type, dt.Timestamp):
             return "%Y-%m-%d %H:%M:%S"
-        if isinstance(client, OracleClient):
+        if isinstance(client, clients.OracleClient):
             # Oracle DATE is a DateTime
             return "%Y-%m-%d %H:%M:%S"
         return "%Y-%m-%d"
