@@ -709,10 +709,12 @@ class ConfigManager(object):
 
         return calculated_config
 
-    def _strftime_format(self, column_type: Union[dt.Date, dt.Timestamp]) -> str:
+    def _strftime_format(
+        self, column_type: Union[dt.Date, dt.Timestamp], client
+    ) -> str:
         if isinstance(column_type, dt.Timestamp):
             return "%Y-%m-%d %H:%M:%S"
-        if isinstance(self.source_client, OracleClient):
+        if isinstance(client, OracleClient):
             # Oracle DATE is a DateTime
             return "%Y-%m-%d %H:%M:%S"
         return "%Y-%m-%d"
@@ -737,8 +739,12 @@ class ConfigManager(object):
             # For example Date -> Timestamp should format both source and target as Date.
             fmt = min(
                 [
-                    self._strftime_format(source_table_schema[column]),
-                    self._strftime_format(source_table_schema[column]),
+                    self._strftime_format(
+                        source_table_schema[column], self.source_client
+                    ),
+                    self._strftime_format(
+                        source_table_schema[column], self.target_client
+                    ),
                 ],
                 key=len,
             )
