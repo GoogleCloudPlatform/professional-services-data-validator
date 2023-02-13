@@ -220,11 +220,12 @@ def sa_cast_postgres(t, expr):
         #     100.00
         # This doesn't match most engines which would return "100".
         # Using to_char() function instead of cast to return a more typical value.
+        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
         # Would have liked to use trim_scale but this is only available in PostgreSQL 13+
         #     return (sa.cast(sa.func.trim_scale(sa_arg), sa_type))
         precision = arg.type().precision or 38
         fmt = "FM" + ("9" * (precision - arg.type().scale)) + "." + ("9" * arg.type().scale)
-        return sa.func.to_char(sa_arg, fmt)
+        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
 
     if arg.type().equals(dt.binary) and typ.equals(dt.string):
         return sa.func.encode(sa_arg, 'escape')
