@@ -291,8 +291,6 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
                         File containing the source sql commands
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
-  [--primary-key or -pk JOIN_KEY]
-                        Common column between source and target tables for join
                         File containing the target sql commands
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
