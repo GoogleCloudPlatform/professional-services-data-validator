@@ -47,73 +47,73 @@ ORDER BY attnum
     tuples = [(col, self._get_type(typestr)) for col, typestr in type_info]
     return sch.Schema.from_tuples(tuples)
 
-def _get_type(self,typestr: str) -> dt.DataType:
-    _type_mapping = {
-    # "boolean": dt.bool,
-    "boolean": dt.boolean,
-    "boolean[]": dt.Array(dt.boolean),
-    "bytea": dt.binary,
-    "bytea[]": dt.Array(dt.binary),
-    "character(1)": dt.string,
-    "character(1)[]": dt.Array(dt.string),
-    "bigint": dt.int64,
-    "bigint[]": dt.Array(dt.int64),
-    "smallint": dt.int16,
-    "smallint[]": dt.Array(dt.int16),
-    "integer": dt.int32,
-    "integer[]": dt.Array(dt.int32),
-    "text": dt.string,
-    "text[]": dt.Array(dt.string),
-    "json": dt.json,
-    "json[]": dt.Array(dt.json),
-    "point": dt.point,
-    "point[]": dt.Array(dt.point),
-    "polygon": dt.polygon,
-    "polygon[]": dt.Array(dt.polygon),
-    "line": dt.linestring,
-    "line[]": dt.Array(dt.linestring),
-    "real": dt.float32,
-    "real[]": dt.Array(dt.float32),
-    "double precision": dt.float64,
-    "double precision[]": dt.Array(dt.float64),
-    "macaddr8": dt.macaddr,
-    "macaddr8[]": dt.Array(dt.macaddr),
-    "macaddr": dt.macaddr,
-    "macaddr[]": dt.Array(dt.macaddr),
-    "inet": dt.inet,
-    "inet[]": dt.Array(dt.inet),
-    "character": dt.string,
-    "character[]": dt.Array(dt.string),
-    "character varying": dt.string,
-    "character varying[]": dt.Array(dt.string),
-    "date": dt.date,
-    "date[]": dt.Array(dt.date),
-    "time without time zone": dt.time,
-    "time without time zone[]": dt.Array(dt.time),
-    "timestamp without time zone": dt.timestamp,
-    "timestamp without time zone[]": dt.Array(dt.timestamp),
-    "timestamp with time zone": dt.Timestamp("UTC"),
-    "timestamp with time zone[]": dt.Array(dt.Timestamp("UTC")),
-    "interval": dt.interval,
-    "interval[]": dt.Array(dt.interval),
-    # NB: this isn"t correct, but we try not to fail
-    "time with time zone": "time",
-    "numeric": dt.Decimal,
-    "numeric[]": dt.Array(dt.Decimal),
-    "uuid": dt.uuid,
-    "uuid[]": dt.Array(dt.uuid),
-    "jsonb": dt.jsonb,
-    "jsonb[]": dt.Array(dt.jsonb),
-    "geometry": dt.geometry,
-    "geometry[]": dt.Array(dt.geometry),
-    "geography": dt.geography,
-    "geography[]": dt.Array(dt.geography),
-    }
-    _BRACKETS = "[]"
-    is_array = typestr.endswith(_BRACKETS)
-    if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
-        return dt.Array(typ) if is_array else typ
-    return _parse_numeric(typestr)
+# def _get_type(self,typestr: str) -> dt.DataType:
+#     _type_mapping = {
+#     # "boolean": dt.bool,
+#     "boolean": dt.boolean,
+#     "boolean[]": dt.Array(dt.boolean),
+#     "bytea": dt.binary,
+#     "bytea[]": dt.Array(dt.binary),
+#     "character(1)": dt.string,
+#     "character(1)[]": dt.Array(dt.string),
+#     "bigint": dt.int64,
+#     "bigint[]": dt.Array(dt.int64),
+#     "smallint": dt.int16,
+#     "smallint[]": dt.Array(dt.int16),
+#     "integer": dt.int32,
+#     "integer[]": dt.Array(dt.int32),
+#     "text": dt.string,
+#     "text[]": dt.Array(dt.string),
+#     "json": dt.json,
+#     "json[]": dt.Array(dt.json),
+#     "point": dt.point,
+#     "point[]": dt.Array(dt.point),
+#     "polygon": dt.polygon,
+#     "polygon[]": dt.Array(dt.polygon),
+#     "line": dt.linestring,
+#     "line[]": dt.Array(dt.linestring),
+#     "real": dt.float32,
+#     "real[]": dt.Array(dt.float32),
+#     "double precision": dt.float64,
+#     "double precision[]": dt.Array(dt.float64),
+#     "macaddr8": dt.macaddr,
+#     "macaddr8[]": dt.Array(dt.macaddr),
+#     "macaddr": dt.macaddr,
+#     "macaddr[]": dt.Array(dt.macaddr),
+#     "inet": dt.inet,
+#     "inet[]": dt.Array(dt.inet),
+#     "character": dt.string,
+#     "character[]": dt.Array(dt.string),
+#     "character varying": dt.string,
+#     "character varying[]": dt.Array(dt.string),
+#     "date": dt.date,
+#     "date[]": dt.Array(dt.date),
+#     "time without time zone": dt.time,
+#     "time without time zone[]": dt.Array(dt.time),
+#     "timestamp without time zone": dt.timestamp,
+#     "timestamp without time zone[]": dt.Array(dt.timestamp),
+#     "timestamp with time zone": dt.Timestamp("UTC"),
+#     "timestamp with time zone[]": dt.Array(dt.Timestamp("UTC")),
+#     "interval": dt.interval,
+#     "interval[]": dt.Array(dt.interval),
+#     # NB: this isn"t correct, but we try not to fail
+#     "time with time zone": "time",
+#     "numeric": dt.Decimal,
+#     "numeric[]": dt.Array(dt.Decimal),
+#     "uuid": dt.uuid,
+#     "uuid[]": dt.Array(dt.uuid),
+#     "jsonb": dt.jsonb,
+#     "jsonb[]": dt.Array(dt.jsonb),
+#     "geometry": dt.geometry,
+#     "geometry[]": dt.Array(dt.geometry),
+#     "geography": dt.geography,
+#     "geography[]": dt.Array(dt.geography),
+#     }
+#     _BRACKETS = "[]"
+#     is_array = typestr.endswith(_BRACKETS)
+#     if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
+#         return dt.Array(typ) if is_array else typ
+#     return _parse_numeric(typestr)
 
 _STRING_REGEX = (
     """('[^\n'\\\\]*(?:\\\\.[^\n'\\\\]*)*'|"[^\n"\\\\"]*(?:\\\\.[^\n"\\\\]*)*")"""
@@ -151,34 +151,62 @@ FIELD = parsy.regex("[a-zA-Z_][a-zA-Z_0-9]*")
 def _parse_numeric(
     text: str, default_decimal_parameters: tuple[int | None, int | None] = (None, None)
 ) -> dt.DataType:
-    @parsy.generate
-    def decimal():
-        yield spaceless_string("decimal", "numeric")
-        prec_scale = (
-            yield LPAREN.then(
-                parsy.seq(PRECISION.skip(COMMA), SCALE).combine(
-                    lambda prec, scale: (prec, scale)
-                )
-            )
-            .skip(RPAREN)
-            .optional()
-        ) or default_decimal_parameters
-        return dt.Decimal(*prec_scale)
+    decimal = spaceless_string("decimal", "numeric").then(
+        parsy.seq(LPAREN.then(PRECISION.skip(COMMA)), SCALE.skip(RPAREN))
+        .optional(default_decimal_parameters)
+        .combine(dt.Decimal)
+    )
 
-    @parsy.generate
-    def brackets():
-        yield spaceless(LBRACKET)
-        yield spaceless(RBRACKET)
+    brackets = spaceless(LBRACKET).then(spaceless(RBRACKET))
 
-    @parsy.generate
-    def pg_array():
-        value_type = yield decimal
-        n = len((yield brackets.at_least(1)))
-        return toolz.nth(n, toolz.iterate(dt.Array, value_type))
+    pg_array = parsy.seq(decimal, brackets.at_least(1).map(len)).combine(
+        lambda value_type, n: toolz.nth(n, toolz.iterate(dt.Array, value_type))
+    )
 
     ty = pg_array | decimal
     return ty.parse(text)
 
+def _get_type(typestr: str) -> dt.DataType:
+    is_array = typestr.endswith(_BRACKETS)
+    if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
+        return dt.Array(typ) if is_array else typ
+    return _parse_numeric(typestr)
+
+
+_type_mapping = {
+    "bigint": dt.int64,
+    "boolean": dt.boolean,
+    "bytea": dt.binary,
+    "character varying": dt.string,
+    "character": dt.string,
+    "character(1)": dt.string,
+    "date": dt.date,
+    "double precision": dt.float64,
+    "geography": dt.geography,
+    "geometry": dt.geometry,
+    "inet": dt.inet,
+    "integer": dt.int32,
+    "interval": dt.interval,
+    "json": dt.json,
+    "jsonb": dt.json,
+    "line": dt.linestring,
+    "macaddr": dt.macaddr,
+    "macaddr8": dt.macaddr,
+    "numeric": dt.float64,
+    "point": dt.point,
+    "polygon": dt.polygon,
+    "real": dt.float32,
+    "smallint": dt.int16,
+    "text": dt.string,
+    # NB: this isn't correct because we're losing the "with time zone"
+    # information (ibis doesn't have time type that is time-zone aware), but we
+    # try to do _something_ here instead of failing
+    "time with time zone": dt.time,
+    "time without time zone": dt.time,
+    "timestamp with time zone": dt.Timestamp("UTC"),
+    "timestamp without time zone": dt.timestamp,
+    "uuid": dt.uuid,
+}
 
 PostgreSQLClient._get_schema_using_query = _get_schema_using_query
 PostgreSQLClient._get_type = _get_type
