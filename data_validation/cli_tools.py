@@ -508,11 +508,6 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
     )
     optional_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
-        help="Comma separated list of primary key columns 'col_a,col_b'",
-    )
-    optional_arguments.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -721,11 +716,6 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         "-ctb",
         action="store_true",
         help="Cast any int32 fields to int64 for large aggregations.",
-    )
-    optional_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
-        help="Comma separated list of primary key columns 'col_a,col_b'",
     )
     optional_arguments.add_argument(
         "--filters",
@@ -1155,10 +1145,9 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         result_handler_config = None
 
     # Get filter_config and threshold. Not supported in case of schema validation
+    filter_config = []
+    threshold = 0.0
     if config_type != consts.SCHEMA_VALIDATION:
-        filter_config = []
-        threshold = 0.0
-    else:
         if args.filters:
             filter_config = get_filters(args.filters)
         if args.threshold:
@@ -1180,13 +1169,12 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
 
     # Get random row arguments. Not supported in case of schema validation and
     # generate-table-partitions
+    use_random_rows = None
+    random_row_batch_size = None
     if (
-        config_type == consts.SCHEMA_VALIDATION
-        or args.command == "generate-table-partitions"
+        config_type != consts.SCHEMA_VALIDATION
+        and args.command != "generate-table-partitions"
     ):
-        use_random_rows = None
-        random_row_batch_size = None
-    else:
         use_random_rows = args.use_random_row
         random_row_batch_size = args.random_row_batch_size
 

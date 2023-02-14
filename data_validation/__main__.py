@@ -176,7 +176,6 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
             )
         if args.allow_list is not None:
             config_manager.append_allow_list(args.allow_list)
-        return config_manager
 
     # Append CUSTOM_QUERY configs
     if config_manager.validation_type == consts.CUSTOM_QUERY:
@@ -194,8 +193,16 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
 
         # For custom-query row command
         if args.custom_query_type == consts.ROW_VALIDATION.lower():
+
+            # Append calculated fields: --hash/--concat
             config_manager.append_calculated_fields(
                 get_calculated_config(args, config_manager)
+            )
+
+            # Append primary_keys
+            primary_keys = cli_tools.get_arg_list(args.primary_keys)
+            config_manager.append_primary_keys(
+                config_manager.build_column_configs(primary_keys)
             )
 
     # Append COLUMN_VALIDATION configs
@@ -209,9 +216,13 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
 
     # Append ROW_VALIDATION configs
     if config_manager.validation_type == consts.ROW_VALIDATION:
+
+        # Append calculated fields: --hash/--concat
         config_manager.append_calculated_fields(
             get_calculated_config(args, config_manager)
         )
+
+        # Append Comparison fields
         if args.comparison_fields is not None:
             comparison_fields = cli_tools.get_arg_list(
                 args.comparison_fields, default_value=[]
@@ -220,8 +231,7 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
 
-    # Append primary_keys
-    if args.primary_keys is not None:
+        # Append primary_keys
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
