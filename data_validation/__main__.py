@@ -188,17 +188,15 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         target_query_str = config_manager.get_query_from_file(args.target_query_file)
         config_manager.append_target_query(target_query_str)
 
+        # For custom-query column command
         if args.custom_query_type == consts.COLUMN_VALIDATION.lower():
             config_manager.append_aggregates(get_aggregate_config(args, config_manager))
 
-        elif not args.primary_keys:
-            raise ValueError(
-                "Expected valid primary keys for custom query row validation, got None."
+        # For custom-query row command
+        if args.custom_query_type == consts.ROW_VALIDATION.lower():
+            config_manager.append_calculated_fields(
+                get_calculated_config(args, config_manager)
             )
-
-        config_manager.append_calculated_fields(
-            get_calculated_config(args, config_manager)
-        )
 
     # Append COLUMN_VALIDATION configs
     if config_manager.validation_type == consts.COLUMN_VALIDATION:

@@ -301,17 +301,17 @@ data-validation validate custom-query column --source-query-file source_query.sq
 
 #### Run a custom query validation with sum aggregation 
 ````shell script
-data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available
+data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --sum num_bikes_available
 ````
 
 #### Run a custom query validation with max aggregation 
 ````shell script
-data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --max num_bikes_available
+data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --max num_bikes_available
 ````
 
 #### Run a custom query row validation
 ````shell script
-data-validation validate custom-query row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations  --hash \'*\' --primary-keys station_id
+data-validation validate custom-query row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --hash '*' --primary-keys station_id
 ````
 
 Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively. The primary key should be included
