@@ -1,18 +1,27 @@
-class SecretMangerBuilder:
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+class SecretManagerBuilder:
     def build(self, client_type):
         """
         :param client_type:
-        :return: secret manger instance currently support gcp secret manger
+        :return: secret manager instance currently support gcp secret manager
         """
         if client_type.lower() == "gcp":
-            return GCPSecretManger()
+            return GCPSecretManager()
         else:
             raise Exception(f"{client_type} is not supported yet.")
 
 
-class GCPSecretManger:
+class GCPSecretManager:
     """
-    GCPSecretManger: client to access secrets stored at GCP secret manger
+    GCPSecretManager: client to access secrets stored at GCP secret manager
     """
 
     def __init__(self):
@@ -36,18 +45,4 @@ class GCPSecretManger:
             payload = response.payload.data.decode("UTF-8")
             return payload
         except Exception as e:
-            print(e)
             return secret_id
-
-
-if __name__ == "__main__":
-    import os
-
-    os.environ[
-        "GOOGLE_APPLICATION_CREDENTIALS"
-    ] = "/Users/moukhtar/ws/ma-sabre-sandbox-01-dfe8f33bb3ad.json"
-    print(
-        SecretMangerBuilder()
-        .build("GCP")
-        .maybe_secret("ma-sabre-sandbox-01", "db_user")
-    )

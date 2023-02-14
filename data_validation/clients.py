@@ -31,7 +31,7 @@ from ibis.backends.postgres.client import PostgreSQLClient
 from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info, consts, exceptions
-from data_validation.secret_manger import SecretMangerBuilder
+from data_validation.secret_manager import SecretManagerBuilder
 
 ibis.options.sql.default_limit = None
 
@@ -224,17 +224,17 @@ def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
-    secret_manger_type = connection_config.pop(consts.SECRET_MANGER_TYPE, None)
-    secret_manger_project_id = connection_config.pop(
-        consts.SECRET_MANGER_PROJECT_ID, None
+    secret_manager_type = connection_config.pop(consts.SECRET_MANAGER_TYPE, None)
+    secret_manager_project_id = connection_config.pop(
+        consts.SECRET_MANAGER_PROJECT_ID, None
     )
 
     decrypted_connection_config = {}
-    if secret_manger_type is not None:
-        sm = SecretMangerBuilder().build(secret_manger_type.lower())
+    if secret_manager_type is not None:
+        sm = SecretManagerBuilder().build(secret_manager_type.lower())
         for config_item in connection_config:
             decrypted_connection_config[config_item] = sm.maybe_secret(
-                secret_manger_project_id, connection_config[config_item]
+                secret_manager_project_id, connection_config[config_item]
             )
     else:
         decrypted_connection_config = connection_config

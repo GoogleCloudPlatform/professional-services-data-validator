@@ -379,16 +379,16 @@ def _configure_connection_parser(subparsers):
         "--connection-name", "-c", help="Name of connection used as reference"
     )
     add_parser.add_argument(
-        "--secret-manger-type",
+        "--secret-manager-type",
         "-sm",
         default=None,
-        help="Secret manger type to store credentials by default will be plain ",
+        help="Secret manager type to store credentials by default will be None ",
     )
     add_parser.add_argument(
-        "--secret-manger-project-id",
+        "--secret-manager-project-id",
         "-sm-prj-id",
         default=None,
-        help="Secret manger type to store credentials by default will be plain ",
+        help="Project ID for the secret manager that stores the credentials",
     )
     _configure_database_specific_parsers(add_parser)
 
@@ -834,8 +834,8 @@ def get_connection_config_from_args(args):
     """Return dict with connection config supplied."""
     config = {
         consts.SOURCE_TYPE: args.connect_type,
-        consts.SECRET_MANGER_TYPE: getattr(args, consts.SECRET_MANGER_TYPE),
-        consts.SECRET_MANGER_PROJECT_ID: getattr(args, consts.SECRET_MANGER_PROJECT_ID),
+        consts.SECRET_MANAGER_TYPE: getattr(args, consts.SECRET_MANAGER_TYPE),
+        consts.SECRET_MANAGER_PROJECT_ID: getattr(args, consts.SECRET_MANAGER_PROJECT_ID),
     }
 
     if args.connect_type == "Raw":
