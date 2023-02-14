@@ -281,20 +281,17 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
 Below is the command syntax for custom query column validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
+data-validation (--verbose or -v) (--log-level or -ll) validate custom-query column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
-  --custom-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
-                        Type of custom query validation: ('row'|'column')
-                        Enter 'column' for custom query column validation
   --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
                         File containing the source sql commands
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
-  --primary-key or -pk JOIN_KEY
+  [--primary-key or -pk JOIN_KEY]
                         Common column between source and target tables for join
                         File containing the target sql commands
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
@@ -334,16 +331,13 @@ in the SELECT statement of both source_query.sql and target_query.sql
 Below is the command syntax for custom query row validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query
+data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
-  --custom-query-type CUSTOM_QUERY_TYPE, -cqt CUSTOM_QUERY_TYPE
-                        Type of custom query validation: ('row'|'column')
-                        Enter 'row' for custom query column validation
   --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
                         File containing the source sql commands
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE

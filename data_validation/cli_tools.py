@@ -145,29 +145,7 @@ def get_parsed_args() -> Namespace:
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
     args = ["--help"] if len(sys.argv) == 1 else None
-    parsed_args = apply_post_parse_checks(parser.parse_args(args), parser)
-    return parsed_args
-
-
-def apply_post_parse_checks(args: Namespace, parser) -> Namespace:
-    """Apply post parse checks for logical errors
-
-    Returns:
-        args(Namespace)
-    """
-    # Validate custom-query check for primary-keys
-    if (
-        args.command == "validate"
-        and args.validate_cmd == "custom-query"
-        and args.custom_query_type is not None
-        and args.primary_keys is None
-    ):
-        parser.error(
-            "the following argument is required with "
-            "--custom-query-type/-cqt='row': --primary_keys/-pk"
-        )
-
-    return args
+    return parser.parse_args(args)
 
 
 def configure_arg_parser():
@@ -611,8 +589,97 @@ def _configure_schema_parser(schema_parser):
 
 def _configure_custom_query_parser(custom_query_parser):
     """Configure arguments to run custom-query validations."""
+
+    custom_query_subparsers = custom_query_parser.add_subparsers(
+        dest="custom_query_type"
+    )
+
+    # Add arguments for custom-query row parser
+    custom_query_row_parser = custom_query_subparsers.add_parser(
+        "row", help="Run a custom query row validation"
+    )
+    _configure_custom_query_row_parser(custom_query_row_parser)
+
+    # Add arguments for custom-query column parser
+    custom_query_column_parser = custom_query_subparsers.add_parser(
+        "column", help="Run a custom query column validation"
+    )
+    _configure_custom_query_column_parser(custom_query_column_parser)
+
+
+def _configure_custom_query_row_parser(custom_query_row_parser):
     # Group optional arguments
-    optional_arguments = custom_query_parser.add_argument_group("optional arguments")
+    optional_arguments = custom_query_row_parser.add_argument_group(
+        "optional arguments"
+    )
+    optional_arguments.add_argument(
+        "--filters",
+        "-filters",
+        help="Filters in the format source_filter:target_filter",
+    )
+    optional_arguments.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    optional_arguments.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    optional_arguments.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
+
+    # Group required arguments
+    required_arguments = custom_query_row_parser.add_argument_group(
+        "required arguments"
+    )
+    required_arguments.add_argument(
+        "--source-query-file",
+        "-sqf",
+        required=True,
+        help="File containing the source sql query",
+    )
+    required_arguments.add_argument(
+        "--target-query-file",
+        "-tqf",
+        required=True,
+        help="File containing the target sql query",
+    )
+    required_arguments.add_argument(
+        "--primary-keys",
+        "-pk",
+        required=True,
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+
+    # Group for mutually exclusive required arguments. Either must be supplied
+    required_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    required_mutually_exclusive.add_argument(
+        "--hash",
+        "-hash",
+        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
+    )
+    required_mutually_exclusive.add_argument(
+        "--concat",
+        "-concat",
+        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
+    )
+    _add_common_arguments(optional_arguments, required_arguments)
+
+
+def _configure_custom_query_column_parser(custom_query_column_parser):
+    # Group optional arguments
+    optional_arguments = custom_query_column_parser.add_argument_group(
+        "optional arguments"
+    )
     optional_arguments.add_argument(
         "--count",
         "-count",
@@ -644,6 +711,23 @@ def _configure_custom_query_parser(custom_query_parser):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     optional_arguments.add_argument(
+        "--wildcard-include-string-len",
+        "-wis",
+        action="store_true",
+        help="Include string fields for wildcard aggregations.",
+    )
+    optional_arguments.add_argument(
+        "--cast-to-bigint",
+        "-ctb",
+        action="store_true",
+        help="Cast any int32 fields to int64 for large aggregations.",
+    )
+    optional_arguments.add_argument(
+        "--primary-keys",
+        "-pk",
+        help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+    optional_arguments.add_argument(
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
@@ -665,47 +749,10 @@ def _configure_custom_query_parser(custom_query_parser):
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
     )
-    optional_arguments.add_argument(
-        "--wildcard-include-string-len",
-        "-wis",
-        action="store_true",
-        help="Include string fields for wildcard aggregations.",
-    )
-    optional_arguments.add_argument(
-        "--cast-to-bigint",
-        "-ctb",
-        action="store_true",
-        help="Cast any int32 fields to int64 for large aggregations.",
-    )
-    optional_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
-        help="Comma separated list of primary key columns 'col_a,col_b'",
-    )
-
-    # Group for mutually exclusive optional arguments. Either must be supplied
-    optional_mutually_exclusive = optional_arguments.add_mutually_exclusive_group(
-        required=False
-    )
-    optional_mutually_exclusive.add_argument(
-        "--hash",
-        "-hash",
-        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
-    )
-    optional_mutually_exclusive.add_argument(
-        "--concat",
-        "-concat",
-        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
-    )
 
     # Group required arguments
-    required_arguments = custom_query_parser.add_argument_group("required arguments")
-    required_arguments.add_argument(
-        "--custom-query-type",
-        "-cqt",
-        required=True,
-        choices=["row", "column"],
-        help="Which type of custom query (row/column)",
+    required_arguments = custom_query_column_parser.add_argument_group(
+        "required arguments"
     )
     required_arguments.add_argument(
         "--source-query-file",
@@ -719,11 +766,11 @@ def _configure_custom_query_parser(custom_query_parser):
         required=True,
         help="File containing the target sql query",
     )
+
     _add_common_arguments(optional_arguments, required_arguments)
 
 
 def _add_common_arguments(optional_arguments, required_arguments):
-
     # Group all Required Arguments together
     required_arguments.add_argument(
         "--source-conn", "-sc", required=True, help="Source connection name"
