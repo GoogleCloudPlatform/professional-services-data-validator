@@ -835,7 +835,9 @@ def get_connection_config_from_args(args):
     config = {
         consts.SOURCE_TYPE: args.connect_type,
         consts.SECRET_MANAGER_TYPE: getattr(args, consts.SECRET_MANAGER_TYPE),
-        consts.SECRET_MANAGER_PROJECT_ID: getattr(args, consts.SECRET_MANAGER_PROJECT_ID),
+        consts.SECRET_MANAGER_PROJECT_ID: getattr(
+            args, consts.SECRET_MANAGER_PROJECT_ID
+        ),
     }
 
     if args.connect_type == "Raw":

@@ -7,6 +7,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+
+
 class SecretManagerBuilder:
     def build(self, client_type):
         """
@@ -44,5 +47,6 @@ class GCPSecretManager:
             # Return the decoded payload.
             payload = response.payload.data.decode("UTF-8")
             return payload
-        except:
+        except Exception as e:
+            logging.warning(f"{secret_id} : {e}")
             return secret_id
