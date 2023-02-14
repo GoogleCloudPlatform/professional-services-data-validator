@@ -21,6 +21,7 @@ import ast
 import toolz
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
+# import ibis.expr.types as ir
 from ibis import util
 from ibis.backends.postgres.client import PostgreSQLClient
 
@@ -97,8 +98,8 @@ def _get_type(self,typestr: str) -> dt.DataType:
     "interval[]": dt.Array(dt.interval),
     # NB: this isn"t correct, but we try not to fail
     "time with time zone": "time",
-    "numeric": dt.decimal,
-    "numeric[]": dt.Array(dt.decimal),
+    "numeric": dt.Decimal,
+    "numeric[]": dt.Array(dt.Decimal),
     "uuid": dt.uuid,
     "uuid[]": dt.Array(dt.uuid),
     "jsonb": dt.jsonb,
@@ -177,6 +178,7 @@ def _parse_numeric(
 
     ty = pg_array | decimal
     return ty.parse(text)
+
 
 PostgreSQLClient._get_schema_using_query = _get_schema_using_query
 PostgreSQLClient._get_type = _get_type
