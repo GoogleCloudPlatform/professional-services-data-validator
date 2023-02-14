@@ -109,12 +109,7 @@ ORDER BY attnum
 #     "geography": dt.geography,
 #     "geography[]": dt.Array(dt.geography),
 #     }
-#     _BRACKETS = "[]"
-#     is_array = typestr.endswith(_BRACKETS)
-#     if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
-#         return dt.Array(typ) if is_array else typ
-#     return _parse_numeric(typestr)
-
+_BRACKETS = "[]"
 _STRING_REGEX = (
     """('[^\n'\\\\]*(?:\\\\.[^\n'\\\\]*)*'|"[^\n"\\\\"]*(?:\\\\.[^\n"\\\\]*)*")"""
 )
@@ -166,7 +161,7 @@ def _parse_numeric(
     ty = pg_array | decimal
     return ty.parse(text)
 
-def _get_type(typestr: str) -> dt.DataType:
+def _get_type(self,typestr: str) -> dt.DataType:
     is_array = typestr.endswith(_BRACKETS)
     if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
         return dt.Array(typ) if is_array else typ
