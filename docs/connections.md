@@ -22,7 +22,7 @@ Secret manager flags are optional
 --secret-manager-project-id <SECRET_PROJECT_ID>
 
 ```
-data-validation connections add --connection-name CONN_NAME source_type --secret-manager-type <None|GCP> --secret-manager-project-id <SECRET_PROJECT_ID>
+data-validation connections add --connection-name CONN_NAME source-type --secret-manager-type <None|GCP> --secret-manager-project-id <SECRET_PROJECT_ID>
 ```
 
 ## Create a sample BigQuery connection:
@@ -60,11 +60,11 @@ The data validation tool supports the following connection types.
 * [DB2](#DB2)
 * [AlloyDB](#AlloyDB)
 
-As you see above, Teradata and BigQuery have different sets of custom arguments (for example project_id for BQ versus host for Teradata).
+As you see above, Teradata and BigQuery have different sets of custom arguments (for example project-id for BQ versus host for Teradata).
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
 
 ```
-data-validation connections add -c  CONN_NAME <connection type> -h
+data-validation connections add -c CONN_NAME <connection type> -h
 ```
 
 Below is the expected configuration for each type.
@@ -73,7 +73,7 @@ Below is the expected configuration for each type.
 ```
 {
     # Raw JSON config for a connection
-    "json": '{  "secret_manager_type": null, "secret_manager_project_id": null, "source_type": "BigQuery", "project_id": "pso-kokoro-resources", "google_service_account_key_path": null}'
+    "json": '{  "secret_manager_type": null, "secret_manager_project_id": null, "source-type": "BigQuery", "project-id": "pso-kokoro-resources", "google-service-account-key-path": null}'
 }
 ```
 
@@ -87,13 +87,13 @@ Below is the expected configuration for each type.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "BigQuery",
+    "source-type": "BigQuery",
 
     # BigQuery Specific Connection Config
-    "project_id": "my-project-name",
+    "project-id": "my-project-name",
 
     # (Optional) BigQuery JSON Config File for On-Prem usecases
-    "google_service_account_key_path": "/path/to/key.json"
+    "google-service-account-key-path": "/path/to/key.json"
 }
 ```
 
@@ -117,19 +117,19 @@ Below is the expected configuration for each type.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "Spanner",
+    "source-type": "Spanner",
 
     # GCP Project to use for Spanner
-    "project_id": "my-project-name",
+    "project-id": "my-project-name",
     
     # ID of Spanner instance to connect to
-    "instance_id": "my-instance-id",
+    "instance-id": "my-instance-id",
 
     # ID of Spanner database (schema) to connect to
-    "database_id": "my-database-id",
+    "database-id": "my-database-id",
                         
     # (Optional) Spanner JSON Config File for On-Prem usecases
-    "google_service_account_key_path": "/path/to/key.json"
+    "google-service-account-key-path": "/path/to/key.json"
 }
 ```
 
@@ -149,13 +149,14 @@ via `pip install teradatasql` if you have a license.
     
     
     # Configuration Required for All Data Sources
-    "source_type": "Teradata",
+    "source-type": "Teradata",
 
     # Connection Details
     "host": "127.0.0.1",
     "port":1025,
+    # (Optional)
     "logmech":"TD2",
-    "user_name":"my-user",
+    "user-name":"my-user",
     "password":"my-password"
 }
 ```
@@ -172,12 +173,12 @@ Then `pip install cx_Oracle`.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "Oracle",
+    "source-type": "Oracle",
 
     # Connection Details
     "host": "127.0.0.1",
     "port":1521,
-    "user_name":"my-user",
+    "user":"my-user",
     "password":"my-password",
     "database": "XE",
 
@@ -196,7 +197,7 @@ Then `pip install pyodbc`.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "MSSQL",
+    "source-type": "MSSQL",
 
     # Connection Details
     "host": "127.0.0.1",
@@ -218,7 +219,7 @@ Then `pip install pyodbc`.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "Postgres",
+    "source-type": "Postgres",
 
     # Connection Details
     "host": "127.0.0.1",
@@ -240,7 +241,7 @@ Please note AlloyDB supports same connection config as Postgres.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "Postgres",
+    "source-type": "Postgres",
 
     # Connection Details
     "host": "127.0.0.1",
@@ -261,7 +262,7 @@ Please note AlloyDB supports same connection config as Postgres.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "MySQL",
+    "source-type": "MySQL",
 
     # Connection Details
     "host": "127.0.0.1",
@@ -282,7 +283,7 @@ Please note AlloyDB supports same connection config as Postgres.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "Redshift",
+    "source-type": "Redshift",
 
     # Connection Details
     "host": "127.0.0.1",
@@ -297,16 +298,16 @@ Please note AlloyDB supports same connection config as Postgres.
 ```
 {
     # Configuration Required for All Data Sources
-    "source_type": "FileSystem",
+    "source-type": "FileSystem",
 
     # Table name to use as a reference for file data
-    "table_name": "my_table_name",
+    "table-name": "my-table-name",
     
     # The local, s3, or GCS file path to the data
-    "file_path": "gs://path/to/file",
+    "file-path": "gs://path/to/file",
     
     # The file type. Either 'csv' or 'json'
-    "file_type":"csv"
+    "file-type":"csv"
 }
 ```
 
@@ -320,13 +321,13 @@ Please note AlloyDB supports same connection config as Postgres.
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "Impala",
+    "source-type": "Impala",
 
     # Connection Details
     "host": "127.0.0.1",
     "port": 10000,
     "database": "default",
-    "auth_mechanism":"PLAIN"
+    "auth-mechanism":"PLAIN"
 }
 ```
 
@@ -350,13 +351,13 @@ Please note that for Group By validations, the following property must be set in
     "secret_manager_project_id": "secrets-project-id",
     
     # Hive is based off Impala connector
-    "source_type": "Impala",
+    "source-type": "Impala",
 
     # Connection Details
-    "host": "HIVE_IP_ADDRESS",
+    "host": "HIVE-IP-ADDRESS",
     "port": 10000,
     "database": "default",
-    "auth_mechanism":"PLAIN"
+    "auth-mechanism":"PLAIN"
 }
 ```
 Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
@@ -371,12 +372,12 @@ Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla
     "secret_manager_project_id": "secrets-project-id",
     
     # Configuration Required for All Data Sources
-    "source_type": "DB2",
+    "source-type": "DB2",
 
     # Connection Details
     "host": "localhost",
     "port": 50000,
-    "driver": "ibm_db_sa",
+    "driver": "ibm-db-sa",
     "user": "my-username",
     "password": "my-password",
     "database": "my-db",
