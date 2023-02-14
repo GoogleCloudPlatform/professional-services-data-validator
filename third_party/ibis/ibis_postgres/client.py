@@ -13,6 +13,12 @@
 # limitations under the License.
 
 # from ibis.backends.postgres.client import PostgreSQLClient
+
+from __future__ import annotations
+import parsy
+import re
+import ast
+import toolz
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from ibis import util
@@ -91,8 +97,8 @@ def _get_type(self,typestr: str) -> dt.DataType:
     "interval[]": dt.Array(dt.interval),
     # NB: this isn"t correct, but we try not to fail
     "time with time zone": "time",
-    "numeric": dt.float64,
-    "numeric[]": dt.Array(dt.float64),
+    "numeric": dt.decimal,
+    "numeric[]": dt.Array(dt.decimal),
     "uuid": dt.uuid,
     "uuid[]": dt.Array(dt.uuid),
     "jsonb": dt.jsonb,
@@ -102,10 +108,75 @@ def _get_type(self,typestr: str) -> dt.DataType:
     "geography": dt.geography,
     "geography[]": dt.Array(dt.geography),
     }
-    try:
-        return _type_mapping[typestr]
-    except KeyError:
-        return 
+    _BRACKETS = "[]"
+    is_array = typestr.endswith(_BRACKETS)
+    if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
+        return dt.Array(typ) if is_array else typ
+    return _parse_numeric(typestr)
+
+_STRING_REGEX = (
+    """('[^\n'\\\\]*(?:\\\\.[^\n'\\\\]*)*'|"[^\n"\\\\"]*(?:\\\\.[^\n"\\\\]*)*")"""
+)
+
+def spaceless(parser):
+    return SPACES.then(parser).skip(SPACES)
+
+def spaceless_string(*strings: str):
+    return spaceless(
+        parsy.alt(*(parsy.string(string, transform=str.lower) for string in strings))
+    )
+
+SPACES = parsy.regex(r'\s*', re.MULTILINE)
+RAW_NUMBER = parsy.decimal_digit.at_least(1).concat()
+SINGLE_DIGIT = parsy.decimal_digit
+PRECISION = SCALE = NUMBER = RAW_NUMBER.map(int)
+
+LPAREN = spaceless_string("(")
+RPAREN = spaceless_string(")")
+
+LBRACKET = spaceless_string("[")
+RBRACKET = spaceless_string("]")
+
+LANGLE = spaceless_string("<")
+RANGLE = spaceless_string(">")
+
+COMMA = spaceless_string(",")
+COLON = spaceless_string(":")
+SEMICOLON = spaceless_string(";")
+
+RAW_STRING = parsy.regex(_STRING_REGEX).map(ast.literal_eval)
+FIELD = parsy.regex("[a-zA-Z_][a-zA-Z_0-9]*")
+
+def _parse_numeric(
+    text: str, default_decimal_parameters: tuple[int | None, int | None] = (None, None)
+) -> dt.DataType:
+    @parsy.generate
+    def decimal():
+        yield spaceless_string("decimal", "numeric")
+        prec_scale = (
+            yield LPAREN.then(
+                parsy.seq(PRECISION.skip(COMMA), SCALE).combine(
+                    lambda prec, scale: (prec, scale)
+                )
+            )
+            .skip(RPAREN)
+            .optional()
+        ) or default_decimal_parameters
+        return dt.Decimal(*prec_scale)
+
+    @parsy.generate
+    def brackets():
+        yield spaceless(LBRACKET)
+        yield spaceless(RBRACKET)
+
+    @parsy.generate
+    def pg_array():
+        value_type = yield decimal
+        n = len((yield brackets.at_least(1)))
+        return toolz.nth(n, toolz.iterate(dt.Array, value_type))
+
+    ty = pg_array | decimal
+    return ty.parse(text)
 
 PostgreSQLClient._get_schema_using_query = _get_schema_using_query
 PostgreSQLClient._get_type = _get_type
