@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# from ibis.backends.postgres.client import PostgreSQLClient
-
 from __future__ import annotations
 import parsy
 import re
@@ -21,8 +19,6 @@ import ast
 import toolz
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
-
-# import ibis.expr.types as ir
 from ibis import util
 from ibis.backends.postgres.client import PostgreSQLClient
 
