@@ -51,7 +51,7 @@ dependencies = [
     "jellyfish==0.8.2",
     "tabulate==0.8.9",
     "Flask==2.0.2",
-    "parsy==2.0"
+    "parsy==2.0",
 ]
 
 extras_require = {
