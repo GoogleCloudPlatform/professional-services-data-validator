@@ -1002,7 +1002,7 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
     """
     if not arg_tables:
         return default_value
-    
+
     json_tables_list = _read_json_value(arg_tables)
     if json_tables_list:
         return json_tables_list

@@ -27,7 +27,7 @@ import random
 import nox
 
 # Python version used for linting.
-DEFAULT_PYTHON_VERSION = "3.9"
+DEFAULT_PYTHON_VERSION = "3.10"
 
 # Python versions used for testing.
 PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10"]
