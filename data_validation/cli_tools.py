@@ -980,14 +980,17 @@ def get_arg_list(arg_value, default_value=None):
     if not arg_value:
         return default_value
 
+    return _read_json_value(arg_value) or arg_value.split(",")
+
+
+def _read_json_value(arg_value: str) -> list:
+    """Returns a deserialized JSON value or None if an error occurs."""
     try:
         if isinstance(arg_value, list):
             arg_value = str(arg_value)
-        # arg_value = "hash_all"
-        arg_list = json.loads(arg_value)
+        return json.loads(arg_value)
     except json.decoder.JSONDecodeError:
-        arg_list = arg_value.split(",")
-    return arg_list
+        return None
 
 
 def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
@@ -999,6 +1002,10 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
     """
     if not arg_tables:
         return default_value
+
+    json_tables_list = _read_json_value(arg_tables)
+    if json_tables_list:
+        return json_tables_list
 
     tables_list = []
     tables_mapping = list(csv.reader([arg_tables]))[0]
