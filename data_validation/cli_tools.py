@@ -979,8 +979,9 @@ def get_arg_list(arg_value, default_value=None):
     """
     if not arg_value:
         return default_value
-    
+
     return _read_json_value(arg_value) or arg_value.split(",")
+
 
 def _read_json_value(arg_value: str) -> list:
     """Returns a deserialized JSON value or None if an error occurs."""
@@ -990,6 +991,7 @@ def _read_json_value(arg_value: str) -> list:
         return json.loads(arg_value)
     except json.decoder.JSONDecodeError:
         return None
+
 
 def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
     """Returns dictionary of tables. Backwards compatible for JSON input.
