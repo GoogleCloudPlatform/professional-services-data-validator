@@ -125,10 +125,10 @@ def get_calculated_config(args, config_manager):
     fields = []
     if args.hash:
         col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
-        fields = config_manager._build_dependent_aliases("hash", col_list)
+        fields = config_manager.build_dependent_aliases("hash", col_list)
     elif args.concat:
         col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
-        fields = config_manager._build_dependent_aliases("concat", col_list)
+        fields = config_manager.build_dependent_aliases("concat", col_list)
 
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
@@ -141,7 +141,7 @@ def get_calculated_config(args, config_manager):
                 field["calc_type"],
                 field["name"],
                 field["depth"],
-                None,
+                custom_params=field.get("calc_params"),
             )
         )
     if args.hash:
