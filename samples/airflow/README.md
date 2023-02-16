@@ -7,7 +7,41 @@ YAML config file.
 
 Parameters from YAML format are slightly different from the JSON config,
 there is an example for Cloud Run [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/run#test-cloud-run-endpoint) 
-that shows the expected JSON config in the `'data'` variable. 
+that shows the expected JSON config in the `'data'` variable.
 
-[This](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/config_manager.py#L444) 
+For example, check the following YAML config part.
+
+```yaml
+result_handler: {}
+source: my_bq_conn
+target: my_bq_conn
+validations:
+- aggregates:
+  - field_alias: count
+    source_column: null
+    target_column: null
+    type: count
+...
+```
+
+This YAML is equivalent to the JSON part below, where the source param is written as `source_conn`.
+
+```json
+{
+    "source_conn": BQ_CONN,
+    "target_conn": BQ_CONN,
+    ...
+    "aggregates": [
+        {
+            "field_alias": "count",
+            "source_column": None,
+            "target_column": None,
+            "type": "count",
+        }
+    ],
+    ...
+}
+```
+
+For more implementation details, [this](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/config_manager.py#L444) 
 is where the raw JSON config is generated in the DVT code.

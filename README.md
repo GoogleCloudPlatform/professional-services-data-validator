@@ -492,7 +492,7 @@ for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()`, and `MAX()`
 are supported.
 
 Here is a sample aggregate config:
-```
+```yaml
 validations:
 - aggregates:
     - field_alias: count
@@ -585,7 +585,7 @@ in the resulting query. For example, with the following YAML config...
 
 is equivalent to the following SQL query...
 
-```
+```sql
 SELECT
   CONCAT(rtrim_col_a, rtrim_col_b) AS concat_col_a_col_b
 FROM (
