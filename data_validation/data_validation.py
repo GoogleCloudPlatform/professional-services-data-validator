@@ -255,8 +255,9 @@ class DataValidation(object):
             }
             validation_builder.add_filter(filter_field)
 
+    @classmethod
     def _get_pandas_schema(
-        self,
+        cls,
         source_df: pandas.core.frame.DataFrame,
         target_df: pandas.core.frame.DataFrame,
         join_on_schema: dict,

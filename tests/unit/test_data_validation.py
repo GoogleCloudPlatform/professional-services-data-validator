@@ -508,8 +508,9 @@ def test_data_validation_client(module_under_test, fs):
 
 def test_get_pandas_schema(module_under_test):
     """Test extracting pandas schema from dataframes for Ibis Pandas."""
-    client = module_under_test.DataValidation(SAMPLE_CONFIG)
-    pandas_schema = client._get_pandas_schema(SOURCE_DF, SOURCE_DF, JOIN_ON_DATE_FIELDS)
+    pandas_schema = module_under_test.DataValidation._get_pandas_schema(
+        SOURCE_DF, SOURCE_DF, JOIN_ON_DATE_FIELDS
+    )
 
     assert (pandas_schema.index == NON_OBJECT_FIELDS).all()
 
