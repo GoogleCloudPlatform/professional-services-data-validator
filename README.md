@@ -340,6 +340,9 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         File containing the source sql commands
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql commands
+  --comparison-fields or -comp-fields FIELDS
+                        Comma separated list of columns to compare. Can either be a physical column or an alias
+                        See: *Calculated Fields* section for details
   --hash '*'            '*' to hash all columns.
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns
                         (use if a common hash function is not available between databases)

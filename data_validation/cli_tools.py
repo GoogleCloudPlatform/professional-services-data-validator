@@ -618,17 +618,6 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         type=threshold_float,
         help="Float max threshold for percent difference",
     )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
-    )
 
     # Group required arguments
     required_arguments = custom_query_row_parser.add_argument_group(
@@ -666,6 +655,14 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         "--concat",
         "-concat",
         help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
+    )
+    required_mutually_exclusive.add_argument(
+        "--comparison-fields",
+        "-comp-fields",
+        help=(
+            "Individual columns to compare. If comparing a calculated field use "
+            "the column alias."
+        ),
     )
     _add_common_arguments(optional_arguments, required_arguments)
 
@@ -1167,13 +1164,14 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     # Get format: text, csv, json, table. Default is table
     format = args.format if args.format else "table"
 
-    # Get random row arguments. Not supported in case of schema validation and
-    # generate-table-partitions
+    # Get random row arguments. Not supported in case of schema validation,
+    # custom-query validation and generate-table-partitions
     use_random_rows = None
     random_row_batch_size = None
     if (
-        config_type != consts.SCHEMA_VALIDATION
-        and args.command != "generate-table-partitions"
+        args.command != "generate-table-partitions"
+        and config_type != consts.SCHEMA_VALIDATION
+        and config_type != consts.CUSTOM_QUERY
     ):
         use_random_rows = args.use_random_row
         random_row_batch_size = args.random_row_batch_size
