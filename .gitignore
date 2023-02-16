@@ -90,6 +90,8 @@ partitions_dir
 source_table_data.json
 target_table_data.json
 source-sql.sql
+source_query.sql
+target_query.sql
 
 # Commit msg
 commits.txt

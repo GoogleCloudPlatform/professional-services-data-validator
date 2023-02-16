@@ -27,13 +27,13 @@ Above command creates a YAML file named citibike.yaml that can be used to run va
  
 #### Run validations from a configuration file
 ````shell script
-data-validation run-config -c citibike.yaml
+data-validation configs run -c citibike.yaml
 ````
 Above command executes validations stored in a config file named citibike.yaml. 
 
 #### Generate partitions and save as multiple configuration files
 ````shell script
-data-validation generate-table-partitions -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --primary-keys station_id --hash '*' --filters 'station_id>3000' -cdir partitions_dir --partition-key station_id --partition-num 200
+data-validation generate-table-partitions -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_trees.tree_census_2015 --primary-keys tree_id --hash '*' --filters 'tree_id>3000' -cdir partitions_dir --partition-key tree_id --partition-num 200
 ````
 Above command creates multiple partitions based on `--partition-key`. Number of generated configuration files is decided by `--partition-num`
  
@@ -296,22 +296,22 @@ validations:
 
 #### Run a custom query column validation
 ````shell script
-data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn
+data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn
 ````
 
 #### Run a custom query validation with sum aggregation 
 ````shell script
-data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --sum num_bikes_available
+data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --sum num_bikes_available
 ````
 
 #### Run a custom query validation with max aggregation 
 ````shell script
-data-validation validate custom-query --custom-query-type column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations --max num_bikes_available
+data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --max num_bikes_available
 ````
 
 #### Run a custom query row validation
 ````shell script
-data-validation validate custom-query --custom-query-type row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_stations  --hash \'*\' --primary-keys station_id
+data-validation validate custom-query row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --hash '*' --primary-keys station_id
 ````
 
 Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively. The primary key should be included
