@@ -1,7 +1,7 @@
 # Data Validation Tool
 
 The Data Validation Tool is an open sourced Python CLI tool based on the
-[Ibis framework](https://ibis-project.org/docs/3.0.2/)
+[Ibis framework](https://ibis-project.org/docs)
 that compares heterogeneous data source tables with multi-leveled validation
 functions.
 
