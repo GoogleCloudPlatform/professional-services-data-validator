@@ -723,21 +723,18 @@ class ConfigManager(object):
         return "%Y-%m-%d"
 
     def _apply_base_cast_overrides(
-        self, column: str,
+        self,
+        column: str,
         col_config: dict,
         source_table: "ibis.expr.types.TableExpr",
-        target_table: "ibis.expr.types.TableExpr"
+        target_table: "ibis.expr.types.TableExpr",
     ) -> dict:
         """Mutates col_config to contain any overrides. Also returns col_config for convenience."""
         if col_config["calc_type"] != "cast":
             return col_config
 
-        source_table_schema = {
-            k: v for k, v in source_table.schema().items()
-        }
-        target_table_schema = {
-            k: v for k, v in target_table.schema().items()
-        }
+        source_table_schema = {k: v for k, v in source_table.schema().items()}
+        target_table_schema = {k: v for k, v in target_table.schema().items()}
 
         if isinstance(
             source_table_schema[column], (dt.Date, dt.Timestamp)
@@ -830,7 +827,9 @@ class ConfigManager(object):
                     if i == 0:
                         # If we are casting the base column (i == 0) then apply any
                         # datatype specific overrides.
-                        col = self._apply_base_cast_overrides(column, col, source_table, target_table)
+                        col = self._apply_base_cast_overrides(
+                            column, col, source_table, target_table
+                        )
 
                     name = col["name"]
                     column_aliases[name] = i
