@@ -309,6 +309,11 @@ data-validation validate custom-query column --source-query-file source_query.sq
 data-validation validate custom-query column --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --max num_bikes_available
 ````
 
+#### Run a custom query column validation with inline source/target query
+````shell script
+data-validation validate custom-query column -sc my_bq_conn -tc my_bq_conn --source-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' --target-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' --count bikeid,gender
+````
+
 #### Run a custom query row validation
 ````shell script
 data-validation validate custom-query row --source-query-file source_query.sql --target-query-file target_query.sql -sc my_bq_conn -tc my_bq_conn --hash '*' --primary-keys station_id

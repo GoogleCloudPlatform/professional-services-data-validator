@@ -624,22 +624,40 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         "required arguments"
     )
     required_arguments.add_argument(
-        "--source-query-file",
-        "-sqf",
-        required=True,
-        help="File containing the source sql query",
-    )
-    required_arguments.add_argument(
-        "--target-query-file",
-        "-tqf",
-        required=True,
-        help="File containing the target sql query",
-    )
-    required_arguments.add_argument(
         "--primary-keys",
         "-pk",
         required=True,
         help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+
+    # Group for mutually exclusive source query arguments. Either must be supplied
+    source_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    source_mutually_exclusive.add_argument(
+        "--source-query-file",
+        "-sqf",
+        help="File containing the source sql query",
+    )
+    source_mutually_exclusive.add_argument(
+        "--source-query",
+        "-sq",
+        help="Source sql query",
+    )
+
+    # Group for mutually exclusive target query arguments. Either must be supplied
+    target_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query-file",
+        "-tqf",
+        help="File containing the target sql query",
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query",
+        "-tq",
+        help="Target sql query",
     )
 
     # Group for mutually exclusive required arguments. Either must be supplied
@@ -741,17 +759,35 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     required_arguments = custom_query_column_parser.add_argument_group(
         "required arguments"
     )
-    required_arguments.add_argument(
+
+    # Group for mutually exclusive source query arguments. Either must be supplied
+    source_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    source_mutually_exclusive.add_argument(
         "--source-query-file",
         "-sqf",
-        required=True,
         help="File containing the source sql query",
     )
-    required_arguments.add_argument(
+    source_mutually_exclusive.add_argument(
+        "--source-query",
+        "-sq",
+        help="Source sql query",
+    )
+
+    # Group for mutually exclusive target query arguments. Either must be supplied
+    target_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    target_mutually_exclusive.add_argument(
         "--target-query-file",
         "-tqf",
-        required=True,
         help="File containing the target sql query",
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query",
+        "-tq",
+        help="Target sql query",
     )
 
     _add_common_arguments(optional_arguments, required_arguments)
