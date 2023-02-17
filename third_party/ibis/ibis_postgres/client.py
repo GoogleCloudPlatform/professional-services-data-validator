@@ -105,7 +105,17 @@ def _parse_numeric(
 
 def _get_type(self, typestr: str) -> dt.DataType:
     is_array = typestr.endswith(_BRACKETS)
-    typ = _type_mapping.get(typestr.replace(_BRACKETS, ""))
+    # typ = _type_mapping.get(typestr.replace(_BRACKETS, ""))
+    # handle bracket length
+    typestr_wob = typestr.replace(_BRACKETS, "")
+    if "(" in typestr_wob:
+        typestr_wo_length = (
+            typestr_wob[: typestr_wob.index("(")]
+            + typestr_wob[typestr_wob.index(")") + 1 :]
+        )
+    else:
+        typestr_wo_length = typestr_wob
+    typ = _type_mapping.get(typestr_wo_length)
     if typ is not None:
         return dt.Array(typ) if is_array else typ
     return _parse_numeric(typestr)
