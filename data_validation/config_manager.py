@@ -715,9 +715,16 @@ class ConfigManager(object):
     def _strftime_format(
         self, column_type: Union[dt.Date, dt.Timestamp], client
     ) -> str:
+        def is_oracle_client(client):
+            # When no Oracle client installed clients.OracleClient is not a class
+            try:
+                return isinstance(client, clients.OracleClient)
+            except TypeError:
+                return False
+
         if isinstance(column_type, dt.Timestamp):
             return "%Y-%m-%d %H:%M:%S"
-        if isinstance(client, clients.OracleClient):
+        if is_oracle_client(client):
             # Oracle DATE is a DateTime
             return "%Y-%m-%d %H:%M:%S"
         return "%Y-%m-%d"
