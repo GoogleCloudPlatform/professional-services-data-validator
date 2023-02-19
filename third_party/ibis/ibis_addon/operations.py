@@ -31,8 +31,12 @@ import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 
 from data_validation.clients import _raise_missing_client_error
-from ibis_bigquery.compiler import reduction as bq_reduction, BigQueryExprTranslator
-from ibis.expr.operations import Arg, Cast, Comparison, Reduction, ValueOp
+from ibis_bigquery.compiler import (
+    reduction as bq_reduction,
+    BigQueryExprTranslator,
+    STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
+)
+from ibis.expr.operations import Arg, Cast, Comparison, Reduction, Strftime, ValueOp
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
@@ -121,6 +125,26 @@ def format_hashbytes_bigquery(translator, expr):
         return f"FARM_FINGERPRINT({compiled_arg})"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
+
+
+def strftime_bigquery(translator, expr):
+    """Timestamp formatting. Copied from bigquery_ibis in order to inject TIMESTAMP cast"""
+    arg, format_string = expr.op().args
+    arg_type = arg.type()
+    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
+    fmt_string = translator.translate(format_string)
+    arg_formatted = translator.translate(arg)
+    if isinstance(arg_type, dt.Timestamp):
+        return "FORMAT_{}({}, {}({}), {!r})".format(
+            strftime_format_func_name,
+            fmt_string,
+            strftime_format_func_name,
+            arg_formatted,
+            arg_type.timezone if arg_type.timezone is not None else "UTC",
+        )
+    return "FORMAT_{}({}, {})".format(
+        strftime_format_func_name, fmt_string, arg_formatted
+    )
 
 
 def format_hashbytes_teradata(translator, expr):
@@ -250,6 +274,7 @@ BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
+BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
