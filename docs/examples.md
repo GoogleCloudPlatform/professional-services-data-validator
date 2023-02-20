@@ -426,9 +426,14 @@ data-validation validate custom-query column \
   --max num_bikes_available
 ````
 
-#### Run a custom query column validation with inline source/target query
+#### Run a custom query column validation using inline source/target query
 ````shell script
-data-validation validate custom-query column -sc my_bq_conn -tc my_bq_conn --source-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' --target-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' --count bikeid,gender
+data-validation validate custom-query column \
+  -sc my_bq_conn \
+  -tc my_bq_conn \
+  --source-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' \
+  --target-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' \
+  --count bikeid,gender
 ````
 
 #### Run a custom query row validation
