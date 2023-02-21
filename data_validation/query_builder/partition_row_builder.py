@@ -70,4 +70,5 @@ class PartitionRowBuilder(object):
 
     def get_count_query(self) -> ibis.Expr:
         """Return an Ibis query object to get count of Primary Key column"""
-        return self.query[self.partition_key].count()
+    return self.query[self.partition_key]   
+    return self.query[self.partition_key].count()
