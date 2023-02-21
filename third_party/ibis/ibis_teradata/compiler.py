@@ -1,6 +1,12 @@
 import datetime
 from functools import partial
 from io import StringIO
+import itertools
+import locale
+import platform
+import re
+import string
+import warnings
 
 import numpy as np
 import toolz
@@ -20,7 +26,6 @@ from ibis.common.exceptions import UnsupportedOperationError
 from .datatypes import ibis_type_to_teradata_type
 from ibis.backends.base_sql import fixed_arity, literal, reduction, unary
 from ibis.backends.base_sql.compiler import (
-    BaseExprTranslator,
     BaseSelect,
     BaseTableSetFormatter,
 )
@@ -483,6 +488,134 @@ def _arbitrary(translator, expr):
     return "ANY_VALUE({})".format(translator.translate(arg))
 
 
+# Teradata rules copied from ibis PostgreSQL compiler
+_strftime_to_teradata_rules = {
+    '%a': 'Dy',
+    '%A': 'Day',
+    '%w': 'D',  # 1-based day of week, see below for how we make this 0-based
+    '%d': 'DD',  # day of month
+    '%-d': 'FMDD',  # - is no leading zero for Python same for FM in Teradata
+    '%b': 'Mon',  # Sep
+    '%B': 'Month',  # September
+    '%m': 'MM',  # 01
+    '%-m': 'FMMM',  # 1
+    '%y': 'YY',  # 15
+    '%Y': 'YYYY',  # 2015
+    '%H': 'HH24',  # 09
+    '%-H': 'FMHH24',  # 9
+    '%I': 'HH12',  # 09
+    '%-I': 'FMHH12',  # 9
+    '%p': 'AM',  # AM or PM
+    '%M': 'MI',  # zero padded minute
+    '%-M': 'FMMI',  # Minute
+    '%S': 'SS',  # zero padded second
+    '%-S': 'FMSS',  # Second
+    '%f': 'FF6',  # zero padded microsecond
+    '%z': 'TZR',  # utf offset
+    '%Z': 'TZR',  # uppercase timezone name
+    '%j': 'DDD',  # zero padded day of year
+    '%-j': 'FMDDD',  # day of year
+    '%U': 'WW',  # 1-based week of year
+    # 'W': ?,  # meh
+}
+
+try:
+    _strftime_to_teradata_rules.update(
+        {
+            '%c': locale.nl_langinfo(locale.D_T_FMT),  # locale date and time
+            '%x': locale.nl_langinfo(locale.D_FMT),  # locale date
+            '%X': locale.nl_langinfo(locale.T_FMT),  # locale time
+        }
+    )
+except AttributeError:
+    warnings.warn(
+        'locale specific date formats (%%c, %%x, %%X) are not yet implemented '
+        'for %s' % platform.system()
+    )
+
+# Translate strftime spec into mostly equivalent Teradata spec
+_scanner = re.Scanner(
+    # double quotes need to be escaped
+    [('"', lambda scanner, token: r'\"')]
+    + [
+        (
+            '|'.join(
+                map(
+                    '(?:{})'.format,
+                    itertools.chain(
+                        _strftime_to_teradata_rules.keys(),
+                        [
+                            # "%e" is in the C standard and Python actually
+                            # generates this if your spec contains "%c" but we
+                            # don't officially support it as a specifier so we
+                            # need to special case it in the scanner
+                            '%e',
+                            r'\s+',
+                            r'[{}]'.format(re.escape(string.punctuation)),
+                            r'[^{}\s]+'.format(re.escape(string.punctuation)),
+                        ],
+                    ),
+                )
+            ),
+            lambda scanner, token: token,
+        )
+    ]
+)
+
+_lexicon_values = frozenset(_strftime_to_teradata_rules.values())
+
+_strftime_blacklist = frozenset(['%w', '%U', '%c', '%x', '%X', '%e'])
+
+
+def _reduce_tokens(tokens):
+    """
+    Reduce strftime for,mat elements to an equivalent string of Teradata elements.
+    Ideally this would be a full reduction like for Oracle and PostgreSQL but the "arg" parameter received
+    by _strftime is not equivalent and ends up as a string rather than a column name.
+    I've followed pattern set by other functions in this module and build a string function spec rather than
+    using sa.func.to_char.
+    """
+    # TODO It would be nice to bring this into line with Oracle/PostgreSQL strftime function processing.
+
+    # current list of tokens
+    curtokens = []
+
+    non_special_tokens = (
+        frozenset(_strftime_to_teradata_rules) - _strftime_blacklist
+    )
+
+    # TODO: how much of a hack is this?
+    for token in tokens:
+        # we are a non-special token %A, %d, etc.
+        if token in non_special_tokens:
+            curtokens.append(_strftime_to_teradata_rules[token])
+
+        # we have a string like DD, to escape this we
+        # surround it with double quotes
+        elif token in _lexicon_values:
+            curtokens.append('"{}"'.format(token))
+
+        # we have a token that needs special treatment
+        elif token in _strftime_blacklist:
+            raise UnsupportedOperationError('Not right now')
+
+        # uninteresting text
+        else:
+            curtokens.append(token)
+    return ''.join(curtokens)
+
+
+def _strftime(translator, expr):
+    arg, format_string = expr.op().args
+    fmt_string = translator.translate(format_string)
+    arg_formatted = translator.translate(arg)
+    tokens, _ = _scanner.scan(fmt_string)
+    translated_format = _reduce_tokens(tokens)
+    return "TO_CHAR({}, {})".format(
+        arg_formatted, translated_format
+    )
+
+
 _date_units = {
     "Y": "YEAR",
     "Q": "QUARTER",
@@ -537,13 +670,6 @@ def _timestamp_op(func, units):
     return _formatter
 
 
-STRFTIME_FORMAT_FUNCTIONS = {
-    dt.Date: "DATE",
-    dt.Time: "TIME",
-    dt.Timestamp: "TIMESTAMP",
-}
-
-
 _operation_registry.update(
     {
         ops.ExtractYear: _extract_field("year"),
@@ -559,6 +685,7 @@ _operation_registry.update(
         ops.StringJoin: _string_join,
         ops.StringAscii: _string_ascii,
         ops.StringFind: _string_find,
+        ops.Strftime: _strftime,
         ops.StrRight: _string_right,
         ops.Repeat: fixed_arity("REPEAT", 2),
         ops.RegexSearch: _regex_search,
@@ -626,25 +753,6 @@ def teradata_day_of_week_name(e):
 @compiles(ops.Divide)
 def teradata_compiles_divide(t, e):
     return "IEEE_DIVIDE({}, {})".format(*map(t.translate, e.op().args))
-
-
-@compiles(ops.Strftime)
-def compiles_strftime(translator, expr):
-    arg, format_string = expr.op().args
-    arg_type = arg.type()
-    strftime_format_func_name = STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
-    fmt_string = translator.translate(format_string)
-    arg_formatted = translator.translate(arg)
-    if isinstance(arg_type, dt.Timestamp):
-        return "FORMAT_{}({}, {}, {!r})".format(
-            strftime_format_func_name,
-            fmt_string,
-            arg_formatted,
-            arg_type.timezone if arg_type.timezone is not None else "UTC",
-        )
-    return "FORMAT_{}({}, {})".format(
-        strftime_format_func_name, fmt_string, arg_formatted
-    )
 
 
 @compiles(ops.StringToTimestamp)
