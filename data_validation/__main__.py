@@ -19,6 +19,7 @@ import sys
 
 from yaml import Dumper, dump
 from argparse import Namespace
+from typing import List
 from data_validation import (
     cli_tools,
     clients,
@@ -125,10 +126,10 @@ def get_calculated_config(args, config_manager):
     fields = []
     if args.hash:
         col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
-        fields = config_manager._build_dependent_aliases("hash", col_list)
+        fields = config_manager.build_dependent_aliases("hash", col_list)
     elif args.concat:
         col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
-        fields = config_manager._build_dependent_aliases("concat", col_list)
+        fields = config_manager.build_dependent_aliases("concat", col_list)
 
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
@@ -141,7 +142,7 @@ def get_calculated_config(args, config_manager):
                 field["calc_type"],
                 field["name"],
                 field["depth"],
-                None,
+                custom_params=field.get("calc_params"),
             )
         )
     if args.hash:
@@ -159,13 +160,24 @@ def get_calculated_config(args, config_manager):
     return calculated_configs
 
 
-def build_config_from_args(args, config_manager):
-    """Return config manager object ready to execute.
+def build_config_from_args(args: Namespace, config_manager: ConfigManager):
+    """Append build configs to ConfigManager object.
 
     Args:
+        args (Namespace): User specified Arguments
         config_manager (ConfigManager): Validation config manager instance.
     """
+    # Append SCHEMA_VALIDATION configs
+    if config_manager.validation_type == consts.SCHEMA_VALIDATION:
+        if args.exclusion_columns is not None:
+            exclusion_columns = cli_tools.get_arg_list(args.exclusion_columns)
+            config_manager.append_exclusion_columns(
+                [col.casefold() for col in exclusion_columns]
+            )
+        if args.allow_list is not None:
+            config_manager.append_allow_list(args.allow_list)
 
+    # Append CUSTOM_QUERY configs
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_custom_query_type(args.custom_query_type)
 
@@ -175,16 +187,34 @@ def build_config_from_args(args, config_manager):
         target_query_str = config_manager.get_query_from_file(args.target_query_file)
         config_manager.append_target_query(target_query_str)
 
+        # For custom-query column command
         if args.custom_query_type == consts.COLUMN_VALIDATION.lower():
             config_manager.append_aggregates(get_aggregate_config(args, config_manager))
 
-        elif not args.primary_keys:
-            raise ValueError(
-                "Expected valid primary keys for custom query row validation, got None."
+        # For custom-query row command
+        if args.custom_query_type == consts.ROW_VALIDATION.lower():
+
+            # Append Comparison fields
+            if args.comparison_fields is not None:
+                comparison_fields = cli_tools.get_arg_list(
+                    args.comparison_fields, default_value=[]
+                )
+                config_manager.append_comparison_fields(
+                    config_manager.build_config_comparison_fields(comparison_fields)
+                )
+
+            # Append calculated fields: --hash/--concat
+            config_manager.append_calculated_fields(
+                get_calculated_config(args, config_manager)
             )
 
-    config_manager.append_calculated_fields(get_calculated_config(args, config_manager))
+            # Append primary_keys
+            primary_keys = cli_tools.get_arg_list(args.primary_keys)
+            config_manager.append_primary_keys(
+                config_manager.build_column_configs(primary_keys)
+            )
 
+    # Append COLUMN_VALIDATION configs
     if config_manager.validation_type == consts.COLUMN_VALIDATION:
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if args.grouped_columns is not None:
@@ -192,7 +222,16 @@ def build_config_from_args(args, config_manager):
             config_manager.append_query_groups(
                 config_manager.build_column_configs(grouped_columns)
             )
-    elif config_manager.validation_type == consts.ROW_VALIDATION:
+
+    # Append ROW_VALIDATION configs
+    if config_manager.validation_type == consts.ROW_VALIDATION:
+
+        # Append calculated fields: --hash/--concat
+        config_manager.append_calculated_fields(
+            get_calculated_config(args, config_manager)
+        )
+
+        # Append Comparison fields
         if args.comparison_fields is not None:
             comparison_fields = cli_tools.get_arg_list(
                 args.comparison_fields, default_value=[]
@@ -201,7 +240,7 @@ def build_config_from_args(args, config_manager):
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
 
-    if args.primary_keys is not None:
+        # Append primary_keys
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
         config_manager.append_primary_keys(
             config_manager.build_column_configs(primary_keys)
@@ -210,106 +249,23 @@ def build_config_from_args(args, config_manager):
     return config_manager
 
 
-def build_config_managers_from_args(args: Namespace, validate_cmd: str = None):
+def build_config_managers_from_args(
+    args: Namespace, validate_cmd: str = None
+) -> List[ConfigManager]:
     """Return a list of config managers ready to execute."""
     configs = []
 
-    # Since `generate-table-partitions` defaults to `validate_cmd=row`,
-    # `validate_cmd` is passed along while calling this method
-    if validate_cmd is None:
-        validate_cmd = args.validate_cmd.capitalize()
+    # Get pre build configs to build ConfigManager objects
+    pre_build_configs_list = cli_tools.get_pre_build_configs(args, validate_cmd)
 
-    if validate_cmd == "Schema":
-        config_type = consts.SCHEMA_VALIDATION
-    elif validate_cmd == "Column":
-        config_type = consts.COLUMN_VALIDATION
-    elif validate_cmd == "Row":
-        config_type = consts.ROW_VALIDATION
-    elif validate_cmd == "Custom-query":
-        config_type = consts.CUSTOM_QUERY
-    else:
-        raise ValueError(f"Unknown Validation Type: {validate_cmd}")
+    # Build a list of ConfigManager objects
+    for pre_build_configs in pre_build_configs_list:
+        config_manager = ConfigManager.build_config_manager(**pre_build_configs)
 
-    result_handler_config = None
-    if args.bq_result_handler:
-        result_handler_config = cli_tools.get_result_handler(
-            args.bq_result_handler, args.service_account
-        )
-    elif args.result_handler_config:
-        result_handler_config = cli_tools.get_result_handler(
-            args.result_handler_config, args.service_account
-        )
+        # Append post build configs to ConfigManager object
+        config_manager = build_config_from_args(args, config_manager)
 
-    # Schema validation will not accept filters, labels, or threshold as flags
-    filter_config, labels, threshold = [], [], 0.0
-    if config_type != consts.SCHEMA_VALIDATION:
-        if args.filters:
-            filter_config = cli_tools.get_filters(args.filters)
-        if args.threshold:
-            threshold = args.threshold
-    labels = cli_tools.get_labels(args.labels)
-
-    mgr = state_manager.StateManager()
-    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
-    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
-
-    format = args.format if args.format else "table"
-
-    use_random_rows = (
-        None if config_type == consts.SCHEMA_VALIDATION else args.use_random_row
-    )
-    random_row_batch_size = (
-        None if config_type == consts.SCHEMA_VALIDATION else args.random_row_batch_size
-    )
-
-    is_filesystem = source_client._source_type == "FileSystem"
-
-    if config_type == consts.CUSTOM_QUERY and args.tables_list is not None:
-        args.tables_list = None
-        logging.warning(
-            "tables-list/tbls flag is not supported for custom-query validations, supplied tables list will be ignored."
-        )
-    tables_list = cli_tools.get_tables_list(
-        args.tables_list, default_value=[{}], is_filesystem=is_filesystem
-    )
-
-    filter_status = None
-    if args.filter_status is not None:
-        arg_list = cli_tools.get_arg_list(args.filter_status)
-        if all(arg in consts.VALIDATION_STATUSES for arg in arg_list):
-            filter_status = arg_list
-        else:
-            raise ValueError("An unsupported status was provided")
-
-    for table_obj in tables_list:
-        config_manager = ConfigManager.build_config_manager(
-            config_type,
-            args.source_conn,
-            args.target_conn,
-            table_obj,
-            labels,
-            threshold,
-            format,
-            use_random_rows=use_random_rows,
-            random_row_batch_size=random_row_batch_size,
-            source_client=source_client,
-            target_client=target_client,
-            result_handler_config=result_handler_config,
-            filter_config=filter_config,
-            filter_status=filter_status,
-            verbose=args.verbose,
-        )
-
-        if config_type != consts.SCHEMA_VALIDATION:
-            config_manager = build_config_from_args(args, config_manager)
-        else:
-            if args.exclusion_columns is not None:
-                exclusion_columns = cli_tools.get_arg_list(args.exclusion_columns)
-                config_manager.append_exclusion_columns(
-                    [col.casefold() for col in exclusion_columns]
-                )
-            if args.allow_list is not None:
-                config_manager.append_allow_list(args.allow_list)
+        # Append ConfigManager object to configs list
         configs.append(config_manager)
 
     return configs
@@ -549,13 +505,6 @@ def run_connections(args):
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 
 
-def run_config(args):
-    """Run commands related to validation config YAMLs (LEGACY - superceded by run_validation_configs)."""
-    config_file_path = _get_arg_config_file(args)
-    config_managers = build_config_managers_from_yaml(args, config_file_path)
-    run_validations(args, config_managers)
-
-
 def run_validation_configs(args):
     """Run commands related to validation config YAMLs."""
     if args.validation_config_cmd == "run":
@@ -588,8 +537,6 @@ def main():
     )
     if args.command == "connections":
         run_connections(args)
-    elif args.command == "run-config":
-        run_config(args)
     elif args.command == "configs":
         run_validation_configs(args)
     elif args.command == "find-tables":

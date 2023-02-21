@@ -18,6 +18,8 @@ import pytest
 import random
 from datetime import datetime, timedelta
 
+import ibis.expr.datatypes as dt
+
 from data_validation import consts
 
 
@@ -425,7 +427,7 @@ SOURCE_QUERY_DATA = [
     }
 ]
 SOURCE_DF = pandas.DataFrame(SOURCE_QUERY_DATA)
-JOIN_ON_FIELDS = ["date"]
+JOIN_ON_DATE_FIELDS = {"date": dt.Date()}
 NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
 
 RANDOM_STRINGS = ["a", "b", "c", "d"]
@@ -507,7 +509,7 @@ def test_data_validation_client(module_under_test, fs):
 def test_get_pandas_schema(module_under_test):
     """Test extracting pandas schema from dataframes for Ibis Pandas."""
     pandas_schema = module_under_test.DataValidation._get_pandas_schema(
-        SOURCE_DF, SOURCE_DF, JOIN_ON_FIELDS
+        SOURCE_DF, SOURCE_DF, JOIN_ON_DATE_FIELDS
     )
 
     assert (pandas_schema.index == NON_OBJECT_FIELDS).all()

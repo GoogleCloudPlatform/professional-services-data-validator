@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "2.8.0"
+version = "2.9.0"
 release_status = "Development Status :: 3 - Alpha"
 
 with open("README.md", "r") as fh:
@@ -51,6 +51,7 @@ dependencies = [
     "jellyfish==0.8.2",
     "tabulate==0.8.9",
     "Flask==2.0.2",
+    "parsy==2.0",
     "google-cloud-secret-manager<=2.15.0",
 ]
 

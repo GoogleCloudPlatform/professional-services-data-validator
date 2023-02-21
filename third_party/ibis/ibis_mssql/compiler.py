@@ -136,6 +136,28 @@ def _string_like1(t, expr):
     return sa.case([(result, 1)], else_=0,)
 
 
+def _strftime(t, expr):
+    """Use MS SQL CONVERT() in place of STRFTIME().
+
+    This is pretty restrictive due to the limited styles offered by SQL Server,
+    we've just covered off the generic formats used when casting date based columns
+    to string in order to complete row data comparison."""
+    arg, pattern = map(t.translate, expr.op().args)
+    supported_convert_styles = {
+        "%Y-%m-%d": 23, # ISO8601
+        "%Y-%m-%d %H:%M:%S": 20, # ODBC canonical
+        "%Y-%m-%d %H:%M:%S.%f": 21, # ODBC canonical (with milliseconds)
+    }
+    try:
+        convert_style = supported_convert_styles[pattern.value]
+    except KeyError:
+        raise NotImplementedError(
+            f'strftime format {pattern.value} not supported for SQL Server.'
+        )
+    result = sa.func.convert(sa.text('VARCHAR(32)'), arg, convert_style)
+    return result
+
+
 def _floor_divide(t, expr):
     left, right = map(t.translate, expr.op().args)
     return sa.func.floor(left / right)
@@ -400,6 +422,7 @@ _operation_registry.update(
         ops.ExtractMinute: _extract('minute'),
         ops.ExtractSecond: _extract('second'),
         ops.ExtractMillisecond: _extract('millisecond'),
+        ops.Strftime: _strftime,
         # newly added
         ops.Lag: _lag,
         ops.Lead: _lead,

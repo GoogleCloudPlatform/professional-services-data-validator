@@ -285,6 +285,17 @@ def test_threshold_float_err(test_input):
             'src.schema."src.table"',
             [{"schema_name": "src.schema", "table_name": "src.table"}],
         ),
+        (
+            '[{"schema_name": "src", "table_name": "table", "target_schema_name": "trg", "target_table_name": "trg_table"}]',
+            [
+                {
+                    "schema_name": "src",
+                    "table_name": "table",
+                    "target_schema_name": "trg",
+                    "target_table_name": "trg_table",
+                }
+            ],
+        ),
     ],
 )
 def test_get_tables_list(test_input, expected):

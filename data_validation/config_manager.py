@@ -14,14 +14,20 @@
 
 import copy
 import logging
+from typing import Optional, Union, TYPE_CHECKING
 
 import google.oauth2.service_account
 from ibis_bigquery.client import BigQueryClient
+import ibis.expr.datatypes as dt
 
 from data_validation import clients, consts, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 from data_validation.validation_builder import ValidationBuilder
+
+
+if TYPE_CHECKING:
+    import ibis.expr.types.TableExpr
 
 
 class ConfigManager(object):
@@ -659,8 +665,15 @@ class ConfigManager(object):
         return aggregate_configs
 
     def build_config_calculated_fields(
-        self, reference, calc_type, alias, depth, supported_types, arg_value=None
-    ):
+        self,
+        reference,
+        calc_type,
+        alias,
+        depth,
+        supported_types=None,
+        arg_value=None,
+        custom_params: Optional[dict] = None,
+    ) -> dict:
         """Returns list of calculated fields"""
         source_table = self.get_source_ibis_calculated_table(depth=depth)
         target_table = self.get_target_ibis_calculated_table(depth=depth)
@@ -692,13 +705,73 @@ class ConfigManager(object):
             consts.CONFIG_TYPE: calc_type,
             consts.CONFIG_DEPTH: depth,
         }
+
+        if calc_type == consts.CONFIG_CUSTOM and custom_params:
+            calculated_config.update(custom_params)
+
         return calculated_config
 
-    def _build_dependent_aliases(self, calc_type, col_list=None):
+    def _strftime_format(
+        self, column_type: Union[dt.Date, dt.Timestamp], client
+    ) -> str:
+        if isinstance(column_type, dt.Timestamp):
+            return "%Y-%m-%d %H:%M:%S"
+        if isinstance(client, clients.OracleClient):
+            # Oracle DATE is a DateTime
+            return "%Y-%m-%d %H:%M:%S"
+        return "%Y-%m-%d"
+
+    def _apply_base_cast_overrides(
+        self,
+        column: str,
+        col_config: dict,
+        source_table: "ibis.expr.types.TableExpr",
+        target_table: "ibis.expr.types.TableExpr",
+    ) -> dict:
+        """Mutates col_config to contain any overrides. Also returns col_config for convenience."""
+        if col_config["calc_type"] != "cast":
+            return col_config
+
+        source_table_schema = {k: v for k, v in source_table.schema().items()}
+        target_table_schema = {k: v for k, v in target_table.schema().items()}
+
+        if isinstance(
+            source_table_schema[column], (dt.Date, dt.Timestamp)
+        ) and isinstance(target_table_schema[column], (dt.Date, dt.Timestamp)):
+            # Use strftime rather than cast for temporal comparisons.
+            # Pick the most permissive format across the two engines.
+            # For example Date -> Timestamp should format both source and target as Date.
+            fmt = min(
+                [
+                    self._strftime_format(
+                        source_table_schema[column], self.source_client
+                    ),
+                    self._strftime_format(
+                        source_table_schema[column], self.target_client
+                    ),
+                ],
+                key=len,
+            )
+            col_config["calc_type"] = consts.CONFIG_CUSTOM
+            custom_params = {
+                "calc_params": {
+                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.api.TimestampValue.strftime",
+                    consts.CONFIG_CUSTOM_PARAMS: [
+                        {consts.CONFIG_CUSTOM_PARAM_FORMAT_STR: fmt}
+                    ],
+                }
+            }
+            col_config.update(custom_params)
+
+        return col_config
+
+    def build_dependent_aliases(self, calc_type, col_list=None):
         """This is a utility function for determining the required depth of all fields"""
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
+
         order_of_operations = []
         if col_list is None:
-            source_table = self.get_source_ibis_calculated_table()
             casefold_source_columns = {
                 x.casefold(): str(x) for x in source_table.columns
             }
@@ -749,6 +822,14 @@ class ConfigManager(object):
                     col["name"] = f"{calc}__" + column
                     col["calc_type"] = calc
                     col["depth"] = i
+
+                    if i == 0:
+                        # If we are casting the base column (i == 0) then apply any
+                        # datatype specific overrides.
+                        col = self._apply_base_cast_overrides(
+                            column, col, source_table, target_table
+                        )
+
                     name = col["name"]
                     column_aliases[name] = i
                     col_names.append(col)
