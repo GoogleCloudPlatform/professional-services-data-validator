@@ -27,7 +27,7 @@ import random
 import nox
 
 # Python version used for linting.
-DEFAULT_PYTHON_VERSION = "3.9"
+DEFAULT_PYTHON_VERSION = "3.10"
 
 # Python versions used for testing.
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10"]
@@ -241,3 +241,18 @@ def integration_oracle(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)
+
+
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+def integration_hive(session):
+    """Run Hive integration tests.
+    Ensure Hive validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=["PyHive", "hdfs"])
+
+    expected_env_vars = ["PROJECT_ID", "HIVE_HOST"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)

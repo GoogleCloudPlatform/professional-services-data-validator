@@ -2,6 +2,28 @@
 
 ## Untagged
 
+## [2.9.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.8.0...v2.9.0) (2023-02-16)
+
+
+### Features
+
+* Added Partition support to generate multiple YAML config files ([#653](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/653)) (Issue [#619](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/619),[#662](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/662)) ([f79c308](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f79c30873e9ec7a0377cdbce4e781cdf69a2a305))
+* added run_id to output  ([#708](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/708)) ([17720f2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/17720f2b9abde1ea66e39ab26d084bfa1b77b54a))
+* Divert cast of PostgreSQL decimal with scale&gt;0 to to_char ([#721](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/721)) ([3542851](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/354285112236721ffe4071d690da1cbdd99d9bba))
+* Use centralized date/time format in order to compare row data across engines ([#720](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/720)) ([0de823b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0de823b4298f8739d656f7069e300c7fdaf08b7a))
+
+
+### Bug Fixes
+
+* Error handling for batch processing of config files ([#663](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/663)) ([21a26af](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/21a26afade76c1f9143605d672b552f2d4d54115))
+* Protect non-date columns from astype(str) date workaround ([#726](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/726)) ([489ee27](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/489ee2762aed320278f6a2ebdd430b7717dc39d2))
+* schema validation fix for different base names of source and destination data types ([#710](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/710)) ([d7b44b0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d7b44b03a06dc1f9f0b6342051510f058464b3c2))
+
+
+### Documentation
+
+* updated Oracle parameter from user_name to user and changed underscores to hypens across the document ([#689](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/689)) ([8777e00](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8777e00d048970b6c833825a23de335b4a87c249))
+
 ## [2.8.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.7.0...v2.8.0) (2023-01-19)
 
 

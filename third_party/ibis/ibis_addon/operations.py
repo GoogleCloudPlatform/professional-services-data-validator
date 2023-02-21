@@ -18,7 +18,7 @@ when required before they can be pushed upstream to Ibis.
 Raw SQL Filters:
 The ability to inject RawSQL into a query DNE in Ibis.  It must be built out
 and applied to each Ibis Data Source directly as each has
-extended it's own registry.  Eventually this can potentially be pushed to
+extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
@@ -32,7 +32,8 @@ import ibis.expr.rules as rlz
 
 from data_validation.clients import _raise_missing_client_error
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
-from ibis.expr.operations import Value, Reduction, Comparison, HashBytes
+from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
+from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.pandas import client as _pandas_client
@@ -77,7 +78,7 @@ class RawSQL(Comparison):
 
 def compile_to_char(numeric_value, fmt):
     return ToChar(numeric_value, fmt=fmt).to_expr()
-    
+
 
 def format_hash_bigquery(translator, op):
     arg = translator.translate(op.arg)
@@ -107,6 +108,26 @@ def format_hashbytes_teradata(translator, op):
         return f"rtrim(hash_md5({arg}))"
     else:
         raise ValueError(f"unexpected value for 'how': {how}")
+
+
+def strftime_bigquery(translator, op):
+    """Timestamp formatting. Copied from bigquery_ibis in order to inject TIMESTAMP cast"""
+    arg_type = op.arg.type()
+    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
+    fmt_string = translator.translate(op.format_string)
+    arg_formatted = translator.translate(arg)
+    if isinstance(arg_type, dt.Timestamp):
+        return "FORMAT_{}({}, {}({}), {!r})".format(
+            strftime_format_func_name,
+            fmt_string,
+            strftime_format_func_name,
+            arg_formatted,
+            arg_type.timezone if arg_type.timezone is not None else "UTC",
+        )
+    return "FORMAT_{}({}, {})".format(
+        strftime_format_func_name, fmt_string, arg_formatted
+    )
+
 
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
@@ -166,15 +187,51 @@ def sa_format_to_char(translator, op):
     fmt = translator.translate(op.fmt)
     return sa.func.to_char(arg, fmt)
 
+def sa_cast_postgres(t, op):
+    sa_arg = t.translate(op.arg)
+    sa_type = t.get_sqla_type(op.typ)
+
+    # Specialize going from an integer type to a timestamp
+    if isinstance(arg.type(), dt.Integer) and isinstance(sa_type, sa.DateTime):
+        return sa.func.timezone('UTC', sa.func.to_timestamp(sa_arg))
+
+    # Specialize going from numeric(p,s>0) to string
+    if isinstance(arg.type(), dt.Decimal) and arg.type().scale > 0 and typ.equals(dt.string):
+        # When casting a number to string PostgreSQL includes the full scale, e.g.:
+        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
+        #     100.00
+        # This doesn't match most engines which would return "100".
+        # Using to_char() function instead of cast to return a more typical value.
+        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
+        # Would have liked to use trim_scale but this is only available in PostgreSQL 13+
+        #     return (sa.cast(sa.func.trim_scale(sa_arg), sa_type))
+        precision = arg.type().precision or 38
+        fmt = "FM" + ("9" * (precision - arg.type().scale)) + "." + ("9" * arg.type().scale)
+        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+
+    if arg.type().equals(dt.binary) and typ.equals(dt.string):
+        return sa.func.encode(sa_arg, 'escape')
+
+    if typ.equals(dt.binary):
+        # Decode yields a column of memoryview which is annoying to deal with
+        # in pandas. CAST(expr AS BYTEA) is correct and returns byte strings.
+        return sa.cast(sa_arg, sa.LargeBinary())
+
+    return sa.cast(sa_arg, sa_type)
+
+
 # _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
+# IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
 # BinaryValue.hash = compile_hash
 # StringValue.hash = compile_hash
 # BinaryValue.hashbytes = compile_hashbytes
 # StringValue.hashbytes = compile_hashbytes
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
+BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
+BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
@@ -191,3 +248,4 @@ PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 # MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
 # MSSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
+PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
