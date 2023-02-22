@@ -155,6 +155,11 @@ Then `pip install cx_Oracle`.
 }
 ```
 
+### Oracle User permissions to run the validator tool:
+* GRANT CREATE SESSION TO DVT-USER (Create Session Privilege)
+* GRANT READ ON SCHEMA_NAME.TABLE_NAME to DVT-USER; (Oracle Read table privilege)
+
+
 ## MSSQL Server
 Please note the MSSQL Server package is not installed by default. You will need to follow [SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server) installation steps.
 Then `pip install pyodbc`.
