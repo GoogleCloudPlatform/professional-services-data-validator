@@ -288,8 +288,14 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
+  --source-query SOURCE_QUERY, -sq SOURCE_QUERY
+                        Source sql query
+                        Either --source-query or --source-query-file must be provided
   --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
                         File containing the source sql commands
+  --target-query TARGET_QUERY, -tq TARGET_QUERY
+                        Target sql query
+                        Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql commands
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
@@ -336,8 +342,14 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
   --target-conn or -tc TARGET_CONN
                         Target connection details
                         See: *Connections* section for each data source
+  --source-query SOURCE_QUERY, -sq SOURCE_QUERY
+                        Source sql query
+                        Either --source-query or --source-query-file must be provided
   --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
                         File containing the source sql commands
+  --target-query TARGET_QUERY, -tq TARGET_QUERY
+                        Target sql query
+                        Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql commands
   --comparison-fields or -comp-fields FIELDS
