@@ -25,7 +25,7 @@ validations:
 ...
 ```
 
-```json lines
+```json5
 {
     "source_conn": BQ_CONN,
     "target_conn": BQ_CONN,
