@@ -860,3 +860,16 @@ class ConfigManager(object):
             )
         file.close()
         return query
+
+    def get_query_from_inline(self, inline_query):
+        """Return query from inline query arg"""
+
+        query = inline_query.strip()
+        query = query.rstrip(";\n")
+
+        if not query or query.isspace():
+            raise ValueError(
+                "Expected arg with sql query, got empty arg or arg with white "
+                f"spaces. input query: '{inline_query}'"
+            )
+        return query

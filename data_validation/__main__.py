@@ -181,10 +181,22 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
     if config_manager.validation_type == consts.CUSTOM_QUERY:
         config_manager.append_custom_query_type(args.custom_query_type)
 
-        source_query_str = config_manager.get_query_from_file(args.source_query_file)
+        # Get source sql query from source sql file or inline query
+        if args.source_query:
+            source_query_str = config_manager.get_query_from_inline(args.source_query)
+        else:
+            source_query_str = config_manager.get_query_from_file(
+                args.source_query_file
+            )
         config_manager.append_source_query(source_query_str)
 
-        target_query_str = config_manager.get_query_from_file(args.target_query_file)
+        # Get target sql query from target sql file or inline query
+        if args.target_query:
+            target_query_str = config_manager.get_query_from_inline(args.target_query)
+        else:
+            target_query_str = config_manager.get_query_from_file(
+                args.target_query_file
+            )
         config_manager.append_target_query(target_query_str)
 
         # For custom-query column command

@@ -88,6 +88,22 @@ CUSTOM_QUERY_VALIDATION_CONFIG = {
     consts.CONFIG_TARGET_QUERY_FILE: "tests/resources/custom-query.sql",
 }
 
+CUSTOM_QUERY_INLINE_VALIDATION_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": None,
+    "target_conn": None,
+    # Validation Type
+    consts.CONFIG_TYPE: "Custom-query",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_CALCULATED_FIELDS: [],
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_FILTERS: [],
+    consts.CONFIG_SOURCE_QUERY: " SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013; ",
+    consts.CONFIG_TARGET_QUERY: " ",
+}
+
 
 class MockIbisClient(object):
     _source_type = "BigQuery"
@@ -341,3 +357,26 @@ def test_custom_query_get_query_from_file(module_under_test):
     )
     query = config_manager.get_query_from_file(config_manager.source_query_file)
     assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+
+def test_custom_query_get_query_from_inline(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        CUSTOM_QUERY_INLINE_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+
+    # Assert query format
+    source_query = config_manager.get_query_from_inline(config_manager.source_query)
+    assert source_query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+    # Assert exception for empty query or query with white spaces
+    try:
+        config_manager.get_query_from_inline(config_manager.target_query)
+        assert False
+    except ValueError as e:
+        assert e.args[0] == (
+            "Expected arg with sql query, got empty arg or arg "
+            "with white spaces. input query: ' '"
+        )
