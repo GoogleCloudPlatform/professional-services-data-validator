@@ -261,11 +261,10 @@ def integration_hive(session):
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_secrets(session):
     """
-        Run SecretManager integration tests.
-        Ensure the SecretManager is running as expected.
+    Run SecretManager integration tests.
+    Ensure the SecretManager is running as expected.
     """
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/test_secret_manager.py"
     session.run("pytest", test_path, *session.posargs)
-
