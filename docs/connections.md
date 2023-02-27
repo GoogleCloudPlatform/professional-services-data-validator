@@ -158,6 +158,7 @@ Then `pip install cx_Oracle`.
 ### Oracle User permissions to run the validator tool:
 * CREATE SESSION
 * READ or SELECT on any tables to be validated
+* Optional - Read on SYS.V_$TRANSACTION (required to get isolation level if privilege is not given then will default to Read Commited ,[more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ## MSSQL Server
 Please note the MSSQL Server package is not installed by default. You will need to follow [SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server) installation steps.
