@@ -52,6 +52,7 @@ dependencies = [
     "tabulate==0.8.9",
     "Flask==2.0.2",
     "parsy==2.0",
+    "google-cloud-secret-manager<=2.15.0",
 ]
 
 extras_require = {

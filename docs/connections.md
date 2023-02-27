@@ -16,8 +16,13 @@ eg.
 The following commands can be used to create connections:
 
 ## Command template to create a connection:
+Secret manager flags are optional 
+
+--secret-manager-type <None|GCP>  
+--secret-manager-project-id <SECRET_PROJECT_ID>
+
 ```
-data-validation connections add --connection-name CONN_NAME source-type 
+data-validation connections add --connection-name CONN_NAME source-type --secret-manager-type <None|GCP> --secret-manager-project-id <SECRET_PROJECT_ID>
 ```
 
 ## Create a sample BigQuery connection:
@@ -68,13 +73,19 @@ Below is the expected configuration for each type.
 ```
 {
     # Raw JSON config for a connection
-    "json": '{"source-type": "BigQuery", "project-id": "pso-kokoro-resources", "google-service-account-key-path": null}'
-
+    "json": '{  "secret_manager_type": null, "secret_manager_project_id": null, "source-type": "BigQuery", "project-id": "pso-kokoro-resources", "google-service-account-key-path": null}'
+}
 ```
 
 ## Google BigQuery
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "BigQuery",
 
@@ -99,6 +110,12 @@ Below is the expected configuration for each type.
 ## Google Spanner
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager type
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "Spanner",
 
@@ -124,6 +141,13 @@ Please note that Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
+    
     # Configuration Required for All Data Sources
     "source-type": "Teradata",
 
@@ -142,6 +166,12 @@ Please note the Oracle package is not installed by default. You will need to fol
 Then `pip install cx_Oracle`.
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "Oracle",
 
@@ -160,6 +190,12 @@ Please note the MSSQL Server package is not installed by default. You will need 
 Then `pip install pyodbc`.
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+    # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "MSSQL",
 
@@ -176,6 +212,12 @@ Then `pip install pyodbc`.
 ## Postgres
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "Postgres",
 
@@ -192,6 +234,12 @@ Then `pip install pyodbc`.
 Please note AlloyDB supports same connection config as Postgres.
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "Postgres",
 
@@ -207,6 +255,12 @@ Please note AlloyDB supports same connection config as Postgres.
 ## MySQL
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+    # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "MySQL",
 
@@ -222,6 +276,12 @@ Please note AlloyDB supports same connection config as Postgres.
 ## Redshift
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "Redshift",
 
@@ -254,6 +314,12 @@ Please note AlloyDB supports same connection config as Postgres.
 ## Impala
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "Impala",
 
@@ -277,6 +343,13 @@ Please note that for Group By validations, the following property must be set in
  
 ```
 {
+
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Hive is based off Impala connector
     "source-type": "Impala",
 
@@ -292,6 +365,12 @@ Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla
 ## DB2
 ```
 {
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
     # Configuration Required for All Data Sources
     "source-type": "DB2",
 

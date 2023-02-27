@@ -256,3 +256,15 @@ def integration_hive(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)
+
+
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+def integration_secrets(session):
+    """
+    Run SecretManager integration tests.
+    Ensure the SecretManager is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=[])
+
+    test_path = "tests/system/test_secret_manager.py"
+    session.run("pytest", test_path, *session.posargs)

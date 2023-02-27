@@ -261,7 +261,6 @@ class ColumnReference(object):
 
 class CalculatedField(object):
     def __init__(self, ibis_expr, config, fields, cast=None, **kwargs):
-
         """A representation of an calculated field to build a query.
 
         Args:
