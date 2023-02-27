@@ -527,23 +527,41 @@ class ConfigManager(object):
 
         return aggregate_config
 
+    def _prefix_calc_col_name(
+        self, column_name: str, prefix: str, column_number: int
+    ) -> str:
+        """Prefix a column name but protect final string from overflowing SQL engine identifier length limit."""
+        new_name = f"{prefix}__{column_name}"
+        if len(new_name) > self._get_comparison_max_col_length():
+            # Use an abstract name for the calculated column to avoid composing invalid SQL.
+            new_name = f"{prefix}__dvt_calc_col_{column_number}"
+        return new_name
+
     def build_and_append_pre_agg_calc_config(
-        self, source_column, target_column, calc_func, cast_type=None, depth=0
+        self,
+        source_column,
+        target_column,
+        calc_func,
+        column_position,
+        cast_type=None,
+        depth=0,
     ):
         """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [source_column],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: [target_column],
-            consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{source_column}",
+            consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
+                source_column, calc_func, column_position
+            ),
             consts.CONFIG_TYPE: calc_func,
             consts.CONFIG_DEPTH: depth,
         }
 
         if calc_func == "cast" and cast_type is not None:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
-            calculated_config[
-                consts.CONFIG_FIELD_ALIAS
-            ] = f"{calc_func}_{cast_type}__{source_column}"
+            calculated_config[consts.CONFIG_FIELD_ALIAS] = self._prefix_calc_col_name(
+                source_column, f"{calc_func}_{cast_type}", column_position
+            )
 
         existing_calc_fields = [
             config[consts.CONFIG_FIELD_ALIAS] for config in self.calculated_fields
@@ -554,7 +572,7 @@ class ConfigManager(object):
         return calculated_config
 
     def append_pre_agg_calc_field(
-        self, source_column, target_column, agg_type, column_type
+        self, source_column, target_column, agg_type, column_type, column_position
     ):
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
@@ -569,7 +587,12 @@ class ConfigManager(object):
                 calc_func = "cast"
                 cast_type = "timestamp"
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
-                    source_column, target_column, calc_func, cast_type, depth
+                    source_column,
+                    target_column,
+                    calc_func,
+                    column_position,
+                    cast_type,
+                    depth,
                 )
                 source_column = target_column = pre_calculated_config[
                     consts.CONFIG_FIELD_ALIAS
@@ -586,13 +609,17 @@ class ConfigManager(object):
             raise ValueError(f"Unsupported column type: {column_type}")
 
         calculated_config = self.build_and_append_pre_agg_calc_config(
-            source_column, target_column, calc_func, cast_type, depth
+            source_column, target_column, calc_func, column_position, cast_type, depth
         )
 
         aggregate_config = {
             consts.CONFIG_SOURCE_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
             consts.CONFIG_TARGET_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
-            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
+            consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
+                calculated_config[consts.CONFIG_FIELD_ALIAS],
+                f"{agg_type}",
+                column_position,
+            ),
             consts.CONFIG_TYPE: agg_type,
         }
 
@@ -615,7 +642,7 @@ class ConfigManager(object):
                 supported_types.append("string")
 
         allowlist_columns = arg_value or casefold_source_columns
-        for column in casefold_source_columns:
+        for column_position, column in enumerate(casefold_source_columns):
             # Get column type and remove precision/scale attributes
             column_type_str = str(source_table[casefold_source_columns[column]].type())
             column_type = column_type_str.split("(")[0]
@@ -652,13 +679,16 @@ class ConfigManager(object):
                     casefold_target_columns[column],
                     agg_type,
                     column_type,
+                    column_position,
                 )
 
             else:
                 aggregate_config = {
                     consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
                     consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
-                    consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
+                    consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
+                        column, f"{agg_type}", column_position
+                    ),
                     consts.CONFIG_TYPE: agg_type,
                 }
 
@@ -721,19 +751,24 @@ class ConfigManager(object):
             # When no Oracle client installed clients.OracleClient is not a class
             return False
 
-    def _get_comparison_max_col_length(self):
+    def _get_comparison_max_col_length(self) -> int:
         def max_length(client):
             if self._is_oracle_client(client):
                 # We can't reliably know which Version class client.version is stored in
                 # because it is out of our control. Therefore using string identification
                 # of Oracle <= 12.1 to avoid exceptions of this nature:
                 #  TypeError: '<' not supported between instances of 'Version' and 'Version'
-                if str(client.version)[:2] in ["10", "11"] or str(client.version)[:4] == "12.1":
+                if (
+                    str(client.version)[:2] in ["10", "11"]
+                    or str(client.version)[:4] == "12.1"
+                ):
                     return 30
             return 128
 
         if not self._comparison_max_col_length:
-            self._comparison_max_col_length = min([max_length(self.source_client), max_length(self.target_client)])
+            self._comparison_max_col_length = min(
+                [max_length(self.source_client), max_length(self.target_client)]
+            )
         return self._comparison_max_col_length
 
     def _strftime_format(
@@ -839,13 +874,9 @@ class ConfigManager(object):
             else:
                 # This needs to be the previous manifest of columns
                 for j, column in enumerate(previous_level):
-                    calc_col_name = f"{calc}__{column}"
-                    if len(calc_col_name) > self._get_comparison_max_col_length():
-                        # Use an abstract name for the calculated column to avoid composing invalid SQL
-                        calc_col_name = f"{calc}__dvt_calc_col_{j}"
                     col = {}
                     col["reference"] = [column]
-                    col["name"] = calc_col_name
+                    col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
 
