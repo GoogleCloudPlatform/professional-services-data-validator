@@ -64,6 +64,7 @@ class ConfigManager(object):
         self.verbose = verbose
         if self.validation_type not in consts.CONFIG_TYPES:
             raise ValueError(f"Unknown Configuration Type: {self.validation_type}")
+        self._comparison_max_col_length = None
 
     @property
     def config(self):
@@ -712,19 +713,35 @@ class ConfigManager(object):
 
         return calculated_config
 
+    @staticmethod
+    def _is_oracle_client(client):
+        try:
+            return isinstance(client, clients.OracleClient)
+        except TypeError:
+            # When no Oracle client installed clients.OracleClient is not a class
+            return False
+
+    def _get_comparison_max_col_length(self):
+        def max_length(client):
+            if self._is_oracle_client(client):
+                # We can't reliably know which Version class client.version is stored in
+                # because it is out of our control. Therefore using string identification
+                # of Oracle <= 12.1 to avoid exceptions of this nature:
+                #  TypeError: '<' not supported between instances of 'Version' and 'Version'
+                if str(client.version)[:2] in ["10", "11"] or str(client.version)[:4] == "12.1":
+                    return 30
+            return 128
+
+        if not self._comparison_max_col_length:
+            self._comparison_max_col_length = min([max_length(self.source_client), max_length(self.target_client)])
+        return self._comparison_max_col_length
+
     def _strftime_format(
         self, column_type: Union[dt.Date, dt.Timestamp], client
     ) -> str:
-        def is_oracle_client(client):
-            # When no Oracle client installed clients.OracleClient is not a class
-            try:
-                return isinstance(client, clients.OracleClient)
-            except TypeError:
-                return False
-
         if isinstance(column_type, dt.Timestamp):
             return "%Y-%m-%d %H:%M:%S"
-        if is_oracle_client(client):
+        if self._is_oracle_client(client):
             # Oracle DATE is a DateTime
             return "%Y-%m-%d %H:%M:%S"
         return "%Y-%m-%d"
@@ -820,14 +837,15 @@ class ConfigManager(object):
                 column_aliases[name] = i
                 col_names.append(col)
             else:
-                for (
-                    column
-                ) in (
-                    previous_level
-                ):  # this needs to be the previous manifest of columns
+                # This needs to be the previous manifest of columns
+                for j, column in enumerate(previous_level):
+                    calc_col_name = f"{calc}__{column}"
+                    if len(calc_col_name) > self._get_comparison_max_col_length():
+                        # Use an abstract name for the calculated column to avoid composing invalid SQL
+                        calc_col_name = f"{calc}__dvt_calc_col_{j}"
                     col = {}
                     col["reference"] = [column]
-                    col["name"] = f"{calc}__" + column
+                    col["name"] = calc_col_name
                     col["calc_type"] = calc
                     col["depth"] = i
 
