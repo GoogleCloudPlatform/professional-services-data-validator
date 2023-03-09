@@ -1,5 +1,5 @@
-CREATE DATABASE pso_data_validator;
-DROP TABLE pso_data_validator.dvt_core_types;
+CREATE DATABASE IF NOT EXISTS pso_data_validator;
+DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
 CREATE TABLE pso_data_validator.dvt_core_types
 (   id              int NOT NULL
 ,   col_int8        tinyint
