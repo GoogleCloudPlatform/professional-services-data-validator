@@ -13,15 +13,18 @@
 # limitations under the License.
 
 import os
+from unittest import mock
 
-from data_validation import data_validation, consts
+from data_validation import cli_tools, data_validation, consts
+from data_validation.__main__ import build_config_managers_from_args
+
 
 TERADATA_USER = os.getenv("TERADATA_USER", "udf")
 TERADATA_PASSWORD = os.getenv("TERADATA_PASSWORD")
 TERADATA_HOST = os.getenv("TERADATA_HOST")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
-conn = {
+CONN = {
     "source_type": "Teradata",
     "host": TERADATA_HOST,
     "user_name": TERADATA_USER,
@@ -32,8 +35,8 @@ conn = {
 
 TERADATA_COLUMN_CONFIG = {
     # Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: conn,
-    consts.CONFIG_TARGET_CONN: conn,
+    consts.CONFIG_SOURCE_CONN: CONN,
+    consts.CONFIG_TARGET_CONN: CONN,
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
@@ -62,8 +65,8 @@ TERADATA_COLUMN_CONFIG = {
 
 TERADATA_ROW_CONFIG = {
     # Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: conn,
-    consts.CONFIG_TARGET_CONN: conn,
+    consts.CONFIG_SOURCE_CONN: CONN,
+    consts.CONFIG_TARGET_CONN: CONN,
     # Validation Type
     consts.CONFIG_TYPE: "Row",
     # Configuration Required Depending on Validator Type
@@ -187,3 +190,86 @@ def test_row_validator():
     validator = data_validation.DataValidation(TERADATA_ROW_CONFIG, verbose=True)
     df = validator.execute()
     assert df["validation_status"][0] == "success"
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=CONN,
+)
+def test_schema_validation_core_types(mock_conn):
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=udf.dvt_core_types",
+            "--filter-status=fail",
+        ]
+    )
+    config_managers = build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures only the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=CONN,
+)
+def test_column_validation_core_types(mock_conn):
+    parser = cli_tools.configure_arg_parser()
+    # TODO Add col_datetime,col_tstz to --sum string below when issue-XXX is complete. Or change whole string to * if YYY is also complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=udf.dvt_core_types",
+            "--filter-status=fail",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date",
+            "--min=*",
+            "--max=*",
+        ]
+    )
+    config_managers = build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures only the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=CONN,
+)
+def test_row_validation_core_types(mock_conn):
+    parser = cli_tools.configure_arg_parser()
+    # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
+    # [Error 3798] A column or character expression is larger than the max size.
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=udf.dvt_core_types",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--concat=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
+        ]
+    )
+    config_managers = build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures only the data frame should be empty
+    assert len(df) == 0
