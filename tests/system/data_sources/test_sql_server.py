@@ -20,8 +20,9 @@ import pytest
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
+from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
-from data_validation.__main__ import build_config_managers_from_args
+
 
 # Local testing requires the Cloud SQL Proxy.
 # https://cloud.google.com/sql/docs/sqlserver/connect-admin-proxy
@@ -206,7 +207,7 @@ def test_schema_validation_core_types(mock_conn):
             "--filter-status=fail",
         ]
     )
-    config_managers = build_config_managers_from_args(args)
+    config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
@@ -238,7 +239,7 @@ def test_column_validation_core_types(mock_conn):
     )
     # TODO When issue-XXX is complete remove the return statement below.
     return
-    config_managers = build_config_managers_from_args(args)
+    config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
@@ -267,7 +268,7 @@ def test_row_validation_core_types(mock_conn):
     )
     # TODO When issue-XXX is complete remove the return statement below.
     return
-    config_managers = build_config_managers_from_args(args)
+    config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)

@@ -15,8 +15,8 @@
 import os
 from unittest import mock
 
+from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
-from data_validation.__main__ import build_config_managers_from_args
 
 
 TERADATA_USER = os.getenv("TERADATA_USER", "udf")
@@ -208,7 +208,7 @@ def test_schema_validation_core_types(mock_conn):
             "--filter-status=fail",
         ]
     )
-    config_managers = build_config_managers_from_args(args)
+    config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
@@ -237,7 +237,7 @@ def test_column_validation_core_types(mock_conn):
             "--max=*",
         ]
     )
-    config_managers = build_config_managers_from_args(args)
+    config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
@@ -266,7 +266,7 @@ def test_row_validation_core_types(mock_conn):
             "--concat=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
         ]
     )
-    config_managers = build_config_managers_from_args(args)
+    config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
