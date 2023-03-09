@@ -1118,7 +1118,7 @@ def test_schema_validation_core_types(mock_conn):
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
     df = validator.execute()
-    # With filter on failures only the data frame should be empty
+    # With filter on failures the data frame should be empty
     assert len(df) == 0
 
 
@@ -1146,7 +1146,7 @@ def test_column_validation_core_types(mock_conn):
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
     df = validator.execute()
-    # With filter on failures only the data frame should be empty
+    # With filter on failures the data frame should be empty
     assert len(df) == 0
 
 
@@ -1173,6 +1173,5 @@ def test_row_validation_core_types(mock_conn):
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
     df = validator.execute()
-    # With filter on failures only the data frame should be empty
+    # With filter on failures the data frame should be empty
     assert len(df) == 0
-
