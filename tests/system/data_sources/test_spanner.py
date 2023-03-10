@@ -250,11 +250,7 @@ def _remove_spanner_conn():
     os.remove(file_path)
 
 
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=spanner_connection_config(instance_id, database_id),
-)
-def test_schema_validation_core_types(mock_conn):
+def test_schema_validation_core_types(spanner_connection_config):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -266,20 +262,20 @@ def test_schema_validation_core_types(mock_conn):
             "--filter-status=fail",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    with mock.patch(
+        "data_validation.state_manager.StateManager.get_connection_config",
+        return_value=spanner_connection_config,
+    ):
+        config_managers = main.build_config_managers_from_args(args)
+        assert len(config_managers) == 1
+        config_manager = config_managers[0]
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        df = validator.execute()
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0
 
 
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=spanner_connection_config(instance_id, database_id),
-)
-def test_column_validation_core_types(mock_conn):
+def test_column_validation_core_types(spanner_connection_config):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -294,20 +290,20 @@ def test_column_validation_core_types(mock_conn):
             "--max=*",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    with mock.patch(
+        "data_validation.state_manager.StateManager.get_connection_config",
+        return_value=spanner_connection_config,
+    ):
+        config_managers = main.build_config_managers_from_args(args)
+        assert len(config_managers) == 1
+        config_manager = config_managers[0]
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        df = validator.execute()
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0
 
 
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=spanner_connection_config(instance_id, database_id),
-)
-def test_row_validation_core_types(mock_conn):
+def test_row_validation_core_types(spanner_connection_config):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -321,10 +317,14 @@ def test_row_validation_core_types(mock_conn):
             "--concat=*",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    with mock.patch(
+        "data_validation.state_manager.StateManager.get_connection_config",
+        return_value=spanner_connection_config,
+    ):
+        config_managers = main.build_config_managers_from_args(args)
+        assert len(config_managers) == 1
+        config_manager = config_managers[0]
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        df = validator.execute()
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0
