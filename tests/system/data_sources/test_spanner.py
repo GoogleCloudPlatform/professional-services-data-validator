@@ -250,7 +250,7 @@ def _remove_spanner_conn():
     os.remove(file_path)
 
 
-def test_schema_validation_core_types(spanner_connection_config):
+def test_schema_validation_core_types(spanner_connection_config, database_id):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -275,7 +275,7 @@ def test_schema_validation_core_types(spanner_connection_config):
         assert len(df) == 0
 
 
-def test_column_validation_core_types(spanner_connection_config):
+def test_column_validation_core_types(spanner_connection_config, database_id):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -303,7 +303,7 @@ def test_column_validation_core_types(spanner_connection_config):
         assert len(df) == 0
 
 
-def test_row_validation_core_types(spanner_connection_config):
+def test_row_validation_core_types(spanner_connection_config, database_id):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
