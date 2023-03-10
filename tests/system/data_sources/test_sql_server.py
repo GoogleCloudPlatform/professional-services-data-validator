@@ -211,7 +211,7 @@ def test_schema_validation_core_types(mock_conn):
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    # TODO When issue-XXX is complete remove the return statement below.
+    # TODO When issue-764 is complete remove the return statement below.
     return
     df = validator.execute()
     # With filter on failures the data frame should be empty
@@ -237,7 +237,7 @@ def test_column_validation_core_types(mock_conn):
             "--max=*",
         ]
     )
-    # TODO When issue-XXX is complete remove the return statement below.
+    # TODO When issue-764 is complete remove the return statement below.
     return
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
@@ -266,7 +266,7 @@ def test_row_validation_core_types(mock_conn):
             "--concat=*",
         ]
     )
-    # TODO When issue-XXX is complete remove the return statement below.
+    # TODO When issue-764 is complete remove the return statement below.
     return
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1

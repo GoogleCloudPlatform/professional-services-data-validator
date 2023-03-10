@@ -223,7 +223,7 @@ def test_schema_validation_core_types(mock_conn):
 )
 def test_column_validation_core_types(mock_conn):
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_datetime,col_tstz to --sum string below when issue-XXX is complete. Or change whole string to * if YYY is also complete.
+    # TODO Add col_datetime,col_tstz to --sum string below when issue-762 is complete. Or change whole string to * if YYY is also complete.
     args = parser.parse_args(
         [
             "validate",

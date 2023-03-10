@@ -120,7 +120,7 @@ def test_column_validation_core_types(mock_conn):
 )
 def test_row_validation_core_types(mock_conn):
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_date,col_datetime,col_tstz to --sum string below when issue-XXX is complete. Or change whole string to * if YYY is also complete.
+    # TODO Change --concat option to * below when issue-765 is complete.
     args = parser.parse_args(
         [
             "validate",
