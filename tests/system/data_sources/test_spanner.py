@@ -305,6 +305,7 @@ def test_column_validation_core_types(spanner_connection_config, database_id):
 
 def test_row_validation_core_types(spanner_connection_config, database_id):
     parser = cli_tools.configure_arg_parser()
+    # TODO Change --concat string below to * when issue-767 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -314,7 +315,7 @@ def test_row_validation_core_types(spanner_connection_config, database_id):
             f"-tbls={database_id}.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--concat=*",
+            "--concat=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date",
         ]
     )
     with mock.patch(
