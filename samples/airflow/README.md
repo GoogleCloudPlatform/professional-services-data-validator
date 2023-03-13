@@ -1,3 +1,12 @@
+# Data Validation on Airflow (Cloud Composer)
+
+-- explain how to deploy this on Airflow/Composer.
+-- Under the high level overview we can include this 'Warning' section. 
+
+Requirements to run the DAG:
+- Airflow environment created with Public IP (Private environment disabled)
+- Create an Airflow variable called 'gcp_project' with the GCP Project ID
+
 
 ### Warning 
 
