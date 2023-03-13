@@ -326,3 +326,5 @@ MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
 
 if DB2ExprTranslator: #check if Db2 driver is loaded
     DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
+    DB2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    DB2ExprTranslator._registry[ToChar] = sa_format_to_char
