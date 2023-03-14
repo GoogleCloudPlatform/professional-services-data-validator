@@ -126,6 +126,14 @@ def get_pandas_client(table_name, file_path, file_type):
     return pandas_client
 
 
+def is_oracle_client(client):
+    try:
+        return isinstance(client, OracleClient)
+    except TypeError:
+        # When no Oracle client has been installed OracleClient is not a class
+        return False
+
+
 def get_ibis_table(client, schema_name, table_name, database_name=None):
     """Return Ibis Table for Supplied Client.
 
@@ -267,6 +275,21 @@ def get_data_client(connection_config):
         raise exceptions.DataClientConnectionFailure(msg)
 
     return data_client
+
+
+def get_max_column_length(client):
+    """Return the max column length supported by client.
+
+    client (IbisClient): Client to use for tables
+    """
+    if is_oracle_client(client):
+        # We can't reliably know which Version class client.version is stored in
+        # because it is out of our control. Therefore using string identification
+        # of Oracle <= 12.1 to avoid exceptions of this nature:
+        #  TypeError: '<' not supported between instances of 'Version' and 'Version'
+        if str(client.version)[:2] in ["10", "11"] or str(client.version)[:4] == "12.1":
+            return 30
+    return 128
 
 
 CLIENT_LOOKUP = {
