@@ -228,7 +228,6 @@ def sa_cast_postgres(t, op):
 # StringValue.hashbytes = compile_hashbytes
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
-BigQueryExprTranslator._registry[BitXor] = bq_reduction("BIT_XOR")
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[Strftime] = strftime_bigquery

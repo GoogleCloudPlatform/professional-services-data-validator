@@ -20,30 +20,33 @@ import toolz
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from ibis import util
-from ibis.backends.postgres.client import PostgreSQLClient
+
+import sqlalchemy as sa
+
+from ibis.backends.postgres import Backend as PostgresBackend
 
 
-def _get_schema_using_query(self, query: str) -> sch.Schema:
+def _metadata(self, query: str) -> sch.Schema:
     raw_name = util.guid()
-    name = self.con.dialect.identifier_preparer.quote_identifier(raw_name)
-    type_info_sql = f"""\
-SELECT
-attname,
-format_type(atttypid, atttypmod) AS type
-FROM pg_attribute
-WHERE attrelid = {raw_name!r}::regclass
-AND attnum > 0
-AND NOT attisdropped
-ORDER BY attnum
-"""
-    with self.con.connect() as con:
-        con.execute(f"CREATE TEMPORARY VIEW {name} AS {query}")
-        try:
-            type_info = con.execute(type_info_sql).fetchall()
-        finally:
-            con.execute(f"DROP VIEW {name}")
-    tuples = [(col, self._get_type(typestr)) for col, typestr in type_info]
-    return sch.Schema.from_tuples(tuples)
+    name = self._quote(raw_name)
+    type_info_sql = """\
+    SELECT
+    attname,
+    format_type(atttypid, atttypmod) AS type
+    FROM pg_attribute
+    WHERE attrelid = CAST(:raw_name AS regclass)
+    AND attnum > 0
+    AND NOT attisdropped
+    ORDER BY attnum"""
+    with self.begin() as con:
+        con.exec_driver_sql(f"CREATE TEMPORARY VIEW {name} AS {query}")
+        type_info = con.execute(
+            sa.text(type_info_sql).bindparams(raw_name=raw_name)
+        )
+        tuples =  [(col, _get_type(typestr)) for col, typestr in type_info]
+        print (tuples)
+        return tuples
+        con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
 
 
 _BRACKETS = "[]"
@@ -103,7 +106,7 @@ def _parse_numeric(
     return ty.parse(text)
 
 
-def _get_type(self, typestr: str) -> dt.DataType:
+def _get_type(typestr: str) -> dt.DataType:
     is_array = typestr.endswith(_BRACKETS)
     # typ = _type_mapping.get(typestr.replace(_BRACKETS, ""))
     # handle bracket length
@@ -156,5 +159,6 @@ _type_mapping = {
     "uuid": dt.uuid,
 }
 
-PostgreSQLClient._get_schema_using_query = _get_schema_using_query
-PostgreSQLClient._get_type = _get_type
+# Does this work?
+PostgresBackend._metadata = _metadata
+#pdt._get_type = _new_get_type

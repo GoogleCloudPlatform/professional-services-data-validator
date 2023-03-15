@@ -21,6 +21,7 @@ import ibis
 # import ibis_bigquery
 import pandas
 import third_party.ibis.ibis_addon.datatypes
+import third_party.ibis.ibis_postgres.client
 # import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 from google.cloud import bigquery
 # from ibis.backends.mysql.client import MySQLClient
@@ -65,7 +66,7 @@ except Exception:
     OracleClient = _raise_missing_client_error("pip install cx_Oracle")
 
 try:
-from third_party.ibis.ibis_mssql.client import MSSQLClient
+    from third_party.ibis.ibis_mssql.client import MSSQLClient
 except Exception:
     MSSQLClient = _raise_missing_client_error("pip install pyodbc")
 
