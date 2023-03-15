@@ -66,6 +66,7 @@ class ConfigManager(object):
         self.verbose = verbose
         if self.validation_type not in consts.CONFIG_TYPES:
             raise ValueError(f"Unknown Configuration Type: {self.validation_type}")
+        self._comparison_max_col_length = None
 
     @property
     def config(self):
@@ -502,7 +503,6 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for column in columns:
-
             if column.casefold() not in casefold_source_columns:
                 raise ValueError(f"Grouped Column DNE in source: {column}")
             if column.casefold() not in casefold_target_columns:
@@ -528,23 +528,41 @@ class ConfigManager(object):
 
         return aggregate_config
 
+    def _prefix_calc_col_name(
+        self, column_name: str, prefix: str, column_number: int
+    ) -> str:
+        """Prefix a column name but protect final string from overflowing SQL engine identifier length limit."""
+        new_name = f"{prefix}__{column_name}"
+        if len(new_name) > self._get_comparison_max_col_length():
+            # Use an abstract name for the calculated column to avoid composing invalid SQL.
+            new_name = f"{prefix}__dvt_calc_col_{column_number}"
+        return new_name
+
     def build_and_append_pre_agg_calc_config(
-        self, source_column, target_column, calc_func, cast_type=None, depth=0
+        self,
+        source_column,
+        target_column,
+        calc_func,
+        column_position,
+        cast_type=None,
+        depth=0,
     ):
         """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [source_column],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: [target_column],
-            consts.CONFIG_FIELD_ALIAS: f"{calc_func}__{source_column}",
+            consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
+                source_column, calc_func, column_position
+            ),
             consts.CONFIG_TYPE: calc_func,
             consts.CONFIG_DEPTH: depth,
         }
 
         if calc_func == "cast" and cast_type is not None:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
-            calculated_config[
-                consts.CONFIG_FIELD_ALIAS
-            ] = f"{calc_func}_{cast_type}__{source_column}"
+            calculated_config[consts.CONFIG_FIELD_ALIAS] = self._prefix_calc_col_name(
+                source_column, f"{calc_func}_{cast_type}", column_position
+            )
 
         existing_calc_fields = [
             config[consts.CONFIG_FIELD_ALIAS] for config in self.calculated_fields
@@ -555,7 +573,7 @@ class ConfigManager(object):
         return calculated_config
 
     def append_pre_agg_calc_field(
-        self, source_column, target_column, agg_type, column_type
+        self, source_column, target_column, agg_type, column_type, column_position
     ):
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
@@ -570,7 +588,12 @@ class ConfigManager(object):
                 calc_func = "cast"
                 cast_type = "timestamp"
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
-                    source_column, target_column, calc_func, cast_type, depth
+                    source_column,
+                    target_column,
+                    calc_func,
+                    column_position,
+                    cast_type,
+                    depth,
                 )
                 source_column = target_column = pre_calculated_config[
                     consts.CONFIG_FIELD_ALIAS
@@ -587,13 +610,17 @@ class ConfigManager(object):
             raise ValueError(f"Unsupported column type: {column_type}")
 
         calculated_config = self.build_and_append_pre_agg_calc_config(
-            source_column, target_column, calc_func, cast_type, depth
+            source_column, target_column, calc_func, column_position, cast_type, depth
         )
 
         aggregate_config = {
             consts.CONFIG_SOURCE_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
             consts.CONFIG_TARGET_COLUMN: f"{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
-            consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{calculated_config[consts.CONFIG_FIELD_ALIAS]}",
+            consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
+                calculated_config[consts.CONFIG_FIELD_ALIAS],
+                f"{agg_type}",
+                column_position,
+            ),
             consts.CONFIG_TYPE: agg_type,
         }
 
@@ -616,7 +643,7 @@ class ConfigManager(object):
                 supported_types.append("string")
 
         allowlist_columns = arg_value or casefold_source_columns
-        for column in casefold_source_columns:
+        for column_position, column in enumerate(casefold_source_columns):
             # Get column type and remove precision/scale attributes
             column_type_str = str(source_table[casefold_source_columns[column]].type())
             column_type = column_type_str.split("(")[0]
@@ -653,13 +680,16 @@ class ConfigManager(object):
                     casefold_target_columns[column],
                     agg_type,
                     column_type,
+                    column_position,
                 )
 
             else:
                 aggregate_config = {
                     consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
                     consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
-                    consts.CONFIG_FIELD_ALIAS: f"{agg_type}__{column}",
+                    consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
+                        column, f"{agg_type}", column_position
+                    ),
                     consts.CONFIG_TYPE: agg_type,
                 }
 
@@ -714,19 +744,22 @@ class ConfigManager(object):
 
         return calculated_config
 
+    def _get_comparison_max_col_length(self) -> int:
+        if not self._comparison_max_col_length:
+            self._comparison_max_col_length = min(
+                [
+                    clients.get_max_column_length(self.source_client),
+                    clients.get_max_column_length(self.target_client),
+                ]
+            )
+        return self._comparison_max_col_length
+
     def _strftime_format(
         self, column_type: Union[dt.Date, dt.Timestamp], client
     ) -> str:
-        def is_oracle_client(client):
-            # When no Oracle client installed clients.OracleClient is not a class
-            try:
-                return isinstance(client, clients.OracleClient)
-            except TypeError:
-                return False
-
         if isinstance(column_type, dt.Timestamp):
             return "%Y-%m-%d %H:%M:%S"
-        if is_oracle_client(client):
+        if clients.is_oracle_client(client):
             # Oracle DATE is a DateTime
             return "%Y-%m-%d %H:%M:%S"
         return "%Y-%m-%d"
@@ -822,14 +855,11 @@ class ConfigManager(object):
                 column_aliases[name] = i
                 col_names.append(col)
             else:
-                for (
-                    column
-                ) in (
-                    previous_level
-                ):  # this needs to be the previous manifest of columns
+                # This needs to be the previous manifest of columns
+                for j, column in enumerate(previous_level):
                     col = {}
                     col["reference"] = [column]
-                    col["name"] = f"{calc}__" + column
+                    col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
 
@@ -861,4 +891,17 @@ class ConfigManager(object):
                 f"input file: {filename}"
             )
         file.close()
+        return query
+
+    def get_query_from_inline(self, inline_query):
+        """Return query from inline query arg"""
+
+        query = inline_query.strip()
+        query = query.rstrip(";\n")
+
+        if not query or query.isspace():
+            raise ValueError(
+                "Expected arg with sql query, got empty arg or arg with white "
+                f"spaces. input query: '{inline_query}'"
+            )
         return query

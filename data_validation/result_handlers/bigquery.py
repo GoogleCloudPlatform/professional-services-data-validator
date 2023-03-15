@@ -64,7 +64,6 @@ class BigQueryResultHandler(object):
         return BigQueryResultHandler(client, status_list=status_list, table_id=table_id)
 
     def execute(self, result_df):
-
         if self._status_list is not None:
             result_df = filter_validation_status(self._status_list, result_df)
 

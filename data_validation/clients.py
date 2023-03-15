@@ -25,10 +25,12 @@ import third_party.ibis.ibis_postgres.client
 # import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 from google.cloud import bigquery
 # from ibis.backends.mysql.client import MySQLClient
+# from ibis.backends.pandas.client import PandasClient
+# from ibis.backends.postgres.client import PostgreSQLClient
 # from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
 # from third_party.ibis.ibis_impala.api import impala_connect
-
 from data_validation import client_info, consts, exceptions
+from data_validation.secret_manager import SecretManagerBuilder
 
 ibis.options.sql.default_limit = None
 
@@ -121,6 +123,14 @@ def get_pandas_client(table_name, file_path, file_type):
     return pandas_client
 
 
+def is_oracle_client(client):
+    try:
+        return isinstance(client, OracleClient)
+    except TypeError:
+        # When no Oracle client has been installed OracleClient is not a class
+        return False
+
+
 def get_ibis_table(client, schema_name, table_name, database_name=None):
     """Return Ibis Table for Supplied Client.
 
@@ -209,12 +219,28 @@ def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
     source_type = connection_config.pop(consts.SOURCE_TYPE)
+    secret_manager_type = connection_config.pop(consts.SECRET_MANAGER_TYPE, None)
+    secret_manager_project_id = connection_config.pop(
+        consts.SECRET_MANAGER_PROJECT_ID, None
+    )
+
+    decrypted_connection_config = {}
+    if secret_manager_type is not None:
+        sm = SecretManagerBuilder().build(secret_manager_type.lower())
+        for config_item in connection_config:
+            decrypted_connection_config[config_item] = sm.maybe_secret(
+                secret_manager_project_id, connection_config[config_item]
+            )
+    else:
+        decrypted_connection_config = connection_config
 
     # The ibis_bigquery.connect expects a credentials object, not a string.
-    if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_config:
-        key_path = connection_config.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
+    if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in decrypted_connection_config:
+        key_path = decrypted_connection_config.pop(
+            consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
+        )
         if key_path:
-            connection_config[
+            decrypted_connection_config[
                 "credentials"
             ] = google.oauth2.service_account.Credentials.from_service_account_file(
                 key_path
@@ -227,7 +253,7 @@ def get_data_client(connection_config):
         raise Exception(msg)
 
     try:
-        data_client = CLIENT_LOOKUP[source_type](**connection_config)
+        data_client = CLIENT_LOOKUP[source_type](**decrypted_connection_config)
         data_client._source_type = source_type
     except Exception as e:
         msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
@@ -236,6 +262,21 @@ def get_data_client(connection_config):
         raise exceptions.DataClientConnectionFailure(msg)
 
     return data_client
+
+
+def get_max_column_length(client):
+    """Return the max column length supported by client.
+
+    client (IbisClient): Client to use for tables
+    """
+    if is_oracle_client(client):
+        # We can't reliably know which Version class client.version is stored in
+        # because it is out of our control. Therefore using string identification
+        # of Oracle <= 12.1 to avoid exceptions of this nature:
+        #  TypeError: '<' not supported between instances of 'Version' and 'Version'
+        if str(client.version)[:2] in ["10", "11"] or str(client.version)[:4] == "12.1":
+            return 30
+    return 128
 
 
 CLIENT_LOOKUP = {

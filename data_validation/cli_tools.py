@@ -332,15 +332,27 @@ def _configure_validation_config_parser(subparsers):
 
 def _configure_connection_parser(subparsers):
     """Configure the Parser for Connection Management."""
+
     connection_parser = subparsers.add_parser(
         "connections", help="Manage & Store connections to your Databases"
     )
     connect_subparsers = connection_parser.add_subparsers(dest="connect_cmd")
     _ = connect_subparsers.add_parser("list", help="List your connections")
-
     add_parser = connect_subparsers.add_parser("add", help="Store a new connection")
     add_parser.add_argument(
         "--connection-name", "-c", help="Name of connection used as reference"
+    )
+    add_parser.add_argument(
+        "--secret-manager-type",
+        "-sm",
+        default=None,
+        help="Secret manager type to store credentials by default will be None ",
+    )
+    add_parser.add_argument(
+        "--secret-manager-project-id",
+        "-sm-prj-id",
+        default=None,
+        help="Project ID for the secret manager that stores the credentials",
     )
     _configure_database_specific_parsers(add_parser)
 
@@ -624,22 +636,40 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         "required arguments"
     )
     required_arguments.add_argument(
-        "--source-query-file",
-        "-sqf",
-        required=True,
-        help="File containing the source sql query",
-    )
-    required_arguments.add_argument(
-        "--target-query-file",
-        "-tqf",
-        required=True,
-        help="File containing the target sql query",
-    )
-    required_arguments.add_argument(
         "--primary-keys",
         "-pk",
         required=True,
         help="Comma separated list of primary key columns 'col_a,col_b'",
+    )
+
+    # Group for mutually exclusive source query arguments. Either must be supplied
+    source_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    source_mutually_exclusive.add_argument(
+        "--source-query-file",
+        "-sqf",
+        help="File containing the source sql query",
+    )
+    source_mutually_exclusive.add_argument(
+        "--source-query",
+        "-sq",
+        help="Source sql query",
+    )
+
+    # Group for mutually exclusive target query arguments. Either must be supplied
+    target_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query-file",
+        "-tqf",
+        help="File containing the target sql query",
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query",
+        "-tq",
+        help="Target sql query",
     )
 
     # Group for mutually exclusive required arguments. Either must be supplied
@@ -741,17 +771,35 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     required_arguments = custom_query_column_parser.add_argument_group(
         "required arguments"
     )
-    required_arguments.add_argument(
+
+    # Group for mutually exclusive source query arguments. Either must be supplied
+    source_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    source_mutually_exclusive.add_argument(
         "--source-query-file",
         "-sqf",
-        required=True,
         help="File containing the source sql query",
     )
-    required_arguments.add_argument(
+    source_mutually_exclusive.add_argument(
+        "--source-query",
+        "-sq",
+        help="Source sql query",
+    )
+
+    # Group for mutually exclusive target query arguments. Either must be supplied
+    target_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
+        required=True
+    )
+    target_mutually_exclusive.add_argument(
         "--target-query-file",
         "-tqf",
-        required=True,
         help="File containing the target sql query",
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query",
+        "-tq",
+        help="Target sql query",
     )
 
     _add_common_arguments(optional_arguments, required_arguments)
@@ -873,7 +921,13 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
 
 def get_connection_config_from_args(args):
     """Return dict with connection config supplied."""
-    config = {consts.SOURCE_TYPE: args.connect_type}
+    config = {
+        consts.SOURCE_TYPE: args.connect_type,
+        consts.SECRET_MANAGER_TYPE: getattr(args, consts.SECRET_MANAGER_TYPE),
+        consts.SECRET_MANAGER_PROJECT_ID: getattr(
+            args, consts.SECRET_MANAGER_PROJECT_ID
+        ),
+    }
 
     if args.connect_type == "Raw":
         return json.loads(args.json)

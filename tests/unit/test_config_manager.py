@@ -88,6 +88,22 @@ CUSTOM_QUERY_VALIDATION_CONFIG = {
     consts.CONFIG_TARGET_QUERY_FILE: "tests/resources/custom-query.sql",
 }
 
+CUSTOM_QUERY_INLINE_VALIDATION_CONFIG = {
+    # BigQuery Specific Connection Config
+    "source_conn": None,
+    "target_conn": None,
+    # Validation Type
+    consts.CONFIG_TYPE: "Custom-query",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_CALCULATED_FIELDS: [],
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_FILTERS: [],
+    consts.CONFIG_SOURCE_QUERY: " SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013; ",
+    consts.CONFIG_TARGET_QUERY: " ",
+}
+
 
 class MockIbisClient(object):
     _source_type = "BigQuery"
@@ -341,3 +357,69 @@ def test_custom_query_get_query_from_file(module_under_test):
     )
     query = config_manager.get_query_from_file(config_manager.source_query_file)
     assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+
+def test_custom_query_get_query_from_inline(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        CUSTOM_QUERY_INLINE_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+
+    # Assert query format
+    source_query = config_manager.get_query_from_inline(config_manager.source_query)
+    assert source_query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+    # Assert exception for empty query or query with white spaces
+    try:
+        config_manager.get_query_from_inline(config_manager.target_query)
+        assert False
+    except ValueError as e:
+        assert e.args[0] == (
+            "Expected arg with sql query, got empty arg or arg "
+            "with white spaces. input query: ' '"
+        )
+
+
+def test__get_comparison_max_col_length(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    max_identifier_length = config_manager._get_comparison_max_col_length()
+    assert isinstance(max_identifier_length, int)
+    short_itentifier = "id"
+    too_long_itentifier = "a_long_column_name".ljust(max_identifier_length + 1, "_")
+    nearly_too_long_itentifier = "another_long_column_name".ljust(
+        max_identifier_length - 1, "_"
+    )
+    assert len(short_itentifier) < max_identifier_length
+    assert len(too_long_itentifier) > max_identifier_length
+    assert len(nearly_too_long_itentifier) < max_identifier_length
+    new_identifier = config_manager._prefix_calc_col_name(
+        short_itentifier, "prefix", 900
+    )
+    assert (
+        len(short_itentifier) <= max_identifier_length
+    ), f"Column name is too long: {new_identifier}"
+    assert (
+        "900" not in new_identifier
+    ), f"Column name should NOT contain ID 900: {new_identifier}"
+    new_identifier = config_manager._prefix_calc_col_name(
+        too_long_itentifier, "prefix", 901
+    )
+    assert (
+        len(new_identifier) <= max_identifier_length
+    ), f"Column name is too long: {new_identifier}"
+    assert (
+        "901" in new_identifier
+    ), f"Column name should contain ID 901: {new_identifier}"
+    new_identifier = config_manager._prefix_calc_col_name(
+        nearly_too_long_itentifier, "prefix", 902
+    )
+    assert (
+        len(new_identifier) <= max_identifier_length
+    ), f"Column name is too long: {new_identifier}"
+    assert (
+        "902" in new_identifier
+    ), f"Column name should contain ID 902: {new_identifier}"
