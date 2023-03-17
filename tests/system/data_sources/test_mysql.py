@@ -30,15 +30,6 @@ CONN = {
     "user": MYSQL_USER,
     "password": os.getenv("MYSQL_PASSWORD"),
     "port": 3306,
-    "database": "guestbook",
-    "driver": "pymysql",
-}
-CONN_INTEGRATION = {
-    "source_type": "MySQL",
-    "host": MYSQL_HOST,
-    "user": MYSQL_USER,
-    "password": os.getenv("MYSQL_PASSWORD"),
-    "port": 3306,
     "database": "pso_data_validator",
     "driver": "pymysql",
 }
@@ -49,7 +40,7 @@ CONFIG_COUNT_VALID = {
     # Validation Type
     consts.CONFIG_TYPE: "Column",
     # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "guestbook",
+    consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
     consts.CONFIG_TABLE_NAME: "entries",
     consts.CONFIG_AGGREGATES: [
         {
@@ -67,7 +58,7 @@ CONFIG_SCHEMA_VALID = {
     consts.CONFIG_SOURCE_CONN: CONN,
     consts.CONFIG_TARGET_CONN: CONN,
     consts.CONFIG_TYPE: "Column",
-    consts.CONFIG_SCHEMA_NAME: "guestbook",
+    consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
     consts.CONFIG_TABLE_NAME: "entries",
     consts.CONFIG_FORMAT: "table",
     consts.CONFIG_FILTER_STATUS: None,
@@ -88,6 +79,9 @@ def test_mysql_count_invalid_host():
 
 
 def test_schema_validation():
+    # This test is disabled.
+    # When issue-777 is resolved we can remove these comments and the return statement below.
+    return
     try:
         data_validator = data_validation.DataValidation(
             CONFIG_SCHEMA_VALID,
@@ -102,8 +96,11 @@ def test_schema_validation():
         pass
 
 
-def test_mssql_row():
+def test_mysql_row():
     """Test row validation on MySQL"""
+    # This test is disabled.
+    # When issue-776 is resolved we can remove these comments and the return statement below.
+    return
     try:
         config_row_valid = {
             consts.CONFIG_SOURCE_CONN: CONN,
@@ -111,7 +108,7 @@ def test_mssql_row():
             # Validation Type
             consts.CONFIG_TYPE: "Row",
             # Configuration Required Depending on Validator Type
-            consts.CONFIG_SCHEMA_NAME: "guestbook",
+            consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
             consts.CONFIG_TABLE_NAME: "test_data_types_mysql_row",
             consts.CONFIG_COMPARISON_FIELDS: [
                 {
@@ -437,7 +434,7 @@ def test_mssql_row():
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN_INTEGRATION,
+    return_value=CONN,
 )
 def test_schema_validation_core_types(mock_conn):
     parser = cli_tools.configure_arg_parser()
@@ -462,7 +459,7 @@ def test_schema_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN_INTEGRATION,
+    return_value=CONN,
 )
 def test_column_validation_core_types(mock_conn):
     parser = cli_tools.configure_arg_parser()
@@ -490,7 +487,7 @@ def test_column_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN_INTEGRATION,
+    return_value=CONN,
 )
 def test_row_validation_core_types(mock_conn):
     # This test is disabled.

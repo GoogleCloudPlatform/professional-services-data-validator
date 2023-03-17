@@ -13,8 +13,50 @@
 -- limitations under the License.
 
 CREATE DATABASE pso_data_validator;
-DROP TABLE pso_data_validator.dvt_core_types;
-CREATE TABLE pso_data_validator.dvt_core_types
+
+DROP TABLE IF EXISTS `pso_data_validator`.`entries`;
+CREATE TABLE `pso_data_validator`.`entries` (
+  `guestName` varchar(255) DEFAULT NULL,
+  `content` varchar(255) DEFAULT NULL,
+  `entryID` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`entryID`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+
+INSERT INTO `pso_data_validator`.`entries` VALUES
+('first guest','I got here!',1),('second guest','Me too!',2),
+('This Guy','More data Coming',3),('Joe','Me too!',4),
+('John','I got here!',5),('Alex','Me too!',6),('Zoe','zippp!',7);
+COMMIT;
+
+DROP TABLE `pso_data_validator`.`test_data_types_mysql_row`;
+CREATE TABLE `pso_data_validator`.`test_data_types_mysql_row` (
+  `serial_col` int(11) NOT NULL AUTO_INCREMENT,
+  `int_col` int(3) DEFAULT NULL,
+  `text_col` char(100) DEFAULT NULL,
+  `char_col` char(30) DEFAULT NULL,
+  `varchar_col` varchar(255) DEFAULT NULL,
+  `float_col` float(5,2) DEFAULT NULL,
+  `decimal_col` decimal(5,2) DEFAULT NULL,
+  `datetime_col` datetime DEFAULT NULL,
+  `date_col` date DEFAULT NULL,
+  PRIMARY KEY (`serial_col`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+
+INSERT INTO `pso_data_validator`.`test_data_types_mysql_row` VALUES
+(1,10,'row1_text','1','row1_varchar',10.10,10.10,'2016-06-22 19:10:25','2020-01-01'),
+(2,20,'row2_text','2','row2_varchar',20.20,20.20,'2016-06-22 19:20:25','2020-02-02'),
+(3,30,'row3_text','3','row3_varchar',30.20,30.20,'2016-06-22 19:30:25','2020-03-03'),
+(4,40,'row4_text','4','row4_varchar',40.20,40.40,'2016-06-22 19:30:45','2020-04-04'),
+(5,50,'row5_text','5','row5_varchar',50.20,50.40,'2016-06-22 19:50:44','2020-05-05'),
+(6,60,'row6_text','6','row6_varchar',60.20,60.40,'2016-01-22 19:51:44','2020-06-06'),
+(7,70,'row7_text','7','row7_varchar',70.20,70.40,'2017-01-22 19:51:44','2020-06-07'),
+(8,80,'row8_text','8','row8_varchar',80.20,80.40,'2018-01-22 19:51:44','2020-06-08'),
+(9,90,'row9_text','9','row9_varchar',90.20,90.40,'2019-01-22 19:51:44','2020-06-09'),
+(10,100,'row10_text','1','row10_varchar',100.20,100.40,'2020-01-22 19:51:44','2021-06-09');
+COMMIT;
+
+DROP TABLE `pso_data_validator`.`dvt_core_types`;
+CREATE TABLE `pso_data_validator`.`dvt_core_types`
 (   id              int NOT NULL PRIMARY KEY
 ,   col_int8        tinyint
 ,   col_int16       smallint
@@ -34,7 +76,7 @@ CREATE TABLE pso_data_validator.dvt_core_types
 ) COMMENT='Core data types integration test table';
 
 SET time_zone = '+00:00';
-INSERT INTO pso_data_validator.dvt_core_types VALUES
+INSERT INTO `pso_data_validator`.`dvt_core_types` VALUES
 (1,1,1,1,1
  ,12345678901234567890,1234567890123456789012345,123.11,123456.1,12345678.1
  ,'Hello DVT','A ','Hello DVT'
