@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1165,7 +1165,7 @@ def test_row_validation_core_types(mock_conn):
             "-tbls=pso_data_validator.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--concat=*",
+            "--hash=*",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
