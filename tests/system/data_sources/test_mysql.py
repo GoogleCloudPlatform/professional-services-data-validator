@@ -23,10 +23,11 @@ from data_validation import cli_tools, data_validation, consts, exceptions
 #       https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test
 
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+MYSQL_USER = os.getenv("MYSQL_USER", "dvt")
 CONN = {
     "source_type": "MySQL",
     "host": MYSQL_HOST,
-    "user": "root",
+    "user": MYSQL_USER,
     "password": os.getenv("MYSQL_PASSWORD"),
     "port": 3306,
     "database": "guestbook",
@@ -35,7 +36,7 @@ CONN = {
 CONN_INTEGRATION = {
     "source_type": "MySQL",
     "host": MYSQL_HOST,
-    "user": "root",
+    "user": MYSQL_USER,
     "password": os.getenv("MYSQL_PASSWORD"),
     "port": 3306,
     "database": "pso_data_validator",
