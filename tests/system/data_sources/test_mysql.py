@@ -22,9 +22,10 @@ from data_validation import cli_tools, data_validation, consts, exceptions
 # TODO: To use this code I would need to use the Cloud SQL Proxy.
 #       https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test
 
+MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 CONN = {
     "source_type": "MySQL",
-    "host": os.getenv("MYSQL_HOST"),
+    "host": MYSQL_HOST,
     "user": "root",
     "password": os.getenv("MYSQL_PASSWORD"),
     "port": 3306,
@@ -33,7 +34,7 @@ CONN = {
 }
 CONN_INTEGRATION = {
     "source_type": "MySQL",
-    "host": os.getenv("MYSQL_HOST"),
+    "host": MYSQL_HOST,
     "user": "root",
     "password": os.getenv("MYSQL_PASSWORD"),
     "port": 3306,

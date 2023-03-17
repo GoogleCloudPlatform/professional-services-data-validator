@@ -38,8 +38,10 @@ steps:
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_mysql'
-  - 'MYSQL_HOST=35.184.142.16'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  #- 'MYSQL_HOST=35.184.142.16'
   - 'MYSQL_PASSWORD=password'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mysql=tcp:3306'
   waitFor: ['-']
 - id: integration_postgres
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
