@@ -374,7 +374,7 @@ def get_table_map(client, allowed_schemas=None):
 
 def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
-    score_cutoff = args.score_cutoff or 0.8
+    score_cutoff = args.score_cutoff or 1
 
     mgr = state_manager.StateManager()
     source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
