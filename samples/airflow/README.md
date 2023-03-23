@@ -1,14 +1,24 @@
-# Data Validation on Airflow (Cloud Composer)
+# Data Validation on Airflow (ideally Cloud Composer)
 
--- explain how to deploy this on Airflow/Composer.
--- Under the high level overview we can include this 'Warning' section. 
+DVT on Airflow makes use of our [latest released version of DVT library on PyPi](https://pypi.org/project/google-pso-data-validator/#history).
+There is no specific operator for it at the moment, so the DAG uses the
+main structures of the library itself.
 
-Requirements to run the DAG:
-- Airflow environment created with Public IP (Private environment disabled)
-- Create an Airflow variable called 'gcp_project' with the GCP Project ID
+The input is a JSON data representation of the DVT run configuration. 
 
+By default, the DAG will output the results to BigQuery as a result handler.
 
-### Warning 
+### Requirements to run the DAG:
+- Pre-existing Airflow environment created with Public IP (Private environment disabled)
+- Create an Airflow variable called `gcp_project with the GCP Project ID
+
+### Instructions
+
+1. Download the Python file with the DAG
+2. Update the JSON configuration to your use case (source, target tables, etc)
+3. Upload it to the DAGs folder of your Airflow environment
+
+### Limitations 
 
 The Airflow DAG expects the raw config JSON which is not the same as a YAML config converted to JSON.
 
