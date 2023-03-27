@@ -45,7 +45,6 @@ def _infer_object_array_dtype(x):
             'mixed-integer-float': dt.float64,
             'decimal': dt.float64,
             'complex': dt.binary,
-            'categorical': dt.category,
             'boolean': dt.boolean,
             'datetime64': dt.timestamp,
             'datetime': dt.timestamp,
@@ -55,7 +54,7 @@ def _infer_object_array_dtype(x):
             'timedelta': dt.interval,
             'time': dt.time,
             'period': dt.binary,
-            'empty': dt.binary,
+            'empty': dt.null,
             'unicode': dt.string,
         }[classifier]
 

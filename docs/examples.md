@@ -368,7 +368,7 @@ validations:
     target_calculated_columns:
     - name
     type: custom
-    ibis_expr: ibis.expr.api.StringValue.replace
+    ibis_expr: ibis.expr.types.StringValue.replace
     params:
     - pattern: '/'
     - replacement: '-'

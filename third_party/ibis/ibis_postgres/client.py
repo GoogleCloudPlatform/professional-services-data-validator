@@ -12,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations
-import parsy
-import re
-import ast
-import toolz
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from ibis import util
 
 import sqlalchemy as sa
-
 from ibis.backends.postgres import Backend as PostgresBackend
+from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
 
 
 def _metadata(self, query: str) -> sch.Schema:
@@ -43,67 +38,8 @@ def _metadata(self, query: str) -> sch.Schema:
         type_info = con.execute(
             sa.text(type_info_sql).bindparams(raw_name=raw_name)
         )
-        tuples =  [(col, _get_type(typestr)) for col, typestr in type_info]
-        print (tuples)
-        return tuples
+        yield from ((col, _get_type(typestr)) for col, typestr in type_info)
         con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
-
-
-_BRACKETS = "[]"
-_STRING_REGEX = (
-    """('[^\n'\\\\]*(?:\\\\.[^\n'\\\\]*)*'|"[^\n"\\\\"]*(?:\\\\.[^\n"\\\\]*)*")"""
-)
-
-
-def spaceless(parser):
-    return SPACES.then(parser).skip(SPACES)
-
-
-def spaceless_string(*strings: str):
-    return spaceless(
-        parsy.alt(*(parsy.string(s, transform=str.lower) for s in strings))
-    )
-
-
-SPACES = parsy.regex(r"\s*", re.MULTILINE)
-RAW_NUMBER = parsy.decimal_digit.at_least(1).concat()
-SINGLE_DIGIT = parsy.decimal_digit
-PRECISION = SCALE = NUMBER = RAW_NUMBER.map(int)
-
-LPAREN = spaceless_string("(")
-RPAREN = spaceless_string(")")
-
-LBRACKET = spaceless_string("[")
-RBRACKET = spaceless_string("]")
-
-LANGLE = spaceless_string("<")
-RANGLE = spaceless_string(">")
-
-COMMA = spaceless_string(",")
-COLON = spaceless_string(":")
-SEMICOLON = spaceless_string(";")
-
-RAW_STRING = parsy.regex(_STRING_REGEX).map(ast.literal_eval)
-FIELD = parsy.regex("[a-zA-Z_][a-zA-Z_0-9]*")
-
-
-def _parse_numeric(
-    text: str, ddp: tuple[int | None, int | None] = (None, None)
-) -> dt.DataType:
-    decimal = spaceless_string("decimal", "numeric").then(
-        parsy.seq(LPAREN.then(PRECISION.skip(COMMA)), SCALE.skip(RPAREN))
-        .optional(ddp)
-        .combine(dt.Decimal)
-    )
-
-    brackets = spaceless(LBRACKET).then(spaceless(RBRACKET))
-
-    pg_array = parsy.seq(decimal, brackets.at_least(1).map(len)).combine(
-        lambda value_type, n: toolz.nth(n, toolz.iterate(dt.Array, value_type))
-    )
-
-    ty = pg_array | decimal
-    return ty.parse(text)
 
 
 def _get_type(typestr: str) -> dt.DataType:
@@ -124,41 +60,4 @@ def _get_type(typestr: str) -> dt.DataType:
     return _parse_numeric(typestr)
 
 
-_type_mapping = {
-    "bigint": dt.int64,
-    "boolean": dt.boolean,
-    "bytea": dt.binary,
-    "character varying": dt.string,
-    "character": dt.string,
-    "character(1)": dt.string,
-    "date": dt.date,
-    "double precision": dt.float64,
-    "geography": dt.geography,
-    "geometry": dt.geometry,
-    "inet": dt.inet,
-    "integer": dt.int32,
-    "interval": dt.interval,
-    "json": dt.json,
-    "jsonb": dt.json,
-    "line": dt.linestring,
-    "macaddr": dt.macaddr,
-    "macaddr8": dt.macaddr,
-    "numeric": dt.float64,
-    "point": dt.point,
-    "polygon": dt.polygon,
-    "real": dt.float32,
-    "smallint": dt.int16,
-    "text": dt.string,
-    # NB: this isn't correct because we're losing the "with time zone"
-    # information (ibis doesn't have time type that is time-zone aware), but we
-    # try to do _something_ here instead of failing
-    "time with time zone": dt.time,
-    "time without time zone": dt.time,
-    "timestamp with time zone": dt.Timestamp("UTC"),
-    "timestamp without time zone": dt.timestamp,
-    "uuid": dt.uuid,
-}
-
-# Does this work?
 PostgresBackend._metadata = _metadata
-#pdt._get_type = _new_get_type

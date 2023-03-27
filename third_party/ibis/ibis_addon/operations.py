@@ -111,10 +111,12 @@ def format_hashbytes_teradata(translator, op):
 
 
 def strftime_bigquery(translator, op):
-    """Timestamp formatting. Copied from bigquery_ibis in order to inject TIMESTAMP cast"""
-    arg_type = op.arg.type()
+    """Timestamp formatting."""
+    arg = op.arg
+    format_str = op.format_str
+    arg_type = arg.output_dtype
     strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
-    fmt_string = translator.translate(op.format_string)
+    fmt_string = translator.translate(format_str)
     arg_formatted = translator.translate(arg)
     if isinstance(arg_type, dt.Timestamp):
         return "FORMAT_{}({}, {}({}), {!r})".format(
@@ -127,7 +129,6 @@ def strftime_bigquery(translator, op):
     return "FORMAT_{}({}, {})".format(
         strftime_format_func_name, fmt_string, arg_formatted
     )
-
 
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
