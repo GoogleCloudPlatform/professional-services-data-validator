@@ -47,5 +47,5 @@ class GCPSecretManager:
             # Return the decoded payload.
             payload = response.payload.data.decode("UTF-8")
             return payload
-        except:
+        except BaseException:
             return secret_id
