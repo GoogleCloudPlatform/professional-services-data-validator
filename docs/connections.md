@@ -22,7 +22,7 @@ Secret manager flags are optional
 --secret-manager-project-id <SECRET_PROJECT_ID>
 
 ```
-data-validation connections add --connection-name CONN_NAME source-type --secret-manager-type <None|GCP> --secret-manager-project-id <SECRET_PROJECT_ID>
+data-validation connections add --secret-manager-type <None|GCP> --secret-manager-project-id <SECRET_PROJECT_ID> --connection-name CONN_NAME source-type 
 ```
 
 ## Create a sample BigQuery connection:
