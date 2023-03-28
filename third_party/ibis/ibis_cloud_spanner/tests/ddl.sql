@@ -52,3 +52,23 @@ CREATE TABLE array_table
   id INT64,
 )
 PRIMARY KEY (id);
+
+CREATE TABLE dvt_core_types (
+    id              INT64
+,   col_int8        INT64
+,   col_int16       INT64
+,   col_int32       INT64
+,   col_int64       INT64
+,   col_dec_20      NUMERIC
+,   col_dec_38      NUMERIC
+,   col_dec_10_2    NUMERIC
+,   col_float32     FLOAT64
+,   col_float64     FLOAT64
+,   col_varchar_30  STRING(30)
+,   col_char_2      STRING(2)
+,   col_string      STRING(MAX)
+,   col_date        DATE
+,   col_datetime    TIMESTAMP
+,   col_tstz        TIMESTAMP
+) PRIMARY KEY (id);
+
