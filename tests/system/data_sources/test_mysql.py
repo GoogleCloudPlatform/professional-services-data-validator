@@ -19,9 +19,6 @@ from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts, exceptions
 
 
-# TODO: To use this code I would need to use the Cloud SQL Proxy.
-#       https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test
-
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "dvt")
 CONN = {
