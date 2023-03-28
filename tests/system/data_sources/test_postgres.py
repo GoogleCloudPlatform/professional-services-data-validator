@@ -496,10 +496,6 @@ def test_schema_validation_core_types(mock_conn):
 )
 def test_column_validation_core_types(mock_conn):
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_datetime,col_tstz to --sum string below when issue-XXX is complete. Or change whole string to * if YYY is also complete.
-    # TODO Add col_dec_20,col_dec_38 to --sum string below when issue-YYY is complete. Or change whole string to * if XXX is also complete.
-    # TODO Change --min string below to * when issue-YYY is complete.
-    # TODO Change --max string below to * when issue-YYY is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -508,9 +504,9 @@ def test_column_validation_core_types(mock_conn):
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--sum=*",
+            "--min=*",
+            "--max=*",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
