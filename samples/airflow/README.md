@@ -10,13 +10,13 @@ By default, the DAG will output the results to BigQuery as a result handler.
 
 ### Requirements to run the DAG:
 - Pre-existing Airflow environment created with Public IP (Private environment disabled)
-- Create an Airflow variable called `gcp_project with the GCP Project ID
+- Create an Airflow variable called `gcp_project` with the GCP Project ID
 
 ### Instructions
 
-1. Download the Python file with the DAG
-2. Update the JSON configuration to your use case (source, target tables, etc)
-3. Upload it to the DAGs folder of your Airflow environment
+1. Download the DAG file in this directory
+2. Update the JSON configuration for your use case (update table names, etc.)
+3. Upload it to the DAGs folder in your Airflow environment
 
 ### Limitations 
 
