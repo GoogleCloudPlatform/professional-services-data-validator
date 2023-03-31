@@ -33,6 +33,13 @@ def impala_connect(
     database="default",
     auth_mechanism="PLAIN",
     kerberos_service_name="impala",
+    use_ssl=False,
+    timeout=45,
+    ca_cert=None,
+    user=None,
+    password=None,
+    pool_size=8,
+    hdfs_client=None
 ):
     auth_mechanism = (auth_mechanism, "PLAIN")[auth_mechanism is None]
     database = (database, "default")[database is None]
@@ -40,12 +47,23 @@ def impala_connect(
     kerberos_service_name = (kerberos_service_name, "impala")[
         kerberos_service_name is None
     ]
+    use_ssl = (use_ssl, False)[use_ssl is None]
+    timeout = (timeout, 45)[timeout is None]
+    pool_size = (pool_size, 8)[pool_size is None]
+    
     return connect(
         host=host,
         port=int(port),
         database=database,
         auth_mechanism=auth_mechanism,
         kerberos_service_name=kerberos_service_name,
+        use_ssl=use_ssl,
+        timeout=timeout,
+        ca_cert=ca_cert,
+        user=user,
+        password=password,
+        pool_size=pool_size,
+        hdfs_client=hdfs_client
     )
 
 

@@ -128,6 +128,13 @@ CONNECTION_SOURCE_FIELDS = {
             "kerberos_service_name",
             "Desired Kerberos service name ('impala' if not provided)",
         ],
+        ["use_ssl", "Use SSL when connecting to HiveServer2 (default is False)"],
+        ["timeout", "Connection timeout in seconds when communicating with HiveServer2 (default is 45)"],
+        ["ca_cert", "Local path to 3rd party CA certificate or copy of server certificate for self-signed certificates. If SSL is enabled, but this argument is None, then certificate validation is skipped."],
+        ["user", "LDAP user to authenticate"],
+        ["password", "LDAP password to authenticate"],
+        ["pool_size", "Size of the connection pool. Typically this is not necessary to configure. (default is 8)"],
+        ["hdfs_client", "An existing HDFS client"],
     ],
     "DB2": [
         ["host", "Desired DB2 host"],
