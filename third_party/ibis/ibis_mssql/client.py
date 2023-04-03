@@ -15,6 +15,7 @@
 
 import contextlib
 import datetime
+import decimal
 import getpass
 
 import sqlalchemy as sa
@@ -256,6 +257,7 @@ class MSSQLClient(alch.AlchemyClient):
             float: 'float64',
             str: 'string',
             datetime.datetime: 'timestamp',
+            decimal.Decimal: 'Decimal'
         }
 
         with self._execute(limited_query, results=True) as cur:

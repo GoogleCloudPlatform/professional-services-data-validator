@@ -124,7 +124,7 @@ def integration_mysql(session):
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_mysql.py"
-    expected_env_vars = ["MYSQL_HOST", "MYSQL_PASSWORD"]
+    expected_env_vars = ["PROJECT_ID", "MYSQL_PASSWORD", "CLOUD_SQL_CONNECTION"]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)

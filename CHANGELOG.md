@@ -2,6 +2,37 @@
 
 ## Untagged
 
+## [3.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.9.0...v3.0.0) (2023-03-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* issue673 optimize CLI tools arg parser ([#701](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/701))
+
+### Features
+
+* :sparkles: Add support for source/target inline sql queries for `validate custom-query` command ([#734](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/734)) ([c5e7a37](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c5e7a37780e8c87168938d7d60592bfe5c4b2147))
+* gcp secret manger support for DVT  ([#704](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/704)) ([d6c40f1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d6c40f1f780f634c9b31a5a6ae9e0fc9312eb5ee))
+* ibis_bigquery strftime support for DATETIME columns ([#737](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/737)) ([b1141de](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b1141de481216f2adfe4cabbf3cb69efac1d5c89))
+
+
+### Bug Fixes
+
+* Add support for numeric and precision with length and precision in Postgres Custom Query ([#723](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/723)) ([742b77e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/742b77ef18741e9eee52d71f954b1400395fe5c8))
+* Adding Decimal datatype support for MSSQL custom query validation ([#771](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/771)) ([0d5c5eb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0d5c5eb88a9979a290dbbe6a2d84caecbb04f39c))
+* Better detection of Oracle client ([#736](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/736)) ([efce0b8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/efce0b838d13441e0a5940f394d5be73cfa52fce))
+* Cater for query driven comparisons in date format override code ([#733](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/733)) ([0a22643](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0a226436605de93af36894cf6497f9d7dcb337c0))
+* issue 740 teradata strftime function ([#747](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/747)) ([9fd102a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9fd102a98de5bf0e2ac824c3f2b29f287ab4709d))
+* issue673 optimize CLI tools arg parser ([#701](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/701)) ([26bb8e9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/26bb8e9f9a5301361f632a9eb1dd13aaf67628e0))
+* Protect column and row validation calculated column names from Oracle 30 character identifier limit ([#749](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/749)) ([89413c1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/89413c19196d4f93c94c6363895c386ed826438f))
+* remove secret manager warnings  ([#781](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/781)) ([7e72bfd](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7e72bfde4adbe07c6f7ad99c104e074652a84bed))
+
+
+### Documentation
+
+* formatting fixes and fix broken link ([#739](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/739)) ([7306dfc](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7306dfc95f3f3816703a5f31da7bc2e8f0ec21da))
+* oracleuserpriv ([#746](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/746)) ([a7889bf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a7889bf7c8b5106a4144a73a0767c2b59b4c09b0))
+
 ## [2.9.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.8.0...v2.9.0) (2023-02-16)
 
 

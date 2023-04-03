@@ -456,13 +456,12 @@ target. The find-tables tool:
 -   Finally, it prints a JSON list of tables which can be a reference for the
     validation run config.
 
-Note that our score cutoff default is a 0.8, which was manually tested to be an
-accurate value. If no matches occur, reduce this value.
+Note that our score cutoff default is 1. If no matches occur, reduce this value as deemed necessary.
 
 ```
 data-validation find-tables --source-conn source --target-conn target \
     --allowed-schemas pso_data_validator \
-    --score-cutoff 0.8
+    --score-cutoff 1
 ```
 
 ### Using Beta CLI Features
@@ -492,7 +491,7 @@ for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()`, and `MAX()`
 are supported.
 
 Here is a sample aggregate config:
-```
+```yaml
 validations:
 - aggregates:
     - field_alias: count
@@ -585,7 +584,7 @@ in the resulting query. For example, with the following YAML config...
 
 is equivalent to the following SQL query...
 
-```
+```sql
 SELECT
   CONCAT(rtrim_col_a, rtrim_col_b) AS concat_col_a_col_b
 FROM (

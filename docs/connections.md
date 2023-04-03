@@ -22,7 +22,7 @@ Secret manager flags are optional
 --secret-manager-project-id <SECRET_PROJECT_ID>
 
 ```
-data-validation connections add --connection-name CONN_NAME source-type --secret-manager-type <None|GCP> --secret-manager-project-id <SECRET_PROJECT_ID>
+data-validation connections add --secret-manager-type <None|GCP> --secret-manager-project-id <SECRET_PROJECT_ID> --connection-name CONN_NAME source-type 
 ```
 
 ## Create a sample BigQuery connection:
@@ -332,7 +332,15 @@ Please note AlloyDB supports same connection config as Postgres.
     "host": "127.0.0.1",
     "port": 10000,
     "database": "default",
-    "auth-mechanism":"PLAIN"
+    "auth-mechanism": "PLAIN",
+    # (Optional)
+    "use-ssl": False,
+    "timeout": 45,
+    "ca-cert": "path-certificate",
+    "user": "user",
+    "password": "password",
+    "pool-size": 10,
+    "hdfs-client": "hdfs-client"
 }
 ```
 

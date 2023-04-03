@@ -131,7 +131,7 @@ Please replace $YOUR_PROJECT_ID with the correct project-id where you created yo
 
 #### Query results from a BigQuery results table
 
-````shell script
+````sql
 SELECT
   run_id,
   validation_name,
