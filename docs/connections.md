@@ -332,7 +332,15 @@ Please note AlloyDB supports same connection config as Postgres.
     "host": "127.0.0.1",
     "port": 10000,
     "database": "default",
-    "auth-mechanism":"PLAIN"
+    "auth-mechanism": "PLAIN",
+    # (Optional)
+    "use-ssl": False,
+    "timeout": 45,
+    "ca-cert": "path-certificate",
+    "user": "user",
+    "password": "password",
+    "pool-size": 10,
+    "hdfs-client": "hdfs-client"
 }
 ```
 
