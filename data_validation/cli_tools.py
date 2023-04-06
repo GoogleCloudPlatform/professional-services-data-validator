@@ -990,7 +990,9 @@ def list_connections():
     connections = mgr.list_connections()
 
     for conn_name in connections:
-        logging.info(f"Connection Name: {conn_name}")
+        logging.info(
+            f"Connection Name: {conn_name}, source_type : {clients.get_data_client(mgr.get_connection_config(conn_name))}"
+        )
 
 
 def get_connection(connection_name):
