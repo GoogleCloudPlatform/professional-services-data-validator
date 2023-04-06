@@ -29,6 +29,7 @@ from third_party.ibis.ibis_mssql.compiler import MSSQLDialect
 
 import pyodbc  # NOQA fail early if the driver is missing
 
+
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.UNIQUEIDENTIFIER)
 def sa_string(_, satype, nullable=True):
     return dt.String(nullable=nullable)
@@ -37,6 +38,16 @@ def sa_string(_, satype, nullable=True):
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.BIT)
 def sa_boolean(_, satype, nullable=True):
     return dt.Boolean(nullable=nullable)
+
+
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.DATETIMEOFFSET)
+def sa_timestamp_tz(_, satype, nullable=True):
+    return dt.Timestamp("UTC", nullable=nullable)
+
+
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.FLOAT)
+def sa_float64(_, satype, nullable=True):
+    return dt.Float64(nullable=nullable)
 
 
 class MSSQLTable(alch.AlchemyTable):
@@ -65,29 +76,29 @@ class MSSQLClient(alch.AlchemyClient):
 
     def __init__(
         self,
-        host='localhost',
+        host="localhost",
         user=None,
         password=None,
         port=1433,
-        database='master',
+        database="master",
         url=None,
-        driver='pyodbc',
-        odbc_driver='ODBC Driver 17 for SQL Server',
+        driver="pyodbc",
+        odbc_driver="ODBC Driver 17 for SQL Server",
     ):
         if url is None:
-            if driver != 'pyodbc':
+            if driver != "pyodbc":
                 raise NotImplementedError(
-                    'pyodbc is currently the only supported driver'
+                    "pyodbc is currently the only supported driver"
                 )
             user = user or getpass.getuser()
             url = sa.engine.url.URL(
-                'mssql+pyodbc',
+                "mssql+pyodbc",
                 host=host,
                 port=port,
                 username=user,
                 password=password,
                 database=database,
-                query={'driver': odbc_driver},
+                query={"driver": odbc_driver},
             )
         else:
             url = sa.engine.url.make_url(url)
@@ -161,9 +172,7 @@ class MSSQLClient(alch.AlchemyClient):
         """List all databases for client to connect to."""
         return [
             row.name
-            for row in self.con.execute(
-                'SELECT name FROM master.dbo.sysdatabases'
-            )
+            for row in self.con.execute("SELECT name FROM master.dbo.sysdatabases")
         ]
 
     def list_schemas(self):
@@ -173,8 +182,8 @@ class MSSQLClient(alch.AlchemyClient):
     def set_database(self, name):
         """Set current database that client is connected to."""
         raise NotImplementedError(
-            'Cannot set database with MSSQL client. To use a different'
-            ' database, use client.database({!r})'.format(name)
+            "Cannot set database with MSSQL client. To use a different"
+            " database, use client.database({!r})".format(name)
         )
 
     @property
@@ -226,9 +235,7 @@ class MSSQLClient(alch.AlchemyClient):
             A list with all tables available for the current database.
         """
         if database is not None and database != self.current_database:
-            return self.database(name=database).list_tables(
-                like=like, schema=schema
-            )
+            return self.database(name=database).list_tables(like=like, schema=schema)
         else:
             parent = super(MSSQLClient, self)
             return parent.list_tables(like=like, schema=schema)
@@ -246,25 +253,23 @@ class MSSQLClient(alch.AlchemyClient):
         -------
         table : TableExpr
         """
-        limited_query = 'SELECT TOP 0 * FROM ({}) t0'.format(query)
+        limited_query = "SELECT TOP 0 * FROM ({}) t0".format(query)
         schema = self._get_schema_using_query(limited_query)
         return ops.SQLQueryResult(query, schema, self).to_expr()
 
     def _get_schema_using_query(self, limited_query):
         type_map = {
-            int: 'int64',
-            bool: 'boolean',
-            float: 'float64',
-            str: 'string',
-            datetime.datetime: 'timestamp',
-            decimal.Decimal: 'Decimal'
+            int: "int64",
+            bool: "boolean",
+            float: "float64",
+            str: "string",
+            datetime.datetime: "timestamp",
+            decimal.Decimal: "Decimal",
         }
 
         with self._execute(limited_query, results=True) as cur:
             names = [row[0] for row in cur.proxy._cursor_description()]
-            ibis_types = [
-                type_map[row[1]] for row in cur.proxy._cursor_description()
-            ]
+            ibis_types = [type_map[row[1]] for row in cur.proxy._cursor_description()]
         return sch.Schema(names, ibis_types)
 
     def get_schema(self, name, schema=None):
