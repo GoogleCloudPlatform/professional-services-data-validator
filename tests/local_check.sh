@@ -14,25 +14,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Step 1: After finishing your development, activate your virtual environment
-# Step 2: Execute this script only after the virtual env activation
+# - After finishing your development, activate your virtual environment
+# - Execute this script only after the virtual env activation
+
+# confirm you have all the libraries needed for the full check
+echo "Starting LIBRARIES INSTALLATION..."
+pip install pytest pytest-cov pyfakefs flake8 black
+echo "Finished LIBRARIES INSTALLATION."
 
 # check unit tests and coverage
-echo "Start TEST COVERAGE"
+echo "Starting TEST COVERAGE..."
 pytest --quiet --cov=data_validation --cov=tests.unit --cov-append --cov-config=.coveragerc --cov-report=term tests/unit
-echo "Finish TEST COVERAGE"
+echo "Finished TEST COVERAGE."
 
 # check code style
-echo "Start CODE STYLE (FLAKE8)"
+echo "Starting CODE STYLE (FLAKE8)..."
 flake8 data_validation tests
-echo "Finish CODE STYLE (FLAKE8)"
+echo "Finished CODE STYLE (FLAKE8)."
 
 # check code formatting and reformat, if needed
-echo "Start CODE FORMATTING (BLACK)"
+echo "Starting CODE FORMATTING (BLACK)..."
 black data_validation samples tests noxfile.py setup.py
-echo "Finish CODE FORMATTING (BLACK)"
+echo "Finished CODE FORMATTING (BLACK)."
 
 # execute all previous checks in a virtual env the same way that is run by our build tool
-echo "Start ALL CHECKS IN VENV (NOX)"
+echo "Starting ALL CHECKS IN VENV (NOX)..."
 python3 -m nox --envdir ~/dvt/envs/ -s unit_small blacken lint
-echo "Finish ALL CHECKS IN VENV (NOX)"
+echo "Finished ALL CHECKS IN VENV (NOX)."
