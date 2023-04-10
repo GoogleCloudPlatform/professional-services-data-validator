@@ -32,7 +32,6 @@ import ibis.backends.pandas.execution.util as pandas_util
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
-
 """ The QueryBuilder for retreiving random row values to filter against."""
 
 ######################################
@@ -47,22 +46,25 @@ RANDOM_SORT_SUPPORTS = {
     ibis.backends.pandas.Backend: "NA",
     ibis.backends.bigquery.Backend: "RAND()",
     # clients.TeradataClient: None,
-    # ImpalaClient: "RAND()",
+    # ibis.backends.impala.Backend: "RAND()",
     # clients.OracleClient: "DBMS_RANDOM.VALUE",
     ibis.backends.postgres.Backend: "RANDOM()",
     # clients.MSSQLClient: "NEWID()",
 }
 
 
-# class RandomSortExpr(Value, SortExpr):
-#     _dtype = rlz.string
-#     _name = "RandomSortExpr"
+# class RandomSortExpr(Expr):
+#     arg = rlz.string
+#     expr = rlz.any
+#     # _dtype = rlz.string
+#     
+#     # _name = "RandomExpr"
 
 #     def __init__(self, arg):
 #         self._arg = arg
 
 #     def type(self):
-#         return self._dtype
+#         return self.output_dtype
 
 
 # class RandomSortKey(ops.SortKey):
@@ -72,8 +74,8 @@ RANDOM_SORT_SUPPORTS = {
 #     def equals(self, other, cache=None):
 #         return isinstance(other, RandomSortKey)
 
-#     def output_type(self, expr):
-#         return RandomSortExpr(expr)
+#     # def output_type(self, expr):
+#     #     return RandomSortExpr()
 
 #     def resolve_name(self):
 #         return "RandomSortKey"
@@ -121,9 +123,10 @@ class RandomRowBuilder(object):
             if type(data_client) == clients.TeradataClient:
                 return table
 
-            return table.order_by(
-                ibis.random()
-            )
+            # return table.order_by(
+            #     RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
+            # )
+            return table.order_by(ibis.random())
 
         logging.warning(
             "Data Client %s Does Not Enforce Random Sort on Sample",

@@ -19,9 +19,11 @@ import pyarrow
 from google.cloud import bigquery
 from ibis.backends.bigquery.client import _DTYPE_TO_IBIS_TYPE
 
-# BigQuery BIGNUMERIC support needs to be pushed to Ibis
+# Ibis 5.0.0 has a bug (https://github.com/ibis-project/ibis/issues/5765) 
+# for BIGNUMERIC. Once the bug fix is merged, we can remove these two lines.
 bigquery._pandas_helpers.BQ_TO_ARROW_SCALARS["BIGNUMERIC"] = pyarrow.decimal256
 _DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.Decimal(76, 38)
+
 
 def _infer_object_array_dtype(x):
     # Added support for decimal in pandas

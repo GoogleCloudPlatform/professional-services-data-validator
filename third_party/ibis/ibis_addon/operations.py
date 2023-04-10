@@ -40,7 +40,7 @@ from ibis.backends.pandas import client as _pandas_client
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 
-
+from ibis.backends.mysql.compiler import MySQLExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 # from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 # from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
@@ -227,6 +227,7 @@ def sa_cast_postgres(t, op):
 # StringValue.hash = compile_hash
 # BinaryValue.hashbytes = compile_hashbytes
 # StringValue.hashbytes = compile_hashbytes
+
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
@@ -236,8 +237,9 @@ AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[HashBytes] = format_hashbytes_base
-# ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
-# ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
+MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
+ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
+ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 # OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 # OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 # OracleExprTranslator._registry[ToChar] = sa_format_to_char

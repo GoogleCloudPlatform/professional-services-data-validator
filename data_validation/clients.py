@@ -18,17 +18,15 @@ import warnings
 import logging
 import google.oauth2.service_account
 import ibis
-# import ibis_bigquery
 import pandas
 import third_party.ibis.ibis_addon.datatypes
 import third_party.ibis.ibis_postgres.client
 # import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 from google.cloud import bigquery
-# from ibis.backends.mysql.client import MySQLClient
 # from ibis.backends.pandas.client import PandasClient
 # from ibis.backends.postgres.client import PostgreSQLClient
 # from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
-# from third_party.ibis.ibis_impala.api import impala_connect
+from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
 
@@ -166,7 +164,7 @@ def get_ibis_table_schema(client, schema_name, table_name):
     database_name (str): Database name (generally default is used)
     """
     if type(client) in [
-        # MySQLClient, 
+        ibis.backends.mysql.Backend, 
         ibis.backends.postgres.Backend,
     ]:
         return client.table(table_name).schema()
@@ -281,7 +279,7 @@ def get_max_column_length(client):
 
 CLIENT_LOOKUP = {
     "BigQuery": get_bigquery_client,
-    # "Impala": impala_connect,
+    "Impala": impala_connect,
     "MySQL": ibis.mysql.connect,
     "Oracle": OracleClient,
     "FileSystem": get_pandas_client,

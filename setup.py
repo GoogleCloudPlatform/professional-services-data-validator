@@ -34,7 +34,7 @@ dependencies = [
     "fsspec==2023.1.0",
     "google-api-python-client==1.12.8",
     "ibis-framework==5.0.0",
-    "impyla==0.17.0",
+    "impyla==0.18.0",
     "SQLAlchemy==1.4.45",
     "PyMySQL==1.0.2",
     "psycopg2-binary==2.9.3",
