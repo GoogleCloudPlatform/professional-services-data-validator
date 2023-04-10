@@ -50,6 +50,9 @@ from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
+# from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
+# from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
+
 
 # avoid errors if Db2 is not installed and not needed
 try:
@@ -57,9 +60,6 @@ try:
 except Exception:
     DB2ExprTranslator = None
 
-
-# from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
-# from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
 class BitXor(Reduction):
     """Aggregate bitwise XOR operation."""
