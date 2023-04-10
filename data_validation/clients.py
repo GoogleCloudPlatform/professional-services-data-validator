@@ -19,7 +19,6 @@ import logging
 import google.oauth2.service_account
 import ibis
 import pandas
-import third_party.ibis.ibis_addon.datatypes
 import third_party.ibis.ibis_postgres.client
 # import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 from google.cloud import bigquery
@@ -64,11 +63,6 @@ try:
     from third_party.ibis.ibis_oracle.client import OracleClient
 except Exception:
     OracleClient = _raise_missing_client_error("pip install cx_Oracle")
-
-try:
-    from third_party.ibis.ibis_mssql.client import MSSQLClient
-except Exception:
-    MSSQLClient = _raise_missing_client_error("pip install pyodbc")
 
 try:
     from third_party.ibis.ibis_snowflake.client import (
@@ -141,7 +135,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         # OracleClient,
         ibis.backends.postgres.Backend,
         # DB2Client,
-        # MSSQLClient,
+        ibis.backends.mssql.Backend,
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif type(client) in [ibis.backends.pandas.Backend]:
@@ -166,6 +160,7 @@ def get_ibis_table_schema(client, schema_name, table_name):
     if type(client) in [
         ibis.backends.mysql.Backend, 
         ibis.backends.postgres.Backend,
+        ibis.backends.mssql.Backend,
     ]:
         return client.table(table_name).schema()
     else:
@@ -185,7 +180,7 @@ def list_tables(client, schema_name):
         # OracleClient,
         ibis.backends.postgres.Backend,
         # DB2Client,
-        # MSSQLClient,
+        ibis.backends.mssql.Backend,
     ]:
         return client.list_tables()
     return client.list_tables(database=schema_name)
@@ -286,7 +281,7 @@ CLIENT_LOOKUP = {
     "Postgres": ibis.postgres.connect,
     "Redshift": ibis.postgres.connect,
     "Teradata": TeradataClient,
-    "MSSQL": MSSQLClient,
+    "MSSQL": ibis.mssql.connect,
     "Snowflake": snowflake_connect,
     # "Spanner": spanner_connect,
     "DB2": DB2Client,

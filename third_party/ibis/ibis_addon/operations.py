@@ -22,7 +22,6 @@ extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
-
 import ibis
 import sqlalchemy as sa
 
@@ -30,25 +29,32 @@ import ibis.expr.api
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 
-from data_validation.clients import _raise_missing_client_error
-from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
-from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast
+from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast, StringLength, RandomScalar, IfNull, StringJoin
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
+
+
+from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.impala.compiler import ImpalaExprTranslator
-from ibis.backends.pandas import client as _pandas_client
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
-
 from ibis.backends.mysql.compiler import MySQLExprTranslator
+from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
+from ibis.backends.mssql.compiler import MsSqlExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 # from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
-# from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
-from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
+
+from ibis.backends.mssql.datatypes import _MSSQL_TYPE_MAP
+from sqlalchemy.dialects import mssql
+
+from ibis.backends.base.sql.alchemy import unary, fixed_arity as sa_fixed_arity
+from ibis.backends.base.sql.registry import fixed_arity
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
+# Needs to be VARCHAR insteaad of NVARCHAR for Hash function
+_MSSQL_TYPE_MAP[dt.String] = mssql.VARCHAR
 
 # class HashBytes(ValueOp):
 #     arg = rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)])
@@ -220,8 +226,12 @@ def sa_cast_postgres(t, op):
 
     return sa.cast(sa_arg, sa_type)
 
+def _sa_string_join(t, op):
+    return sa.func.concat(*map(t.translate, op.arg))
 
-# _pandas_client._inferable_pandas_dtypes["floating"] = _pandas_client.dt.float64
+def sa_format_new_id(t, op):
+    return sa.func.NEWID()
+
 # IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
 # BinaryValue.hash = compile_hash
 # StringValue.hash = compile_hash
@@ -240,6 +250,7 @@ ExprTranslator._registry[HashBytes] = format_hashbytes_base
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
+ImpalaExprTranslator._registry[RandomScalar] = fixed_arity("RAND", 0)
 # OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 # OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 # OracleExprTranslator._registry[ToChar] = sa_format_to_char
@@ -248,6 +259,12 @@ ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
-# MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
-# MSSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
+
+MsSqlExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
+MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
+MsSqlExprTranslator._registry[StringLength] = unary(sa.func.len)
+MsSqlExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.isnull,2)
+MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
+MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
+
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres

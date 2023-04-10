@@ -14,7 +14,6 @@
 
 import ibis
 from ibis.backends.impala import Backend as ImpalaBackend
-from ibis.backends.base.sql.registry import fixed_arity
 
 from ibis.backends.impala import udf
 from ibis.backends.impala.compiler import rewrites
@@ -202,6 +201,5 @@ def _get_schema_using_query(self, query):
 
 udf.parse_type = parse_type
 ImpalaBackend.get_schema = get_schema
-ImpalaExprTranslator._registry[ops.RandomScalar] = fixed_arity("RAND", 0)
 ibis.backends.impala._chunks_to_pandas_array = _chunks_to_pandas_array
 ImpalaBackend._get_schema_using_query = _get_schema_using_query

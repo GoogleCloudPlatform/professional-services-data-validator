@@ -42,15 +42,15 @@ from data_validation.query_builder.query_builder import QueryBuilder
 ### is required, feel free to reach
 ### out to dhercher
 ######################################
-RANDOM_SORT_SUPPORTS = {
-    ibis.backends.pandas.Backend: "NA",
-    ibis.backends.bigquery.Backend: "RAND()",
+RANDOM_SORT_SUPPORTS = [
+    ibis.backends.pandas.Backend,
+    ibis.backends.bigquery.Backend,
     # clients.TeradataClient: None,
-    # ibis.backends.impala.Backend: "RAND()",
+    ibis.backends.impala.Backend,
     # clients.OracleClient: "DBMS_RANDOM.VALUE",
-    ibis.backends.postgres.Backend: "RANDOM()",
-    # clients.MSSQLClient: "NEWID()",
-}
+    ibis.backends.postgres.Backend,
+    ibis.backends.mssql.Backend,
+]
 
 
 # class RandomSortExpr(Expr):
@@ -110,9 +110,8 @@ class RandomRowBuilder(object):
         compiled_filters = query_builder.compile_filter_fields(table)
         filtered_table = table.filter(compiled_filters) if compiled_filters else table
         randomly_sorted_table = self.maybe_add_random_sort(data_client, filtered_table)
-        query = randomly_sorted_table[self.primary_keys].limit(self.batch_size)
 
-        return query
+        return randomly_sorted_table
 
     def maybe_add_random_sort(
         self, data_client, table: ibis.Expr
@@ -121,12 +120,13 @@ class RandomRowBuilder(object):
         if type(data_client) in RANDOM_SORT_SUPPORTS:
             # Teradata 'SAMPLE' is random by nature and does not require a sort by
             if type(data_client) == clients.TeradataClient:
-                return table
+                return table[self.primary_keys].limit(self.batch_size)
 
             # return table.order_by(
             #     RandomSortKey(RANDOM_SORT_SUPPORTS[type(data_client)]).to_expr()
             # )
-            return table.order_by(ibis.random())
+            # return table[self.primary_keys].order_by(ibis.random()).limit(self.batch_size)
+            return table[self.primary_keys].order_by(ibis.random()).limit(self.batch_size)
 
         logging.warning(
             "Data Client %s Does Not Enforce Random Sort on Sample",

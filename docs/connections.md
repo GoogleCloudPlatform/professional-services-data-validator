@@ -191,8 +191,7 @@ Then `pip install cx_Oracle`.
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Commited, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ## MSSQL Server
-Please note the MSSQL Server package is not installed by default. You will need to follow [SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server) installation steps.
-Then `pip install pyodbc`.
+MSSQL Server connections require [pymssql](https://pymssql.readthedocs.io/en/stable/) as the driver: `pip install pymssql`.
 ```
 {
     # secret manager type
@@ -210,7 +209,6 @@ Then `pip install pyodbc`.
     "user": "my-user",
     "password": "my-password",
     "database": "my-db",
-
 }
 ```
 
@@ -333,7 +331,8 @@ Please note AlloyDB supports same connection config as Postgres.
     "port": 10000,
     "database": "default",
     "auth-mechanism": "PLAIN",
-    # (Optional)
+
+    # Optional Parameters
     "use-ssl": False,
     "timeout": 45,
     "ca-cert": "path-certificate",
