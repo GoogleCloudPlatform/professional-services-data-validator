@@ -47,7 +47,12 @@ from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from third_party.ibis.ibis_DB2.compiler import DB2ExprTranslator
+
+# avoid errors if Db2 is not installed and not needed
+try:
+    from third_party.ibis.ibis_DB2.compiler import DB2ExprTranslator
+except Exception:
+    DB2ExprTranslator = None
 
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
@@ -300,4 +305,6 @@ PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
-DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
+
+if DB2ExprTranslator: #check if Db2 driver is loaded
+    DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
