@@ -47,6 +47,8 @@ from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
+from third_party.ibis.ibis_DB2.compiler import DB2ExprTranslator
+
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
@@ -213,6 +215,12 @@ def sa_format_hashbytes_oracle(translator, expr):
     hash_func = sa.func.standard_hash(compiled_arg, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
 
+def sa_format_hashbytes_db2(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    hashfunc = sa.func.hash(compiled_arg,sa.sql.literal_column("2"))
+    return sa.func.hex(hashfunc)
+
 def sa_format_hashbytes_postgres(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
@@ -292,3 +300,4 @@ PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
+DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
