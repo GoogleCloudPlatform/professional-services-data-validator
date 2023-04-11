@@ -224,7 +224,8 @@ def sa_format_hashbytes_db2(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
     hashfunc = sa.func.hash(compiled_arg,sa.sql.literal_column("2"))
-    return sa.func.hex(hashfunc)
+    hex = sa.func.hex(hashfunc)
+    return sa.func.lower(hex)
 
 def sa_format_hashbytes_postgres(translator, expr):
     arg, how = expr.op().args
