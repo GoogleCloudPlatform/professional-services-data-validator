@@ -52,6 +52,7 @@ RANDOM_SORT_SUPPORTS = {
     clients.OracleClient: "DBMS_RANDOM.VALUE",
     PostgreSQLClient: "RANDOM()",
     clients.MSSQLClient: "NEWID()",
+    clients.DB2Client: "RAND()",
 }
 
 
