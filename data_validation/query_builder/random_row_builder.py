@@ -29,6 +29,7 @@ import ibis.backends.pandas.execution.util as pandas_util
 # from google.cloud.bigquery import Client
 # from ibis.backends.impala.client import ImpalaClient
 # from ibis.backends.postgres.client import PostgreSQLClient
+from third_party.ibis.ibis_oracle import Backend as OracleBackend
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
@@ -47,7 +48,7 @@ RANDOM_SORT_SUPPORTS = [
     ibis.backends.bigquery.Backend,
     # clients.TeradataClient: None,
     ibis.backends.impala.Backend,
-    # clients.OracleClient: "DBMS_RANDOM.VALUE",
+    OracleBackend,
     ibis.backends.postgres.Backend,
     ibis.backends.mssql.Backend,
 ]

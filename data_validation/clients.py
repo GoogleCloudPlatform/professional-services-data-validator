@@ -60,9 +60,9 @@ except Exception:
 
 # If you have an cx_Oracle driver installed
 try:
-    from third_party.ibis.ibis_oracle.client import OracleClient
+    from third_party.ibis.ibis_oracle.api import oracle_connect
 except Exception:
-    OracleClient = _raise_missing_client_error("pip install cx_Oracle")
+    oracle_connect = _raise_missing_client_error("pip install cx_Oracle")
 
 try:
     from third_party.ibis.ibis_snowflake.client import (
@@ -117,9 +117,9 @@ def get_pandas_client(table_name, file_path, file_type):
 
 def is_oracle_client(client):
     try:
-        return isinstance(client, OracleClient)
+        return isinstance(client, third_party.ibis.ibis_oracle.Backend)
     except TypeError:
-        # When no Oracle client has been installed OracleClient is not a class
+        # When no Oracle backend has been installed OracleBackend is not a class
         return False
 
 
@@ -132,7 +132,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     database_name (str): Database name (generally default is used)
     """
     if type(client) in [
-        # OracleClient,
+        third_party.ibis.ibis_oracle.Backend,
         ibis.backends.postgres.Backend,
         # DB2Client,
         ibis.backends.mssql.Backend,
@@ -161,8 +161,9 @@ def get_ibis_table_schema(client, schema_name, table_name):
         ibis.backends.mysql.Backend, 
         ibis.backends.postgres.Backend,
         ibis.backends.mssql.Backend,
+        third_party.ibis.ibis_oracle.Backend,
     ]:
-        return client.table(table_name).schema()
+        return client.table(table_name, schema=schema_name).schema()
     else:
         return client.get_schema(table_name, schema_name)
 
@@ -177,7 +178,7 @@ def list_schemas(client):
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
     if type(client) in [
-        # OracleClient,
+        third_party.ibis.ibis_oracle.Backend,
         ibis.backends.postgres.Backend,
         # DB2Client,
         ibis.backends.mssql.Backend,
@@ -276,7 +277,7 @@ CLIENT_LOOKUP = {
     "BigQuery": get_bigquery_client,
     "Impala": impala_connect,
     "MySQL": ibis.mysql.connect,
-    "Oracle": OracleClient,
+    "Oracle": oracle_connect,
     "FileSystem": get_pandas_client,
     "Postgres": ibis.postgres.connect,
     "Redshift": ibis.postgres.connect,

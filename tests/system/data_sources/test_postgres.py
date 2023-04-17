@@ -115,7 +115,7 @@ def test_postgres_count(cloud_sql):
 
 
 def test_postgres_row(cloud_sql):
-    """Test row validaiton on Postgres"""
+    """Test row validation on Postgres"""
     config_row_valid = {
         consts.CONFIG_SOURCE_CONN: CONN,
         consts.CONFIG_TARGET_CONN: CONN,

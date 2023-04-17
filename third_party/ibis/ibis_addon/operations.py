@@ -41,7 +41,7 @@ from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
-# from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
+from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 # from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 
 from ibis.backends.mssql.datatypes import _MSSQL_TYPE_MAP
@@ -165,12 +165,12 @@ def compile_raw_sql(table, sql):
 
 def format_raw_sql(translator, op):
     rand_col, raw_sql = op.args
-    return raw_sql.op().args[0]
+    return raw_sql.args[0]
 
 
 def sa_format_raw_sql(translator, op):
     rand_col, raw_sql = op.args
-    return sa.text(raw_sql.op().args[0])
+    return sa.text(raw_sql.args[0])
 
 def sa_format_hashbytes_mssql(translator, op):
     arg = translator.translate(op.arg)
@@ -251,9 +251,11 @@ MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 ImpalaExprTranslator._registry[RandomScalar] = fixed_arity("RAND", 0)
-# OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
-# OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
-# OracleExprTranslator._registry[ToChar] = sa_format_to_char
+
+OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
+OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
+OracleExprTranslator._registry[ToChar] = sa_format_to_char
+
 # TeradataExprTranslator._registry[RawSQL] = format_raw_sql
 # TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres

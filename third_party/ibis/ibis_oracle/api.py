@@ -1,4 +1,4 @@
-# Copyright 2020 Google Inc.
+# Copyright 2023 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,25 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Literal
+from third_party.ibis.ibis_oracle import Backend as OracleBackend
+import cx_oracle # NOQA fail early if the driver is missing
 
-from third_party.ibis.ibis_oracle.client import OracleClient
-from third_party.ibis.ibis_oracle.compiler import (  # noqa: F401
-    dialect,
-    rewrites,
-)
-
-from ibis.sql.alchemy import to_sqlalchemy
-
-
-def compile(expr, params=None):
-    return to_sqlalchemy(expr, dialect.make_context(params=params))
-
-
-def connect(
-    host=None, port=None, user=None, password=None, database=None, protocol='TCP', url=None, driver='cx_Oracle',
+def oracle_connect(
+    host: str = "localhost",
+    user: str | None = None,
+    password: str | None = None,
+    port: int = 1521,
+    database: str | None = None,
+    protocol: str | None = "TCP",
+    url: str | None = None,
+    driver: Literal["cx_Oracle"] = "cx_Oracle",
 ):
-
-    return OracleClient(
+    backend = OracleBackend()
+    backend.do_connect(
         host=host,
         port=port,
         user=user,
@@ -39,3 +36,4 @@ def connect(
         url=url,
         driver=driver,
     )
+    return backend

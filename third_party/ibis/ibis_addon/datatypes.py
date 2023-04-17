@@ -14,51 +14,42 @@
 
 import ibis.expr.datatypes as dt
 import numpy as np
-import pyarrow
+import pyarrow as pa
 
-from google.cloud import bigquery
-from ibis.backends.bigquery.client import _DTYPE_TO_IBIS_TYPE
+from ibis.backends.pandas.execution.constants import IBIS_TYPE_TO_PANDAS_TYPE
 
-# Ibis 5.0.0 has a bug (https://github.com/ibis-project/ibis/issues/5765) 
-# for BIGNUMERIC. Once the bug fix is merged, we can remove these two lines.
-bigquery._pandas_helpers.BQ_TO_ARROW_SCALARS["BIGNUMERIC"] = pyarrow.decimal256
-_DTYPE_TO_IBIS_TYPE["BIGNUMERIC"] = dt.Decimal(76, 38)
+# PyArrow support for decimal; should be fixed in Ibis v5.1.0+
+@dt.dtype.register((pa.Decimal128Type, pa.Decimal256Type))
+def from_pyarrow_decimal(
+    arrow_type: pa.Decimal128Type | pa.Decimal256Type, nullable: bool = True
+) -> dt.Decimal:
+    return dt.Decimal(
+        precision=arrow_type.precision, scale=arrow_type.scale, nullable=nullable
+    )
 
 
 def _infer_object_array_dtype(x):
     # Added support for decimal in pandas
-    import pandas as pd
-    from pandas.api.types import infer_dtype
+    import ibis.backends.pyarrow.datatypes  # noqa: F401
 
-    classifier = infer_dtype(x, skipna=True)
-    if classifier == "mixed":
-        value = x.iloc[0] if isinstance(x, pd.Series) else x[0]
-        if isinstance(value, (np.ndarray, pd.Series, Sequence, Mapping)):
-            return infer(value)
-        else:
-            return dt.binary
+    try:
+        pa_type = pa.array(x, from_pandas=True).type
+    except pa.ArrowInvalid:
+        try:
+            # handle embedded series objects
+            return dt.highest_precedence(map(infer, x))
+        except IbisTypeError:
+            # we can still have a type error, e.g., float64 and string in the
+            # same array
+            return dt.unknown
+    except pa.ArrowTypeError:
+        # arrow can't infer the type
+        return dt.unknown
     else:
-        return {
-            'string': dt.string,
-            'bytes': dt.string,
-            'floating': dt.float64,
-            'integer': dt.int64,
-            'mixed-integer': dt.binary,
-            'mixed-integer-float': dt.float64,
-            'decimal': dt.float64,
-            'complex': dt.binary,
-            'boolean': dt.boolean,
-            'datetime64': dt.timestamp,
-            'datetime': dt.timestamp,
-            'date': dt.date,
-            'decimal': dt.Decimal(),
-            'timedelta64': dt.interval,
-            'timedelta': dt.interval,
-            'time': dt.time,
-            'period': dt.binary,
-            'empty': dt.null,
-            'unicode': dt.string,
-        }[classifier]
+        if isinstance(pa_type, pa.Decimal256Type):
+            return dt.Decimal(10,0, nullable=True)
+        return dt.dtype(pa_type)
 
 dt.value._infer_object_array_dtype = _infer_object_array_dtype
+IBIS_TYPE_TO_PANDAS_TYPE[dt.Decimal(precision=10, scale=0, nullable=True)] = np.float64
 

@@ -339,7 +339,7 @@ class DataValidation(object):
             # pd_schema = self._get_pandas_schema(
             #     source_df, target_df, join_on_schema, verbose=self.verbose
             # )
-
+            
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )
