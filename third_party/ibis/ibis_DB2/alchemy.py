@@ -29,6 +29,7 @@ _ibis_type_to_sqla = {
     dt.BIGINT: sa.BIGINT,
 }
 _ibis_type_to_sqla.update(s_al._ibis_type_to_sqla)
+_ibis_type_to_sqla[dts.String] = sa.sql.sqltypes.String(length=3000)
 
 
 def _to_sqla_type(itype, type_map=None):

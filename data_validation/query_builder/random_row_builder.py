@@ -51,6 +51,7 @@ RANDOM_SORT_SUPPORTS = [
     OracleBackend,
     ibis.backends.postgres.Backend,
     ibis.backends.mssql.Backend,
+    # clients.DB2Client: "RAND()",
 ]
 
 

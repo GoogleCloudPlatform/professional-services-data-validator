@@ -33,6 +33,11 @@ from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRF
 from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast, StringLength, RandomScalar, IfNull, StringJoin
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 
+# avoid errors if Db2 is not installed and not needed
+# try:
+#     from third_party.ibis.ibis_DB2.compiler import DB2ExprTranslator
+# except Exception:
+#     DB2ExprTranslator = None
 
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.impala.compiler import ImpalaExprTranslator
@@ -183,6 +188,13 @@ def sa_format_hashbytes_oracle(translator, op):
     hash_func = sa.func.standard_hash(arg, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
 
+def sa_format_hashbytes_db2(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    hashfunc = sa.func.hash(compiled_arg,sa.sql.literal_column("2"))
+    hex = sa.func.hex(hashfunc)
+    return sa.func.lower(hex)
+
 def sa_format_hashbytes_postgres(translator, op):
     arg = translator.translate(op.arg)
     convert = sa.func.convert_to(arg, sa.sql.literal_column("'UTF8'"))
@@ -270,3 +282,6 @@ MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
 MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
+
+if DB2ExprTranslator: #check if Db2 driver is loaded
+    DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2

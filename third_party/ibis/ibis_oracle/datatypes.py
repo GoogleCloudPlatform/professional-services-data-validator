@@ -137,3 +137,7 @@ def sa_oracle_TIMESTAMP(_, satype, nullable=True):
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BLOB)
 def sa_oracle_BLOB(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
+
+@dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BINARY_DOUBLE)
+def sa_oracle_BINARY_DOUBLE(_, satype, nullable=True):
+    return dt.Float64(nullable=nullable)

@@ -148,7 +148,7 @@ _TYPE_RULES.update(dt._TYPE_RULES)
 _TYPE_KEYS = tuple(_TYPE_RULES.keys())
 
 
-class TypeParser_Oracle(dt.TypeParser):
+class TypeParser_DB2(dt.TypeParser):
     def type(self) -> dt.DataType:
         if self._accept(Token_DB2.CLOB):
             return CLOB()

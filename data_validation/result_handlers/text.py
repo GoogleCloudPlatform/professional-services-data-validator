@@ -45,11 +45,11 @@ class TextResultHandler(object):
             result_df = filter_validation_status(self.status_list, result_df)
 
         if self.format == "text":
-            print(result_df.to_string(index=False))
+            print(result_df.drop(self.cols_filter_list, axis=1).to_string(index=False))
         elif self.format == "csv":
-            print(result_df.to_csv(index=False))
+            print(result_df.drop(self.cols_filter_list, axis=1).to_csv(index=False))
         elif self.format == "json":
-            print(result_df.to_json(orient="index"))
+            print(result_df.drop(self.cols_filter_list, axis=1).to_json(orient="index"))
         else:
             print(
                 result_df.drop(self.cols_filter_list, axis=1).to_markdown(

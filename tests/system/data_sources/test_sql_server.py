@@ -211,8 +211,6 @@ def test_schema_validation_core_types(mock_conn):
     assert len(config_managers) == 1
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    # TODO When issue-764 is complete remove the return statement below.
-    return
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
