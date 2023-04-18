@@ -105,9 +105,9 @@ def test_column_validation_core_types(mock_conn):
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38",
+            "--min=*",
+            "--max=*",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

@@ -603,7 +603,7 @@ class ConfigManager(object):
         elif column_type == "int32":
             calc_func = "cast"
             cast_type = "int64"
-        
+
         elif column_type == "decimal":
             calc_func = "cast"
             cast_type = "float64"
