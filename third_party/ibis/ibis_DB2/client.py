@@ -17,9 +17,10 @@ import getpass
 from typing import Optional
 
 import sqlalchemy as sa
-
+import ibis.expr.operations as ops
 import third_party.ibis.ibis_DB2.alchemy as alch
 from third_party.ibis.ibis_DB2.compiler import DB2Dialect
+import ibis.expr.schema as sch
 
 
 class DB2Table(alch.AlchemyTable):
@@ -199,3 +200,41 @@ class DB2Client(alch.AlchemyClient):
 
     def get_schema(self, name, schema=None):
         return self.table(name, schema=schema).schema()
+
+    def sql(self, query):
+        """
+        Convert a DB2 query to an Ibis table expression
+
+        Parameters
+        ----------
+        query: string
+           SQL query to execute on connection
+
+        Returns
+        -------
+        table : TableExpr
+        """
+        limited_query = 'SELECT * FROM ({}) t0 LIMIT 1'.format(query)
+        schema = self._get_schema_using_query(limited_query)
+        return ops.SQLQueryResult(query, schema, self).to_expr()
+
+    def _get_schema_using_query(self, limited_query):
+        type_map = {
+            'INTEGER': 'int64',
+            'BOOLEAN': 'boolean',
+            'FLOAT': 'float64',
+            'VARCHAR': 'string',
+            'DOUBLE': 'float64'
+        }
+
+        with self._execute(limited_query, results=True) as cur:
+            names = []
+            ibis_types = []
+            for row in cur.proxy._cursor_description():
+                names.append(row[0].lower())
+                datatypes = list(row[1])
+                for datatype in datatypes: 
+                    if datatype in type_map:
+                        ibis_types.append(type_map[datatype])
+                        break
+        return sch.Schema(names, ibis_types)
