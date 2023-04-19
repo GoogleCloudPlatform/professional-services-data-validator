@@ -122,14 +122,12 @@ def test_create_and_list_connections(caplog, fs):
     conn = cli_tools.get_connection_config_from_args(args)
     cli_tools.store_connection(args.connection_name, conn)
 
-
     assert WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     # List Connection
     cli_tools.list_connections()
     assert "Connection Name: test : BigQuery" in caplog.records[1].msg
     
-
 def test_configure_arg_parser_list_and_run_validation_configs():
     """Test configuring arg parse in different ways."""
     parser = cli_tools.configure_arg_parser()
