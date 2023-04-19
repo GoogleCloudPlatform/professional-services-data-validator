@@ -126,7 +126,7 @@ def test_create_and_list_connections(caplog, fs):
 
     # List Connection
     cli_tools.list_connections()
-    assert "Connection Name: test" in caplog.records[1].msg
+    assert "Connection Name: test : BigQuery" in caplog.records[1].msg
 
 
 def test_configure_arg_parser_list_and_run_validation_configs():

@@ -988,9 +988,9 @@ def list_connections():
     """List all saved connections."""
     mgr = state_manager.StateManager()
     connections = mgr.list_connections()
-
     for conn_name in connections:
-        logging.info(f"Connection Name: {conn_name}")
+        source_type = mgr.get_connection_config(conn_name).get("source_type")
+        logging.info(f"Connection Name: {conn_name} : {source_type}")
 
 
 def get_connection(connection_name):
