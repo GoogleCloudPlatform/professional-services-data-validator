@@ -19,7 +19,7 @@
 
 # confirm you have all the libraries needed for the full check
 echo "Starting LIBRARIES INSTALLATION..."
-pip install pytest pytest-cov pyfakefs flake8 black
+pip install pytest pytest-cov pyfakefs flake8 black==22.3.0
 echo "Finished LIBRARIES INSTALLATION."
 
 # check unit tests and coverage

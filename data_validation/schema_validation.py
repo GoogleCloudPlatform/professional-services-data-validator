@@ -152,10 +152,7 @@ def schema_validation_matching(
                     string_val(source_field_type)
                 ]
 
-                (
-                    higher_precision,
-                    lower_precision,
-                ) = parse_n_validate_datatypes(
+                (higher_precision, lower_precision,) = parse_n_validate_datatypes(
                     string_val(source_field_type), allowed_target_field_type
                 )
                 if lower_precision:
