@@ -228,7 +228,7 @@ def _type_from_cursor_info(descr, field) -> dt.DataType:
     return typ(nullable=True)
 
 
-def _metadata(self, query: str) -> Iterable[tuple[str, dt.DataType]]:
+def _metadata(self, query: str):
     if (
         re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
         is not None
