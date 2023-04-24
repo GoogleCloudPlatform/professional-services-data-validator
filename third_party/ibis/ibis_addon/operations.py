@@ -31,7 +31,6 @@ import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 import ibis.expr.operations as ops
 
-from data_validation.clients import _raise_missing_client_error
 from ibis_bigquery.compiler import (
     reduction as bq_reduction,
     BigQueryExprTranslator,
@@ -51,7 +50,6 @@ from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
-# from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
 
 
 # avoid errors if Db2 is not installed and not needed
