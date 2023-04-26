@@ -604,6 +604,10 @@ class ConfigManager(object):
             calc_func = "cast"
             cast_type = "int64"
 
+        elif column_type == "decimal":
+            calc_func = "cast"
+            cast_type = "float64"
+
         else:
             raise ValueError(f"Unsupported column type: {column_type}")
 
@@ -672,6 +676,7 @@ class ConfigManager(object):
                         "bit_xor",
                     )  # For timestamps: do not convert to epoch seconds for min/max
                 )
+                or (column_type == "decimal")
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
