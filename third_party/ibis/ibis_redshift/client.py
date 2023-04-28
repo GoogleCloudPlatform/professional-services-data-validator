@@ -286,9 +286,7 @@ RAW_STRING = parsy.regex(_STRING_REGEX).map(ast.literal_eval)
 FIELD = parsy.regex("[a-zA-Z_][a-zA-Z_0-9]*")
 
 
-def _parse_numeric(
-    text: str, ddp: tuple[int | None, int | None] = (None, None)
-) -> dt.DataType:
+def _parse_numeric(text, ddp=(None, None)) -> dt.DataType:
     decimal = spaceless_string("decimal", "numeric").then(
         parsy.seq(LPAREN.then(PRECISION.skip(COMMA)), SCALE.skip(RPAREN))
         .optional(ddp)
