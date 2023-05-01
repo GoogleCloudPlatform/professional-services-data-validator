@@ -50,7 +50,7 @@ dependencies = [
     "setuptools>=34.0.0",
     "jellyfish==0.8.2",
     "tabulate==0.8.9",
-    "Flask==2.0.2",
+    "Flask==2.3.2",
     "parsy==2.0",
     "google-cloud-secret-manager<=2.15.0",
 ]
