@@ -1,58 +1,34 @@
-"""BigQuery public API."""
+# Copyright 2023 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from third_party.ibis.ibis_teradata import Backend as TeradataBackend
+import teradatasql # NOQA fail early if the package is missing
 
-from typing import Optional
-
-import ibis.common.exceptions as com
-from client import TeradataClient  # TODO make non local
-from compiler import dialect  # TODO make non local
-from ibis.config import options  # noqa: F401
-
-
-__all__ = ("compile", "connect", "verify")
-
-
-def compile(expr, params=None):
-    """ Compile an expression for Teradata
-    Returns
-    -------
-    compiled : str
-    See Also
-    --------
-    ibis.expr.types.Expr.compile
-    """
-    from compiler import to_sql  # TODO make non local
-
-    return to_sql(expr, dialect.make_context(params=params))
-
-
-def verify(expr, params=None):
-    """ Check if an expression can be compiled using Teradata """
-    try:
-        compile(expr, params=params)
-        return True
-    except com.TranslationError:
-        return False
-
-
-def connect(
-    host: str, user_name: str, password: str, port: Optional[int] = 1025, logmech: Optional[str]='TD2'
-) -> TeradataClient:
-    """ Create a TeradataClient for use with Ibis.
-    Parameters
-    ----------
-    host : str
-        The Database host to connect to
-    user_name : str
-        A Database username to connect with
-    password : str
-        Password for supplied username
-    port : Optional[int]
-        The database port to connect to (default. 1025)
-    logmech : Optional[str]
-        Logmech flag to select with (default. TD2)
-    Returns
-    -------
-    TeradataClient
-    """
-
-    return TeradataClient(host, user_name, password, port, logmech)
+def teradata_connect(
+    host: str = "localhost",
+    user_name: str | None = None,
+    password: str | None = None,
+    port: int = 1025,
+    logmech: str | None = 'TD2',
+    use_no_lock_tables: bool = False,
+):
+    backend = TeradataBackend()
+    backend.do_connect(
+        host=host,
+        user_name=user_name,
+        password=password,
+        port=port,
+        logmech=logmech,
+        use_no_lock_tables=use_no_lock_tables,
+    )
+    return backend

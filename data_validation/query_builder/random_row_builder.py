@@ -30,6 +30,7 @@ import ibis.backends.pandas.execution.util as pandas_util
 # from ibis.backends.impala.client import ImpalaClient
 # from ibis.backends.postgres.client import PostgreSQLClient
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
+from third_party.ibis.ibis_teradata import Backend as TeradataBackend
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
@@ -46,7 +47,7 @@ from data_validation.query_builder.query_builder import QueryBuilder
 RANDOM_SORT_SUPPORTS = [
     ibis.backends.pandas.Backend,
     ibis.backends.bigquery.Backend,
-    # clients.TeradataClient: None,
+    TeradataBackend,
     ibis.backends.impala.Backend,
     OracleBackend,
     ibis.backends.postgres.Backend,
@@ -121,7 +122,7 @@ class RandomRowBuilder(object):
         """Return a randomly sorted query if it is supported for the client."""
         if type(data_client) in RANDOM_SORT_SUPPORTS:
             # Teradata 'SAMPLE' is random by nature and does not require a sort by
-            if type(data_client) == clients.TeradataClient:
+            if type(data_client) == TeradataBackend:
                 return table[self.primary_keys].limit(self.batch_size)
 
             # return table.order_by(

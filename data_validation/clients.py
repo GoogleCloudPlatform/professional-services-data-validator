@@ -50,13 +50,12 @@ def _raise_missing_client_error(msg):
 
     return get_client_call
 
-
 # If you have a Teradata License there is an optional teradatasql import
 try:
-    from third_party.ibis.ibis_teradata.client import TeradataClient
+    from third_party.ibis.ibis_teradata.api import teradata_connect
 except Exception:
     msg = "pip install teradatasql (requires Teradata licensing)"
-    TeradataClient = _raise_missing_client_error(msg)
+    teradata_connect = _raise_missing_client_error(msg)
 
 # If you have an cx_Oracle driver installed
 try:
@@ -64,14 +63,14 @@ try:
 except Exception:
     oracle_connect = _raise_missing_client_error("pip install cx_Oracle")
 
-try:
-    from third_party.ibis.ibis_snowflake.client import (
-        SnowflakeClient as snowflake_connect,
-    )
-except Exception:
-    snowflake_connect = _raise_missing_client_error(
-        "pip install snowflake-connector-python"
-    )
+# try:
+#     from third_party.ibis.ibis_snowflake.client import (
+#         SnowflakeClient as snowflake_connect,
+#     )
+# except Exception:
+#     snowflake_connect = _raise_missing_client_error(
+#         "pip install snowflake-connector-python"
+#     )
 
 # If you have Db2 client installed
 try:
@@ -281,9 +280,9 @@ CLIENT_LOOKUP = {
     "FileSystem": get_pandas_client,
     "Postgres": ibis.postgres.connect,
     "Redshift": ibis.postgres.connect,
-    "Teradata": TeradataClient,
+    "Teradata": teradata_connect,
     "MSSQL": ibis.mssql.connect,
-    "Snowflake": snowflake_connect,
+    # "Snowflake": ibis.snowflake.connect,
     # "Spanner": spanner_connect,
     "DB2": DB2Client,
 }

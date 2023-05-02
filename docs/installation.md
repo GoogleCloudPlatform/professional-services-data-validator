@@ -7,7 +7,7 @@ This tool can be natively installed on your machine or can be containerized and 
 
 ## Prerequisites
 
-- Any machine with Python 3.7+ installed.
+- Any machine with Python 3.8+ installed.
 
 ## Setup
 
@@ -73,7 +73,7 @@ After installing the CLI tool using the instructions below, you will be ready to
 
 ## Deploy Data Validation CLI on your machine
 
-The Data Validation tooling requires Python 3.7+.
+The Data Validation tooling requires Python 3.8+.
 
 ```
 sudo apt-get install python3
@@ -84,7 +84,7 @@ Create and activate a new virtual environment to sandbox the tool and its
 dependencies from your system installation of Python. 
 
 ```
-python3.7 -m venv venv
+python3.10 -m venv venv
 source venv/bin/activate
 ```
 

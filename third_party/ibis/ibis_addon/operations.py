@@ -46,13 +46,16 @@ from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
+# from ibis.backends.snowflake import SnowflakeExprTranslator
+
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
-# from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
+from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
+
 
 from ibis.backends.mssql.datatypes import _MSSQL_TYPE_MAP
 from sqlalchemy.dialects import mssql
 
-from ibis.backends.base.sql.alchemy import unary, fixed_arity as sa_fixed_arity
+from ibis.backends.base.sql.alchemy.registry import unary, fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.registry import fixed_arity
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
@@ -268,8 +271,9 @@ OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 OracleExprTranslator._registry[ToChar] = sa_format_to_char
 
-# TeradataExprTranslator._registry[RawSQL] = format_raw_sql
-# TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
+TeradataExprTranslator._registry[RawSQL] = format_raw_sql
+TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
+
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
@@ -283,5 +287,10 @@ MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
 
-if DB2ExprTranslator: #check if Db2 driver is loaded
-    DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
+# TODO: Snowflake support
+# SnowflakeExprTranslator._registry[HashBytes] = 
+# SnowflakeExprTranslator._registry[RawSQL] = 
+# SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
+
+# if DB2ExprTranslator: #check if Db2 driver is loaded
+#     DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
