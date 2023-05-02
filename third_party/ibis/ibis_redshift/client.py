@@ -245,8 +245,7 @@ def _get_schema_using_query(self, query: str) -> sch.Schema:
         finally:
             con.execute(f"DROP VIEW {name}")
     tuples = [(col, self._get_type(typestr)) for col, typestr in type_info]
-    a = sch.Schema.from_tuples(tuples)
-    return a
+    return sch.Schema.from_tuples(tuples)
 
 _BRACKETS = "[]"
 _STRING_REGEX = (
