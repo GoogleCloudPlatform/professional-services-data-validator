@@ -320,7 +320,6 @@ def _get_type(self, typestr: str) -> dt.DataType:
 _type_mapping = {
         "boolean": dt.boolean,
         "varbyte": dt.binary,
-        "character(1)": dt.string,
         "bigint": dt.int64,
         "smallint": dt.int16,
         "integer": dt.int32,
