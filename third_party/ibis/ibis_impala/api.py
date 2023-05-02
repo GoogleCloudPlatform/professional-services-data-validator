@@ -39,7 +39,9 @@ def impala_connect(
     user=None,
     password=None,
     pool_size=8,
-    hdfs_client=None
+    hdfs_client=None,
+    use_http_transport=False,
+    http_path=None
 ):
     auth_mechanism = (auth_mechanism, "PLAIN")[auth_mechanism is None]
     database = (database, "default")[database is None]
@@ -63,7 +65,9 @@ def impala_connect(
         user=user,
         password=password,
         pool_size=pool_size,
-        hdfs_client=hdfs_client
+        hdfs_client=hdfs_client,
+        use_http_transport=use_http_transport,
+        http_path=http_path
     )
 
 
