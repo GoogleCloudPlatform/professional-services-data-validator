@@ -14,7 +14,7 @@ perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
-* Row validation (BQ, Hive, Teradata, Oracle, SQL Server, Postgres only)
+* Row validation (BQ, Hive, Teradata, Oracle, SQL Server, Postgres, Mysql only)
 * Schema validation 
 * Custom Query validation
 * Ad hoc SQL exploration
@@ -136,7 +136,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, Postgres, Db2 and Alloy DB. Struct and array data types are not currently supported.
+(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, Postgres, Mysql, Db2 and Alloy DB. Struct and array data types are not currently supported.
 In addition, please note that SHA256 is not a supported function on Teradata systems. 
 If you wish to perform this comparison on Teradata you will need to 
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
@@ -233,7 +233,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
   --partition-num [1-1000], -pn [1-1000]
                         Number of partitions/config files to generate
-                        In case this value exceeds the row count of the source/target table, its will be decreased to max(source_row_count, target_row_count)
+                        In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
   [--partition-key PARTITION_KEY, -partkey PARTITION_KEY]
                         Column on which the partitions would be generated. Column type must be integer. Defaults to Primary key
   [--filters SOURCE_FILTER:TARGET_FILTER]

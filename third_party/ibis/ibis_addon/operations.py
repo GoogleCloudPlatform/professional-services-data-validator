@@ -28,6 +28,7 @@ import sqlalchemy as sa
 import ibis.expr.api
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
+import ibis.expr.operations as ops
 
 from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
 from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast, StringLength, RandomScalar, IfNull, StringJoin
@@ -191,6 +192,12 @@ def sa_format_hashbytes_oracle(translator, op):
     hash_func = sa.func.standard_hash(arg, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
 
+def sa_format_hashbytes_mysql(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    hash_func = sa.func.sha2(compiled_arg, sa.sql.literal_column("'256'"))
+    return hash_func
+
 def sa_format_hashbytes_db2(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
@@ -208,6 +215,12 @@ def sa_format_to_char(translator, op):
     arg = translator.translate(op.arg)
     fmt = translator.translate(op.fmt)
     return sa.func.to_char(arg, fmt)
+
+
+def sa_format_to_stringjoin(translator, op):
+    sep, elements = op.args
+    return sa.func.concat_ws(translator.translate(sep), *map(translator.translate, elements))
+
 
 def sa_cast_postgres(t, op):
     sa_arg = t.translate(op.arg)
@@ -286,6 +299,10 @@ MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
 MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
+MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
+MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
+MySQLExprTranslator._registry[ops.IfNull] = fixed_arity(sa.func.ifnull, 2)
+MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
 
 # TODO: Snowflake support
 # SnowflakeExprTranslator._registry[HashBytes] = 

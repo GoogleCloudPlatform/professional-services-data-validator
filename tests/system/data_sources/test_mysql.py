@@ -95,9 +95,6 @@ def test_schema_validation():
 
 def test_mysql_row():
     """Test row validation on MySQL"""
-    # This test is disabled.
-    # When issue-776 is resolved we can remove these comments and the return statement below.
-    return
     try:
         config_row_valid = {
             consts.CONFIG_SOURCE_CONN: CONN,
@@ -487,9 +484,6 @@ def test_column_validation_core_types(mock_conn):
     return_value=CONN,
 )
 def test_row_validation_core_types(mock_conn):
-    # This test is disabled.
-    # When issue-776 is resolved we can remove these comments and the return statement below.
-    return
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [

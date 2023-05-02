@@ -2,6 +2,29 @@
 
 ## Untagged
 
+## [3.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v3.0.0...v3.1.0) (2023-04-21)
+
+
+### Features
+
+* add db2 hash and concat support ([#800](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/800)) ([c16e2f7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c16e2f79c974412f2407ddbd0846a83b8c2cb330))
+* add Impala connection optional parameters ([#743](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/743)) ([#790](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/790)) ([414d7f8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/414d7f83bc65be2f17dd6103b7667409ff9b0269))
+* added source_type in output  while listing connections list ([#803](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/803)) ([056275b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/056275b1a78c04f7aa5e5cfa4911d35ac9af1c5a))
+* Adding Custom-Query support for DB2.  ([#807](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/807)) ([a8085d3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a8085d318c7fdd4b4591c45dc8eb6f399cabb670))
+* Option for simpler report output grid ([#802](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/802)) ([b92eb91](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b92eb91feb3b4a83c6ad74c4b9c5af65dcbc21f8))
+
+
+### Bug Fixes
+
+* Mysql fix to support row hash validations, random row validation, and filter ([#812](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/812)) ([ae07fa4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ae07fa429e7c94991c570231b46a54423b2e56e5))
+* schema validation fixes for Oracle/SQL Server float64 and SQL Server datetimeoffset ([#796](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/796)) ([ad0e64f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ad0e64f4356394826fabd73d1a279ed448cb8273))
+
+
+### Documentation
+
+* add README for Airflow DAG sample, update code formatting in other docs ([#722](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/722)) ([f4c3241](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f4c3241357451947687b16eb51bee8702bbdf7d8))
+* score-cutoff changed to 1 ([#779](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/779)) ([d3aabca](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d3aabca19945564711c256972236e23c05212160))
+
 ## [3.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v2.9.0...v3.0.0) (2023-03-28)
 
 

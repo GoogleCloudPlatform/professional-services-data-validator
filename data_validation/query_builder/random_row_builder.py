@@ -31,6 +31,7 @@ import ibis.backends.pandas.execution.util as pandas_util
 # from ibis.backends.postgres.client import PostgreSQLClient
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
 from third_party.ibis.ibis_teradata import Backend as TeradataBackend
+#from ibis.backends.mysql.client import MySQLClient
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
@@ -53,6 +54,7 @@ RANDOM_SORT_SUPPORTS = [
     ibis.backends.postgres.Backend,
     ibis.backends.mssql.Backend,
     # clients.DB2Client: "RAND()",
+    # ibis.backends.mysql.Backend,
 ]
 
 
