@@ -15,6 +15,9 @@
 import ibis
 from ibis.backends.impala import Backend as ImpalaBackend
 
+from pathlib import Path
+from typing import Literal
+
 from ibis.backends.impala import udf
 from ibis.backends.impala.compiler import rewrites
 from ibis.backends.impala.compiler import ImpalaExprTranslator
@@ -22,45 +25,37 @@ import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 import numpy as np
+import fsspec
 
 
 def impala_connect(
-    host=None,
-    port=10000,
-    database="default",
-    auth_mechanism="PLAIN",
-    kerberos_service_name="impala",
-    use_ssl=False,
-    timeout=45,
-    ca_cert=None,
-    user=None,
-    password=None,
-    pool_size=8,
-    hdfs_client=None,
+    # Implement impala_connect to set our own default values
+    host: str = "localhost",
+    port: int = 10000,
+    database: str = "default",
+    timeout: int = 45,
+    use_ssl: bool = False,
+    ca_cert: str | Path | None = None,
+    user: str | None = None,
+    password: str | None = None,
+    auth_mechanism: Literal["NOSASL", "PLAIN", "GSSAPI", "LDAP"] = "PLAIN",
+    kerberos_service_name: str = "impala",
+    pool_size: int = 8,
+    hdfs_client: fsspec.spec.AbstractFileSystem | None = None
 ):
-    auth_mechanism = (auth_mechanism, "PLAIN")[auth_mechanism is None]
-    database = (database, "default")[database is None]
-    port = (port, 10000)[port is None]
-    kerberos_service_name = (kerberos_service_name, "impala")[
-        kerberos_service_name is None
-    ]
-    use_ssl = (use_ssl, False)[use_ssl is None]
-    timeout = (timeout, 45)[timeout is None]
-    pool_size = (pool_size, 8)[pool_size is None]
-
     return ibis.impala.connect(
-        host=host,
-        port=int(port),
-        database=database,
-        auth_mechanism=auth_mechanism,
-        kerberos_service_name=kerberos_service_name,
-        use_ssl=use_ssl,
-        timeout=timeout,
-        ca_cert=ca_cert,
-        user=user,
-        password=password,
-        pool_size=pool_size,
-        hdfs_client=hdfs_client,
+       host=host,
+       port=port,
+       database=database,
+       timeout=timeout,
+       use_ssl=use_ssl,
+       ca_cert=ca_cert,
+       user=user,
+       password=password,
+       auth_mechanism=auth_mechanism,
+       kerberos_service_name=kerberos_service_name,
+       pool_size=pool_size,
+       hdfs_client=hdfs_client,
     )
 
 

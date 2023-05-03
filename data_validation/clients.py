@@ -25,23 +25,12 @@ from google.cloud import bigquery
 # from ibis.backends.pandas.client import PandasClient
 # from ibis.backends.postgres.client import PostgreSQLClient
 # from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
+
 from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
 
 ibis.options.sql.default_limit = None
-
-# TODO(googleapis/google-auth-library-python#520): Remove after issue is resolved
-warnings.filterwarnings(
-    "ignore", "Your application has authenticated using end user credentials"
-)
-warnings.filterwarnings(
-    "ignore",
-    "Cannot create BigQuery Storage client, the dependency google-cloud-bigquery-storage is not installed",
-)
-warnings.filterwarnings(
-    "ignore", "The GenericFunction 'regex_extract' is already registered"
-)
 
 
 def _raise_missing_client_error(msg):
@@ -50,29 +39,28 @@ def _raise_missing_client_error(msg):
 
     return get_client_call
 
-# If you have a Teradata License there is an optional teradatasql import
+# Teradata requires teradatasql and licensing
 try:
     from third_party.ibis.ibis_teradata.api import teradata_connect
 except Exception:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
 
-# If you have an cx_Oracle driver installed
+# Oracle requires cx_Oracle driver
 try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
 except Exception:
     oracle_connect = _raise_missing_client_error("pip install cx_Oracle")
 
-# try:
-#     from third_party.ibis.ibis_snowflake.client import (
-#         SnowflakeClient as snowflake_connect,
-#     )
-# except Exception:
-#     snowflake_connect = _raise_missing_client_error(
-#         "pip install snowflake-connector-python"
-#     )
+# Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
+try:
+    from third_party.ibis.ibis_snowflake.api_new import snowflake_connect
+except Exception:
+    snowflake_connect = _raise_missing_client_error(
+        "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
+    )
 
-# If you have Db2 client installed
+# DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_DB2.client import DB2Client
 except Exception:
@@ -282,7 +270,7 @@ CLIENT_LOOKUP = {
     "Redshift": ibis.postgres.connect,
     "Teradata": teradata_connect,
     "MSSQL": ibis.mssql.connect,
-    # "Snowflake": ibis.snowflake.connect,
+    "Snowflake": snowflake_connect,
     # "Spanner": spanner_connect,
     "DB2": DB2Client,
 }

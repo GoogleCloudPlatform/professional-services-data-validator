@@ -217,9 +217,9 @@ def sa_format_to_char(translator, op):
     return sa.func.to_char(arg, fmt)
 
 
-def sa_format_to_stringjoin(translator, op):
-    sep, elements = op.args
-    return sa.func.concat_ws(translator.translate(sep), *map(translator.translate, elements))
+# def sa_format_to_stringjoin(translator, op):
+#     sep, elements = op.args
+#     return sa.func.concat_ws(translator.translate(sep), *map(translator.translate, elements))
 
 
 def sa_cast_postgres(t, op):
@@ -290,6 +290,7 @@ TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
+PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
 
 MsSqlExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -298,11 +299,10 @@ MsSqlExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.isnull,2)
 MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
 MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 
-PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
-MySQLExprTranslator._registry[ops.IfNull] = fixed_arity(sa.func.ifnull, 2)
-MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
+# MySQLExprTranslator._registry[IfNull] = fixed_arity(sa.func.ifnull, 2)
+# MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
 
 # TODO: Snowflake support
 # SnowflakeExprTranslator._registry[HashBytes] = 

@@ -59,6 +59,7 @@ The data validation tool supports the following connection types.
 * [Hive](#Hive)
 * [DB2](#DB2)
 * [AlloyDB](#AlloyDB)
+* [Snowflake](#Snowflake)
 
 As you see above, Teradata and BigQuery have different sets of custom arguments (for example project-id for BQ versus host for Teradata).
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command.
@@ -375,6 +376,7 @@ Please note that for Group By validations, the following property must be set in
 Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
 
 ## DB2
+DB2 requires the `ibm_db_sa` package.
 ```
 {
     # secret manager type
@@ -394,5 +396,29 @@ Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla
     "password": "my-password",
     "database": "my-db",
     "url": "my-url",
+}
+```
+
+## Snowflake
+Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
+```
+{
+    # secret manager type
+    "secret_manager_type": "GCP", 
+    
+     # secret manager project id
+    "secret_manager_project_id": "secrets-project-id",
+    
+    # Configuration Required for All Data Sources
+    "source-type": "Snowflake",
+
+    # Connection Details
+    "user": "my-user",
+    "password": my-password,
+    "account": "my-account",
+    "database": "my-db",
+
+    # Optional Parameters
+    "connect_args": {},
 }
 ```
