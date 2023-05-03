@@ -144,6 +144,8 @@ CONNECTION_SOURCE_FIELDS = {
             "Size of the connection pool. Typically this is not necessary to configure. (default is 8)",
         ],
         ["hdfs_client", "An existing HDFS client"],
+        ["use_http_transport", "Boolean if HTTP proxy is provided (default is False)"],
+        ["http_path", "URL path of HTTP proxy"],
     ],
     "DB2": [
         ["host", "Desired DB2 host"],

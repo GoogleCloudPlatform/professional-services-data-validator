@@ -15,12 +15,21 @@
 from ibis.backends.base_sql import fixed_arity
 from ibis.backends.impala import connect, udf
 from ibis.backends.impala.compiler import rewrites
-from ibis.backends.impala.client import ImpalaClient, ImpalaQuery, _HS2_TTypeId_to_dtype
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 import numpy as np
 import pandas as pd
+
+from ibis.config import options
+from ibis.backends.impala.client import (  
+    ImpalaClient,
+    ImpalaConnection,
+    ImpalaDatabase,
+    ImpalaTable,
+    ImpalaQuery,
+    _HS2_TTypeId_to_dtype
+)
 
 _impala_to_ibis_type = udf._impala_to_ibis_type
 
@@ -39,32 +48,34 @@ def impala_connect(
     user=None,
     password=None,
     pool_size=8,
-    hdfs_client=None
+    hdfs_client=None,
+    use_http_transport=False,
+    http_path="",
 ):
-    auth_mechanism = (auth_mechanism, "PLAIN")[auth_mechanism is None]
-    database = (database, "default")[database is None]
-    port = (port, 10000)[port is None]
-    kerberos_service_name = (kerberos_service_name, "impala")[
-        kerberos_service_name is None
-    ]
-    use_ssl = (use_ssl, False)[use_ssl is None]
-    timeout = (timeout, 45)[timeout is None]
-    pool_size = (pool_size, 8)[pool_size is None]
-    
-    return connect(
-        host=host,
-        port=int(port),
-        database=database,
-        auth_mechanism=auth_mechanism,
-        kerberos_service_name=kerberos_service_name,
-        use_ssl=use_ssl,
-        timeout=timeout,
-        ca_cert=ca_cert,
-        user=user,
-        password=password,
-        pool_size=pool_size,
-        hdfs_client=hdfs_client
-    )
+    params = {
+        'host': host,
+        'port': port,
+        'database': database,
+        'timeout': timeout,
+        'use_ssl': use_ssl,
+        'ca_cert': ca_cert,
+        'user': user,
+        'password': password,
+        'auth_mechanism': auth_mechanism,
+        'kerberos_service_name': kerberos_service_name,
+        'use_http_transport': use_http_transport,
+        'http_path': http_path,
+    }
+    con = ImpalaConnection(pool_size=pool_size, **params)
+    try:
+        client = ImpalaClient(con, hdfs_client=hdfs_client)
+    except Exception:
+        con.close()
+        raise
+    else:
+        if options.default_backend is None:
+            options.default_backend = client
+    return client
 
 
 def parse_type(t):
