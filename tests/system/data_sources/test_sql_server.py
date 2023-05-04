@@ -22,6 +22,7 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 )
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
+from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
 # Local testing requires the Cloud SQL Proxy.
@@ -191,11 +192,18 @@ def test_schema_validation():
         assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
 
 
+def mock_get_connection_config(*args):
+    if args[1] in ("sql-conn", "mock-conn"):
+        return CONN
+    elif args[1] == "bq-conn":
+        return BQ_CONN
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_schema_validation_core_types(mock_conn):
+def test_schema_validation_core_types():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -218,9 +226,49 @@ def test_schema_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_column_validation_core_types(mock_conn):
+def test_schema_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # TODO When issue-706 is complete remove the timestamp line below
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=sql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            (
+                # All SQL Server integrals go to BigQuery INT64.
+                "--allow-list=int16:int64,int32:int64,"
+                # SQL Server decimals that map to BigQuery NUMERIC.
+                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
+                # SQL Server decimals that map to BigQuery BIGNUMERIC.
+                # This is incorrect and needs an issue raising.
+                "decimal(38,0):decimal(38,9),"
+                # BigQuery does not have a float32 type.
+                "float32:float64,"
+                "timestamp('UTC'):timestamp,"
+                # Ignore ID column, we're not testing that one.
+                "int32[non-nullable]:int64"
+            ),
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_core_types():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -235,8 +283,6 @@ def test_column_validation_core_types(mock_conn):
             "--max=*",
         ]
     )
-    # TODO When issue-764 is complete remove the return statement below.
-    return
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
@@ -248,10 +294,44 @@ def test_column_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_row_validation_core_types(mock_conn):
+def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
+    # TODO When issue-832 is complete add col_varchar_30,col_char_2,col_string to --sum/min/max strings below.
+    # TODO When issue-833 is complete add col_datetime,col_tstz to --sum string below.
+    # TODO When issue-XXX is complete add col_dec_10_2,col_dec_20,col_dec_38 to --sum/min/max strings below.
+    # TODO Change --min/max strings below to include col_tstz when issue-XXX is complete.
+    # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=sql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_float64,col_date",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types():
+    parser = cli_tools.configure_arg_parser()
+    # TODO When issue-834 is complete add col_string to --hash string below.
     args = parser.parse_args(
         [
             "validate",
@@ -261,11 +341,39 @@ def test_row_validation_core_types(mock_conn):
             "-tbls=pso_data_validator.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=*",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz,col_dec_20,col_dec_38",
         ]
     )
-    # TODO When issue-764 is complete remove the return statement below.
-    return
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # TODO When issue-834 is complete add col_string to --hash string below.
+    # TODO Change --hash string below to include col_tstz when issue-XXX is complete.
+    # TODO Change --hash string below to include col_float32,col_float64 when issue-XXX is complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=sql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_date,col_datetime",
+        ]
+    )
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
