@@ -39,17 +39,17 @@ steps:
   env:
   - 'NOX_SESSION=integration_mysql'
   - 'PROJECT_ID=pso-kokoro-resources'
-  - 'MYSQL_PASSWORD=dvt'
   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mysql=tcp:3306'
   waitFor: ['-']
+  secretEnv: ['MYSQL_PASSWORD']
 - id: integration_postgres
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_postgres'
   - 'PROJECT_ID=pso-kokoro-resources'
-  - 'POSTGRES_PASSWORD=password'
   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
+  secretEnv: ['POSTGRES_PASSWORD']
   waitFor: ['proxy-install']
 - id: integration_sql_server
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
@@ -57,8 +57,8 @@ steps:
   env:
   - 'NOX_SESSION=integration_sql_server'
   - 'PROJECT_ID=pso-kokoro-resources'
-  - 'SQL_SERVER_PASSWORD=password'
   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017=tcp:1433'
+  secretEnv: ['SQL_SERVER_PASSWORD']
   waitFor: ['proxy-install']
 - id: integration_bigquery
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
@@ -80,8 +80,8 @@ steps:
   env:
   - 'NOX_SESSION=integration_teradata'
   - 'PROJECT_ID=pso-kokoro-resources'
-  - 'TERADATA_PASSWORD=udfs'
   - 'TERADATA_HOST=10.128.15.235'
+  secretEnv: ['TERADATA_PASSWORD']
 - id: integration_state
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
@@ -95,8 +95,8 @@ steps:
   env:
   - 'NOX_SESSION=integration_oracle'
   - 'PROJECT_ID=pso-kokoro-resources'
-  - 'ORACLE_PASSWORD=Oracle123'
   - 'ORACLE_HOST=10.128.15.246'
+  secretEnv: ['ORACLE_PASSWORD']
 - id: integration_hive
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
@@ -104,3 +104,16 @@ steps:
   - 'NOX_SESSION=integration_hive'
   - 'PROJECT_ID=pso-kokoro-resources'
   - 'HIVE_HOST=10.128.15.219'
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/mysql_password/versions/latest
+    env: 'MYSQL_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/postgres_password/versions/latest
+    env: 'POSTGRES_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/sql_server_password/versions/latest
+    env: 'SQL_SERVER_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/teradata_password/versions/latest
+    env: 'TERADATA_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/oracle_password/versions/latest
+    env: 'ORACLE_PASSWORD'
