@@ -17,6 +17,7 @@ from unittest import mock
 
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
+from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
@@ -62,11 +63,19 @@ def test_count_validator():
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
 
 
+def mock_get_connection_config(*args):
+    if args[1] in ("ora-conn", "mock-conn"):
+        return CONN
+    elif args[1] == "bq-conn":
+        return BQ_CONN
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_schema_validation_core_types(mock_conn):
+def test_schema_validation_core_types():
+    """Oracle to Oracle dvt_core_types schema validation"""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -89,14 +98,49 @@ def test_schema_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_column_validation_core_types(mock_conn):
+def test_schema_validation_core_types_to_bigquery():
+    """Oracle to BigQuery dvt_core_types schema validation"""
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_datetime,col_tstz to --sum string below when issue-762 is complete. Or change whole string to * if issue-763 is also complete.
-    # TODO Add col_dec_20,col_dec_38 to --sum string below when issue-763 is complete. Or change whole string to * if issue-762 is also complete.
-    # TODO Change --min string below to * when issue-763 is complete.
-    # TODO Change --max string below to * when issue-763 is complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=ora-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            (
+                # Integral Oracle NUMBERS go to BigQuery INT64.
+                "--allow-list=decimal(8,0):int64,decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
+                # Oracle NUMBERS that map to BigQuery NUMERIC.
+                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
+                # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
+                # This is incorrect and needs an issue raising.
+                "decimal(38,0):decimal(38,9),"
+                # BigQuery does not have a float32 type.
+                "float32:float64"
+            ),
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_core_types():
+    """Oracle to Oracle dvt_core_types column validation"""
+    parser = cli_tools.configure_arg_parser()
+    # TODO Change --sum string below to * when issue-762 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -121,9 +165,41 @@ def test_column_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_row_validation_core_types(mock_conn):
+def test_column_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # TODO Change --sum string below to include col_datetime and col_tstz when issue-762 is complete.
+    # TODO Change --min/max strings below to include col_tstz when issue-XXX is complete.
+    # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=ora-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types():
+    """Oracle to Oracle dvt_core_types row validation"""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -135,6 +211,35 @@ def test_row_validation_core_types(mock_conn):
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=*",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    # TODO Change --hash string below to include col_tstz when issue-XXX is complete.
+    # TODO Change --hash string below to include col_float32,col_float64 when issue-XXX is complete.
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=ora-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
