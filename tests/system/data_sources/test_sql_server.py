@@ -270,6 +270,8 @@ def test_schema_validation_core_types_to_bigquery():
 )
 def test_column_validation_core_types():
     parser = cli_tools.configure_arg_parser()
+    # TODO When issue-832 is complete add col_varchar_30,col_char_2,col_string to --sum/min/max strings below.
+    # TODO When issue-833 is complete add col_datetime,col_tstz to --sum string below.
     args = parser.parse_args(
         [
             "validate",
@@ -278,9 +280,9 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=*",
-            "--min=*",
-            "--max=*",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
