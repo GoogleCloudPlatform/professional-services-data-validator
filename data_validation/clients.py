@@ -32,6 +32,7 @@ from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
+from third_party.ibis.ibis_redshift.client import RedShiftClient
 
 ibis.options.sql.default_limit = None
 
@@ -147,6 +148,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         PostgreSQLClient,
         DB2Client,
         MSSQLClient,
+        RedShiftClient,
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif type(client) in [PandasClient]:
@@ -168,7 +170,7 @@ def get_ibis_table_schema(client, schema_name, table_name):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if type(client) in [MySQLClient, PostgreSQLClient]:
+    if type(client) in [MySQLClient, PostgreSQLClient, RedShiftClient]:
         return client.schema(schema_name).table(table_name).schema()
     else:
         return client.get_schema(table_name, schema_name)
@@ -181,6 +183,7 @@ def list_schemas(client):
         PostgreSQLClient,
         DB2Client,
         MSSQLClient,
+        RedShiftClient,
     ]:
         return client.list_schemas()
     elif hasattr(client, "list_databases"):
@@ -196,6 +199,7 @@ def list_tables(client, schema_name):
         PostgreSQLClient,
         DB2Client,
         MSSQLClient,
+        RedShiftClient,
     ]:
         return client.list_tables(schema=schema_name)
     elif schema_name:
@@ -299,7 +303,7 @@ CLIENT_LOOKUP = {
     "Oracle": OracleClient,
     "FileSystem": get_pandas_client,
     "Postgres": PostgreSQLClient,
-    "Redshift": PostgreSQLClient,
+    "Redshift": RedShiftClient,
     "Teradata": TeradataClient,
     "MSSQL": MSSQLClient,
     "Snowflake": snowflake_connect,
