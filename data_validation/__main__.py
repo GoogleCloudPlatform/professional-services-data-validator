@@ -382,7 +382,8 @@ def find_tables_using_string_matching(args):
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
-    target_table_map = get_table_map(target_client)
+    # TODO(#827): test change - added allowed schemas to target?
+    target_table_map = get_table_map(target_client, allowed_schemas=allowed_schemas)
 
     table_configs = _compare_match_tables(
         source_table_map, target_table_map, score_cutoff=score_cutoff
