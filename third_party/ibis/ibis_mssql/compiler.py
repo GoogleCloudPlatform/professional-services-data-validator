@@ -18,8 +18,6 @@ import math
 import sqlalchemy as sa
 import sqlalchemy.dialects.mssql as mssql
 
-from sqlalchemy.dialects.mssql.base import MSDialect
-
 import ibis.common.exceptions as com
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
@@ -500,18 +498,15 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
             dt.Float: mssql.REAL,
             dt.Double: mssql.REAL,
             dt.String: mssql.VARCHAR,
-            # TODO(issue-827): check if decimals are taken properly
             dt.Int64: mssql.MONEY,
         }
     )
-    #print("~~~ _TYPE_MAP: " + str(_type_map))
 
 
 rewrites = MSSQLExprTranslator.rewrites
 compiles = MSSQLExprTranslator.compiles
 
-
-class MSSQLDialect(MSDialect):
+class MSSQLDialect(alch.AlchemyDialect):
 
      translator = MSSQLExprTranslator
 
