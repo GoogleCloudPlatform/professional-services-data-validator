@@ -18,8 +18,6 @@ import math
 import sqlalchemy as sa
 import sqlalchemy.dialects.mssql as mssql
 
-from sqlalchemy.dialects.mssql.base import MSDialect
-
 import ibis.common.exceptions as com
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
@@ -503,7 +501,6 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
             dt.Int64: mssql.MONEY,
         }
     )
-    #print("~~~ _TYPE_MAP: " + str(_type_map))
 
 
 rewrites = MSSQLExprTranslator.rewrites
