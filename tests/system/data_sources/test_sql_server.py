@@ -363,7 +363,7 @@ def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # TODO When issue-834 is complete add col_string to --hash string below.
     # TODO Change --hash string below to include col_tstz when issue-XXX is complete.
-    # TODO Change --hash string below to include col_float32,col_float64 when issue-XXX is complete.
+    # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     args = parser.parse_args(
         [
             "validate",

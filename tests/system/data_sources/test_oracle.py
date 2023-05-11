@@ -227,8 +227,8 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    # TODO Change --hash string below to include col_tstz when issue-XXX is complete.
-    # TODO Change --hash string below to include col_float32,col_float64 when issue-XXX is complete.
+    # TODO Change --hash string below to include col_tstz when issue-706 is complete.
+    # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
