@@ -113,7 +113,7 @@ def test_schema_validation_core_types_to_bigquery():
                 # Hive decimals that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Hive decimals that map to BigQuery BIGNUMERIC.
-                # This is incorrect and needs an issue raising.
+                # When issue-839 is resolved we need to edit the line below as appropriate.
                 "decimal(38,0):decimal(38,9),"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
