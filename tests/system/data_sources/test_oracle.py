@@ -170,7 +170,7 @@ def test_column_validation_core_types():
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # TODO Change --sum string below to include col_datetime and col_tstz when issue-762 is complete.
-    # TODO Change --min/max strings below to include col_tstz when issue-XXX is complete.
+    # TODO Change --min/max strings below to include col_tstz when issue-706 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     args = parser.parse_args(
         [

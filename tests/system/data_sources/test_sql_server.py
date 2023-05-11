@@ -303,7 +303,7 @@ def test_column_validation_core_types_to_bigquery():
     # TODO When issue-832 is complete add col_varchar_30,col_char_2,col_string to --sum/min/max strings below.
     # TODO When issue-833 is complete add col_datetime,col_tstz to --sum string below.
     # TODO When issue-XXX is complete add col_dec_10_2,col_dec_20,col_dec_38 to --sum/min/max strings below.
-    # TODO Change --min/max strings below to include col_tstz when issue-XXX is complete.
+    # TODO Change --min/max strings below to include col_tstz when issue-706 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     args = parser.parse_args(
         [
@@ -362,7 +362,7 @@ def test_row_validation_core_types():
 def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # TODO When issue-834 is complete add col_string to --hash string below.
-    # TODO Change --hash string below to include col_tstz when issue-XXX is complete.
+    # TODO Change --hash string below to include col_tstz when issue-706 is complete.
     # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     args = parser.parse_args(
         [
@@ -374,6 +374,34 @@ def test_row_validation_core_types_to_bigquery():
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_date,col_datetime",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # TODO Change --hash string below to include col_tstz when issue-706 is complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=pg-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
