@@ -448,15 +448,15 @@ data-validation query
 
 Creating the list of matched tables can be a hassle. We have added a feature
 which may help you to match all of the tables together between source and
-target. The find-tables tool:
+target. The `find-tables` command:
 
--   Pulls all tables in the source (applying a supplied allowed-schemas filter)
+-   Pulls all tables in the source (applying a supplied `allowed-schemas` filter)
 -   Pulls all tables from the target
--   Uses Levenshtein distance to match tables
+-   Uses Jaro Similarity algorithm to match tables
 -   Finally, it prints a JSON list of tables which can be a reference for the
     validation run config.
 
-Note that our score cutoff default is 1. If no matches occur, reduce this value as deemed necessary.
+Note that our default value for the `score-cutoff` parameter is 1 and it seeks for identical matches. If no matches occur, reduce this value as deemed necessary. By using smaller numbers such as 0.7, 0.65 etc you can get more matches. For reference, we make use of [this jaro_similarity method](https://jamesturk.github.io/jellyfish/functions/#jaro-similarity) for the string comparison.
 
 ```
 data-validation find-tables --source-conn source --target-conn target \
