@@ -166,7 +166,7 @@ def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # Hive tests are really slow so I've excluded --min below assuming that --max is effectively the same test.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    # TODO Change --sum and --max options to include col_char_2 when issue-XXX is complete.
+    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
     args = parser.parse_args(
         [
             "validate",
