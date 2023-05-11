@@ -498,6 +498,7 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
             dt.Float: mssql.REAL,
             dt.Double: mssql.REAL,
             dt.String: mssql.VARCHAR,
+            dt.Int64: mssql.MONEY,
         }
     )
 
@@ -505,10 +506,9 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
 rewrites = MSSQLExprTranslator.rewrites
 compiles = MSSQLExprTranslator.compiles
 
-
 class MSSQLDialect(alch.AlchemyDialect):
 
-    translator = MSSQLExprTranslator
+     translator = MSSQLExprTranslator
 
 
 dialect = MSSQLDialect
