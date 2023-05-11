@@ -157,6 +157,15 @@ def strftime_bigquery(translator, expr):
         strftime_format_func_name, fmt_string, arg_formatted
     )
 
+def strftime_mysql(translator, expr):
+    arg, format_string = expr.op().args 
+    arg_formatted = translator.translate(arg)
+    arg_type = arg.type()
+    fmt_string = translator.translate(format_string)
+    if isinstance(arg_type, dt.Timestamp):
+        fmt_string = "%Y-%m-%d %H:%i:%S"
+    return sa.func.date_format(arg_formatted, fmt_string)
+
 
 def format_hashbytes_teradata(translator, expr):
     arg, how = expr.op().args
@@ -308,6 +317,7 @@ BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
+MySQLExprTranslator._registry[Strftime] = strftime_mysql
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
