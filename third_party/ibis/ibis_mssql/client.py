@@ -50,6 +50,11 @@ def sa_float64(_, satype, nullable=True):
     return dt.Float64(nullable=nullable)
 
 
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.MONEY)
+def sa_money(_, satype, nullable=True):
+    return dt.Int64(nullable=nullable)
+
+
 class MSSQLTable(alch.AlchemyTable):
     pass
 

@@ -50,6 +50,7 @@ from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
+from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
 # avoid errors if Db2 is not installed and not needed
 try:
@@ -156,6 +157,15 @@ def strftime_bigquery(translator, expr):
         strftime_format_func_name, fmt_string, arg_formatted
     )
 
+def strftime_mysql(translator, expr):
+    arg, format_string = expr.op().args 
+    arg_formatted = translator.translate(arg)
+    arg_type = arg.type()
+    fmt_string = translator.translate(format_string)
+    if isinstance(arg_type, dt.Timestamp):
+        fmt_string = "%Y-%m-%d %H:%i:%S"
+    return sa.func.date_format(arg_formatted, fmt_string)
+
 
 def format_hashbytes_teradata(translator, expr):
     arg, how = expr.op().args
@@ -236,6 +246,11 @@ def sa_format_hashbytes_db2(translator, expr):
     hex = sa.func.hex(hashfunc)
     return sa.func.lower(hex)
 
+def sa_format_hashbytes_redshift(translator, expr):
+    arg, how  = expr.op().args
+    compiled_arg = translator.translate(arg)
+    return sa.sql.literal_column(f"sha2({compiled_arg}, 256)")
+
 def sa_format_hashbytes_postgres(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
@@ -302,6 +317,7 @@ BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
+MySQLExprTranslator._registry[Strftime] = strftime_mysql
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
@@ -323,6 +339,7 @@ MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
 MySQLExprTranslator._registry[ops.IfNull] = fixed_arity(sa.func.ifnull, 2)
 MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
+RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
 
 if DB2ExprTranslator: #check if Db2 driver is loaded
     DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
