@@ -440,7 +440,7 @@ def run_validation(config_manager, dry_run=False, verbose=False):
                     "source_query": validator.validation_builder.get_source_query().compile(),
                     "target_query": validator.validation_builder.get_target_query().compile(),
                 },
-                indent=4
+                indent=4,
             )
         )
     else:
