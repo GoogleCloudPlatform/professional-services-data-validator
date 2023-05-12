@@ -376,6 +376,31 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
 page provides few examples of how this tool can be used to run custom query row validations.
 
+#### Dry Run Validation
+
+The `validate` command takes a `--dry-run` command line flag that prints source
+and target SQL to stdout as JSON in lieu of performing a validation:
+
+```
+data-validation (--verbose or -v) (--log-level or -ll) validate
+  [--dry-run or -dr]    Prints source and target SQL to stdout in lieu of performing a validation.
+```
+
+For example, this flag can be used as follows:
+
+```shell
+> data-validation validate --dry-run row \
+  -sc my_bq_conn \
+  -tc my_bq_conn \
+  -tbls bigquery-public-data.new_york_citibike.citibike_stations \
+  --primary-keys station_id \
+  --hash '*'
+{
+    "source_query": "SELECT `hash__all`, `station_id`\nFROM ...",
+    "target_query": "SELECT `hash__all`, `station_id`\nFROM ..."
+}
+```
+
 ### YAML Configuration Files
 
 You can customize the configuration for any given validation by providing use
