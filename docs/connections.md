@@ -257,6 +257,10 @@ Please note AlloyDB supports same connection config as Postgres.
 ```
 
 ## MySQL
+DVT only supports MySQL version 8.0+. 
+
+TODO: link latest version before Ibis upgrade
+The last functioning release for support for versions < 8.0 is 3.2.0.
 ```
 {
     # secret manager type
@@ -353,6 +357,7 @@ Please note that for Group By validations, the following property must be set in
  ```
  pip install ibis-framework[impala]
  ```
+ Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
  
 ```
 {
@@ -373,7 +378,7 @@ Please note that for Group By validations, the following property must be set in
     "auth-mechanism":"PLAIN"
 }
 ```
-Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
+
 
 ## DB2
 DB2 requires the `ibm_db_sa` package.

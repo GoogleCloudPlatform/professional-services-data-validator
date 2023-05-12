@@ -13,17 +13,17 @@
 # limitations under the License.
 
 import sqlalchemy as sa
-from ibis.backends.base_sqlalchemy.alchemy import (
-    _to_sqla_type,
-    AlchemyTable,
-    _AlchemyTableSet,
-)
+
+from ibis.backends.base.sql.alchemy.query_builder import _AlchemyTableSetFormatter
+from ibis.backends.base.sql.alchemy.database import AlchemyTable
+from ibis.backends.mysql.compiler import MySQLExprTranslator
+
 import ibis.expr.schema as sch
 import ibis.expr.operations as ops
 
 import re
 import ibis.expr.datatypes as dt
-from ibis.backends.base_sqlalchemy.alchemy import AlchemyClient
+# from ibis.backends.base_sqlalchemy.alchemy import AlchemyClient
 
 from typing import Iterable
 
@@ -92,53 +92,68 @@ def _schema_to_sqlalchemy_columns(schema: sch.Schema):
     return [sa.column(n, _to_sqla_type(t)) for n, t in schema.items()]
 
 
-def _format_table_new(self, expr):
+def _format_table_new(self, op):
     ctx = self.context
-    ref_expr = expr
-    op = ref_op = expr.op()
+    ref_op = op
 
     if isinstance(op, ops.SelfReference):
-        ref_expr = op.table
-        ref_op = ref_expr.op()
+        ref_op = op.table
 
-    alias = ctx.get_ref(expr)
+    alias = ctx.get_ref(op)
+
+    translator = ctx.compiler.translator_class(ref_op, ctx)
+
     if isinstance(ref_op, AlchemyTable):
         result = ref_op.sqla_table
-    elif isinstance(ref_op, ops.SQLQueryResult):
-        columns = _schema_to_sqlalchemy_columns(ref_op.schema)
-        result = sa.text(ref_op.query).columns(*columns)
     elif isinstance(ref_op, ops.UnboundTable):
-        # use SQLAlchemy's TableClause and ColumnClause for unbound tables
-        schema = ref_op.schema
-        result = sa.table(
-            ref_op.name if ref_op.name is not None else ctx.get_ref(expr),
-            *(
-                sa.column(n, _to_sqla_type(t))
-                for n, t in zip(schema.names, schema.types)
-            ),
+        # use SQLAlchemy's TableClause for unbound tables
+        result = sa.Table(
+            ref_op.name,
+            sa.MetaData(),
+            *translator._schema_to_sqlalchemy_columns(ref_op.schema),
+            quote=translator._quote_table_names,
         )
+    elif isinstance(ref_op, ops.SQLQueryResult):
+        columns = translator._schema_to_sqlalchemy_columns(ref_op.schema)
+        result = sa.text(ref_op.query).columns(*columns)
+    elif isinstance(ref_op, ops.SQLStringView):
+        columns = translator._schema_to_sqlalchemy_columns(ref_op.schema)
+        result = sa.text(ref_op.query).columns(*columns).cte(ref_op.name)
+    elif isinstance(ref_op, ops.View):
+        # TODO(kszucs): avoid converting to expression
+        child_expr = ref_op.child.to_expr()
+        definition = child_expr.compile()
+        result = sa.Table(
+            ref_op.name,
+            sa.MetaData(),
+            *translator._schema_to_sqlalchemy_columns(ref_op.schema),
+            quote=translator._quote_table_names,
+        )
+        backend = child_expr._find_backend()
+        backend._create_temp_view(view=result, definition=definition)
+    elif isinstance(ref_op, ops.InMemoryTable):
+        result = self._format_in_memory_table(op, ref_op, translator)
     else:
         # A subquery
-        if ctx.is_extracted(ref_expr):
+        if ctx.is_extracted(ref_op):
             # Was put elsewhere, e.g. WITH block, we just need to grab
             # its alias
-            alias = ctx.get_ref(expr)
+            alias = ctx.get_ref(op)
 
             # hack
             if isinstance(op, ops.SelfReference):
-
-                table = ctx.get_table(ref_expr)
-                self_ref = table.alias(alias)
-                ctx.set_table(expr, self_ref)
+                table = ctx.get_ref(ref_op)
+                self_ref = alias if hasattr(alias, "name") else table.alias(alias)
+                ctx.set_ref(op, self_ref)
                 return self_ref
-            else:
-                return ctx.get_table(expr)
+            return alias
 
-        result = ctx.get_compiled_expr(expr)
-        alias = ctx.get_ref(expr)
+        alias = ctx.get_ref(op)
+        result = ctx.get_compiled_expr(op)
 
-    result = result.alias(alias)
-    ctx.set_table(expr, result)
+    result = alias if hasattr(alias, "name") else result.alias(alias)
+    ctx.set_ref(op, result)
+    
     return result
 
 class _FieldFlags:
@@ -247,6 +262,7 @@ def _get_schema_using_query(self, query: str) -> sch.Schema:
     """Return an ibis Schema from a backend-specific SQL string."""
     return sch.Schema.from_tuples(self._metadata(query))
 
+
 # AlchemyClient._get_schema_using_query = _get_schema_using_query
 # AlchemyClient._metadata = _metadata
-_AlchemyTableSet._format_table = _format_table_new
+# _AlchemyTableSetFormatter._format_table = _format_table_new

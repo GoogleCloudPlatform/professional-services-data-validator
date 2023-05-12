@@ -54,7 +54,7 @@ RANDOM_SORT_SUPPORTS = [
     ibis.backends.postgres.Backend,
     ibis.backends.mssql.Backend,
     # clients.DB2Client: "RAND()",
-    # ibis.backends.mysql.Backend,
+    ibis.backends.mysql.Backend,
 ]
 
 

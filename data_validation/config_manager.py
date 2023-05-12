@@ -888,7 +888,7 @@ class ConfigManager(object):
             query = file.read()
             query = query.rstrip(";\n")
         except IOError:
-            logging.warning("Cannot read query file: ", filename)
+            logging.error("Cannot read query file: ", filename)
 
         if not query or query.isspace():
             raise ValueError(

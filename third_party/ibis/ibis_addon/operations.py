@@ -33,7 +33,6 @@ import ibis.expr.operations as ops
 from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
 from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast, StringLength, RandomScalar, IfNull, StringJoin
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
-
 # avoid errors if Db2 is not installed and not needed
 # try:
 #     from third_party.ibis.ibis_DB2.compiler import DB2ExprTranslator
@@ -47,10 +46,14 @@ from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
-# from ibis.backends.snowflake import SnowflakeExprTranslator
-
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
+
+# Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
+try:
+    from ibis.backends.snowflake import SnowflakeExprTranslator
+except Exception:
+    SnowflakeExprTranslator = None
 
 
 from ibis.backends.mssql.datatypes import _MSSQL_TYPE_MAP
@@ -192,10 +195,9 @@ def sa_format_hashbytes_oracle(translator, op):
     hash_func = sa.func.standard_hash(arg, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
 
-def sa_format_hashbytes_mysql(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
-    hash_func = sa.func.sha2(compiled_arg, sa.sql.literal_column("'256'"))
+def sa_format_hashbytes_mysql(translator, op):
+    arg = translator.translate(op.arg)
+    hash_func = sa.func.sha2(arg, sa.sql.literal_column("'256'"))
     return hash_func
 
 def sa_format_hashbytes_db2(translator, expr):
@@ -210,6 +212,10 @@ def sa_format_hashbytes_postgres(translator, op):
     convert = sa.func.convert_to(arg, sa.sql.literal_column("'UTF8'"))
     hash_func = sa.func.sha256(convert)
     return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
+
+def sa_format_hashbytes_snowflake(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.sha2(arg)
 
 def sa_format_to_char(translator, op):
     arg = translator.translate(op.arg)
@@ -260,6 +266,7 @@ def _sa_string_join(t, op):
 def sa_format_new_id(t, op):
     return sa.func.NEWID()
 
+
 # IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
 # BinaryValue.hash = compile_hash
 # StringValue.hash = compile_hash
@@ -304,10 +311,10 @@ MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
 # MySQLExprTranslator._registry[IfNull] = fixed_arity(sa.func.ifnull, 2)
 # MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
 
-# TODO: Snowflake support
-# SnowflakeExprTranslator._registry[HashBytes] = 
-# SnowflakeExprTranslator._registry[RawSQL] = 
-# SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
+if SnowflakeExprTranslator:
+    SnowflakeExprTranslator._registry[HashBytes] = sa_format_hashbytes_snowflake
+    SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
 
 # if DB2ExprTranslator: #check if Db2 driver is loaded
 #     DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2

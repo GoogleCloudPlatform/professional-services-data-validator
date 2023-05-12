@@ -32,6 +32,10 @@ from data_validation.secret_manager import SecretManagerBuilder
 
 ibis.options.sql.default_limit = None
 
+# Filter Ibis MySQL error when loading client.table()
+warnings.filterwarnings(
+    "ignore", "`BaseBackend.database` is deprecated; use equivalent methods in the backend"
+)
 
 def _raise_missing_client_error(msg):
     def get_client_call(*args, **kwargs):
@@ -54,7 +58,7 @@ except Exception:
 
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
-    from third_party.ibis.ibis_snowflake.api_new import snowflake_connect
+    from third_party.ibis.ibis_snowflake.api import snowflake_connect
 except Exception:
     snowflake_connect = _raise_missing_client_error(
         "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
