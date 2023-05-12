@@ -24,6 +24,7 @@ import ibis.expr.rules as rlz
 import ibis.backends.base_sqlalchemy.compiler as sql_compiler
 import ibis.backends.base_sqlalchemy.alchemy as sqla
 import ibis.backends.pandas.execution.util as pandas_util
+import numpy as np
 
 from ibis_bigquery import BigQueryClient
 from ibis.backends.impala.client import ImpalaClient
@@ -84,7 +85,7 @@ class RandomSortKey(ops.SortKey):
 
 
 class RandomRowBuilder(object):
-    def __init__(self, primary_keys: List[str], batch_size: int):
+    def __init__(self, primary_keys: List[str], batch_size: str):
         """Build a RandomRowBuilder object which is ready to build a random row filter query.
 
         Args:
@@ -93,6 +94,38 @@ class RandomRowBuilder(object):
         """
         self.primary_keys = primary_keys
         self.batch_size = batch_size
+
+    def python_compile(
+        self,
+        data_client: ibis.client,
+        schema_name: str,
+        table_name: str,
+        query_builder: QueryBuilder,
+    ) -> np.ndarray:
+        """Return array with random rows generated with Numpy. Only works for monotonically
+        increasing PKs.
+
+        Args:
+            data_client (IbisClient): The client used to query random rows.
+            schema_name (String): The name of the schema for the given table.
+            table_name (String): The name of the table to query.
+            query_builder (QueryBuilder): QueryBuilder object for additional filters.
+        """
+        table = clients.get_ibis_table(data_client, schema_name, table_name)
+        compiled_filters = query_builder.compile_filter_fields(table)
+        filtered_table = table.filter(compiled_filters) if compiled_filters else table
+
+        min_query = filtered_table[self.primary_keys[0]].min()
+        max_query = filtered_table[self.primary_keys[0]].max()
+
+        min_value = data_client.execute(min_query)
+        max_value = data_client.execute(max_query)
+
+        seq = np.arange(min_value, max_value + 1)
+        rng = np.random.default_rng()
+        random_rows = rng.choice(seq, size=int(self.batch_size), replace=False)
+
+        return random_rows
 
     def compile(
         self,
@@ -107,6 +140,7 @@ class RandomRowBuilder(object):
             data_client (IbisClient): The client used to query random rows.
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
+            query_builder (QueryBuilder): QueryBuilder object for additional filters.
         """
         table = clients.get_ibis_table(data_client, schema_name, table_name)
         compiled_filters = query_builder.compile_filter_fields(table)

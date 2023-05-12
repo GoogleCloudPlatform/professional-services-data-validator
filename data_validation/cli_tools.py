@@ -447,6 +447,12 @@ def _configure_row_parser(row_parser):
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
     )
+    optional_arguments.add_argument(
+        "--use-random-rows-python",
+        "-rrp",
+        action="store_true",
+        help="Calculate random rows in Python instead of SQL; Requires monotonically increasing PK.",
+    )
 
     # Group required arguments
     required_arguments = row_parser.add_argument_group("required arguments")
@@ -1245,6 +1251,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     # custom-query validation and generate-table-partitions
     use_random_rows = None
     random_row_batch_size = None
+    use_random_rows_python = None
     if (
         args.command != "generate-table-partitions"
         and config_type != consts.SCHEMA_VALIDATION
@@ -1252,6 +1259,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     ):
         use_random_rows = args.use_random_row
         random_row_batch_size = args.random_row_batch_size
+        use_random_rows_python = args.use_random_rows_python
 
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
@@ -1286,6 +1294,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "format": format,
             "use_random_rows": use_random_rows,
             "random_row_batch_size": random_row_batch_size,
+            "use_random_rows_python": use_random_rows_python,
             "source_client": source_client,
             "target_client": target_client,
             "result_handler_config": result_handler_config,

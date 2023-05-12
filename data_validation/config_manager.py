@@ -109,6 +109,10 @@ class ConfigManager(object):
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
+    def use_random_rows_python(self):
+        """Return if the validation should use a random row filter."""
+        return self._config.get(consts.CONFIG_USE_RANDOM_ROWS_PYTHON) or False
+
     def get_random_row_batch_size(self):
         """Return number of random rows or None."""
         return self.random_row_batch_size() if self.use_random_rows() else None
@@ -437,6 +441,7 @@ class ConfigManager(object):
         format,
         use_random_rows=None,
         random_row_batch_size=None,
+        use_random_rows_python=None,
         source_client=None,
         target_client=None,
         result_handler_config=None,
@@ -469,6 +474,7 @@ class ConfigManager(object):
             consts.CONFIG_FILTERS: filter_config,
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
+            consts.CONFIG_USE_RANDOM_ROWS_PYTHON: use_random_rows_python,
             consts.CONFIG_FILTER_STATUS: filter_status,
         }
 

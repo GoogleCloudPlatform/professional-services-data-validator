@@ -109,34 +109,42 @@ class DataValidation(object):
 
         # Filter for only first primary key (multi-pk filter not supported)
         primary_key_info = self.config_manager.primary_keys[0]
-
-        query = RandomRowBuilder(
+        builder = RandomRowBuilder(
             [primary_key_info[consts.CONFIG_SOURCE_COLUMN]],
             self.config_manager.random_row_batch_size(),
-        ).compile(
-            self.config_manager.source_client,
-            self.config_manager.source_schema,
-            self.config_manager.source_table,
-            self.validation_builder.source_builder,
         )
 
-        random_rows = self.config_manager.source_client.execute(query)
+        if self.config_manager.use_random_rows_python():
+            random_rows = builder.python_compile(
+                self.config_manager.source_client,
+                self.config_manager.source_schema,
+                self.config_manager.source_table,
+                self.validation_builder.source_builder,
+            )
+        else:
+            query = builder.compile(
+                self.config_manager.source_client,
+                self.config_manager.source_schema,
+                self.config_manager.source_table,
+                self.validation_builder.source_builder,
+            )
+            result = self.config_manager.source_client.execute(query)
+
+            random_rows = result[primary_key_info[consts.CONFIG_SOURCE_COLUMN]]
+
         if len(random_rows) == 0:
             return
+
         filter_field = {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
             consts.CONFIG_FILTER_SOURCE_COLUMN: primary_key_info[
                 consts.CONFIG_SOURCE_COLUMN
             ],
-            consts.CONFIG_FILTER_SOURCE_VALUE: random_rows[
-                primary_key_info[consts.CONFIG_SOURCE_COLUMN]
-            ],
+            consts.CONFIG_FILTER_SOURCE_VALUE: random_rows,
             consts.CONFIG_FILTER_TARGET_COLUMN: primary_key_info[
                 consts.CONFIG_TARGET_COLUMN
             ],
-            consts.CONFIG_FILTER_TARGET_VALUE: random_rows[
-                primary_key_info[consts.CONFIG_SOURCE_COLUMN]
-            ],
+            consts.CONFIG_FILTER_TARGET_VALUE: random_rows,
         }
         self.validation_builder.add_filter(filter_field)
 
