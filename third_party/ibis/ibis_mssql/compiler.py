@@ -506,9 +506,10 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
 rewrites = MSSQLExprTranslator.rewrites
 compiles = MSSQLExprTranslator.compiles
 
+
 class MSSQLDialect(alch.AlchemyDialect):
 
-     translator = MSSQLExprTranslator
+      translator = MSSQLExprTranslator
 
 
 dialect = MSSQLDialect
