@@ -417,11 +417,12 @@ def convert_config_to_yaml(args, config_managers):
     return yaml_config
 
 
-def run_validation(config_manager, verbose=False):
+def run_validation(config_manager, dry_run=False, verbose=False):
     """Run a single validation.
 
     Args:
         config_manager (ConfigManager): Validation config manager instance.
+        dry_run (bool): Print source and target SQL to stdout in lieu of validation.
         verbose (bool): Validation setting to log queries run.
     """
     validator = DataValidation(
@@ -430,7 +431,18 @@ def run_validation(config_manager, verbose=False):
         result_handler=None,
         verbose=verbose,
     )
-    validator.execute()
+    if dry_run:
+        print(
+            json.dumps(
+                {
+                    "source_query": validator.validation_builder.get_source_query().compile(),
+                    "target_query": validator.validation_builder.get_target_query().compile(),
+                },
+                indent=4,
+            )
+        )
+    else:
+        validator.execute()
 
 
 def run_validations(args, config_managers):
@@ -447,7 +459,9 @@ def run_validations(args, config_managers):
                 config_manager.config[consts.CONFIG_FILE],
             )
             try:
-                run_validation(config_manager, verbose=args.verbose)
+                run_validation(
+                    config_manager, dry_run=args.dry_run, verbose=args.verbose
+                )
             except Exception as e:
                 logging.error(
                     "Error %s occured while running config file %s. Skipping it for now.",
@@ -455,7 +469,7 @@ def run_validations(args, config_managers):
                     config_manager.config[consts.CONFIG_FILE],
                 )
         else:
-            run_validation(config_manager, verbose=args.verbose)
+            run_validation(config_manager, dry_run=args.dry_run, verbose=args.verbose)
 
 
 def store_yaml_config_file(args, config_managers):

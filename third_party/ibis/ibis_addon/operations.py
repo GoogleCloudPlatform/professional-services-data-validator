@@ -48,6 +48,7 @@ from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
+from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
@@ -148,6 +149,16 @@ def strftime_bigquery(translator, op):
         strftime_format_func_name, fmt_string, arg_formatted
     )
 
+def strftime_mysql(translator, op):
+    arg = op.arg
+    format_string = op.format_str
+    arg_formatted = translator.translate(arg)
+    arg_type = arg.output_dtype
+    fmt_string = translator.translate(format_string)
+    if isinstance(arg_type, dt.Timestamp):
+        fmt_string = "%Y-%m-%d %H:%i:%S"
+    return sa.func.date_format(arg_formatted, fmt_string)
+
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -206,6 +217,10 @@ def sa_format_hashbytes_db2(translator, expr):
     hashfunc = sa.func.hash(compiled_arg,sa.sql.literal_column("2"))
     hex = sa.func.hex(hashfunc)
     return sa.func.lower(hex)
+
+def sa_format_hashbytes_redshift(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.sql.literal_column(f"sha2({arg}, 256)")
 
 def sa_format_hashbytes_postgres(translator, op):
     arg = translator.translate(op.arg)
@@ -278,6 +293,7 @@ TemporalValue.to_char = compile_to_char
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
+MySQLExprTranslator._registry[Strftime] = strftime_mysql
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
@@ -308,8 +324,8 @@ MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
-# MySQLExprTranslator._registry[IfNull] = fixed_arity(sa.func.ifnull, 2)
-# MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
+
+RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[HashBytes] = sa_format_hashbytes_snowflake

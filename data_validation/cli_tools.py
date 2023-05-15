@@ -399,6 +399,13 @@ def _configure_validate_parser(subparsers):
         "validate", help="Run a validation and optionally store to config"
     )
 
+    validate_parser.add_argument(
+        "--dry-run",
+        "-dr",
+        action="store_true",
+        help="Prints source and target SQL to stdout in lieu of performing a validation.",
+    )
+
     validate_subparsers = validate_parser.add_subparsers(dest="validate_cmd")
 
     column_parser = validate_subparsers.add_parser(

@@ -29,6 +29,7 @@ from google.cloud import bigquery
 from third_party.ibis.ibis_impala.api import impala_connect
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
+from third_party.ibis.ibis_redshift.client import RedShiftClient
 
 ibis.options.sql.default_limit = None
 
@@ -127,6 +128,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         ibis.backends.postgres.Backend,
         # DB2Client,
         ibis.backends.mssql.Backend,
+        # RedShiftClient,
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif type(client) in [ibis.backends.pandas.Backend]:
@@ -153,6 +155,7 @@ def get_ibis_table_schema(client, schema_name, table_name):
         ibis.backends.postgres.Backend,
         ibis.backends.mssql.Backend,
         third_party.ibis.ibis_oracle.Backend,
+        # RedShiftClient,
     ]:
         return client.table(table_name, schema=schema_name).schema()
     else:
@@ -173,6 +176,7 @@ def list_tables(client, schema_name):
         ibis.backends.postgres.Backend,
         # DB2Client,
         ibis.backends.mssql.Backend,
+        # RedShiftClient,
     ]:
         return client.list_tables()
     return client.list_tables(database=schema_name)
@@ -271,7 +275,7 @@ CLIENT_LOOKUP = {
     "Oracle": oracle_connect,
     "FileSystem": get_pandas_client,
     "Postgres": ibis.postgres.connect,
-    "Redshift": ibis.postgres.connect,
+    # "Redshift": RedShiftClient,
     "Teradata": teradata_connect,
     "MSSQL": ibis.mssql.connect,
     "Snowflake": snowflake_connect,

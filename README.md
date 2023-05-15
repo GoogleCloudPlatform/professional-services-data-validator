@@ -136,7 +136,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, Postgres, Mysql, Db2 and Alloy DB. Struct and array data types are not currently supported.
+(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, Redshift, Postgres, Mysql, Db2 and Alloy DB. Struct and array data types are not currently supported.
 In addition, please note that SHA256 is not a supported function on Teradata systems. 
 If you wish to perform this comparison on Teradata you will need to 
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
@@ -325,7 +325,7 @@ page provides few examples of how this tool can be used to run custom query vali
 
 #### Custom Query Row Validations 
 
-(Note: Custom query row validation is currently only supported for BigQuery, Teradata, SQL Server, PostgreSQL, Oracle, AlloyDB, and Impala/Hive. Struct and array data types are not currently supported.)
+(Note: Custom query row validation is currently only supported for BigQuery, Teradata, SQL Server, PostgreSQL, Oracle, Redshift, DB2, AlloyDB, and Impala/Hive. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields
@@ -375,6 +375,31 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
 page provides few examples of how this tool can be used to run custom query row validations.
+
+#### Dry Run Validation
+
+The `validate` command takes a `--dry-run` command line flag that prints source
+and target SQL to stdout as JSON in lieu of performing a validation:
+
+```
+data-validation (--verbose or -v) (--log-level or -ll) validate
+  [--dry-run or -dr]    Prints source and target SQL to stdout in lieu of performing a validation.
+```
+
+For example, this flag can be used as follows:
+
+```shell
+> data-validation validate --dry-run row \
+  -sc my_bq_conn \
+  -tc my_bq_conn \
+  -tbls bigquery-public-data.new_york_citibike.citibike_stations \
+  --primary-keys station_id \
+  --hash '*'
+{
+    "source_query": "SELECT `hash__all`, `station_id`\nFROM ...",
+    "target_query": "SELECT `hash__all`, `station_id`\nFROM ..."
+}
+```
 
 ### YAML Configuration Files
 

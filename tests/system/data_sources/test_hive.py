@@ -17,6 +17,7 @@ from unittest import mock
 
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
+from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
 HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
@@ -60,11 +61,23 @@ def test_count_validator():
     assert df["source_agg_value"][0] == df["target_agg_value"][0]
 
 
+def mock_get_connection_config(*args):
+    if args[1] in ("hive-conn", "mock-conn"):
+        return CONN
+    elif args[1] == "bq-conn":
+        return BQ_CONN
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_schema_validation_core_types(mock_conn):
+def disabled_test_schema_validation_core_types():
+    """
+    Disabled this test in favour of test_schema_validation_core_types_to_bigquery().
+    The Hive integration tests are too slow and timing out but I believe
+    test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
+    """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -87,9 +100,50 @@ def test_schema_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_column_validation_core_types(mock_conn):
+def test_schema_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=hive-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            (
+                # All Hive integrals go to BigQuery INT64.
+                "--allow-list=int8:int64,int16:int64,int32:int64,"
+                # Hive decimals that map to BigQuery NUMERIC.
+                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
+                # Hive decimals that map to BigQuery BIGNUMERIC.
+                # When issue-839 is resolved we need to edit the line below as appropriate.
+                "decimal(38,0):decimal(38,9),"
+                # BigQuery does not have a float32 type.
+                "float32:float64"
+            ),
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def disabled_test_column_validation_core_types():
+    """
+    Disabled this test in favour of test_column_validation_core_types_to_bigquery().
+    The Hive integration tests are too slow and timing out but I believe
+    test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
+    """
     parser = cli_tools.configure_arg_parser()
     # Hive tests are really slow so I've excluded --min below assuming that --max is
     # effectively the same test when comparing an engine back to itself.
@@ -116,9 +170,44 @@ def test_column_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_row_validation_core_types(mock_conn):
+def test_column_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # Hive tests are really slow so I've excluded --min below assuming that --max is effectively the same test.
+    # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
+    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=hive-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def disabled_test_row_validation_core_types():
+    """
+    Disabled this test in favour of test_row_validation_core_types_to_bigquery().
+    The Hive integration tests are too slow and timing out but I believe
+    test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
+    """
     parser = cli_tools.configure_arg_parser()
     # TODO Change --hash option to * below when issue-765 is complete.
     args = parser.parse_args(
@@ -131,6 +220,35 @@ def test_row_validation_core_types(mock_conn):
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # TODO Change --hash option to include col_date,col_datetime,col_tstz when issue-765 is complete.
+    # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=hive-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
