@@ -244,15 +244,15 @@ def sa_format_to_char(translator, op):
 
 
 def sa_cast_postgres(t, op):
-    sa_arg = t.translate(op.arg)
-    sa_type = t.get_sqla_type(op.typ)
+    # Add cast from numeric to string
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
 
-    # Specialize going from an integer type to a timestamp
-    if isinstance(arg.type(), dt.Integer) and isinstance(sa_type, sa.DateTime):
-        return sa.func.timezone('UTC', sa.func.to_timestamp(sa_arg))
+    sa_arg = t.translate(arg)
 
     # Specialize going from numeric(p,s>0) to string
-    if isinstance(arg.type(), dt.Decimal) and arg.type().scale > 0 and typ.equals(dt.string):
+    if arg_dtype.is_decimal() and arg_dtype.scale > 0 and typ.equals(dt.string):
         # When casting a number to string PostgreSQL includes the full scale, e.g.:
         #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
         #     100.00
@@ -260,20 +260,27 @@ def sa_cast_postgres(t, op):
         # Using to_char() function instead of cast to return a more typical value.
         # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
         # Would have liked to use trim_scale but this is only available in PostgreSQL 13+
-        #     return (sa.cast(sa.func.trim_scale(sa_arg), sa_type))
-        precision = arg.type().precision or 38
-        fmt = "FM" + ("9" * (precision - arg.type().scale)) + "." + ("9" * arg.type().scale)
-        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+        #     return (sa.cast(sa.func.trim_scale(arg), typ))
+        precision = arg_dtype.precision or 38
+        fmt = "FM" + ("9" * (precision - arg_dtype.scale)) + "." + ("9" * arg_dtype.scale)
+        return sa.func.rtrim(sa.func.to_char(arg, fmt), ".")
 
-    if arg.type().equals(dt.binary) and typ.equals(dt.string):
+    # specialize going from an integer type to a timestamp
+    if arg_dtype.is_integer() and typ.is_timestamp():
+        return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
+
+    if arg_dtype.is_binary() and typ.is_string():
         return sa.func.encode(sa_arg, 'escape')
 
-    if typ.equals(dt.binary):
-        # Decode yields a column of memoryview which is annoying to deal with
+    if typ.is_binary():
+        #  decode yields a column of memoryview which is annoying to deal with
         # in pandas. CAST(expr AS BYTEA) is correct and returns byte strings.
         return sa.cast(sa_arg, sa.LargeBinary())
 
-    return sa.cast(sa_arg, sa_type)
+    if typ.is_json() and not t.native_json_type:
+        return sa_arg
+
+    return sa.cast(sa_arg, t.get_sqla_type(typ))
 
 def _sa_string_join(t, op):
     return sa.func.concat(*map(t.translate, op.arg))
