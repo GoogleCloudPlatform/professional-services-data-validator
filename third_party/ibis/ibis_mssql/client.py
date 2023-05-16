@@ -31,18 +31,23 @@ import pyodbc  # NOQA fail early if the driver is missing
 
 
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.UNIQUEIDENTIFIER)
-def sa_string(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
+def sa_uuid(_, satype, nullable=True):
+    return dt.UUID()(nullable=nullable)
 
 
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.BIT)
-def sa_boolean(_, satype, nullable=True):
+def sa_bit(_, satype, nullable=True):
     return dt.Boolean(nullable=nullable)
 
 
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.DATETIMEOFFSET)
 def sa_timestamp_tz(_, satype, nullable=True):
     return dt.Timestamp("UTC", nullable=nullable)
+
+
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.TIMESTAMP)
+def sa_timestamp(_, satype, nullable=True):
+    return dt.Binary(nullable=nullable)
 
 
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.FLOAT)
@@ -55,7 +60,11 @@ def sa_money(_, satype, nullable=True):
     return dt.Int64(nullable=nullable)
 
 
-<<<<<<< HEAD
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.SMALLMONEY)
+def sa_smallmoney(_, satype, nullable=True):
+    return dt.Int32(nullable=nullable)
+
+
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.BINARY)
 def sa_binary(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
@@ -66,14 +75,11 @@ def sa_varbinary(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
 
 
-=======
->>>>>>> feat: Add support for SQL Server's IMAGE data type (#858)
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.IMAGE)
 def sa_image(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
 
 
-<<<<<<< HEAD
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.NCHAR)
 def sa_nchar(_, satype, nullable=True):
     return dt.String(nullable=nullable)
@@ -89,8 +95,6 @@ def sa_nvarchar(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
 
-=======
->>>>>>> feat: Add support for SQL Server's IMAGE data type (#858)
 class MSSQLTable(alch.AlchemyTable):
     pass
 

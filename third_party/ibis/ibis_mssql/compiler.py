@@ -492,19 +492,38 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
     # only used to map SQLAlchemy types back to SQL Server types, it does not add support to new data types, for that go to client.py
     _type_map.update(
         {
+            # Exact numerics
             dt.Boolean: mssql.BIT,
             dt.Int8: mssql.TINYINT,
             dt.Int16: mssql.SMALLINT,
             dt.Int32: mssql.INTEGER,
-            dt.Int32: mssql.INT,
             dt.Int64: mssql.BIGINT,
             dt.Float16: mssql.FLOAT,
             dt.Float32: mssql.FLOAT,
-            dt.Float64: mssql.REAL, 
+            dt.Float64: mssql.REAL,
+            dt.Int64: mssql.MONEY,
+            dt.Decimal: mssql.DECIMAL,
+            dt.Decimal: mssql.NUMERIC,
+            dt.Int16: mssql.SMALLINT,
+            dt.Int32: mssql.SMALLMONEY, 
+            # Date and time
+            dt.Date: mssql.DATE,
+            dt.Timestamp: mssql.DATETIME2,
+            dt.Timestamp: mssql.DATETIME,
+            dt.Timestamp: mssql.DATETIMEOFFSET,
+            dt.Timestamp: mssql.SMALLDATETIME,
+            dt.Time: mssql.TIME,
+            # Character string
+            dt.String: mssql.CHAR,
+            dt.String: mssql.TEXT,
+            dt.String: mssql.VARCHAR,
+            # Unicode character strings
+            dt.String: mssql.NCHAR,
+            dt.String: mssql.NTEXT,
             dt.String: mssql.NVARCHAR,
             dt.String: mssql.VARCHAR,
         }
-    )
+)
 
 
 rewrites = MSSQLExprTranslator.rewrites
