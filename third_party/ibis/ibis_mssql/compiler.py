@@ -499,6 +499,7 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
             dt.Double: mssql.REAL,
             dt.String: mssql.VARCHAR,
             dt.Int64: mssql.MONEY,
+            dt.Binary: mssql.IMAGE,
         }
     )
 

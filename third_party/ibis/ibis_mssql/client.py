@@ -55,6 +55,11 @@ def sa_money(_, satype, nullable=True):
     return dt.Int64(nullable=nullable)
 
 
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.IMAGE)
+def sa_image(_, satype, nullable=True):
+    return dt.Binary(nullable=nullable)
+
+
 class MSSQLTable(alch.AlchemyTable):
     pass
 
