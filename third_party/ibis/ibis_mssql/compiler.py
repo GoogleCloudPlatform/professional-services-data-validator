@@ -494,10 +494,14 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
         {
             dt.Boolean: mssql.BIT,
             dt.Int8: mssql.TINYINT,
+            dt.Int16: mssql.SMALLINT,
             dt.Int32: mssql.INTEGER,
+            dt.Int32: mssql.INT,
             dt.Int64: mssql.BIGINT,
-            dt.Float: mssql.REAL,
-            dt.Double: mssql.REAL,
+            dt.Float16: mssql.FLOAT,
+            dt.Float32: mssql.FLOAT,
+            dt.Float64: mssql.REAL, 
+            dt.String: mssql.NVARCHAR,
             dt.String: mssql.VARCHAR,
         }
     )
