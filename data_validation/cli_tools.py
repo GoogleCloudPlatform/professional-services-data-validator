@@ -564,6 +564,12 @@ def _configure_column_parser(column_parser):
         help="Row batch size used for random row filters (default 10,000).",
     )
     optional_arguments.add_argument(
+        "--use-random-rows-python",
+        "-rrp",
+        action="store_true",
+        help="Calculate random rows in Python instead of SQL; Requires monotonically increasing PK.",
+    )
+    optional_arguments.add_argument(
         "--wildcard-include-string-len",
         "-wis",
         action="store_true",
@@ -787,6 +793,12 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         "--random-row-batch-size",
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
+    )
+    optional_arguments.add_argument(
+        "--use-random-rows-python",
+        "-rrp",
+        action="store_true",
+        help="Calculate random rows in Python instead of SQL; Requires monotonically increasing PK.",
     )
 
     # Group required arguments
