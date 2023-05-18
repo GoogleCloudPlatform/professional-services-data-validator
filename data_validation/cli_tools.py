@@ -49,10 +49,10 @@ import json
 import logging
 import sys
 import uuid
-from typing import List, Dict
 from argparse import Namespace
+from typing import Dict, List
 
-from data_validation import consts, state_manager, clients
+from data_validation import clients, consts, state_manager
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
