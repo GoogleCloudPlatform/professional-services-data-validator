@@ -326,6 +326,12 @@ def _configure_validation_config_parser(subparsers):
         "run", help="Run your validation configs"
     )
     run_parser.add_argument(
+        "--dry-run",
+        "-dr",
+        action="store_true",
+        help="Prints source and target SQL to stdout in lieu of performing a validation.",
+    )
+    run_parser.add_argument(
         "--config-file",
         "-c",
         help="YAML Config File Path to be used for building or running validations.",

@@ -452,7 +452,7 @@ def run_validations(args, config_managers):
                 run_validation(config_manager, verbose=args.verbose)
             except Exception as e:
                 logging.error(
-                    "Error %s occured while running config file %s. Skipping it for now.",
+                    "Error %s occurred while running config file %s. Skipping it for now.",
                     str(e),
                     config_manager.config[consts.CONFIG_FILE],
                 )
