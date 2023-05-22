@@ -85,12 +85,12 @@ class PartitionBuilder:
         yaml_configs_list = self._add_partition_filters(partition_filters)
         self._store_partitions(yaml_configs_list)
 
-    def _get_partition_key_filters(self) -> List[List[str]]:
-        """Generate Partition filters for primary_key type partition for all
-        Configs/Tables.
+    def _get_partition_key_filters(self) -> List[str]:
+        """Generate where clauses for each partition for the tabales. Not clear why we will have more than one set of tables
+        Investigate the concept of multiple Configs/Tables.
 
         Returns:
-            A list of lists of partition filters for each table
+            A list of where clauses for source/target table
         """
 
         master_filter_list = []
