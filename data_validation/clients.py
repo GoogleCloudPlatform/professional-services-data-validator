@@ -24,7 +24,7 @@ import third_party.ibis.ibis_postgres.client
 from google.cloud import bigquery
 # from ibis.backends.pandas.client import PandasClient
 # from ibis.backends.postgres.client import PostgreSQLClient
-# from third_party.ibis.ibis_cloud_spanner.api import connect as spanner_connect
+from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
@@ -280,6 +280,6 @@ CLIENT_LOOKUP = {
     "Teradata": teradata_connect,
     "MSSQL": ibis.mssql.connect,
     "Snowflake": snowflake_connect,
-    # "Spanner": spanner_connect,
+    "Spanner": spanner_connect,
     "DB2": DB2Client,
 }

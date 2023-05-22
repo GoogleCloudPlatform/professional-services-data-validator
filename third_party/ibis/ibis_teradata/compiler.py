@@ -15,13 +15,6 @@ from ibis.backends.base.sql.compiler import Compiler, ExprTranslator, TableSetFo
 from ibis.backends.base.sql.registry import identifiers
 from third_party.ibis.ibis_teradata.registry import _operation_registry
 
-def _format_limit(self):
-    if not self.limit:
-            return None
-
-    limit_sql = f"SAMPLE {self.limit.n}"
-    return limit_sql
-
 
 class TeradataTableSetFormatter(TableSetFormatter):
     @classmethod
@@ -41,9 +34,17 @@ class TeradataExprTranslator(ExprTranslator):
 
 
 rewrites = TeradataExprTranslator.rewrites
-Select.format_limit = _format_limit
+
+class TeradataSelect(Select):
+    def format_limit(self):
+        if not self.limit:
+            return None
+
+        limit_sql = f"SAMPLE {self.limit.n}"
+        return limit_sql
 
 class TeradataCompiler(Compiler):
     translator_class = TeradataExprTranslator
     table_set_formatter_class = TeradataTableSetFormatter
+    select_class = TeradataSelect
 

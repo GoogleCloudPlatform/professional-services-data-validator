@@ -31,6 +31,7 @@ import ibis.backends.pandas.execution.util as pandas_util
 # from ibis.backends.postgres.client import PostgreSQLClient
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
 from third_party.ibis.ibis_teradata import Backend as TeradataBackend
+from third_party.ibis.ibis_cloud_spanner import Backend as SpannerBackend
 #from ibis.backends.mysql.client import MySQLClient
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
@@ -55,6 +56,7 @@ RANDOM_SORT_SUPPORTS = [
     ibis.backends.mssql.Backend,
     # clients.DB2Client: "RAND()",
     ibis.backends.mysql.Backend,
+    SpannerBackend,
 ]
 
 
@@ -124,7 +126,8 @@ class RandomRowBuilder(object):
         """Return a randomly sorted query if it is supported for the client."""
         if type(data_client) in RANDOM_SORT_SUPPORTS:
             # Teradata 'SAMPLE' is random by nature and does not require a sort by
-            if type(data_client) == TeradataBackend:
+            # Spanner uses 'TABLESAMPLE' which is also random by nature
+            if type(data_client) == TeradataBackend or type(data_client) == SpannerBackend:
                 return table[self.primary_keys].limit(self.batch_size)
 
             # return table.order_by(

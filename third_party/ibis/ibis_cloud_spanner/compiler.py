@@ -13,46 +13,29 @@
 # limitations under the License.
 
 import ibis.expr.operations as ops
-import ibis_bigquery
-from ibis_bigquery import compiler as bigquery_compiler
-
-
-def build_ast(expr, context):
-    builder = bigquery_compiler.BigQueryQueryBuilder(expr, context=context)
-    return builder.get_result()
-
-
-def to_sql(expr, context):
-    query_ast = build_ast(expr, context)
-    compiled = query_ast.compile()
-    return compiled
-
-
-def _array_index(translator, expr):
-    # SAFE_OFFSET returns NULL if out of bounds
-    return "{}[OFFSET({})]".format(*map(translator.translate, expr.op().args))
-
-
-def _translate_pattern(translator, pattern):
-    # add 'r' to string literals to indicate to Cloud Spanner this is a raw string
-    return "r" * isinstance(pattern.op(), ops.Literal) + translator.translate(pattern)
-
-
-def _regex_extract(translator, expr):
-    arg, pattern, index = expr.op().args
-    regex = _translate_pattern(translator, pattern)
-    result = "REGEXP_EXTRACT({}, {})".format(translator.translate(arg), regex)
-    return result
-
-
-_operation_registry = bigquery_compiler._operation_registry.copy()
-_operation_registry.update(
-    {ops.RegexExtract: _regex_extract, ops.ArrayIndex: _array_index,}
-)
-
+from ibis.backends.base.sql import compiler as sql_compiler
+from ibis.backends.bigquery import compiler as bigquery_compiler
 
 compiles = bigquery_compiler.BigQueryExprTranslator.compiles
 rewrites = bigquery_compiler.BigQueryExprTranslator.rewrites
 
 
-dialect = ibis_bigquery.Backend().dialect
+class SpannerSelect(sql_compiler.Select):
+    def format_limit(self):
+        if not self.limit:
+            return None
+
+        limit_sql = f"TABLESAMPLE RESERVOIR ({self.limit.n} ROWS)"
+        return limit_sql
+
+
+class SpannerCompiler(sql_compiler.Compiler):
+    # Spanner uses BigQuery SQL syntax
+    translator_class = bigquery_compiler.BigQueryExprTranslator
+    table_set_formatter_class = bigquery_compiler.BigQueryTableSetFormatter
+    union_class = bigquery_compiler.BigQueryUnion
+    intersect_class = bigquery_compiler.BigQueryIntersection
+    difference_class = bigquery_compiler.BigQueryDifference
+    select_class = SpannerSelect
+
+    support_values_syntax_in_select = False

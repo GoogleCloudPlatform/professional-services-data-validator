@@ -352,7 +352,7 @@ class CalculatedField(object):
     @staticmethod
     def epoch_seconds(config, fields):
         return CalculatedField(
-            ibis.expr.types.TemporalValue.epoch_seconds,
+            ibis.expr.types.TimestampValue.epoch_seconds,
             config,
             fields,
         )
