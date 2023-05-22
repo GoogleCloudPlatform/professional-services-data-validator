@@ -498,18 +498,9 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
             dt.Int16: mssql.SMALLINT,
             dt.Int32: mssql.INTEGER,
             dt.Int64: mssql.BIGINT,
-            dt.Float16: mssql.FLOAT,
-            dt.Float32: mssql.FLOAT,
-            dt.Float64: mssql.REAL,
-            dt.Int64: mssql.MONEY,
-            # Unicode character strings
-            dt.String: mssql.NCHAR,
-            dt.String: mssql.NTEXT,
-            dt.String: mssql.NVARCHAR,
-            # Binary string
-            dt.Binary: mssql.BINARY,
-            dt.Binary: mssql.IMAGE,
-            dt.Binary: mssql.VARBINARY, 
+            dt.Float: mssql.REAL,
+            dt.Double: mssql.REAL,
+            dt.String: mssql.VARCHAR,
         }
 )
 
