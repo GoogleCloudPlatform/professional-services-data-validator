@@ -31,8 +31,8 @@ import pyodbc  # NOQA fail early if the driver is missing
 
 
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.UNIQUEIDENTIFIER)
-def sa_uuid(_, satype, nullable=True):
-    return dt.UUID()(nullable=nullable)
+def sa_uniqueidentifier(_, satype, nullable=True):
+    return dt.String(nullable=nullable)
 
 
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.BIT)
@@ -51,7 +51,7 @@ def sa_timestamp(_, satype, nullable=True):
 
 
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.FLOAT)
-def sa_float64(_, satype, nullable=True):
+def sa_float(_, satype, nullable=True):
     return dt.Float64(nullable=nullable)
 
 
@@ -93,6 +93,23 @@ def sa_ntext(_, satype, nullable=True):
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.NVARCHAR)
 def sa_nvarchar(_, satype, nullable=True):
     return dt.String(nullable=nullable)
+
+
+"""     
+    TODO(issue-858): Check the mapping below before adding register
+    dt.Decimal: mssql.DECIMAL,
+    dt.Decimal: mssql.NUMERIC,
+    # Date and time
+    dt.Date: mssql.DATE,
+    dt.Timestamp: mssql.DATETIME2,
+    dt.Timestamp: mssql.DATETIME,
+    dt.Timestamp: mssql.SMALLDATETIME,
+    dt.Time: mssql.TIME,
+    # Character string
+    dt.String: mssql.CHAR,
+    dt.String: mssql.TEXT,
+    dt.String: mssql.VARCHAR,     
+"""    
 
 
 class MSSQLTable(alch.AlchemyTable):
