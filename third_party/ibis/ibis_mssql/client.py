@@ -70,6 +70,21 @@ def sa_image(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
 
 
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.NCHAR)
+def sa_nchar(_, satype, nullable=True):
+    return dt.String(nullable=nullable)
+
+
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.NTEXT)
+def sa_ntext(_, satype, nullable=True):
+    return dt.String(nullable=nullable)
+
+
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.NVARCHAR)
+def sa_nvarchar(_, satype, nullable=True):
+    return dt.String(nullable=nullable)
+
+
 class MSSQLTable(alch.AlchemyTable):
     pass
 
