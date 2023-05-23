@@ -492,7 +492,6 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
     # only used to map SQLAlchemy types back to SQL Server types, it does not add support to new data types, for that go to client.py
     _type_map.update(
         {
-            # Exact numerics
             dt.Boolean: mssql.BIT,
             dt.Int8: mssql.TINYINT,
             dt.Int16: mssql.SMALLINT,
@@ -502,7 +501,7 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
             dt.Double: mssql.REAL,
             dt.String: mssql.VARCHAR,
         }
-)
+    )
 
 
 rewrites = MSSQLExprTranslator.rewrites
