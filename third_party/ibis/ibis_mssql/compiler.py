@@ -371,9 +371,28 @@ def _day_of_week_name(t, expr):
     (sa_arg,) = map(t.translate, expr.op().args)
     return sa.func.trim(sa.func.format(sa_arg, 'dddd'))
 
+
 def _string_join(t, expr):
     sep, elements = expr.op().args
     return sa.func.concat(*map(t.translate, elements))
+
+
+def _timestamp_truncate(t, op):
+    arg = t.translate(op.arg)
+    unit = op.unit.short
+    if unit not in _truncate_precisions:
+        raise com.UnsupportedOperationError(f'Unsupported truncate unit {op.unit!r}')
+
+    return sa.func.datetrunc(sa.text(_truncate_precisions[unit]), arg)
+
+
+def _timestamp_from_unix(x, unit='s'):
+    if unit == 's':
+        return sa.func.dateadd(sa.text('s'), x, '1970-01-01 00:00:00')
+    if unit == 'ms':
+        return sa.func.dateadd(sa.text('s'), x / 1_000, '1970-01-01 00:00:00')
+    raise com.UnsupportedOperationError(f"{unit!r} unit is not supported!")
+
 
 _operation_registry = alch._operation_registry.copy()
 
@@ -418,11 +437,25 @@ _operation_registry.update(
         ops.ExtractYear: _extract('year'),
         ops.ExtractMonth: _extract('month'),
         ops.ExtractDay: _extract('day'),
+        ops.ExtractDayOfYear: _extract('dayofyear'),
         ops.ExtractHour: _extract('hour'),
         ops.ExtractMinute: _extract('minute'),
         ops.ExtractSecond: _extract('second'),
         ops.ExtractMillisecond: _extract('millisecond'),
+        ops.ExtractWeekOfYear: _extract('iso_week'),
         ops.Strftime: _strftime,
+        ops.ExtractEpochSeconds: fixed_arity(
+            lambda x: sa.cast(
+                sa.func.datediff(sa.text('s'), '1970-01-01 00:00:00', x), sa.BIGINT
+            ),
+            1,
+        ),
+        ops.TimestampFromUNIX: lambda t, op: _timestamp_from_unix(
+            t.translate(op.arg), op.unit.short
+        ),
+        ops.TimestampTruncate: _timestamp_truncate,
+        ops.DateTruncate: _timestamp_truncate,
+        ops.Hash: unary(sa.func.checksum),
         # newly added
         ops.Lag: _lag,
         ops.Lead: _lead,
