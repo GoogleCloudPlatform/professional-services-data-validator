@@ -80,6 +80,16 @@ def sa_image(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
 
 
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.CHAR)
+def sa_char(_, satype, nullable=True):
+    return dt.String(nullable=nullable)
+
+
+@dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.TEXT)
+def sa_text(_, satype, nullable=True):
+    return dt.String(nullable=nullable)
+
+
 @dt.dtype.register(MSDialect_pyodbc, sa.dialects.mssql.NCHAR)
 def sa_nchar(_, satype, nullable=True):
     return dt.String(nullable=nullable)
@@ -104,11 +114,7 @@ def sa_nvarchar(_, satype, nullable=True):
     dt.Timestamp: mssql.DATETIME2,
     dt.Timestamp: mssql.DATETIME,
     dt.Timestamp: mssql.SMALLDATETIME,
-    dt.Time: mssql.TIME,
-    # Character string
-    dt.String: mssql.CHAR,
-    dt.String: mssql.TEXT,
-    dt.String: mssql.VARCHAR,     
+    dt.Time: mssql.TIME,  
 """    
 
 
