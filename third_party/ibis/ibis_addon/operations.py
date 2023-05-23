@@ -56,18 +56,12 @@ try:
 except Exception:
     SnowflakeExprTranslator = None
 
-
-from ibis.backends.mssql.datatypes import _MSSQL_TYPE_MAP
-from sqlalchemy.dialects import mssql
-
+import third_party.ibis.ibis_addon.datatypes
 from ibis.backends.base.sql.alchemy.registry import unary, fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.registry import fixed_arity
 
 # from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
 # from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
-
-# Needs to be VARCHAR insteaad of NVARCHAR for Hash function
-_MSSQL_TYPE_MAP[dt.String] = mssql.VARCHAR
 
 # class HashBytes(ValueOp):
 #     arg = rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)])

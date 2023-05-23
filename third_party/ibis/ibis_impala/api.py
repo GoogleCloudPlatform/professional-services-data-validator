@@ -28,8 +28,9 @@ import numpy as np
 import fsspec
 
 
-def impala_connect(
+def do_connect(
     # Implement impala_connect to set our own default values
+    self,
     host: str = "localhost",
     port: int = 10000,
     database: str = "default",
@@ -41,22 +42,45 @@ def impala_connect(
     auth_mechanism: Literal["NOSASL", "PLAIN", "GSSAPI", "LDAP"] = "PLAIN",
     kerberos_service_name: str = "impala",
     pool_size: int = 8,
-    hdfs_client: fsspec.spec.AbstractFileSystem | None = None
+    hdfs_client: fsspec.spec.AbstractFileSystem | None = None,
+    use_http_transport: bool = False,
+    http_path: str = "",
 ):
-    return ibis.impala.connect(
-       host=host,
-       port=port,
-       database=database,
-       timeout=timeout,
-       use_ssl=use_ssl,
-       ca_cert=ca_cert,
-       user=user,
-       password=password,
-       auth_mechanism=auth_mechanism,
-       kerberos_service_name=kerberos_service_name,
-       pool_size=pool_size,
-       hdfs_client=hdfs_client,
-    )
+    self._temp_objects = set()
+    self._hdfs = hdfs_client
+
+    params = {
+        'host': host,
+        'port': port,
+        'database': database,
+        'timeout': timeout,
+        'use_ssl': use_ssl,
+        'ca_cert': str(ca_cert),
+        'user': user,
+        'password': password,
+        'auth_mechanism': auth_mechanism,
+        'kerberos_service_name': kerberos_service_name,
+        'use_http_transport': use_http_transport,
+        'http_path': http_path,
+    }
+    self.con = ImpalaConnection(pool_size=pool_size, **params)
+
+    self._ensure_temp_db_exists()
+
+    # return ibis.impala.connect(
+    #    host=host,
+    #    port=port,
+    #    database=database,
+    #    timeout=timeout,
+    #    use_ssl=use_ssl,
+    #    ca_cert=ca_cert,
+    #    user=user,
+    #    password=password,
+    #    auth_mechanism=auth_mechanism,
+    #    kerberos_service_name=kerberos_service_name,
+    #    pool_size=pool_size,
+    #    hdfs_client=hdfs_client,
+    # )
 
 
 def parse_type(t):
@@ -195,6 +219,42 @@ def _get_schema_using_query(self, query):
 
 
 udf.parse_type = parse_type
-ImpalaBackend.get_schema = get_schema
 ibis.backends.impala._chunks_to_pandas_array = _chunks_to_pandas_array
+ImpalaBackend.get_schema = get_schema
 ImpalaBackend._get_schema_using_query = _get_schema_using_query
+ImpalaBackend.do_connect = do_connect
+
+def impala_connect(
+    host: str = "localhost",
+    port: int = 10000,
+    database: str = "default",
+    timeout: int = 45,
+    use_ssl: bool = False,
+    ca_cert: str | Path | None = None,
+    user: str | None = None,
+    password: str | None = None,
+    auth_mechanism: Literal["NOSASL", "PLAIN", "GSSAPI", "LDAP"] = "PLAIN",
+    kerberos_service_name: str = "impala",
+    pool_size: int = 8,
+    hdfs_client: fsspec.spec.AbstractFileSystem | None = None,
+    use_http_transport: bool = False,
+    http_path: str = "",
+):
+    backend = ImpalaBackend()
+    backend.do_connect(
+        host=host,
+        port=port,
+        database=database,
+        timeout=timeout,
+        use_ssl=use_ssl,
+        ca_cert=ca_cert,
+        user=user,
+        password=password,
+        auth_mechanism=auth_mechanism,
+        kerberos_service_name=kerberos_service_name,
+        pool_size=pool_size,
+        hdfs_client=hdfs_client,
+        use_http_transport=use_http_transport,
+        http_path=http_path,
+    )
+    return backend

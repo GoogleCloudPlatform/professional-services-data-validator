@@ -80,7 +80,7 @@ class StateManager(object):
         """Returns a list of the connection names that exist."""
         file_names = self._list_directory(self._get_connections_directory())
         return [
-            file_name.split(".")[0]
+            file_name.rsplit(".", 2)[0]
             for file_name in file_names
             if file_name.endswith(".connection.json")
         ]

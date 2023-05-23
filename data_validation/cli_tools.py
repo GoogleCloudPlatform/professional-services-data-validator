@@ -49,10 +49,10 @@ import json
 import logging
 import sys
 import uuid
-from typing import List, Dict
 from argparse import Namespace
+from typing import Dict, List
 
-from data_validation import consts, state_manager, clients
+from data_validation import clients, consts, state_manager
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -144,6 +144,8 @@ CONNECTION_SOURCE_FIELDS = {
             "Size of the connection pool. Typically this is not necessary to configure. (default is 8)",
         ],
         ["hdfs_client", "An existing HDFS client"],
+        ["use_http_transport", "Boolean if HTTP proxy is provided (default is False)"],
+        ["http_path", "URL path of HTTP proxy"],
     ],
     "DB2": [
         ["host", "Desired DB2 host"],
@@ -324,6 +326,12 @@ def _configure_validation_config_parser(subparsers):
     _ = configs_subparsers.add_parser("list", help="List your validation configs")
     run_parser = configs_subparsers.add_parser(
         "run", help="Run your validation configs"
+    )
+    run_parser.add_argument(
+        "--dry-run",
+        "-dr",
+        action="store_true",
+        help="Prints source and target SQL to stdout in lieu of performing a validation.",
     )
     run_parser.add_argument(
         "--config-file",
