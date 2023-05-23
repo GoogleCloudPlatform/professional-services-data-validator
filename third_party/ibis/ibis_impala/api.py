@@ -14,6 +14,7 @@
 
 import ibis
 from ibis.backends.impala import Backend as ImpalaBackend
+from ibis.backends.impala.client import ImpalaConnection
 
 from pathlib import Path
 from typing import Literal
@@ -29,7 +30,7 @@ import fsspec
 
 
 def do_connect(
-    # Implement impala_connect to set our own default values
+    # Override do_connect to add use_http_transport and http_path params
     self,
     host: str = "localhost",
     port: int = 10000,
@@ -48,14 +49,14 @@ def do_connect(
 ):
     self._temp_objects = set()
     self._hdfs = hdfs_client
-
+   
     params = {
         'host': host,
         'port': port,
         'database': database,
         'timeout': timeout,
         'use_ssl': use_ssl,
-        'ca_cert': str(ca_cert),
+        'ca_cert': ca_cert,
         'user': user,
         'password': password,
         'auth_mechanism': auth_mechanism,
@@ -64,23 +65,6 @@ def do_connect(
         'http_path': http_path,
     }
     self.con = ImpalaConnection(pool_size=pool_size, **params)
-
-    self._ensure_temp_db_exists()
-
-    # return ibis.impala.connect(
-    #    host=host,
-    #    port=port,
-    #    database=database,
-    #    timeout=timeout,
-    #    use_ssl=use_ssl,
-    #    ca_cert=ca_cert,
-    #    user=user,
-    #    password=password,
-    #    auth_mechanism=auth_mechanism,
-    #    kerberos_service_name=kerberos_service_name,
-    #    pool_size=pool_size,
-    #    hdfs_client=hdfs_client,
-    # )
 
 
 def parse_type(t):
