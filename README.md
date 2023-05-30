@@ -246,6 +246,8 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
 Below is the syntax for schema validations. These can be used to compare case insensitive column names and
 types between source and target.
 
+Note: An exclamation point before a data type (`!string`) signifies the column is non-nullable or required.
+
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate schema
   --source-conn or -sc SOURCE_CONN
@@ -273,7 +275,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
                         Comma separated list of columns to be excluded from the schema validation, i.e col_a,col_b.
 
   [--allow-list or -al ALLOW_LIST]
-                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),string[non-nullable]:string"                 
+                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),!string:string"                 
 ```
 
 #### Custom Query Column Validations

@@ -290,7 +290,7 @@ def validate_typeb_vals(source, target):
 
 
 def strip_null(st):
-    return st.replace("[non-nullable]", "")
+    return st.replace("!", "")
 
 
 def parse_n_validate_datatypes(source, target):

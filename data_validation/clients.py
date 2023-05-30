@@ -70,7 +70,7 @@ except Exception:
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
 except Exception:
-    DB2Client = _raise_missing_client_error("pip install ibm_db_sa")
+    db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
 
 def get_bigquery_client(project_id, dataset_id="", credentials=None):
@@ -110,7 +110,7 @@ def get_pandas_client(table_name, file_path, file_type):
 
 def is_oracle_client(client):
     try:
-        return isinstance(client, third_party.ibis.ibis_oracle.Backend)
+        return (client.name == "oracle")
     except TypeError:
         # When no Oracle backend has been installed OracleBackend is not a class
         return False
@@ -124,15 +124,15 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if type(client) in [
-        third_party.ibis.ibis_oracle.Backend,
-        ibis.backends.postgres.Backend,
-        third_party.ibis.ibis_db2.Backend,
-        ibis.backends.mssql.Backend,
-        third_party.ibis.ibis_redshift.Backend,
+    if client.name in [
+        "oracle",
+        "postgres",
+        "db2",
+        "mssql",
+        "redshift",
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
-    elif type(client) in [ibis.backends.pandas.Backend]:
+    elif client.name == "pandas":
         return client.table(table_name, schema=schema_name)
     else:
         return client.table(table_name, database=schema_name)
@@ -151,13 +151,13 @@ def get_ibis_table_schema(client, schema_name, table_name):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if type(client) in [
-        ibis.backends.mysql.Backend, 
-        ibis.backends.postgres.Backend,
-        ibis.backends.mssql.Backend,
-        third_party.ibis.ibis_oracle.Backend,
-        third_party.ibis.ibis_redshift.Backend,
-        third_party.ibis.ibis_db2.Backend,
+    if client.name in [
+        "mysql", 
+        "oracle",
+        "postgres",
+        "db2",
+        "mssql",
+        "redshift",
     ]:
         return client.table(table_name, schema=schema_name).schema()
     else:
@@ -173,12 +173,12 @@ def list_schemas(client):
 
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
-    if type(client) in [
-        third_party.ibis.ibis_oracle.Backend,
-        ibis.backends.postgres.Backend,
-        third_party.ibis.ibis_db2.Backend,
-        ibis.backends.mssql.Backend,
-        third_party.ibis.ibis_redshift.Backend,
+    if client.name in [
+        "oracle",
+        "postgres",
+        "db2",
+        "mssql",
+        "redshift",
     ]:
         return client.list_tables()
     return client.list_tables(database=schema_name)

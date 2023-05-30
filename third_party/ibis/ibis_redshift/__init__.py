@@ -17,7 +17,7 @@ import ibis.expr.datatypes as dt
 from typing import Iterable, Literal
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
-
+from ibis import util
 from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
 
 
@@ -63,6 +63,8 @@ class Backend(BaseAlchemyBackend):
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
                 cur.execute("SET TIMEZONE = UTC")
+        
+        super().do_connect(engine)
 
     def list_databases(self, like=None):
         with self.begin() as con:
@@ -87,7 +89,7 @@ class Backend(BaseAlchemyBackend):
         if self.inspector.has_table(query):
             query = f"TABLE {query}"
         with self.begin() as con:
-            con.exec_driver_sql(f"CREATE TEMPORARY VIEW {name} AS {query}")
+            con.exec_driver_sql(f"CREATE VIEW {name} AS {query}")
             type_info = con.execute(
                 sa.text(type_info_sql).bindparams(raw_name=raw_name)
             )
@@ -102,17 +104,6 @@ class Backend(BaseAlchemyBackend):
 
 def _get_type(typestr: str) -> dt.DataType:
     is_array = typestr.endswith(_BRACKETS)
-    # typ = _type_mapping.get(typestr.replace(_BRACKETS, ""))
-    # handle bracket length
-    typestr_wob = typestr.replace(_BRACKETS, "")
-    if "(" in typestr_wob:
-        typestr_wo_length = (
-            typestr_wob[: typestr_wob.index("(")]
-            + typestr_wob[typestr_wob.index(")") + 1 :]
-        )
-    else:
-        typestr_wo_length = typestr_wob
-    typ = _type_mapping.get(typestr_wo_length)
-    if typ is not None:
+    if (typ := _type_mapping.get(typestr.replace(_BRACKETS, ""))) is not None:
         return dt.Array(typ) if is_array else typ
     return _parse_numeric(typestr)

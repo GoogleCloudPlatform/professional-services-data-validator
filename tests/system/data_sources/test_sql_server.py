@@ -251,7 +251,7 @@ def test_schema_validation_core_types_to_bigquery():
                 "float32:float64,"
                 "timestamp('UTC'):timestamp,"
                 # Ignore ID column, we're not testing that one.
-                "int32[non-nullable]:int64"
+                "!int32:int64"
             ),
         ]
     )

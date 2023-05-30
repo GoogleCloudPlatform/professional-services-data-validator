@@ -23,50 +23,44 @@ Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
 import ibis
-import sqlalchemy as sa
-
-import ibis.expr.api
 import ibis.expr.datatypes as dt
-import ibis.expr.rules as rlz
 import ibis.expr.operations as ops
-
-from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
-from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast, StringLength, RandomScalar, IfNull, StringJoin
-from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
-from ibis.backends.bigquery.compiler import BigQueryExprTranslator
-from ibis.backends.impala.compiler import ImpalaExprTranslator
+import ibis.expr.rules as rlz
+import sqlalchemy as sa
+from ibis.backends.base.sql.alchemy.registry import \
+    fixed_arity as sa_fixed_arity
+from ibis.backends.base.sql.alchemy.registry import unary
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
+from ibis.backends.base.sql.registry import fixed_arity
+from ibis.backends.bigquery.compiler import BigQueryExprTranslator
+from ibis.backends.bigquery.registry import \
+    STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
+from ibis.backends.impala.compiler import ImpalaExprTranslator
+from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from ibis.backends.mssql.compiler import MsSqlExprTranslator
+from ibis.expr.operations import (Cast, Comparison, HashBytes, IfNull,
+                                  RandomScalar, Strftime, StringJoin,
+                                  StringLength, Value)
+from ibis.expr.types import NumericValue, TemporalValue
+
+import third_party.ibis.ibis_addon.datatypes
+from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
-from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
+
+# TD requires teradatasql
+try:
+    from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
+except Exception:
+    TeradataExprTranslator = None
 
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
     from ibis.backends.snowflake import SnowflakeExprTranslator
 except Exception:
     SnowflakeExprTranslator = None
-
-# Avoid errors if Db2 is not installed and not needed
-try:
-    from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
-except Exception:
-    Db2ExprTranslator = None
-
-import third_party.ibis.ibis_addon.datatypes
-from ibis.backends.base.sql.alchemy.registry import unary, fixed_arity as sa_fixed_arity
-from ibis.backends.base.sql.registry import fixed_arity
-
-# from third_party.ibis.ibis_snowflake.compiler import SnowflakeExprTranslator
-# from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator <<<<<< DB2
-
-# class HashBytes(ValueOp):
-#     arg = rlz.one_of([rlz.value(dt.string), rlz.value(dt.binary)])
-#     how = rlz.isin({"sha256", "farm_fingerprint"})
-#     output_type = rlz.shape_like("arg", "binary")
 
 class ToChar(Value):
     arg = rlz.one_of([rlz.value(dt.Decimal), rlz.value(dt.float64), rlz.value(dt.Date), rlz.value(dt.Time), rlz.value(dt.Timestamp)])
@@ -75,18 +69,6 @@ class ToChar(Value):
 
 class RawSQL(Comparison):
     pass
-
-
-# def compile_hash(numeric_value, how):
-#     return Hash(numeric_value, how=how).to_expr()
-
-
-# def compile_hash(binary_value, how):
-#     return Hash(binary_value, how=how).to_expr()
-
-
-# def compile_hashbytes(binary_value, how):
-#     return HashBytes(binary_value, how=how).to_expr()
 
 
 def compile_to_char(numeric_value, fmt):
@@ -232,11 +214,6 @@ def sa_format_to_char(translator, op):
     return sa.func.to_char(arg, fmt)
 
 
-# def sa_format_to_stringjoin(translator, op):
-#     sep, elements = op.args
-#     return sa.func.concat_ws(translator.translate(sep), *map(translator.translate, elements))
-
-
 def sa_cast_postgres(t, op):
     # Add cast from numeric to string
     arg = op.arg
@@ -282,13 +259,6 @@ def _sa_string_join(t, op):
 def sa_format_new_id(t, op):
     return sa.func.NEWID()
 
-
-# IntegerColumn.bit_xor = ibis.expr.api._agg_function("bit_xor", BitXor, True)
-# BinaryValue.hash = compile_hash
-# StringValue.hash = compile_hash
-# BinaryValue.hashbytes = compile_hashbytes
-# StringValue.hashbytes = compile_hashbytes
-
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
@@ -308,9 +278,6 @@ OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 OracleExprTranslator._registry[ToChar] = sa_format_to_char
 
-TeradataExprTranslator._registry[RawSQL] = format_raw_sql
-TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
-
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
@@ -327,12 +294,16 @@ MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
 
 RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
+RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
+
+Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
+Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
+
+if TeradataExprTranslator:
+    TeradataExprTranslator._registry[RawSQL] = format_raw_sql
+    TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[HashBytes] = sa_format_hashbytes_snowflake
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
-
-if Db2ExprTranslator: # Check if Db2 driver is loaded
-    Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
-    Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql

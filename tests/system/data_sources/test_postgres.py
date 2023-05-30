@@ -514,7 +514,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             (
                 # PostgreSQL integrals go to BigQuery INT64.
-                "--allow-list=int16:int64,int32:int64,int32[non-nullable]:int64,"
+                "--allow-list=int16:int64,int32:int64,!int32:int64,"
                 # Oracle NUMBERS that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
