@@ -32,7 +32,7 @@ import ibis.backends.pandas.execution.util as pandas_util
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
 from third_party.ibis.ibis_teradata import Backend as TeradataBackend
 from third_party.ibis.ibis_cloud_spanner import Backend as SpannerBackend
-#from ibis.backends.mysql.client import MySQLClient
+from third_party.ibis.ibis_db2 import Backend as DB2Backend
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
@@ -54,7 +54,7 @@ RANDOM_SORT_SUPPORTS = [
     OracleBackend,
     ibis.backends.postgres.Backend,
     ibis.backends.mssql.Backend,
-    # clients.DB2Client: "RAND()",
+    DB2Backend,
     ibis.backends.mysql.Backend,
     SpannerBackend,
 ]

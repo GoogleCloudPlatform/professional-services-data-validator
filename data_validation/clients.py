@@ -68,7 +68,7 @@ except Exception:
 
 # DB2 requires ibm_db_sa
 try:
-    from third_party.ibis.ibis_DB2.client import DB2Client
+    from third_party.ibis.ibis_db2.api import db2_connect
 except Exception:
     DB2Client = _raise_missing_client_error("pip install ibm_db_sa")
 
@@ -127,7 +127,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     if type(client) in [
         third_party.ibis.ibis_oracle.Backend,
         ibis.backends.postgres.Backend,
-        # DB2Client,
+        third_party.ibis.ibis_db2.Backend,
         ibis.backends.mssql.Backend,
         third_party.ibis.ibis_redshift.Backend,
     ]:
@@ -157,6 +157,7 @@ def get_ibis_table_schema(client, schema_name, table_name):
         ibis.backends.mssql.Backend,
         third_party.ibis.ibis_oracle.Backend,
         third_party.ibis.ibis_redshift.Backend,
+        third_party.ibis.ibis_db2.Backend,
     ]:
         return client.table(table_name, schema=schema_name).schema()
     else:
@@ -175,7 +176,7 @@ def list_tables(client, schema_name):
     if type(client) in [
         third_party.ibis.ibis_oracle.Backend,
         ibis.backends.postgres.Backend,
-        # DB2Client,
+        third_party.ibis.ibis_db2.Backend,
         ibis.backends.mssql.Backend,
         third_party.ibis.ibis_redshift.Backend,
     ]:
@@ -281,5 +282,5 @@ CLIENT_LOOKUP = {
     "MSSQL": ibis.mssql.connect,
     "Snowflake": snowflake_connect,
     "Spanner": spanner_connect,
-    "DB2": DB2Client,
+    "DB2": db2_connect,
 }

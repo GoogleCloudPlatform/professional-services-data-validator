@@ -21,7 +21,7 @@ from google.cloud import spanner
 from google.cloud.spanner_v1 import TypeCode
 from ibis.backends.base.sql import BaseSQLBackend
 
-from third_party.ibis.ibis_cloud_spanner.client import spanner_field_to_ibis_dtype
+from third_party.ibis.ibis_cloud_spanner.datatypes import dtype_from_spanner_field, schema_from_spanner
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
 from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
 
@@ -83,7 +83,7 @@ class Backend(BaseSQLBackend):
                 break
 
             fields = {
-                col.name: spanner_field_to_ibis_dtype(col.type_)
+                col.name: dtype_from_spanner_field(col.type_)
                 for col in result.fields
             }
         return sch.Schema(fields)
@@ -135,7 +135,7 @@ class Backend(BaseSQLBackend):
             database = self.dataset_id
         db_value = self.instance.database(database)
         spanner_table = db_value.table(table_id)
-        return sch.infer(spanner_table)
+        return schema_from_spanner(spanner_table.schema)
 
     def execute(
         self,

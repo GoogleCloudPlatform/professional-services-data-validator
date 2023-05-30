@@ -12,25 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.backends.base_sqlalchemy.alchemy import to_sqlalchemy
-from third_party.ibis.ibis_DB2.client import DB2Client
-from third_party.ibis.ibis_DB2.compiler import dialect, rewrites  # noqa: F401
+# from ibis.backends.base_sqlalchemy.alchemy import to_sqlalchemy
+# from third_party.ibis.ibis_db2.compiler import dialect, rewrites  # noqa: F401
+
+from third_party.ibis.ibis_db2 import Backend as DB2Backend
+import ibm_db_sa #NOQA fail early if driver is missing
 
 
-def compile(expr, params=None):
-    return to_sqlalchemy(expr, dialect.make_context(params=params))
-
-
-def connect(
-    host='localhost',
-    user=None,
-    password=None,
-    port=50000,
-    database=None,
-    url=None,
-    driver='ibm_db_sa',
+def db2_connect(
+    host: str = 'localhost',
+    user: str = None,
+    password: str | None = None,
+    port: int = 50000,
+    database: str = None,
+    url: str | None = None,
+    driver: str = 'ibm_db_sa',
 ):
-    return DB2Client(
+    backend = DB2Backend()
+    backend.do_connect(
         host=host,
         user=user,
         password=password,
@@ -39,3 +38,4 @@ def connect(
         url=url,
         driver=driver,
     )
+    return backend

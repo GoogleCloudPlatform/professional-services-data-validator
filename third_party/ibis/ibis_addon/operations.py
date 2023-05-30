@@ -33,12 +33,6 @@ import ibis.expr.operations as ops
 from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
 from ibis.expr.operations import Value, Reduction, Comparison, HashBytes, Strftime, Cast, StringLength, RandomScalar, IfNull, StringJoin
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
-# avoid errors if Db2 is not installed and not needed
-# try:
-#     from third_party.ibis.ibis_DB2.compiler import DB2ExprTranslator
-# except Exception:
-#     DB2ExprTranslator = None
-
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
@@ -55,6 +49,12 @@ try:
     from ibis.backends.snowflake import SnowflakeExprTranslator
 except Exception:
     SnowflakeExprTranslator = None
+
+# Avoid errors if Db2 is not installed and not needed
+try:
+    from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
+except Exception:
+    Db2ExprTranslator = None
 
 import third_party.ibis.ibis_addon.datatypes
 from ibis.backends.base.sql.alchemy.registry import unary, fixed_arity as sa_fixed_arity
@@ -333,5 +333,6 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
 
-# if DB2ExprTranslator: #check if Db2 driver is loaded
-#     DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
+if Db2ExprTranslator: # Check if Db2 driver is loaded
+    Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
+    Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql

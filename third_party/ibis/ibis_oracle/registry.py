@@ -276,13 +276,13 @@ def _reduce_tokens(tokens, arg):
     return reduced
 
 
-def _strftime(t, pattern):
+def _strftime(arg, pattern):
     tokens, _ = _scanner.scan(pattern.value)
     reduced = _reduce_tokens(tokens, arg)
     return functools.reduce(sa.sql.ColumnElement.concat, reduced)
 
 
-def _regex_replace(t, expr):
+def _regex_replace(t, op):
     return sa.func.regexp_replace(t.translate(op.string), t.translate(op.pattern), t.translate(op.replacement))
 
 
@@ -314,24 +314,6 @@ def _log(t, op):
             t.get_sqla_type(op.output_dtype),
         )
     return sa.func.ln(sa_arg)
-
-
-class regex_extract(GenericFunction):
-    def __init__(self, string, pattern, index):
-        super().__init__(string, pattern, index)
-        self.string = string
-        self.pattern = pattern
-        self.index = index
-
-
-@compiles(regex_extract, 'oracle')
-def compile_regex_extract(element, compiler, **kw):
-    result = '(SELECT regexp_substr({}, {}, {}) as TMP FROM dual)'.format(
-        compiler.process(element.string, **kw),
-        compiler.process(element.pattern, **kw),
-        compiler.process(element.index, **kw),
-    )
-    return result
 
 
 def _regex_extract(t, op):
