@@ -140,7 +140,7 @@ def trans_string(t, context):
 
 @ibis_type_to_teradata_type.register(dt.Floating, TypeTranslationContext)
 def trans_float64(t, context):
-    return "FLOAT64"
+    return "FLOAT"
 
 
 @ibis_type_to_teradata_type.register(dt.Integer, TypeTranslationContext)
