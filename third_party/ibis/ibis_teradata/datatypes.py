@@ -55,10 +55,16 @@ class TeradataTypeTranslator(object):
 
     @classmethod
     def to_ibis_from_D(cls, col_data, return_ibis_type=True):
-        precision = int(col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 20)))
-        scale = int(col_data.get("DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 4)))
+        precision = int(
+            col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 20))
+        )
+        scale = int(
+            col_data.get(
+                "DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 4)
+            )
+        )
         if return_ibis_type:
-            return dt.float64
+            return dt.Decimal(precision, scale)
         value_type = "DECIMAL(%d, %d)" % (precision, scale)
         return value_type
 
@@ -71,7 +77,7 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_I(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.int64
+            return dt.int32
         return "INT"
 
     @classmethod
@@ -83,13 +89,13 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_I2(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.int8
+            return dt.int16
         return "INT"
 
     @classmethod
     def to_ibis_from_I8(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.int16
+            return dt.int64
         return "INT"
 
     @classmethod
@@ -116,6 +122,7 @@ class TeradataTypeTranslator(object):
 
 ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")
 
+
 @ibis_type_to_teradata_type.register(dt.DataType)
 def trans_default(t):
     return ibis_type_to_teradata_type(t, TypeTranslationContext())
@@ -133,7 +140,7 @@ def trans_string(t, context):
 
 @ibis_type_to_teradata_type.register(dt.Floating, TypeTranslationContext)
 def trans_float64(t, context):
-    return "FLOAT64"
+    return "FLOAT"
 
 
 @ibis_type_to_teradata_type.register(dt.Integer, TypeTranslationContext)
