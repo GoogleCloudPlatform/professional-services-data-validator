@@ -2,6 +2,35 @@
 
 ## Untagged
 
+## [3.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v3.1.0...v3.2.0) (2023-05-31)
+
+
+### Features
+
+* Add --dry-run option to validate. ([#778](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/778)) ([8989350](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/89893505e420e4c8feefa1fbf61a35259969dd76))
+* Add Impala flags for http_transport and http_path ([#829](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/829)) ([d966b9e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d966b9e9bde36925dfabf9ce85b91bad6ba52a7d))
+* Add support for SQL Server's IMAGE, BINARY, VARBINARY, NCHAR, NTEXT, NVARCHAR data types ([#859](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/859)) ([6ebece3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6ebece37bb5e2c7eb3a5408ef10545672db2051e))
+* Add support for SQL Server's MONEY data type  ([#837](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/837)) ([0749c9e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0749c9e0ea36df06226267670bc08642163c9cd8))
+* Move source credentials to secret manager ([#824](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/824)) ([1dd5fea](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1dd5fea0bdca68b69989f5ed58379845bd6dbd98))
+* Redshift integration for Normal row and Custom-Query Validation. ([#817](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/817)) ([92ab215](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/92ab215670a0d46a845dcd1e057346de8fb9cce0))
+
+
+### Bug Fixes
+
+* Add missing operations for SQL Server - ExtractEpochSeconds, ExtractDayOfYear, ExtractWeekOfYear ([#870](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/870)) ([709dd4c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/709dd4cbf17e073cb83cbdde50bc1bcdaf94d4cb))
+* Adding datetime and timestamp format logic ([#840](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/840)) ([eb095c9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/eb095c9bfd9addd617a9e260e3bec5e0273695a7))
+* dry-run bug when running configs, added CODEOWNERS, and docs ([#865](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/865)) ([1779772](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/177977207aa75318a231889e958e78b43510a4a5))
+* handle numeric datatype mapping in teradata schema and fix int mapping as per teradata doc ([#874](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/874)) ([333eadb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/333eadbf9136a78e51822fcae5cd22f4490bdd6e))
+* split connection names from second last period instead of first from front ([#864](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/864)) ([1462deb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1462debeffb1944ecb5580cdf2f55a49b5bf7982))
+* Support for sum/min/max included for oracle number greater than int64 ([#809](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/809)) ([73bda66](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/73bda661ee9fde18486a9c5209806be3d1de7ea0))
+
+
+### Documentation
+
+* Fix typos on README ([#801](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/801)) ([14ddcc5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/14ddcc5c55c39dbcd64d234f4f4186caeab85ab7))
+* update installation guide about Python 3.11 ([#815](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/815)) ([88cd281](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/88cd28158a852a4f1713f91890b4d898b4ce2191))
+* Update our documentation about `find-tables` command and the `score-cutoff` parameter ([#846](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/846)) ([54403e3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/54403e3014ff5dbcc50ca540eb786dfc33759f0b))
+
 ## [3.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v3.0.0...v3.1.0) (2023-04-21)
 
 
