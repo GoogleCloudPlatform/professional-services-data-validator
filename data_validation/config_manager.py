@@ -314,6 +314,7 @@ class ConfigManager(object):
 
     def append_allow_list(self, allow_list):
         """Append allow_list of datatype to existing config."""
+        allow_list = allow_list.replace(" ", "")
         self._config[consts.CONFIG_ALLOW_LIST] = allow_list
 
     def get_source_ibis_table(self):

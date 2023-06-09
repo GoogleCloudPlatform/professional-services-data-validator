@@ -146,15 +146,11 @@ def schema_validation_matching(
             elif (
                 string_val(source_field_type) in allow_list_map
                 and string_val(target_field_type)
-                == allow_list_map[string_val(source_field_type)]
+                in allow_list_map[string_val(source_field_type)]
             ):
 
-                allowed_target_field_type = allow_list_map[
-                    string_val(source_field_type)
-                ]
-
                 (higher_precision, lower_precision,) = parse_n_validate_datatypes(
-                    string_val(source_field_type), allowed_target_field_type
+                    string_val(source_field_type), string_val(target_field_type)
                 )
                 if lower_precision:
                     results.append(
@@ -219,7 +215,7 @@ def schema_validation_matching(
             )
     return results
 
-
+# Converting allow list from string to map, to ease validation.
 def parse_allow_list(st):
     output = {}
     stack = []
@@ -227,12 +223,13 @@ def parse_allow_list(st):
     for i in range(len(st)):
         if st[i] == ":":
             key = "".join(stack)
-            output[key] = None
+            if key not in output:
+                output[key] = []
             stack = []
             continue
         if st[i] == "," and not st[i + 1].isdigit():
             value = "".join(stack)
-            output[key] = value
+            output[key].append(value)
             stack = []
             i += 1
             continue
