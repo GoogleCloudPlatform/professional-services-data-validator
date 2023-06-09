@@ -166,6 +166,16 @@ def strftime_mysql(translator, expr):
         fmt_string = "%Y-%m-%d %H:%i:%S"
     return sa.func.date_format(arg_formatted, fmt_string)
 
+def strftime_base(translator, expr):
+    arg, format_string = expr.op().args 
+    arg_formatted = translator.translate(arg)
+    arg_type = arg.type()
+    fmt_string = translator.translate(format_string)
+    if isinstance(arg_type, dt.Timestamp):
+        fmt_string = "YYYY-MM-dd HH:mm:ss"
+    elif isinstance(arg_type, dt.Date):
+        fmt_string = "YYYY-MM-dd"
+    return f"date_format({arg_formatted}, '{fmt_string}')"
 
 def format_hashbytes_teradata(translator, expr):
     arg, how = expr.op().args
@@ -326,6 +336,7 @@ BaseExprTranslator._registry[RawSQL] = format_raw_sql
 BaseExprTranslator._registry[HashBytes] = format_hashbytes_base
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
+BaseExprTranslator._registry[Strftime] = strftime_base
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 OracleExprTranslator._registry[ToChar] = sa_format_to_char
