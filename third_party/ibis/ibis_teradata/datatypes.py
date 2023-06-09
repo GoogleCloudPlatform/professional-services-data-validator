@@ -25,21 +25,6 @@ _teradatasql_to_ibis_type = {
     decimal.Decimal: dt.decimal,
     str: dt.string,
     bytes: dt.binary
-    # "object": 'CV',
-    # "int64": 'I',
-    # "date": 'DA',
-    # "float64": 'F',
-    # "datetime64[ns]":'TS',
-    # 'DA': 'date',
-    # 'TS': 'timestamp',
-    # 'I': 'int64',
-    # 'I1':'int8',
-    # 'I2': 'int8',
-    # 'I8': 'int16',
-    # 'F': 'float64',
-    # 'D': 'decimal',
-    # 'N': 'decimal',
-    # 'CV': 'string'
 }
 
 _teradata_native_to_ibis = {

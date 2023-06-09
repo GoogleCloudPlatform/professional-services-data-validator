@@ -49,7 +49,7 @@ def _setup_session_requirements(session, extra_packages=[]):
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
-    _setup_session_requirements(session, extra_packages=["pyfakefs==4.6.2"])
+    _setup_session_requirements(session, extra_packages=["pyfakefs==4.6.2,freezegun"])
 
     # Run py.test against the unit tests.
     session.run(

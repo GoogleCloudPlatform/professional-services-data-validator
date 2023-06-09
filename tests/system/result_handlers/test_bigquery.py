@@ -147,7 +147,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             "labels": [[{"key": "name", "value": "test_label"}]] * 6,
         }
     )
-    object_under_test.execute(None, df)
+    object_under_test.execute(df)
     result = get_dataframe(bigquery_client, table_id)
     pandas.testing.assert_frame_equal(result, df)
     bigquery_client.delete_table(table_id)

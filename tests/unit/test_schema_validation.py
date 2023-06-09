@@ -73,6 +73,10 @@ SOURCE_QUERY_DATA = [
 
 RANDOM_STRINGS = ["a", "b", "c", "d"]
 
+@pytest.fixture
+def ibis_pandas():
+    import ibis
+    return ibis.pandas.connect()
 
 @pytest.fixture
 def module_under_test():
@@ -214,7 +218,7 @@ def test_schema_validation_matching_exclusion_columns(module_under_test):
     )
 
 
-def test_execute(module_under_test, fs):
+def test_execute(module_under_test, ibis_pandas, fs):
     num_rows = 1
     source_data = _generate_fake_data(rows=num_rows, second_range=0)
     _create_table_file(SOURCE_TABLE_FILE_PATH, _get_fake_json_data(source_data))

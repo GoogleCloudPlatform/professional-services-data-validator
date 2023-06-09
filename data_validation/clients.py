@@ -167,7 +167,10 @@ def get_ibis_table_schema(client, schema_name, table_name):
 def list_schemas(client):
     """Return a list of schemas in the DB."""
     if hasattr(client, "list_databases"):
-        return client.list_databases()
+        try:
+            return client.list_databases()
+        except NotImplementedError:
+            return [None]
     else:
         return [None]
 

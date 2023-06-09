@@ -11,16 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import ibis
 import pandas
 import pytest
-import ibis.backends.pandas
 
 from third_party.ibis.ibis_addon import operations
 
 
 TABLE_DF = pandas.DataFrame([{"column": "value"}])
-CLIENT = ibis.backends.pandas.connect({"table": TABLE_DF})
+CLIENT = ibis.pandas.connect({"table": TABLE_DF})
 WHERE_FILTER = "id > 100"
 
 

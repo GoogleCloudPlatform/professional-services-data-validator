@@ -19,11 +19,11 @@ import ibis
 from data_validation.clients import get_ibis_table
 from data_validation.query_builder.query_builder import QueryBuilder
 
+
 """ The QueryBuilder for retreiving random row values to filter against."""
 
 # Adding new data sources should be done by adding the Backend name here
 RANDOM_SORT_SUPPORTS = [
-    "pandas",
     "bigquery",
     "teradata",
     "impala",

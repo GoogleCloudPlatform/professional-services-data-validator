@@ -361,7 +361,7 @@ def _add_metadata(joined, run_metadata):
         joined,
         ibis.literal(run_metadata.run_id).name("run_id"),
         ibis.literal(
-            run_metadata.labels, type="array<struct<key:string,value:string>>"
+            run_metadata.labels
         ).name("labels"),
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),

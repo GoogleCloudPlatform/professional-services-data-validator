@@ -47,7 +47,7 @@ The data validation tool supports the following connection types.
 * [Postgres](#postgres)
 * [MySQL](#mysql)
 * [Redshift](#redshift)
-* [FileSystem](#filesystem)
+* [FileSystem](#filesystem-csv-or-json-only)
 * [Impala](#Impala)
 * [Hive](#Hive)
 * [DB2](#DB2)
@@ -226,7 +226,7 @@ data-validation connections add
     --connection-name CONN_NAME FileSystem              Connection name
     --table-name TABLE_NAME                             Table name to use as reference for file data
     --file-path FILE_PATH                               Local, GCS, or S3 file path
-    --file-type FILE_TYPE                               File type (CSV, JSON)
+    --file-type FILE_TYPE                               File type (csv, json)
 ```
 
 ## Impala
