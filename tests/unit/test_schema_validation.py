@@ -141,6 +141,7 @@ def _get_fake_json_data(data):
 def test_import(module_under_test):
     assert True
 
+
 # Basic unit test  for schema validation.
 def test_schema_validation_matching(module_under_test):
     source_fields = {"FIELD1": "string", "fiEld2": "datetime", "field3": "string"}
@@ -180,6 +181,7 @@ def test_schema_validation_matching(module_under_test):
         source_fields, target_fields, [], ""
     )
 
+
 # Unit test adding validation for exclusion columns in schema validation.
 def test_schema_validation_matching_exclusion_columns(module_under_test):
     source_fields = {"FIELD1": "string", "fiEld2": "datetime", "field3": "string"}
@@ -212,6 +214,7 @@ def test_schema_validation_matching_exclusion_columns(module_under_test):
     assert expected_results == module_under_test.schema_validation_matching(
         source_fields, target_fields, ["field2"], ""
     )
+
 
 # Testing for allow list functionality, covers allowing multiple vallues for a same datatype.
 def test_schema_validation_matching_allowlist_columns(module_under_test):

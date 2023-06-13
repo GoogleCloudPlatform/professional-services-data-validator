@@ -215,6 +215,7 @@ def schema_validation_matching(
             )
     return results
 
+
 # Converting allow list from string to map, to ease validation.
 def parse_allow_list(st):
     output = {}
