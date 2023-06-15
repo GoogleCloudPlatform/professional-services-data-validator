@@ -18,6 +18,8 @@ import random
 from datetime import datetime, timedelta
 
 from data_validation import consts, data_validation
+from data_validation.schema_validation import parse_allow_list
+
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
@@ -140,6 +142,41 @@ def _get_fake_json_data(data):
 
 def test_import(module_under_test):
     assert True
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        ("", {}),
+        ("int32:int64", {"int32": ["int64"]}),
+        ("Int32:INT64", {"Int32": ["INT64"]}),
+        ("string:string", {"string": ["string"]}),
+        (
+            "decimal(38,0):int64,decimal(38,0):decimal(1000,0),int32:int64,float32:float64",
+            {
+                "decimal(38,0)": ["int64", "decimal(1000,0)"],
+                "int32": ["int64"],
+                "float32": ["float64"],
+            },
+        ),
+        (
+            "date:timestamp,timestamp:date",
+            {"date": ["timestamp"], "timestamp": ["date"]},
+        ),
+        (
+            "date:timestamp('UTC'),timestamp('UTC'):timestamp",
+            {"date": ["timestamp('UTC')"], "timestamp('UTC')": ["timestamp"]},
+        ),
+        ("decimal(38 , 0):decimal ( 38 , 0)", {"decimal(38,0)": ["decimal(38,0)"]}),
+        (
+            "decimal(38,0):int32[non-nullable]",
+            {"decimal(38,0)": ["int32[non-nullable]"]},
+        ),
+        ("int64[non-nullable]:int32", {"int64[non-nullable]": ["int32"]}),
+    ],
+)
+def test_parse_allow_list(test_input: str, expected: dict):
+    assert parse_allow_list(test_input) == expected
 
 
 # Basic unit test  for schema validation.

@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import datetime
-import pandas
 import logging
+import pandas
+import re
 
-from data_validation import metadata, consts, clients
+from data_validation import metadata, consts, clients, exceptions
 
 
 class SchemaValidation(object):
@@ -216,40 +217,34 @@ def schema_validation_matching(
     return results
 
 
-# Converting allow list from string to map, to ease validation.
-def parse_allow_list(st):
-    output = {}
-    stack = []
-    key = None
-    for i in range(len(st)):
-        if st[i] == ":":
-            key = "".join(stack)
-            if key not in output:
-                output[key] = []
-            stack = []
-            continue
-        if st[i] == "," and not st[i + 1].isdigit():
-            value = "".join(stack)
-            output[key].append(value)
-            stack = []
-            i += 1
-            continue
-        stack.append(st[i])
-    value = "".join(stack)
-    output[key] = value
-    stack = []
-    return output
+def split_allow_list_str(allow_list_str: str) -> list[tuple]:
+    """Split the allow list string into a list of datatype:datatype tuples."""
+    precision_scale_pattern = r"(?:\((?:[0-9 ,\-]+|'UTC')\))?"
+    nullable_pattern = r"(?:\[[noulabe\-]+\])?"
+    data_type_pattern = r"[a-z0-9 ]+" + precision_scale_pattern + nullable_pattern
+    csv_split_pattern = data_type_pattern + r":" + data_type_pattern
+    data_type_pairs = [
+        _.replace(" ", "").split(":")
+        for _ in re.findall(csv_split_pattern, allow_list_str, re.I)
+    ]
+    invalid_pairs = [_ for _ in data_type_pairs if len(_) != 2]
+    if invalid_pairs:
+        raise exceptions.SchemaValidationException(
+            f"Invalid data type pairs: {invalid_pairs}"
+        )
+    return data_type_pairs
 
 
-def get_datatype_name(st):
-    chars = []
-    for i in range(len(st)):
-        if ord(st[i].lower()) >= 97 and ord(st[i].lower()) <= 122:
-            chars.append(st[i].lower())
-    out = "".join(chars)
-    if out == "":
-        return -1
-    return out
+def parse_allow_list(st) -> dict:
+    """Convert allow-list data type pairs into a dictionary like {key[value1, value2, etc], }"""
+    data_type_pairs = split_allow_list_str(st)
+    return_pairs = {}
+    for dt1, dt2 in data_type_pairs:
+        if dt1 in return_pairs:
+            return_pairs[dt1].append(dt2)
+        else:
+            return_pairs[dt1] = [dt2]
+    return return_pairs
 
 
 # typea data types: int8,int16
