@@ -15,7 +15,6 @@
 import json
 import pytest
 import random
-import re
 from datetime import datetime, timedelta
 
 from data_validation import consts, data_validation
