@@ -228,7 +228,7 @@ def schema_validation_matching(
     return results
 
 
-def split_allow_list_str(allow_list_str: str) -> list[tuple]:
+def split_allow_list_str(allow_list_str: str) -> list:
     """Split the allow list string into a list of datatype:datatype tuples."""
     # I've not moved this patter to a compiled constant because it should only
     # happen once per command and I felt splitting the pattern into variables
@@ -249,7 +249,7 @@ def split_allow_list_str(allow_list_str: str) -> list[tuple]:
     return data_type_pairs
 
 
-def expand_precision_range(s: str) -> list[str]:
+def expand_precision_range(s: str) -> list:
     """Expand an integer range (e.g. "0-3") to a list (e.g. ["0", "1", "2", "3"])."""
     m_range = DECIMAL_PRECISION_SCALE_RANGE_PATTERN.match(s)
     if not m_range:
@@ -268,7 +268,7 @@ def expand_precision_range(s: str) -> list[str]:
         ) from e
 
 
-def expand_precision_or_scale_range(data_type: str) -> list[str]:
+def expand_precision_or_scale_range(data_type: str) -> list:
     """Take a data type and example any precision/scale range.
 
     For example "decimal(1-3,0)" becomes:
@@ -298,7 +298,7 @@ def expand_precision_or_scale_range(data_type: str) -> list[str]:
 def parse_allow_list(st: str) -> dict:
     """Convert allow-list data type pairs into a dictionary like {key[value1, value2, etc], }"""
 
-    def expand_allow_list_ranges(data_type_pairs: list[tuple]) -> list[tuple]:
+    def expand_allow_list_ranges(data_type_pairs: list) -> list:
         expanded_pairs = []
         for dt1, dt2 in data_type_pairs:
             dt1_list = expand_precision_or_scale_range(dt1)
