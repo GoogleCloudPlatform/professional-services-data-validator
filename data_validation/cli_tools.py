@@ -610,12 +610,12 @@ def _configure_schema_parser(schema_parser):
     optional_arguments.add_argument(
         "--allow-list",
         "-al",
-        help="Comma separated list of datatype mappings due to incompatible datatypes in source and target. e.g: decimal(12,2):decimal(38,9),string[non-nullable]:string,decimal(10-18,0):int64",
+        help="Comma separated list of datatype mappings due to incompatible datatypes in source and target. e.g.: decimal(12,2):decimal(38,9),string[non-nullable]:string,decimal(10-18,0):int64",
     )
     optional_arguments.add_argument(
         "--allow-list-file",
         "-alf",
-        help="YAML file containing default --allow-list mappings. See examples in samples/allow_list/",
+        help="YAML file containing default --allow-list mappings. Can be used in conjunction with --allow-list. e.g.: samples/allow_list/oracle_to_bigquery.yaml or gs://dvt-allow-list-files/oracle_to_bigquery.yaml. See example files in samples/allow_list/",
     )
 
     # Group required arguments
