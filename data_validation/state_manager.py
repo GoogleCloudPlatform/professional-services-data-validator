@@ -85,6 +85,9 @@ class StateManager(object):
             if file_name.endswith(".connection.json")
         ]
 
+    def read_gcs_file(self, file_path: str) -> str:
+        return self._read_gcs_file(self, file_path)
+
     def _get_connections_directory(self) -> str:
         """Returns the connections directory path."""
         if self.file_system == FileSystem.LOCAL:

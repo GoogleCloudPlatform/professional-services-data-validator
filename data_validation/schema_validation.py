@@ -141,10 +141,6 @@ def schema_validation_matching(
     allow_list_map = parse_allow_list(allow_list)
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields_casefold.items():
-        print(
-            source_field_name,
-            source_field_type,
-        )
         if source_field_name not in target_fields_casefold:
             # Target field doesn't exist
             results.append(

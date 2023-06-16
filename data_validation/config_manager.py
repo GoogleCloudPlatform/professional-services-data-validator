@@ -15,6 +15,7 @@
 import copy
 import logging
 from typing import Optional, Union, TYPE_CHECKING
+import yaml
 
 import google.oauth2.service_account
 from ibis_bigquery.client import BigQueryClient
@@ -312,10 +313,28 @@ class ConfigManager(object):
             self.exclusion_columns + column_configs
         )
 
-    def append_allow_list(self, allow_list):
-        """Append allow_list of datatype to existing config."""
-        allow_list = allow_list.replace(" ", "")
-        self._config[consts.CONFIG_ALLOW_LIST] = allow_list
+    def _read_file(self, allow_list_file: str) -> str:
+        if allow_list_file.startswith("gs://"):
+            return self._state_manager.read_gcs_file(allow_list_file)
+        else:
+            try:
+                with open(allow_list_file, "r") as f:
+                    return f.read()
+            except FileNotFoundError as e:
+                raise ValueError("Cannot locate --allow-list-file: {allow_list_file}") from e
+
+    def append_allow_list(self, allow_list: Union[str, None], allow_list_file: Union[str, None]):
+        """Append datatype allow_list to existing config."""
+        full_allow_list = []
+        if allow_list:
+            allow_list = allow_list.replace(" ", "")
+            full_allow_list.append(allow_list)
+        if allow_list_file:
+            allow_list_yaml = self._read_file(allow_list_file)
+            allow_list_dict = yaml.safe_load(allow_list_yaml)
+            full_allow_list.append(",".join([f"{_[0]}:{_[1]}" for _ in allow_list_dict.items()]))
+
+        self._config[consts.CONFIG_ALLOW_LIST] = ",".join(full_allow_list)
 
     def get_source_ibis_table(self):
         """Return IbisTable from source."""
