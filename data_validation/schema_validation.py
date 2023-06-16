@@ -309,6 +309,12 @@ def parse_allow_list(st: str) -> dict:
         return expanded_pairs
 
     def convert_pairs_to_dict(expanded_pairs: list) -> dict:
+        """Take the list data type tuples and convert them into a dictionary keyed on source data type.
+        For example:
+            [('decimal(2,0)', 'int64'), ('decimal(2,0)', 'int32')]
+        becomes:
+            {'decimal(2,0)': ['int64', 'int32']}
+        """
         return_pairs = {}
         for dt1, dt2 in expanded_pairs:
             if dt1 in return_pairs:
