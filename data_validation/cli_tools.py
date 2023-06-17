@@ -925,14 +925,6 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
             "all statuses are returned"
         ),
     )
-    optional_arguments.add_argument(
-        "--partition-key",
-        "-partkey",
-        help=(
-            "Column on which the partitions would be generated. "
-            "Column type must be integer. Defaults to Primary key"
-        ),
-    )
 
 
 def get_connection_config_from_args(args):
