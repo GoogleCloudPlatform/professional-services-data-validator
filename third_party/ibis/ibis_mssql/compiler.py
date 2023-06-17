@@ -371,9 +371,11 @@ def _day_of_week_name(t, expr):
     (sa_arg,) = map(t.translate, expr.op().args)
     return sa.func.trim(sa.func.format(sa_arg, 'dddd'))
 
+
 def _string_join(t, expr):
     sep, elements = expr.op().args
     return sa.func.concat(*map(t.translate, elements))
+
 
 _operation_registry = alch._operation_registry.copy()
 
@@ -418,11 +420,19 @@ _operation_registry.update(
         ops.ExtractYear: _extract('year'),
         ops.ExtractMonth: _extract('month'),
         ops.ExtractDay: _extract('day'),
+        ops.ExtractDayOfYear: _extract('dayofyear'),
         ops.ExtractHour: _extract('hour'),
         ops.ExtractMinute: _extract('minute'),
         ops.ExtractSecond: _extract('second'),
         ops.ExtractMillisecond: _extract('millisecond'),
+        ops.ExtractWeekOfYear: _extract('iso_week'),
         ops.Strftime: _strftime,
+        ops.ExtractEpochSeconds: fixed_arity(
+            lambda x: sa.cast(
+                sa.func.datediff(sa.text('s'), '1970-01-01 00:00:00', x), sa.BIGINT
+            ),
+            1,
+        ),
         # newly added
         ops.Lag: _lag,
         ops.Lead: _lead,
@@ -489,6 +499,7 @@ class MSSQLExprTranslator(alch.AlchemyExprTranslator):
     _registry = _operation_registry
     _rewrites = alch.AlchemyExprTranslator._rewrites.copy()
     _type_map = alch.AlchemyExprTranslator._type_map.copy()
+    # only used to map SQLAlchemy types back to SQL Server types, it does not add support to new data types, for that go to client.py
     _type_map.update(
         {
             dt.Boolean: mssql.BIT,
@@ -508,7 +519,7 @@ compiles = MSSQLExprTranslator.compiles
 
 class MSSQLDialect(alch.AlchemyDialect):
 
-    translator = MSSQLExprTranslator
+      translator = MSSQLExprTranslator
 
 
 dialect = MSSQLDialect

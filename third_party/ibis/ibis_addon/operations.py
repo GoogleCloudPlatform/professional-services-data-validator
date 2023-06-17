@@ -29,6 +29,7 @@ import sqlalchemy as sa
 import ibis.expr.api
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
+import ibis.expr.operations as ops
 
 from data_validation.clients import _raise_missing_client_error
 from ibis_bigquery.compiler import (
@@ -36,6 +37,7 @@ from ibis_bigquery.compiler import (
     BigQueryExprTranslator,
     STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
 )
+from ibis.backends.base_sqlalchemy.alchemy import fixed_arity
 from ibis.expr.operations import Arg, Cast, Comparison, Reduction, Strftime, ValueOp
 from ibis.expr.types import BinaryValue, IntegerColumn, StringValue, NumericValue, TemporalValue
 from ibis.backends.impala.compiler import ImpalaExprTranslator
@@ -47,6 +49,8 @@ from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_teradata.compiler import TeradataExprTranslator
 from third_party.ibis.ibis_mssql.compiler import MSSQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
+from ibis.backends.mysql.compiler import MySQLExprTranslator
+from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
 # avoid errors if Db2 is not installed and not needed
 try:
@@ -153,6 +157,25 @@ def strftime_bigquery(translator, expr):
         strftime_format_func_name, fmt_string, arg_formatted
     )
 
+def strftime_mysql(translator, expr):
+    arg, format_string = expr.op().args 
+    arg_formatted = translator.translate(arg)
+    arg_type = arg.type()
+    fmt_string = translator.translate(format_string)
+    if isinstance(arg_type, dt.Timestamp):
+        fmt_string = "%Y-%m-%d %H:%i:%S"
+    return sa.func.date_format(arg_formatted, fmt_string)
+
+def strftime_base(translator, expr):
+    arg, format_string = expr.op().args 
+    arg_formatted = translator.translate(arg)
+    arg_type = arg.type()
+    fmt_string = translator.translate(format_string)
+    if isinstance(arg_type, dt.Timestamp):
+        fmt_string = "YYYY-MM-dd HH:mm:ss"
+    elif isinstance(arg_type, dt.Date):
+        fmt_string = "YYYY-MM-dd"
+    return f"date_format({arg_formatted}, '{fmt_string}')"
 
 def format_hashbytes_teradata(translator, expr):
     arg, how = expr.op().args
@@ -217,8 +240,15 @@ def sa_format_hashbytes_mssql(translator, expr):
 def sa_format_hashbytes_oracle(translator, expr):
     arg, how = expr.op().args
     compiled_arg = translator.translate(arg)
-    hash_func = sa.func.standard_hash(compiled_arg, sa.sql.literal_column("'SHA256'"))
+    convert = sa.func.convert(compiled_arg, sa.sql.literal_column("'UTF8'"))
+    hash_func = sa.func.standard_hash(convert, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
+
+def sa_format_hashbytes_mysql(translator, expr):
+    arg, how = expr.op().args
+    compiled_arg = translator.translate(arg)
+    hash_func = sa.func.sha2(compiled_arg, sa.sql.literal_column("'256'"))
+    return hash_func
 
 def sa_format_hashbytes_db2(translator, expr):
     arg, how = expr.op().args
@@ -226,6 +256,11 @@ def sa_format_hashbytes_db2(translator, expr):
     hashfunc = sa.func.hash(compiled_arg,sa.sql.literal_column("2"))
     hex = sa.func.hex(hashfunc)
     return sa.func.lower(hex)
+
+def sa_format_hashbytes_redshift(translator, expr):
+    arg, how  = expr.op().args
+    compiled_arg = translator.translate(arg)
+    return sa.sql.literal_column(f"sha2({compiled_arg}, 256)")
 
 def sa_format_hashbytes_postgres(translator, expr):
     arg, how = expr.op().args
@@ -239,6 +274,10 @@ def sa_format_to_char(translator, expr):
     compiled_arg = translator.translate(arg)
     compiled_fmt = translator.translate(fmt)
     return sa.func.to_char(compiled_arg, compiled_fmt)
+
+def sa_format_to_stringjoin(translator, expr):
+    sep, elements = expr.op().args
+    return sa.func.concat_ws(translator.translate(sep), *map(translator.translate, elements))
 
 
 def sa_cast_postgres(t, expr):
@@ -289,6 +328,7 @@ BigQueryExprTranslator._registry[Hash] = format_hash_bigquery
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
+MySQLExprTranslator._registry[Strftime] = strftime_mysql
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 MSSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
@@ -297,6 +337,7 @@ BaseExprTranslator._registry[RawSQL] = format_raw_sql
 BaseExprTranslator._registry[HashBytes] = format_hashbytes_base
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
+BaseExprTranslator._registry[Strftime] = strftime_base
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 OracleExprTranslator._registry[ToChar] = sa_format_to_char
@@ -306,6 +347,11 @@ PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
+MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
+MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
+MySQLExprTranslator._registry[ops.IfNull] = fixed_arity(sa.func.ifnull, 2)
+MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
+RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
 
 if DB2ExprTranslator: #check if Db2 driver is loaded
     DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2

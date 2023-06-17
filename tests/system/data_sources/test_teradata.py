@@ -17,6 +17,7 @@ from unittest import mock
 
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
+from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
 TERADATA_USER = os.getenv("TERADATA_USER", "udf")
@@ -192,11 +193,18 @@ def test_row_validator():
     assert df["validation_status"][0] == "success"
 
 
+def mock_get_connection_config(*args):
+    if args[1] in ("td-conn", "mock-conn"):
+        return CONN
+    elif args[1] == "bq-conn":
+        return BQ_CONN
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_schema_validation_core_types(mock_conn):
+def test_schema_validation_core_types():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -219,11 +227,47 @@ def test_schema_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_column_validation_core_types(mock_conn):
+def test_schema_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_datetime,col_tstz to --sum string below when issue-762 is complete. Or change whole string to * if YYY is also complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            (
+                # Teradata integrals go to BigQuery INT64.
+                "--allow-list=int8:int64,int16:int64,int32:int64,"
+                # Teradata NUMBERS that map to BigQuery NUMERIC.
+                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
+                # When fix issue 838 then uncomment line above and remove line below.
+                # "float64:decimal(38,9),"
+                # Teradata NUMBERS that map to BigQuery BIGNUMERIC.
+                # When issue-839 is resolved we need to edit the line below as appropriate.
+                "decimal(38,0):decimal(38,9)"
+            ),
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_core_types():
+    parser = cli_tools.configure_arg_parser()
+    # TODO Add col_datetime,col_tstz to --sum string below when issue-762 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -248,9 +292,38 @@ def test_column_validation_core_types(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_row_validation_core_types(mock_conn):
+def test_column_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # TODO Add col_datetime,col_tstz to --sum string below when issue-762 is complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types():
     parser = cli_tools.configure_arg_parser()
     # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
     # [Error 3798] A column or character expression is larger than the max size.
@@ -264,6 +337,37 @@ def test_row_validation_core_types(mock_conn):
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
+    # [Error 3798] A column or character expression is larger than the max size.
+    # TODO Change --hash option to include col_tstz when issue-706 is complete.
+    # TODO Change --hash option to include col_float32,col_float64 when issue-841 is complete.
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_date,col_datetime",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

@@ -142,6 +142,7 @@ def test_import(module_under_test):
     assert True
 
 
+# Basic unit test  for schema validation.
 def test_schema_validation_matching(module_under_test):
     source_fields = {"FIELD1": "string", "fiEld2": "datetime", "field3": "string"}
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
@@ -181,6 +182,7 @@ def test_schema_validation_matching(module_under_test):
     )
 
 
+# Unit test adding validation for exclusion columns in schema validation.
 def test_schema_validation_matching_exclusion_columns(module_under_test):
     source_fields = {"FIELD1": "string", "fiEld2": "datetime", "field3": "string"}
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
@@ -211,6 +213,78 @@ def test_schema_validation_matching_exclusion_columns(module_under_test):
 
     assert expected_results == module_under_test.schema_validation_matching(
         source_fields, target_fields, ["field2"], ""
+    )
+
+
+# Testing for allow list functionality, covers allowing multiple vallues for a same datatype.
+def test_schema_validation_matching_allowlist_columns(module_under_test):
+    source_fields = {
+        "FIELD1": "string",
+        "fiEld2": "datetime",
+        "field3": "decimal(38, 0)",
+        "field4": "int32",
+        "field5": "decimal(38,0)",
+        "field6": "int64",
+    }
+    target_fields = {
+        "field1": "string",
+        "field2": "timestamp",
+        "field3": "int64",
+        "field4": "int64",
+        "field5": "decimal(1000,0)",
+        "field6": "int32",
+    }
+
+    expected_results = [
+        [
+            "field1",
+            "field1",
+            "string",
+            "string",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field2",
+            "field2",
+            "datetime",
+            "timestamp",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
+        [
+            "field3",
+            "field3",
+            "decimal(38,0)",
+            "int64",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field4",
+            "field4",
+            "int32",
+            "int64",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field5",
+            "field5",
+            "decimal(38,0)",
+            "decimal(1000,0)",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field6",
+            "field6",
+            "int64",
+            "int32",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
+    ]
+
+    assert expected_results == module_under_test.schema_validation_matching(
+        source_fields,
+        target_fields,
+        None,
+        "decimal(38,0):int64,decimal(38,0):decimal(1000,0),int32:int64",
     )
 
 
