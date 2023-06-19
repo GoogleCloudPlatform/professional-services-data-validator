@@ -1,0 +1,9 @@
+# Default data type mappings for --allow-list option if this file is included using --allow-list-file.
+# All integral NUMBERs with precision <19 are valid in INT64.
+"decimal(1-18,0)": "int64"
+# All integral NUMBERs with precision >=19 and <= 29 are valid in NUMERIC.
+"decimal(19-29,0)": "decimal(38,9)"
+# All fractional NUMBERs with precision <= 30 and scale between 1 and 9 are valid in NUMERIC.
+"decimal(1-30,1-9)": "decimal(38,9)"
+# BINARY_FLOAT maps to FLOAT64 because BigQuery does not have FLOAT32.
+"float32": "float64"
