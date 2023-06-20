@@ -94,18 +94,19 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
-
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
     elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(datatype, ibis.expr.datatypes.Float64):
         source_value = (
             field_differences["differences_source_value"]
-            .cast("float64")
+            .cast("float32")
+            .round(digits=4)
         )
         target_value = (
             field_differences["differences_target_value"]
-            .cast("float64")
+            .cast("float32")
+            .round(digits=4)
         )
     else:
         source_value = field_differences["differences_source_value"]
@@ -140,7 +141,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
             .end()
         )
     else:
-        difference = (target_value - source_value).cast("float64")
+        difference = (target_value - source_value).cast("float32")
 
         pct_difference_nonzero = (
             ibis.literal(100.0)

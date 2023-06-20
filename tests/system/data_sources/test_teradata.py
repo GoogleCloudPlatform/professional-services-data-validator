@@ -247,8 +247,7 @@ def test_schema_validation_core_types_to_bigquery():
                 # When fix issue 838 then uncomment line above and remove line below.
                 "float64:decimal(38,9),"
                 # Teradata NUMBERS that map to BigQuery BIGNUMERIC.
-                # When issue-839 is resolved we need to edit the line below as appropriate.
-                "decimal(38,0):decimal(38,9)"
+                "decimal(38,0):decimal(76,38)"
             ),
         ]
     )

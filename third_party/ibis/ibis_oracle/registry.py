@@ -276,32 +276,14 @@ def _reduce_tokens(tokens, arg):
     return reduced
 
 
-def _strftime(arg, pattern):
-    tokens, _ = _scanner.scan(pattern.value)
-    reduced = _reduce_tokens(tokens, arg)
+def _strftime(t, op):
+    tokens, _ = _scanner.scan(op.format_str.value)
+    reduced = _reduce_tokens(tokens, t.translate(op.arg))
     return functools.reduce(sa.sql.ColumnElement.concat, reduced)
 
 
 def _regex_replace(t, op):
     return sa.func.regexp_replace(t.translate(op.string), t.translate(op.pattern), t.translate(op.replacement))
-
-
-def _reduction(func, cast_type='int32'):
-    def reduction_compiler(t, op):
-        arg, where = op.args
-
-        if arg.output_dtype.is_boolean():
-            if isinstance(arg, ops.TableColumn):
-                nullable = arg.output_dtype.nullable
-                arg = ops.Cast(arg, dt.dtype(cast_type)(nullable=nullable))
-            else:
-                arg = ops.Where(arg, 1, 0)
-
-        if where is not None:
-            arg = ops.Where(where, arg, None)
-        return func(t.translate(arg))
-
-    return reduction_compiler
 
 
 def _log(t, op):
@@ -470,12 +452,6 @@ operation_registry.update(
         ops.ExtractSecond: _second,
         ops.DayOfWeekIndex: _day_of_week_index,
         ops.DayOfWeekName: _day_of_week_name,
-        ops.Sum: _reduction('sum'),
-        ops.Mean: _reduction('avg'),
-        ops.Min: _reduction('min'),
-        ops.Max: _reduction('max'),
-        ops.Variance: variance_reduction('var', suffix={'sample': '', 'pop': 'p'}),
-        ops.StandardDev: variance_reduction('stdev', suffix={'sample': '', 'pop': 'p'}),
         ops.RandomScalar: _random,
         # now is in the timezone of the server, but we want UTC
         ops.TimestampNow: lambda *args: sa.func.timezone('UTC', sa.func.now()),

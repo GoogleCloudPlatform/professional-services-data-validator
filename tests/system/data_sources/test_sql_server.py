@@ -245,8 +245,7 @@ def test_schema_validation_core_types_to_bigquery():
                 # SQL Server decimals that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # SQL Server decimals that map to BigQuery BIGNUMERIC.
-                # When issue-839 is resolved we need to edit the line below as appropriate.
-                "decimal(38,0):decimal(38,9),"
+                "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64,"
                 "timestamp('UTC'):timestamp,"

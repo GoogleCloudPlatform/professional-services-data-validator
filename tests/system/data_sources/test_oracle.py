@@ -113,12 +113,11 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             (
                 # Integral Oracle NUMBERS go to BigQuery INT64.
-                "--allow-list=decimal(8,0):int64,decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
+                "--allow-list=!decimal(8,0):int64,decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
                 # Oracle NUMBERS that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
-                # When issue-839 is resolved we need to edit the line below as appropriate.
-                "decimal(38,0):decimal(38,9),"
+                "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
             ),

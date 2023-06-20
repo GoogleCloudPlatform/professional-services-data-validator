@@ -234,7 +234,7 @@ def sa_cast_postgres(t, op):
         #     return (sa.cast(sa.func.trim_scale(arg), typ))
         precision = arg_dtype.precision or 38
         fmt = "FM" + ("9" * (precision - arg_dtype.scale)) + "." + ("9" * arg_dtype.scale)
-        return sa.func.rtrim(sa.func.to_char(arg, fmt), ".")
+        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
 
     # specialize going from an integer type to a timestamp
     if arg_dtype.is_integer() and typ.is_timestamp():

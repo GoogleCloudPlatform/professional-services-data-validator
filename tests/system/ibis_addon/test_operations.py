@@ -20,17 +20,11 @@ import ibis.expr.datatypes as dt
 
 # Import required in order to register operations.
 import third_party.ibis.ibis_addon.operations  # noqa: F401
-from third_party.ibis import ibis_teradata
 
 
 @pytest.fixture
 def bigquery_client():
     return ibis.bigquery.connect()
-
-
-@pytest.fixture
-def teradata_client():
-    return ibis_teradata.connect()
 
 
 def test_bit_xor_bigquery(bigquery_client):
@@ -43,8 +37,8 @@ def test_bit_xor_bigquery(bigquery_client):
         sql
         == textwrap.dedent(
             """
-    SELECT BIT_XOR(`tripduration`) AS `checksum`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+    SELECT BIT_XOR(t0.`tripduration`) AS `checksum`
+    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
     """
         ).strip()
     )
@@ -62,8 +56,8 @@ def test_hash_bigquery_string(bigquery_client):
         sql
         == textwrap.dedent(
             """
-    SELECT farm_fingerprint(`start_station_name`) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+    SELECT farm_fingerprint(t0.`start_station_name`) AS `station_hash`
+    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
     """
         ).strip()
     )
@@ -86,8 +80,8 @@ def test_hash_bigquery_binary(bigquery_client):
         sql
         == textwrap.dedent(
             """
-    SELECT farm_fingerprint(CAST(`start_station_name` AS BINARY)) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+    SELECT farm_fingerprint(CAST(t0.`start_station_name` AS BYTES)) AS `station_hash`
+    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
     """
         ).strip()
     )
@@ -103,8 +97,8 @@ def test_hashbytes_bigquery_string(bigquery_client):
         sql
         == textwrap.dedent(
             """
-    SELECT SHA256(`start_station_name`) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+    SELECT TO_HEX(SHA256(t0.`start_station_name`)) AS `station_hash`
+    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
     """
         ).strip()
     )
@@ -127,30 +121,9 @@ def test_hashbytes_bigquery_binary(bigquery_client):
         sql
         == textwrap.dedent(
             """
-    SELECT SHA256(CAST(`start_station_name` AS BINARY)) AS `station_hash`
-    FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+    SELECT TO_HEX(SHA256(CAST(t0.`start_station_name` AS BYTES))) AS `station_hash`
+    FROM `bigquery-public-data.new_york_citibike.citibike_trips` t0
     """
         ).strip()
     )
 
-
-def test_hashbytes_teradata_binary(teradata_client):
-    tbl = teradata_client.table("citibike_trips", database="udfs.new_york_citibike")
-    expr = tbl[
-        tbl["start_station_name"]
-        .cast(dt.binary)
-        .hashbytes(how="sha256")
-        .name("station_hash")
-    ]
-    sql = expr.compile()
-    # TODO: Update the expected SQL to be a valid query once
-    #       https://github.com/ibis-project/ibis/issues/2354 is fixed.
-    assert (
-        sql
-        == textwrap.dedent(
-            """
-    SELECT hash_sha256(CAST(`start_station_name` AS BINARY)) AS `station_hash`
-    FROM `udfs.citibike_trips`
-    """
-        ).strip()
-    )

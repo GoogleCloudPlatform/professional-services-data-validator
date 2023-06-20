@@ -398,13 +398,13 @@ CLI_FIND_TABLES_ARGS = [
 STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'
 
 EXPECTED_RANDOM_ROW_QUERY = """
-SELECT `station_id`
+SELECT t0.*
 FROM (
-  SELECT *
-  FROM `bigquery-public-data.new_york_citibike.citibike_stations`
-  ORDER BY RAND()
-  LIMIT 10
+  SELECT t1.`station_id`
+  FROM `bigquery-public-data.new_york_citibike.citibike_stations` t1
 ) t0
+ORDER BY RAND() ASC
+LIMIT 10
 """.strip()
 
 
@@ -705,9 +705,6 @@ def test_random_row_query_builder():
         4665,
         4664,
     ]
-
-
-# add row validation tests for BQ
 
 
 def test_bigquery_row():

@@ -45,7 +45,7 @@ class Backend(BaseAlchemyBackend):
             (connect_data=(service_name={})))""".format(
                 protocol, host, port, database
             )
-            sa_url = sa.engine.url.URL(
+            sa_url = sa.engine.url.URL.create(
                 "oracle+cx_oracle",
                 user,
                 password,

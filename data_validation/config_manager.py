@@ -577,14 +577,11 @@ class ConfigManager(object):
     ):
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
-
         if column_type == "string":
             calc_func = "length"
 
-        elif column_type == "timestamp":
-            if isinstance(self.source_client, BigQueryClient) or isinstance(
-                self.target_client, BigQueryClient
-            ):
+        elif column_type == "timestamp" or column_type == "!timestamp":
+            if self.source_client.name == "bigquery" or self.target_client.name == "bigquery":
                 calc_func = "cast"
                 cast_type = "timestamp"
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
@@ -602,11 +599,11 @@ class ConfigManager(object):
 
             calc_func = "epoch_seconds"
 
-        elif column_type == "int32":
+        elif column_type == "int32" or column_type == "!int32":
             calc_func = "cast"
             cast_type = "int64"
 
-        elif column_type == "decimal":
+        elif column_type == "decimal" or column_type == "!decimal":
             calc_func = "cast"
             cast_type = "float64"
 
@@ -667,10 +664,10 @@ class ConfigManager(object):
                 continue
 
             if (
-                column_type == "string"
-                or (cast_to_bigint and column_type == "int32")
+                (column_type == "string" or column_type == "!string")
+                or (cast_to_bigint and (column_type == "int32" or column_type == "!int32"))
                 or (
-                    column_type == "timestamp"
+                    (column_type == "timestamp" or column_type == "!timestamp")
                     and agg_type
                     in (
                         "sum",
@@ -678,7 +675,7 @@ class ConfigManager(object):
                         "bit_xor",
                     )  # For timestamps: do not convert to epoch seconds for min/max
                 )
-                or (column_type == "decimal")
+                or (column_type == "decimal" or column_type == "!decimal")
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],

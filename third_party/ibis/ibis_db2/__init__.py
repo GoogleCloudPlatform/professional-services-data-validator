@@ -39,7 +39,7 @@ class Backend(BaseAlchemyBackend):
                 raise NotImplementedError(
                     'ibm_db_sa is currently the only supported driver'
                 )
-            sa_url = sa.engine.url.URL(
+            sa_url = sa.engine.url.URL.create(
                 'ibm_db_sa',
                 host=host,
                 port=port,

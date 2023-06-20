@@ -505,7 +505,7 @@ class QueryBuilder(object):
         filtered_table = table.filter(compiled_filters) if compiled_filters else table
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
-            filtered_table.groupby(compiled_groups)
+            filtered_table.group_by(compiled_groups)
             if compiled_groups
             else filtered_table
         )
