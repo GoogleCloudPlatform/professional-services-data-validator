@@ -45,7 +45,6 @@ from ibis.expr.operations import (Cast, Comparison, HashBytes, IfNull,
                                   StringLength, Value)
 from ibis.expr.types import NumericValue, TemporalValue
 
-import third_party.ibis.ibis_addon.datatypes
 from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
@@ -134,6 +133,28 @@ def strftime_mysql(translator, op):
     if isinstance(arg_type, dt.Timestamp):
         fmt_string = "%Y-%m-%d %H:%i:%S"
     return sa.func.date_format(arg_formatted, fmt_string)
+
+def strftime_mssql(translator, op):
+    """Use MS SQL CONVERT() in place of STRFTIME().
+
+    This is pretty restrictive due to the limited styles offered by SQL Server,
+    we've just covered off the generic formats used when casting date based columns
+    to string in order to complete row data comparison."""
+    arg, pattern = map(translator.translate, op.args)
+    supported_convert_styles = {
+        "%Y-%m-%d": 23, # ISO8601
+        "%Y-%m-%d %H:%M:%S": 20, # ODBC canonical
+        "%Y-%m-%d %H:%M:%S.%f": 21, # ODBC canonical (with milliseconds)
+    }
+    try:
+        convert_style = supported_convert_styles[pattern.value]
+    except KeyError:
+        raise NotImplementedError(
+            f'strftime format {pattern.value} not supported for SQL Server.'
+        )
+    result = sa.func.convert(sa.text('VARCHAR(32)'), arg, convert_style)
+    return result
+
 
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
@@ -285,10 +306,10 @@ PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
 
 MsSqlExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
-MsSqlExprTranslator._registry[StringLength] = unary(sa.func.len)
 MsSqlExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.isnull,2)
 MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
 MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
+MsSqlExprTranslator._registry[Strftime] = strftime_mssql
 
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql

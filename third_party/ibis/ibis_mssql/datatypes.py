@@ -18,14 +18,18 @@ from sqlalchemy.dialects import mssql
 from sqlalchemy.dialects.mssql.base import MSDialect
 
 
-# Register additional MSSQL data types
-@dt.dtype.register(MSDialect, (mssql.VARBINARY, mssql.IMAGE))
-def sa_mssql_binary(_, satype, nullable=True):
-    return dt.Binary(nullable=nullable)
+# Override DATETIMEOFFSET and DATETIME to remove timestamp
+# scale of 7 for valid schema matching
+@dt.dtype.register(MSDialect, mssql.DATETIMEOFFSET)
+def _datetimeoffset(_, sa_type, nullable=True):
+    return dt.Timestamp(timezone="UTC", nullable=nullable)
 
-@dt.dtype.register(MSDialect, (mssql.NCHAR, mssql.NTEXT, mssql.NVARCHAR))
-def sa_mssql_binary(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
+
+@dt.dtype.register(MSDialect, mssql.DATETIME2)
+def _datetime2(_, sa_type, nullable=True):
+    return dt.Timestamp(nullable=nullable)
+
 
 # Needs to be VARCHAR insteaad of NVARCHAR for Hash function
 _MSSQL_TYPE_MAP[dt.String] = mssql.VARCHAR
+_MSSQL_TYPE_MAP[dt.Float64] = mssql.FLOAT

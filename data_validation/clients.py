@@ -28,6 +28,7 @@ from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
+from third_party.ibis.ibis_mssql.api import mssql_connect
 
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
@@ -282,7 +283,7 @@ CLIENT_LOOKUP = {
     "Postgres": ibis.postgres.connect,
     "Redshift": redshift_connect,
     "Teradata": teradata_connect,
-    "MSSQL": ibis.mssql.connect,
+    "MSSQL": mssql_connect,
     "Snowflake": snowflake_connect,
     "Spanner": spanner_connect,
     "DB2": db2_connect,

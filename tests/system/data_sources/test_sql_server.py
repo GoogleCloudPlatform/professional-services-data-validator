@@ -241,7 +241,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             (
                 # All SQL Server integrals go to BigQuery INT64.
-                "--allow-list=int16:int64,int32:int64,"
+                "--allow-list=int8:int64,int16:int64,int32:int64,"
                 # SQL Server decimals that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # SQL Server decimals that map to BigQuery BIGNUMERIC.
@@ -269,8 +269,6 @@ def test_schema_validation_core_types_to_bigquery():
 )
 def test_column_validation_core_types():
     parser = cli_tools.configure_arg_parser()
-    # TODO When issue-832 is complete add col_varchar_30,col_char_2,col_string to --sum/min/max strings below.
-    # TODO When issue-833 is complete add col_datetime,col_tstz to --sum string below.
     args = parser.parse_args(
         [
             "validate",
@@ -279,9 +277,9 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz,col_varchar_30,col_char_2,col_string",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz,col_varchar_30,col_char_2,col_string",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz,col_varchar_30,col_char_2,col_string",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -299,11 +297,9 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO When issue-832 is complete add col_varchar_30,col_char_2,col_string to --sum/min/max strings below.
-    # TODO When issue-833 is complete add col_datetime,col_tstz to --sum string below.
-    # TODO When issue-XXX is complete add col_dec_10_2,col_dec_20,col_dec_38 to --sum/min/max strings below.
-    # TODO Change --min/max strings below to include col_tstz when issue-706 is complete.
+    # TODO Change --sum/min/max strings below to include col_tstz when issue-706 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
+    # We've excluded col_char_2 since the data stored in MSSQL has a trailing space which is counted in the LEN()
     args = parser.parse_args(
         [
             "validate",
@@ -312,9 +308,9 @@ def test_column_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_float64,col_date",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
