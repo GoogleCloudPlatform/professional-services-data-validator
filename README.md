@@ -199,13 +199,11 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
-Below is the command syntax for generating table partitions in order to perform row validations on large tables with memory constraints. 
+When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows.
 
-The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE partition_key > X AND partition_key < Y`). You can then run the configs in the directory serially with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`). You can then run the configs in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
-The command takes the same parameters as required for `Row Validation` *plus* few commands to implement the partitioning logic.
-
-(Note: As of now, only monotonically increasing key is supported for `--partition-key`.)
+The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type. A parameter used in earlier versions, ```partition-key``` is no longer supported. 
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
@@ -234,8 +232,6 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   --partition-num [1-1000], -pn [1-1000]
                         Number of partitions/config files to generate
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
-  [--partition-key PARTITION_KEY, -partkey PARTITION_KEY]
-                        Column on which the partitions would be generated. Column type must be integer. Defaults to Primary key
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
