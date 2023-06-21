@@ -125,7 +125,8 @@ class PartitionBuilder:
     def _get_partition_key_filters(self) -> List[List[str]]:
         """Generate where clauses for each partition for each table pair. We are partitioning the tables based on keys, so that
             we get equivalent sized partitions that can be compared against each other. With this approach, we can validate the
-            partitions in parallel leading to horizontal scaling of DVT.
+            partitions in parallel leading to horizontal scaling of DVT. The design doc for this section is available in
+            docs/internal/partition_table_prd.md
 
         Returns:
             A list of where clauses for the source tables for each table pair
