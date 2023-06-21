@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, ibis
+import os
+import ibis
 import logging
-import numpy
 from typing import List, Dict
 from argparse import Namespace
 
@@ -30,7 +30,7 @@ class PartitionBuilder:
         self.table_count = len(config_managers)
         self.args = args
         self.config_dir = self._get_arg_config_dir()
-        self.primary_key = self._get_primary_key()
+        self.primary_keys = self._get_primary_keys()
 
     def _get_arg_config_dir(self) -> str:
         """Return String yaml config folder path."""
@@ -39,12 +39,9 @@ class PartitionBuilder:
 
         return self.args.config_dir
 
-    def _get_primary_key(self) -> str:
-        """Return the first Primary Key"""
-        # Filter for only first primary key (multi-pk filter not supported)
-        primary_keys = cli_tools.get_arg_list(self.args.primary_keys)
-        primary_key = primary_keys[0]
-        return primary_key
+    def _get_primary_keys(self) -> str:
+        """Return the Primary Keys"""
+        return cli_tools.get_arg_list(self.args.primary_keys)
 
     def _get_yaml_from_config(self, config_manager: ConfigManager) -> Dict:
         """Return dict objects formatted for yaml validations.
@@ -75,14 +72,14 @@ class PartitionBuilder:
 
     @staticmethod
     def _less_than_value(keys, values) -> str:
-        """ Takes the list of primary keys in keys and the value of the biggest element
-        and generates an expression which can be used in a where clause to filter all rows with primary keys equal or 
+        """Takes the list of primary keys in keys and the value of the biggest element
+        and generates an expression which can be used in a where clause to filter all rows with primary keys equal or
         smaller than the biggest element.
 
         Returns:
             String containing the expression - e.g. (birth_month < 5 OR (birth_month = 5 AND (birth_day <= 2)))
         """
-        value0 = "'" + values[0] + "'" if type(values[0]) == type("A") else str(values[0])
+        value0 = "'" + values[0] + "'" if isinstance(values[0], str) else str(values[0])
         if len(keys) == 1:
             return keys[0] + " < " + value0
         else:
@@ -101,14 +98,14 @@ class PartitionBuilder:
 
     @staticmethod
     def _geq_value(keys, values) -> str:
-        """ Takes the list of primary keys in keys and the value of the smallest element
-        and generates an expression which can be used in a where clause to filter all rows with primary keys equal or 
+        """Takes the list of primary keys in keys and the value of the smallest element
+        and generates an expression which can be used in a where clause to filter all rows with primary keys equal or
         bigger than the smallest element.
 
         Returns:
             String containing the expression - e.g. (birth_month > 5 OR (birth_month = 5 AND (birth_day >= 2)))
         """
-        value0 = "'" + values[0] + "'" if type(values[0]) == type("A") else str(values[0])
+        value0 = "'" + values[0] + "'" if isinstance(values[0], str) else str(values[0])
         if len(keys) == 1:
             return keys[0] + " >= " + value0
         else:
@@ -123,8 +120,8 @@ class PartitionBuilder:
                 + " AND ("
                 + PartitionBuilder._geq_value(keys[1:], values[1:])
                 + ")"
-        )
-    
+            )
+
     def _get_partition_key_filters(self) -> List[List[str]]:
         """Generate where clauses for each partition for each table pair. We are partitioning the tables based on keys, so that
             we get equivalent sized partitions that can be compared against each other. With this approach, we can validate the
@@ -135,52 +132,52 @@ class PartitionBuilder:
             Therefore you get a list of lists.
         """
         master_filter_list = []
-        for config_manager in self.config_managers: # For each pair of tables
+        for config_manager in self.config_managers:  # For each pair of tables
             validation_builder = ValidationBuilder(config_manager)
 
-            # extract primary keys
-            primary_keys=config_manager.get_primary_keys_list()
-
             source_partition_row_builder = PartitionRowBuilder(
-                primary_keys,
+                self.primary_keys,
                 config_manager.source_client,
                 config_manager.source_schema,
                 config_manager.source_table,
                 validation_builder.source_builder,
             )
-            source_table=source_partition_row_builder.query
+            source_table = source_partition_row_builder.query
             target_partition_row_builder = PartitionRowBuilder(
-                primary_keys,
+                self.primary_keys,
                 config_manager.target_client,
                 config_manager.target_schema,
                 config_manager.target_table,
                 validation_builder.target_builder,
             )
-            target_table=target_partition_row_builder.query
 
             # Get Source and Target row Count
             source_count = source_partition_row_builder.get_count()
             target_count = target_partition_row_builder.get_count()
 
-            if abs(source_count - target_count) > source_count*0.1 :
-                            logging.warning(
-                                "Source and Target table row counts vary by more than 10%,"
-                                "partitioning may result in partitions with very different sizes"
-                            )
+            if abs(source_count - target_count) > source_count * 0.1:
+                logging.warning(
+                    "Source and Target table row counts vary by more than 10%,"
+                    "partitioning may result in partitions with very different sizes"
+                )
 
             # Decide on number of partitions after checking number requested is not > number of rows in source
-            number_of_part = self.args.partition_num if self.args.partition_num < source_count else source_count
-            
+            number_of_part = (
+                self.args.partition_num
+                if self.args.partition_num < source_count
+                else source_count
+            )
+
             # First we use the ntile aggregate function and divide assign a partition
             # number to each row in the source table
-            window1 = ibis.window(order_by=primary_keys)
+            window1 = ibis.window(order_by=self.primary_keys)
             nt = (
-                    source_table.get_column(primary_keys[0])
-                        .ntile(buckets=number_of_part)
-                        .over(window1)
-                        .name(consts.DVT_NTILE_COL)
-                )
-            dvt_nt = primary_keys.copy()
+                source_table.get_column(self.primary_keys[0])
+                .ntile(buckets=number_of_part)
+                .over(window1)
+                .name(consts.DVT_NTILE_COL)
+            )
+            dvt_nt = self.primary_keys.copy()
             dvt_nt.append(nt)
             partitioned_table = source_table.select(dvt_nt)
             # Partitioned table is just the primary key columns in the source table along with
@@ -188,17 +185,29 @@ class PartitionBuilder:
 
             # We are interested in only the primary key values at the begining of
             # each partitition - the following window groups by partition number
-            window2 = ibis.window(order_by=primary_keys, group_by=[consts.DVT_NTILE_COL])
-            first_pkys = [partitioned_table.get_column(primary_key)
-                            .first()
-                            .over(window2)
-                            .name(consts.DVT_FIRST_PRE + primary_key)
-                            for primary_key in primary_keys
-                        ]
-            partition_no = partitioned_table[consts.DVT_NTILE_COL].first().over(window2).name(consts.DVT_PART_NO)
+            window2 = ibis.window(
+                order_by=self.primary_keys, group_by=[consts.DVT_NTILE_COL]
+            )
+            first_pkys = [
+                partitioned_table.get_column(primary_key)
+                .first()
+                .over(window2)
+                .name(consts.DVT_FIRST_PRE + primary_key)
+                for primary_key in self.primary_keys
+            ]
+            partition_no = (
+                partitioned_table[consts.DVT_NTILE_COL]
+                .first()
+                .over(window2)
+                .name(consts.DVT_PART_NO)
+            )
             column_list = [partition_no] + first_pkys
-            partition_boundary = partitioned_table.select(column_list).sort_by([consts.DVT_PART_NO]).distinct()
-        
+            partition_boundary = (
+                partitioned_table.select(column_list)
+                .sort_by([consts.DVT_PART_NO])
+                .distinct()
+            )
+
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first and last element of each partition
             first_elements = partition_boundary.execute().to_numpy()
@@ -208,12 +217,25 @@ class PartitionBuilder:
             # The first and the last partitions have special where clauses - less than first element of second
             # partition and greater than or equal to the first element of the last partition respectively
             filter_clause_list = []
-            filter_clause_list.append(self._less_than_value(primary_keys, first_elements[1,1:]))
-            for i in range(1,first_elements.shape[0]-1):
-                filter_clause_list.append( '(' + self._geq_value(primary_keys, first_elements[i,1:]) +
-                                            ') AND (' + self._less_than_value(primary_keys, first_elements[i+1,1:])+ ')')
-            filter_clause_list.append(self._geq_value(primary_keys, first_elements[len(first_elements)-1,1:]))
-           
+            filter_clause_list.append(
+                self._less_than_value(self.primary_keys, first_elements[1, 1:])
+            )
+            for i in range(1, first_elements.shape[0] - 1):
+                filter_clause_list.append(
+                    "("
+                    + self._geq_value(self.primary_keys, first_elements[i, 1:])
+                    + ") AND ("
+                    + self._less_than_value(
+                        self.primary_keys, first_elements[i + 1, 1:]
+                    )
+                    + ")"
+                )
+            filter_clause_list.append(
+                self._geq_value(
+                    self.primary_keys, first_elements[len(first_elements) - 1, 1:]
+                )
+            )
+
             master_filter_list.append(filter_clause_list)
         return master_filter_list
 

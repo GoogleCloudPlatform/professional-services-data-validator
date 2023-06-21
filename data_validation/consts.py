@@ -170,7 +170,7 @@ SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
 
 # Constants for named columns used in generate partitions
 # these cannot conflict with primary key column names
-DVT_NTILE_COL = 'dvt_ntile'
-DVT_PART_NO = 'dvt_part_no'
-DVT_FIRST_PRE = 'dvt_first_' # prefix for first_element_column names
-DVT_LAST_PRE = 'dvt_last_' # prefix for last_element_column names
+DVT_NTILE_COL = "dvt_ntile"
+DVT_PART_NO = "dvt_part_no"
+DVT_FIRST_PRE = "dvt_first_"  # prefix for first_element_column names
+DVT_LAST_PRE = "dvt_last_"  # prefix for last_element_column names
