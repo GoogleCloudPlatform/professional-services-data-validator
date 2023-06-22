@@ -11,7 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ibis.backends.base.sql.compiler import Compiler, ExprTranslator, TableSetFormatter, Select
+from ibis.backends.base.sql.compiler import (
+    Compiler,
+    ExprTranslator,
+    TableSetFormatter,
+    Select,
+)
 from ibis.backends.base.sql.registry import identifiers
 from third_party.ibis.ibis_teradata.registry import _operation_registry
 
@@ -35,6 +40,7 @@ class TeradataExprTranslator(ExprTranslator):
 
 rewrites = TeradataExprTranslator.rewrites
 
+
 class TeradataSelect(Select):
     def format_limit(self):
         if not self.limit:
@@ -43,8 +49,8 @@ class TeradataSelect(Select):
         limit_sql = f"SAMPLE {self.limit.n}"
         return limit_sql
 
+
 class TeradataCompiler(Compiler):
     translator_class = TeradataExprTranslator
     table_set_formatter_class = TeradataTableSetFormatter
     select_class = TeradataSelect
-

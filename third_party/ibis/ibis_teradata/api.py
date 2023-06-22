@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from third_party.ibis.ibis_teradata import Backend as TeradataBackend
-import teradatasql # NOQA fail early if the package is missing
+import teradatasql  # NOQA fail early if the package is missing
+
 
 def teradata_connect(
     host: str = "localhost",
     user_name: str | None = None,
     password: str | None = None,
     port: int = 1025,
-    logmech: str | None = 'TD2',
+    logmech: str | None = "TD2",
     use_no_lock_tables: bool = False,
 ):
     backend = TeradataBackend()

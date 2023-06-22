@@ -95,7 +95,7 @@ TERADATA_ROW_CONFIG = {
             consts.CONFIG_FIELD_ALIAS: "cast__calendar_date",
             consts.CONFIG_TYPE: "custom",
             consts.CONFIG_DEPTH: 0,
-            consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.api.TimestampValue.strftime",
+            consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TemporalValue.strftime",
             consts.CONFIG_CUSTOM_PARAMS: [{"format_str": "%Y-%m-%d"}],
         },
         {
@@ -241,11 +241,9 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             (
                 # Teradata integrals go to BigQuery INT64.
-                "--allow-list=int8:int64,int16:int64,"
+                "--allow-list=int8:int64,int16:int64,int32:int64,"
                 # Teradata NUMBERS that map to BigQuery NUMERIC.
-                # "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # When fix issue 838 then uncomment line above and remove line below.
-                "float64:decimal(38,9),"
+                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Teradata NUMBERS that map to BigQuery BIGNUMERIC.
                 "decimal(38,0):decimal(76,38)"
             ),
