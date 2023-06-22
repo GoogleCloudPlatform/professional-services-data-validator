@@ -1,0 +1,7 @@
+# Default data type mappings for --allow-list option if this file is included using --allow-list-file.
+# All integral NUMBERs with precision <=4 are valid in SMALLINT.
+"decimal(1-4,0)": "int16"
+# All integral NUMBERs with precision <=9 are valid in INT.
+"decimal(5-9,0)": "int32"
+# All integral NUMBERs with precision <=18 are valid in BIGINT.
+"decimal(10-18,0)": "int64"
