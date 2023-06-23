@@ -15,7 +15,7 @@ perform this task.
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
 * Row validation (BQ, Hive, Teradata, Oracle, SQL Server, Postgres, Mysql only)
-* Schema validation 
+* Schema validation
 * Custom Query validation
 * Ad hoc SQL exploration
 
@@ -39,7 +39,7 @@ The [Connections](https://github.com/GoogleCloudPlatform/professional-services-d
 and list connections for the validation tool.
 
 ### Disclaimer
-This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly 
+This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly
 (see [CONTRIBUTING.md](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details).
 
 ## Installation
@@ -78,7 +78,7 @@ Below is the command syntax for column validations. To run a grouped column
 validation, simply specify the `--grouped-columns` flag.
 
 You can specify a list of string columns for aggregations in order to calculate
-an aggregation over the `length(string_col)`. Running an aggregation 
+an aggregation over the `length(string_col)`. Running an aggregation
 over all columns ('*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` flag is present.
 
@@ -137,8 +137,8 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 #### Row Validations
 
 (Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, Redshift, Postgres, Mysql, Db2 and Alloy DB. Struct and array data types are not currently supported.
-In addition, please note that SHA256 is not a supported function on Teradata systems. 
-If you wish to perform this comparison on Teradata you will need to 
+In addition, please note that SHA256 is not a supported function on Teradata systems.
+If you wish to perform this comparison on Teradata you will need to
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
 
 Below is the command syntax for row validations. In order to run row level
@@ -173,7 +173,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
   --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
-  --hash COLUMNS        Comma separated list of columns to hash or * for all columns 
+  --hash COLUMNS        Comma separated list of columns to hash or * for all columns
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
@@ -199,7 +199,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
-Below is the command syntax for generating table partitions in order to perform row validations on large tables with memory constraints. 
+Below is the command syntax for generating table partitions in order to perform row validations on large tables with memory constraints.
 
 The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE partition_key > X AND partition_key < Y`). You can then run the configs in the directory serially with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
@@ -225,7 +225,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
-  --hash COLUMNS        Comma separated list of columns to hash or * for all columns 
+  --hash COLUMNS        Comma separated list of columns to hash or * for all columns
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
   --config-dir CONFIG_DIR, -cdir CONFIG_DIR
                         Directory Path to store YAML Config Files
@@ -259,7 +259,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
   --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
-                        i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+                        e.g.: 'bigquery-public-data.new_york_citibike.citibike_trips'
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -270,12 +270,16 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
   [--filter-status or -fs STATUSES_LIST]
-                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail).
+                        If no list is provided, all statuses are returned.
   [--exclusion-columns or -ec EXCLUSION_COLUMNS]
-                        Comma separated list of columns to be excluded from the schema validation, i.e col_a,col_b.
-
+                        Comma separated list of columns to be excluded from the schema validation, e.g.: col_a,col_b.
   [--allow-list or -al ALLOW_LIST]
-                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),!string:string"                 
+                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),string[non-nullable]:string"
+  [--allow-list-file ALLOW_LIST_FILE, -alf ALLOW_LIST_FILE]
+                        YAML file containing default --allow-list mappings. Can be used in conjunction with --allow-list.
+                        e.g.: samples/allow_list/oracle_to_bigquery.yaml or gs://dvt-allow-list-files/oracle_to_bigquery.yaml
+                        See example files in samples/allow_list/.
 ```
 
 #### Custom Query Column Validations
@@ -325,7 +329,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 page provides few examples of how this tool can be used to run custom query validations.
 
 
-#### Custom Query Row Validations 
+#### Custom Query Row Validations
 
 (Note: Custom query row validation is currently only supported for BigQuery, Teradata, SQL Server, PostgreSQL, Oracle, Redshift, DB2, AlloyDB, and Impala/Hive. Struct and array data types are not currently supported.)
 
@@ -411,10 +415,10 @@ case specific CLI arguments or editing the YAML configuration file.
 For example, the following command creates a YAML file for the validation of the
 `new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
-citibike.yaml`. 
+citibike.yaml`.
 
 The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
-env variable if that has been set; otherwise, it is saved to wherever the tool is run. 
+env variable if that has been set; otherwise, it is saved to wherever the tool is run.
 
 You can now edit the YAML file if, for example, the `new_york_citibike` table is
 stored in datasets that have different names in the source and target systems.
@@ -437,13 +441,13 @@ data-validation configs run -cdir gs://my-bucket/my-validations/
 View the complete YAML file for a Grouped Column validation on the
 [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
-You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`. 
+You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`.
 
 ### Validation Reports
 
 The result handlers tell DVT where to store the results of
 each validation. The tool can write the results of a validation run to Google
-BigQuery or print to stdout (default). View the schema of the results 
+BigQuery or print to stdout (default). View the schema of the results
 table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
 
 To output to BigQuery, simply include the `-bqrh` flag during a validation run
@@ -625,7 +629,7 @@ FROM (
 If you generate the config file for a row validation, you can see that it uses
 calculated fields to generate the query. You can also use calculated fields
 in column level validations to generate the length of a string, or cast
-a INT field to BIGINT for aggregations. 
+a INT field to BIGINT for aggregations.
 
 See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-with-calc-fields-cast-to-numeric-before-aggregation) for a sample
 cast to NUMERIC.

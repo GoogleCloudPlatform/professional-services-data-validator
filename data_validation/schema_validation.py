@@ -13,10 +13,22 @@
 # limitations under the License.
 
 import datetime
-import pandas
+import itertools
 import logging
+import pandas
+import re
 
-from data_validation import metadata, consts, clients
+from data_validation import metadata, consts, clients, exceptions
+
+
+# Check for decimal data type with precision and/or scale. Permits hyphen in p/s for value ranges.
+DECIMAL_PRECISION_SCALE_PATTERN = re.compile(
+    r"(decimal)\(([0-9\-]+)(?:,[ ]*([0-9\-]+))?\)", re.I
+)
+# Extract lower/upper from a range of the format "0-2" or "12-18".
+DECIMAL_PRECISION_SCALE_RANGE_PATTERN = re.compile(
+    r"([0-9]{2}|[0-9])(?:\-)([0-9]{2}|[0-9])"
+)
 
 
 class SchemaValidation(object):
@@ -125,65 +137,45 @@ def schema_validation_matching(
             source_fields_casefold.pop(field, None)
             target_fields_casefold.pop(field, None)
 
-    # allow list map in case of incompatible  data types in source and target
+    # Allow list map in case of incompatible  data types in source and target
     allow_list_map = parse_allow_list(allow_list)
     # Go through each source and check if target exists and matches
     for source_field_name, source_field_type in source_fields_casefold.items():
-        # target field exists
-        if source_field_name in target_fields_casefold:
-            # target data type matches
-            target_field_type = target_fields_casefold[source_field_name]
-            if source_field_type == target_field_type:
-                results.append(
-                    [
-                        source_field_name,
-                        source_field_name,
-                        str(source_field_type),
-                        str(target_field_type),
-                        consts.VALIDATION_STATUS_SUCCESS,
-                    ]
-                )
-            elif (
-                string_val(source_field_type) in allow_list_map
-                and string_val(target_field_type)
-                == allow_list_map[string_val(source_field_type)]
-            ):
-
-                allowed_target_field_type = allow_list_map[
-                    string_val(source_field_type)
+        if source_field_name not in target_fields_casefold:
+            # Target field doesn't exist
+            results.append(
+                [
+                    source_field_name,
+                    "N/A",
+                    str(source_field_type),
+                    "N/A",
+                    consts.VALIDATION_STATUS_FAIL,
                 ]
+            )
+            continue
 
-                (higher_precision, lower_precision,) = parse_n_validate_datatypes(
-                    string_val(source_field_type), allowed_target_field_type
-                )
-                if lower_precision:
-                    results.append(
-                        [
-                            source_field_name,
-                            source_field_name,
-                            str(source_field_type),
-                            str(target_field_type),
-                            consts.VALIDATION_STATUS_FAIL,
-                        ]
-                    )
-                else:
-                    if higher_precision:
-                        logging.warning(
-                            "Source and target data type has precision mismatch: %s - %s",
-                            string_val(source_field_type),
-                            str(target_field_type),
-                        )
-                    results.append(
-                        [
-                            source_field_name,
-                            source_field_name,
-                            string_val(source_field_type),
-                            str(target_field_type),
-                            consts.VALIDATION_STATUS_SUCCESS,
-                        ]
-                    )
-            # target data type mismatch
-            else:
+        # Target field exists
+        target_field_type = target_fields_casefold[source_field_name]
+        if source_field_type == target_field_type:
+            # Target data type matches
+            results.append(
+                [
+                    source_field_name,
+                    source_field_name,
+                    str(source_field_type),
+                    str(target_field_type),
+                    consts.VALIDATION_STATUS_SUCCESS,
+                ]
+            )
+        elif (
+            string_val(source_field_type) in allow_list_map
+            and string_val(target_field_type)
+            in allow_list_map[string_val(source_field_type)]
+        ):
+            (higher_precision, lower_precision,) = parse_n_validate_datatypes(
+                string_val(source_field_type), string_val(target_field_type)
+            )
+            if lower_precision:
                 results.append(
                     [
                         source_field_name,
@@ -193,14 +185,30 @@ def schema_validation_matching(
                         consts.VALIDATION_STATUS_FAIL,
                     ]
                 )
-        # target field doesn't exist
+            else:
+                if higher_precision:
+                    logging.warning(
+                        "Source and target data type has precision mismatch: %s - %s",
+                        string_val(source_field_type),
+                        str(target_field_type),
+                    )
+                results.append(
+                    [
+                        source_field_name,
+                        source_field_name,
+                        string_val(source_field_type),
+                        str(target_field_type),
+                        consts.VALIDATION_STATUS_SUCCESS,
+                    ]
+                )
+        # target data type mismatch
         else:
             results.append(
                 [
                     source_field_name,
-                    "N/A",
+                    source_field_name,
                     str(source_field_type),
-                    "N/A",
+                    str(target_field_type),
                     consts.VALIDATION_STATUS_FAIL,
                 ]
             )
@@ -220,38 +228,105 @@ def schema_validation_matching(
     return results
 
 
-def parse_allow_list(st):
-    output = {}
-    stack = []
-    key = None
-    for i in range(len(st)):
-        if st[i] == ":":
-            key = "".join(stack)
-            output[key] = None
-            stack = []
-            continue
-        if st[i] == "," and not st[i + 1].isdigit():
-            value = "".join(stack)
-            output[key] = value
-            stack = []
-            i += 1
-            continue
-        stack.append(st[i])
-    value = "".join(stack)
-    output[key] = value
-    stack = []
-    return output
+def split_allow_list_str(allow_list_str: str) -> list:
+    """Split the allow list string into a list of datatype:datatype tuples."""
+    # I've not moved this patter to a compiled constant because it should only
+    # happen once per command and I felt splitting the pattern into variables
+    # aided readability.
+    precision_scale_pattern = r"(?:\((?:[0-9 ,\-]+|'UTC')\))?"
+    nullable_pattern = r"(?:\[[noulabe\-]+\])?"
+    data_type_pattern = r"[a-z0-9 ]+" + precision_scale_pattern + nullable_pattern
+    csv_split_pattern = data_type_pattern + r":" + data_type_pattern
+    data_type_pairs = [
+        _.replace(" ", "").split(":")
+        for _ in re.findall(csv_split_pattern, allow_list_str, re.I)
+    ]
+    invalid_pairs = [_ for _ in data_type_pairs if len(_) != 2]
+    if invalid_pairs:
+        raise exceptions.SchemaValidationException(
+            f"Invalid data type pairs: {invalid_pairs}"
+        )
+    return data_type_pairs
 
 
-def get_datatype_name(st):
-    chars = []
-    for i in range(len(st)):
-        if ord(st[i].lower()) >= 97 and ord(st[i].lower()) <= 122:
-            chars.append(st[i].lower())
-    out = "".join(chars)
-    if out == "":
-        return -1
-    return out
+def expand_precision_range(s: str) -> list:
+    """Expand an integer range (e.g. "0-3") to a list (e.g. ["0", "1", "2", "3"])."""
+    m_range = DECIMAL_PRECISION_SCALE_RANGE_PATTERN.match(s)
+    if not m_range:
+        return [s]
+    try:
+        p_lower = int(m_range.group(1))
+        p_upper = int(m_range.group(2))
+        if p_lower >= p_upper:
+            raise exceptions.SchemaValidationException(
+                f"Invalid allow list data type precision/scale: Lower value {p_lower} >= upper value {p_upper}"
+            )
+        return [str(_) for _ in range(p_lower, p_upper + 1)]
+    except ValueError as e:
+        raise exceptions.SchemaValidationException(
+            f"Invalid allow list data type precision/scale: {s}"
+        ) from e
+
+
+def expand_precision_or_scale_range(data_type: str) -> list:
+    """Take a data type and example any precision/scale range.
+
+    For example "decimal(1-3,0)" becomes:
+      ["decimal(1,0)", "decimal(2,0)", "decimal(3,0)"]"""
+
+    m = DECIMAL_PRECISION_SCALE_PATTERN.match(data_type.replace(" ", ""))
+    if not m:
+        return [data_type]
+
+    if len(m.groups()) != 3:
+        raise exceptions.SchemaValidationException(
+            f"Badly formatted data type: {data_type}"
+        )
+
+    type_name, p, s = m.groups()
+    p_list = expand_precision_range(p)
+    if s:
+        s_list = expand_precision_range(s)
+        return_list = [
+            f"{type_name}({p},{s})" for p, s in itertools.product(p_list, s_list)
+        ]
+    else:
+        return_list = [f"{type_name}({_})" for _ in p_list]
+    return return_list
+
+
+def parse_allow_list(st: str) -> dict:
+    """Convert allow-list data type pairs into a dictionary like {key[value1, value2, etc], }"""
+
+    def expand_allow_list_ranges(data_type_pairs: list) -> list:
+        expanded_pairs = []
+        for dt1, dt2 in data_type_pairs:
+            dt1_list = expand_precision_or_scale_range(dt1)
+            dt2_list = expand_precision_or_scale_range(dt2)
+            expanded_pairs.extend(
+                [(_[0], _[1]) for _ in itertools.product(dt1_list, dt2_list)]
+            )
+        return expanded_pairs
+
+    def convert_pairs_to_dict(expanded_pairs: list) -> dict:
+        """Take the list data type tuples and convert them into a dictionary keyed on source data type.
+        For example:
+            [('decimal(2,0)', 'int64'), ('decimal(2,0)', 'int32')]
+        becomes:
+            {'decimal(2,0)': ['int64', 'int32']}
+        """
+        return_pairs = {}
+        for dt1, dt2 in expanded_pairs:
+            if dt1 in return_pairs:
+                return_pairs[dt1].append(dt2)
+            else:
+                return_pairs[dt1] = [dt2]
+        return return_pairs
+
+    data_type_pairs = split_allow_list_str(st)
+    expanded_pairs = expand_allow_list_ranges(data_type_pairs)
+    return_pairs = convert_pairs_to_dict(expanded_pairs)
+    return return_pairs
 
 
 # typea data types: int8,int16

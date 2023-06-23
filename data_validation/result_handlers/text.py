@@ -36,6 +36,18 @@ class TextResultHandler(object):
         self.cols_filter_list = cols_filter_list
         self.status_list = status_list
 
+    def _get_formatted(self, result_df):
+        if self.format == "text":
+            return result_df.drop(self.cols_filter_list, axis=1).to_string(index=False)
+        elif self.format == "csv":
+            return result_df.to_csv(index=False)
+        elif self.format == "json":
+            return result_df.to_json(orient="index")
+        else:
+            return result_df.drop(self.cols_filter_list, axis=1).to_markdown(
+                tablefmt="fancy_grid", index=False
+            )
+
     def print_formatted_(self, result_df):
         """
         Utility for printing formatted results
@@ -44,18 +56,7 @@ class TextResultHandler(object):
         if self.status_list is not None:
             result_df = filter_validation_status(self.status_list, result_df)
 
-        if self.format == "text":
-            print(result_df.drop(self.cols_filter_list, axis=1).to_string(index=False))
-        elif self.format == "csv":
-            print(result_df.drop(self.cols_filter_list, axis=1).to_csv(index=False))
-        elif self.format == "json":
-            print(result_df.drop(self.cols_filter_list, axis=1).to_json(orient="index"))
-        else:
-            print(
-                result_df.drop(self.cols_filter_list, axis=1).to_markdown(
-                    tablefmt="fancy_grid", index=False
-                )
-            )
+        print(self._get_formatted(result_df))
 
         if self.format not in consts.FORMAT_TYPES:
             error_msg = (

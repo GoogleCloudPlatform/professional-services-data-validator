@@ -156,6 +156,18 @@ def strftime_mssql(translator, op):
     return result
 
 
+def strftime_impala(t, op):
+    import sqlglot as sg
+
+    hive_dialect = sg.dialects.hive.Hive
+    if (time_mapping := getattr(hive_dialect, "TIME_MAPPING", None)) is None:
+        time_mapping = hive_dialect.time_mapping
+    reverse_hive_mapping = {v: k for k, v in time_mapping.items()}
+    format_str = sg.time.format_time(op.format_str.value, reverse_hive_mapping)
+    targ = t.translate(ops.Cast(op.arg, to=dt.string))
+    return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
+
+
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -200,7 +212,8 @@ def sa_format_hashbytes_mssql(translator, op):
 
 def sa_format_hashbytes_oracle(translator, op):
     arg = translator.translate(op.arg)
-    hash_func = sa.func.standard_hash(arg, sa.sql.literal_column("'SHA256'"))
+    convert = sa.func.convert(arg, sa.sql.literal_column("'UTF8'"))
+    hash_func = sa.func.standard_hash(convert, sa.sql.literal_column("'SHA256'"))
     return sa.func.lower(hash_func)
 
 def sa_format_hashbytes_mysql(translator, op):
@@ -291,9 +304,11 @@ AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[HashBytes] = format_hashbytes_base
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
+
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 ImpalaExprTranslator._registry[RandomScalar] = fixed_arity("RAND", 0)
+ImpalaExprTranslator._registry[Strftime] = strftime_impala
 
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle

@@ -174,8 +174,7 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
             config_manager.append_exclusion_columns(
                 [col.casefold() for col in exclusion_columns]
             )
-        if args.allow_list is not None:
-            config_manager.append_allow_list(args.allow_list)
+        config_manager.append_allow_list(args.allow_list, args.allow_list_file)
 
     # Append CUSTOM_QUERY configs
     if config_manager.validation_type == consts.CUSTOM_QUERY:
@@ -394,8 +393,10 @@ def run_raw_query_against_connection(args):
     """Return results of raw query for ad hoc usage."""
     mgr = state_manager.StateManager()
     client = clients.get_data_client(mgr.get_connection_config(args.conn))
-    return client.raw_sql(args.query).fetchall()
-
+    cursor = client.raw_sql(args.query)
+    res = cursor.fetchall()
+    cursor.close()
+    return res
 
 def convert_config_to_yaml(args, config_managers):
     """Return dict objects formatted for yaml validations.

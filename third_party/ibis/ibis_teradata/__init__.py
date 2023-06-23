@@ -56,6 +56,9 @@ class Backend(BaseSQLBackend):
     def close(self):
         """Close the connection."""
         self.con.close()
+    
+    def __del__ (self):
+        self.con.close()
 
     @property
     def version(self):
