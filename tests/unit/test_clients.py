@@ -85,7 +85,7 @@ def test_get_oracle_data_client():
         clients.get_data_client(ORACLE_CONN_CONFIG)
 
 
-def test_get_pandas_data_client(fs):
+def test_get_pandas_data_client():
     conn_config = SOURCE_CONN_CONFIG
     _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
     ibis_client = clients.get_data_client(conn_config)
