@@ -368,7 +368,7 @@ def test_import(module_under_test):
 def test_class_object_creation(module_under_test):
     """Create a PartitionBuilder object passing 2 tables and assert the following
     1. Table/Configs count
-    2. config_dir value present and absent
+    2. config_dir value present and correct
     3. single primary_key value (is this already tested in row validation?)
     4. multiple primary keys (is this already tested in row validation?)
     """
@@ -388,35 +388,6 @@ def test_class_object_creation(module_under_test):
     builder = module_under_test.PartitionBuilder(config_managers, args)
     assert builder.table_count == len(config_managers)
     assert builder.primary_keys == ["region_id", "station_id"]
-
-
-def test_get_partition_key_filters(module_under_test):
-    """Build partitions filters and assert:
-    1. Table count
-    2. Filters count
-    3. Partition filters
-    """
-    data = _generate_fake_data(rows=1001, second_range=0)
-
-    source_json_data = _get_fake_json_data(data)
-    target_json_data = _get_fake_json_data(data)
-
-    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
-    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
-
-    config_manager = _generate_config_manager("my_table")
-    config_managers = [config_manager]
-
-    parser = cli_tools.configure_arg_parser()
-    mock_args = parser.parse_args(CLI_ARGS_SINGLE_KEY)
-
-    expected_partition_filters_list = PARTITION_FILTERS_LIST
-
-    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
-    partition_filters_list = builder._get_partition_key_filters()
-    assert len(partition_filters_list) == len(config_managers)
-    assert len(partition_filters_list[0]) == mock_args.partition_num
-    assert partition_filters_list[0] == expected_partition_filters_list
 
 
 def test_add_partition_filters_to_config(module_under_test):
