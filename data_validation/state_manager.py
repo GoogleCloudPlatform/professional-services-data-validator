@@ -85,6 +85,9 @@ class StateManager(object):
             if file_name.endswith(".connection.json")
         ]
 
+    def read_file(self, file_path: str) -> str:
+        return self._read_file(file_path)
+
     def _get_connections_directory(self) -> str:
         """Returns the connections directory path."""
         if self.file_system == FileSystem.LOCAL:
@@ -184,7 +187,8 @@ class StateManager(object):
         if self.file_system == FileSystem.GCS:
             return self._read_gcs_file(file_path)
         else:
-            return open(file_path, "r").read()
+            with open(file_path, "r") as f:
+                return f.read()
 
     def _write_file(self, file_path: str, data: str):
         if self.file_system == FileSystem.GCS:
@@ -242,7 +246,8 @@ class StateManager(object):
     def _read_gcs_file(self, file_path: str) -> str:
         gcs_file_path = self._get_gcs_file_path(file_path)
         blob = self.gcs_bucket.get_blob(gcs_file_path)
-
+        if not blob:
+            raise ValueError(f"Invalid Cloud Storage Path: {file_path}")
         return blob.download_as_bytes()
 
     def _write_gcs_file(self, file_path: str, data: str):

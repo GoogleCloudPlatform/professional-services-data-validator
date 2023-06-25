@@ -174,8 +174,7 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
             config_manager.append_exclusion_columns(
                 [col.casefold() for col in exclusion_columns]
             )
-        if args.allow_list is not None:
-            config_manager.append_allow_list(args.allow_list)
+        config_manager.append_allow_list(args.allow_list, args.allow_list_file)
 
     # Append CUSTOM_QUERY configs
     if config_manager.validation_type == consts.CUSTOM_QUERY:

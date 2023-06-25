@@ -16,11 +16,11 @@ import pytest
 
 from pandas import DataFrame
 
-from data_validation.consts import VALIDATION_STATUS_FAIL
+from data_validation import consts
 
 SAMPLE_CONFIG = {}
 SAMPLE_CONFIG_FILTER_STATUS = [
-    VALIDATION_STATUS_FAIL,
+    consts.VALIDATION_STATUS_FAIL,
 ]
 
 SAMPLE_RESULT_DATA = [
@@ -119,3 +119,29 @@ def test_columns_to_print(module_under_test, capsys):
         .replace("╘═════╧═════╛", "")
     )
     assert printed_text == grid_text
+
+
+@pytest.mark.parametrize(
+    "format,module_under_test",
+    [
+        ("csv", None),
+        ("json", None),
+        ("text", None),
+        ("fancy_grid", None),
+    ],
+    indirect=["module_under_test"],
+)
+def test_column_filter_list(format, module_under_test):
+    """CSV and JSON don't filter out columns."""
+    result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
+    result_handler = module_under_test.TextResultHandler(
+        format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
+    )
+    printed_output = result_handler._get_formatted(result_df)
+    print("printed_output", printed_output)
+    if format in ("csv", "json"):
+        # CSV and JSON don't filter out columns.
+        assert "validation_type" in printed_output
+    else:
+        # Other formats do filter out columns.
+        assert "validation_type" not in printed_output
