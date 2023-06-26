@@ -666,6 +666,17 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         type=threshold_float,
         help="Float max threshold for percent difference",
     )
+    optional_arguments.add_argument(
+        "--use-random-row",
+        "-rr",
+        action="store_true",
+        help="Finds a set of random rows of the first primary key supplied.",
+    )
+    optional_arguments.add_argument(
+        "--random-row-batch-size",
+        "-rbs",
+        help="Row batch size used for random row filters (default 10,000).",
+    )
 
     # Group required arguments
     required_arguments = custom_query_row_parser.add_argument_group(
@@ -1268,7 +1279,6 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     if (
         args.command != "generate-table-partitions"
         and config_type != consts.SCHEMA_VALIDATION
-        and config_type != consts.CUSTOM_QUERY
     ):
         use_random_rows = args.use_random_row
         random_row_batch_size = args.random_row_batch_size
