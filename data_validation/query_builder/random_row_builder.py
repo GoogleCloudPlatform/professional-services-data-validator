@@ -116,6 +116,19 @@ class RandomRowBuilder(object):
 
         return query
 
+    def compile_custom_query(self, data_client: ibis.client, query: str) -> ibis.Expr:
+        """Return an Ibis query object for a given query.
+
+        Args:
+            data_client (IbisClient): The client used to query random rows.
+            query (String): Custom query provided by user.
+        """
+        table = clients.get_ibis_query(data_client, query)
+        randomly_sorted_table = self.maybe_add_random_sort(data_client, table)
+        query = randomly_sorted_table.limit(self.batch_size)[self.primary_keys]
+
+        return query
+
     def maybe_add_random_sort(
         self, data_client: ibis.client, table: ibis.Expr
     ) -> ibis.Expr:
