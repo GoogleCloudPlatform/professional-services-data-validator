@@ -50,3 +50,43 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,'Hello DVT','C ','Hello DVT'
  ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
  ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 -03:00');
+
+ /* Following table used for validating generating table partitions */
+\c guestbook
+drop table if exists public.test_generate_partitions ;
+CREATE TABLE public.test_generate_partitions (
+        course_id VARCHAR(6),
+        quarter_id INTEGER,
+        student_id INTEGER,
+        grade NUMERIC,
+        PRIMARY KEY (course_id, quarter_id, student_id));
+COMMENT ON TABLE public.test_generate_partitions IS 'Table for testing generate table partitions, consists of 27 rows with course_id, quarter_id, student_id as a composite primary key';
+
+INSERT INTO public.test_generate_partitions (course_id, quarter_id, student_id, grade) VALUES
+        ('ALG001', 1, 1234, 2.1),
+        ('ALG001', 1, 5678, 3.5),
+        ('ALG001', 1, 9012, 2.3),
+        ('ALG001', 2, 1234, 3.5),
+        ('ALG001', 2, 5678, 2.6),
+        ('ALG001', 2, 9012, 3.5),
+        ('ALG001', 3, 1234, 2.7),
+        ('ALG001', 3, 5678, 3.5),
+        ('ALG001', 3, 9012, 2.8),
+        ('GEO001', 1, 1234, 2.1),
+        ('GEO001', 1, 5678, 3.5),
+        ('GEO001', 1, 9012, 2.3),
+        ('GEO001', 2, 1234, 3.5),
+        ('GEO001', 2, 5678, 2.6),
+        ('GEO001', 2, 9012, 3.5),
+        ('GEO001', 3, 1234, 2.7),
+        ('GEO001', 3, 5678, 3.5),
+        ('GEO001', 3, 9012, 2.8),
+        ('TRI001', 1, 1234, 2.1),
+        ('TRI001', 1, 5678, 3.5),
+        ('TRI001', 1, 9012, 2.3),
+        ('TRI001', 2, 1234, 3.5),
+        ('TRI001', 2, 5678, 2.6),
+        ('TRI001', 2, 9012, 3.5),
+        ('TRI001', 3, 1234, 2.7),
+        ('TRI001', 3, 5678, 3.5),
+        ('TRI001', 3, 9012, 2.8); 
