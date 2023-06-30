@@ -395,7 +395,10 @@ def run_raw_query_against_connection(args):
     client = clients.get_data_client(mgr.get_connection_config(args.conn))
     cursor = client.raw_sql(args.query)
     res = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.close()
+    except:
+        pass
     return res
 
 def convert_config_to_yaml(args, config_managers):
@@ -436,8 +439,8 @@ def run_validation(config_manager, dry_run=False, verbose=False):
         print(
             json.dumps(
                 {
-                    "source_query": validator.validation_builder.get_source_query().compile(),
-                    "target_query": validator.validation_builder.get_target_query().compile(),
+                    "source_query": str(validator.validation_builder.get_source_query().compile()),
+                    "target_query": str(validator.validation_builder.get_target_query().compile()),
                 },
                 indent=4,
             )

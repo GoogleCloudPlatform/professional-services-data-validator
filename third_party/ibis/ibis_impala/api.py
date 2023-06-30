@@ -65,6 +65,7 @@ def do_connect(
         'http_path': http_path,
     }
     self.con = ImpalaConnection(pool_size=pool_size, **params)
+    self._ensure_temp_db_exists()
 
 
 def parse_type(t):
@@ -224,8 +225,7 @@ def impala_connect(
     use_http_transport: bool = False,
     http_path: str = "",
 ):
-    backend = ImpalaBackend()
-    backend.do_connect(
+    backend = ibis.impala.connect(
         host=host,
         port=port,
         database=database,

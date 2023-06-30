@@ -48,6 +48,7 @@ from ibis.expr.types import NumericValue, TemporalValue
 from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
+import third_party.ibis.ibis_mysql.compiler 
 
 # TD requires teradatasql
 try:
@@ -295,15 +296,15 @@ def sa_format_new_id(t, op):
 
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
+
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
-MySQLExprTranslator._registry[Strftime] = strftime_mysql
+
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[HashBytes] = format_hashbytes_base
-MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
@@ -328,6 +329,7 @@ MsSqlExprTranslator._registry[Strftime] = strftime_mssql
 
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
+MySQLExprTranslator._registry[Strftime] = strftime_mysql
 
 RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
 RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql

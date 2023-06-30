@@ -255,42 +255,6 @@ class DataValidation(object):
             }
             validation_builder.add_filter(filter_field)
 
-    @classmethod
-    def _get_pandas_schema(
-        cls,
-        source_df: pandas.core.frame.DataFrame,
-        target_df: pandas.core.frame.DataFrame,
-        join_on_schema: dict,
-        verbose=False,
-    ):
-        """Return a pandas schema which aligns source and target for joins."""
-        for join_on_field in join_on_schema:
-            if isinstance(join_on_schema[join_on_field], (dt.Date, dt.Timestamp)):
-                # TODO(dhercher): We are experiencing issues around datetime coming as string
-                # and not matching. Currently the hack to cast it to string works, but is not ideal.
-                # We should look at both types, and if one is
-                # date-like than use pandas.to_datetime on the other.
-                source_df[join_on_field] = source_df[join_on_field].astype(str)
-                target_df[join_on_field] = target_df[join_on_field].astype(str)
-
-        # Loop over index keys() instead of iteritems() because pandas is
-        # failing with datetime64[ns, UTC] data type on Python 3.9.
-        schema_data = []
-        schema_index = []
-        for key in source_df.dtypes.keys():
-            dtype = source_df.dtypes[key]
-            # The Ibis pandas backend fails with `KeyError: dtype('O')` if
-            # object dtypes are passed in.
-            if dtype in {numpy.dtype("O")}:
-                continue
-            schema_data.append(dtype)
-            schema_index.append(key)
-        pd_schema = pandas.Series(schema_data, index=schema_index)
-        if verbose:
-            logging.info("-- ** Pandas Schema ** --")
-            logging.info(pd_schema)
-
-        return pd_schema
 
     def _execute_validation(self, validation_builder, process_in_memory=True):
         """Execute Against a Supplied Validation Builder"""
@@ -334,11 +298,6 @@ class DataValidation(object):
                 )
                 source_df = futures[0].result()
                 target_df = futures[1].result()
-
-            # join_on_schema = {_: source_query.schema()[_] for _ in join_on_fields}
-            # pd_schema = self._get_pandas_schema(
-            #     source_df, target_df, join_on_schema, verbose=self.verbose
-            # )
             
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}

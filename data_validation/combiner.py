@@ -141,11 +141,11 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
             .end()
         )
     else:
-        difference = (target_value - source_value).cast("float32")
+        difference = (target_value - source_value).cast("float64")
 
         pct_difference_nonzero = (
             ibis.literal(100.0)
-            * difference
+            * difference.cast("float32")
             / (
                 source_value.case()
                 .when(ibis.literal(0), target_value)

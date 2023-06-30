@@ -465,15 +465,7 @@ def test_data_validation_client(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
     assert int(result_df.source_agg_value[0]) == 2
-
-
-def test_get_pandas_schema(module_under_test):
-    """Test extracting pandas schema from dataframes for Ibis Pandas."""
-    pandas_schema = module_under_test.DataValidation._get_pandas_schema(
-        SOURCE_DF, SOURCE_DF, JOIN_ON_DATE_FIELDS
-    )
-
-    assert (pandas_schema.index == NON_OBJECT_FIELDS).all()
+    
 
 
 def test_zero_source_value(module_under_test, fs):
