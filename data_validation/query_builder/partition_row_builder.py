@@ -20,7 +20,7 @@ from data_validation.query_builder.query_builder import QueryBuilder
 class PartitionRowBuilder(object):
     def __init__(
         self,
-        partition_key: str,
+        primary_keys: [str],
         data_client: ibis.backends.base.BaseBackend,
         schema_name: str,
         table_name: str,
@@ -29,13 +29,13 @@ class PartitionRowBuilder(object):
         """Build a PartitionRowBuilder object which is ready to build a partition row filter query.
 
         Args:
-            partition_key (str): Partition key used to generate Partitions.
-            data_client (IbisClient): The client used to query random rows.
+            primary_keys [str]: Keys used to identify a row for validation
+            data_client (BaseBackend): The Backend used to query random rows.
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
             query_builder (QueryBuilder): QueryBuilder object.
         """
-        self.partition_key = partition_key
+        self.primary_keys = primary_keys
         self.query = self._compile_query(
             data_client, schema_name, table_name, query_builder
         )
@@ -50,7 +50,7 @@ class PartitionRowBuilder(object):
         """Return an Ibis query object
 
         Args:
-            data_client (IbisClient): The client used to query random rows.
+            data_client (BaseBackend): The Backend used to query random rows.
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
             query_builder (QueryBuilder): QueryBuilder object.
@@ -60,14 +60,6 @@ class PartitionRowBuilder(object):
         filtered_table = table.filter(compiled_filters) if compiled_filters else table
         return filtered_table
 
-    def get_max_query(self) -> ibis.Expr:
-        """Return an Ibis query object to get Max of Primary Key column"""
-        return self.query[self.partition_key].max()
-
-    def get_min_query(self) -> ibis.Expr:
-        """Return an Ibis query object to get Min of Primary Key column"""
-        return self.query[self.partition_key].min()
-
-    def get_count_query(self) -> ibis.Expr:
-        """Return an Ibis query object to get count of Primary Key column"""
-        return self.query[self.partition_key].count()
+    def get_count(self) -> int:
+        """Return a count of rows of primary keys - they should be all distinct"""
+        return self.query.select(self.primary_keys).count().execute()

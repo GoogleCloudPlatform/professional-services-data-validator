@@ -47,7 +47,7 @@ TEST_CONN = "{'source_type':'Example'}"
 PARTITION_NUM = 3
 PARTITIONS_DIR = "test_partitions_dir"
 
-CLI_ARGS_JSON_SOURCE = [
+CLI_ARGS_SINGLE_KEY = [
     "generate-table-partitions",
     "-sc",
     TEST_CONN,
@@ -56,7 +56,7 @@ CLI_ARGS_JSON_SOURCE = [
     "-tbls",
     "test_table",
     "--primary-keys",
-    "station_id",
+    "id",
     "--hash",
     "*",
     "--filter-status",
@@ -67,12 +67,10 @@ CLI_ARGS_JSON_SOURCE = [
     PARTITIONS_DIR,
     "--partition-num",
     f"{PARTITION_NUM}",
-    "--partition-key",
-    "id",
 ]
 
 # partition_key is not passed
-CLI_ARGS_ABSENT_PARTITION_KEY = [
+CLI_ARGS_MULTIPLE_KEYS = [
     "generate-table-partitions",
     "-sc",
     TEST_CONN,
@@ -81,7 +79,7 @@ CLI_ARGS_ABSENT_PARTITION_KEY = [
     "-tbls",
     "bigquery-public-data.new_york_citibike.citibike_stations,bigquery-public-data.new_york_citibike.citibike_stations",
     "--primary-keys",
-    "station_id",
+    "region_id,station_id",
     "--hash",
     "*",
     "--filter-status",
@@ -370,57 +368,26 @@ def test_import(module_under_test):
 def test_class_object_creation(module_under_test):
     """Create a PartitionBuilder object passing 2 tables and assert the following
     1. Table/Configs count
-    2. config_dir value present and absent
-    3. primary_key value
-    4. partition_key value present and absent
+    2. config_dir value present and correct
+    3. single primary_key value (is this already tested in row validation?)
+    4. multiple primary keys (is this already tested in row validation?)
     """
     mock_config_manager = _generate_config_manager("test_table")
     config_managers = [mock_config_manager]
 
     parser = cli_tools.configure_arg_parser()
 
-    # partition_key is present and different from primary_key
     # config_dir is passed
-    args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
+    args = parser.parse_args(CLI_ARGS_SINGLE_KEY)
     builder = module_under_test.PartitionBuilder(config_managers, args)
     assert builder.table_count == len(config_managers)
-    assert builder.partition_key == "id"
-    assert builder.primary_key == "station_id"
+    assert builder.primary_keys == ["id"]
 
-    # partition_key is absent, expected to default to primary_key
-    args = parser.parse_args(CLI_ARGS_ABSENT_PARTITION_KEY)
+    # multiple primary keys are present
+    args = parser.parse_args(CLI_ARGS_MULTIPLE_KEYS)
     builder = module_under_test.PartitionBuilder(config_managers, args)
     assert builder.table_count == len(config_managers)
-    assert builder.partition_key == builder.primary_key
-
-
-def test_get_partition_key_filters(module_under_test):
-    """Build partitions filters and assert:
-    1. Table count
-    2. Filters count
-    3. Partition filters
-    """
-    data = _generate_fake_data(rows=1001, second_range=0)
-
-    source_json_data = _get_fake_json_data(data)
-    target_json_data = _get_fake_json_data(data)
-
-    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
-    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
-
-    config_manager = _generate_config_manager("my_table")
-    config_managers = [config_manager]
-
-    parser = cli_tools.configure_arg_parser()
-    mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
-
-    expected_partition_filters_list = PARTITION_FILTERS_LIST
-
-    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
-    partition_filters_list = builder._get_partition_key_filters()
-    assert len(partition_filters_list) == len(config_managers)
-    assert len(partition_filters_list[0]) == mock_args.partition_num
-    assert partition_filters_list[0] == expected_partition_filters_list
+    assert builder.primary_keys == ["region_id", "station_id"]
 
 
 def test_add_partition_filters_to_config(module_under_test):
@@ -432,7 +399,7 @@ def test_add_partition_filters_to_config(module_under_test):
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
-    mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
+    mock_args = parser.parse_args(CLI_ARGS_SINGLE_KEY)
 
     expected_yaml_configs_list = YAML_CONFIGS_LIST
 
@@ -453,7 +420,7 @@ def test_store_yaml_partitions_local(module_under_test):
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
-    mock_args = parser.parse_args(CLI_ARGS_JSON_SOURCE)
+    mock_args = parser.parse_args(CLI_ARGS_SINGLE_KEY)
 
     # Dummy YAML configs list
     yaml_configs_list = YAML_CONFIGS_LIST

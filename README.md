@@ -98,7 +98,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Comma separated list of columns for Group By i.e col_a,col_b
   [--primary-keys or -pk PRIMARY_KEYS]
                         Comma separated list of columns to use as primary keys
-                        (Note) Only use with grouped column validation
+                        (Note) Only use with grouped column validation. See *Primary Keys* section. 
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
@@ -144,7 +144,7 @@ If you wish to perform this comparison on Teradata you will need to
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass a `--primary-key` flag which defines what field(s)
 the validation will be compared on, as well as either the `--comparison-fields` flag
-or the `--hash` flag.
+or the `--hash` flag. See *Primary Keys* section
 
 The `--comparison-fields` flag specifies the values (e.g. columns) whose raw values will be compared
 based on the primary key join. The `--hash` flag will run a checksum across specified columns in
@@ -169,7 +169,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   --primary-keys or -pk PRIMARY_KEYS
-                        Comma separated list of columns to use as primary keys
+                        Comma separated list of columns to use as primary keys.  See *Primary Keys* section
   --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
@@ -199,13 +199,13 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
-Below is the command syntax for generating table partitions in order to perform row validations on large tables with memory constraints.
+Note: This is only supported for Oracle and Postgres connections.
 
-The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE partition_key > X AND partition_key < Y`). You can then run the configs in the directory serially with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
-The command takes the same parameters as required for `Row Validation` *plus* few commands to implement the partitioning logic.
+The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`). You can then run the configs in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
-(Note: As of now, only monotonically increasing key is supported for `--partition-key`.)
+The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type. A parameter used in earlier versions, ```partition-key``` is no longer supported. 
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
@@ -221,7 +221,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   --primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS
-                        Comma separated list of primary key columns 'col_a,col_b'
+                        Comma separated list of primary key columns 'col_a,col_b'.  See *Primary Keys* section
   --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
@@ -234,8 +234,6 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   --partition-num [1-1000], -pn [1-1000]
                         Number of partitions/config files to generate
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
-  [--partition-key PARTITION_KEY, -partkey PARTITION_KEY]
-                        Column on which the partitions would be generated. Column type must be integer. Defaults to Primary key
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
@@ -336,7 +334,7 @@ page provides few examples of how this tool can be used to run custom query vali
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields
 of the custom query result that will be concatenated and hashed. The primary key should be included
-in the SELECT statement of both source_query.sql and target_query.sql
+in the SELECT statement of both source_query.sql and target_query.sql.  See *Primary Keys* section
 
 Below is the command syntax for custom query row validations.
 
@@ -552,6 +550,12 @@ Note that you are writing the query to execute, which does not have to match
 between source and target as long as the results can be expected to align. If
 the target filter is omitted, the source filter will run on both the source and
 target tables.
+
+### Primary Keys
+
+In many cases, validations (e.g. count, min, max etc) produce one row per table. The comparison between the source
+and target table is to compare the value for each column in the source with the value of the column in the target.
+`grouped-columns` validation and `validate row` produce multiple rows per table. Data Validation Tool needs one or more columns to uniquely identify each row so the source and target can be compared. Data Validation Tool refers to these columns as primary keys. These do not need to be primary keys in the table. The only requirement is that the keys uniquely identify the row in the results.
 
 ### Grouped Columns
 

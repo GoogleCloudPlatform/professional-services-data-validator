@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import os
+import ibis
 import logging
-import numpy
 from typing import List, Dict
 from argparse import Namespace
 
@@ -30,8 +30,7 @@ class PartitionBuilder:
         self.table_count = len(config_managers)
         self.args = args
         self.config_dir = self._get_arg_config_dir()
-        self.primary_key = self._get_primary_key()
-        self.partition_key = self._get_arg_partition_key()
+        self.primary_keys = self._get_primary_keys()
 
     def _get_arg_config_dir(self) -> str:
         """Return String yaml config folder path."""
@@ -40,22 +39,9 @@ class PartitionBuilder:
 
         return self.args.config_dir
 
-    def _get_primary_key(self) -> str:
-        """Return the first Primary Key"""
-        # Filter for only first primary key (multi-pk filter not supported)
-        primary_keys = cli_tools.get_arg_list(self.args.primary_keys)
-        primary_key = primary_keys[0]
-        return primary_key
-
-    def _get_arg_partition_key(self) -> str:
-        """Return Partition Key. If not supplied, defaults to Primary Key"""
-        if not self.args.partition_key:
-            logging.warning(
-                "Partition key cannot be found. Will default to Primary key"
-            )
-            return self.primary_key
-
-        return self.args.partition_key
+    def _get_primary_keys(self) -> str:
+        """Return the Primary Keys"""
+        return cli_tools.get_arg_list(self.args.primary_keys)
 
     def _get_yaml_from_config(self, config_manager: ConfigManager) -> Dict:
         """Return dict objects formatted for yaml validations.
@@ -79,35 +65,87 @@ class PartitionBuilder:
             None
         """
 
-        # Default partition logic: Partition key
-        # Add necessary checks and routes when support for hashmod or partitionkeymod is added
+        # Default partition logic: Use NTILE function to create partitions, ordering by primary keys.
         partition_filters = self._get_partition_key_filters()
         yaml_configs_list = self._add_partition_filters(partition_filters)
         self._store_partitions(yaml_configs_list)
 
-    def _get_partition_key_filters(self) -> List[List[str]]:
-        """Generate Partition filters for primary_key type partition for all
-        Configs/Tables.
+    @staticmethod
+    def _less_than_value(keys, values) -> str:
+        """Takes the list of primary keys in keys and the value of the biggest element
+        and generates an expression which can be used in a where clause to filter all rows with primary keys equal or
+        smaller than the biggest element.
 
         Returns:
-            A list of lists of partition filters for each table
+            String containing the expression - e.g. (birth_month < 5 OR (birth_month = 5 AND (birth_day <= 2)))
         """
+        value0 = "'" + values[0] + "'" if isinstance(values[0], str) else str(values[0])
+        if len(keys) == 1:
+            return keys[0] + " < " + value0
+        else:
+            return (
+                keys[0]
+                + " < "
+                + value0
+                + " OR "
+                + keys[0]
+                + " = "
+                + value0
+                + " AND ("
+                + PartitionBuilder._less_than_value(keys[1:], values[1:])
+                + ")"
+            )
 
+    @staticmethod
+    def _geq_value(keys, values) -> str:
+        """Takes the list of primary keys in keys and the value of the smallest element
+        and generates an expression which can be used in a where clause to filter all rows with primary keys equal or
+        bigger than the smallest element.
+
+        Returns:
+            String containing the expression - e.g. (birth_month > 5 OR (birth_month = 5 AND (birth_day >= 2)))
+        """
+        value0 = "'" + values[0] + "'" if isinstance(values[0], str) else str(values[0])
+        if len(keys) == 1:
+            return keys[0] + " >= " + value0
+        else:
+            return (
+                keys[0]
+                + " > "
+                + value0
+                + " OR "
+                + keys[0]
+                + " = "
+                + value0
+                + " AND ("
+                + PartitionBuilder._geq_value(keys[1:], values[1:])
+                + ")"
+            )
+
+    def _get_partition_key_filters(self) -> List[List[str]]:
+        """Generate where clauses for each partition for each table pair. We are partitioning the tables based on keys, so that
+            we get equivalent sized partitions that can be compared against each other. With this approach, we can validate the
+            partitions in parallel leading to horizontal scaling of DVT. The design doc for this section is available in
+            docs/internal/partition_table_prd.md
+
+        Returns:
+            A list of where clauses for the source tables for each table pair
+            Therefore you get a list of lists.
+        """
         master_filter_list = []
-
-        for config_manager in self.config_managers:
+        for config_manager in self.config_managers:  # For each pair of tables
             validation_builder = ValidationBuilder(config_manager)
 
             source_partition_row_builder = PartitionRowBuilder(
-                self.partition_key,
+                self.primary_keys,
                 config_manager.source_client,
                 config_manager.source_schema,
                 config_manager.source_table,
                 validation_builder.source_builder,
             )
-
+            source_table = source_partition_row_builder.query
             target_partition_row_builder = PartitionRowBuilder(
-                self.partition_key,
+                self.primary_keys,
                 config_manager.target_client,
                 config_manager.target_schema,
                 config_manager.target_table,
@@ -115,91 +153,91 @@ class PartitionBuilder:
             )
 
             # Get Source and Target row Count
-            source_count_query = source_partition_row_builder.get_count_query()
-            source_count = source_count_query.execute()
+            source_count = source_partition_row_builder.get_count()
+            target_count = target_partition_row_builder.get_count()
 
-            target_count_query = target_partition_row_builder.get_count_query()
-            target_count = target_count_query.execute()
-
-            if source_count != target_count:
+            if abs(source_count - target_count) > source_count * 0.1:
                 logging.warning(
-                    "Source and Target table row counts do not match,"
-                    "proceeding with max(source_count, target_count)"
-                )
-            row_count = max(source_count, target_count)
-
-            # If supplied partition_num is greater than count(*) coalesce it
-            if self.args.partition_num > row_count:
-                partition_count = row_count
-                logging.warning(
-                    "Supplied partition num is greater than row count, "
-                    "truncating it to row count"
-                )
-            else:
-                partition_count = self.args.partition_num
-
-            # Get Source and Target Primary key Min
-            source_min_query = source_partition_row_builder.get_min_query()
-            source_min = source_min_query.execute()
-
-            target_min_query = target_partition_row_builder.get_min_query()
-            target_min = target_min_query.execute()
-
-            # If Primary key is non numeric, raise Type Error
-            accepted_data_types = [int, numpy.int32, numpy.int64]
-            if not (
-                type(source_min) in accepted_data_types
-                and type(target_min) in accepted_data_types
-            ):
-                raise TypeError(
-                    f"Supplied Partition key is not of type Numeric: "
-                    f"{self.partition_key}"
+                    "Source and Target table row counts vary by more than 10%,"
+                    "partitioning may result in partitions with very different sizes"
                 )
 
-            if source_min != target_min:
-                logging.warning(
-                    "min(partition_key) for Source and Target tables do not"
-                    "match, proceeding with min(source_min, target_min)"
+            # Decide on number of partitions after checking number requested is not > number of rows in source
+            number_of_part = (
+                self.args.partition_num
+                if self.args.partition_num < source_count
+                else source_count
+            )
+
+            # First we use the ntile aggregate function and divide assign a partition
+            # number to each row in the source table
+            window1 = ibis.window(order_by=self.primary_keys)
+            nt = (
+                source_table.get_column(self.primary_keys[0])
+                .ntile(buckets=number_of_part)
+                .over(window1)
+                .name(consts.DVT_NTILE_COL)
+            )
+            dvt_nt = self.primary_keys.copy()
+            dvt_nt.append(nt)
+            partitioned_table = source_table.select(dvt_nt)
+            # Partitioned table is just the primary key columns in the source table along with
+            # an additional column with the partition number associated with each row.
+
+            # We are interested in only the primary key values at the begining of
+            # each partitition - the following window groups by partition number
+            window2 = ibis.window(
+                order_by=self.primary_keys, group_by=[consts.DVT_NTILE_COL]
+            )
+            first_pkys = [
+                partitioned_table.get_column(primary_key)
+                .first()
+                .over(window2)
+                .name(consts.DVT_FIRST_PRE + primary_key)
+                for primary_key in self.primary_keys
+            ]
+            partition_no = (
+                partitioned_table[consts.DVT_NTILE_COL]
+                .first()
+                .over(window2)
+                .name(consts.DVT_PART_NO)
+            )
+            column_list = [partition_no] + first_pkys
+            partition_boundary = (
+                partitioned_table.select(column_list)
+                .sort_by([consts.DVT_PART_NO])
+                .distinct()
+            )
+
+            # Up until this point, we have built the table expression, have not executed the query yet.
+            # The query is now executed to find the first and last element of each partition
+            first_elements = partition_boundary.execute().to_numpy()
+
+            # Once we have the first element of each partition, we can generate the where clause
+            # i.e. greater than or equal to first element and less than first element of next partition
+            # The first and the last partitions have special where clauses - less than first element of second
+            # partition and greater than or equal to the first element of the last partition respectively
+            filter_clause_list = []
+            filter_clause_list.append(
+                self._less_than_value(self.primary_keys, first_elements[1, 1:])
+            )
+            for i in range(1, first_elements.shape[0] - 1):
+                filter_clause_list.append(
+                    "("
+                    + self._geq_value(self.primary_keys, first_elements[i, 1:])
+                    + ") AND ("
+                    + self._less_than_value(
+                        self.primary_keys, first_elements[i + 1, 1:]
+                    )
+                    + ")"
                 )
-            lower_bound = min(source_min, target_min)
-
-            # Get Source and Target Primary key Max
-            source_max_query = source_partition_row_builder.get_max_query()
-            source_max = source_max_query.execute()
-
-            target_max_query = target_partition_row_builder.get_max_query()
-            target_max = target_max_query.execute()
-
-            if source_min != target_min:
-                logging.warning(
-                    "max(partition_key) for Source and Target tables do not"
-                    "match, proceeding with max(source_max, target_max)"
+            filter_clause_list.append(
+                self._geq_value(
+                    self.primary_keys, first_elements[len(first_elements) - 1, 1:]
                 )
+            )
 
-            upper_bound = max(source_max, target_max)
-
-            filter_list = []  # Store partition filters per config/table
-            i = 0
-            marker = lower_bound
-            partition_step = (upper_bound - lower_bound) // partition_count
-            while i < partition_count:
-                lower_val = marker
-                upper_val = marker + partition_step
-
-                if i == partition_count - 1:
-                    upper_val = upper_bound + 1
-
-                partition_filter = (
-                    f"{self.partition_key} >= {lower_val} "
-                    f"and {self.partition_key} < {upper_val}"
-                )
-                filter_list.append(partition_filter)
-
-                i += 1
-                marker += partition_step
-
-            master_filter_list.append(filter_list)
-
+            master_filter_list.append(filter_clause_list)
         return master_filter_list
 
     def _add_partition_filters(
