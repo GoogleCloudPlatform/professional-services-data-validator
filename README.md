@@ -14,13 +14,14 @@ perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
-* Row validation (BQ, Hive, Teradata, Oracle, SQL Server, Postgres, Mysql only)
+* Row validation (Not supported for FileSystem connections)
 * Schema validation
 * Custom Query validation
 * Ad hoc SQL exploration
 
 DVT supports the following connection types:
 
+*   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
 *   [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
 *   [DB2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
 *   [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
@@ -33,7 +34,6 @@ DVT supports the following connection types:
 *   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
 *   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
 *   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
-*   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
 
 The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
@@ -136,7 +136,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, Redshift, Postgres, Mysql, Db2 and Alloy DB. Struct and array data types are not currently supported.
+(Note: Row hash validation not supported for FileSystem connections. 
 In addition, please note that SHA256 is not a supported function on Teradata systems.
 If you wish to perform this comparison on Teradata you will need to
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
@@ -199,7 +199,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
-Note: This is only supported for Oracle and Postgres connections.
+(Note: This is only supported for Oracle and Postgres connections.)
 
 When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
@@ -329,7 +329,7 @@ page provides few examples of how this tool can be used to run custom query vali
 
 #### Custom Query Row Validations
 
-(Note: Custom query row validation is currently only supported for BigQuery, Teradata, SQL Server, PostgreSQL, Oracle, Redshift, DB2, AlloyDB, and Impala/Hive. Struct and array data types are not currently supported.)
+(Note: Custom query row validation is not supported for FileSystem connections. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields

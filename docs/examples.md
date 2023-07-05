@@ -241,9 +241,8 @@ data-validation validate schema \
 
 #### Run validation on a file
 ````shell script
-# Additional dependencies needed for GCS files
+# Additional dependency needed for GCS files
 pip install gcsfs
-pip install fsspec
 
 data-validation connections add \
   --connection-name file_conn FileSystem \

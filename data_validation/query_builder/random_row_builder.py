@@ -16,7 +16,7 @@ from typing import List
 
 import ibis
 
-from data_validation.clients import get_ibis_table
+from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
 
@@ -47,7 +47,7 @@ class RandomRowBuilder(object):
 
     def compile(
         self,
-        data_client,
+        data_client: ibis.backends.base.BaseBackend,
         schema_name: str,
         table_name: str,
         query_builder: QueryBuilder,
@@ -59,14 +59,14 @@ class RandomRowBuilder(object):
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
         """
-        table = get_ibis_table(data_client, schema_name, table_name)
+        table = clients.get_ibis_table(data_client, schema_name, table_name)
         compiled_filters = query_builder.compile_filter_fields(table)
         filtered_table = table.filter(compiled_filters) if compiled_filters else table
         randomly_sorted_table = self.maybe_add_random_sort(data_client, filtered_table)
 
         return randomly_sorted_table
 
-    def compile_custom_query(self, data_client: ibis.client, query: str) -> ibis.Expr:
+    def compile_custom_query(self, data_client: ibis.backends.base.BaseBackend, query: str) -> ibis.Expr:
         """Return an Ibis query object for a given query.
 
         Args:
@@ -80,7 +80,9 @@ class RandomRowBuilder(object):
         return query
 
     def maybe_add_random_sort(
-        self, data_client, table: ibis.Expr
+        self,
+        data_client: ibis.backends.base.BaseBackend,
+        table: ibis.Expr
     ) -> ibis.Expr:
         """Return a randomly sorted query if it is supported for the client."""
         if data_client.name in RANDOM_SORT_SUPPORTS:

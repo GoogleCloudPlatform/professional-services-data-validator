@@ -23,6 +23,7 @@ from ibis.backends.base.sql import BaseSQLBackend
 
 from third_party.ibis.ibis_cloud_spanner.datatypes import dtype_from_spanner_field, schema_from_spanner
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
+from third_party.ibis.ibis_cloud_spanner.client import SpannerCursor
 from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
 
 
@@ -166,6 +167,13 @@ class Backend(BaseSQLBackend):
         with db.snapshot() as snapshot:
             data_qry = pandas_df.to_pandas(snapshot, stmt, query_parameters)
         return data_qry
+
+    def raw_sql(self, query: str, results=False, params=None):
+        db = self.instance.database(self.dataset_id)
+        with db.snapshot() as snapshot:
+            result = snapshot.execute_sql(query)
+        
+        return SpannerCursor(result)
 
     def database(self, name=None):
         if name is None and self.dataset is None:

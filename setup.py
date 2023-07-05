@@ -31,7 +31,7 @@ dependencies = [
     "lazy-object-proxy==1.9.0",
     "marshmallow==3.19.0",
     # Core dependencies
-    "fsspec==2023.1.0",
+    "fsspec>=2022.8.2",
     "google-api-python-client==2.91.0",
     "ibis-framework==5.1.0",
     "impyla==0.18.0",
