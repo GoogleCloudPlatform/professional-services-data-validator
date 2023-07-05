@@ -31,8 +31,9 @@ RANDOM_SORT_SUPPORTS = [
     "db2",
     "mysql",
     "spanner",
-    "redshift"
+    "redshift",
 ]
+
 
 class RandomRowBuilder(object):
     def __init__(self, primary_keys: List[str], batch_size: int):
@@ -66,7 +67,9 @@ class RandomRowBuilder(object):
 
         return randomly_sorted_table
 
-    def compile_custom_query(self, data_client: ibis.backends.base.BaseBackend, query: str) -> ibis.Expr:
+    def compile_custom_query(
+        self, data_client: ibis.backends.base.BaseBackend, query: str
+    ) -> ibis.Expr:
         """Return an Ibis query object for a given query.
 
         Args:
@@ -80,18 +83,18 @@ class RandomRowBuilder(object):
         return query
 
     def maybe_add_random_sort(
-        self,
-        data_client: ibis.backends.base.BaseBackend,
-        table: ibis.Expr
+        self, data_client: ibis.backends.base.BaseBackend, table: ibis.Expr
     ) -> ibis.Expr:
         """Return a randomly sorted query if it is supported for the client."""
         if data_client.name in RANDOM_SORT_SUPPORTS:
-            # Teradata 'SAMPLE' and Spanner 'TABLESAMPLE' is random by nature 
+            # Teradata 'SAMPLE' and Spanner 'TABLESAMPLE' is random by nature
             # and does not require a sort by
             if data_client.name == "teradata" or data_client.name == "spanner":
                 return table[self.primary_keys].limit(self.batch_size)
 
-            return table[self.primary_keys].order_by(ibis.random()).limit(self.batch_size)
+            return (
+                table[self.primary_keys].order_by(ibis.random()).limit(self.batch_size)
+            )
 
         logging.warning(
             "Data Client %s Does Not Enforce Random Sort on Sample",

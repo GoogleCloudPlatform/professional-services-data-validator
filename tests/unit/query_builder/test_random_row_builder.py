@@ -14,6 +14,7 @@
 
 import pytest
 
+
 @pytest.fixture
 def module_under_test():
     import data_validation.query_builder.random_row_builder

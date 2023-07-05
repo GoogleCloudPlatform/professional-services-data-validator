@@ -14,37 +14,36 @@
 
 
 import copy
-import warnings
 import logging
+import warnings
+
 import google.oauth2.service_account
 import ibis
 import pandas
-import third_party.ibis.ibis_postgres.client
-# import third_party.ibis.ibis_addon.base_sqlalchemy.alchemy
 from google.cloud import bigquery
-# from ibis.backends.pandas.client import PandasClient
-# from ibis.backends.postgres.client import PostgreSQLClient
-from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
-
-from third_party.ibis.ibis_impala.api import impala_connect
-from third_party.ibis.ibis_redshift.api import redshift_connect
-from third_party.ibis.ibis_mssql.api import mssql_connect
 
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
+from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
+from third_party.ibis.ibis_impala.api import impala_connect
+from third_party.ibis.ibis_mssql.api import mssql_connect
+from third_party.ibis.ibis_redshift.api import redshift_connect
 
 ibis.options.sql.default_limit = None
 
 # Filter Ibis MySQL error when loading client.table()
 warnings.filterwarnings(
-    "ignore", "`BaseBackend.database` is deprecated; use equivalent methods in the backend"
+    "ignore",
+    "`BaseBackend.database` is deprecated; use equivalent methods in the backend",
 )
+
 
 def _raise_missing_client_error(msg):
     def get_client_call(*args, **kwargs):
         raise Exception(msg)
 
     return get_client_call
+
 
 # Teradata requires teradatasql and licensing
 try:
@@ -111,7 +110,7 @@ def get_pandas_client(table_name, file_path, file_type):
 
 def is_oracle_client(client):
     try:
-        return (client.name == "oracle")
+        return client.name == "oracle"
     except TypeError:
         # When no Oracle backend has been installed OracleBackend is not a class
         return False
@@ -153,7 +152,7 @@ def get_ibis_table_schema(client, schema_name, table_name):
     database_name (str): Database name (generally default is used)
     """
     if client.name in [
-        "mysql", 
+        "mysql",
         "oracle",
         "postgres",
         "db2",
@@ -175,6 +174,7 @@ def list_schemas(client):
     else:
         return [None]
 
+
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
     if client.name in [
@@ -186,6 +186,7 @@ def list_tables(client, schema_name):
     ]:
         return client.list_tables()
     return client.list_tables(database=schema_name)
+
 
 def get_all_tables(client, allowed_schemas=None):
     """Return a list of tuples with database and table names.

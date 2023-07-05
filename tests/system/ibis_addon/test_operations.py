@@ -126,4 +126,3 @@ def test_hashbytes_bigquery_binary(bigquery_client):
     """
         ).strip()
     )
-

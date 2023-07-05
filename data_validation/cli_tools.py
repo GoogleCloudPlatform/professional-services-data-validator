@@ -92,7 +92,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["account", "Snowflake account to connect to"],
         ["database", "Database in snowflake to connect to"],
-        ["connect_args", "(Optional) Additional connection arg mapping"]
+        ["connect_args", "(Optional) Additional connection arg mapping"],
     ],
     "Postgres": [
         ["host", "Desired Postgres host."],

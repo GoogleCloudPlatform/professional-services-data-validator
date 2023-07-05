@@ -74,8 +74,9 @@ def test_get_bigquery_client_sets_user_agent():
 
 
 def test_import_oracle_client():
-    with pytest.raises(ModuleNotFoundError, match=r"No module named 'cx_oracle'"):
+    with pytest.raises(ModuleNotFoundError, match=r"No module named 'cx_Oracle'"):
         from third_party.ibis.ibis_oracle.api import oracle_connect
+        oracle_connect()
 
 
 def test_get_oracle_data_client():

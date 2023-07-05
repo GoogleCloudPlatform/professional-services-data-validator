@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import google.cloud.spanner_v1 as spanner
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from google.cloud.spanner_v1.types import Type, TypeCode, StructType

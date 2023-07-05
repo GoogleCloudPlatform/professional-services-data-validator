@@ -18,7 +18,6 @@ import google.cloud.spanner as cs
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from google.cloud import spanner
-from google.cloud.spanner_v1 import TypeCode
 from ibis.backends.base.sql import BaseSQLBackend
 
 from third_party.ibis.ibis_cloud_spanner.datatypes import dtype_from_spanner_field, schema_from_spanner

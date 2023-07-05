@@ -390,14 +390,18 @@ NON_OBJECT_FIELDS = pandas.Index(["int_val", "double_val"])
 
 RANDOM_STRINGS = ["a", "b", "c", "d"]
 
+
 @pytest.fixture
 def ibis_pandas():
     import ibis
+
     return ibis.pandas.connect()
+
 
 @pytest.fixture
 def module_under_test(ibis_pandas):
     import data_validation.data_validation
+
     return data_validation.data_validation
 
 
@@ -465,7 +469,6 @@ def test_data_validation_client(module_under_test, fs):
     client = module_under_test.DataValidation(SAMPLE_CONFIG)
     result_df = client.execute()
     assert int(result_df.source_agg_value[0]) == 2
-    
 
 
 def test_zero_source_value(module_under_test, fs):
@@ -700,4 +703,3 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     # 2 validations * (100 source + 1 target)
     assert len(result_df) == 202
     assert len(comparison_df) == 202
-

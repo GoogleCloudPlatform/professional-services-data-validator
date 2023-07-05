@@ -32,7 +32,7 @@ from ibis.backends.base.sql.alchemy import (
     unary,
     get_sqla_table,
 )
-from ibis.backends.base.sql.alchemy.registry import substr, variance_reduction
+from ibis.backends.base.sql.alchemy.registry import variance_reduction
 
 operation_registry = sqlalchemy_operation_registry.copy()
 operation_registry.update(sqlalchemy_window_functions_registry)
@@ -438,10 +438,6 @@ def _literal(t, op):
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
     elif dtype.is_set():
         return list(map(sa.literal, value))
-    elif dtype.is_array():
-        return pg.array(value)
-    elif dtype.is_map():
-        return pg.hstore(list(value.keys()), list(value.values()))
     else:
         return sa.literal(value)
 

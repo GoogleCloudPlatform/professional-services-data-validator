@@ -397,9 +397,10 @@ def run_raw_query_against_connection(args):
     res = cursor.fetchall()
     try:
         cursor.close()
-    except:
+    except Exception:
         pass
     return res
+
 
 def convert_config_to_yaml(args, config_managers):
     """Return dict objects formatted for yaml validations.
@@ -439,8 +440,12 @@ def run_validation(config_manager, dry_run=False, verbose=False):
         print(
             json.dumps(
                 {
-                    "source_query": str(validator.validation_builder.get_source_query().compile()),
-                    "target_query": str(validator.validation_builder.get_target_query().compile()),
+                    "source_query": str(
+                        validator.validation_builder.get_source_query().compile()
+                    ),
+                    "target_query": str(
+                        validator.validation_builder.get_target_query().compile()
+                    ),
                 },
                 indent=4,
             )

@@ -97,7 +97,9 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
-    elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(datatype, ibis.expr.datatypes.Float64):
+    elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(
+        datatype, ibis.expr.datatypes.Float64
+    ):
         source_value = (
             field_differences["differences_source_value"]
             .cast("float32")
@@ -361,9 +363,7 @@ def _add_metadata(joined, run_metadata):
     joined = joined[
         joined,
         ibis.literal(run_metadata.run_id).name("run_id"),
-        ibis.literal(
-            run_metadata.labels
-        ).name("labels"),
+        ibis.literal(run_metadata.labels).name("labels"),
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),
     ]

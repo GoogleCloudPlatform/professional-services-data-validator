@@ -29,7 +29,6 @@ import ibis.expr.rules as rlz
 import sqlalchemy as sa
 from ibis.backends.base.sql.alchemy.registry import \
     fixed_arity as sa_fixed_arity
-from ibis.backends.base.sql.alchemy.registry import unary
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
@@ -42,13 +41,14 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.expr.operations import (Cast, Comparison, HashBytes, IfNull,
                                   RandomScalar, Strftime, StringJoin,
-                                  StringLength, Value)
+                                  Value)
 from ibis.expr.types import NumericValue, TemporalValue
 
+import third_party.ibis.ibis_mysql.compiler
+import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
-import third_party.ibis.ibis_mysql.compiler 
 
 # TD requires teradatasql
 try:

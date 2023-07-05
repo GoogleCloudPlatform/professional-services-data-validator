@@ -19,8 +19,6 @@ import yaml
 
 import google.oauth2.service_account
 
-from google.cloud.bigquery import Client as BigQueryClient
-#from ibis_bigquery.client import BigQueryClient
 import ibis.expr.datatypes as dt
 
 from data_validation import clients, consts, state_manager
@@ -601,7 +599,10 @@ class ConfigManager(object):
             calc_func = "length"
 
         elif column_type == "timestamp" or column_type == "!timestamp":
-            if self.source_client.name == "bigquery" or self.target_client.name == "bigquery":
+            if (
+                self.source_client.name == "bigquery"
+                or self.target_client.name == "bigquery"
+            ):
                 calc_func = "cast"
                 cast_type = "timestamp"
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
@@ -685,7 +686,10 @@ class ConfigManager(object):
 
             if (
                 (column_type == "string" or column_type == "!string")
-                or (cast_to_bigint and (column_type == "int32" or column_type == "!int32"))
+                or (
+                    cast_to_bigint
+                    and (column_type == "int32" or column_type == "!int32")
+                )
                 or (
                     (column_type == "timestamp" or column_type == "!timestamp")
                     and agg_type

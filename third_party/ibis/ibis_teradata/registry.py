@@ -22,6 +22,7 @@ from multipledispatch import Dispatcher
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 
+from ibis.common.exceptions import UnsupportedOperationError
 from ibis.backends.base.sql.registry import operation_registry, fixed_arity
 from third_party.ibis.ibis_teradata.datatypes import ibis_type_to_teradata_type
 

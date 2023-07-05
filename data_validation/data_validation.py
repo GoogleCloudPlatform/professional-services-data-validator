@@ -18,8 +18,6 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 
 import ibis.backends.pandas
-import ibis.expr.datatypes as dt
-import numpy
 import pandas
 
 from data_validation import combiner, consts, metadata
@@ -265,7 +263,6 @@ class DataValidation(object):
             }
             validation_builder.add_filter(filter_field)
 
-
     def _execute_validation(self, validation_builder, process_in_memory=True):
         """Execute Against a Supplied Validation Builder"""
         self.run_metadata.validations = validation_builder.get_metadata()
@@ -308,7 +305,7 @@ class DataValidation(object):
                 )
                 source_df = futures[0].result()
                 target_df = futures[1].result()
-            
+
             pandas_client = ibis.pandas.connect(
                 {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
             )

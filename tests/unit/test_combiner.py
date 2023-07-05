@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections import OrderedDict
 import datetime
 
 import ibis.backends.pandas
@@ -129,7 +128,11 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": [None],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -182,7 +185,11 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["timecol"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -243,7 +250,11 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["timecol"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -305,7 +316,12 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 {
                     "run_id": ["test-run"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)] * 2,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
                     "source_table_name": [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",
@@ -410,7 +426,12 @@ def test_generate_report_without_group_by(
                 {
                     "run_id": ["grouped-test"] * 4,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 4,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)] * 4,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 4,
                     "source_table_name": ["bq-public.source_dataset.test_source"] * 4,
                     "source_column_name": [None] * 4,
                     "target_table_name": ["bq-public.target_dataset.test_target"] * 4,
@@ -470,7 +491,12 @@ def test_generate_report_without_group_by(
                 {
                     "run_id": ["grouped-test"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)] * 2,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
                     "source_table_name": ["bq-public.source_dataset.test_source"] * 2,
                     "source_column_name": [None] * 2,
                     "target_table_name": ["bq-public.target_dataset.test_target"] * 2,
@@ -535,7 +561,12 @@ def test_generate_report_without_group_by(
                 {
                     "run_id": ["grouped-test"] * 6,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 6,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)] * 6,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 6,
                     "source_table_name": [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",
@@ -654,7 +685,11 @@ def test_generate_report_with_group_by(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["test_col"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -703,7 +738,11 @@ def test_generate_report_with_group_by(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["test_col"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -752,7 +791,11 @@ def test_generate_report_with_group_by(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["test_col"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -801,7 +844,11 @@ def test_generate_report_with_group_by(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": [None],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -863,7 +910,12 @@ def test_generate_report_with_group_by(
                 {
                     "run_id": ["test-run"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc)] * 2,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
                     "source_table_name": [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",

@@ -19,7 +19,6 @@ from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
 
 
-
 class AggregateField(object):
     def __init__(self, ibis_expr, field_name=None, alias=None, cast=None):
         """A representation of a table or column aggregate in Ibis

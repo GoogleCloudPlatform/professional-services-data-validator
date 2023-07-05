@@ -21,7 +21,6 @@ from typing import Literal
 
 from ibis.backends.impala import udf
 from ibis.backends.impala.compiler import rewrites
-from ibis.backends.impala.compiler import ImpalaExprTranslator
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch

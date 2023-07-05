@@ -26,8 +26,8 @@ with open("README.md", "r") as fh:
 
 dependencies = [
     # Dependency corrections from our requirements
-    "attrs==20.3.0",
-    "grpcio==1.47.0",
+    "attrs==23.1.0",
+    "grpcio>=1.47.0",
     "lazy-object-proxy==1.9.0",
     "marshmallow==3.19.0",
     # Core dependencies

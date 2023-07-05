@@ -80,10 +80,13 @@ SOURCE_QUERY_DATA = [
 
 RANDOM_STRINGS = ["a", "b", "c", "d"]
 
+
 @pytest.fixture
 def ibis_pandas():
     import ibis
+
     return ibis.pandas.connect()
+
 
 @pytest.fixture
 def module_under_test():

@@ -22,12 +22,8 @@ import warnings
 import operator
 
 import sqlalchemy as sa
-import sqlalchemy.dialects.oracle as ol
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql.functions import GenericFunction
 
 import ibis.common.exceptions as com
-import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 
 from ibis.backends.base.sql.alchemy import (
@@ -37,7 +33,6 @@ from ibis.backends.base.sql.alchemy import (
     unary,
     get_sqla_table,
 )
-from ibis.backends.base.sql.alchemy.registry import substr, variance_reduction
 
 operation_registry = sqlalchemy_operation_registry.copy()
 operation_registry.update(sqlalchemy_window_functions_registry)
