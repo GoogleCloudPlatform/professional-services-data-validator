@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import List
+
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from google.cloud.spanner_v1.types import Type, TypeCode, StructType
@@ -35,6 +37,6 @@ def dtype_from_spanner_field(field: Type) -> dt.DataType:
     ibis_type = _DTYPE_TO_IBIS_TYPE.get(typ, typ)
     return ibis_type
 
-def schema_from_spanner(fields: list[StructType.Field]) -> sch.Schema:
+def schema_from_spanner(fields: List[StructType.Field]) -> sch.Schema:
     return sch.Schema({f.name: dtype_from_spanner_field(f.type_) for f in fields})
     
