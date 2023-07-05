@@ -222,9 +222,8 @@ def sa_format_hashbytes_mysql(translator, op):
     hash_func = sa.func.sha2(arg, sa.sql.literal_column("'256'"))
     return hash_func
 
-def sa_format_hashbytes_db2(translator, expr):
-    arg, how = expr.op().args
-    compiled_arg = translator.translate(arg)
+def sa_format_hashbytes_db2(translator, op):
+    compiled_arg = translator.translate(op.arg)
     hashfunc = sa.func.hash(compiled_arg,sa.sql.literal_column("2"))
     hex = sa.func.hex(hashfunc)
     return sa.func.lower(hex)

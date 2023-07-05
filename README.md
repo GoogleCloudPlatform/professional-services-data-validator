@@ -640,7 +640,7 @@ DVT supports certain functions required for row hash validation natively (i.e. C
 which are listed in the CalculatedField() class methods in the [QueryBuilder](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/query_builder/query_builder.py).
 
 You can also specify custom functions (i.e. replace() or truncate()) from the Ibis expression
-[API reference](https://ibis-project.org/docs/3.2.0/api/expressions/). Keep in mind these will run
+[API reference](https://ibis-project.org/reference/expressions/generic/). Keep in mind these will run
 on both source and target systems. You will need to specify the Ibis API expression and the parameters
 required, if any, with the 'params' block as shown below:
 
@@ -658,7 +658,7 @@ required, if any, with the 'params' block as shown below:
     - format_str: '%m%d%Y'
 ```
 
-The above block references the [TimestampValue.strftime](https://ibis-project.org/docs/3.2.0/api/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
+The above block references the [TimestampValue.strftime](https://ibis-project.org/reference/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
 See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-row-validation-yaml-with-custom-calc-field)
 for a sample YAML with a custom calculated field.
 
