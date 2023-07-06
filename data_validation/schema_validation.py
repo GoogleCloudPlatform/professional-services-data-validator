@@ -233,9 +233,9 @@ def split_allow_list_str(allow_list_str: str) -> list:
     # I've not moved this patter to a compiled constant because it should only
     # happen once per command and I felt splitting the pattern into variables
     # aided readability.
+    nullable_pattern = r"!?"
     precision_scale_pattern = r"(?:\((?:[0-9 ,\-]+|'UTC')\))?"
-    nullable_pattern = r"(?:\[[noulabe\-]+\])?"
-    data_type_pattern = r"[a-z0-9 ]+" + precision_scale_pattern + nullable_pattern
+    data_type_pattern = nullable_pattern + r"[a-z0-9 ]+" + precision_scale_pattern
     csv_split_pattern = data_type_pattern + r":" + data_type_pattern
     data_type_pairs = [
         _.replace(" ", "").split(":")

@@ -273,7 +273,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
   [--exclusion-columns or -ec EXCLUSION_COLUMNS]
                         Comma separated list of columns to be excluded from the schema validation, e.g.: col_a,col_b.
   [--allow-list or -al ALLOW_LIST]
-                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),string[non-nullable]:string"
+                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),!string:string"
   [--allow-list-file ALLOW_LIST_FILE, -alf ALLOW_LIST_FILE]
                         YAML file containing default --allow-list mappings. Can be used in conjunction with --allow-list.
                         e.g.: samples/allow_list/oracle_to_bigquery.yaml or gs://dvt-allow-list-files/oracle_to_bigquery.yaml

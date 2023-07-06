@@ -173,7 +173,7 @@ class PartitionBuilder:
             # number to each row in the source table
             window1 = ibis.window(order_by=self.primary_keys)
             nt = (
-                source_table.get_column(self.primary_keys[0])
+                source_table[self.primary_keys[0]]
                 .ntile(buckets=number_of_part)
                 .over(window1)
                 .name(consts.DVT_NTILE_COL)
@@ -190,7 +190,7 @@ class PartitionBuilder:
                 order_by=self.primary_keys, group_by=[consts.DVT_NTILE_COL]
             )
             first_pkys = [
-                partitioned_table.get_column(primary_key)
+                partitioned_table[primary_key]
                 .first()
                 .over(window2)
                 .name(consts.DVT_FIRST_PRE + primary_key)

@@ -233,10 +233,10 @@ def test_expand_precision_or_scale_range(test_input: str, expected: list):
         ),
         ("decimal(38 , 0):decimal ( 38 , 0)", {"decimal(38,0)": ["decimal(38,0)"]}),
         (
-            "decimal(38,0):int32[non-nullable]",
-            {"decimal(38,0)": ["int32[non-nullable]"]},
+            "decimal(38,0):!int32",
+            {"decimal(38,0)": ["!int32"]},
         ),
-        ("int64[non-nullable]:int32", {"int64[non-nullable]": ["int32"]}),
+        ("!int64:int32", {"!int64": ["int32"]}),
         (
             "decimal(1-9,0):int32",
             {
@@ -448,7 +448,7 @@ def test_schema_validation_matching_allowlist_columns(module_under_test):
     )
 
 
-def test_execute(module_under_test, fs):
+def test_execute(module_under_test, ibis_pandas, fs):
     num_rows = 1
     source_data = _generate_fake_data(rows=num_rows, second_range=0)
     _create_table_file(SOURCE_TABLE_FILE_PATH, _get_fake_json_data(source_data))
