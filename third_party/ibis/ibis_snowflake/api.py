@@ -24,7 +24,7 @@ def snowflake_connect(
     password: str,
     account: str,
     database: str,
-    connect_args: Mapping[str, Any] | None = None,
+    connect_args: Mapping[str, Any] = None,
 ):
     return ibis.snowflake.connect(
         user=user,

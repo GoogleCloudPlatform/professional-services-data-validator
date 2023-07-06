@@ -17,12 +17,12 @@ import cx_Oracle # NOQA fail early if the driver is missing
 
 def oracle_connect(
     host: str = "localhost",
-    user: str | None = None,
-    password: str | None = None,
+    user: str = None,
+    password: str = None,
     port: int = 1521,
-    database: str | None = None,
-    protocol: str | None = "TCP",
-    url: str | None = None,
+    database: str = None,
+    protocol: str = "TCP",
+    url: str = None,
     driver: Literal["cx_Oracle"] = "cx_Oracle",
 ):
     backend = OracleBackend()

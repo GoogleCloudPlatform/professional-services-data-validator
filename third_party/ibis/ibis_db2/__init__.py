@@ -28,10 +28,10 @@ class Backend(BaseAlchemyBackend):
         self,
         host: str = 'localhost',
         user: str = None,
-        password: str | None = None,
+        password: str = None,
         port: int = 50000,
         database: str = None,
-        url: str | None = None,
+        url: str = None,
         driver: str = 'ibm_db_sa',
     ) -> None:
         if url is None:
@@ -66,7 +66,7 @@ class Backend(BaseAlchemyBackend):
     
     def _metadata(self, query)  -> Iterable[tuple[str, dt.DataType]]:
         if (
-            re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
+            re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE)
             is not None
         ):
             query = f"({query})"

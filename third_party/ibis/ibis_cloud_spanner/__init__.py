@@ -33,8 +33,8 @@ class Backend(BaseSQLBackend):
     def do_connect(
         self,
         instance_id: str,
-        database_id: str | None = None,
-        project_id: str | None = None,
+        database_id: str = None,
+        project_id: str = None,
     ) -> None:
 
         self.spanner_client = spanner.Client(project=project_id)
@@ -140,7 +140,7 @@ class Backend(BaseSQLBackend):
     def execute(
         self,
         expr: ir.Expr,
-        params: Mapping[ir.Scalar, Any] | None = None,
+        params: Mapping[ir.Scalar, Any] = None,
         limit: str = "default",
         **kwargs: Any,
     ):

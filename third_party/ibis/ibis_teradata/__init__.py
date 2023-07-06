@@ -35,10 +35,10 @@ class Backend(BaseSQLBackend):
     def do_connect(
         self,
         host: str = "localhost",
-        user_name: str | None = None,
-        password: str | None = None,
+        user_name: str = None,
+        password: str = None,
         port: int = 1025,
-        logmech: str | None = "TD2",
+        logmech: str = "TD2",
         use_no_lock_tables: bool = False,
     ) -> None:
         self.teradata_config = {
@@ -179,7 +179,7 @@ class Backend(BaseSQLBackend):
     def execute(
         self,
         expr: ir.Expr,
-        params: Mapping[ir.Scalar, Any] | None = None,
+        params: Mapping[ir.Scalar, Any] = None,
         limit: str = "default",
         **kwargs: Any,
     ):

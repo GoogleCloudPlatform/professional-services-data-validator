@@ -18,11 +18,11 @@ from third_party.ibis.ibis_mssql import Backend as MsSqlBackend
 
 def mssql_connect(
     host: str = "localhost",
-    user: str | None = None,
-    password: str | None = None,
+    user: str = None,
+    password: str = None,
     port: int = 1433,
-    database: str | None = None,
-    url: str | None = None,
+    database: str = None,
+    url: str = None,
     driver: Literal["pyodbc"] = "pyodbc",
     odbc_driver: str = "ODBC Driver 17 for SQL Server",
 ):

@@ -28,12 +28,12 @@ class Backend(BaseAlchemyBackend):
     def do_connect(
         self,
         host: str = "localhost",
-        user: str | None = None,
-        password: str | None = None,
+        user: str = None,
+        password: str = None,
         port: int = 1521,
-        database: str | None = None,
-        protocol: str | None = "TCP",
-        url: str | None = None,
+        database: str = None,
+        protocol: str = "TCP",
+        url: str = None,
         driver: Literal["cx_Oracle"] = "cx_Oracle",
     ) -> None:
         if url is None:
@@ -67,7 +67,7 @@ class Backend(BaseAlchemyBackend):
 
     def _metadata(self, query)  -> Iterable[tuple[str, dt.DataType]]:
         if (
-            re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
+            re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE)
             is not None
         ):
             query = f"({query})"

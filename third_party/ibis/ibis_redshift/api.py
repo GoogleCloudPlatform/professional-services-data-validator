@@ -16,12 +16,12 @@ from third_party.ibis.ibis_redshift import Backend as RedshiftBackend
 
 def redshift_connect(
     host: str = 'localhost',
-    user: str | None = None,
-    password: str | None = None,
+    user: str = None,
+    password: str = None,
     port: int = 5439,
-    database: str | None = 'public',
-    schema: str | None = None,
-    url: str | None = None,
+    database: str = 'public',
+    schema: str = None,
+    url: str = None,
     driver: Literal["psycopg2"] = "psycopg2",
 ):
     backend = RedshiftBackend()

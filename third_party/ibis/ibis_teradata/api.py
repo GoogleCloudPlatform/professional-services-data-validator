@@ -17,10 +17,10 @@ import teradatasql  # NOQA fail early if the package is missing
 
 def teradata_connect(
     host: str = "localhost",
-    user_name: str | None = None,
-    password: str | None = None,
+    user_name: str = None,
+    password: str = None,
     port: int = 1025,
-    logmech: str | None = "TD2",
+    logmech: str = "TD2",
     use_no_lock_tables: bool = False,
 ):
     backend = TeradataBackend()

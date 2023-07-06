@@ -22,10 +22,10 @@ import ibm_db_sa #NOQA fail early if driver is missing
 def db2_connect(
     host: str = 'localhost',
     user: str = None,
-    password: str | None = None,
+    password: str = None,
     port: int = 50000,
     database: str = None,
-    url: str | None = None,
+    url: str = None,
     driver: str = 'ibm_db_sa',
 ):
     backend = DB2Backend()
