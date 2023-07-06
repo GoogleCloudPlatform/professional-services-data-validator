@@ -14,7 +14,7 @@
 import sqlalchemy as sa
 
 import ibis.expr.datatypes as dt
-from typing import Iterable, Literal
+from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
 from ibis import util
@@ -77,7 +77,7 @@ class Backend(BaseAlchemyBackend):
             ]
         return self._filter_with_like(databases, like)
     
-    def _metadata(self, query: str) -> Iterable[tuple[str, dt.DataType]]:
+    def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
         raw_name = util.guid()
         name = self._quote(raw_name)
         type_info_sql = """\

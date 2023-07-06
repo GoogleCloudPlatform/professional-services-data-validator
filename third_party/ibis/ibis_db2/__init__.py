@@ -15,7 +15,7 @@ import sqlalchemy as sa
 import re
 
 import ibis.expr.datatypes as dt
-from typing import Iterable
+from typing import Iterable, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
@@ -64,7 +64,7 @@ class Backend(BaseAlchemyBackend):
     def find_db(self):
         return self.url
     
-    def _metadata(self, query)  -> Iterable[tuple[str, dt.DataType]]:
+    def _metadata(self, query)  -> Iterable[Tuple[str, dt.DataType]]:
         if (
             re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE)
             is not None
