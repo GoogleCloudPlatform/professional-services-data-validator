@@ -34,6 +34,7 @@ PYTHON_VERSIONS = ["3.8", "3.9", "3.10"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
+UNIT_PACKAGES = ["pyfakefs==4.6.2","freezegun"]
 
 
 def _setup_session_requirements(session, extra_packages=[]):
@@ -49,7 +50,7 @@ def _setup_session_requirements(session, extra_packages=[]):
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
-    _setup_session_requirements(session, extra_packages=["pyfakefs==4.6.2,freezegun"])
+    _setup_session_requirements(session, extra_packages=UNIT_PACKAGES)
 
     # Run py.test against the unit tests.
     session.run(
