@@ -196,7 +196,6 @@ def integration_spanner(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "third_party/ibis/ibis_cloud_spanner/tests", *session.posargs)
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
 
 
