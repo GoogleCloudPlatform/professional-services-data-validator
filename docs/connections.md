@@ -147,7 +147,7 @@ data-validation connections add
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ## MSSQL Server
-MSSQL Server connections require [pymssql](https://pymssql.readthedocs.io/en/stable/) as the driver: `pip install pymssql`.
+MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
 
 ```
 data-validation connections add 

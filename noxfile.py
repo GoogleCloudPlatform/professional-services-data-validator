@@ -157,7 +157,7 @@ def integration_sql_server(session):
     """
     # Pin a specific version of black, so that the linter doesn't conflict with
     # contributors.
-    _setup_session_requirements(session, extra_packages=["pymssql"])
+    _setup_session_requirements(session, extra_packages=["pyodbc"])
 
     test_path = "tests/system/data_sources/test_sql_server.py"
     expected_env_vars = ["PROJECT_ID", "SQL_SERVER_PASSWORD", "CLOUD_SQL_CONNECTION"]
