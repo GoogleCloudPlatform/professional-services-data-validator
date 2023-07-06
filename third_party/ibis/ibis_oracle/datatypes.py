@@ -15,6 +15,8 @@ from functools import partial
 from typing import Optional, TypedDict
 
 import sqlalchemy as sa
+import sqlalchemy.types as sat
+from sqlalchemy.dialects import oracle
 from sqlalchemy.dialects.oracle.cx_oracle import OracleDialect_cx_oracle
 
 import ibis.expr.datatypes as dt
@@ -23,6 +25,8 @@ import cx_Oracle
 
 # Update to avoid cast to CLOB/Text
 ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=4000)
+ibis_type_to_sqla[dt.Float32] = sat.Float(precision=23).with_variant(oracle.FLOAT(), 'oracle')
+ibis_type_to_sqla[dt.Float64] = sat.Float(precision=53).with_variant(oracle.FLOAT(), 'oracle')
 
 
 class _FieldDescription(TypedDict):
