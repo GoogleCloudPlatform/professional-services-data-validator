@@ -34,7 +34,7 @@ PYTHON_VERSIONS = ["3.8", "3.9", "3.10"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
-UNIT_PACKAGES = ["pyfakefs==4.6.2","freezegun"]
+UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
 
 
 def _setup_session_requirements(session, extra_packages=[]):
