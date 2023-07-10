@@ -83,7 +83,7 @@ def get_bigquery_client(project_id, dataset_id="", credentials=None):
         project_id=project_id, dataset_id=dataset_id, credentials=credentials
     )
 
-    # # Override the BigQuery client object to ensure the correct user agent is
+    # Override the BigQuery client object to ensure the correct user agent is
     # included.
     ibis_client.client = google_client
     return ibis_client

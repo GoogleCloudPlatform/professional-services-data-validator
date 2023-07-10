@@ -189,10 +189,6 @@ data-validation connections add
 ```
 
 ## MySQL
-DVT only supports MySQL version 8.0+. 
-
-TODO: link latest version before Ibis upgrade
-The last functioning release for support for versions < 8.0 is 3.2.0.
 ```
 data-validation connections add 
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)

@@ -257,7 +257,7 @@ def sa_cast_postgres(t, op):
     sa_arg = t.translate(arg)
 
     # Specialize going from numeric(p,s>0) to string
-    if arg_dtype.is_decimal() and arg_dtype.scale > 0 and typ.equals(dt.string):
+    if arg_dtype.is_decimal() and arg_dtype.scale and arg_dtype.scale > 0 and typ.is_string():
         # When casting a number to string PostgreSQL includes the full scale, e.g.:
         #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
         #     100.00
