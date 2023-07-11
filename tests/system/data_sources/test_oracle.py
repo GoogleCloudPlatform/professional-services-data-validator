@@ -18,6 +18,7 @@ from unittest import mock
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.test_bigquery import BQ_CONN
+from tests.system.data_sources.test_postgres import CONN as PG_CONN
 
 
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
@@ -68,6 +69,8 @@ def mock_get_connection_config(*args):
         return CONN
     elif args[1] == "bq-conn":
         return BQ_CONN
+    elif args[1] == "pg-conn":
+        return PG_CONN
 
 
 @mock.patch(
@@ -122,6 +125,34 @@ def test_schema_validation_core_types_to_bigquery():
                 # BigQuery does not have a float32 type.
                 "float32:float64"
             ),
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_oracle_to_postgres():
+    """Oracle to PostgreSQL schema validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=ora-conn",
+            "-tc=pg-conn",
+            "-tbls=pso_data_validator.dvt_ora2pg_types",
+            "--filter-status=fail",
+            "--allow-list-file=samples/allow_list/oracle_to_postgres.yaml",
+            "--allow-list=decimal(8,0):int32",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -198,6 +229,42 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_oracle_to_postgres():
+    parser = cli_tools.configure_arg_parser()
+    # TODO Change --sum string below to include col_tstz when issue-762 is complete.
+    # TODO Change --min/max strings below to include col_tstz when issue-706 is complete.
+    number_cols = "col_num_4,col_num_9,col_num_18,col_num_38,col_num,col_num_10_2"
+    float_cols = "col_num_float,col_float32,col_float64"
+    string_cols = "col_varchar_30,col_char_2,col_nvarchar_30,col_nchar_2"
+    # date_cols = "col_date,col_ts,col_tstz,col_tsltz"
+    date_cols = "col_date,col_ts,col_tstz"
+    # Excluded RAW/CLOB/NCLOB columns because they don't make sense for column validation.
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=ora-conn",
+            "-tc=pg-conn",
+            "-tbls=pso_data_validator.dvt_ora2pg_types",
+            "--filter-status=fail",
+            f"--sum={number_cols},{float_cols}",
+            f"--min={number_cols},{float_cols},{string_cols},{date_cols}",
+            f"--max={number_cols},{float_cols},{string_cols},{date_cols}",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Oracle to Oracle dvt_core_types row validation"""
     parser = cli_tools.configure_arg_parser()
@@ -227,6 +294,7 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
+    """Oracle to BigQuery dvt_core_types row validation"""
     # TODO Change --hash string below to include col_tstz when issue-706 is complete.
     # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     parser = cli_tools.configure_arg_parser()
@@ -240,6 +308,43 @@ def test_row_validation_core_types_to_bigquery():
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_oracle_to_postgres():
+    # TODO Change --hash string below to include col_tstz when issue-706 is complete.
+    # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
+    parser = cli_tools.configure_arg_parser()
+    number_cols = "col_num_4,col_num_9,col_num_18,col_num_38,col_num,col_num_10_2"
+    float_cols = "col_num_float,col_float32,col_float64"
+    string_cols = "col_varchar_30,col_char_2,col_nvarchar_30,col_nchar_2"
+    # date_cols = "col_date,col_ts,col_tstz,col_tsltz"
+    date_cols = "col_date,col_ts,col_tstz"
+    # TODO col_raw is blocked by two issues: 773 and 873
+    # other_cols = "col_raw"
+    # Excluded CLOB/NCLOB columns because lob values cannot be concatenated
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=ora-conn",
+            "-tc=pg-conn",
+            "-tbls=pso_data_validator.dvt_ora2pg_types",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            f"--hash={number_cols},{float_cols},{string_cols},{date_cols}",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
