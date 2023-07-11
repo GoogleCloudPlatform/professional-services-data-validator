@@ -118,8 +118,12 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         target_value = field_differences["differences_target_value"]
 
     # Does not calculate difference between agg values for row hash due to int64 overflow
-    if is_value_comparison:
-        difference = pct_difference = ibis.null()
+    if is_value_comparison or isinstance(datatype, ibis.expr.datatypes.String):
+        # String data types i.e "None" can be returned for NULL timestamp/datetime aggs
+        if is_value_comparison:
+            difference = pct_difference = ibis.null()
+        else:
+            difference = pct_difference = ibis.null().cast("float64")
         validation_status = (
             ibis.case()
             .when(
@@ -128,18 +132,6 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
             )
             .when(
                 target_value == source_value,
-                consts.VALIDATION_STATUS_SUCCESS,
-            )
-            .else_(consts.VALIDATION_STATUS_FAIL)
-            .end()
-        )
-    # String data types i.e "None" can be returned for NULL timestamp/datetime aggs
-    elif isinstance(datatype, ibis.expr.datatypes.String):
-        difference = pct_difference = ibis.null().cast("float64")
-        validation_status = (
-            ibis.case()
-            .when(
-                target_value.isnull() & source_value.isnull(),
                 consts.VALIDATION_STATUS_SUCCESS,
             )
             .else_(consts.VALIDATION_STATUS_FAIL)

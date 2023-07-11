@@ -592,7 +592,7 @@ class ConfigManager(object):
 
     def append_pre_agg_calc_field(
         self, source_column, target_column, agg_type, column_type, column_position
-    ):
+    ) -> dict:
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
 
@@ -624,10 +624,6 @@ class ConfigManager(object):
             calc_func = "cast"
             cast_type = "int64"
 
-        elif column_type == "decimal":
-            calc_func = "cast"
-            cast_type = "float64"
-
         else:
             raise ValueError(f"Unsupported column type: {column_type}")
 
@@ -652,6 +648,27 @@ class ConfigManager(object):
         self, agg_type, arg_value, supported_types, cast_to_bigint=False
     ):
         """Return list of aggregate objects of given agg_type."""
+
+        def decimal_too_big_for_64bit(
+            source_column_ibis_type, target_column_ibis_type
+        ) -> bool:
+            return bool(
+                (
+                    isinstance(source_column_ibis_type, dt.Decimal)
+                    and (
+                        source_column_ibis_type.precision is None
+                        or source_column_ibis_type.precision > 18
+                    )
+                )
+                and (
+                    isinstance(target_column_ibis_type, dt.Decimal)
+                    and (
+                        target_column_ibis_type.precision is None
+                        or target_column_ibis_type.precision > 18
+                    )
+                )
+            )
+
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
@@ -667,8 +684,13 @@ class ConfigManager(object):
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
             # Get column type and remove precision/scale attributes
-            column_type_str = str(source_table[casefold_source_columns[column]].type())
-            column_type = column_type_str.split("(")[0]
+            source_column_ibis_type = source_table[
+                casefold_source_columns[column]
+            ].type()
+            target_column_ibis_type = target_table[
+                casefold_target_columns[column]
+            ].type()
+            column_type = str(source_column_ibis_type).split("(")[0]
 
             if column not in allowlist_columns:
                 continue
@@ -696,7 +718,6 @@ class ConfigManager(object):
                         "bit_xor",
                     )  # For timestamps: do not convert to epoch seconds for min/max
                 )
-                or (column_type == "decimal")
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
@@ -715,6 +736,10 @@ class ConfigManager(object):
                     ),
                     consts.CONFIG_TYPE: agg_type,
                 }
+                if decimal_too_big_for_64bit(
+                    source_column_ibis_type, target_column_ibis_type
+                ):
+                    aggregate_config[consts.CONFIG_CAST] = "string"
 
             aggregate_configs.append(aggregate_config)
 
