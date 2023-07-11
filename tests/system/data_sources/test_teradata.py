@@ -17,6 +17,7 @@ from unittest import mock
 
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
+from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
@@ -346,6 +347,52 @@ def test_row_validation_core_types():
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+# Expected result from partitioning table on 3 keys
+EXPECTED_PARTITION_FILTER = [
+    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 5678))",
+    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 5678)))"
+    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 9012)))",
+    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 9012)))"
+    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 1234)))",
+    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 1234))",
+]
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_teradata_generate_table_partitions():
+    """Test generate table partitions on BigQuery
+    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
+    check that yaml configurations are created and saved in local storage. Partitions can only be created with
+    a database that can handle SQL with ntile, hence doing this as part of system testing.
+    What we are checking
+    1. the shape of the partition list is 1, number of partitions (only one table in the list)
+    2. value of the partition list matches what we expect.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "generate-table-partitions",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=udf.test_generate_partitions=udf.test_generate_partitions",
+            "-pk=course_id,quarter_id,student_id",
+            "-hash=*",
+            "-cdir=/home/users/yaml",
+            "-pn=4",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_filters = partition_builder._get_partition_key_filters()
+
+    assert len(partition_filters) == 1  # only one pair of tables
+    assert (
+        len(partition_filters[0]) == partition_builder.args.partition_num
+    )  # assume no of table rows > partition_num
+    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
