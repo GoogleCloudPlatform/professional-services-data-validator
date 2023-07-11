@@ -52,7 +52,7 @@ def _get_type(col: _FieldDescription) -> dt.DataType:
     if typename == cx_Oracle.DB_TYPE_NUMBER:
         if col[4] == 0 and col[5] == -127:
             # This will occur if type is NUMBER with no precision/scale
-            typ = partial(typ, precision=38, scale=0)
+            typ = partial(typ)
         else:
             typ = partial(typ, precision=col[4], scale=col[5])
 
@@ -93,7 +93,7 @@ def sa_oracle_LONG(_, satype, nullable=True):
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.NUMBER)
 def sa_oracle_NUMBER(_, satype, nullable=True):
-    return dt.Decimal(satype.precision or 38, satype.scale or 0, nullable=nullable)
+    return dt.Decimal(satype.precision, satype.scale, nullable=nullable)
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BFILE)
