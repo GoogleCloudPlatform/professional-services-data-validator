@@ -51,6 +51,72 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
  ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 -03:00');
 
+DROP TABLE pso_data_validator.dvt_ora2pg_types;
+CREATE TABLE pso_data_validator.dvt_ora2pg_types
+(   id              int NOT NULL PRIMARY KEY
+,   col_num_4       smallint
+,   col_num_9       int
+,   col_num_18      bigint
+,   col_num_38      decimal(38)
+,   col_num         decimal
+,   col_num_10_2    decimal(10,2)
+--,   col_num_6_m2    decimal(6,0)
+--,   col_num_3_5     decimal(5,5)
+,   col_num_float   decimal
+,   col_float32     real
+,   col_float64     double precision
+,   col_varchar_30  varchar(30)
+,   col_char_2      char(2)
+,   col_nvarchar_30 varchar(30)
+,   col_nchar_2     char(2)
+,   col_date        date
+,   col_ts          timestamp(6)
+,   col_tstz        timestamp(6) with time zone
+--,   col_tsltz       timestamp(6) with time zone
+--,   col_raw         bytea
+,   col_clob        text
+,   col_nclob       text
+);
+COMMENT ON TABLE pso_data_validator.dvt_ora2pg_types IS 'Oracle to PostgreSQL integration test table';
+
+-- Literals below match corresponding table in oracle_test_tables.sql
+INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
+(1,1111,123456789,123456789012345678,1234567890123456789012345
+,123.1,123.1
+--,123400,0.001
+,123.123,123456.1,12345678.1
+,'Hello DVT','A ','Hello DVT','A '
+,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456'
+,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
+--,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
+--,CAST('DVT' AS BYTEA)
+,'DVT A','DVT A'
+);
+INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
+(2,2222,123456789,123456789012345678,1234567890123456789012345
+,123.12,123.11
+--,123400,0.002
+,123.123,123456.1,12345678.1
+,'Hello DVT','B ','Hello DVT','B '
+,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:01.123456'
+,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
+--,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
+--,CAST('DVT' AS BYTEA)
+,'DVT B','DVT B'
+);
+INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
+(3,3333,123456789,123456789012345678,1234567890123456789012345
+,123.123,123.11
+--,123400,0.003
+,123.123,123456.1,12345678.1
+,'Hello DVT','C ','Hello DVT','C '
+,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
+,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
+--,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
+--,CAST('DVT' AS BYTEA)
+,'DVT C','DVT C'
+);
+
  /* Following table used for validating generating table partitions */
 \c guestbook
 drop table if exists public.test_generate_partitions ;
@@ -89,4 +155,4 @@ INSERT INTO public.test_generate_partitions (course_id, quarter_id, student_id, 
         ('TRI001', 2, 9012, 3.5),
         ('TRI001', 3, 1234, 2.7),
         ('TRI001', 3, 5678, 3.5),
-        ('TRI001', 3, 9012, 2.8); 
+        ('TRI001', 3, 9012, 2.8);
