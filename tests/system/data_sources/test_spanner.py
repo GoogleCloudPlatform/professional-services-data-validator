@@ -340,8 +340,8 @@ def test_custom_query_validation_core_types(spanner_connection_config, database_
             "column",
             "-sc=mock-conn",
             "-tc=mock-conn",
-            f"--source-query=select * from {database_id}.dvt_core_types",
-            f"--target-query=select * from {database_id}.dvt_core_types",
+            "--source-query=select * from dvt_core_types",
+            "--target-query=select * from dvt_core_types",
             "--filter-status=fail",
             "--count=*",
         ]
