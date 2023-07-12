@@ -328,3 +328,32 @@ def test_row_validation_core_types(spanner_connection_config, database_id):
         df = validator.execute()
         # With filter on failures the data frame should be empty
         assert len(df) == 0
+
+
+def test_custom_query_validation_core_types(spanner_connection_config, database_id):
+    """Spanner to Spanner dvt_core_types custom-query validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            f"--source-query=select * from {database_id}.dvt_core_types",
+            f"--target-query=select * from {database_id}.dvt_core_types",
+            "--filter-status=fail",
+            "--count=*",
+        ]
+    )
+    with mock.patch(
+        "data_validation.state_manager.StateManager.get_connection_config",
+        return_value=spanner_connection_config,
+    ):
+        config_managers = main.build_config_managers_from_args(args)
+        assert len(config_managers) == 1
+        config_manager = config_managers[0]
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        df = validator.execute()
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0

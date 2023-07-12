@@ -378,3 +378,32 @@ def test_row_validation_core_types_to_bigquery():
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_core_types():
+    """SQL Server to SQL Server dvt_core_types custom-query validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "--source-query=select * from pso_data_validator.dvt_core_types",
+            "--target-query=select * from pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--count=*",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
