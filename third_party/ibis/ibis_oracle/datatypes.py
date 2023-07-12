@@ -74,6 +74,8 @@ _type_mapping = {
         cx_Oracle.DB_TYPE_NCLOB: dt.String,
         cx_Oracle.DB_TYPE_CLOB: dt.String,
         cx_Oracle.DB_TYPE_BLOB: dt.Binary,
+        cx_Oracle.DB_TYPE_BINARY_FLOAT: dt.Float32,
+        cx_Oracle.DB_TYPE_BINARY_DOUBLE: dt.Float64,
     }
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.CLOB)

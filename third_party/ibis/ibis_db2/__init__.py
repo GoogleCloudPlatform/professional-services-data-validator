@@ -66,7 +66,7 @@ class Backend(BaseAlchemyBackend):
     
     def _metadata(self, query)  -> Iterable[Tuple[str, dt.DataType]]:
         if (
-            re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE)
+            re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
             is not None
         ):
             query = f"({query})"
