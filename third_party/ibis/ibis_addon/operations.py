@@ -352,8 +352,6 @@ MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
 MySQLExprTranslator._registry[ops.IfNull] = fixed_arity(sa.func.ifnull, 2)
 MySQLExprTranslator._registry[ops.StringJoin] = sa_format_to_stringjoin
 RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
-RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
-
 
 if DB2ExprTranslator: #check if Db2 driver is loaded
     DB2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
