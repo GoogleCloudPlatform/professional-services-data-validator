@@ -207,7 +207,8 @@ def sa_format_raw_sql(translator, op):
 
 def sa_format_hashbytes_mssql(translator, op):
     arg = translator.translate(op.arg)
-    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), arg)
+    cast_arg = sa.func.convert(sa.sql.literal_column("VARCHAR(MAX)"), arg)
+    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), cast_arg)
     hash_to_string = sa.func.convert(sa.sql.literal_column('CHAR(64)'), hash_func, sa.sql.literal_column('2'))
     return sa.func.lower(hash_to_string)
 
