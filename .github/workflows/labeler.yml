@@ -1,0 +1,20 @@
+name: "Issue Labeler"
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: github/issue-labeler@v3.2 #May not be the latest version
+      with:
+        configuration-path: .github/workflows/labeler.yml
+        not-before: 2023-07-18T21:21:20Z
+        enable-versioned-regex: 0
+        include-title: 1
+        repo-token: ${{ github.token }}
