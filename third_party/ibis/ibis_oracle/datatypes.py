@@ -25,8 +25,10 @@ import cx_Oracle
 
 # Update to avoid cast to CLOB/Text
 ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=4000)
-ibis_type_to_sqla[dt.Float32] = sat.Float(precision=23).with_variant(oracle.FLOAT(), 'oracle')
-ibis_type_to_sqla[dt.Float64] = sat.Float(precision=53).with_variant(oracle.FLOAT(), 'oracle')
+
+# This is only required for SQLAlchemy 2.0+
+# ibis_type_to_sqla[dt.Float32] = sat.Float(precision=23).with_variant(oracle.FLOAT(), 'oracle')
+# ibis_type_to_sqla[dt.Float64] = sat.Float(precision=53).with_variant(oracle.FLOAT(), 'oracle')
 
 
 class _FieldDescription(TypedDict):
