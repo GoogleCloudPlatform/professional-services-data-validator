@@ -241,9 +241,8 @@ data-validation validate schema \
 
 #### Run validation on a file
 ````shell script
-# Additional dependencies needed for GCS files
+# Additional dependency needed for GCS files
 pip install gcsfs
-pip install fsspec
 
 data-validation connections add \
   --connection-name file_conn FileSystem \
@@ -368,7 +367,7 @@ validations:
     target_calculated_columns:
     - name
     type: custom
-    ibis_expr: ibis.expr.api.StringValue.replace
+    ibis_expr: ibis.expr.types.StringValue.replace
     params:
     - pattern: '/'
     - replacement: '-'

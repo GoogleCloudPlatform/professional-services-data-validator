@@ -12,29 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Literal
+from third_party.ibis.ibis_redshift import Backend as RedshiftBackend
 
-from third_party.ibis.ibis_mssql import Backend as MsSqlBackend
-
-
-def mssql_connect(
-    host: str = "localhost",
+def redshift_connect(
+    host: str = 'localhost',
     user: str = None,
     password: str = None,
-    port: int = 1433,
-    database: str = None,
+    port: int = 5439,
+    database: str = 'public',
+    schema: str = None,
     url: str = None,
-    driver: Literal["pyodbc"] = "pyodbc",
-    odbc_driver: str = "ODBC Driver 17 for SQL Server",
+    driver: Literal["psycopg2"] = "psycopg2",
 ):
-    backend = MsSqlBackend()
+    backend = RedshiftBackend()
     backend.do_connect(
         host=host,
-        port=port,
         user=user,
         password=password,
+        port=port,
         database=database,
+        schema=schema,
         url=url,
         driver=driver,
-        odbc_driver=odbc_driver,
     )
     return backend

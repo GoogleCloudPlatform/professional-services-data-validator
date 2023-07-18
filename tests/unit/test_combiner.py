@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import datetime
 
 import ibis.backends.pandas
@@ -19,11 +18,10 @@ import pandas
 import pandas.testing
 import pytest
 
+from freezegun import freeze_time
 from data_validation import metadata, consts
 
-
 _NAN = float("nan")
-FAKE_TIME = datetime.datetime(1998, 9, 4, 7, 31, 42)
 
 EXAMPLE_RUN_METADATA = metadata.RunMetadata(
     validations={
@@ -43,7 +41,7 @@ EXAMPLE_RUN_METADATA = metadata.RunMetadata(
     },
     start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
     end_time=datetime.datetime(1998, 9, 4, 7, 31, 42),
-    labels=[("name", "test_label")],
+    labels=[],
     run_id="test-run",
 )
 
@@ -55,20 +53,10 @@ def module_under_test():
     return combiner
 
 
-@pytest.fixture
-def patch_datetime_now(monkeypatch):
-    class mydatetime:
-        @classmethod
-        def now(cls, utc):
-            return FAKE_TIME
-
-    monkeypatch.setattr(datetime, "datetime", mydatetime)
-
-
 def test_generate_report_with_different_columns(module_under_test):
     source = pandas.DataFrame({"count": [1], "sum": [3]})
     target = pandas.DataFrame({"count": [2]})
-    pandas_client = ibis.backends.pandas.connect(
+    pandas_client = ibis.pandas.connect(
         {
             module_under_test.DEFAULT_SOURCE: source,
             module_under_test.DEFAULT_TARGET: target,
@@ -89,7 +77,7 @@ def test_generate_report_with_different_columns(module_under_test):
 def test_generate_report_with_too_many_rows(module_under_test):
     source = pandas.DataFrame({"count": [1, 1]})
     target = pandas.DataFrame({"count": [2, 2]})
-    pandas_client = ibis.backends.pandas.connect(
+    pandas_client = ibis.pandas.connect(
         {
             module_under_test.DEFAULT_SOURCE: source,
             module_under_test.DEFAULT_TARGET: target,
@@ -108,6 +96,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
     assert len(report) == 16
 
 
+@freeze_time("1998-09-04 07:31:42")
 @pytest.mark.parametrize(
     ("source_df", "target_df", "run_metadata", "expected"),
     (
@@ -132,14 +121,18 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": [None],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -156,7 +149,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "pct_difference": [100.0],
                     "pct_threshold": [0.0],
                     "validation_status": [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[("name", "test_label")]],
+                    "labels": [[]],
                 }
             ),
         ),
@@ -185,14 +178,18 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["timecol"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -209,7 +206,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "pct_difference": [0.0],
                     "pct_threshold": [0.0],
                     "validation_status": [consts.VALIDATION_STATUS_SUCCESS],
-                    "labels": [[("name", "test_label")]],
+                    "labels": [[]],
                 }
             ),
         ),
@@ -246,14 +243,18 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["timecol"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -270,7 +271,7 @@ def test_generate_report_with_too_many_rows(module_under_test):
                     "pct_difference": [25.0],
                     "pct_threshold": [0.0],
                     "validation_status": [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[("name", "test_label")]],
+                    "labels": [[]],
                 }
             ),
         ),
@@ -308,14 +309,19 @@ def test_generate_report_with_too_many_rows(module_under_test):
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 2,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
                     "source_table_name": [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",
@@ -341,16 +347,16 @@ def test_generate_report_with_too_many_rows(module_under_test):
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
-                    "labels": [[("name", "test_label")]] * 2,
+                    "labels": [[]] * 2,
                 }
             ),
         ),
     ),
 )
 def test_generate_report_without_group_by(
-    module_under_test, patch_datetime_now, source_df, target_df, run_metadata, expected
+    module_under_test, source_df, target_df, run_metadata, expected
 ):
-    pandas_client = ibis.backends.pandas.connect(
+    pandas_client = ibis.pandas.connect(
         {"test_source": source_df, "test_target": target_df}
     )
     report = module_under_test.generate_report(
@@ -375,6 +381,7 @@ def test_generate_report_without_group_by(
     pandas.testing.assert_frame_equal(report, expected)
 
 
+@freeze_time("1998-09-04 07:31:42")
 @pytest.mark.parametrize(
     ("source_df", "target_df", "join_on_fields", "run_metadata", "expected"),
     (
@@ -412,14 +419,19 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "group_label")],
+                labels=[],
                 run_id="grouped-test",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["grouped-test"] * 4,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 4,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 4,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 4,
                     "source_table_name": ["bq-public.source_dataset.test_source"] * 4,
                     "source_column_name": [None] * 4,
                     "target_table_name": ["bq-public.target_dataset.test_target"] * 4,
@@ -446,7 +458,7 @@ def test_generate_report_without_group_by(
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                     ],
-                    "labels": [[("name", "group_label")]] * 4,
+                    "labels": [[]] * 4,
                 }
             ),
         ),
@@ -472,14 +484,19 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "group_label")],
+                labels=[],
                 run_id="grouped-test",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["grouped-test"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 2,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
                     "source_table_name": ["bq-public.source_dataset.test_source"] * 2,
                     "source_column_name": [None] * 2,
                     "target_table_name": ["bq-public.target_dataset.test_target"] * 2,
@@ -499,7 +516,7 @@ def test_generate_report_without_group_by(
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                     ],
-                    "labels": [[("name", "group_label")]] * 2,
+                    "labels": [[]] * 2,
                 }
             ),
         ),
@@ -537,14 +554,19 @@ def test_generate_report_without_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "group_label")],
+                labels=[],
                 run_id="grouped-test",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["grouped-test"] * 6,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 6,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 6,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 6,
                     "source_table_name": [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",
@@ -589,7 +611,7 @@ def test_generate_report_without_group_by(
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
-                    "labels": [[("name", "group_label")]] * 6,
+                    "labels": [[]] * 6,
                 }
             ),
         ),
@@ -597,14 +619,13 @@ def test_generate_report_without_group_by(
 )
 def test_generate_report_with_group_by(
     module_under_test,
-    patch_datetime_now,
     source_df,
     target_df,
     join_on_fields,
     run_metadata,
     expected,
 ):
-    pandas_client = ibis.backends.pandas.connect(
+    pandas_client = ibis.pandas.connect(
         {"test_source": source_df, "test_target": target_df}
     )
     report = module_under_test.generate_report(
@@ -632,6 +653,7 @@ def test_generate_report_with_group_by(
     pandas.testing.assert_frame_equal(report, expected)
 
 
+@freeze_time("1998-09-04 07:31:42")
 @pytest.mark.parametrize(
     ("source_df", "target_df", "run_metadata", "expected"),
     (
@@ -656,14 +678,18 @@ def test_generate_report_with_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["test_col"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -680,7 +706,7 @@ def test_generate_report_with_group_by(
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
                     "validation_status": [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[("name", "test_label")]],
+                    "labels": [[]],
                 }
             ),
         ),
@@ -705,14 +731,18 @@ def test_generate_report_with_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["test_col"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -729,7 +759,7 @@ def test_generate_report_with_group_by(
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
                     "validation_status": [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[("name", "test_label")]],
+                    "labels": [[]],
                 }
             ),
         ),
@@ -754,14 +784,18 @@ def test_generate_report_with_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": ["test_col"],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -778,7 +812,7 @@ def test_generate_report_with_group_by(
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
                     "validation_status": [consts.VALIDATION_STATUS_SUCCESS],
-                    "labels": [[("name", "test_label")]],
+                    "labels": [[]],
                 }
             ),
         ),
@@ -803,14 +837,18 @@ def test_generate_report_with_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"],
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)],
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ],
                     "source_table_name": ["bq-public.source_dataset.test_source"],
                     "source_column_name": [None],
                     "target_table_name": ["bq-public.target_dataset.test_target"],
@@ -827,7 +865,7 @@ def test_generate_report_with_group_by(
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
                     "validation_status": [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[("name", "test_label")]],
+                    "labels": [[]],
                 }
             ),
         ),
@@ -865,14 +903,19 @@ def test_generate_report_with_group_by(
                 },
                 start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
                 end_time=None,
-                labels=[("name", "test_label")],
+                labels=[],
                 run_id="test-run",
             ),
             pandas.DataFrame(
                 {
                     "run_id": ["test-run"] * 2,
                     "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [datetime.datetime(1998, 9, 4, 7, 31, 42)] * 2,
+                    "end_time": [
+                        datetime.datetime(
+                            1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 2,
                     "source_table_name": [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",
@@ -898,16 +941,16 @@ def test_generate_report_with_group_by(
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
-                    "labels": [[("name", "test_label")]] * 2,
+                    "labels": [[]] * 2,
                 }
             ),
         ),
     ),
 )
 def test_generate_report_with_nan_agg_value(
-    module_under_test, patch_datetime_now, source_df, target_df, run_metadata, expected
+    module_under_test, source_df, target_df, run_metadata, expected
 ):
-    pandas_client = ibis.backends.pandas.connect(
+    pandas_client = ibis.pandas.connect(
         {"test_source": source_df, "test_target": target_df}
     )
     report = module_under_test.generate_report(

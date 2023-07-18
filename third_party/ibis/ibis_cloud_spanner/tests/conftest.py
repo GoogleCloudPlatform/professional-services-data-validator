@@ -13,13 +13,13 @@
 # limitations under the License.
 
 import datetime
-import random
 import pathlib
+import random
 
-from google.cloud import spanner_v1
 import pytest
-from third_party.ibis.ibis_cloud_spanner.api import connect
+from google.cloud import spanner_v1
 
+from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 
 DATA_DIR = pathlib.Path(__file__).parent
 
@@ -66,7 +66,9 @@ def cleanup_spanner_instances(spanner_client):
     for instance in spanner_client.list_instances():
         instance_id = instance.name.split("/")[-1]
         if instance_id.startswith(INSTANCE_ID_PREFIX):
-            creation_time = datetime.datetime.strptime(instance_id[len(INSTANCE_ID_PREFIX):], INSTANCE_ID_TIMESTAMP_FORMAT)
+            creation_time = datetime.datetime.strptime(
+                instance_id[len(INSTANCE_ID_PREFIX) :], INSTANCE_ID_TIMESTAMP_FORMAT
+            )
             if datetime.datetime.now() - creation_time > datetime.timedelta(days=1):
                 instance = spanner_client.instance(instance_id)
                 instance.delete()
@@ -131,12 +133,12 @@ def database_id2(spanner_client, instance_id):
 
 @pytest.fixture(scope="session")
 def client(instance_id, database_id):
-    return connect(instance_id, database_id)
+    return spanner_connect(instance_id, database_id)
 
 
 @pytest.fixture(scope="session")
 def client2(instance_id, database_id):
-    return connect(instance_id, database_id)
+    return spanner_connect(instance_id, database_id)
 
 
 @pytest.fixture(scope="session")
