@@ -94,23 +94,20 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
-
     if isinstance(datatype, ibis.expr.datatypes.Timestamp):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
-    elif isinstance(datatype, ibis.expr.datatypes.Float64):
-        # Float64 type results from AVG() aggregation
-        source_value = field_differences["differences_source_value"].round(digits=4)
-        target_value = field_differences["differences_target_value"].round(digits=4)
-    elif isinstance(datatype, ibis.expr.datatypes.Decimal):
+    elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(
+        datatype, ibis.expr.datatypes.Float64
+    ):
         source_value = (
             field_differences["differences_source_value"]
-            .cast("float64")
+            .cast("float32")
             .round(digits=4)
         )
         target_value = (
             field_differences["differences_target_value"]
-            .cast("float64")
+            .cast("float32")
             .round(digits=4)
         )
     else:
@@ -150,7 +147,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
 
         pct_difference_nonzero = (
             ibis.literal(100.0)
-            * difference
+            * difference.cast("float32")
             / (
                 source_value.case()
                 .when(ibis.literal(0), target_value)
@@ -366,9 +363,7 @@ def _add_metadata(joined, run_metadata):
     joined = joined[
         joined,
         ibis.literal(run_metadata.run_id).name("run_id"),
-        ibis.literal(
-            run_metadata.labels, type="array<struct<key:string,value:string>>"
-        ).name("labels"),
+        ibis.literal(run_metadata.labels).name("labels"),
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),
     ]

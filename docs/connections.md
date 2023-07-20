@@ -47,11 +47,14 @@ The data validation tool supports the following connection types.
 * [Postgres](#postgres)
 * [MySQL](#mysql)
 * [Redshift](#redshift)
-* [FileSystem](#filesystem)
+* [FileSystem](#filesystem-csv-or-json-only)
 * [Impala](#Impala)
 * [Hive](#Hive)
 * [DB2](#DB2)
 * [AlloyDB](#AlloyDB)
+<!--- TODO Uncomment once Snowflake is supported
+* [Snowflake (Alpha)](#snowflake-alpha)
+-->
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
@@ -146,8 +149,7 @@ data-validation connections add
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ## MSSQL Server
-Please note the MSSQL Server package is not installed by default. You will need to follow [SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server) installation steps.
-Then `pip install pyodbc`.
+MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
 
 ```
 data-validation connections add 
@@ -222,7 +224,7 @@ data-validation connections add
     --connection-name CONN_NAME FileSystem              Connection name
     --table-name TABLE_NAME                             Table name to use as reference for file data
     --file-path FILE_PATH                               Local, GCS, or S3 file path
-    --file-type FILE_TYPE                               File type (CSV, JSON)
+    --file-type FILE_TYPE                               File type (csv, json)
 ```
 
 ## Impala
@@ -255,6 +257,7 @@ Please note that for Group By validations, the following property must be set in
  ```
  pip install ibis-framework[impala]
  ```
+ Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
  
  Hive connections are based on the Ibis Impala connection which uses [impyla](https://github.com/cloudera/impyla).
  Only Hive >=0.11 is supported due to impyla's dependency on HiveServer2.
@@ -281,6 +284,7 @@ data-validation connections add
 
 
 ## DB2
+DB2 requires the `ibm_db_sa` package.
 ```
 data-validation connections add 
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -294,3 +298,19 @@ data-validation connections add
     [--url URL]                                         URL link in DB2 to connect to
     [--driver DRIVER]                                   DB2 driver, defaults to "ibm_db_sa"
 ```
+
+<!--- TODO Uncomment this once Snowflake support has been tested
+## Snowflake (Alpha)
+Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
+```
+data-validation connections add 
+    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
+    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
+    --connection-name CONN_NAME Snowflake               Connection name
+    --user USER                                         Snowflake user
+    --password PASSWORD                                 Snowflake password
+    --account ACCOUNT                                   Snowflake account
+    --database DATABASE                                 Snowflake database
+    [--connect-args CONNECT_ARGS]                       Additional connection args, default {}
+```
+-->

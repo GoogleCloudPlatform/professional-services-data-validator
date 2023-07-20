@@ -14,13 +14,14 @@ perform this task.
 
 DVT supports the following validations:
 * Column validation (count, sum, avg, min, max, group by)
-* Row validation (BQ, Hive, Teradata, Oracle, SQL Server, Postgres, Mysql only)
+* Row validation (Not supported for FileSystem connections)
 * Schema validation
 * Custom Query validation
 * Ad hoc SQL exploration
 
 DVT supports the following connection types:
 
+*   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
 *   [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
 *   [DB2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
 *   [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
@@ -33,7 +34,6 @@ DVT supports the following connection types:
 *   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
 *   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
 *   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
-*   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
 
 The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
@@ -136,7 +136,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation is currently supported for BigQuery, Teradata, Impala/Hive, Oracle, SQL Server, Redshift, Postgres, Mysql, Db2 and Alloy DB. Struct and array data types are not currently supported.
+(Note: Row hash validation not supported for FileSystem connections. 
 In addition, please note that SHA256 is not a supported function on Teradata systems.
 If you wish to perform this comparison on Teradata you will need to
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
@@ -199,6 +199,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
+(Note: This is only supported for Oracle and Postgres connections.)
+
 When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
 The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`). You can then run the configs in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
@@ -242,6 +244,8 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
 Below is the syntax for schema validations. These can be used to compare case insensitive column names and
 types between source and target.
 
+Note: An exclamation point before a data type (`!string`) signifies the column is non-nullable or required.
+
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate schema
   --source-conn or -sc SOURCE_CONN
@@ -269,7 +273,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
   [--exclusion-columns or -ec EXCLUSION_COLUMNS]
                         Comma separated list of columns to be excluded from the schema validation, e.g.: col_a,col_b.
   [--allow-list or -al ALLOW_LIST]
-                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),string[non-nullable]:string"
+                        Comma separated list of data-type mappings of source and destination data sources which will be validated in case of missing data types in destination data source. e.g: "decimal(4,2):decimal(5,4),!string:string"
   [--allow-list-file ALLOW_LIST_FILE, -alf ALLOW_LIST_FILE]
                         YAML file containing default --allow-list mappings. Can be used in conjunction with --allow-list.
                         e.g.: samples/allow_list/oracle_to_bigquery.yaml or gs://dvt-allow-list-files/oracle_to_bigquery.yaml
@@ -325,7 +329,7 @@ page provides few examples of how this tool can be used to run custom query vali
 
 #### Custom Query Row Validations
 
-(Note: Custom query row validation is currently only supported for BigQuery, Teradata, SQL Server, PostgreSQL, Oracle, Redshift, DB2, AlloyDB, and Impala/Hive. Struct and array data types are not currently supported.)
+(Note: Custom query row validation is not supported for FileSystem connections. Struct and array data types are not currently supported.)
 
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields
@@ -640,7 +644,7 @@ DVT supports certain functions required for row hash validation natively (i.e. C
 which are listed in the CalculatedField() class methods in the [QueryBuilder](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/query_builder/query_builder.py).
 
 You can also specify custom functions (i.e. replace() or truncate()) from the Ibis expression
-[API reference](https://ibis-project.org/docs/3.2.0/api/expressions/). Keep in mind these will run
+[API reference](https://ibis-project.org/reference/expressions/generic/). Keep in mind these will run
 on both source and target systems. You will need to specify the Ibis API expression and the parameters
 required, if any, with the 'params' block as shown below:
 
@@ -658,7 +662,7 @@ required, if any, with the 'params' block as shown below:
     - format_str: '%m%d%Y'
 ```
 
-The above block references the [TimestampValue.strftime](https://ibis-project.org/docs/3.2.0/api/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
+The above block references the [TimestampValue.strftime](https://ibis-project.org/reference/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
 See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-row-validation-yaml-with-custom-calc-field)
 for a sample YAML with a custom calculated field.
 

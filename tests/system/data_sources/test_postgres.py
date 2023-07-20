@@ -117,7 +117,7 @@ def test_postgres_count(cloud_sql):
 
 
 def test_postgres_row(cloud_sql):
-    """Test row validaiton on Postgres"""
+    """Test row validation on Postgres"""
     config_row_valid = {
         consts.CONFIG_SOURCE_CONN: CONN,
         consts.CONFIG_TARGET_CONN: CONN,
@@ -563,12 +563,11 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             (
                 # PostgreSQL integrals go to BigQuery INT64.
-                "--allow-list=int16:int64,int32:int64,int32[non-nullable]:int64,"
+                "--allow-list=int16:int64,int32:int64,!int32:int64,"
                 # Oracle NUMBERS that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
-                # When issue-839 is resolved we need to edit the line below as appropriate.
-                "decimal(38,0):decimal(38,9),"
+                "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64,"
                 # TODO When issue-706 is complete remove the timestamp line below
@@ -660,6 +659,35 @@ def test_row_validation_core_types():
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=*",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_core_types():
+    """PostgreSQL to PostgreSQL dvt_core_types custom-query validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "--source-query=select * from pso_data_validator.dvt_core_types",
+            "--target-query=select * from pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--count=*",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

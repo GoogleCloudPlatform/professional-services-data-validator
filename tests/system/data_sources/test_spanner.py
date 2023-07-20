@@ -305,7 +305,6 @@ def test_column_validation_core_types(spanner_connection_config, database_id):
 
 def test_row_validation_core_types(spanner_connection_config, database_id):
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --hash string below to * when issue-767 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -315,7 +314,36 @@ def test_row_validation_core_types(spanner_connection_config, database_id):
             f"-tbls={database_id}.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date",
+            "--hash=*",
+        ]
+    )
+    with mock.patch(
+        "data_validation.state_manager.StateManager.get_connection_config",
+        return_value=spanner_connection_config,
+    ):
+        config_managers = main.build_config_managers_from_args(args)
+        assert len(config_managers) == 1
+        config_manager = config_managers[0]
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        df = validator.execute()
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0
+
+
+def test_custom_query_validation_core_types(spanner_connection_config, database_id):
+    """Spanner to Spanner dvt_core_types custom-query validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "--source-query=select * from dvt_core_types",
+            "--target-query=select * from dvt_core_types",
+            "--filter-status=fail",
+            "--count=*",
         ]
     )
     with mock.patch(

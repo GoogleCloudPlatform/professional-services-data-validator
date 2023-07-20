@@ -107,6 +107,7 @@ CUSTOM_QUERY_INLINE_VALIDATION_CONFIG = {
 
 class MockIbisClient(object):
     _source_type = "BigQuery"
+    name = "bigquery"
 
     def table(self, table, database=None):
         return MockIbisTable()

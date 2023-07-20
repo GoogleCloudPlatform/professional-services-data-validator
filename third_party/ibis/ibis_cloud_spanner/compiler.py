@@ -11,48 +11,74 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 
 import ibis.expr.operations as ops
-import ibis_bigquery
-from ibis_bigquery import compiler as bigquery_compiler
+from ibis.backends.base.sql import compiler as sql_compiler
+from ibis.backends.bigquery import compiler as bigquery_compiler
+from ibis.backends.bigquery import rewrites
+from third_party.ibis.ibis_cloud_spanner import registry
 
 
-def build_ast(expr, context):
-    builder = bigquery_compiler.BigQueryQueryBuilder(expr, context=context)
-    return builder.get_result()
+_NAME_REGEX = re.compile(r"[_A-Za-z][A-Za-z_0-9]*")
 
+class SpannerSelect(sql_compiler.Select):
+    def format_limit(self):
+        if not self.limit:
+            return None
 
-def to_sql(expr, context):
-    query_ast = build_ast(expr, context)
-    compiled = query_ast.compile()
-    return compiled
+        limit_sql = f"TABLESAMPLE RESERVOIR ({self.limit.n} ROWS)"
+        return limit_sql
 
+class SpannerExprTranslator(sql_compiler.ExprTranslator):
+    """Translate expressions to strings."""
 
-def _array_index(translator, expr):
-    # SAFE_OFFSET returns NULL if out of bounds
-    return "{}[OFFSET({})]".format(*map(translator.translate, expr.op().args))
+    _registry = registry._registry
+    _rewrites = rewrites.REWRITES
 
+    _forbids_frame_clause = (
+        *sql_compiler.ExprTranslator._forbids_frame_clause,
+        ops.Lag,
+        ops.Lead,
+    )
 
-def _translate_pattern(translator, pattern):
-    # add 'r' to string literals to indicate to Cloud Spanner this is a raw string
-    return "r" * isinstance(pattern.op(), ops.Literal) + translator.translate(pattern)
+    _unsupported_reductions = (ops.ApproxMedian, ops.ApproxCountDistinct)
+    _dialect_name = "spanner"
 
+    @staticmethod
+    def _gen_valid_name(name: str) -> str:
+        name = "_".join(_NAME_REGEX.findall(name)) or "tmp"
+        return f"`{name}`"
 
-def _regex_extract(translator, expr):
-    arg, pattern, index = expr.op().args
-    regex = _translate_pattern(translator, pattern)
-    result = "REGEXP_EXTRACT({}, {})".format(translator.translate(arg), regex)
-    return result
+    def name(self, translated: str, name: str):
+        # replace invalid characters in automatically generated names
+        valid_name = self._gen_valid_name(name)
+        if translated == valid_name:
+            return translated
+        return f"{translated} AS {valid_name}"
 
+    @classmethod
+    def compiles(cls, klass):
+        def decorator(f):
+            cls._registry[klass] = f
+            return f
 
-_operation_registry = bigquery_compiler._operation_registry.copy()
-_operation_registry.update(
-    {ops.RegexExtract: _regex_extract, ops.ArrayIndex: _array_index,}
-)
+        return decorator
 
+    def _trans_param(self, op):
+        if op not in self.context.params:
+            raise KeyError(op)
+        return f"@{op.name}"
 
-compiles = bigquery_compiler.BigQueryExprTranslator.compiles
-rewrites = bigquery_compiler.BigQueryExprTranslator.rewrites
+compiles = SpannerExprTranslator.compiles
 
+class SpannerCompiler(sql_compiler.Compiler):
+    # Spanner uses BigQuery SQL syntax
+    translator_class = SpannerExprTranslator
+    table_set_formatter_class = bigquery_compiler.BigQueryTableSetFormatter
+    union_class = bigquery_compiler.BigQueryUnion
+    intersect_class = bigquery_compiler.BigQueryIntersection
+    difference_class = bigquery_compiler.BigQueryDifference
+    select_class = SpannerSelect
 
-dialect = ibis_bigquery.Backend().dialect
+    support_values_syntax_in_select = False

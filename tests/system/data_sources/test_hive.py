@@ -165,8 +165,7 @@ def test_schema_validation_core_types_to_bigquery():
                 # Hive decimals that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Hive decimals that map to BigQuery BIGNUMERIC.
-                # When issue-839 is resolved we need to edit the line below as appropriate.
-                "decimal(38,0):decimal(38,9),"
+                "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
             ),
@@ -256,7 +255,6 @@ def disabled_test_row_validation_core_types():
     test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
     """
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --hash option to * below when issue-765 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -266,7 +264,7 @@ def disabled_test_row_validation_core_types():
             "-tbls=pso_data_validator.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
+            "--hash=*",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -284,7 +282,6 @@ def disabled_test_row_validation_core_types():
 )
 def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --hash option to include col_date,col_datetime,col_tstz when issue-765 is complete.
     # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     args = parser.parse_args(
         [
@@ -295,7 +292,7 @@ def test_row_validation_core_types_to_bigquery():
             "-tbls=pso_data_validator.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

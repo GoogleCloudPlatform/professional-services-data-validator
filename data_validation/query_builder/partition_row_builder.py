@@ -21,7 +21,7 @@ class PartitionRowBuilder(object):
     def __init__(
         self,
         primary_keys: [str],
-        data_client: ibis.client,
+        data_client: ibis.backends.base.BaseBackend,
         schema_name: str,
         table_name: str,
         query_builder: QueryBuilder,
@@ -30,7 +30,7 @@ class PartitionRowBuilder(object):
 
         Args:
             primary_keys [str]: Keys used to identify a row for validation
-            data_client (IbisClient): The client used to query random rows.
+            data_client (BaseBackend): The Backend used to query random rows.
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
             query_builder (QueryBuilder): QueryBuilder object.
@@ -42,7 +42,7 @@ class PartitionRowBuilder(object):
 
     def _compile_query(
         self,
-        data_client: ibis.client,
+        data_client: ibis.backends.base.BaseBackend,
         schema_name: str,
         table_name: str,
         query_builder: QueryBuilder,
@@ -50,7 +50,7 @@ class PartitionRowBuilder(object):
         """Return an Ibis query object
 
         Args:
-            data_client (IbisClient): The client used to query random rows.
+            data_client (BaseBackend): The Backend used to query random rows.
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
             query_builder (QueryBuilder): QueryBuilder object.
