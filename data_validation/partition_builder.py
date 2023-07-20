@@ -181,43 +181,6 @@ class PartitionBuilder:
             # available on all platforms (Teradata does not support NTILE). For our purposes, it is likely
             # more efficient
             window1 = ibis.window(order_by=self.primary_keys)
-<<<<<<< Updated upstream
-            nt = (
-                source_table.get_column(self.primary_keys[0])
-                .ntile(buckets=number_of_part)
-                .over(window1)
-                .name(consts.DVT_NTILE_COL)
-            )
-            dvt_nt = self.primary_keys.copy()
-            dvt_nt.append(nt)
-            partitioned_table = source_table.select(dvt_nt)
-            # Partitioned table is just the primary key columns in the source table along with
-            # an additional column with the partition number associated with each row.
-
-            # We are interested in only the primary key values at the begining of
-            # each partitition - the following window groups by partition number
-            window2 = ibis.window(
-                order_by=self.primary_keys, group_by=[consts.DVT_NTILE_COL]
-            )
-            first_pkys = [
-                partitioned_table.get_column(primary_key)
-                .first()
-                .over(window2)
-                .name(consts.DVT_FIRST_PRE + primary_key)
-                for primary_key in self.primary_keys
-            ]
-            partition_no = (
-                partitioned_table[consts.DVT_NTILE_COL]
-                .first()
-                .over(window2)
-                .name(consts.DVT_PART_NO)
-            )
-            column_list = [partition_no] + first_pkys
-            partition_boundary = (
-                partitioned_table.select(column_list)
-                .sort_by([consts.DVT_PART_NO])
-                .distinct()
-=======
             row_number = (ibis.row_number().over(window1) + 1).name(consts.DVT_POS_COL)
             dvt_keys = self.primary_keys.copy()
             dvt_keys.append(row_number)
@@ -248,7 +211,6 @@ class PartitionBuilder:
                     * source_count
                 )
                 > 0
->>>>>>> Stashed changes
             )
             first_keys_table = rownum_table[cond].order_by(self.primary_keys)
 
