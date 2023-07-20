@@ -14,6 +14,7 @@
 
 import os
 import ibis
+import pandas
 import logging
 from typing import List, Dict
 from argparse import Namespace
@@ -156,6 +157,13 @@ class PartitionBuilder:
             source_count = source_partition_row_builder.get_count()
             target_count = target_partition_row_builder.get_count()
 
+            # For some reason Teradata connector returns a dataframe with the count element,
+            # while the other connectors return a numpy.int64 value
+            if isinstance(source_count, pandas.DataFrame):
+                source_count = source_count.values[0][0]
+            if isinstance(target_count, pandas.DataFrame):
+                target_count = target_count.values[0][0]
+
             if abs(source_count - target_count) > source_count * 0.1:
                 logging.warning(
                     "Source and Target table row counts vary by more than 10%,"
@@ -169,9 +177,11 @@ class PartitionBuilder:
                 else source_count
             )
 
-            # First we use the ntile aggregate function and divide assign a partition
-            # number to each row in the source table
+            # First we number each row in the source table. Using row_number instead of ntile since it is
+            # available on all platforms (Teradata does not support NTILE). For our purposes, it is likely
+            # more efficient
             window1 = ibis.window(order_by=self.primary_keys)
+<<<<<<< Updated upstream
             nt = (
                 source_table.get_column(self.primary_keys[0])
                 .ntile(buckets=number_of_part)
@@ -207,11 +217,44 @@ class PartitionBuilder:
                 partitioned_table.select(column_list)
                 .sort_by([consts.DVT_PART_NO])
                 .distinct()
+=======
+            row_number = (ibis.row_number().over(window1) + 1).name(consts.DVT_POS_COL)
+            dvt_keys = self.primary_keys.copy()
+            dvt_keys.append(row_number)
+            rownum_table = source_table.select(dvt_keys)
+            # Rownum table is just the primary key columns in the source table along with
+            # an additional column with the row number associated with each row.
+
+            # This rather complicated expression below is a filter (where) clause condition that filters the row numbers
+            # that correspond to the first element of the partition. The number of a partition is
+            # ceiling(row number * # of partitions / total number of rows). The first element of the partition is where
+            # the remainder, i.e. row number * # of partitions % total number of rows is > 0 and <= number of partitions.
+            # The remainder function does not work well with Teradata, hence writing that out explicitly.
+            cond = (
+                (
+                    rownum_table[consts.DVT_POS_COL] * number_of_part
+                    - (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
+                    ).floor()
+                    * source_count
+                )
+                <= number_of_part
+            ) & (
+                (
+                    rownum_table[consts.DVT_POS_COL] * number_of_part
+                    - (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
+                    ).floor()
+                    * source_count
+                )
+                > 0
+>>>>>>> Stashed changes
             )
+            first_keys_table = rownum_table[cond].order_by(self.primary_keys)
 
             # Up until this point, we have built the table expression, have not executed the query yet.
-            # The query is now executed to find the first and last element of each partition
-            first_elements = partition_boundary.execute().to_numpy()
+            # The query is now executed to find the first element of each partition
+            first_elements = first_keys_table.execute().to_numpy()
 
             # Once we have the first element of each partition, we can generate the where clause
             # i.e. greater than or equal to first element and less than first element of next partition
@@ -219,21 +262,27 @@ class PartitionBuilder:
             # partition and greater than or equal to the first element of the last partition respectively
             filter_clause_list = []
             filter_clause_list.append(
-                self._less_than_value(self.primary_keys, first_elements[1, 1:])
+                self._less_than_value(
+                    self.primary_keys, first_elements[1, : len(self.primary_keys)]
+                )
             )
             for i in range(1, first_elements.shape[0] - 1):
                 filter_clause_list.append(
                     "("
-                    + self._geq_value(self.primary_keys, first_elements[i, 1:])
+                    + self._geq_value(
+                        self.primary_keys, first_elements[i, : len(self.primary_keys)]
+                    )
                     + ") AND ("
                     + self._less_than_value(
-                        self.primary_keys, first_elements[i + 1, 1:]
+                        self.primary_keys,
+                        first_elements[i + 1, : len(self.primary_keys)],
                     )
                     + ")"
                 )
             filter_clause_list.append(
                 self._geq_value(
-                    self.primary_keys, first_elements[len(first_elements) - 1, 1:]
+                    self.primary_keys,
+                    first_elements[len(first_elements) - 1, : len(self.primary_keys)],
                 )
             )
 
