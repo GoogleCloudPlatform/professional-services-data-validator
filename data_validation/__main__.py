@@ -485,6 +485,8 @@ def run_validations(args, config_managers):
                     config_manager.config[consts.CONFIG_FILE],
                 )
         else:
+            print("===========JSON CONFIG - MAIN PART ==========")
+            print(config_manager.config)
             run_validation(config_manager, dry_run=args.dry_run, verbose=args.verbose)
 
 
