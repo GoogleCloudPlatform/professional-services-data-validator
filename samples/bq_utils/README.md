@@ -2,7 +2,7 @@
 
 ## Dataset-level
 
-Currently, we do not natively support validations of an entire BQ dataset yet. This is a workaround to execute this task.
+We do not natively support validations of an entire BQ dataset. This is a workaround to execute this task.
 
 This script will run validations on all the BigQuery tables within a provided dataset **as long as the table names match between source and target datasets.** 
 
