@@ -140,7 +140,7 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_SZ(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.timestamp
+            return dt.timestamp(timezone="UTC")
 
         return "TIMESTAMP"
 

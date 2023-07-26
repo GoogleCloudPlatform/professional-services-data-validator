@@ -40,7 +40,7 @@ class _FieldDescription(TypedDict):
     internal_size: Optional[int]
     precision: Optional[int]
     scale: Optional[int]
-    null_ok: Optional[int] 
+    null_ok: Optional[int]
 
 
 def _get_type(col: _FieldDescription) -> dt.DataType:
@@ -50,7 +50,7 @@ def _get_type(col: _FieldDescription) -> dt.DataType:
         raise NotImplementedError(
             f"Oracle type {typename} is not supported"
         )
-    
+
     if typename == cx_Oracle.DB_TYPE_NUMBER:
         if col[4] == 0 and col[5] == -127:
             # This will occur if type is NUMBER with no precision/scale
@@ -140,7 +140,10 @@ def sa_oracle_NCHAR(_, satype, nullable=True):
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.TIMESTAMP)
 def sa_oracle_TIMESTAMP(_, satype, nullable=True):
-    return dt.Timestamp(nullable=nullable)
+    if satype.timezone:
+        return dt.Timestamp(timezone="UTC", nullable=nullable)
+    else:
+        return dt.Timestamp(nullable=nullable)
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BLOB)
 def sa_oracle_BLOB(_, satype, nullable=True):
