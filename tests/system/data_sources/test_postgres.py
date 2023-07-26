@@ -569,9 +569,7 @@ def test_schema_validation_core_types_to_bigquery():
                 # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
                 "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
-                "float32:float64,"
-                # TODO When issue-706 is complete remove the timestamp line below
-                "timestamp('UTC'):timestamp"
+                "float32:float64"
             ),
         ]
     )

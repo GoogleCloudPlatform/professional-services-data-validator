@@ -230,7 +230,6 @@ def test_schema_validation_core_types():
 )
 def test_schema_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO When issue-706 is complete remove the timestamp line below
     args = parser.parse_args(
         [
             "validate",
@@ -248,7 +247,6 @@ def test_schema_validation_core_types_to_bigquery():
                 "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64,"
-                "timestamp('UTC'):timestamp,"
                 # Ignore ID column, we're not testing that one.
                 "!int32:int64"
             ),
