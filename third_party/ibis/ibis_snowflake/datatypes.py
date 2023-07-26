@@ -11,27 +11,18 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.See the
 # License for the specific language governing permissions and limitations under
 # the License.
-import ibis
-from typing import Any, Mapping
+from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
+import sqlalchemy as sa
+import ibis.expr.datatypes as dt
 
+from snowflake.sqlalchemy import (
+    NUMBER
+)
 
-# Fail fast with import
-import snowflake.sqlalchemy
-import snowflake.connector
-
-import third_party.ibis.ibis_snowflake.datatypes
-
-def snowflake_connect(
-    user: str,
-    password: str,
-    account: str,
-    database: str,
-    connect_args: Mapping[str, Any] = None,
-):
-    return ibis.snowflake.connect(
-        user=user,
-        password=password,
-        account=account,
-        database=database,
-        connect_args=connect_args,
+@dt.dtype.register(SnowflakeDialect, NUMBER)
+def sa_sf_numeric(_, satype, nullable=True):
+    return dt.Decimal(
+        precision=satype.precision or 38,
+        scale=satype.scale or 0,
+        nullable=nullable,
     )

@@ -41,7 +41,7 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.expr.operations import (Cast, Comparison, HashBytes, IfNull,
                                   RandomScalar, Strftime, StringJoin,
-                                  Value)
+                                  Value, ExtractEpochSeconds)
 from ibis.expr.types import NumericValue, TemporalValue
 
 import third_party.ibis.ibis_mysql.compiler
@@ -243,6 +243,10 @@ def sa_format_hashbytes_snowflake(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.sha2(arg)
 
+def sa_epoch_time_snowflake(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.date_part(sa.sql.literal_column("epoch_seconds"), arg)
+
 def sa_format_to_char(translator, op):
     arg = translator.translate(op.arg)
     fmt = translator.translate(op.fmt)
@@ -345,3 +349,4 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[HashBytes] = sa_format_hashbytes_snowflake
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
+    SnowflakeExprTranslator._registry[ExtractEpochSeconds] = sa_epoch_time_snowflake

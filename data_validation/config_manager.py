@@ -725,7 +725,8 @@ class ConfigManager(object):
 
     def build_config_calculated_fields(
         self,
-        reference,
+        source_reference,
+        target_reference,
         calc_type,
         alias,
         depth,
@@ -758,8 +759,8 @@ class ConfigManager(object):
                 continue
 
         calculated_config = {
-            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: reference,
-            consts.CONFIG_CALCULATED_TARGET_COLUMNS: reference,
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: source_reference,
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: target_reference,
             consts.CONFIG_FIELD_ALIAS: alias,
             consts.CONFIG_TYPE: calc_type,
             consts.CONFIG_DEPTH: depth,
@@ -783,7 +784,7 @@ class ConfigManager(object):
     def _strftime_format(
         self, column_type: Union[dt.Date, dt.Timestamp], client
     ) -> str:
-        if isinstance(column_type, dt.Timestamp):
+        if column_type.is_timestamp():
             return "%Y-%m-%d %H:%M:%S"
         if clients.is_oracle_client(client):
             # Oracle DATE is a DateTime
@@ -792,7 +793,8 @@ class ConfigManager(object):
 
     def _apply_base_cast_overrides(
         self,
-        column: str,
+        source_column: str,
+        target_column: str,
         col_config: dict,
         source_table: "ibis.expr.types.TableExpr",
         target_table: "ibis.expr.types.TableExpr",
@@ -805,18 +807,18 @@ class ConfigManager(object):
         target_table_schema = {k: v for k, v in target_table.schema().items()}
 
         if isinstance(
-            source_table_schema[column], (dt.Date, dt.Timestamp)
-        ) and isinstance(target_table_schema[column], (dt.Date, dt.Timestamp)):
+            source_table_schema[source_column], (dt.Date, dt.Timestamp)
+        ) and isinstance(target_table_schema[target_column], (dt.Date, dt.Timestamp)):
             # Use strftime rather than cast for temporal comparisons.
             # Pick the most permissive format across the two engines.
             # For example Date -> Timestamp should format both source and target as Date.
             fmt = min(
                 [
                     self._strftime_format(
-                        source_table_schema[column], self.source_client
+                        source_table_schema[source_column], self.source_client
                     ),
                     self._strftime_format(
-                        source_table_schema[column], self.target_client
+                        source_table_schema[source_column], self.target_client
                     ),
                 ],
                 key=len,
@@ -840,12 +842,19 @@ class ConfigManager(object):
         target_table = self.get_target_ibis_calculated_table()
 
         order_of_operations = []
-        if col_list is None:
-            casefold_source_columns = {
+        casefold_source_columns = {
                 x.casefold(): str(x) for x in source_table.columns
             }
-        else:
-            casefold_source_columns = {x.casefold(): str(x) for x in col_list}
+        casefold_target_columns = {
+            x.casefold(): str(x) for x in target_table.columns
+        }
+
+        if col_list:
+            casefold_col_list = [x.casefold() for x in col_list]
+            # Filter columns based on col_list if provided
+            casefold_source_columns = { k : v for (k, v) in casefold_source_columns.items() if k in casefold_col_list}
+            casefold_target_columns = { k : v for (k, v) in casefold_target_columns.items() if k in casefold_col_list}
+
         if calc_type == "hash":
             order_of_operations = [
                 "cast",
@@ -867,12 +876,13 @@ class ConfigManager(object):
         col_names = []
         for i, calc in enumerate(order_of_operations):
             if i == 0:
-                previous_level = [x for x in casefold_source_columns.values()]
+                previous_level = [x for x in casefold_source_columns.keys()]
             else:
                 previous_level = [k for k, v in column_aliases.items() if v == i - 1]
             if calc in ["concat", "hash"]:
                 col = {}
-                col["reference"] = previous_level
+                col["source_reference"] = previous_level
+                col["target_reference"] = previous_level
                 col["name"] = f"{calc}__all"
                 col["calc_type"] = calc
                 col["depth"] = i
@@ -884,16 +894,22 @@ class ConfigManager(object):
                 # This needs to be the previous manifest of columns
                 for j, column in enumerate(previous_level):
                     col = {}
-                    col["reference"] = [column]
+                    col["source_reference"] = [column] 
+                    col["target_reference"] = [column]
                     col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
-
+                    
                     if i == 0:
+                        # If depth 0, get raw column name with correct casing
+                        source_column = casefold_source_columns[column]
+                        target_column = casefold_target_columns[column]
+                        col["source_reference"] = [source_column] 
+                        col["target_reference"] = [target_column]
                         # If we are casting the base column (i == 0) then apply any
                         # datatype specific overrides.
                         col = self._apply_base_cast_overrides(
-                            column, col, source_table, target_table
+                            source_column, target_column, col, source_table, target_table
                         )
 
                     name = col["name"]

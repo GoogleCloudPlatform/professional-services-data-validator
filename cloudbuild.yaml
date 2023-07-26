@@ -104,6 +104,13 @@ steps:
   - 'NOX_SESSION=integration_hive'
   - 'PROJECT_ID=pso-kokoro-resources'
   - 'HIVE_HOST=10.128.15.219'
+- id: integration_snowflake
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_snowflake'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  secretEnv: ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD']
 
 availableSecrets:
   secretManager:
@@ -117,3 +124,9 @@ availableSecrets:
     env: 'TERADATA_PASSWORD'
   - versionName: projects/$PROJECT_ID/secrets/oracle_password/versions/latest
     env: 'ORACLE_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/snowflake_account/versions/latest
+    env: 'SNOWFLAKE_ACCOUNT'
+  - versionName: projects/$PROJECT_ID/secrets/snowflake_user/versions/latest
+    env: 'SNOWFLAKE_USER'
+  - versionName: projects/$PROJECT_ID/secrets/snowflake_password/versions/latest
+    env: 'SNOWFLAKE_PASSWORD'

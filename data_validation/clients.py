@@ -158,6 +158,7 @@ def get_ibis_table_schema(client, schema_name, table_name):
         "db2",
         "mssql",
         "redshift",
+        "snowflake",
     ]:
         return client.table(table_name, schema=schema_name).schema()
     else:
@@ -183,6 +184,7 @@ def list_tables(client, schema_name):
         "db2",
         "mssql",
         "redshift",
+        "snowflake"
     ]:
         return client.list_tables()
     return client.list_tables(database=schema_name)
