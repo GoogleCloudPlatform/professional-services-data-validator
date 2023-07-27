@@ -843,8 +843,8 @@ class ConfigManager(object):
 
         order_of_operations = []
         casefold_source_columns = {
-                x.casefold(): str(x) for x in source_table.columns
-            }
+            x.casefold(): str(x) for x in source_table.columns
+        }
         casefold_target_columns = {
             x.casefold(): str(x) for x in target_table.columns
         }
@@ -852,8 +852,8 @@ class ConfigManager(object):
         if col_list:
             casefold_col_list = [x.casefold() for x in col_list]
             # Filter columns based on col_list if provided
-            casefold_source_columns = { k : v for (k, v) in casefold_source_columns.items() if k in casefold_col_list}
-            casefold_target_columns = { k : v for (k, v) in casefold_target_columns.items() if k in casefold_col_list}
+            casefold_source_columns = {k : v for (k, v) in casefold_source_columns.items() if k in casefold_col_list}
+            casefold_target_columns = {k : v for (k, v) in casefold_target_columns.items() if k in casefold_col_list}
 
         if calc_type == "hash":
             order_of_operations = [
@@ -894,17 +894,17 @@ class ConfigManager(object):
                 # This needs to be the previous manifest of columns
                 for j, column in enumerate(previous_level):
                     col = {}
-                    col["source_reference"] = [column] 
+                    col["source_reference"] = [column]
                     col["target_reference"] = [column]
                     col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
-                    
+
                     if i == 0:
                         # If depth 0, get raw column name with correct casing
                         source_column = casefold_source_columns[column]
                         target_column = casefold_target_columns[column]
-                        col["source_reference"] = [source_column] 
+                        col["source_reference"] = [source_column]
                         col["target_reference"] = [target_column]
                         # If we are casting the base column (i == 0) then apply any
                         # datatype specific overrides.

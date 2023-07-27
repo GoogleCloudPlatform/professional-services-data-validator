@@ -263,14 +263,23 @@ def integration_snowflake(session):
     """Run Snowflake integration tests.
     Ensure Hive validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["snowflake-sqlalchemy", "snowflake-connector-python"])
+    _setup_session_requirements(
+        session, extra_packages=["snowflake-sqlalchemy", "snowflake-connector-python"]
+    )
 
-    expected_env_vars = ["PROJECT_ID", "SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD"]
+    expected_env_vars = [
+        "PROJECT_ID",
+        "SNOWFLAKE_ACCOUNT",
+        "SNOWFLAKE_USER",
+        "SNOWFLAKE_PASSWORD",
+    ]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "tests/system/data_sources/test_snowflake.py", *session.posargs)
+    session.run(
+        "pytest", "tests/system/data_sources/test_snowflake.py", *session.posargs
+    )
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")

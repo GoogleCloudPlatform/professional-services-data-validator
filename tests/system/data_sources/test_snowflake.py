@@ -53,6 +53,7 @@ SNOWFLAKE_CONFIG = {
     consts.CONFIG_FILTER_STATUS: None,
 }
 
+
 def test_count_validator():
     validator = data_validation.DataValidation(SNOWFLAKE_CONFIG, verbose=True)
     df = validator.execute()
@@ -135,7 +136,7 @@ def test_schema_validation_core_types_to_bigquery():
 )
 def test_column_validation_core_types():
     parser = cli_tools.configure_arg_parser()
-    # TODO Add COL_TSTZ when issue-916 is complete
+    # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
     args = parser.parse_args(
         [
             "validate",
@@ -164,7 +165,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Add COL_TSTZ when issue-916 is complete
+    # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
     args = parser.parse_args(
         [
             "validate",
@@ -193,7 +194,7 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_row_validation_core_types():
     parser = cli_tools.configure_arg_parser()
-    # TODO Add COL_TSTZ when issue-916 is complete
+    # TODO Change --hash to '*' when issue-916 is complete (support for col_tstz)
     args = parser.parse_args(
         [
             "validate",
@@ -221,7 +222,7 @@ def test_row_validation_core_types():
 )
 def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_tstz when issue-916 is complete
+    # TODO Change --hash to '*' when issue-916 is complete (support for col_tstz)
     args = parser.parse_args(
         [
             "validate",
@@ -242,3 +243,32 @@ def test_row_validation_core_types_to_bigquery():
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_core_types():
+    """Snowflake to Snowflake dvt_core_types custom-query validation"""
+    parser = cli_tools.configure_arg_parser()
+    # TODO Change to 'select *' when issue-916 is complete (support for col_tstz)
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "--source-query=select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
+            "--target-query=select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
+            "--filter-status=fail",
+            "--count=*",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
