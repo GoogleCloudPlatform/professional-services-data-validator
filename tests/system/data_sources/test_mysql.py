@@ -436,6 +436,7 @@ EXPECTED_PARTITION_FILTER = [
     "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
 ]
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=CONN,
@@ -471,6 +472,7 @@ def test_mysql_generate_table_partitions(mock_conn):
         len(partition_filters[0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",

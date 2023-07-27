@@ -118,6 +118,7 @@ def test_oracle_generate_table_partitions():
     )  # assume no of table rows > partition_num
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,

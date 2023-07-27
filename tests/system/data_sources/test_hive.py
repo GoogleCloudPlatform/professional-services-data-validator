@@ -109,6 +109,7 @@ EXPECTED_PARTITION_FILTER = [
     "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
 ]
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -144,6 +145,7 @@ def test_bigquery_generate_table_partitions():
         len(partition_filters[0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",

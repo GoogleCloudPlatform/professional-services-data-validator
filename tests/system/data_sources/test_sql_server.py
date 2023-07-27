@@ -192,11 +192,13 @@ def test_schema_validation():
     for validation in df.to_dict(orient="records"):
         assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
 
+
 def mock_get_connection_config(*args):
     if args[1] in ("ora-conn", "mock-conn"):
         return CONN
     elif args[1] == "bq-conn":
         return BQ_CONN
+
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
@@ -207,6 +209,7 @@ EXPECTED_PARTITION_FILTER = [
     + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
     "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
 ]
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
