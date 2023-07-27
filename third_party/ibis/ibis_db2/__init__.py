@@ -15,67 +15,66 @@ import sqlalchemy as sa
 import re
 
 import ibis.expr.datatypes as dt
-from typing import Iterable, Literal, Tuple
+from typing import Iterable, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
-from third_party.ibis.ibis_oracle.compiler import OracleCompiler
-from third_party.ibis.ibis_oracle.datatypes import _get_type
-
+from third_party.ibis.ibis_db2.compiler import Db2Compiler
+from third_party.ibis.ibis_db2.datatypes import _get_type
 
 class Backend(BaseAlchemyBackend):
-    name = "oracle"
-    compiler = OracleCompiler
+    name = "db2"
+    compiler = Db2Compiler
 
     def do_connect(
         self,
-        host: str = "localhost",
+        host: str = 'localhost',
         user: str = None,
         password: str = None,
-        port: int = 1521,
+        port: int = 50000,
         database: str = None,
-        protocol: str = "TCP",
         url: str = None,
-        driver: Literal["cx_Oracle"] = "cx_Oracle",
+        driver: str = 'ibm_db_sa',
     ) -> None:
         if url is None:
-            if driver != "cx_Oracle":
+            if driver != 'ibm_db_sa':
                 raise NotImplementedError(
-                    "cx_Oracle is currently the only supported driver"
+                    'ibm_db_sa is currently the only supported driver'
                 )
-            dsn = """(description= (address=(protocol={})(host={})(port={}))
-            (connect_data=(service_name={})))""".format(
-                protocol, host, port, database
-            )
             sa_url = sa.engine.url.URL.create(
-                "oracle+cx_oracle",
-                user,
-                password,
-                dsn,
+                'ibm_db_sa',
+                host=host,
+                port=port,
+                username=user,
+                password=password,
+                database=database,
             )
         else:
             sa_url = sa.engine.url.make_url(url)
         
-        self.database_name = sa_url.database
         engine = sa.create_engine(sa_url, poolclass=sa.pool.StaticPool)
+        self.database_name = database
+        self.url = sa_url
 
         @sa.event.listens_for(engine, "connect")
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
-                cur.execute("ALTER SESSION SET TIME_ZONE='UTC'")
+                cur.execute("SET TIMEZONE = UTC")
     
         super().do_connect(engine)
-
-
+    
+    def find_db(self):
+        return self.url
+    
     def _metadata(self, query)  -> Iterable[Tuple[str, dt.DataType]]:
         if (
             re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
             is not None
         ):
             query = f"({query})"
-
+        
         with self.begin() as con:
-            result = con.exec_driver_sql(f"SELECT * FROM {query} t0 WHERE ROWNUM <= 1")
+            result = con.exec_driver_sql(f"SELECT * FROM {query} t0 LIMIT 1")
             cursor = result.cursor
             yield from (
-                (column[0], _get_type(column))
+                (column[0].lower(), _get_type(column[1]))
                 for column in cursor.description
             )

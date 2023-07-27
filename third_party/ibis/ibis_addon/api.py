@@ -14,28 +14,25 @@
 
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
-from ibis.expr.types import TimestampColumn
+
+from ibis.expr.types.generic import Value
 
 
-def cast(arg, target_type):
+def cast(self, target_type: dt.DataType) -> Value:
     """Override ibis.expr.api's cast method.
     This allows for Timestamp-typed columns to be cast to Timestamp, since Ibis interprets some similar but non-equivalent types (eg. DateTime) to Timestamp (GitHub issue #451).
     """
     # validate
-    op = ops.Cast(arg, to=target_type)
+    op = ops.Cast(self, to=target_type)
 
-    if op.to.equals(arg.type()) and not isinstance(arg, TimestampColumn):
+    if op.to == self.type() and not op.to.is_timestamp():
         # noop case if passed type is the same
-        return arg
+        return self
 
-    if isinstance(op.to, (dt.Geography, dt.Geometry)):
-        from_geotype = arg.type().geotype or "geometry"
+    if op.to.is_geospatial():
+        from_geotype = self.type().geotype or 'geometry'
         to_geotype = op.to.geotype
         if from_geotype == to_geotype:
-            return arg
+            return self
 
-    result = op.to_expr()
-    if not arg.has_name():
-        return result
-    expr_name = "cast({}, {})".format(arg.get_name(), op.to)
-    return result.name(expr_name)
+    return op.to_expr()

@@ -11,79 +11,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from multipledispatch import Dispatcher
+from typing import List
 
 import ibis.expr.datatypes as dt
+import ibis.expr.schema as sch
+from google.cloud.spanner_v1.types import Type, TypeCode, StructType
 
+_DTYPE_TO_IBIS_TYPE = {
+    TypeCode.INT64: dt.int64,
+    TypeCode.FLOAT64: dt.double,
+    TypeCode.BOOL: dt.boolean,
+    TypeCode.STRING: dt.string,
+    TypeCode.DATE: dt.date,
+    TypeCode.TIMESTAMP: dt.Timestamp(timezone="UTC"),
+    TypeCode.BYTES: dt.binary,
+    TypeCode.NUMERIC: dt.Decimal(38, 9),
+    TypeCode.JSON: dt.json,
+}
 
-class TypeTranslationContext:
-    """A tag class to allow alteration of the way a particular type is
-    translated."""
+def dtype_from_spanner_field(field: Type) -> dt.DataType:
+    """Convert Spanner `Type` to an ibis type."""
+    typ = TypeCode(field.code)
+    if typ == TypeCode.ARRAY:
+        ibis_type = dt.Array(field.array_element_type)
+    ibis_type = _DTYPE_TO_IBIS_TYPE.get(typ, typ)
+    return ibis_type
 
-    __slots__ = ()
-
-
-ibis_type_to_cloud_spanner_type = Dispatcher("ibis_type_to_cloud_spanner_type")
-
-
-@ibis_type_to_cloud_spanner_type.register(str)
-def trans_string_default(datatype):
-    return ibis_type_to_cloud_spanner_type(dt.dtype(datatype))
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.DataType)
-def trans_default(t):
-    return ibis_type_to_cloud_spanner_type(t, TypeTranslationContext())
-
-
-@ibis_type_to_cloud_spanner_type.register(str, TypeTranslationContext)
-def trans_string_context(datatype, context):
-    return ibis_type_to_cloud_spanner_type(dt.dtype(datatype), context)
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.Floating, TypeTranslationContext)
-def trans_float64(t, context):
-    return "FLOAT64"
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.Integer, TypeTranslationContext)
-def trans_integer(t, context):
-    return "INT64"
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.Array, TypeTranslationContext)
-def trans_array(t, context):
-    return "ARRAY<{}>".format(ibis_type_to_cloud_spanner_type(t.value_type, context))
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.Date, TypeTranslationContext)
-def trans_date(t, context):
-    return "DATE"
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.Timestamp, TypeTranslationContext)
-def trans_timestamp(t, context):
-    return "TIMESTAMP"
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.DataType, TypeTranslationContext)
-def trans_type(t, context):
-    return str(t).upper()
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.UInt64, TypeTranslationContext)
-def trans_lossy_integer(t, context):
-    raise TypeError(
-        "Conversion from uint64 to Cloud Spanner integer type (int64) is lossy"
-    )
-
-
-@ibis_type_to_cloud_spanner_type.register(dt.Decimal, TypeTranslationContext)
-def trans_numeric(t, context):
-    if (t.precision, t.scale) != (38, 9):
-        raise TypeError(
-            "Cloud Spanner only supports decimal types with precision of 38 and "
-            "scale of 9"
-        )
-    return "NUMERIC"
+def schema_from_spanner(fields: List[StructType.Field]) -> sch.Schema:
+    return sch.Schema({f.name: dtype_from_spanner_field(f.type_) for f in fields})
+    

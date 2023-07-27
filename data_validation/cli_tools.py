@@ -92,7 +92,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["account", "Snowflake account to connect to"],
         ["database", "Database in snowflake to connect to"],
-        ["schema", "Schema in the database to connect to"],
+        ["connect_args", "(Optional) Additional connection arg mapping"],
     ],
     "Postgres": [
         ["host", "Desired Postgres host."],
@@ -117,7 +117,7 @@ CONNECTION_SOURCE_FIELDS = {
     "FileSystem": [
         ["table_name", "Table name to use as reference for file data"],
         ["file_path", "The local, s3, or GCS file path to the data"],
-        ["file_type", "The file type of the file.'csv' or 'json'"],
+        ["file_type", "The file type of the file. 'csv' or 'json'"],
     ],
     "Impala": [
         ["host", "Desired Impala host"],
@@ -610,7 +610,7 @@ def _configure_schema_parser(schema_parser):
     optional_arguments.add_argument(
         "--allow-list",
         "-al",
-        help="Comma separated list of datatype mappings due to incompatible datatypes in source and target. e.g.: decimal(12,2):decimal(38,9),string[non-nullable]:string,decimal(10-18,0):int64",
+        help="Comma separated list of datatype mappings due to incompatible datatypes in source and target. e.g.: decimal(12,2):decimal(38,9),!string:string,decimal(10-18,0):int64",
     )
     optional_arguments.add_argument(
         "--allow-list-file",

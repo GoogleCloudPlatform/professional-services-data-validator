@@ -12,51 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-"""CloudSpanner public API."""
-
-
-from third_party.ibis.ibis_cloud_spanner.client import CloudSpannerClient
-from third_party.ibis.ibis_cloud_spanner.compiler import dialect
-
 import google.cloud.spanner  # noqa: F401, fail early if spanner is missing
-import ibis.common.exceptions as com
 
-__all__ = ("compile", "connect", "verify")
-
-
-def compile(expr, params=None):
-    """Compile an expression for Cloud Spanner.
-
-    Returns
-    -------
-    compiled : str
-
-    See Also
-    --------
-    ibis.expr.types.Expr.compile
-
-    """
-    from third_party.ibis.ibis_cloud_spanner.compiler import to_sql
-
-    return to_sql(expr, dialect.make_context(params=params))
+from third_party.ibis.ibis_cloud_spanner import Backend as SpannerBackend
 
 
-def verify(expr, params=None):
-    """Check if an expression can be compiled using Cloud Spanner."""
-    try:
-        compile(expr, params=params)
-        return True
-    except com.TranslationError:
-        return False
-
-
-def connect(
+def spanner_connect(
     instance_id,
     database_id,
     project_id=None,
-) -> CloudSpannerClient:
-    """Create a CloudSpannerClient for use with Ibis.
+):
+    """Create a Cloud Spanner Backend for use with Ibis.
 
     Parameters
     ----------
@@ -66,15 +32,11 @@ def connect(
         A database id inside of the Cloud Spanner Instance
     project_id  : str (Optional)
         The ID of the project which owns the instances, tables and data.
-
-    Returns
-    -------
-    CloudSpannerClient
-
     """
-
-    return CloudSpannerClient(
+    backend = SpannerBackend()
+    backend.do_connect(
         instance_id=instance_id,
         database_id=database_id,
         project_id=project_id,
     )
+    return backend

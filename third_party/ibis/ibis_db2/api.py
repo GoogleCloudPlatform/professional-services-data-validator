@@ -1,4 +1,4 @@
-# Copyright 2023 Google Inc.
+# Copyright 2020 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,30 +11,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Literal
 
-from third_party.ibis.ibis_mssql import Backend as MsSqlBackend
+# from ibis.backends.base_sqlalchemy.alchemy import to_sqlalchemy
+# from third_party.ibis.ibis_db2.compiler import dialect, rewrites  # noqa: F401
+
+from third_party.ibis.ibis_db2 import Backend as DB2Backend
+import ibm_db_sa #NOQA fail early if driver is missing
 
 
-def mssql_connect(
-    host: str = "localhost",
+def db2_connect(
+    host: str = 'localhost',
     user: str = None,
     password: str = None,
-    port: int = 1433,
+    port: int = 50000,
     database: str = None,
     url: str = None,
-    driver: Literal["pyodbc"] = "pyodbc",
-    odbc_driver: str = "ODBC Driver 17 for SQL Server",
+    driver: str = 'ibm_db_sa',
 ):
-    backend = MsSqlBackend()
+    backend = DB2Backend()
     backend.do_connect(
         host=host,
-        port=port,
         user=user,
         password=password,
+        port=port,
         database=database,
         url=url,
         driver=driver,
-        odbc_driver=odbc_driver,
     )
     return backend

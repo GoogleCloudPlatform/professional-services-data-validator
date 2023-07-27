@@ -18,7 +18,7 @@ from typing import Optional, Union, TYPE_CHECKING
 import yaml
 
 import google.oauth2.service_account
-from ibis_bigquery.client import BigQueryClient
+
 import ibis.expr.datatypes as dt
 
 from data_validation import clients, consts, state_manager
@@ -106,7 +106,7 @@ class ConfigManager(object):
     def random_row_batch_size(self):
         """Return if the validation should use a random row filter."""
         return (
-            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
+            int(self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE))
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
@@ -595,13 +595,13 @@ class ConfigManager(object):
     ) -> dict:
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
-
         if column_type == "string":
             calc_func = "length"
 
-        elif column_type == "timestamp":
-            if isinstance(self.source_client, BigQueryClient) or isinstance(
-                self.target_client, BigQueryClient
+        elif column_type == "timestamp" or column_type == "!timestamp":
+            if (
+                self.source_client.name == "bigquery"
+                or self.target_client.name == "bigquery"
             ):
                 calc_func = "cast"
                 cast_type = "timestamp"
@@ -620,7 +620,7 @@ class ConfigManager(object):
 
             calc_func = "epoch_seconds"
 
-        elif column_type == "int32":
+        elif column_type == "int32" or column_type == "!int32":
             calc_func = "cast"
             cast_type = "int64"
 
@@ -707,10 +707,13 @@ class ConfigManager(object):
                 continue
 
             if (
-                column_type == "string"
-                or (cast_to_bigint and column_type == "int32")
+                (column_type == "string" or column_type == "!string")
                 or (
-                    column_type == "timestamp"
+                    cast_to_bigint
+                    and (column_type == "int32" or column_type == "!int32")
+                )
+                or (
+                    (column_type == "timestamp" or column_type == "!timestamp")
                     and agg_type
                     in (
                         "sum",
@@ -846,7 +849,7 @@ class ConfigManager(object):
             col_config["calc_type"] = consts.CONFIG_CUSTOM
             custom_params = {
                 "calc_params": {
-                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.api.TimestampValue.strftime",
+                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TemporalValue.strftime",
                     consts.CONFIG_CUSTOM_PARAMS: [
                         {consts.CONFIG_CUSTOM_PARAM_FORMAT_STR: fmt}
                     ],
@@ -931,7 +934,7 @@ class ConfigManager(object):
             query = file.read()
             query = query.rstrip(";\n")
         except IOError:
-            logging.warning("Cannot read query file: ", filename)
+            logging.error("Cannot read query file: ", filename)
 
         if not query or query.isspace():
             raise ValueError(
