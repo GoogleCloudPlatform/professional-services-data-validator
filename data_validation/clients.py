@@ -178,14 +178,7 @@ def list_schemas(client):
 
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
-    if client.name in [
-        "oracle",
-        "postgres",
-        "db2",
-        "mssql",
-        "redshift",
-        "snowflake"
-    ]:
+    if client.name in ["oracle", "postgres", "db2", "mssql", "redshift", "snowflake"]:
         return client.list_tables()
     return client.list_tables(database=schema_name)
 

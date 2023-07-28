@@ -842,18 +842,22 @@ class ConfigManager(object):
         target_table = self.get_target_ibis_calculated_table()
 
         order_of_operations = []
-        casefold_source_columns = {
-            x.casefold(): str(x) for x in source_table.columns
-        }
-        casefold_target_columns = {
-            x.casefold(): str(x) for x in target_table.columns
-        }
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         if col_list:
             casefold_col_list = [x.casefold() for x in col_list]
             # Filter columns based on col_list if provided
-            casefold_source_columns = {k : v for (k, v) in casefold_source_columns.items() if k in casefold_col_list}
-            casefold_target_columns = {k : v for (k, v) in casefold_target_columns.items() if k in casefold_col_list}
+            casefold_source_columns = {
+                k: v
+                for (k, v) in casefold_source_columns.items()
+                if k in casefold_col_list
+            }
+            casefold_target_columns = {
+                k: v
+                for (k, v) in casefold_target_columns.items()
+                if k in casefold_col_list
+            }
 
         if calc_type == "hash":
             order_of_operations = [
@@ -909,7 +913,11 @@ class ConfigManager(object):
                         # If we are casting the base column (i == 0) then apply any
                         # datatype specific overrides.
                         col = self._apply_base_cast_overrides(
-                            source_column, target_column, col, source_table, target_table
+                            source_column,
+                            target_column,
+                            col,
+                            source_table,
+                            target_table,
                         )
 
                     name = col["name"]
