@@ -658,12 +658,12 @@ required, if any, with the 'params' block as shown below:
     target_calculated_columns:
     - start_time
     type: custom
-    ibis_expr: ibis.expr.api.TimestampValue.strftime
+    ibis_expr: ibis.expr.types.TemporalValue.strftime
     params:
     - format_str: '%m%d%Y'
 ```
 
-The above block references the [TimestampValue.strftime](https://ibis-project.org/reference/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
+The above block references the [TemporalValue.strftime](https://ibis-project.org/reference/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
 See the [Examples page](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-row-validation-yaml-with-custom-calc-field)
 for a sample YAML with a custom calculated field.
 
