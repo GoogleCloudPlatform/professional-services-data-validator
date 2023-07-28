@@ -277,3 +277,40 @@ def test_custom_query_validation_core_types():
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_invalid_long_decimal():
+    """Oracle to BigQuery of comparisons of decimals that exceed precision of 18 (int64 & float64).
+    We used to have an issue where we would see false success because long numbers would lose precision
+    and look the same even if they differed slightly.
+    See: https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/900
+    This is the regression test.
+    """
+    parser = cli_tools.configure_arg_parser()
+    # Notice the two numeric values balow have a different final digit, we expect a failure status.
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "--source-query=select to_number(1234567890123456789012345) as dec_25 from dual",
+            "--target-query=select cast('1234567890123456789012340' as numeric) as dec_25",
+            "--filter-status=fail",
+            "--min=dec_25",
+            "--max=dec_25",
+            "--sum=dec_25",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be populated
+    assert len(df) > 0

@@ -76,16 +76,33 @@ class TeradataTypeTranslator(object):
 
     @classmethod
     def to_ibis_from_N(cls, col_data, return_ibis_type=True):
-        return cls.to_ibis_from_D(col_data, return_ibis_type=return_ibis_type)
+        precision = int(
+            col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 38))
+        )
+        scale = int(
+            col_data.get(
+                "DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 38)
+            )
+        )
+        if return_ibis_type:
+            # No precision or scale specified
+            if precision == -128 or scale ==-128:
+                return dt.Decimal()
+            return dt.Decimal(precision, scale)
+        
+        if precision == -128 or scale ==-128:
+            return "DECIMAL"
+        
+        return "DECIMAL(%d, %d)" % (precision, scale)
 
     @classmethod
     def to_ibis_from_D(cls, col_data, return_ibis_type=True):
         precision = int(
-            col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 20))
+            col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 5))
         )
         scale = int(
             col_data.get(
-                "DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 4)
+                "DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 0)
             )
         )
         if return_ibis_type:
