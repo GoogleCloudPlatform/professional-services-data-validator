@@ -230,7 +230,6 @@ def test_schema_validation_core_types():
 )
 def test_schema_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO When issue-706 is complete remove the timestamp line below
     args = parser.parse_args(
         [
             "validate",
@@ -248,7 +247,6 @@ def test_schema_validation_core_types_to_bigquery():
                 "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64,"
-                "timestamp('UTC'):timestamp,"
                 # Ignore ID column, we're not testing that one.
                 "!int32:int64"
             ),
@@ -297,7 +295,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --sum/min/max strings below to include col_tstz when issue-706 is complete.
+    # TODO Change --sum/min/max strings below to include col_tstz when issue-917 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # We've excluded col_char_2 since the data stored in MSSQL has a trailing space which is counted in the LEN()
     args = parser.parse_args(
@@ -357,7 +355,7 @@ def test_row_validation_core_types():
 def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # TODO When issue-834 is complete add col_string to --hash string below.
-    # TODO Change --hash string below to include col_tstz when issue-706 is complete.
+    # TODO Change --hash string below to include col_tstz when issue-917 is complete.
     # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     args = parser.parse_args(
         [
