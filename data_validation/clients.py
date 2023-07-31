@@ -59,12 +59,12 @@ except Exception:
     oracle_connect = _raise_missing_client_error("pip install cx_Oracle")
 
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
-# try:
-from third_party.ibis.ibis_snowflake.api import snowflake_connect
-# except Exception:
-#     snowflake_connect = _raise_missing_client_error(
-#         "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
-#     )
+try:
+    from third_party.ibis.ibis_snowflake.api import snowflake_connect
+except Exception:
+    snowflake_connect = _raise_missing_client_error(
+        "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
+    )
 
 # DB2 requires ibm_db_sa
 try:
