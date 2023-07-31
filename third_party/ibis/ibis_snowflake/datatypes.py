@@ -11,7 +11,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.See the
 # License for the specific language governing permissions and limitations under
 # the License.
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import ibis.expr.datatypes as dt
 import sqlalchemy as sa
@@ -31,7 +31,7 @@ def sa_sf_numeric(_, satype, nullable=True):
     )
 
 
-def _metadata(self, query: str) -> Iterable[tuple[str, dt.DataType]]:
+def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
     with self.begin() as con, con.connection.cursor() as cur:
         result = cur.describe(query)
 
