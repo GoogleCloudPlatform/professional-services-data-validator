@@ -456,7 +456,7 @@ def test_mysql_generate_table_partitions(mock_conn):
             "generate-table-partitions",
             "-sc=mock-conn",
             "-tc=mock-conn",
-            "-tbls=guestbook.test_generate_partitions=guestbook.test_generate_partitions",
+            "-tbls=pso_data_validator.test_generate_partitions=pso_data_validator.test_generate_partitions",
             "-pk=course_id,quarter_id,student_id",
             "-hash=*",
             "-cdir=/home/users/yaml",
