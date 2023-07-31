@@ -15,9 +15,9 @@ import logging
 from typing import Any, Mapping
 
 import ibis
-import snowflake.connector
 
-# Fail fast with import
+# Fail fast with imports
+import snowflake.connector
 import snowflake.sqlalchemy
 
 logging.getLogger("snowflake.connector").setLevel(logging.WARNING)

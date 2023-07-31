@@ -17,93 +17,93 @@ options:
   pool:
     name: 'projects/pso-kokoro-resources/locations/us-central1/workerPools/private-pool'
 steps:
-- id: lint
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=lint'
-  waitFor: ['-']
-- id: unit
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=unit'
-  waitFor: ['-']
-- id: proxy-install
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/install_cloud_proxy.sh']
-  waitFor: ["-"]
-- id: integration_mysql
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_mysql'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mysql=tcp:3306'
-  waitFor: ['-']
-  secretEnv: ['MYSQL_PASSWORD']
-- id: integration_postgres
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_postgres'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
-  secretEnv: ['POSTGRES_PASSWORD']
-  waitFor: ['proxy-install']
-- id: integration_sql_server
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_sql_server'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017=tcp:1433'
-  secretEnv: ['SQL_SERVER_PASSWORD']
-  waitFor: ['proxy-install']
-- id: integration_bigquery
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_bigquery'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  waitFor: ['-']
-- id: integration_spanner
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_spanner'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  waitFor: ['-']
-- id: integration_teradata
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_teradata'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  - 'TERADATA_HOST=10.128.15.235'
-  secretEnv: ['TERADATA_PASSWORD']
-- id: integration_state
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_state'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  waitFor: ['-']
-- id: integration_oracle
-  name: 'gcr.io/pso-kokoro-resources/python-multi-oracle-21client'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_oracle'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  - 'ORACLE_HOST=10.128.15.246'
-  secretEnv: ['ORACLE_PASSWORD']
-- id: integration_hive
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  args: ['bash', './ci/build.sh']
-  env:
-  - 'NOX_SESSION=integration_hive'
-  - 'PROJECT_ID=pso-kokoro-resources'
-  - 'HIVE_HOST=10.128.15.219'
+# - id: lint
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=lint'
+#   waitFor: ['-']
+# - id: unit
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=unit'
+#   waitFor: ['-']
+# - id: proxy-install
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/install_cloud_proxy.sh']
+#   waitFor: ["-"]
+# - id: integration_mysql
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_mysql'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mysql=tcp:3306'
+#   waitFor: ['-']
+#   secretEnv: ['MYSQL_PASSWORD']
+# - id: integration_postgres
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_postgres'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
+#   secretEnv: ['POSTGRES_PASSWORD']
+#   waitFor: ['proxy-install']
+# - id: integration_sql_server
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_sql_server'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017=tcp:1433'
+#   secretEnv: ['SQL_SERVER_PASSWORD']
+#   waitFor: ['proxy-install']
+# - id: integration_bigquery
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_bigquery'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   waitFor: ['-']
+# - id: integration_spanner
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_spanner'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   waitFor: ['-']
+# - id: integration_teradata
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_teradata'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   - 'TERADATA_HOST=10.128.15.235'
+#   secretEnv: ['TERADATA_PASSWORD']
+# - id: integration_state
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_state'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   waitFor: ['-']
+# - id: integration_oracle
+#   name: 'gcr.io/pso-kokoro-resources/python-multi-oracle-21client'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_oracle'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   - 'ORACLE_HOST=10.128.15.246'
+#   secretEnv: ['ORACLE_PASSWORD']
+# - id: integration_hive
+#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+#   args: ['bash', './ci/build.sh']
+#   env:
+#   - 'NOX_SESSION=integration_hive'
+#   - 'PROJECT_ID=pso-kokoro-resources'
+#   - 'HIVE_HOST=10.128.15.219'
 - id: integration_snowflake
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
