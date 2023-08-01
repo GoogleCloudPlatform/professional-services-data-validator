@@ -454,12 +454,12 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 5678))",
-    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 5678)))"
-    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 9012)))",
-    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 9012)))"
-    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 1234)))",
-    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 1234))",
+    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
+    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
+    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
+    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
+    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
+    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
 ]
 
 
@@ -569,9 +569,7 @@ def test_schema_validation_core_types_to_bigquery():
                 # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
                 "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
-                "float32:float64,"
-                # TODO When issue-706 is complete remove the timestamp line below
-                "timestamp('UTC'):timestamp"
+                "float32:float64"
             ),
         ]
     )
@@ -618,7 +616,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --min/max strings below to include col_tstz when issue-706 is complete.
+    # TODO Change --min/max strings below to include col_tstz when issue-917 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
     args = parser.parse_args(
