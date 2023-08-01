@@ -47,3 +47,40 @@ INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES VALUES
  ,'Hello DVT','C ','Hello DVT'
  ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
  ,'1970-01-03 00:00:03 -03:00');
+
+
+CREATE OR REPLACE TABLE PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS (
+        COURSE_ID VARCHAR(6),
+        QUARTER_ID INTEGER,
+        STUDENT_ID INTEGER,
+        GRADE NUMERIC,
+        PRIMARY KEY (COURSE_ID, QUARTER_ID, STUDENT_ID));
+
+INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS (COURSE_ID, QUARTER_ID, STUDENT_ID, GRADE) VALUES
+        ('ALG001', 1, 1234, 2.1),
+        ('ALG001', 1, 5678, 3.5),
+        ('ALG001', 1, 9012, 2.3),
+        ('ALG001', 2, 1234, 3.5),
+        ('ALG001', 2, 5678, 2.6),
+        ('ALG001', 2, 9012, 3.5),
+        ('ALG001', 3, 1234, 2.7),
+        ('ALG001', 3, 5678, 3.5),
+        ('ALG001', 3, 9012, 2.8),
+        ('GEO001', 1, 1234, 2.1),
+        ('GEO001', 1, 5678, 3.5),
+        ('GEO001', 1, 9012, 2.3),
+        ('GEO001', 2, 1234, 3.5),
+        ('GEO001', 2, 5678, 2.6),
+        ('GEO001', 2, 9012, 3.5),
+        ('GEO001', 3, 1234, 2.7),
+        ('GEO001', 3, 5678, 3.5),
+        ('GEO001', 3, 9012, 2.8),
+        ('TRI001', 1, 1234, 2.1),
+        ('TRI001', 1, 5678, 3.5),
+        ('TRI001', 1, 9012, 2.3),
+        ('TRI001', 2, 1234, 3.5),
+        ('TRI001', 2, 5678, 2.6),
+        ('TRI001', 2, 9012, 3.5),
+        ('TRI001', 3, 1234, 2.7),
+        ('TRI001', 3, 5678, 3.5),
+        ('TRI001', 3, 9012, 2.8); 
