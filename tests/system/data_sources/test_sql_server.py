@@ -194,7 +194,7 @@ def test_schema_validation():
 
 
 def mock_get_connection_config(*args):
-    if args[1] in ("ora-conn", "mock-conn"):
+    if args[1] in ("sql-conn", "mock-conn"):
         return CONN
     elif args[1] == "bq-conn":
         return BQ_CONN
