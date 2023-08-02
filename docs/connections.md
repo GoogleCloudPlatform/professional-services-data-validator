@@ -52,9 +52,8 @@ The data validation tool supports the following connection types.
 * [Hive](#Hive)
 * [DB2](#DB2)
 * [AlloyDB](#AlloyDB)
-<!--- TODO Uncomment once Snowflake is supported
-* [Snowflake (Alpha)](#snowflake-alpha)
--->
+* [Snowflake](#snowflake)
+
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
@@ -299,9 +298,9 @@ data-validation connections add
     [--driver DRIVER]                                   DB2 driver, defaults to "ibm_db_sa"
 ```
 
-<!--- TODO Uncomment this once Snowflake support has been tested
-## Snowflake (Alpha)
+## Snowflake
 Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
+For details on connection parameters, see the [Ibis Snowflake connection parameters](https://ibis-project.org/backends/snowflake/#connection-parameters).
 ```
 data-validation connections add 
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -309,8 +308,7 @@ data-validation connections add
     --connection-name CONN_NAME Snowflake               Connection name
     --user USER                                         Snowflake user
     --password PASSWORD                                 Snowflake password
-    --account ACCOUNT                                   Snowflake account
-    --database DATABASE                                 Snowflake database
+    --account ACCOUNT                                   Snowflake account 
+    --database DATABASE/SCHEMA                          Snowflake database and schema, separated by a `/`
     [--connect-args CONNECT_ARGS]                       Additional connection args, default {}
 ```
--->

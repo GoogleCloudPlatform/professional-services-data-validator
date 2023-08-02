@@ -138,7 +138,8 @@ def get_calculated_config(args, config_manager):
     for field in fields:
         calculated_configs.append(
             config_manager.build_config_calculated_fields(
-                field["reference"],
+                field["source_reference"],
+                field["target_reference"],
                 field["calc_type"],
                 field["name"],
                 field["depth"],

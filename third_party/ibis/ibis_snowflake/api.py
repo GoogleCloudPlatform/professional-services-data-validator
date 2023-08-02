@@ -11,13 +11,19 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.See the
 # License for the specific language governing permissions and limitations under
 # the License.
-import ibis
+import logging
 from typing import Any, Mapping
 
+import ibis
 
-# Fail fast with import
-import snowflake.sqlalchemy
+# Fail fast with imports
 import snowflake.connector
+import snowflake.sqlalchemy
+
+logging.getLogger("snowflake.connector").setLevel(logging.WARNING)
+
+import third_party.ibis.ibis_snowflake.datatypes
+
 
 def snowflake_connect(
     user: str,
