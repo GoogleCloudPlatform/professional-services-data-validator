@@ -51,3 +51,11 @@ INSERT INTO `pso_data_validator`.`dvt_core_types` VALUES
  ,'Hello DVT','C ','Hello DVT'
  ,DATE '1970-01-03',DATETIME '1970-01-03 00:00:03'
  ,TIMESTAMP '1970-01-03 00:00:03-03:00');
+
+DROP TABLE `pso_data_validator`.`dvt_null_not_null`;
+CREATE TABLE `pso_data_validator`.`dvt_null_not_null`
+(   col_nn             DATETIME NOT NULL
+,   col_nullable       DATETIME
+,   col_src_nn_trg_n   DATETIME
+,   col_src_n_trg_nn   DATETIME NOT NULL
+) OPTIONS (description='Nullable integration test table, BigQuery is assumed to be a DVT target (not source)');

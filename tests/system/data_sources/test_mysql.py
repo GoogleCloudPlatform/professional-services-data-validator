@@ -18,6 +18,9 @@ from unittest import mock
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts, exceptions
 from data_validation.partition_builder import PartitionBuilder
+from tests.system.data_sources.common_functions import null_not_null_assertions
+from tests.system.data_sources.test_bigquery import BQ_CONN
+
 
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "dvt")
@@ -60,6 +63,13 @@ CONFIG_SCHEMA_VALID = {
     consts.CONFIG_FORMAT: "table",
     consts.CONFIG_FILTER_STATUS: None,
 }
+
+
+def mock_get_connection_config(*args):
+    if args[1] in ("mysql-conn", "mock-conn"):
+        return CONN
+    elif args[1] == "bq-conn":
+        return BQ_CONN
 
 
 def test_mysql_count_invalid_host():
@@ -476,9 +486,9 @@ def test_mysql_generate_table_partitions(mock_conn):
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
-    return_value=CONN,
+    new=mock_get_connection_config,
 )
-def test_schema_validation_core_types(mock_conn):
+def test_schema_validation_core_types():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -497,6 +507,30 @@ def test_schema_validation_core_types(mock_conn):
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_not_null_vs_nullable():
+    """Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mysql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    null_not_null_assertions(df)
 
 
 @mock.patch(

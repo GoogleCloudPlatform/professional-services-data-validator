@@ -83,4 +83,13 @@ INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS (COURSE_ID, QUART
         ('TRI001', 2, 9012, 3.5),
         ('TRI001', 3, 1234, 2.7),
         ('TRI001', 3, 5678, 3.5),
-        ('TRI001', 3, 9012, 2.8); 
+        ('TRI001', 3, 9012, 2.8);
+
+DROP TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_NULL_NOT_NULL;
+CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_NULL_NOT_NULL
+(   col_nn             TIMESTAMP(0) NOT NULL
+,   col_nullable       TIMESTAMP(0)
+,   col_src_nn_trg_n   TIMESTAMP(0) NOT NULL
+,   col_src_n_trg_nn   TIMESTAMP(0)
+);
+COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_NULL_NOT_NULL IS 'Nullable integration test table, Oracle is assumed to be a DVT source (not target).';

@@ -89,4 +89,13 @@ INSERT INTO public.test_generate_partitions (course_id, quarter_id, student_id, 
         ('TRI001', 2, 9012, 3.5),
         ('TRI001', 3, 1234, 2.7),
         ('TRI001', 3, 5678, 3.5),
-        ('TRI001', 3, 9012, 2.8); 
+        ('TRI001', 3, 9012, 2.8);
+
+DROP TABLE pso_data_validator.dvt_null_not_null;
+CREATE TABLE pso_data_validator.dvt_null_not_null
+(   col_nn             TIMESTAMP(0) NOT NULL
+,   col_nullable       TIMESTAMP(0)
+,   col_src_nn_trg_n   TIMESTAMP(0) NOT NULL
+,   col_src_n_trg_nn   TIMESTAMP(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, PostgreSQL is assumed to be a DVT source (not target).';
