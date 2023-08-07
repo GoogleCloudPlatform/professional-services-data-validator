@@ -402,7 +402,7 @@ def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
     # [Error 3798] A column or character expression is larger than the max size.
-    # TODO Change --hash option to include col_tstz when issue-917 is complete.
+    # TODO Change --hash option to include col_tstz when issue-929 is complete.
     # TODO Change --hash option to include col_float32,col_float64 when issue-841 is complete.
     args = parser.parse_args(
         [
