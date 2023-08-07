@@ -51,9 +51,7 @@ class TeradataTypeTranslator(object):
 
     @classmethod
     def _col_data_nullable(cls, col_data: dict) -> bool:
-        return bool(
-            col_data.get("Nullable", "Y ").startswith("Y")
-        )
+        return bool(col_data.get("Nullable", "Y ").startswith("Y"))
 
     @classmethod
     def to_ibis(cls, col_data):
@@ -92,12 +90,13 @@ class TeradataTypeTranslator(object):
         )
         if return_ibis_type:
             # No precision or scale specified
-            if precision == -128 or scale ==-128:
+            if precision == -128 or scale == -128:
                 return dt.Decimal()
-            return dt.Decimal(precision, scale,
-                              nullable=cls._col_data_nullable(col_data))
+            return dt.Decimal(
+                precision, scale, nullable=cls._col_data_nullable(col_data)
+            )
 
-        if precision == -128 or scale ==-128:
+        if precision == -128 or scale == -128:
             return "DECIMAL"
 
         return "DECIMAL(%d, %d)" % (precision, scale)
@@ -113,8 +112,9 @@ class TeradataTypeTranslator(object):
             )
         )
         if return_ibis_type:
-            return dt.Decimal(precision, scale,
-                              nullable=cls._col_data_nullable(col_data))
+            return dt.Decimal(
+                precision, scale, nullable=cls._col_data_nullable(col_data)
+            )
         value_type = "DECIMAL(%d, %d)" % (precision, scale)
         return value_type
 
@@ -165,7 +165,9 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_SZ(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.timestamp(timezone="UTC", nullable=cls._col_data_nullable(col_data))
+            return dt.timestamp(
+                timezone="UTC", nullable=cls._col_data_nullable(col_data)
+            )
 
         return "TIMESTAMP"
 
