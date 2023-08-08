@@ -67,7 +67,6 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         "int32",
         "int64",
         "decimal",
-        "timestamp",
         "!float64",
         "!float32",
         "!int8",
@@ -75,11 +74,13 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         "!int32",
         "!int64",
         "!decimal",
-        "!timestamp",
     ]
 
     if args.wildcard_include_string_len:
-        supported_data_types.append("string")
+        supported_data_types.extend(["string", "!string"])
+
+    if args.wildcard_include_timestamp:
+        supported_data_types.extend(["timestamp", "!timestamp"])
 
     cast_to_bigint = True if args.cast_to_bigint else False
 

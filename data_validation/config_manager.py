@@ -679,7 +679,7 @@ class ConfigManager(object):
         if arg_value:
             arg_value = [x.casefold() for x in arg_value]
             if supported_types:
-                supported_types.append("string")
+                supported_types.extend(["string", "!string", "timestamp", "!timestamp"])
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):

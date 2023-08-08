@@ -79,9 +79,10 @@ Below is the command syntax for column validations. To run a grouped column
 validation, simply specify the `--grouped-columns` flag.
 
 You can specify a list of string columns for aggregations in order to calculate
-an aggregation over the `length(string_col)`. Running an aggregation
+an aggregation over the `length(string_col)`. Similarly, you can specify timestamp
+columns for aggregation over the `unix_seconds(timestamp_col)`. Running an aggregation
 over all columns ('*') will only run over numeric columns, unless the
-`--wildcard-include-string-len` flag is present.
+`--wildcard-include-string-len` or `--wildcard-include-timestamp` flags are present.
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate column
@@ -112,6 +113,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Service account to use for BigQuery result handler output.
   [--wildcard-include-string-len or -wis]
                         If flag is present, include string columns in aggregation as len(string_col)
+  [--wildcard-include-timestamp or -wit]
+                        If flag is present, include timestamp columns in aggregation as unix_timestamp(ts_col)
   [--cast-to-bigint or -ctb]
                         If flag is present, cast all int32 columns to int64 before aggregation
   [--filters SOURCE_FILTER:TARGET_FILTER]

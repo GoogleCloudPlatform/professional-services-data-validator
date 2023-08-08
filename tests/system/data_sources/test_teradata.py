@@ -265,7 +265,6 @@ def test_schema_validation_core_types_to_bigquery():
 )
 def test_column_validation_core_types():
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_datetime,col_tstz to --sum string below when issue-762 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -274,7 +273,7 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=udf.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
             "--min=*",
             "--max=*",
         ]
@@ -294,7 +293,6 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Add col_datetime,col_tstz to --sum string below when issue-762 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -303,9 +301,9 @@ def test_column_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2,col_datetime",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2,col_datetime",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2,col_datetime",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

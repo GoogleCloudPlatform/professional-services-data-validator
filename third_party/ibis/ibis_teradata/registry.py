@@ -226,6 +226,24 @@ def _string_join(translator, op):
     return "||".join(map(translator.translate, op.arg))
 
 
+def _extract_epoch(translator, op):
+    arg = translator.translate(op.arg)
+    if op.arg.output_dtype.timezone:
+        return (
+            f"(CAST ({arg} AS DATE AT TIME ZONE 'GMT') - DATE '1970-01-01') * 86400 + "
+            f"(EXTRACT(HOUR FROM {arg} AT TIME ZONE 'GMT') * 3600) + "
+            f"(EXTRACT(MINUTE FROM {arg} AT TIME ZONE 'GMT') * 60) + "
+            f"(EXTRACT(SECOND FROM {arg} AT TIME ZONE 'GMT'))"
+        )
+    else:
+        return (
+            f"(CAST ({arg} AS DATE) - DATE '1970-01-01') * 86400 + "
+            f"(EXTRACT(HOUR FROM {arg}) * 3600) + "
+            f"(EXTRACT(MINUTE FROM {arg}) * 60) + "
+            f"(EXTRACT(SECOND FROM {arg}))"
+        )
+
+
 """ Add New Customizations to Operations registry """
 _operation_registry.update(
     {
@@ -234,5 +252,6 @@ _operation_registry.update(
         ops.Cast: _cast,
         ops.IfNull: fixed_arity("NVL", 2),
         ops.StringJoin: _string_join,
+        ops.ExtractEpochSeconds: _extract_epoch,
     }
 )
