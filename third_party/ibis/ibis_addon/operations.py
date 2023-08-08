@@ -355,7 +355,6 @@ def _bigquery_field_to_ibis_dtype(field):
     """Convert BigQuery `field` to an ibis type.
     Taken from ibis.backends.bigquery.client.py for issue:
         https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/926
-    The nullable problem appears to be fixed in the latest Ibis but we cannot upgrade due to Redshift.
     """
     typ = field.field_type
     if typ == "RECORD":
