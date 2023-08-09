@@ -84,11 +84,11 @@ root@033341eb89dc:/$ gsutil ls gs://gcp-public-data-landsat/ | wc -l
 
 12
 
-root@033341eb89dc:/$ ./cloud_sql_proxy --port 15432 m2m-wayfair-dev:us-east1:m2m-wayfair-dev-49bfb53c &
+root@033341eb89dc:/$ ./cloud_sql_proxy --port 15432 &
 [1] 159
 
 root@033341eb89dc:/$ 2023/08/09 01:04:28 Authorizing with Application Default Credentials
-2023/08/09 01:04:29 [m2m-wayfair-dev:us-east1:m2m-wayfair-dev-49bfb53c] Listening on 127.0.0.1:15432
+2023/08/09 01:04:29 Listening on 127.0.0.1:15432
 
 root@033341eb89dc:/$ data-validation -h
 usage: The Data Validation CLI tool is intended to help to build and execute
@@ -134,3 +134,4 @@ root@33014e0b4363:/$ data-validation validate column -sc postgres -tc postgres -
 │ count             │ Column            │ public.flights      │                      │             214867 │             214867 │                0 │ success             │ db02f4cb-affa-4227-a340-5430c12dc7fa │
 ╘═══════════════════╧═══════════════════╧═════════════════════╧══════════════════════╧════════════════════╧════════════════════╧══════════════════╧═════════════════════╧══════════════════════════════════════╛
 ```
+
