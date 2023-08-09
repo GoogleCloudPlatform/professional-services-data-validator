@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  validator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /Users/Thomas_McGeehan/data:/etc/data:rw
+      - /Users/Thomas_McGeehan/.bash_history:/root/.bash_history:rw
+      - .bash_aliases:/root/.bash_aliases:rw
+      - ~/.config/gcloud:/root/.config/gcloud
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - PSO_DV_CONFIG_HOME=/etc/data
+    command: /bin/bash
+    tty: true
+    stdin_open: true
