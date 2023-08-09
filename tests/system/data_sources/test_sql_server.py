@@ -344,7 +344,6 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --sum/min/max strings below to include col_tstz when issue-917 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # We've excluded col_char_2 since the data stored in MSSQL has a trailing space which is counted in the LEN()
     args = parser.parse_args(
@@ -356,8 +355,8 @@ def test_column_validation_core_types_to_bigquery():
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
             "--sum=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_tstz,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_tstz,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -404,7 +403,7 @@ def test_row_validation_core_types():
 def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # TODO When issue-834 is complete add col_string to --hash string below.
-    # TODO Change --hash string below to include col_tstz when issue-917 is complete.
+    # TODO Change --hash string below to include col_tstz when issue-929 is complete.
     # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     args = parser.parse_args(
         [

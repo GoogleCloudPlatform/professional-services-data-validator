@@ -218,7 +218,6 @@ def test_column_validation_core_types():
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # TODO Change --sum string below to include col_datetime and col_tstz when issue-762 is complete.
-    # TODO Change --min/max strings below to include col_tstz when issue-917 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     args = parser.parse_args(
         [
@@ -229,8 +228,8 @@ def test_column_validation_core_types_to_bigquery():
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
             "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -275,7 +274,6 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    # TODO Change --hash string below to include col_tstz when issue-917 is complete.
     # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
@@ -287,7 +285,7 @@ def test_row_validation_core_types_to_bigquery():
             "-tbls=pso_data_validator.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
