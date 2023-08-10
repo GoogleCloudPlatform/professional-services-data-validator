@@ -22,7 +22,7 @@ extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
-import google.cloud.bigquery as bq
+#import google.cloud.bigquery as bq
 import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
@@ -350,7 +350,7 @@ def sa_format_new_id(t, op):
 _BQ_DTYPE_TO_IBIS_TYPE["TIMESTAMP"] = dt.Timestamp(timezone="UTC")
 
 
-@dt.dtype.register(bq.schema.SchemaField)
+#@dt.dtype.register(bq.schema.SchemaField)
 def _bigquery_field_to_ibis_dtype(field):
     """Convert BigQuery `field` to an ibis type.
     Taken from ibis.backends.bigquery.client.py for issue:
