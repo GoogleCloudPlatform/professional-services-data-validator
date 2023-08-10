@@ -114,7 +114,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
   [--wildcard-include-string-len or -wis]
                         If flag is present, include string columns in aggregation as len(string_col)
   [--wildcard-include-timestamp or -wit]
-                        If flag is present, include timestamp columns in aggregation as unix_timestamp(ts_col)
+                        If flag is present, include timestamp columns in aggregation as unix_seconds(ts_col)
   [--cast-to-bigint or -ctb]
                         If flag is present, cast all int32 columns to int64 before aggregation
   [--filters SOURCE_FILTER:TARGET_FILTER]
