@@ -188,7 +188,6 @@ def test_schema_validation_core_types_to_bigquery():
 def test_column_validation_core_types():
     """Oracle to Oracle dvt_core_types column validation"""
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --sum string below to * when issue-762 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -197,7 +196,7 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38",
+            "--sum=*",
             "--min=*",
             "--max=*",
         ]
@@ -217,7 +216,6 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --sum string below to include col_datetime and col_tstz when issue-762 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     args = parser.parse_args(
         [
@@ -227,7 +225,7 @@ def test_column_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
             "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
             "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
