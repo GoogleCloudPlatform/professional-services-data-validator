@@ -436,13 +436,6 @@ def test_mysql_row():
         pass
 
 
-def mock_get_connection_config(*args):
-    if args[1] in ("mysql-conn", "mock-conn"):
-        return CONN
-    elif args[1] == "bq-conn":
-        return BQ_CONN
-
-
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
     "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
