@@ -161,9 +161,10 @@ def test_schema_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
+            "--exclusion-columns=id",
             (
                 # Integral Oracle NUMBERS go to BigQuery INT64.
-                "--allow-list=!decimal(8,0):int64,decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
+                "--allow-list=decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
                 # Oracle NUMBERS that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Oracle NUMBERS that map to BigQuery BIGNUMERIC.

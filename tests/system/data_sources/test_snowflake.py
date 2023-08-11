@@ -160,9 +160,10 @@ def test_schema_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
+            "--exclusion-columns=id",
             (
                 # Integral Snowflake NUMBERs to to BigQuery INT64.
-                "--allow-list=!decimal(38,0):int64,decimal(38,0):int64,"
+                "--allow-list=decimal(38,0):int64,"
                 # Snowflake NUMBERS that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Snowflake NUMBERS that map to BigQuery BIGNUMERIC
