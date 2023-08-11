@@ -297,9 +297,7 @@ def test_schema_validation_core_types_to_bigquery():
                 # SQL Server decimals that map to BigQuery BIGNUMERIC.
                 "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
-                "float32:float64,"
-                # Ignore ID column, we're not testing that one.
-                "!int32:int64"
+                "float32:float64"
             ),
         ]
     )
