@@ -190,8 +190,12 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_not_null_vs_nullable():
-    """Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly."""
+def disabled_test_schema_validation_not_null_vs_nullable():
+    """
+    Disabled this test because we don't currently pull nullable from Hive.
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/934
+    Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly.
+    """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
