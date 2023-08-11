@@ -100,6 +100,12 @@ def sa_oracle_NUMBER(_, satype, nullable=True):
     return dt.Decimal(satype.precision, satype.scale, nullable=nullable)
 
 
+@dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.FLOAT)
+def sa_oracle_FLOAT(_, satype, nullable=True):
+    # Oracle FLOAT is a NUMBER under the hood.
+    return dt.Decimal(nullable=nullable)
+
+
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BFILE)
 def sa_oracle_BFILE(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
