@@ -18,7 +18,7 @@ from typing import Optional, Union, TYPE_CHECKING
 import yaml
 
 import google.oauth2.service_account
-from ibis_bigquery.client import BigQueryClient
+
 import ibis.expr.datatypes as dt
 
 from data_validation import clients, consts, state_manager
@@ -106,7 +106,7 @@ class ConfigManager(object):
     def random_row_batch_size(self):
         """Return if the validation should use a random row filter."""
         return (
-            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
+            int(self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE))
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
@@ -592,16 +592,16 @@ class ConfigManager(object):
 
     def append_pre_agg_calc_field(
         self, source_column, target_column, agg_type, column_type, column_position
-    ):
+    ) -> dict:
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
-
         if column_type == "string":
             calc_func = "length"
 
-        elif column_type == "timestamp":
-            if isinstance(self.source_client, BigQueryClient) or isinstance(
-                self.target_client, BigQueryClient
+        elif column_type == "timestamp" or column_type == "!timestamp":
+            if (
+                self.source_client.name == "bigquery"
+                or self.target_client.name == "bigquery"
             ):
                 calc_func = "cast"
                 cast_type = "timestamp"
@@ -620,13 +620,9 @@ class ConfigManager(object):
 
             calc_func = "epoch_seconds"
 
-        elif column_type == "int32":
+        elif column_type == "int32" or column_type == "!int32":
             calc_func = "cast"
             cast_type = "int64"
-
-        elif column_type == "decimal":
-            calc_func = "cast"
-            cast_type = "float64"
 
         else:
             raise ValueError(f"Unsupported column type: {column_type}")
@@ -652,6 +648,27 @@ class ConfigManager(object):
         self, agg_type, arg_value, supported_types, cast_to_bigint=False
     ):
         """Return list of aggregate objects of given agg_type."""
+
+        def decimal_too_big_for_64bit(
+            source_column_ibis_type, target_column_ibis_type
+        ) -> bool:
+            return bool(
+                (
+                    isinstance(source_column_ibis_type, dt.Decimal)
+                    and (
+                        source_column_ibis_type.precision is None
+                        or source_column_ibis_type.precision > 18
+                    )
+                )
+                and (
+                    isinstance(target_column_ibis_type, dt.Decimal)
+                    and (
+                        target_column_ibis_type.precision is None
+                        or target_column_ibis_type.precision > 18
+                    )
+                )
+            )
+
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
@@ -667,8 +684,13 @@ class ConfigManager(object):
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
             # Get column type and remove precision/scale attributes
-            column_type_str = str(source_table[casefold_source_columns[column]].type())
-            column_type = column_type_str.split("(")[0]
+            source_column_ibis_type = source_table[
+                casefold_source_columns[column]
+            ].type()
+            target_column_ibis_type = target_table[
+                casefold_target_columns[column]
+            ].type()
+            column_type = str(source_column_ibis_type).split("(")[0]
 
             if column not in allowlist_columns:
                 continue
@@ -685,10 +707,13 @@ class ConfigManager(object):
                 continue
 
             if (
-                column_type == "string"
-                or (cast_to_bigint and column_type == "int32")
+                (column_type == "string" or column_type == "!string")
                 or (
-                    column_type == "timestamp"
+                    cast_to_bigint
+                    and (column_type == "int32" or column_type == "!int32")
+                )
+                or (
+                    (column_type == "timestamp" or column_type == "!timestamp")
                     and agg_type
                     in (
                         "sum",
@@ -696,7 +721,6 @@ class ConfigManager(object):
                         "bit_xor",
                     )  # For timestamps: do not convert to epoch seconds for min/max
                 )
-                or (column_type == "decimal")
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
@@ -715,6 +739,10 @@ class ConfigManager(object):
                     ),
                     consts.CONFIG_TYPE: agg_type,
                 }
+                if decimal_too_big_for_64bit(
+                    source_column_ibis_type, target_column_ibis_type
+                ):
+                    aggregate_config[consts.CONFIG_CAST] = "string"
 
             aggregate_configs.append(aggregate_config)
 
@@ -722,7 +750,8 @@ class ConfigManager(object):
 
     def build_config_calculated_fields(
         self,
-        reference,
+        source_reference,
+        target_reference,
         calc_type,
         alias,
         depth,
@@ -755,8 +784,8 @@ class ConfigManager(object):
                 continue
 
         calculated_config = {
-            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: reference,
-            consts.CONFIG_CALCULATED_TARGET_COLUMNS: reference,
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: source_reference,
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: target_reference,
             consts.CONFIG_FIELD_ALIAS: alias,
             consts.CONFIG_TYPE: calc_type,
             consts.CONFIG_DEPTH: depth,
@@ -780,7 +809,7 @@ class ConfigManager(object):
     def _strftime_format(
         self, column_type: Union[dt.Date, dt.Timestamp], client
     ) -> str:
-        if isinstance(column_type, dt.Timestamp):
+        if column_type.is_timestamp():
             return "%Y-%m-%d %H:%M:%S"
         if clients.is_oracle_client(client):
             # Oracle DATE is a DateTime
@@ -789,7 +818,8 @@ class ConfigManager(object):
 
     def _apply_base_cast_overrides(
         self,
-        column: str,
+        source_column: str,
+        target_column: str,
         col_config: dict,
         source_table: "ibis.expr.types.TableExpr",
         target_table: "ibis.expr.types.TableExpr",
@@ -802,18 +832,18 @@ class ConfigManager(object):
         target_table_schema = {k: v for k, v in target_table.schema().items()}
 
         if isinstance(
-            source_table_schema[column], (dt.Date, dt.Timestamp)
-        ) and isinstance(target_table_schema[column], (dt.Date, dt.Timestamp)):
+            source_table_schema[source_column], (dt.Date, dt.Timestamp)
+        ) and isinstance(target_table_schema[target_column], (dt.Date, dt.Timestamp)):
             # Use strftime rather than cast for temporal comparisons.
             # Pick the most permissive format across the two engines.
             # For example Date -> Timestamp should format both source and target as Date.
             fmt = min(
                 [
                     self._strftime_format(
-                        source_table_schema[column], self.source_client
+                        source_table_schema[source_column], self.source_client
                     ),
                     self._strftime_format(
-                        source_table_schema[column], self.target_client
+                        source_table_schema[source_column], self.target_client
                     ),
                 ],
                 key=len,
@@ -821,7 +851,7 @@ class ConfigManager(object):
             col_config["calc_type"] = consts.CONFIG_CUSTOM
             custom_params = {
                 "calc_params": {
-                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.api.TimestampValue.strftime",
+                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TemporalValue.strftime",
                     consts.CONFIG_CUSTOM_PARAMS: [
                         {consts.CONFIG_CUSTOM_PARAM_FORMAT_STR: fmt}
                     ],
@@ -837,12 +867,23 @@ class ConfigManager(object):
         target_table = self.get_target_ibis_calculated_table()
 
         order_of_operations = []
-        if col_list is None:
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        if col_list:
+            casefold_col_list = [x.casefold() for x in col_list]
+            # Filter columns based on col_list if provided
             casefold_source_columns = {
-                x.casefold(): str(x) for x in source_table.columns
+                k: v
+                for (k, v) in casefold_source_columns.items()
+                if k in casefold_col_list
             }
-        else:
-            casefold_source_columns = {x.casefold(): str(x) for x in col_list}
+            casefold_target_columns = {
+                k: v
+                for (k, v) in casefold_target_columns.items()
+                if k in casefold_col_list
+            }
+
         if calc_type == "hash":
             order_of_operations = [
                 "cast",
@@ -864,12 +905,13 @@ class ConfigManager(object):
         col_names = []
         for i, calc in enumerate(order_of_operations):
             if i == 0:
-                previous_level = [x for x in casefold_source_columns.values()]
+                previous_level = [x for x in casefold_source_columns.keys()]
             else:
                 previous_level = [k for k, v in column_aliases.items() if v == i - 1]
             if calc in ["concat", "hash"]:
                 col = {}
-                col["reference"] = previous_level
+                col["source_reference"] = previous_level
+                col["target_reference"] = previous_level
                 col["name"] = f"{calc}__all"
                 col["calc_type"] = calc
                 col["depth"] = i
@@ -881,16 +923,26 @@ class ConfigManager(object):
                 # This needs to be the previous manifest of columns
                 for j, column in enumerate(previous_level):
                     col = {}
-                    col["reference"] = [column]
+                    col["source_reference"] = [column]
+                    col["target_reference"] = [column]
                     col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
 
                     if i == 0:
+                        # If depth 0, get raw column name with correct casing
+                        source_column = casefold_source_columns[column]
+                        target_column = casefold_target_columns[column]
+                        col["source_reference"] = [source_column]
+                        col["target_reference"] = [target_column]
                         # If we are casting the base column (i == 0) then apply any
                         # datatype specific overrides.
                         col = self._apply_base_cast_overrides(
-                            column, col, source_table, target_table
+                            source_column,
+                            target_column,
+                            col,
+                            source_table,
+                            target_table,
                         )
 
                     name = col["name"]
@@ -906,7 +958,7 @@ class ConfigManager(object):
             query = file.read()
             query = query.rstrip(";\n")
         except IOError:
-            logging.warning("Cannot read query file: ", filename)
+            logging.error("Cannot read query file: ", filename)
 
         if not query or query.isspace():
             raise ValueError(

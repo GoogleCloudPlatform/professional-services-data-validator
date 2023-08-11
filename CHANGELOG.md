@@ -2,6 +2,41 @@
 
 ## Untagged
 
+## [4.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v3.2.0...v4.0.0) (2023-08-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* Ibis Upgrade to 5.1.0 ([#894](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/894))
+* Partition based on non-numeric and multiple keys ([#889](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/889))
+
+### Features
+
+* Adding Random-Row support for Custom Query ([#891](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/891)) ([fc42c61](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/fc42c6181a73f79d55dc74ddd383d462a0ca4e7a))
+* Adding RawSQL function for Redshift ([#903](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/903)) ([c25d690](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c25d690f3ccd41fc46768e2064d26a0754652354))
+* Enhance validate schema to support time zoned timestamp columns ([#919](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/919)) ([aed1505](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/aed150530445550dcf2222dd5cb555413a9ea835))
+* **generate-table-partitions:** Works on all 7 platforms - BigQuery, Hive, MySQL, Oracle, Postgres, SQL Server and Teradata. ([#922](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/922)) ([aa84d7a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/aa84d7a77a25e4f67e415d1d6fd938ebb6bfa6ce))
+* Ibis Upgrade to 5.1.0 ([#894](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/894)) ([b5db4c0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b5db4c09818cc9556fedc4e14e46685a788b3919))
+* Partition based on non-numeric and multiple keys ([#889](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/889)) ([7b6a530](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7b6a530bf4052eae24d2073d35d5151c24bc86df))
+* Snowflake support ([#921](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/921)) ([e1d590b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e1d590bb8f0224bc316420ed42bfad0fa8065950))
+* Support allow list decimals having a range for precision and scale. Also add --allow-list-file. ([#888](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/888)) ([7783beb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7783beb347de2a4342810b50c4e65df873351b31))
+
+
+### Bug Fixes
+
+* Adding date and timestamp formatting for Hive ([#876](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/876)) ([65a090a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/65a090a99a47ed60631814c47ebbb5acf04597fb))
+* Adding enhancements to allow-list in schema validation ([#881](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/881)) ([c83df2b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c83df2b165724969bee1a74989333abbed890099))
+* Adding UTF encoding for Oracle hash generation ([#878](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/878)) ([2e24eae](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2e24eae5a5dae9225bc74291ec233d32b56ea36c))
+* No column filtering for csv/json text output. Reverts part of change for issue 753 ([#890](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/890)) ([ba641e0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ba641e03b49c9e7bae2fe798f5b8b2cf9e8b6c76))
+* redshift bug for custom query ([#911](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/911)) ([f1018b5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f1018b5139b8523b12e9e6440add890bcf984717))
+* teradata NUMBER with no precision/scale, small doc fix after Ibis upgrade ([#914](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/914)) ([f9db68f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f9db68f2edcc2980085945a6a65151b9428b4f48))
+* validate column sum/min/max issue for decimals with precision beyond int64/float64  ([#918](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/918)) ([5a8d691](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5a8d6919cf41a1b3457993fcf7fc6ae1df8e6fd8))
+
+
+### Documentation
+
+* Add sample shell script and documentation to execute validations at a BigQuery dataset level ([#910](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/910)) ([a84da45](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a84da450468d0abcae09b081fa208f26c9677da7))
+
 ## [3.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v3.1.0...v3.2.0) (2023-05-31)
 
 

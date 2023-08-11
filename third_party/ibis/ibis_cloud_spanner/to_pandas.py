@@ -34,15 +34,9 @@ class pandas_df:
         for row in data_qry:
             data.append(row)
 
-        columns_dict = {}
+        columns = [f.name for f in data_qry.fields]
 
-        for item in data_qry.fields:
-            columns_dict[item.name] = item.type_.code.name
-
-        # Creating list of columns to be mapped with the data
-        column_list = [k for k, v in columns_dict.items()]
-
-        # Creating pandas dataframe from data and columns_list
-        df = DataFrame(data, columns=column_list)
+        # Creating pandas dataframe from data and columns
+        df = DataFrame(data, columns=columns)
 
         return df

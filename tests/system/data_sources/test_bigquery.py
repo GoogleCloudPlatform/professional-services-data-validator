@@ -18,6 +18,7 @@ from unittest import mock
 from data_validation import __main__ as main
 from data_validation import cli_tools, clients, consts, data_validation, state_manager
 from data_validation.query_builder import random_row_builder
+from data_validation.partition_builder import PartitionBuilder
 from data_validation.query_builder.query_builder import QueryBuilder
 
 
@@ -398,13 +399,13 @@ CLI_FIND_TABLES_ARGS = [
 STRING_MATCH_RESULT = '{"schema_name": "pso_data_validator", "table_name": "results", "target_schema_name": "pso_data_validator", "target_table_name": "results"}'
 
 EXPECTED_RANDOM_ROW_QUERY = """
-SELECT `station_id`
+SELECT t0.*
 FROM (
-  SELECT *
-  FROM `bigquery-public-data.new_york_citibike.citibike_stations`
-  ORDER BY RAND()
-  LIMIT 10
+  SELECT t1.`station_id`
+  FROM `bigquery-public-data.new_york_citibike.citibike_stations` t1
 ) t0
+ORDER BY RAND() ASC
+LIMIT 10
 """.strip()
 
 
@@ -705,9 +706,6 @@ def test_random_row_query_builder():
         4665,
         4664,
     ]
-
-
-# add row validation tests for BQ
 
 
 def test_bigquery_row():
@@ -1097,6 +1095,54 @@ def test_custom_query():
     assert result_df.source_agg_value.equals(result_df.target_agg_value)
 
 
+# Expected result from partitioning table on 3 keys
+EXPECTED_PARTITION_FILTER = [
+    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
+    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
+    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
+    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
+    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
+    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
+]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_generate_table_partitions(mock_conn):
+    """Test generate table partitions on BigQuery
+    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
+    check that yaml configurations are created and saved in local storage. Partitions can only be created with
+    a database that can handle SQL with ntile, hence doing this as part of system testing.
+    What we are checking
+    1. the shape of the partition list is 1, number of partitions (only one table in the list)
+    2. value of the partition list matches what we expect.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "generate-table-partitions",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.test_generate_partitions=pso_data_validator.test_generate_partitions",
+            "-pk=course_id,quarter_id,student_id",
+            "-hash=*",
+            "-cdir=/home/users/yaml",
+            "-pn=4",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_filters = partition_builder._get_partition_key_filters()
+
+    assert len(partition_filters) == 1  # only one pair of tables
+    assert (
+        len(partition_filters[0]) == partition_builder.args.partition_num
+    )  # assume no of table rows > partition_num
+    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
@@ -1166,6 +1212,35 @@ def test_row_validation_core_types(mock_conn):
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=*",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_custom_query_validation_core_types(mock_conn):
+    """BigQuery to BigQuery dvt_core_types custom-query validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "--source-query=select * from pso_data_validator.dvt_core_types",
+            "--target-query=select * from pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--count=*",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

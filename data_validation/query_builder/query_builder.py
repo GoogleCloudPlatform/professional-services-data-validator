@@ -280,7 +280,7 @@ class CalculatedField(object):
         fields = [config["default_concat_separator"], fields]
         cast = "string"
         return CalculatedField(
-            ibis.expr.api.StringValue.join,
+            ibis.expr.types.StringValue.join,
             config,
             fields,
             cast=cast,
@@ -291,7 +291,7 @@ class CalculatedField(object):
         if config.get("default_hash_function") is None:
             how = "sha256"
             return CalculatedField(
-                ibis.expr.api.StringValue.hashbytes,
+                ibis.expr.types.StringValue.hashbytes,
                 config,
                 fields,
                 how=how,
@@ -299,7 +299,7 @@ class CalculatedField(object):
         else:
             how = "farm_fingerprint"
             return CalculatedField(
-                ibis.expr.api.ValueExpr.hash,
+                ibis.expr.types.Value.hash,
                 config,
                 fields,
                 how=how,
@@ -319,7 +319,7 @@ class CalculatedField(object):
         )
         fields = [fields[0], default_null_string]
         return CalculatedField(
-            ibis.expr.api.ValueExpr.fillna,
+            ibis.expr.types.Value.fillna,
             config,
             fields,
         )
@@ -327,7 +327,7 @@ class CalculatedField(object):
     @staticmethod
     def length(config, fields):
         return CalculatedField(
-            ibis.expr.api.StringValue.length,
+            ibis.expr.types.StringValue.length,
             config,
             fields,
         )
@@ -335,7 +335,7 @@ class CalculatedField(object):
     @staticmethod
     def rstrip(config, fields):
         return CalculatedField(
-            ibis.expr.api.StringValue.rstrip,
+            ibis.expr.types.StringValue.rstrip,
             config,
             fields,
         )
@@ -343,7 +343,7 @@ class CalculatedField(object):
     @staticmethod
     def upper(config, fields):
         return CalculatedField(
-            ibis.expr.api.StringValue.upper,
+            ibis.expr.types.StringValue.upper,
             config,
             fields,
         )
@@ -351,7 +351,7 @@ class CalculatedField(object):
     @staticmethod
     def epoch_seconds(config, fields):
         return CalculatedField(
-            ibis.expr.api.TimestampValue.epoch_seconds,
+            ibis.expr.types.TimestampValue.epoch_seconds,
             config,
             fields,
         )
@@ -495,7 +495,8 @@ class QueryBuilder(object):
             validation_type == consts.ROW_VALIDATION
             or validation_type == consts.CUSTOM_QUERY
         ):
-            table = table.projection(self.compile_comparison_fields(table))
+            if self.comparison_fields:
+                table = table.projection(self.compile_comparison_fields(table))
         else:
             if self.comparison_fields:
                 table = table.mutate(self.compile_comparison_fields(table))
@@ -503,7 +504,7 @@ class QueryBuilder(object):
         filtered_table = table.filter(compiled_filters) if compiled_filters else table
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
-            filtered_table.groupby(compiled_groups)
+            filtered_table.group_by(compiled_groups)
             if compiled_groups
             else filtered_table
         )

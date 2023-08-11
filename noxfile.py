@@ -30,10 +30,11 @@ import nox
 DEFAULT_PYTHON_VERSION = "3.10"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10"]
+PYTHON_VERSIONS = ["3.8", "3.9", "3.10"]
 
 BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
+UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
 
 
 def _setup_session_requirements(session, extra_packages=[]):
@@ -49,7 +50,7 @@ def _setup_session_requirements(session, extra_packages=[]):
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
-    _setup_session_requirements(session, extra_packages=["pyfakefs==4.6.2"])
+    _setup_session_requirements(session, extra_packages=UNIT_PACKAGES)
 
     # Run py.test against the unit tests.
     session.run(
@@ -196,7 +197,6 @@ def integration_spanner(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run("pytest", "third_party/ibis/ibis_cloud_spanner/tests", *session.posargs)
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
 
 
@@ -258,6 +258,30 @@ def integration_hive(session):
     session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)
 
 
+@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+def integration_snowflake(session):
+    """Run Snowflake integration tests.
+    Ensure Hive validation is running as expected.
+    """
+    _setup_session_requirements(
+        session, extra_packages=["snowflake-sqlalchemy", "snowflake-connector-python"]
+    )
+
+    expected_env_vars = [
+        "PROJECT_ID",
+        "SNOWFLAKE_ACCOUNT",
+        "SNOWFLAKE_USER",
+        "SNOWFLAKE_PASSWORD",
+    ]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run(
+        "pytest", "tests/system/data_sources/test_snowflake.py", *session.posargs
+    )
+
+
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_secrets(session):
     """
@@ -265,6 +289,11 @@ def integration_secrets(session):
     Ensure the SecretManager is running as expected.
     """
     _setup_session_requirements(session, extra_packages=[])
+
+    expected_env_vars = ["PROJECT_ID"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
 
     test_path = "tests/system/test_secret_manager.py"
     session.run("pytest", test_path, *session.posargs)

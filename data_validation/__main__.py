@@ -68,14 +68,14 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         "int64",
         "decimal",
         "timestamp",
-        "float64[non-nullable]",
-        "float32[non-nullable]",
-        "int8[non-nullable]",
-        "int16[non-nullable]",
-        "int32[non-nullable]",
-        "int64[non-nullable]",
-        "decimal[non-nullable]",
-        "timestamp[non-nullable]",
+        "!float64",
+        "!float32",
+        "!int8",
+        "!int16",
+        "!int32",
+        "!int64",
+        "!decimal",
+        "!timestamp",
     ]
 
     if args.wildcard_include_string_len:
@@ -138,7 +138,8 @@ def get_calculated_config(args, config_manager):
     for field in fields:
         calculated_configs.append(
             config_manager.build_config_calculated_fields(
-                field["reference"],
+                field["source_reference"],
+                field["target_reference"],
                 field["calc_type"],
                 field["name"],
                 field["depth"],
@@ -390,12 +391,16 @@ def find_tables_using_string_matching(args):
 
 
 def run_raw_query_against_connection(args):
-    """Return results of raw query for adhoc usage."""
+    """Return results of raw query for ad hoc usage."""
     mgr = state_manager.StateManager()
     client = clients.get_data_client(mgr.get_connection_config(args.conn))
-
-    with client.raw_sql(args.query, results=True) as cur:
-        return cur.fetchall()
+    cursor = client.raw_sql(args.query)
+    res = cursor.fetchall()
+    try:
+        cursor.close()
+    except Exception:
+        pass
+    return res
 
 
 def convert_config_to_yaml(args, config_managers):
@@ -436,8 +441,12 @@ def run_validation(config_manager, dry_run=False, verbose=False):
         print(
             json.dumps(
                 {
-                    "source_query": validator.validation_builder.get_source_query().compile(),
-                    "target_query": validator.validation_builder.get_target_query().compile(),
+                    "source_query": str(
+                        validator.validation_builder.get_source_query().compile()
+                    ),
+                    "target_query": str(
+                        validator.validation_builder.get_target_query().compile()
+                    ),
                 },
                 indent=4,
             )

@@ -18,7 +18,7 @@ import pytest
 from google.auth import credentials
 import pandas
 import ibis.backends.pandas
-from ibis.backends.pandas.client import PandasClient
+from ibis.backends.pandas import BasePandasBackend as PandasBackend
 
 from data_validation import clients, exceptions
 
@@ -51,7 +51,7 @@ def _create_table_file(table_path, data):
 
 def _get_pandas_client():
     df = pandas.DataFrame(DATA)
-    pandas_client = ibis.backends.pandas.connect({TABLE_NAME: df})
+    pandas_client = ibis.pandas.connect({TABLE_NAME: df})
 
     return pandas_client
 
@@ -75,7 +75,9 @@ def test_get_bigquery_client_sets_user_agent():
 
 def test_import_oracle_client():
     with pytest.raises(ModuleNotFoundError, match=r"No module named 'cx_Oracle'"):
-        from third_party.ibis.ibis_oracle.client import OracleClient  # NOQA
+        from third_party.ibis.ibis_oracle.api import oracle_connect
+
+        oracle_connect()
 
 
 def test_get_oracle_data_client():
@@ -90,4 +92,4 @@ def test_get_pandas_data_client():
     _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
     ibis_client = clients.get_data_client(conn_config)
 
-    assert isinstance(ibis_client, PandasClient)
+    assert isinstance(ibis_client, PandasBackend)

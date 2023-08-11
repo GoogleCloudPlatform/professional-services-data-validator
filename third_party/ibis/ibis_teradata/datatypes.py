@@ -1,6 +1,31 @@
+# Copyright 2023 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from multipledispatch import Dispatcher
 
 import ibis.expr.datatypes as dt
+import datetime, decimal
+
+# Mapping https://pypi.org/project/teradatasql/#DataTypes to Ibis
+_teradatasql_to_ibis_type = {
+    datetime.date: dt.date,
+    int: dt.int64,
+    float: dt.float64,
+    datetime.datetime: dt.timestamp,
+    decimal.Decimal: dt.decimal,
+    str: dt.string,
+    bytes: dt.binary,
+}
 
 
 class TypeTranslationContext:
@@ -51,16 +76,33 @@ class TeradataTypeTranslator(object):
 
     @classmethod
     def to_ibis_from_N(cls, col_data, return_ibis_type=True):
-        return cls.to_ibis_from_D(col_data, return_ibis_type=return_ibis_type)
+        precision = int(
+            col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 38))
+        )
+        scale = int(
+            col_data.get(
+                "DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 38)
+            )
+        )
+        if return_ibis_type:
+            # No precision or scale specified
+            if precision == -128 or scale ==-128:
+                return dt.Decimal()
+            return dt.Decimal(precision, scale)
+        
+        if precision == -128 or scale ==-128:
+            return "DECIMAL"
+        
+        return "DECIMAL(%d, %d)" % (precision, scale)
 
     @classmethod
     def to_ibis_from_D(cls, col_data, return_ibis_type=True):
         precision = int(
-            col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 20))
+            col_data.get("DecimalTotalDigits", col_data.get("Decimal Total Digits", 5))
         )
         scale = int(
             col_data.get(
-                "DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 4)
+                "DecimalFractionalDigits", col_data.get("Decimal Fractional Digits", 0)
             )
         )
         if return_ibis_type:
@@ -115,7 +157,7 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_SZ(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.timestamp
+            return dt.timestamp(timezone="UTC")
 
         return "TIMESTAMP"
 
