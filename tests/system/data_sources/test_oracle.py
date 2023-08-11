@@ -200,7 +200,6 @@ def test_schema_validation_oracle_to_postgres():
             "-tbls=pso_data_validator.dvt_ora2pg_types",
             "--filter-status=fail",
             "--allow-list-file=samples/allow_list/oracle_to_postgres.yaml",
-            "--allow-list=decimal(8,0):int32",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -278,8 +277,6 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_oracle_to_postgres():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --sum string below to include col_tstz when issue-762 is complete.
-    # TODO Change --min/max strings below to include col_tstz when issue-706 is complete.
     number_cols = "col_num_4,col_num_9,col_num_18,col_num_38,col_num,col_num_10_2"
     float_cols = "col_num_float,col_float32,col_float64"
     string_cols = "col_varchar_30,col_char_2,col_nvarchar_30,col_nchar_2"

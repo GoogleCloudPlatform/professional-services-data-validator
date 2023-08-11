@@ -90,7 +90,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_ts          TIMESTAMP(6)
 ,   col_tstz        TIMESTAMP(6) WITH TIME ZONE
 --,   col_tsltz       TIMESTAMP(6) WITH LOCAL TIME ZONE
---,   col_raw         RAW(16)
+,   col_raw         RAW(16)
 ,   col_clob        CLOB
 ,   col_nclob       NCLOB
 );
@@ -106,8 +106,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456'
 ,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
---,UTL_RAW.CAST_TO_RAW('DVT')
-,'DVT A','DVT A'
+,UTL_RAW.CAST_TO_RAW('DVT'),'DVT A','DVT A'
 );
 INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 (2,2222,123456789,123456789012345678,1234567890123456789012345
@@ -118,8 +117,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:01.123456'
 ,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
---,UTL_RAW.CAST_TO_RAW('DVT')
-,'DVT B','DVT B'
+,UTL_RAW.CAST_TO_RAW('DVT'),'DVT B','DVT B'
 );
 INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 (3,3333,123456789,123456789012345678,1234567890123456789012345
@@ -130,7 +128,6 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
 ,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
---,UTL_RAW.CAST_TO_RAW('DVT')
-,'DVT C','DVT C'
+,UTL_RAW.CAST_TO_RAW('DVT'),'DVT C','DVT C'
 );
 COMMIT;
