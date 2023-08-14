@@ -31,6 +31,7 @@ CREATE TABLE udf.dvt_core_types
 ,   col_datetime    TIMESTAMP(3)
 ,   col_tstz        TIMESTAMP(3) WITH TIME ZONE
 );
+COMMENT ON TABLE udf.dvt_core_types AS 'Core data types integration test table';
 
 INSERT INTO udf.dvt_core_types VALUES
 (1,1,1,1,1
@@ -50,3 +51,12 @@ INSERT INTO udf.dvt_core_types VALUES
 ,'Hello DVT','C ','Hello DVT'
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
 ,CAST('1970-01-03 00:00:03.000-03:00' AS TIMESTAMP(3) WITH TIME ZONE));
+
+DROP TABLE udf.dvt_null_not_null;
+CREATE TABLE udf.dvt_null_not_null
+(   col_nn             TIMESTAMP(0) NOT NULL
+,   col_nullable       TIMESTAMP(0)
+,   col_src_nn_trg_n   TIMESTAMP(0) NOT NULL
+,   col_src_n_trg_nn   TIMESTAMP(0)
+);
+COMMENT ON TABLE udf.dvt_null_not_null AS 'Nullable integration test table, Teradata is assumed to be a DVT source (not target).';

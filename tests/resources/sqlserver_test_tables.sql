@@ -54,3 +54,11 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
 ,'Hello DVT','C ','Hello DVT'
 ,'1970-01-03','1970-01-03 00:00:03'
 ,cast('1970-01-03 00:00:03 -03:00' as datetimeoffset(3)));
+
+DROP TABLE pso_data_validator.dvt_null_not_null;
+CREATE TABLE pso_data_validator.dvt_null_not_null
+(   col_nn             datetime2(0) NOT NULL
+,   col_nullable       datetime2(0)
+,   col_src_nn_trg_n   datetime2(0) NOT NULL
+,   col_src_n_trg_nn   datetime2(0)
+);
