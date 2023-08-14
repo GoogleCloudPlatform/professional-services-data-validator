@@ -18,7 +18,9 @@ from unittest import mock
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
 from data_validation.partition_builder import PartitionBuilder
+from tests.system.data_sources.common_functions import null_not_null_assertions
 from tests.system.data_sources.test_bigquery import BQ_CONN
+
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
@@ -158,9 +160,10 @@ def test_schema_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
+            "--exclusion-columns=id",
             (
                 # Integral Snowflake NUMBERs to to BigQuery INT64.
-                "--allow-list=!decimal(38,0):int64,decimal(38,0):int64,"
+                "--allow-list=decimal(38,0):int64,"
                 # Snowflake NUMBERS that map to BigQuery NUMERIC.
                 "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
                 # Snowflake NUMBERS that map to BigQuery BIGNUMERIC
@@ -177,6 +180,30 @@ def test_schema_validation_core_types_to_bigquery():
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_not_null_vs_nullable():
+    """Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=snowflake-conn",
+            "-tc=bq-conn",
+            "-tbls=PUBLIC.DVT_NULL_NOT_NULL=pso_data_validator.dvt_null_not_null",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    null_not_null_assertions(df)
 
 
 @mock.patch(

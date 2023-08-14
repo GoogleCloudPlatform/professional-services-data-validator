@@ -50,6 +50,10 @@ class TeradataTypeTranslator(object):
         pass
 
     @classmethod
+    def _col_data_nullable(cls, col_data: dict) -> bool:
+        return bool(col_data.get("Nullable", "Y ").startswith("Y"))
+
+    @classmethod
     def to_ibis(cls, col_data):
         td_type = col_data["Type"].strip()
 
@@ -62,7 +66,7 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_other(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.string
+            return dt.string(nullable=cls._col_data_nullable(col_data))
 
         print('Unsupported Date Type Seen: "%s"' % col_data["Type"])
         return "VARCHAR"
@@ -70,7 +74,7 @@ class TeradataTypeTranslator(object):
     @classmethod
     def to_ibis_from_CV(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.string
+            return dt.string(nullable=cls._col_data_nullable(col_data))
 
         return "VARCHAR"
 
@@ -86,13 +90,15 @@ class TeradataTypeTranslator(object):
         )
         if return_ibis_type:
             # No precision or scale specified
-            if precision == -128 or scale ==-128:
+            if precision == -128 or scale == -128:
                 return dt.Decimal()
-            return dt.Decimal(precision, scale)
-        
-        if precision == -128 or scale ==-128:
+            return dt.Decimal(
+                precision, scale, nullable=cls._col_data_nullable(col_data)
+            )
+
+        if precision == -128 or scale == -128:
             return "DECIMAL"
-        
+
         return "DECIMAL(%d, %d)" % (precision, scale)
 
     @classmethod
@@ -106,58 +112,62 @@ class TeradataTypeTranslator(object):
             )
         )
         if return_ibis_type:
-            return dt.Decimal(precision, scale)
+            return dt.Decimal(
+                precision, scale, nullable=cls._col_data_nullable(col_data)
+            )
         value_type = "DECIMAL(%d, %d)" % (precision, scale)
         return value_type
 
     @classmethod
     def to_ibis_from_F(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.float64
+            return dt.float64(nullable=cls._col_data_nullable(col_data))
         return "FLOAT"
 
     @classmethod
     def to_ibis_from_I(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.int32
+            return dt.int32(nullable=cls._col_data_nullable(col_data))
         return "INT"
 
     @classmethod
     def to_ibis_from_I1(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.int8
+            return dt.int8(nullable=cls._col_data_nullable(col_data))
         return "INT"
 
     @classmethod
     def to_ibis_from_I2(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.int16
+            return dt.int16(nullable=cls._col_data_nullable(col_data))
         return "INT"
 
     @classmethod
     def to_ibis_from_I8(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.int64
+            return dt.int64(nullable=cls._col_data_nullable(col_data))
         return "INT"
 
     @classmethod
     def to_ibis_from_DA(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.date
+            return dt.date(nullable=cls._col_data_nullable(col_data))
 
         return "DATE"
 
     @classmethod
     def to_ibis_from_TS(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.timestamp
+            return dt.timestamp(nullable=cls._col_data_nullable(col_data))
 
         return "TIMESTAMP"
 
     @classmethod
     def to_ibis_from_SZ(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
-            return dt.timestamp(timezone="UTC")
+            return dt.timestamp(
+                timezone="UTC", nullable=cls._col_data_nullable(col_data)
+            )
 
         return "TIMESTAMP WITH TIME ZONE"
     

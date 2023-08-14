@@ -67,3 +67,12 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
 ,to_timestamp_tz('1970-01-03 00:00:03 -03:00','YYYY-MM-DD HH24:MI:SS TZH:TZM'));
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_null_not_null;
+CREATE TABLE pso_data_validator.dvt_null_not_null
+(   col_nn             TIMESTAMP(0) NOT NULL
+,   col_nullable       TIMESTAMP(0)
+,   col_src_nn_trg_n   TIMESTAMP(0) NOT NULL
+,   col_src_n_trg_nn   TIMESTAMP(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, Oracle is assumed to be a DVT source (not target).';
