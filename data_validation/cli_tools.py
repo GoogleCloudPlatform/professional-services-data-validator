@@ -343,6 +343,11 @@ def _configure_validation_config_parser(subparsers):
         "-cdir",
         help="Directory path containing YAML Config Files to be used for running validations.",
     )
+    run_parser.add_argument(
+        "--config-file-json",
+        "-cj",
+        help="JSON Config File path to be used for building or running validations.",
+    )
 
     get_parser = configs_subparsers.add_parser(
         "get", help="Get and print a validation config"
@@ -351,6 +356,11 @@ def _configure_validation_config_parser(subparsers):
         "--config-file",
         "-c",
         help="YAML Config File Path to be used for building or running validations.",
+    )
+    get_parser.add_argument(
+        "--config-file-json",
+        "-cj",
+        help="JSON Config File Path to be used for building or running validations.",
     )
 
 
@@ -1048,6 +1058,12 @@ def store_validation(validation_file_name, yaml_config):
     """Store the validation YAML config under the given name."""
     mgr = state_manager.StateManager()
     mgr.create_validation_yaml(validation_file_name, yaml_config)
+
+
+def store_validation_json(validation_file_name, json_config):
+    """Store the validation JSON config under the given name."""
+    mgr = state_manager.StateManager()
+    mgr.create_validation_json(validation_file_name, json_config)
 
 
 def store_partition(target_file_path, yaml_config, target_folder_path=None):

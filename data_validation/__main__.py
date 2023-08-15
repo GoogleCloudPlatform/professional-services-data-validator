@@ -471,7 +471,7 @@ def run_validations(args, config_managers):
     for config_manager in config_managers:
         if config_manager.config and consts.CONFIG_FILE in config_manager.config:
             logging.info(
-                "Currently running the validation for yml file: %s",
+                "Currently running the validation for YAML file: %s",
                 config_manager.config[consts.CONFIG_FILE],
             )
             try:
@@ -483,6 +483,21 @@ def run_validations(args, config_managers):
                     "Error %s occurred while running config file %s. Skipping it for now.",
                     str(e),
                     config_manager.config[consts.CONFIG_FILE],
+                )
+        if config_manager.config and consts.CONFIG_FILE_JSON in config_manager.config:
+            logging.info(
+                "Currently running the validation for JSON file: %s",
+                config_manager.config[consts.CONFIG_FILE_JSON],
+            )
+            try:
+                run_validation(
+                    config_manager, dry_run=args.dry_run, verbose=args.verbose
+                )
+            except Exception as e:
+                logging.error(
+                    "Error %s occurred while running config file %s. Skipping it for now.",
+                    str(e),
+                    config_manager.config[consts.CONFIG_FILE_JSON],
                 )
         else:
             print("===========JSON CONFIG - MAIN PART ==========")
@@ -499,6 +514,16 @@ def store_yaml_config_file(args, config_managers):
     yaml_configs = convert_config_to_yaml(args, config_managers)
     config_file_path = _get_arg_config_file(args)
     cli_tools.store_validation(config_file_path, yaml_configs)
+
+
+def store_json_config_file(args, config_managers):
+    """Build a JSON config file from the supplied configs.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
+    config_file_path = _get_arg_config_file(args)
+    cli_tools.store_validation_json(config_file_path, config_managers)
 
 
 def partition_and_store_config_files(args: Namespace) -> None:
@@ -518,7 +543,7 @@ def partition_and_store_config_files(args: Namespace) -> None:
 
 def run(args) -> None:
     """Splits execution into:
-    1. Build and save single Yaml Config file
+    1. Build and save single Config file (YAML or JSON)
     2. Run Validations
 
     Args:
@@ -530,6 +555,8 @@ def run(args) -> None:
     config_managers = build_config_managers_from_args(args)
     if args.config_file:
         store_yaml_config_file(args, config_managers)
+    if args.config_file_json:
+        store_json_config_file(args, config_managers)
     else:
         run_validations(args, config_managers)
 
