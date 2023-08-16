@@ -169,7 +169,7 @@ class TeradataTypeTranslator(object):
                 timezone="UTC", nullable=cls._col_data_nullable(col_data)
             )
 
-        return "TIMESTAMP"
+        return "TIMESTAMP WITH TIME ZONE"
 
 
 ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")

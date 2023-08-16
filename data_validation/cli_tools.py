@@ -579,6 +579,12 @@ def _configure_column_parser(column_parser):
         help="Include string fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
+        "--wildcard-include-timestamp",
+        "-wit",
+        action="store_true",
+        help="Include timestamp fields for wildcard aggregations.",
+    )
+    optional_arguments.add_argument(
         "--cast-to-bigint",
         "-ctb",
         action="store_true",
@@ -784,6 +790,12 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         "-wis",
         action="store_true",
         help="Include string fields for wildcard aggregations.",
+    )
+    optional_arguments.add_argument(
+        "--wildcard-include-timestamp",
+        "-wit",
+        action="store_true",
+        help="Include timestamp fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
         "--cast-to-bigint",

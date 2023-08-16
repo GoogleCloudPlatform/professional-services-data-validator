@@ -311,7 +311,7 @@ CLI_CONFIG_DIR_RUN_ARGS_LOCAL = [
 ]
 CLI_CONFIG_DIR_RUN_ARGS_GCS = ["configs", "run", "--config-dir", "gs://"]
 
-CLI_WILDCARD_STRING_ARGS = [
+CLI_WILDCARD_COLUMN_ARGS = [
     "validate",
     "column",
     "--source-conn",
@@ -323,6 +323,7 @@ CLI_WILDCARD_STRING_ARGS = [
     "--sum",
     "*",
     "--wildcard-include-string-len",
+    "--wildcard-include-timestamp",
     "--config-file",
     CLI_CONFIG_FILE,
 ]
@@ -605,9 +606,9 @@ def test_cli_store_yaml_then_run_directory_local():
 
 
 def test_wildcard_column_agg_yaml():
-    """Test storing column validation YAML with string fields."""
+    """Test storing column validation YAML with string and timestamp fields."""
     _test_cli_yaml_local_runner(
-        CLI_WILDCARD_STRING_ARGS, EXPECTED_NUM_YAML_LINES_WILDCARD
+        CLI_WILDCARD_COLUMN_ARGS, EXPECTED_NUM_YAML_LINES_WILDCARD
     )
 
 
