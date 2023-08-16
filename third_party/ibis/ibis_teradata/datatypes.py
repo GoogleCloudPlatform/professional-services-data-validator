@@ -170,13 +170,6 @@ class TeradataTypeTranslator(object):
             )
 
         return "TIMESTAMP WITH TIME ZONE"
-    
-    @classmethod
-    def to_ibis_from_TZ(cls, col_data, return_ibis_type=True):
-        if return_ibis_type:
-            return dt.timestamp(timezone="UTC")
-
-        return "TIMESTAMP WITH TIME ZONE"
 
 
 ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")

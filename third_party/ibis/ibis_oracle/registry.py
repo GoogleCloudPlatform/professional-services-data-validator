@@ -391,7 +391,7 @@ def _random(t, op):
 
 def _extract_epoch(t, op):
     sub = operator.sub(sa.cast(t.translate(op.arg), sa.DATE), sa.sql.literal_column("DATE '1970-01-01'")).self_group()
-    mult = sa.cast(operator.mul(sub, sa.sql.literal_column("86400")), sa.NUMERIC)
+    mult = sa.cast(operator.mul(sub, sa.sql.literal_column("86400")), sa.dialects.oracle.NUMBER)
     return mult
 
 

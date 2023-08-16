@@ -228,20 +228,14 @@ def _string_join(translator, op):
 
 def _extract_epoch(translator, op):
     arg = translator.translate(op.arg)
-    if op.arg.output_dtype.timezone:
-        return (
-            f"(CAST ({arg} AS DATE AT TIME ZONE 'GMT') - DATE '1970-01-01') * 86400 + "
-            f"(EXTRACT(HOUR FROM {arg} AT TIME ZONE 'GMT') * 3600) + "
-            f"(EXTRACT(MINUTE FROM {arg} AT TIME ZONE 'GMT') * 60) + "
-            f"(EXTRACT(SECOND FROM {arg} AT TIME ZONE 'GMT'))"
-        )
-    else:
-        return (
-            f"(CAST ({arg} AS DATE) - DATE '1970-01-01') * 86400 + "
-            f"(EXTRACT(HOUR FROM {arg}) * 3600) + "
-            f"(EXTRACT(MINUTE FROM {arg}) * 60) + "
-            f"(EXTRACT(SECOND FROM {arg}))"
-        )
+    utc_expression = "AT TIME ZONE 'GMT'" if op.arg.output_dtype.timezone else ""
+    
+    return (
+        f"(CAST ({arg} AS DATE {utc_expression}) - DATE '1970-01-01') * 86400 + "
+        f"(EXTRACT(HOUR FROM {arg} {utc_expression}) * 3600) + "
+        f"(EXTRACT(MINUTE FROM {arg} {utc_expression}) * 60) + "
+        f"(EXTRACT(SECOND FROM {arg} {utc_expression}))"
+    )
 
 
 """ Add New Customizations to Operations registry """
