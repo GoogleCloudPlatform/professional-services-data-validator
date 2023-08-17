@@ -21,11 +21,12 @@ from ibis.expr.types.generic import Value
 def cast(self, target_type: dt.DataType) -> Value:
     """Override ibis.expr.api's cast method.
     This allows for Timestamp-typed columns to be cast to Timestamp, since Ibis interprets some similar but non-equivalent types (eg. DateTime) to Timestamp (GitHub issue #451).
+    This allows for String-typed columns to be cast to String, since there may be a need to cast CHAR to VARCHAR as per Issue #927.
     """
     # validate
     op = ops.Cast(self, to=target_type)
-
-    if op.to == self.type() and not op.to.is_timestamp():
+    
+    if op.to == self.type() and not op.to.is_timestamp() and not op.to.is_string():
         # noop case if passed type is the same
         return self
 
@@ -36,3 +37,6 @@ def cast(self, target_type: dt.DataType) -> Value:
             return self
 
     return op.to_expr()
+
+
+Value.cast = cast
