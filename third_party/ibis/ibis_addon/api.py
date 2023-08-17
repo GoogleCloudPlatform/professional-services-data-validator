@@ -21,17 +21,16 @@ from ibis.expr.types.generic import Value
 def cast(self, target_type: dt.DataType) -> Value:
     """Override ibis.expr.api's cast method.
     This allows for Timestamp-typed columns to be cast to Timestamp, since Ibis interprets some similar but non-equivalent types (eg. DateTime) to Timestamp (GitHub issue #451).
-    This allows for String-typed columns to be cast to String, since there may be a need to cast CHAR to VARCHAR as per Issue #927.
     """
     # validate
     op = ops.Cast(self, to=target_type)
-    
-    if op.to == self.type() and not op.to.is_timestamp() and not op.to.is_string():
+
+    if op.to == self.type() and not op.to.is_timestamp():
         # noop case if passed type is the same
         return self
 
     if op.to.is_geospatial():
-        from_geotype = self.type().geotype or 'geometry'
+        from_geotype = self.type().geotype or "geometry"
         to_geotype = op.to.geotype
         if from_geotype == to_geotype:
             return self
@@ -39,4 +38,20 @@ def cast(self, target_type: dt.DataType) -> Value:
     return op.to_expr()
 
 
-Value.cast = cast
+def force_cast(self, target_type: dt.DataType) -> Value:
+    """New method to force cast even if data type is the same.
+    Used to cast a value to itself in ComparisonFields for nuances in data types i.e. casting CHAR to VARCHAR which are both Ibis strings
+    """
+    # validate
+    op = ops.Cast(self, to=target_type)
+
+    if op.to.is_geospatial():
+        from_geotype = self.type().geotype or "geometry"
+        to_geotype = op.to.geotype
+        if from_geotype == to_geotype:
+            return self
+
+    return op.to_expr()
+
+
+Value.force_cast = force_cast

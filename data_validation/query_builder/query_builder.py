@@ -201,7 +201,7 @@ class ComparisonField(object):
         comparison_field = ibis_table[self.field_name]
         alias = self.alias or self.field_name
         if self.cast:
-            comparison_field = comparison_field.cast(self.cast)
+            comparison_field = comparison_field.force_cast(self.cast)
         comparison_field = comparison_field.name(alias)
 
         return comparison_field
