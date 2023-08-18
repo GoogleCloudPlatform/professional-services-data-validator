@@ -22,7 +22,7 @@ from data_validation.partition_builder import PartitionBuilder
 from data_validation.query_builder.query_builder import QueryBuilder
 
 
-PROJECT_ID = os.environ["PROJECT_ID"]
+PROJECT_ID = "pso-kokoro-resources"
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
 BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
 CONFIG_COUNT_VALID = {
@@ -1098,12 +1098,12 @@ def test_custom_query():
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
-    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
-    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
-    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
-    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
-    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
+    "course_id < \"ALG001\" OR course_id = \"ALG001\" AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
+    "(course_id > \"ALG001\" OR course_id = \"ALG001\" AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
+    + " AND (course_id < \"GEO001\" OR course_id = \"GEO001\" AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
+    "(course_id > \"GEO001\" OR course_id = \"GEO001\" AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
+    + " AND (course_id < \"TRI001\" OR course_id = \"TRI001\" AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
+    "course_id > \"TRI001\" OR course_id = \"TRI001\" AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
 ]
 
 
