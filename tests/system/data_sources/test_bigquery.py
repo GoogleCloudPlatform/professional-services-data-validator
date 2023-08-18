@@ -22,7 +22,7 @@ from data_validation.partition_builder import PartitionBuilder
 from data_validation.query_builder.query_builder import QueryBuilder
 
 
-PROJECT_ID = "pso-kokoro-resources"
+PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
 BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
 CONFIG_COUNT_VALID = {
