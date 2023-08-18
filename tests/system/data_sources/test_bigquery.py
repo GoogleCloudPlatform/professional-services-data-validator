@@ -1096,6 +1096,9 @@ def test_custom_query():
     assert result_df.source_agg_value.equals(result_df.target_agg_value)
 
 
+# fmt: off
+
+
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
     "course_id < \"ALG001\" OR course_id = \"ALG001\" AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
@@ -1105,6 +1108,7 @@ EXPECTED_PARTITION_FILTER = [
     + " AND (course_id < \"TRI001\" OR course_id = \"TRI001\" AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
     "course_id > \"TRI001\" OR course_id = \"TRI001\" AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
 ]
+# fmt: on
 
 
 @mock.patch(
