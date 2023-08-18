@@ -211,6 +211,7 @@ EXPECTED_PARTITION_FILTER = [
     "course_id > \"TRI001\" OR course_id = \"TRI001\" AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
 ]
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
