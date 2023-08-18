@@ -76,12 +76,12 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "course_id < \"ALG001\" OR course_id = \"ALG001\" AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
-    "(course_id > \"ALG001\" OR course_id = \"ALG001\" AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
-    + " AND (course_id < \"GEO001\" OR course_id = \"GEO001\" AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
-    "(course_id > \"GEO001\" OR course_id = \"GEO001\" AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
-    + " AND (course_id < \"TRI001\" OR course_id = \"TRI001\" AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
-    "course_id > \"TRI001\" OR course_id = \"TRI001\" AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
+    "COURSE_ID < \"ALG001\" OR COURSE_ID = \"ALG001\" AND (QUARTER_ID < 3 OR QUARTER_ID = 3 AND (STUDENT_ID < 1234))",
+    "(COURSE_ID > \"ALG001\" OR COURSE_ID = \"ALG001\" AND (QUARTER_ID > 3 OR QUARTER_ID = 3 AND (STUDENT_ID >= 1234)))"
+    + " AND (COURSE_ID < \"GEO001\" OR COURSE_ID = \"GEO001\" AND (QUARTER_ID < 2 OR QUARTER_ID = 2 AND (STUDENT_ID < 5678)))",
+    "(COURSE_ID > \"GEO001\" OR COURSE_ID = \"GEO001\" AND (QUARTER_ID > 2 OR QUARTER_ID = 2 AND (STUDENT_ID >= 5678)))"
+    + " AND (COURSE_ID < \"TRI001\" OR COURSE_ID = \"TRI001\" AND (QUARTER_ID < 1 OR QUARTER_ID = 1 AND (STUDENT_ID < 9012)))",
+    "COURSE_ID > \"TRI001\" OR COURSE_ID = \"TRI001\" AND (QUARTER_ID > 1 OR QUARTER_ID = 1 AND (STUDENT_ID >= 9012))",
 ]
 # fmt: on
 
