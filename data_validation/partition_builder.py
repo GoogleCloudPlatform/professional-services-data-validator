@@ -81,22 +81,25 @@ class PartitionBuilder:
         Returns:
             String containing the expression - e.g. (birth_month < 5 OR (birth_month = 5 AND (birth_day <= 2)))
         """
+        primary_key = keys[0]
         if isinstance(values[0], str):
-            value0 = '"' + values[0] + '"'
+            value0 = "'" + values[0] + "'"
         elif isinstance(values[0], pd.Timestamp):
+            if primary_key != "cast(" + keys[0] + " as timestamp)":
+                primary_key = "cast(" + keys[0] + " as timestamp)"
             value0 = "'" + str(values[0]) + "'"
         else:
             value0 = str(values[0])
 
         if len(keys) == 1:
-            return keys[0] + " < " + value0
+            return primary_key + " < " + value0
         else:
             return (
-                keys[0]
+                primary_key
                 + " < "
                 + value0
                 + " OR "
-                + keys[0]
+                + primary_key
                 + " = "
                 + value0
                 + " AND ("
@@ -113,22 +116,25 @@ class PartitionBuilder:
         Returns:
             String containing the expression - e.g. (birth_month > 5 OR (birth_month = 5 AND (birth_day >= 2)))
         """
+        primary_key = keys[0]
         if isinstance(values[0], str):
             value0 = '"' + values[0] + '"'
         elif isinstance(values[0], pd.Timestamp):
+            if primary_key != "cast(" + keys[0] + " as timestamp)":
+                primary_key = "cast(" + keys[0] + " as timestamp)"
             value0 = "'" + str(values[0]) + "'"
         else:
             value0 = str(values[0])
 
         if len(keys) == 1:
-            return keys[0] + " >= " + value0
+            return primary_key + " >= " + value0
         else:
             return (
-                keys[0]
+                primary_key
                 + " > "
                 + value0
                 + " OR "
-                + keys[0]
+                + primary_key
                 + " = "
                 + value0
                 + " AND ("
