@@ -148,6 +148,51 @@ def test_bigquery_generate_table_partitions():
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
 
 
+EXPECTED_TIMESTAMP_DATE_PARTITION_FILTER = [
+    "cast(col_timestamp as timestamp) < '2023-07-04 09:15:00' OR cast(col_timestamp as timestamp) = '2023-07-04 09:15:00' AND (cast(col_date as timestamp) < '2023-07-04 00:00:00')",
+    "(cast(col_timestamp as timestamp) > '2023-07-04 09:15:00' OR cast(col_timestamp as timestamp) = '2023-07-04 09:15:00' AND (cast(col_date as timestamp) >= '2023-07-04 00:00:00')) AND (cast(col_timestamp as timestamp) < '2023-07-08 13:20:00' OR cast(col_timestamp as timestamp) = '2023-07-08 13:20:00' AND (cast(col_date as timestamp) < '2023-07-08 00:00:00'))",
+    "(cast(col_timestamp as timestamp) > '2023-07-08 13:20:00' OR cast(col_timestamp as timestamp) = '2023-07-08 13:20:00' AND (cast(col_date as timestamp) >= '2023-07-08 00:00:00')) AND (cast(col_timestamp as timestamp) < '2023-07-12 12:30:00' OR cast(col_timestamp as timestamp) = '2023-07-12 12:30:00' AND (cast(col_date as timestamp) < '2023-07-12 00:00:00'))",
+    "cast(col_timestamp as timestamp) > '2023-07-12 12:30:00' OR cast(col_timestamp as timestamp) = '2023-07-12 12:30:00' AND (cast(col_date as timestamp) >= '2023-07-12 00:00:00')",
+]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_table_partitions_date_and_timestamp():
+    """Test generate table partitions on Hive with date or/and timestamp as primary key.
+    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
+    check that yaml configurations are created and saved in local storage. Partitions can only be created with
+    a database that can handle SQL with ntile, hence doing this as part of system testing.
+    What we are checking
+    1. the shape of the partition list is 1, number of partitions (only one table in the list)
+    2. value of the partition list matches what we expect.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "generate-table-partitions",
+            "-sc=hive-conn",
+            "-tc=hive-conn",
+            "-tbls=pso_data_validator.test_generate_partitions_for_date_timestamp=pso_data_validator.test_generate_partitions_for_date_timestamp",
+            "-pk=col_timestamp,col_date",
+            "-hash=*",
+            "-cdir=/home/users/yaml",
+            "-pn=4",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_filters = partition_builder._get_partition_key_filters()
+
+    assert len(partition_filters) == 1  # only one pair of tables
+    assert (
+        len(partition_filters[0]) == partition_builder.args.partition_num
+    )  # assume no of table rows > partition_num
+    assert partition_filters[0] == EXPECTED_TIMESTAMP_DATE_PARTITION_FILTER
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
