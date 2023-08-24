@@ -203,8 +203,8 @@ class ComparisonField(object):
         if self.cast:
             try:
                 comparison_field = comparison_field.force_cast(self.cast)
-            except:
-                raise SyntaxError("FOI AQUI ÒOOOOOO")
+            except Exception as e:
+                raise SyntaxError(f"'{self.cast}' is an invalid data type to cast a comparison field ({e})")
         comparison_field = comparison_field.name(alias)
 
         return comparison_field
