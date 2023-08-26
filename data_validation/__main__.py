@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import sys
+import copy
 
 from yaml import Dumper, dump
 from argparse import Namespace
@@ -286,12 +287,23 @@ def build_config_managers_from_args(
 
 def config_runner(args):
     if args.config_dir:
-        mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
-        config_file_names = mgr.list_validations_in_dir(args.config_dir)
-
-        config_managers = []
-        for file in config_file_names:
-            config_managers.extend(build_config_managers_from_yaml(args, file))
+        if args.kube_completions and (('JOB_COMPLETION_INDEX' in os.environ.keys()) or ('CLOUD_RUN_TASK_INDEX' in os.environ.keys())) :
+            # Running in Kubernetes in Job completions - only run the yaml file corresponding to index
+            job_index = int(os.environ.get('JOB_COMPLETION_INDEX')) if 'JOB_COMPLETION_INDEX' in os.environ.keys() \
+                else int(os.environ.get('CLOUD_RUN_TASK_INDEX'))
+            config_file_path = args.config_dir + '{:04d}'.format(job_index) + '.yaml' if args.config_dir.endswith('/') \
+                else args.config_dir + '/' + '{:04d}'.format(job_index) + '.yaml'
+            setattr(args, 'config_dir', None)
+            setattr(args, 'config_file', config_file_path)
+            config_managers = build_config_managers_from_yaml(args, config_file_path)
+        else: 
+            if args.kube_completions :
+                logging.warning("--kube-completions or -kubecomp specified, however not running in Kubernetes Job completion, check your command line")
+            mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
+            config_file_names = mgr.list_validations_in_dir(args.config_dir)
+            config_managers = []
+            for file in config_file_names:
+                config_managers.extend(build_config_managers_from_yaml(args, file))
     else:
         config_file_path = _get_arg_config_file(args)
         config_managers = build_config_managers_from_yaml(args, config_file_path)
