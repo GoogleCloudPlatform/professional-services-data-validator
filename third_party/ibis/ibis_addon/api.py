@@ -14,6 +14,7 @@
 
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
+import parsy
 
 from ibis.expr.types.generic import Value
 
@@ -42,8 +43,11 @@ def force_cast(self, target_type: dt.DataType) -> Value:
     """New method to force cast even if data type is the same.
     Used to cast a value to itself in ComparisonFields for nuances in data types i.e. casting CHAR to VARCHAR which are both Ibis strings
     """
-    # validate
-    op = ops.Cast(self, to=target_type)
+    # validate target type
+    try:
+        op = ops.Cast(self, to=target_type)
+    except parsy.ParseError:
+        raise SyntaxError(f"'{target_type}' is an invalid datatype provided to cast a ComparisonField")
 
     if op.to.is_geospatial():
         from_geotype = self.type().geotype or "geometry"
