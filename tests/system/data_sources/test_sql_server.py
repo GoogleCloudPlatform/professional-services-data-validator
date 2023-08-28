@@ -292,10 +292,6 @@ def test_schema_validation_core_types_to_bigquery():
             (
                 # All SQL Server integrals go to BigQuery INT64.
                 "--allow-list=int8:int64,int16:int64,int32:int64,"
-                # SQL Server decimals that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # SQL Server decimals that map to BigQuery BIGNUMERIC.
-                "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
             ),

@@ -363,6 +363,22 @@ def _bigquery_field_to_ibis_dtype(field):
         names = [el.name for el in fields]
         ibis_types = list(map(dt.dtype, fields))
         ibis_type = dt.Struct(dict(zip(names, ibis_types)))
+    elif typ == "NUMERIC":
+        if not field.precision and not field.scale:
+            return dt.Decimal(precision=38, scale=9, nullable=field.is_nullable)
+        return dt.Decimal(
+            precision=field.precision,
+            scale=field.scale or 0,
+            nullable=field.is_nullable,
+        )
+    elif typ == "BIGNUMERIC":
+        if not field.precision and not field.scale:
+            return dt.Decimal(precision=76, scale=38, nullable=field.is_nullable)
+        return dt.Decimal(
+            precision=field.precision,
+            scale=field.scale or 0,
+            nullable=field.is_nullable,
+        )
     else:
         ibis_type = _BQ_LEGACY_TO_STANDARD.get(typ, typ)
         if ibis_type in _BQ_DTYPE_TO_IBIS_TYPE:

@@ -164,10 +164,6 @@ def test_schema_validation_core_types_to_bigquery():
             (
                 # Integral Snowflake NUMBERs to to BigQuery INT64.
                 "--allow-list=decimal(38,0):int64,"
-                # Snowflake NUMBERS that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # Snowflake NUMBERS that map to BigQuery BIGNUMERIC
-                "decimal(38,0):decimal(76,38),"
                 # TODO When issue-706 is complete remove the timestamp line below
                 "timestamp('UTC'):timestamp"
             ),
