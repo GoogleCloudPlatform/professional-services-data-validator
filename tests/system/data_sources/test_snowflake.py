@@ -149,6 +149,32 @@ def test_schema_validation_core_types():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_specific_types():
+    """Snowflake to Snowflake test_specific_data_types schema validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.TEST_SPECIFIC_DATA_TYPES",
+            "--filter-status=fail",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_core_types_to_bigquery():
     """Snowflake to BigQuery dvt_core_types schema validation"""
     parser = cli_tools.configure_arg_parser()
