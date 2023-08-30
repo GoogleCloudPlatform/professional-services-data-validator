@@ -19,7 +19,6 @@ import logging
 import re
 from typing import List, Dict
 from argparse import Namespace
-import pandas as pd
 
 from data_validation import cli_tools, consts
 from data_validation.config_manager import ConfigManager
@@ -70,9 +69,20 @@ class PartitionBuilder:
 
         # Default partition logic: Use NTILE function to create partitions, ordering by primary keys.
         partition_filters = self._get_partition_key_filters()
-        breakpoint()
         yaml_configs_list = self._add_partition_filters(partition_filters)
         self._store_partitions(yaml_configs_list)
+
+    @staticmethod
+    def _extract_where(x) -> str:
+        """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the where clause
+        in plain text
+
+        Returns:
+            String with the where condition
+        """
+        return re.sub(r"\s\s+", " ", ibis.to_sql(x).sql.split("WHERE")[1]).replace(
+            "t0.", ""
+        )
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
         """Generate where clauses for each partition for each table pair. We have to create separate where for the source and
@@ -105,7 +115,7 @@ class PartitionBuilder:
                 validation_builder.target_builder,
             )
             target_table = target_partition_row_builder.query
-            
+
             # Get Source and Target row Count
             source_count = source_partition_row_builder.get_count()
             target_count = target_partition_row_builder.get_count()
@@ -177,40 +187,87 @@ class PartitionBuilder:
             # partition and greater than or equal to the first element of the last partition respectively
             source_where_list = []
             target_where_list = []
-            
-            # Given a ibis filter expression, the following lambda function extracts the where clause in plain text
-            extract_where = lambda x : re.sub("\s\s+", " ", ibis.to_sql(x).sql.split('WHERE')[1]).replace('t0.','')
 
             # Given a list of primary keys and corresponding values, the following lambda function builds the filter expression
             # to find all rows before the row containing the values in the sort order. The next function geq_value, finds all
-            # rows after the row containing the values in the sort order, including the row specified by values. 
-            less_than_value = lambda table, keys, values : table.__getattr__(keys[0]) < values[0] if len(keys) == 1 \
-                                else (table.__getattr__(keys[0]) < values[0]) | \
-                                    ((table.__getattr__(keys[0]) == values[0]) & less_than_value(table, keys[1:], values[1:]))
-            geq_value = lambda table, keys, values : table.__getattr__(keys[0]) >= values[0] if len(keys) == 1 \
-                                else (table.__getattr__(keys[0]) > values[0]) | \
-                                    ((table.__getattr__(keys[0]) == values[0]) & geq_value(table, keys[1:], values[1:]))
+            # rows after the row containing the values in the sort order, including the row specified by values.
+            less_than_value = (
+                lambda table, keys, values: table.__getattr__(keys[0]) < values[0]
+                if len(keys) == 1
+                else (table.__getattr__(keys[0]) < values[0])
+                | (
+                    (table.__getattr__(keys[0]) == values[0])
+                    & less_than_value(table, keys[1:], values[1:])
+                )
+            )
+            geq_value = (
+                lambda table, keys, values: table.__getattr__(keys[0]) >= values[0]
+                if len(keys) == 1
+                else (table.__getattr__(keys[0]) > values[0])
+                | (
+                    (table.__getattr__(keys[0]) == values[0])
+                    & geq_value(table, keys[1:], values[1:])
+                )
+            )
 
-            filter_source_clause = less_than_value(source_table, self.primary_keys, first_elements[1, :len(self.primary_keys)])
-            filter_target_clause = less_than_value(target_table, self.primary_keys, first_elements[1, :len(self.primary_keys)])
-            source_where_list.append(extract_where(source_table.filter(filter_source_clause)))
-            target_where_list.append(extract_where(target_table.filter(filter_target_clause)))
-            
+            filter_source_clause = less_than_value(
+                source_table,
+                self.primary_keys,
+                first_elements[1, : len(self.primary_keys)],
+            )
+            filter_target_clause = less_than_value(
+                target_table,
+                self.primary_keys,
+                first_elements[1, : len(self.primary_keys)],
+            )
+            source_where_list.append(
+                self._extract_where(source_table.filter(filter_source_clause))
+            )
+            target_where_list.append(
+                self._extract_where(target_table.filter(filter_target_clause))
+            )
+
             for i in range(1, first_elements.shape[0] - 1):
-                filter_source_clause = \
-                    geq_value(source_table, self.primary_keys, first_elements[i, : len(self.primary_keys)]) & \
-                    less_than_value(source_table, self.primary_keys, first_elements[i + 1, : len(self.primary_keys)])
-                filter_target_clause = \
-                    geq_value(target_table, self.primary_keys, first_elements[i, : len(self.primary_keys)]) & \
-                    less_than_value(target_table, self.primary_keys, first_elements[i + 1, : len(self.primary_keys)])
-                source_where_list.append(extract_where(source_table.filter(filter_source_clause)))
-                target_where_list.append(extract_where(target_table.filter(filter_target_clause)))
-            filter_source_clause = \
-                geq_value(source_table, self.primary_keys, first_elements[len(first_elements) - 1, : len(self.primary_keys)])
-            filter_target_clause = \
-                geq_value(target_table, self.primary_keys, first_elements[len(first_elements) - 1, : len(self.primary_keys)])
-            source_where_list.append(extract_where(source_table.filter(filter_source_clause)))
-            target_where_list.append(extract_where(target_table.filter(filter_target_clause)))
+                filter_source_clause = geq_value(
+                    source_table,
+                    self.primary_keys,
+                    first_elements[i, : len(self.primary_keys)],
+                ) & less_than_value(
+                    source_table,
+                    self.primary_keys,
+                    first_elements[i + 1, : len(self.primary_keys)],
+                )
+                filter_target_clause = geq_value(
+                    target_table,
+                    self.primary_keys,
+                    first_elements[i, : len(self.primary_keys)],
+                ) & less_than_value(
+                    target_table,
+                    self.primary_keys,
+                    first_elements[i + 1, : len(self.primary_keys)],
+                )
+                source_where_list.append(
+                    self._extract_where(source_table.filter(filter_source_clause))
+                )
+                target_where_list.append(
+                    self._extract_where(target_table.filter(filter_target_clause))
+                )
+            filter_source_clause = geq_value(
+                source_table,
+                self.primary_keys,
+                first_elements[len(first_elements) - 1, : len(self.primary_keys)],
+            )
+            filter_target_clause = geq_value(
+                target_table,
+                self.primary_keys,
+                first_elements[len(first_elements) - 1, : len(self.primary_keys)],
+            )
+            source_where_list.append(
+                self._extract_where(source_table.filter(filter_source_clause))
+            )
+            target_where_list.append(
+                self._extract_where(target_table.filter(filter_target_clause))
+            )
             master_filter_list.append([source_where_list, target_where_list])
         return master_filter_list
 

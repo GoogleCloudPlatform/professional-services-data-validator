@@ -62,7 +62,7 @@ CREATE TABLE public.test_generate_partitions (
         approved Boolean,
         grade NUMERIC,
         PRIMARY KEY (course_id, quarter_id, recd_timestamp, registration_date, approved));
-COMMENT ON TABLE public.test_generate_partitions IS 'Table for testing generate table partitions, consists of 27 rows with course_id, quarter_id, student_id as a composite primary key';
+COMMENT ON TABLE public.test_generate_partitions IS 'Table for testing generate table partitions, consists of 32 rows with a composite primary key';
 
 INSERT INTO public.test_generate_partitions (course_id, quarter_id, recd_timestamp, registration_date, approved, grade) VALUES 
         ('ALG001', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),

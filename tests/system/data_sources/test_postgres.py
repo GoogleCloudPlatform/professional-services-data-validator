@@ -454,7 +454,20 @@ def mock_get_connection_config(*args):
 
 
 # Expected result from partitioning table on 3 keys
-EXPECTED_PARTITION_FILTER = [[[" course_id <> 'abc' AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )", " course_id <> 'abc' AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )", " course_id <> 'abc' AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )"], [" course_id <> 'abc' AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )", " course_id <> 'abc' AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )", " course_id <> 'abc' AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )"]]]
+EXPECTED_PARTITION_FILTER = [
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) )"
+        + " AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )",
+    ],
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) )"
+        + " AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )",
+    ],
+]
 
 
 @mock.patch(
@@ -481,7 +494,7 @@ def test_postgres_generate_table_partitions(cloud_sql):
             "-hash=*",
             "-cdir=/home/users/yaml",
             "-pn=3",
-            "-filters=course_id != 'abc'",
+            "-filters=quarter_id != 1111",
         ]
     )
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
@@ -490,7 +503,7 @@ def test_postgres_generate_table_partitions(cloud_sql):
 
     assert len(partition_filters) == 1  # only one pair of tables
     assert (
-        len(partition_filters[0]) == partition_builder.args.partition_num
+        len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
 
