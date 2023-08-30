@@ -454,14 +454,7 @@ def mock_get_connection_config(*args):
 
 
 # Expected result from partitioning table on 3 keys
-EXPECTED_PARTITION_FILTER = [
-    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
-    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
-    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
-    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
-    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
-    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
-]
+EXPECTED_PARTITION_FILTER = [[[" course_id <> 'abc' AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )", " course_id <> 'abc' AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )", " course_id <> 'abc' AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )"], [" course_id <> 'abc' AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )", " course_id <> 'abc' AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )", " course_id <> 'abc' AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )"]]]
 
 
 @mock.patch(
@@ -484,10 +477,11 @@ def test_postgres_generate_table_partitions(cloud_sql):
             "-sc=mock-conn",
             "-tc=mock-conn",
             "-tbls=public.test_generate_partitions=public.test_generate_partitions",
-            "-pk=course_id,quarter_id,student_id",
+            "-pk=course_id,quarter_id,approved",
             "-hash=*",
             "-cdir=/home/users/yaml",
-            "-pn=4",
+            "-pn=3",
+            "-filters=course_id != 'abc'",
         ]
     )
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)

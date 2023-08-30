@@ -70,6 +70,7 @@ class PartitionBuilder:
 
         # Default partition logic: Use NTILE function to create partitions, ordering by primary keys.
         partition_filters = self._get_partition_key_filters()
+        breakpoint()
         yaml_configs_list = self._add_partition_filters(partition_filters)
         self._store_partitions(yaml_configs_list)
 
@@ -211,7 +212,6 @@ class PartitionBuilder:
             source_where_list.append(extract_where(source_table.filter(filter_source_clause)))
             target_where_list.append(extract_where(target_table.filter(filter_target_clause)))
             master_filter_list.append([source_where_list, target_where_list])
-            breakpoint()
         return master_filter_list
 
     def _add_partition_filters(
