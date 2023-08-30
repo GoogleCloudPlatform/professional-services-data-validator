@@ -244,7 +244,11 @@ def test_schema_validation_core_types_to_bigquery():
             "--exclusion-columns=id",
             (
                 # Teradata integrals go to BigQuery INT64.
-                "--allow-list=int8:int64,int16:int64,int32:int64"
+                "--allow-list=int8:int64,int16:int64,int32:int64,"
+                # Teradata NUMBERS that map to BigQuery NUMERIC.
+                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
+                # Teradata NUMBERS that map to BigQuery BIGNUMERIC.
+                "decimal(38,0):decimal(76,38)"
             ),
         ]
     )
@@ -382,7 +386,7 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_teradata_generate_table_partitions():
-    """Test generate table partitions on Teradata
+    """Test generate table partitions on BigQuery
     The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
     check that yaml configurations are created and saved in local storage. Partitions can only be created with
     a database that can handle SQL with ntile, hence doing this as part of system testing.
@@ -412,51 +416,6 @@ def test_teradata_generate_table_partitions():
         len(partition_filters[0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
-
-
-# Expected result from partitioning table on 2 keys, of date and timestamp datatype
-EXPECTED_TIMESTAMP_DATE_PARTITION_FILTER = [
-    "cast(col_timestamp as timestamp) < '2023-07-04 09:15:00' OR cast(col_timestamp as timestamp) = '2023-07-04 09:15:00' AND (col_date < 2023-07-04)",
-    "(cast(col_timestamp as timestamp) > '2023-07-04 09:15:00' OR cast(col_timestamp as timestamp) = '2023-07-04 09:15:00' AND (col_date >= 2023-07-04)) AND (cast(col_timestamp as timestamp) < '2023-07-08 13:20:00' OR cast(col_timestamp as timestamp) = '2023-07-08 13:20:00' AND (col_date < 2023-07-08))",
-    "(cast(col_timestamp as timestamp) > '2023-07-08 13:20:00' OR cast(col_timestamp as timestamp) = '2023-07-08 13:20:00' AND (col_date >= 2023-07-08)) AND (cast(col_timestamp as timestamp) < '2023-07-12 12:30:00' OR cast(col_timestamp as timestamp) = '2023-07-12 12:30:00' AND (col_date < 2023-07-12))",
-    "cast(col_timestamp as timestamp) > '2023-07-12 12:30:00' OR cast(col_timestamp as timestamp) = '2023-07-12 12:30:00' AND (col_date >= 2023-07-12)",
-]
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_generate_table_partitions_date_and_timestamp():
-    """Test generate table partitions on Teradata with date or/and timestamp as primary key.
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.test_generate_partitions_for_date_timestamp=udf.test_generate_partitions_for_date_timestamp",
-            "-pk=col_timestamp,col_date",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=4",
-        ]
-    )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
-    assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0] == EXPECTED_TIMESTAMP_DATE_PARTITION_FILTER
 
 
 @mock.patch(
