@@ -551,6 +551,12 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
     )
     optional_arguments.add_argument(
+        "--exclude-columns",
+        "-ec",
+        action="store_false",
+        help="Flag to indicate the list of columns should be excluded from validation and not included.",
+    )
+    optional_arguments.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,

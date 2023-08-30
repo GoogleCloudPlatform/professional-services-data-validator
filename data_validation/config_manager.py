@@ -645,7 +645,7 @@ class ConfigManager(object):
         return aggregate_config
 
     def build_config_column_aggregates(
-        self, agg_type, arg_value, supported_types, cast_to_bigint=False
+        self, agg_type, arg_value, exclude_cols, supported_types, cast_to_bigint=False
     ):
         """Return list of aggregate objects of given agg_type."""
 
@@ -677,7 +677,17 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         if arg_value:
-            arg_value = [x.casefold() for x in arg_value]
+            if exclude_cols:
+                cols_excluded = [x.casefold() for x in arg_value]
+                included_cols = []
+                for column in casefold_source_columns:
+                    if column not in cols_excluded:
+                        included_cols.append(column)
+
+                arg_value = included_cols
+            else:
+                arg_value = [x.casefold() for x in arg_value]
+
             if supported_types:
                 supported_types.extend(["string", "!string", "timestamp", "!timestamp"])
 

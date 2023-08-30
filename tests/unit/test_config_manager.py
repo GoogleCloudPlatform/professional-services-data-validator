@@ -65,6 +65,20 @@ AGGREGATE_CONFIG_A = {
     consts.CONFIG_TYPE: "sum",
 }
 
+AGGREGATE_CONFIG_B = {
+    consts.CONFIG_SOURCE_COLUMN: "b",
+    consts.CONFIG_TARGET_COLUMN: "b",
+    consts.CONFIG_FIELD_ALIAS: "sum__b",
+    consts.CONFIG_TYPE: "sum",
+}
+
+AGGREGATE_CONFIG_C = {
+    consts.CONFIG_SOURCE_COLUMN: "c",
+    consts.CONFIG_TARGET_COLUMN: "c",
+    consts.CONFIG_FIELD_ALIAS: "sum__c",
+    consts.CONFIG_TYPE: "sum",
+}
+
 GROUPED_COLUMN_CONFIG_A = {
     consts.CONFIG_SOURCE_COLUMN: "a",
     consts.CONFIG_TARGET_COLUMN: "a",
@@ -273,8 +287,24 @@ def test_build_config_aggregates(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    aggregate_configs = config_manager.build_config_column_aggregates("sum", ["a"], [])
+    aggregate_configs = config_manager.build_config_column_aggregates(
+        "sum", ["a"], False, []
+    )
+    assert len(aggregate_configs) == 1
     assert aggregate_configs[0] == AGGREGATE_CONFIG_A
+
+
+def test_build_config_aggregates_ec(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    aggregate_configs = config_manager.build_config_column_aggregates(
+        "sum", ["a"], True, []
+    )
+    assert len(aggregate_configs) == 2
+    assert aggregate_configs[0] == AGGREGATE_CONFIG_B
+    assert aggregate_configs[1] == AGGREGATE_CONFIG_C
 
 
 def test_build_config_aggregates_no_match(module_under_test):
@@ -283,7 +313,7 @@ def test_build_config_aggregates_no_match(module_under_test):
     )
 
     aggregate_configs = config_manager.build_config_column_aggregates(
-        "sum", ["a"], ["float64"]
+        "sum", ["a"], False, ["float64"]
     )
     assert not aggregate_configs
 
