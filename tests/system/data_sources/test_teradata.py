@@ -244,11 +244,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--exclusion-columns=id",
             (
                 # Teradata integrals go to BigQuery INT64.
-                "--allow-list=int8:int64,int16:int64,int32:int64,"
-                # Teradata NUMBERS that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # Teradata NUMBERS that map to BigQuery BIGNUMERIC.
-                "decimal(38,0):decimal(76,38)"
+                "--allow-list=int8:int64,int16:int64,int32:int64"
             ),
         ]
     )

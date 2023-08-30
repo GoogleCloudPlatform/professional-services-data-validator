@@ -23,7 +23,7 @@ from data_validation import metadata, consts, clients, exceptions
 
 # Check for decimal data type with precision and/or scale. Permits hyphen in p/s for value ranges.
 DECIMAL_PRECISION_SCALE_PATTERN = re.compile(
-    r"(decimal)\(([0-9\-]+)(?:,[ ]*([0-9\-]+))?\)", re.I
+    r"([!]?decimal)\(([0-9\-]+)(?:,[ ]*([0-9\-]+))?\)", re.I
 )
 # Extract lower/upper from a range of the format "0-2" or "12-18".
 DECIMAL_PRECISION_SCALE_RANGE_PATTERN = re.compile(

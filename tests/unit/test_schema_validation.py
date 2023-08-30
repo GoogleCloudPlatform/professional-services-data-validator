@@ -192,10 +192,12 @@ def test_expand_precision_range(test_input: str, expected: list):
     [
         ("", [""]),
         ("int32", ["int32"]),
+        ("!int32", ["!int32"]),
         ("decimal(1)", ["decimal(1)"]),
         ("decimal(1,0)", ["decimal(1,0)"]),
         ("decimal(1, 0)", ["decimal(1,0)"]),
         ("decimal(1-2,0)", ["decimal(1,0)", "decimal(2,0)"]),
+        ("!decimal(1-2,0)", ["!decimal(1,0)", "!decimal(2,0)"]),
         ("decimal(9-11,5)", ["decimal(9,5)", "decimal(10,5)", "decimal(11,5)"]),
         ("decimal(12,0-2)", ["decimal(12,0)", "decimal(12,1)", "decimal(12,2)"]),
         (

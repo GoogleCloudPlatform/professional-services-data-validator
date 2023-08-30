@@ -18,7 +18,7 @@ import sqlalchemy as sa
 from ibis.backends.snowflake import Backend as SnowflakeBackend
 from ibis.backends.snowflake.datatypes import parse
 from snowflake.connector.constants import FIELD_ID_TO_NAME
-from snowflake.sqlalchemy import NUMBER
+from snowflake.sqlalchemy import NUMBER, BINARY
 from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
 
 
@@ -29,6 +29,10 @@ def sa_sf_numeric(_, satype, nullable=True):
         scale=satype.scale or 0,
         nullable=nullable,
     )
+
+@dt.dtype.register(SnowflakeDialect, BINARY)
+def sa_sf_binary(_, satype, nullable=True):
+    return dt.Binary(nullable=nullable)
 
 
 def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:

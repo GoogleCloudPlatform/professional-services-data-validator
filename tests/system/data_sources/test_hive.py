@@ -211,10 +211,6 @@ def test_schema_validation_core_types_to_bigquery():
             (
                 # All Hive integrals go to BigQuery INT64.
                 "--allow-list=int8:int64,int16:int64,int32:int64,"
-                # Hive decimals that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # Hive decimals that map to BigQuery BIGNUMERIC.
-                "decimal(38,0):decimal(76,38),"
                 # Hive does not have a time zoned
                 "timestamp:timestamp('UTC'),"
                 # BigQuery does not have a float32 type.

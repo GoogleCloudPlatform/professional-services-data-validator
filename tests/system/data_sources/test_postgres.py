@@ -560,10 +560,6 @@ def test_schema_validation_core_types_to_bigquery():
             (
                 # PostgreSQL integrals go to BigQuery INT64.
                 "--allow-list=int16:int64,int32:int64,"
-                # Oracle NUMBERS that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
-                "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
             ),
