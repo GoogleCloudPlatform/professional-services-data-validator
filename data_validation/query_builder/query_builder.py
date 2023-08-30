@@ -95,7 +95,7 @@ class AggregateField(object):
             alias=alias,
             cast=cast,
         )
-    
+
     @staticmethod
     def std(field_name=None, alias=None, cast=None):
         return AggregateField(

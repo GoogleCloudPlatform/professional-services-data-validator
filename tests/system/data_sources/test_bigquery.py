@@ -462,7 +462,6 @@ def test_numeric_types():
         )
 
 
-
 def test_cli_store_yaml_then_run_gcs():
     """Test storing and retrieving validation YAML when GCS env var is set."""
     # Store BQ Connection
