@@ -95,6 +95,15 @@ class AggregateField(object):
             alias=alias,
             cast=cast,
         )
+    
+    @staticmethod
+    def std(field_name=None, alias=None, cast=None):
+        return AggregateField(
+            ibis.expr.types.NumericColumn.std,
+            field_name=field_name,
+            alias=alias,
+            cast=cast,
+        )
 
     def compile(self, ibis_table):
         if self.field_name:

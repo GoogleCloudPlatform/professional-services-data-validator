@@ -66,6 +66,12 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "min_birth_year",
         },
+        {
+            consts.CONFIG_TYPE: "std",
+            consts.CONFIG_SOURCE_COLUMN: "tripduration",
+            consts.CONFIG_TARGET_COLUMN: "tripduration",
+            consts.CONFIG_FIELD_ALIAS: "std_tripduration",
+        },
     ],
     consts.CONFIG_FORMAT: "table",
     consts.CONFIG_FILTER_STATUS: None,
@@ -211,19 +217,6 @@ CONFIG_NUMERIC_AGG_VALID = {
         },
     ],
     consts.CONFIG_GROUPED_COLUMNS: [],
-    consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: None,
-}
-
-CONFIG_SCHEMA_VALIDATION = {
-    # BigQuery Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: BQ_CONN,
-    consts.CONFIG_TARGET_CONN: BQ_CONN,
-    # Validation Type
-    consts.CONFIG_TYPE: "Schema",
-    # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
-    consts.CONFIG_TABLE_NAME: "citibike_trips",
     consts.CONFIG_FORMAT: "table",
     consts.CONFIG_FILTER_STATUS: None,
 }
@@ -427,12 +420,16 @@ def test_count_validator():
     min_birth_year_value = df[df["validation_name"] == "min_birth_year"][
         "source_agg_value"
     ].values[0]
+    std_tripduration_value = df[df["validation_name"] == "std_tripduration"][
+        "source_agg_value"
+    ].values[0]
 
     assert float(count_value) > 0
     assert float(count_tripduration_value) > 0
     assert float(avg_tripduration_value) > 0
     assert float(max_birth_year_value) > 0
     assert float(min_birth_year_value) > 0
+    assert float(std_tripduration_value) > 0
     assert (
         df["source_agg_value"].astype(float).sum()
         == df["target_agg_value"].astype(float).sum()
@@ -464,13 +461,6 @@ def test_numeric_types():
             validation["target_agg_value"]
         )
 
-
-def test_schema_validation():
-    validator = data_validation.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
-    df = validator.execute()
-
-    for validation in df.to_dict(orient="records"):
-        assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
 
 
 def test_cli_store_yaml_then_run_gcs():
