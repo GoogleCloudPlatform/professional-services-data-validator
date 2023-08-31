@@ -403,8 +403,9 @@ def test_add_partition_filters_to_config(module_under_test):
 
     expected_yaml_configs_list = YAML_CONFIGS_LIST
 
+    # two partition filters are needed, one for source and one for target
     partition_filters = PARTITION_FILTERS_LIST
-    master_filter_list = [partition_filters]
+    master_filter_list = [[partition_filters, partition_filters]]
 
     # Create PartitionBuilder object and get YAML configs list
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
