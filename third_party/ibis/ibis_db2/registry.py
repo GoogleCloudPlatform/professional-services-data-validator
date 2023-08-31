@@ -517,7 +517,6 @@ operation_registry.update(
         ops.Min: _reduction('min'),
         ops.Max: _reduction('max'),
         ops.Variance: variance_reduction('var', suffix={'sample': '', 'pop': 'p'}),
-        ops.StandardDev: variance_reduction('stdev', suffix={'sample': '', 'pop': 'p'}),
         ops.RandomScalar: _random,
         ops.TimestampNow: lambda *args: sa.func.timezone('UTC', sa.func.now()),
         ops.CumulativeAll: unary(sa.func.bool_and),

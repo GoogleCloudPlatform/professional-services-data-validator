@@ -114,6 +114,11 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "bit_xor", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
         )
+    if args.std:
+        col_args = None if args.std == "*" else cli_tools.get_arg_list(args.std)
+        aggregate_configs += config_manager.build_config_column_aggregates(
+            "std", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+        )
     return aggregate_configs
 
 

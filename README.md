@@ -13,7 +13,7 @@ The Data Validation Tool (DVT) provides an automated and repeatable solution to
 perform this task.
 
 DVT supports the following validations:
-* Column validation (count, sum, avg, min, max, group by)
+* Column validation (count, sum, avg, min, max, stddev, group by)
 * Row validation (Not supported for FileSystem connections)
 * Schema validation
 * Custom Query validation
@@ -106,6 +106,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -309,6 +310,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -518,8 +520,8 @@ Functions, and other deployment services.
 ### Aggregated Fields
 
 Aggregate fields contain the SQL fields that you want to produce an aggregate
-for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()`, and `MAX()`
-are supported.
+for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()`, `MAX()`,
+and `STDDEV_SAMP()` are supported.
 
 Here is a sample aggregate config:
 ```yaml
