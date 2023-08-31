@@ -13,23 +13,24 @@ Data Validation Tool has an option in the row validation command for a `--filter
 2. For the last partition, it is every row with primary key(s) value larger than or equal to the the first row of last partition.
 3. For all other partitions, it is every row with primary key(s) value larger than or equal to to the first row of the current partition *AND* with primary key(s) values less than the first row of the next partition.
 ### How to calculate the first row of each partition?
-SQL has an analytic function called NTILE which divides an ordered data set into the specified number of buckets and assigns the appropriate bucket number to each row. SQL has an analytic function FIRST_VALUE which returns the first value in an ordered set of values. Both of these can be used to calculate the value of the primary key(s) of the first row of a partition. The following SQL statement gets the value of the primary key(s) for the first row of each partition:
+The first version of generate partitions used the NTILE function. Unfortunately, Teradata does not have the NTILE function. Most every database has a ROWNUMBER() function which assigns a row number to each row. This function can be used to generate equal sized partitions. Let the rows be numbered from 0 to count where count is the number of rows in the table. Let us assume we want to partition the table in n equal sized partitions. The partition number associated with a row is its _ceiling(rownumber * n / count)_. We specifically only need to identify first element of the partition. The first element of a paritition is the one whose remainder of _(rownumber * n) % count_ is _> 0 and  <= n_.  The following SQL statement gets the value of the primary key(s) for the first row of each partition:
 ```
-SELECT   DISTINCT
-            first_value(primary_key_1) OVER ntile_window  AS first_pk1,
-            first_value(primary_key_2) OVER ntile_window AS first_pk2,
+SELECT 
+            primary_key_1,
+            primary_key_2,
             ....
-            partition_no
+            row_num
                 FROM   (
                     SELECT   primary_key_1,
                         primary_key_2,
                         ....,
-                        ntile(5) OVER (ORDER BY primary_key_1, primary_key_2, .... ) partition_no
+                        rownumber OVER (ORDER BY primary_key_1, primary_key_2, .... ) row_num
                         FROM     <database_table>)
-WINDOW ntile_window AS (partition BY partition_no ORDER BY primary_key_1, primary_key_2, .... ROWS BETWEEN UNBOUNDED  PRECEDING AND UNBOUNDED FOLLOWING)
-ORDER BY partition_no ASC;
+            WHERE ((row_num * n) % count > 0) and ((row_num *n) % count <=n)
+ORDER BY row_num ASC;
 ```
-The internal select statement adds the partition number to each row in the table and the external select statement gets the value of the primary keys for the first row. 
+### How to generate the where clauses
+Once we have the first row of each partition, we have to generate the where clauses for each partition in the source and target tables. The best way may be to generate the ibis table expression including the provided filter clause and the additional filter clause from the first rows we have calculated. We can then have _ibis_ `to_sql` convert the table expression into plain text, extract the where clause and use that. _ibis_ depends on _sqlalchemy_, which has a bug in that it does not support rendering date and timestamps by `to_sql` for versions of _sqlalchemy_ prior to 2.0. Until. we migrate to using _sqlalchemy_ 2.0, we may not be able to support dates and timestamps as a primary key column.
 ## Future Work
 ### How many partitions do I need?
 Partition table requires that the user decide on the number of partitions into which they need to divide the table to avoid MemoryError. Data Validation Tool can run on different VMs with different shapes, so the number of partitions depends on the amount of memory available. How does the user figure out the number of partitions they need? Right now, it is by trial and error, say start with 10, then try 100, try to see if 50 still results in MemoryError etc. This is not optimal. Python's `psutil` package has a function [virtual_memory()](https://psutil.readthedocs.io/en/latest/#psutil.virtual_memory) which tell us the total and available memory. `generate-table-partitions` is provided with all the parameters used in `validate row`, and the memory grows linearly to the number of rows being validated. `generate-table-partitions` can bring say 10,000 rows into memory as though performing a row validation. Using the virtual_memory() function in `psutil`, `generate-table-partitions` can estimate the number of rows that will fit in memory for row validation. Since we can calculate the total number of rows, we can estimate the number of partitions needed. This may need some experimentation, as we may need to allow for memory usage by other functions/objects in Data Validation Tool.
