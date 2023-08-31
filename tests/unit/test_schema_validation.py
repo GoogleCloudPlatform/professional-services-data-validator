@@ -452,8 +452,16 @@ def test_schema_validation_matching_allowlist_columns(module_under_test):
 
 def test_schema_validation_decimal_precision_mismatch(module_under_test):
     """Test for decimal precision mismatch extra checks, i.e. if target has greater precision then success."""
-    source_fields = {"FIELD1": "decimal(5,0)", "FIELD2": "decimal(5,0)", "FIELD3": "decimal(10,0)"}
-    target_fields = {"field1": "decimal(5,0)", "field2": "decimal(10,0)", "field3": "decimal(5,0)"}
+    source_fields = {
+        "FIELD1": "decimal(5,0)",
+        "FIELD2": "decimal(5,0)",
+        "FIELD3": "decimal(10,0)",
+    }
+    target_fields = {
+        "field1": "decimal(5,0)",
+        "field2": "decimal(10,0)",
+        "field3": "decimal(5,0)",
+    }
 
     expected_results = [
         [
