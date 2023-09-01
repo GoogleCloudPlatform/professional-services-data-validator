@@ -73,12 +73,12 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "COURSE_ID < 'ALG001' OR COURSE_ID = 'ALG001' AND (QUARTER_ID < 3 OR QUARTER_ID = 3 AND (STUDENT_ID < 1234))",
-    "(COURSE_ID > 'ALG001' OR COURSE_ID = 'ALG001' AND (QUARTER_ID > 3 OR QUARTER_ID = 3 AND (STUDENT_ID >= 1234)))"
-    + " AND (COURSE_ID < 'GEO001' OR COURSE_ID = 'GEO001' AND (QUARTER_ID < 2 OR QUARTER_ID = 2 AND (STUDENT_ID < 5678)))",
-    "(COURSE_ID > 'GEO001' OR COURSE_ID = 'GEO001' AND (QUARTER_ID > 2 OR QUARTER_ID = 2 AND (STUDENT_ID >= 5678)))"
-    + " AND (COURSE_ID < 'TRI001' OR COURSE_ID = 'TRI001' AND (QUARTER_ID < 1 OR QUARTER_ID = 1 AND (STUDENT_ID < 9012)))",
-    "COURSE_ID > 'TRI001' OR COURSE_ID = 'TRI001' AND (QUARTER_ID > 1 OR QUARTER_ID = 1 AND (STUDENT_ID >= 9012))",
+    ' "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 )',
+    ' ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )'
+    + ' AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 5678 ) )',
+    ' ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 5678 ) )'
+    + ' AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 9012 ) )',
+    ' "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 9012 )',
 ]
 
 
@@ -114,9 +114,9 @@ def test_snowflake_generate_table_partitions():
 
     assert len(partition_filters) == 1  # only one pair of tables
     assert (
-        len(partition_filters[0]) == partition_builder.args.partition_num
+        len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
-    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
