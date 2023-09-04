@@ -197,7 +197,7 @@ def trans_float64(t, context):
 
 @ibis_type_to_teradata_type.register(dt.Integer, TypeTranslationContext)
 def trans_integer(t, context):
-    return "INT64"
+    return "BIGINT"
 
 
 @ibis_type_to_teradata_type.register(dt.UInt64, (TypeTranslationContext, UDFContext))
@@ -224,4 +224,4 @@ def trans_type(t, context):
 
 @ibis_type_to_teradata_type.register(dt.Decimal, TypeTranslationContext)
 def trans_numeric(t, context):
-    return "NUMERIC"
+    return "DECIMAL"
