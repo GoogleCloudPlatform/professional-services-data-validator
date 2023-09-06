@@ -187,7 +187,7 @@ def schema_validation_matching(
                 string_val(source_field_type), string_val(target_field_type)
             )
             if higher_precision:
-                # If the target precision is higher then tha validation is acceptable but worth a warning.
+                # If the target precision is higher then the validation is acceptable but worth a warning.
                 logging.warning(
                     "Source and target data type has precision mismatch: %s - %s",
                     string_val(source_field_type),
