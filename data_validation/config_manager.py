@@ -705,7 +705,7 @@ class ConfigManager(object):
 
             target_column_ibis_type = target_table[
                 casefold_target_columns[column]
-            ].type()   
+            ].type()
 
             if (
                 (column_type == "string" or column_type == "!string")
