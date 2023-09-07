@@ -203,12 +203,12 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
-    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
-    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
-    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
-    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
-    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
+    " course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 )",
+    " ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )"
+    + " AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 5678 ) )",
+    " ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 5678 ) )"
+    + " AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 9012 ) )",
+    " course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 9012 )",
 ]
 
 
@@ -244,9 +244,9 @@ def test_sqlserver_generate_table_partitions(cloud_sql):
 
     assert len(partition_filters) == 1  # only one pair of tables
     assert (
-        len(partition_filters[0]) == partition_builder.args.partition_num
+        len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
-    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
@@ -292,10 +292,6 @@ def test_schema_validation_core_types_to_bigquery():
             (
                 # All SQL Server integrals go to BigQuery INT64.
                 "--allow-list=int8:int64,int16:int64,int32:int64,"
-                # SQL Server decimals that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # SQL Server decimals that map to BigQuery BIGNUMERIC.
-                "decimal(38,0):decimal(76,38),"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
             ),

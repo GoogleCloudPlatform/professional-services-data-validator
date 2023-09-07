@@ -141,7 +141,7 @@ class Backend(BaseSQLBackend):
         return sch.Schema(schema)
 
     def _get_schema_using_query(self, query):
-        cur = self.raw_sql(query)
+        cur = self.raw_sql(f"SELECT TOP 1 * FROM ({query}) AS t0")
         # resets the state of the cursor and closes operation
         cur.fetchall()
         ibis_fields = self._adapt_types(cur.description)

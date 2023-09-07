@@ -261,7 +261,7 @@ def integration_hive(session):
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def integration_snowflake(session):
     """Run Snowflake integration tests.
-    Ensure Hive validation is running as expected.
+    Ensure Snowflake validation is running as expected.
     """
     _setup_session_requirements(
         session, extra_packages=["snowflake-sqlalchemy", "snowflake-connector-python"]

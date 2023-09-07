@@ -73,12 +73,12 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "COURSE_ID < 'ALG001' OR COURSE_ID = 'ALG001' AND (QUARTER_ID < 3 OR QUARTER_ID = 3 AND (STUDENT_ID < 1234))",
-    "(COURSE_ID > 'ALG001' OR COURSE_ID = 'ALG001' AND (QUARTER_ID > 3 OR QUARTER_ID = 3 AND (STUDENT_ID >= 1234)))"
-    + " AND (COURSE_ID < 'GEO001' OR COURSE_ID = 'GEO001' AND (QUARTER_ID < 2 OR QUARTER_ID = 2 AND (STUDENT_ID < 5678)))",
-    "(COURSE_ID > 'GEO001' OR COURSE_ID = 'GEO001' AND (QUARTER_ID > 2 OR QUARTER_ID = 2 AND (STUDENT_ID >= 5678)))"
-    + " AND (COURSE_ID < 'TRI001' OR COURSE_ID = 'TRI001' AND (QUARTER_ID < 1 OR QUARTER_ID = 1 AND (STUDENT_ID < 9012)))",
-    "COURSE_ID > 'TRI001' OR COURSE_ID = 'TRI001' AND (QUARTER_ID > 1 OR QUARTER_ID = 1 AND (STUDENT_ID >= 9012))",
+    ' "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 )',
+    ' ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )'
+    + ' AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 5678 ) )',
+    ' ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 5678 ) )'
+    + ' AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 9012 ) )',
+    ' "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 9012 )',
 ]
 
 
@@ -114,9 +114,9 @@ def test_snowflake_generate_table_partitions():
 
     assert len(partition_filters) == 1  # only one pair of tables
     assert (
-        len(partition_filters[0]) == partition_builder.args.partition_num
+        len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
-    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
@@ -149,6 +149,32 @@ def test_schema_validation_core_types():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_specific_types():
+    """Snowflake to Snowflake test_specific_data_types schema validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.TEST_SPECIFIC_DATA_TYPES",
+            "--filter-status=fail",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_core_types_to_bigquery():
     """Snowflake to BigQuery dvt_core_types schema validation"""
     parser = cli_tools.configure_arg_parser()
@@ -164,10 +190,6 @@ def test_schema_validation_core_types_to_bigquery():
             (
                 # Integral Snowflake NUMBERs to to BigQuery INT64.
                 "--allow-list=decimal(38,0):int64,"
-                # Snowflake NUMBERS that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # Snowflake NUMBERS that map to BigQuery BIGNUMERIC
-                "decimal(38,0):decimal(76,38),"
                 # TODO When issue-706 is complete remove the timestamp line below
                 "timestamp('UTC'):timestamp"
             ),
