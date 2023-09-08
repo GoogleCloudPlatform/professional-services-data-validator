@@ -124,6 +124,7 @@ data-validation connections add
     --user-name USER                                    Teradata user
     --password PASSWORD                                 Teradata password
     [--logmech LOGMECH]                                 Teradata logmech, defaults to "TD2"
+    [--use-no-lock-tables USE_NO_LOCK_TABLES]           Use access lock for queries, defaults to "False"  
 ```
 
 ## Oracle

@@ -65,6 +65,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
         ["logmech", "(Optional) Log on mechanism"],
+        ["use_no_lock_tables", "Use an access lock for queries (defaults to False)"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
