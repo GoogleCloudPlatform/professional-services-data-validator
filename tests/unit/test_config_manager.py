@@ -72,6 +72,13 @@ GROUPED_COLUMN_CONFIG_A = {
     consts.CONFIG_CAST: None,
 }
 
+AGGREGATE_CONFIG_C = {
+    consts.CONFIG_SOURCE_COLUMN: "length__c",
+    consts.CONFIG_TARGET_COLUMN: "length__c",
+    consts.CONFIG_FIELD_ALIAS: "min__length__c",
+    consts.CONFIG_TYPE: "min",
+}
+
 CUSTOM_QUERY_VALIDATION_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": None,
@@ -118,14 +125,22 @@ class MockIbisTable(object):
         self.columns = ["a", "b", "c"]
 
     def __getitem__(self, key):
-        return self
-
-    def type(self):
-        return "int64"
+        return MockIbisColumn(key)
 
     def mutate(self, fields):
         self.columns = self.columns + fields
         return self
+
+
+class MockIbisColumn(object):
+    def __init__(self, column):
+        self.column = column
+
+    def type(self):
+        if self.column == "c":
+            return "!string"
+        else:
+            return "int64"
 
 
 @pytest.fixture
@@ -275,6 +290,9 @@ def test_build_config_aggregates(module_under_test):
 
     aggregate_configs = config_manager.build_config_column_aggregates("sum", ["a"], [])
     assert aggregate_configs[0] == AGGREGATE_CONFIG_A
+
+    aggregate_configs = config_manager.build_config_column_aggregates("min", ["c"], [])
+    assert aggregate_configs[0] == AGGREGATE_CONFIG_C
 
 
 def test_build_config_aggregates_no_match(module_under_test):
