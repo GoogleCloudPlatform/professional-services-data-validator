@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import pytest
 
 from data_validation import consts
@@ -285,7 +286,7 @@ def test_build_column_configs(module_under_test):
 
 def test_build_config_aggregates(module_under_test):
     config_manager = module_under_test.ConfigManager(
-        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+        copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     aggregate_configs = config_manager.build_config_column_aggregates("sum", ["a"], [])
@@ -297,7 +298,7 @@ def test_build_config_aggregates(module_under_test):
 
 def test_build_config_aggregates_no_match(module_under_test):
     config_manager = module_under_test.ConfigManager(
-        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+        copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     aggregate_configs = config_manager.build_config_column_aggregates(
@@ -308,7 +309,7 @@ def test_build_config_aggregates_no_match(module_under_test):
 
 def test_build_config_count_aggregate(module_under_test):
     config_manager = module_under_test.ConfigManager(
-        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+        copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     agg = config_manager.build_config_count_aggregate()
