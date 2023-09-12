@@ -598,7 +598,7 @@ class ConfigManager(object):
         if column_type == "string":
             calc_func = "length"
 
-        elif column_type == "timestamp" or column_type == "!timestamp":
+        elif column_type in ["timestamp", "!timestamp", "date", "!date"]:
             if (
                 self.source_client.name == "bigquery"
                 or self.target_client.name == "bigquery"
@@ -679,7 +679,8 @@ class ConfigManager(object):
         if arg_value:
             arg_value = [x.casefold() for x in arg_value]
             if supported_types:
-                supported_types.extend(["string", "!string", "timestamp", "!timestamp"])
+                # This mutates external supported_types, making it local as part of adding more values.
+                supported_types = supported_types + ["string", "!string", "timestamp", "!timestamp", "date", "!date"]
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
@@ -714,7 +715,7 @@ class ConfigManager(object):
                     and (column_type == "int32" or column_type == "!int32")
                 )
                 or (
-                    (column_type == "timestamp" or column_type == "!timestamp")
+                    column_type in ["timestamp", "!timestamp", "date", "!date"]
                     and agg_type
                     in (
                         "sum",
