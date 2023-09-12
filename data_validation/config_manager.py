@@ -104,9 +104,9 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_USE_RANDOM_ROWS) or False
 
     def random_row_batch_size(self):
-        """Return if the validation should use a random row filter."""
-        return (
-            int(self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE))
+        """Return batch size for random row filter."""
+        return int(
+            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
