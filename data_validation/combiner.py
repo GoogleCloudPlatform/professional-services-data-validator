@@ -71,16 +71,29 @@ def generate_report(
             "Expected source and target to have same schema, got "
             f"source: {source_names} target: {target_names}"
         )
+
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
     )
+    differences_df = client.execute(differences_pivot)
+
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
     )
+    source_df = client.execute(source_pivot)
+
     target_pivot = _pivot_result(
         target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
     )
-    joined = _join_pivots(source_pivot, target_pivot, differences_pivot, join_on_fields)
+    target_df = client.execute(target_pivot)
+
+    con = ibis.pandas.connect(
+        {"source": source_df, "differences": differences_df, "target": target_df}
+    )
+
+    joined = _join_pivots(
+        con.tables.source, con.tables.target, con.tables.differences, join_on_fields
+    )
     documented = _add_metadata(joined, run_metadata)
 
     if verbose:
