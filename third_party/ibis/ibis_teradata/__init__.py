@@ -56,7 +56,7 @@ class Backend(BaseSQLBackend):
     def close(self):
         """Close the connection."""
         self.con.close()
-    
+
     def __del__ (self):
         self.con.close()
 
@@ -216,10 +216,15 @@ class Backend(BaseSQLBackend):
             sql = self.NO_LOCK_SQL + sql
 
         self._log(sql)
+
+        schema = self.ast_schema(query_ast, **kwargs)
+        # Date columns are in the Dataframe as "object", using parse_dates to ensure they have a better data type.
+        date_columns = [_ for _ in schema.names if schema.fields[_].is_date()]
+
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
-            df = pandas.read_sql(sql, self.client)
+            df = pandas.read_sql(sql, self.client, parse_dates=date_columns)
         return df
 
     # Methods we need to implement for BaseSQLBackend
