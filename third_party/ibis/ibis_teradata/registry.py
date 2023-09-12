@@ -228,7 +228,9 @@ def _string_join(translator, op):
 
 def _extract_epoch(translator, op):
     arg = translator.translate(op.arg)
-    utc_expression = "AT TIME ZONE 'GMT'" if getattr(op.arg.output_dtype, 'timezone', None) else ""
+    utc_expression = (
+        "AT TIME ZONE 'GMT'" if getattr(op.arg.output_dtype, "timezone", None) else ""
+    )
     extract_arg = f"CAST({arg} AS TIMESTAMP)" if op.arg.output_dtype.is_date() else arg
 
     return (

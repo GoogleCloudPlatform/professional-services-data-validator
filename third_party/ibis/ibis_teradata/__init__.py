@@ -51,13 +51,15 @@ class Backend(BaseSQLBackend):
 
         self.client = teradatasql.connect(**self.teradata_config)
         self.con = self.client.cursor()
-        self.use_no_lock_tables = True if use_no_lock_tables.casefold() == "True".casefold() else False
+        self.use_no_lock_tables = (
+            True if use_no_lock_tables.casefold() == "True".casefold() else False
+        )
 
     def close(self):
         """Close the connection."""
         self.con.close()
 
-    def __del__ (self):
+    def __del__(self):
         self.con.close()
 
     @property
