@@ -154,7 +154,6 @@ def schema_validation_matching(
             )
             continue
 
-        # Target field exists
         target_field_type = target_fields_casefold[source_field_name]
         if source_field_type == target_field_type:
             # Target data type matches
@@ -172,26 +171,28 @@ def schema_validation_matching(
             and string_val(target_field_type)
             in allow_list_map[string_val(source_field_type)]
         ):
+            # Data type pair match an allow-list pair.
+            results.append(
+                [
+                    source_field_name,
+                    source_field_name,
+                    string_val(source_field_type),
+                    str(target_field_type),
+                    consts.VALIDATION_STATUS_SUCCESS,
+                ]
+            )
+        else:
+            # Target data type mismatch
             (higher_precision, lower_precision,) = parse_n_validate_datatypes(
                 string_val(source_field_type), string_val(target_field_type)
             )
-            if lower_precision:
-                results.append(
-                    [
-                        source_field_name,
-                        source_field_name,
-                        str(source_field_type),
-                        str(target_field_type),
-                        consts.VALIDATION_STATUS_FAIL,
-                    ]
+            if higher_precision:
+                # If the target precision is higher then the validation is acceptable but worth a warning.
+                logging.warning(
+                    "Source and target data type has precision mismatch: %s - %s",
+                    string_val(source_field_type),
+                    str(target_field_type),
                 )
-            else:
-                if higher_precision:
-                    logging.warning(
-                        "Source and target data type has precision mismatch: %s - %s",
-                        string_val(source_field_type),
-                        str(target_field_type),
-                    )
                 results.append(
                     [
                         source_field_name,
@@ -201,19 +202,18 @@ def schema_validation_matching(
                         consts.VALIDATION_STATUS_SUCCESS,
                     ]
                 )
-        # target data type mismatch
-        else:
-            results.append(
-                [
-                    source_field_name,
-                    source_field_name,
-                    str(source_field_type),
-                    str(target_field_type),
-                    consts.VALIDATION_STATUS_FAIL,
-                ]
-            )
+            else:
+                results.append(
+                    [
+                        source_field_name,
+                        source_field_name,
+                        str(source_field_type),
+                        str(target_field_type),
+                        consts.VALIDATION_STATUS_FAIL,
+                    ]
+                )
 
-    # source field doesn't exist
+    # Source field doesn't exist
     for target_field_name, target_field_type in target_fields_casefold.items():
         if target_field_name not in source_fields_casefold:
             results.append(
@@ -344,12 +344,14 @@ def get_typea_numeric_sustr(st):
 
 
 # typeb data types: Decimal(10,2)
-def get_typeb_numeric_sustr(st):
-    first_half = st.split(",")[0]
-    second_half = st.split(",")[1]
-    first_half_num = get_typea_numeric_sustr(first_half)
-    second_half_num = get_typea_numeric_sustr(second_half)
-    return first_half_num, second_half_num
+def get_typeb_numeric_sustr(st: str) -> tuple:
+    m = DECIMAL_PRECISION_SCALE_PATTERN.match(st.replace(" ", ""))
+    if not m:
+        return -1, -1
+    _, p, s = m.groups()
+    if s is None:
+        s = 0
+    return int(p), int(s)
 
 
 def string_val(st):
@@ -368,7 +370,7 @@ def strip_null(st):
     return st.replace("!", "")
 
 
-def parse_n_validate_datatypes(source, target):
+def parse_n_validate_datatypes(source, target) -> tuple:
     """
     Args:
         source: Source table datatype string

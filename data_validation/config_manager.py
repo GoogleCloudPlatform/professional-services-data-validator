@@ -104,9 +104,9 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_USE_RANDOM_ROWS) or False
 
     def random_row_batch_size(self):
-        """Return if the validation should use a random row filter."""
-        return (
-            int(self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE))
+        """Return batch size for random row filter."""
+        return int(
+            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
@@ -697,9 +697,6 @@ class ConfigManager(object):
             source_column_ibis_type = source_table[
                 casefold_source_columns[column]
             ].type()
-            target_column_ibis_type = target_table[
-                casefold_target_columns[column]
-            ].type()
             column_type = str(source_column_ibis_type).split("(")[0]
 
             if column not in allowlist_columns:
@@ -715,6 +712,10 @@ class ConfigManager(object):
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
                     )
                 continue
+
+            target_column_ibis_type = target_table[
+                casefold_target_columns[column]
+            ].type()
 
             if (
                 (column_type == "string" or column_type == "!string")
