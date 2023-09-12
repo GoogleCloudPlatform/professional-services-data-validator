@@ -680,7 +680,14 @@ class ConfigManager(object):
             arg_value = [x.casefold() for x in arg_value]
             if supported_types:
                 # This mutates external supported_types, making it local as part of adding more values.
-                supported_types = supported_types + ["string", "!string", "timestamp", "!timestamp", "date", "!date"]
+                supported_types = supported_types + [
+                    "string",
+                    "!string",
+                    "timestamp",
+                    "!timestamp",
+                    "date",
+                    "!date",
+                ]
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
