@@ -595,10 +595,10 @@ class ConfigManager(object):
     ) -> dict:
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
-        if column_type == "string":
+        if column_type in ["string", "!string"]:
             calc_func = "length"
 
-        elif column_type == "timestamp" or column_type == "!timestamp":
+        elif column_type in ["timestamp", "!timestamp"]:
             if (
                 self.source_client.name == "bigquery"
                 or self.target_client.name == "bigquery"
@@ -718,13 +718,10 @@ class ConfigManager(object):
             ].type()
 
             if (
-                (column_type == "string" or column_type == "!string")
+                column_type in ["string", "!string"]
+                or (cast_to_bigint and column_type in ["int32", "!int32"])
                 or (
-                    cast_to_bigint
-                    and (column_type == "int32" or column_type == "!int32")
-                )
-                or (
-                    (column_type == "timestamp" or column_type == "!timestamp")
+                    column_type in ["timestamp", "!timestamp"]
                     and agg_type
                     in (
                         "sum",
