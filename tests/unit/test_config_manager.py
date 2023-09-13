@@ -74,9 +74,16 @@ AGGREGATE_CONFIG_B = {
 }
 
 AGGREGATE_CONFIG_C = {
-    consts.CONFIG_SOURCE_COLUMN: "c",
-    consts.CONFIG_TARGET_COLUMN: "c",
-    consts.CONFIG_FIELD_ALIAS: "sum__c",
+    consts.CONFIG_SOURCE_COLUMN: "length__c",
+    consts.CONFIG_TARGET_COLUMN: "length__c",
+    consts.CONFIG_FIELD_ALIAS: "min__length__c",
+    consts.CONFIG_TYPE: "min",
+}
+
+AGGREGATE_CONFIG_D = {
+    consts.CONFIG_SOURCE_COLUMN: "d",
+    consts.CONFIG_TARGET_COLUMN: "d",
+    consts.CONFIG_FIELD_ALIAS: "sum__d",
     consts.CONFIG_TYPE: "sum",
 }
 
@@ -85,13 +92,6 @@ GROUPED_COLUMN_CONFIG_A = {
     consts.CONFIG_TARGET_COLUMN: "a",
     consts.CONFIG_FIELD_ALIAS: "a",
     consts.CONFIG_CAST: None,
-}
-
-AGGREGATE_CONFIG_C = {
-    consts.CONFIG_SOURCE_COLUMN: "length__c",
-    consts.CONFIG_TARGET_COLUMN: "length__c",
-    consts.CONFIG_FIELD_ALIAS: "min__length__c",
-    consts.CONFIG_TYPE: "min",
 }
 
 CUSTOM_QUERY_VALIDATION_CONFIG = {
@@ -137,7 +137,7 @@ class MockIbisClient(object):
 
 class MockIbisTable(object):
     def __init__(self):
-        self.columns = ["a", "b", "c"]
+        self.columns = ["a", "b", "c", "d"]
 
     def __getitem__(self, key):
         return MockIbisColumn(key)
@@ -309,7 +309,9 @@ def test_build_config_aggregates(module_under_test):
     assert len(aggregate_configs) == 1
     assert aggregate_configs[0] == AGGREGATE_CONFIG_A
 
-    aggregate_configs = config_manager.build_config_column_aggregates("min", ["c"], [])
+    aggregate_configs = config_manager.build_config_column_aggregates(
+        "min", ["c"], False, []
+    )
     assert aggregate_configs[0] == AGGREGATE_CONFIG_C
 
 
@@ -319,11 +321,11 @@ def test_build_config_aggregates_ec(module_under_test):
     )
 
     aggregate_configs = config_manager.build_config_column_aggregates(
-        "sum", ["a"], True, []
+        "sum", ["a", "c"], True, []
     )
     assert len(aggregate_configs) == 2
     assert aggregate_configs[0] == AGGREGATE_CONFIG_B
-    assert aggregate_configs[1] == AGGREGATE_CONFIG_C
+    assert aggregate_configs[1] == AGGREGATE_CONFIG_D
 
 
 def test_build_config_aggregates_no_match(module_under_test):
