@@ -94,7 +94,7 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
-    if isinstance(datatype, ibis.expr.datatypes.Timestamp):
+    if isinstance(datatype, (ibis.expr.datatypes.Timestamp, ibis.expr.datatypes.Date)):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
     elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(
