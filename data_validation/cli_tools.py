@@ -798,6 +798,11 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     optional_arguments.add_argument(
+        "--std",
+        "-std",
+        help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+    )
+    optional_arguments.add_argument(
         "--exclude-columns",
         "-ec",
         action="store_false",
