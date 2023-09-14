@@ -67,7 +67,6 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         "int32",
         "int64",
         "decimal",
-        "timestamp",
         "!float64",
         "!float32",
         "!int8",
@@ -75,11 +74,13 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         "!int32",
         "!int64",
         "!decimal",
-        "!timestamp",
     ]
 
     if args.wildcard_include_string_len:
-        supported_data_types.append("string")
+        supported_data_types.extend(["string", "!string"])
+
+    if args.wildcard_include_timestamp:
+        supported_data_types.extend(["timestamp", "!timestamp"])
 
     cast_to_bigint = True if args.cast_to_bigint else False
 
@@ -112,6 +113,11 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "bit_xor", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+        )
+    if args.std:
+        col_args = None if args.std == "*" else cli_tools.get_arg_list(args.std)
+        aggregate_configs += config_manager.build_config_column_aggregates(
+            "std", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
         )
     return aggregate_configs
 

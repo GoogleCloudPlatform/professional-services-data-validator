@@ -389,6 +389,11 @@ def _day_of_week_name(t, op):
 def _random(t, op):
     return sa.sql.literal_column("DBMS_RANDOM.VALUE")
 
+def _extract_epoch(t, op):
+    sub = operator.sub(sa.cast(t.translate(op.arg), sa.DATE), sa.sql.literal_column("DATE '1970-01-01'")).self_group()
+    mult = sa.cast(operator.mul(sub, sa.sql.literal_column("86400")), sa.dialects.oracle.NUMBER)
+    return mult
+
 
 operation_registry.update(
     {
@@ -442,12 +447,7 @@ operation_registry.update(
         ops.ExtractDay: _extract('day'),
         ops.ExtractDayOfYear: _extract('doy'),
         ops.ExtractQuarter: _extract('quarter'),
-        ops.ExtractEpochSeconds: fixed_arity(
-            lambda x: sa.cast(
-                sa.func.datediff(sa.text('s'), '1970-01-01 00:00:00', x), sa.BIGINT
-            ),
-            1,
-        ),
+        ops.ExtractEpochSeconds: _extract_epoch,
         ops.ExtractHour: _extract('hour'),
         ops.ExtractMinute: _extract('minute'),
         ops.ExtractSecond: _second,

@@ -48,3 +48,12 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,12345678901234567890,1234567890123456789012345,123.33,123456.3,12345678.3
  ,'Hello DVT','C ','Hello DVT'
  ,'1970-01-03','1970-01-03 00:00:03','1970-01-03 03:00:03');
+
+
+DROP TABLE `pso_data_validator`.`dvt_null_not_null`;
+CREATE TABLE `pso_data_validator`.`dvt_null_not_null`
+(   col_nn             timestamp NOT NULL
+,   col_nullable       timestamp
+,   col_src_nn_trg_n   timestamp NOT NULL
+,   col_src_n_trg_nn   timestamp
+) COMMENT 'Nullable integration test table, Hive is assumed to be a DVT source (not target).';

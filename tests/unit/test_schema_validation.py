@@ -192,10 +192,12 @@ def test_expand_precision_range(test_input: str, expected: list):
     [
         ("", [""]),
         ("int32", ["int32"]),
+        ("!int32", ["!int32"]),
         ("decimal(1)", ["decimal(1)"]),
         ("decimal(1,0)", ["decimal(1,0)"]),
         ("decimal(1, 0)", ["decimal(1,0)"]),
         ("decimal(1-2,0)", ["decimal(1,0)", "decimal(2,0)"]),
+        ("!decimal(1-2,0)", ["!decimal(1,0)", "!decimal(2,0)"]),
         ("decimal(9-11,5)", ["decimal(9,5)", "decimal(10,5)", "decimal(11,5)"]),
         ("decimal(12,0-2)", ["decimal(12,0)", "decimal(12,1)", "decimal(12,2)"]),
         (
@@ -302,7 +304,7 @@ def test_parse_allow_list(test_input: str, expected: dict):
     assert parse_allow_list(test_input) == expected
 
 
-# Basic unit test  for schema validation.
+# Basic unit test for schema validation.
 def test_schema_validation_matching(module_under_test):
     source_fields = {"FIELD1": "string", "fiEld2": "datetime", "field3": "string"}
     target_fields = {"field1": "string", "field2": "timestamp", "field_3": "string"}
@@ -445,6 +447,47 @@ def test_schema_validation_matching_allowlist_columns(module_under_test):
         target_fields,
         None,
         "decimal(38,0):int64,decimal(38,0):decimal(1000,0),int32:int64",
+    )
+
+
+def test_schema_validation_decimal_precision_mismatch(module_under_test):
+    """Test for decimal precision mismatch extra checks, i.e. if target has greater precision then success."""
+    source_fields = {
+        "FIELD1": "decimal(5,0)",
+        "FIELD2": "decimal(5,0)",
+        "FIELD3": "decimal(10,0)",
+    }
+    target_fields = {
+        "field1": "decimal(5,0)",
+        "field2": "decimal(10,0)",
+        "field3": "decimal(5,0)",
+    }
+
+    expected_results = [
+        [
+            "field1",
+            "field1",
+            "decimal(5,0)",
+            "decimal(5,0)",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field2",
+            "field2",
+            "decimal(5,0)",
+            "decimal(10,0)",
+            consts.VALIDATION_STATUS_SUCCESS,
+        ],
+        [
+            "field3",
+            "field3",
+            "decimal(10,0)",
+            "decimal(5,0)",
+            consts.VALIDATION_STATUS_FAIL,
+        ],
+    ]
+    assert expected_results == module_under_test.schema_validation_matching(
+        source_fields, target_fields, [], ""
     )
 
 

@@ -2,6 +2,20 @@
 
 ## Untagged
 
+## [4.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.0.0...v4.1.0) (2023-08-18)
+
+
+### Features
+
+* support timestamp aggregation for Oracle and TD ([#941](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/941)) ([911bae8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/911bae818678dc13a2b0f5a5ee7df3b7b0c75265))
+
+
+### Bug Fixes
+
+* Issues with validate column for time zoned timestamps ([#930](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/930)) ([ee7ae9a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ee7ae9a168bc7dfe3798d77ab238552c36670864))
+* Schema validations ignore not null on Teradata and BigQuery ([#935](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/935)) ([936744b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/936744b37fbae8fc0718da9a515c7c1652a5dfc0))
+* Support casting TD PKs to VARCHAR ([#946](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/946)) ([2171532](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2171532a29182d4c8d95c686f72d419fc5f3ec22))
+
 ## [4.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v3.2.0...v4.0.0) (2023-08-02)
 
 

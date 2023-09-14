@@ -66,6 +66,12 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "min_birth_year",
         },
+        {
+            consts.CONFIG_TYPE: "std",
+            consts.CONFIG_SOURCE_COLUMN: "tripduration",
+            consts.CONFIG_TARGET_COLUMN: "tripduration",
+            consts.CONFIG_FIELD_ALIAS: "std_tripduration",
+        },
     ],
     consts.CONFIG_FORMAT: "table",
     consts.CONFIG_FILTER_STATUS: None,
@@ -215,19 +221,6 @@ CONFIG_NUMERIC_AGG_VALID = {
     consts.CONFIG_FILTER_STATUS: None,
 }
 
-CONFIG_SCHEMA_VALIDATION = {
-    # BigQuery Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: BQ_CONN,
-    consts.CONFIG_TARGET_CONN: BQ_CONN,
-    # Validation Type
-    consts.CONFIG_TYPE: "Schema",
-    # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
-    consts.CONFIG_TABLE_NAME: "citibike_trips",
-    consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: None,
-}
-
 BQ_CONN_NAME = "bq-integration-test"
 CLI_CONFIG_FILE = "example_test.yaml"
 
@@ -311,7 +304,7 @@ CLI_CONFIG_DIR_RUN_ARGS_LOCAL = [
 ]
 CLI_CONFIG_DIR_RUN_ARGS_GCS = ["configs", "run", "--config-dir", "gs://"]
 
-CLI_WILDCARD_STRING_ARGS = [
+CLI_WILDCARD_COLUMN_ARGS = [
     "validate",
     "column",
     "--source-conn",
@@ -323,6 +316,7 @@ CLI_WILDCARD_STRING_ARGS = [
     "--sum",
     "*",
     "--wildcard-include-string-len",
+    "--wildcard-include-timestamp",
     "--config-file",
     CLI_CONFIG_FILE,
 ]
@@ -426,12 +420,16 @@ def test_count_validator():
     min_birth_year_value = df[df["validation_name"] == "min_birth_year"][
         "source_agg_value"
     ].values[0]
+    std_tripduration_value = df[df["validation_name"] == "std_tripduration"][
+        "source_agg_value"
+    ].values[0]
 
     assert float(count_value) > 0
     assert float(count_tripduration_value) > 0
     assert float(avg_tripduration_value) > 0
     assert float(max_birth_year_value) > 0
     assert float(min_birth_year_value) > 0
+    assert float(std_tripduration_value) > 0
     assert (
         df["source_agg_value"].astype(float).sum()
         == df["target_agg_value"].astype(float).sum()
@@ -462,14 +460,6 @@ def test_numeric_types():
         assert float(validation["source_agg_value"]) == float(
             validation["target_agg_value"]
         )
-
-
-def test_schema_validation():
-    validator = data_validation.DataValidation(CONFIG_SCHEMA_VALIDATION, verbose=True)
-    df = validator.execute()
-
-    for validation in df.to_dict(orient="records"):
-        assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
 
 
 def test_cli_store_yaml_then_run_gcs():
@@ -605,9 +595,9 @@ def test_cli_store_yaml_then_run_directory_local():
 
 
 def test_wildcard_column_agg_yaml():
-    """Test storing column validation YAML with string fields."""
+    """Test storing column validation YAML with string and timestamp fields."""
     _test_cli_yaml_local_runner(
-        CLI_WILDCARD_STRING_ARGS, EXPECTED_NUM_YAML_LINES_WILDCARD
+        CLI_WILDCARD_COLUMN_ARGS, EXPECTED_NUM_YAML_LINES_WILDCARD
     )
 
 
@@ -1097,12 +1087,12 @@ def test_custom_query():
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
-    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
-    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
-    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
-    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
-    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
+    " ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) )",
+    " ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )"
+    + " AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 5678 ) ) ) ) )",
+    " ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 5678 ) ) ) ) )"
+    + " AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 9012 ) ) ) ) )",
+    " ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 9012 ) ) ) )",
 ]
 
 
@@ -1138,9 +1128,9 @@ def test_bigquery_generate_table_partitions(mock_conn):
 
     assert len(partition_filters) == 1  # only one pair of tables
     assert (
-        len(partition_filters[0]) == partition_builder.args.partition_num
+        len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
-    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
@@ -1182,9 +1172,9 @@ def test_column_validation_core_types(mock_conn):
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=*",
-            "--min=*",
-            "--max=*",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

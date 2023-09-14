@@ -65,6 +65,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
         ["logmech", "(Optional) Log on mechanism"],
+        ["use_no_lock_tables", "Use an access lock for queries (defaults to False)"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -546,6 +547,11 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     optional_arguments.add_argument(
+        "--std",
+        "-std",
+        help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+    )
+    optional_arguments.add_argument(
         "--grouped-columns",
         "-gc",
         help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
@@ -577,6 +583,12 @@ def _configure_column_parser(column_parser):
         "-wis",
         action="store_true",
         help="Include string fields for wildcard aggregations.",
+    )
+    optional_arguments.add_argument(
+        "--wildcard-include-timestamp",
+        "-wit",
+        action="store_true",
+        help="Include timestamp fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
         "--cast-to-bigint",
@@ -780,10 +792,21 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
     )
     optional_arguments.add_argument(
+        "--std",
+        "-std",
+        help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+    )
+    optional_arguments.add_argument(
         "--wildcard-include-string-len",
         "-wis",
         action="store_true",
         help="Include string fields for wildcard aggregations.",
+    )
+    optional_arguments.add_argument(
+        "--wildcard-include-timestamp",
+        "-wit",
+        action="store_true",
+        help="Include timestamp fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
         "--cast-to-bigint",

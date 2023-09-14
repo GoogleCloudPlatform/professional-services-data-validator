@@ -104,9 +104,9 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_USE_RANDOM_ROWS) or False
 
     def random_row_batch_size(self):
-        """Return if the validation should use a random row filter."""
-        return (
-            int(self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE))
+        """Return batch size for random row filter."""
+        return int(
+            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
@@ -595,10 +595,10 @@ class ConfigManager(object):
     ) -> dict:
         """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
-        if column_type == "string":
+        if column_type in ["string", "!string"]:
             calc_func = "length"
 
-        elif column_type == "timestamp" or column_type == "!timestamp":
+        elif column_type in ["timestamp", "!timestamp", "date", "!date"]:
             if (
                 self.source_client.name == "bigquery"
                 or self.target_client.name == "bigquery"
@@ -679,16 +679,21 @@ class ConfigManager(object):
         if arg_value:
             arg_value = [x.casefold() for x in arg_value]
             if supported_types:
-                supported_types.append("string")
+                # This mutates external supported_types, making it local as part of adding more values.
+                supported_types = supported_types + [
+                    "string",
+                    "!string",
+                    "timestamp",
+                    "!timestamp",
+                    "date",
+                    "!date",
+                ]
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
             # Get column type and remove precision/scale attributes
             source_column_ibis_type = source_table[
                 casefold_source_columns[column]
-            ].type()
-            target_column_ibis_type = target_table[
-                casefold_target_columns[column]
             ].type()
             column_type = str(source_column_ibis_type).split("(")[0]
 
@@ -706,14 +711,15 @@ class ConfigManager(object):
                     )
                 continue
 
+            target_column_ibis_type = target_table[
+                casefold_target_columns[column]
+            ].type()
+
             if (
-                (column_type == "string" or column_type == "!string")
+                column_type in ["string", "!string"]
+                or (cast_to_bigint and column_type in ["int32", "!int32"])
                 or (
-                    cast_to_bigint
-                    and (column_type == "int32" or column_type == "!int32")
-                )
-                or (
-                    (column_type == "timestamp" or column_type == "!timestamp")
+                    column_type in ["timestamp", "!timestamp", "date", "!date"]
                     and agg_type
                     in (
                         "sum",

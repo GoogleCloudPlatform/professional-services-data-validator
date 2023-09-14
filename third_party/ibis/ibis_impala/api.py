@@ -194,7 +194,7 @@ def _if_null(op):
 
 def _get_schema_using_query(self, query):
     # Removing LIMIT 0 around query since it returns no results in Hive
-    cur = self.raw_sql(query)
+    cur = self.raw_sql(f"SELECT * FROM ({query}) t0 LIMIT 1")
     cur.fetchall()
     ibis_fields = self._adapt_types(cur.description)
     cur.release()

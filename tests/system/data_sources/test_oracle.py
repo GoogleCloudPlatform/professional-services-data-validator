@@ -18,6 +18,7 @@ from unittest import mock
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
 from data_validation.partition_builder import PartitionBuilder
+from tests.system.data_sources.common_functions import null_not_null_assertions
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
 
@@ -76,12 +77,12 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    "course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 3 OR quarter_id = 3 AND (student_id < 1234))",
-    "(course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 3 OR quarter_id = 3 AND (student_id >= 1234)))"
-    + " AND (course_id < 'GEO001' OR course_id = 'GEO001' AND (quarter_id < 2 OR quarter_id = 2 AND (student_id < 5678)))",
-    "(course_id > 'GEO001' OR course_id = 'GEO001' AND (quarter_id > 2 OR quarter_id = 2 AND (student_id >= 5678)))"
-    + " AND (course_id < 'TRI001' OR course_id = 'TRI001' AND (quarter_id < 1 OR quarter_id = 1 AND (student_id < 9012)))",
-    "course_id > 'TRI001' OR course_id = 'TRI001' AND (quarter_id > 1 OR quarter_id = 1 AND (student_id >= 9012))",
+    " course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 )",
+    " ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )"
+    + " AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 5678 ) )",
+    " ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 5678 ) )"
+    + " AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 9012 ) )",
+    " course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 9012 )",
 ]
 
 
@@ -117,9 +118,9 @@ def test_oracle_generate_table_partitions():
 
     assert len(partition_filters) == 1  # only one pair of tables
     assert (
-        len(partition_filters[0]) == partition_builder.args.partition_num
+        len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
-    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
@@ -163,13 +164,10 @@ def test_schema_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
+            "--exclusion-columns=id",
             (
                 # Integral Oracle NUMBERS go to BigQuery INT64.
-                "--allow-list=!decimal(8,0):int64,decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
-                # Oracle NUMBERS that map to BigQuery NUMERIC.
-                "decimal(20,0):decimal(38,9),decimal(10,2):decimal(38,9),"
-                # Oracle NUMBERS that map to BigQuery BIGNUMERIC.
-                "decimal(38,0):decimal(76,38),"
+                "--allow-list=decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
             ),
@@ -182,6 +180,30 @@ def test_schema_validation_core_types_to_bigquery():
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_not_null_vs_nullable():
+    """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=ora-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    null_not_null_assertions(df)
 
 
 @mock.patch(
@@ -219,7 +241,6 @@ def test_schema_validation_oracle_to_postgres():
 def test_column_validation_core_types():
     """Oracle to Oracle dvt_core_types column validation"""
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --sum string below to * when issue-762 is complete.
     args = parser.parse_args(
         [
             "validate",
@@ -228,9 +249,9 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38",
-            "--min=*",
-            "--max=*",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -248,7 +269,6 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change --sum string below to include col_datetime and col_tstz when issue-762 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     args = parser.parse_args(
         [
@@ -258,7 +278,7 @@ def test_column_validation_core_types_to_bigquery():
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
             "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
             "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
