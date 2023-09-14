@@ -79,7 +79,7 @@ Below is the command syntax for column validations. To run a grouped column
 validation, simply specify the `--grouped-columns` flag.
 
 You can specify a list of string columns for aggregations in order to calculate
-an aggregation over the `length(string_col)`. Similarly, you can specify timestamp
+an aggregation over the `length(string_col)`. Similarly, you can specify timestamp/date
 columns for aggregation over the `unix_seconds(timestamp_col)`. Running an aggregation
 over all columns ('*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` or `--wildcard-include-timestamp` flags are present.
