@@ -140,7 +140,11 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
 
 def get_ibis_query(client, query):
     """Return Ibis Table from query expression for Supplied Client."""
-    return client.sql(query)
+    iq = client.sql(query)
+    # Normalise all columns in the query to lower case.
+    # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/992
+    iq = iq.relabel(dict(zip(iq.columns, [_.lower() for _ in iq.columns])))
+    return iq
 
 
 def get_ibis_table_schema(client, schema_name, table_name):
