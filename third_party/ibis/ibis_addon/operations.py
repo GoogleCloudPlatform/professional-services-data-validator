@@ -346,6 +346,8 @@ def _sa_string_join(t, op):
 def sa_format_new_id(t, op):
     return sa.func.NEWID()
 
+def sa_format_random(t, op):
+    return sa.func.RANDOM()
 
 _BQ_DTYPE_TO_IBIS_TYPE["TIMESTAMP"] = dt.Timestamp(timezone="UTC")
 
@@ -442,3 +444,4 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
     SnowflakeExprTranslator._registry[ExtractEpochSeconds] = sa_epoch_time_snowflake
+    SnowflakeExprTranslator._registry[RandomScalar] = sa_format_random
