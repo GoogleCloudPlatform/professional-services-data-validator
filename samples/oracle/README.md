@@ -83,7 +83,7 @@ SELECT id,encode(sha256(col_blob),'hex') AS col_blob FROM dvt_test.tab_blob;
 DVT command:
 ```
 data-validation validate custom-query row \
- -sc ora_local -tc pg_local \
+ -sc ora_conn -tc pg_conn \
  --source-query="SELECT id,CASE WHEN DBMS_LOB.GETLENGTH(col_blob) = 0 OR col_blob IS NULL THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_blob,4)) END col_blob FROM dvt_test.tab_blob" \
  --target-query="SELECT id,encode(sha256(col_blob),'hex') AS col_blob FROM dvt_test.tab_blob" \
  --primary-keys=id \
