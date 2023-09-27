@@ -326,7 +326,8 @@ def test_column_validation_oracle_to_postgres():
     # TODO Change count_cols, sum_cols and min_cols to include col_blob when issue-991 is complete.
     count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_blob")])
     # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
-    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_blob")])
+    # TODO Change sum_cols to include col_num_18 when issue-1007 is complete.
+    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_blob", "col_num_18")])
     min_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_blob")])
     args = parser.parse_args(
         [
