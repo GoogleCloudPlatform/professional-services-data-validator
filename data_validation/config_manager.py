@@ -721,6 +721,8 @@ class ConfigManager(object):
                     "!timestamp",
                     "date",
                     "!date",
+                    "binary",
+                    "!binary",
                 ]
 
         allowlist_columns = arg_value or casefold_source_columns
