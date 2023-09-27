@@ -58,6 +58,30 @@ ORACLE_CONFIG = {
     consts.CONFIG_FILTER_STATUS: None,
 }
 
+ORA2PG_COLUMNS = [
+    "id",
+    "col_num_4",
+    "col_num_9",
+    "col_num_18",
+    "col_num_38",
+    "col_num",
+    "col_num_10_2",
+    "col_num_float",
+    "col_float32",
+    "col_float64",
+    "col_varchar_30",
+    "col_char_2",
+    "col_nvarchar_30",
+    "col_nchar_2",
+    "col_date",
+    "col_ts",
+    "col_tstz",
+    "col_raw",
+    "col_blob",
+    "col_clob",
+    "col_nclob",
+]
+
 
 def test_count_validator():
     validator = data_validation.DataValidation(ORACLE_CONFIG, verbose=True)
@@ -212,6 +236,7 @@ def test_schema_validation_not_null_vs_nullable():
 )
 def test_schema_validation_oracle_to_postgres():
     """Oracle to PostgreSQL schema validation"""
+
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -298,14 +323,11 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_oracle_to_postgres():
     parser = cli_tools.configure_arg_parser()
-    number_cols = "col_num_4,col_num_9,col_num_18,col_num_38,col_num,col_num_10_2"
-    float_cols = "col_num_float,col_float32,col_float64"
-    # TODO Change string_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
-    #string_cols = "col_varchar_30,col_char_2,col_nvarchar_30,col_nchar_2"
-    string_cols = "col_varchar_30,col_nvarchar_30"
-    # date_cols = "col_date,col_ts,col_tstz,col_tsltz"
-    date_cols = "col_date,col_ts,col_tstz"
-    # Excluded RAW/CLOB/NCLOB columns because they don't make sense for column validation.
+    # TODO Change count_cols, sum_cols and min_cols to include col_blob when issue-991 is complete.
+    count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_blob")])
+    # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
+    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_blob")])
+    min_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_blob")])
     args = parser.parse_args(
         [
             "validate",
@@ -314,9 +336,10 @@ def test_column_validation_oracle_to_postgres():
             "-tc=pg-conn",
             "-tbls=pso_data_validator.dvt_ora2pg_types",
             "--filter-status=fail",
-            f"--sum={number_cols},{float_cols}",
-            f"--min={number_cols},{float_cols},{string_cols},{date_cols}",
-            f"--max={number_cols},{float_cols},{string_cols},{date_cols}",
+            f"--count={count_cols}",
+            f"--sum={sum_cols}",
+            f"--min={min_cols}",
+            f"--max={min_cols}",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

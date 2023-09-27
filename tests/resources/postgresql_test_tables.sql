@@ -74,6 +74,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_tstz        timestamp(6) with time zone
 --,   col_tsltz       timestamp(6) with time zone
 ,   col_raw         bytea
+,   col_blob        bytea
 ,   col_clob        text
 ,   col_nclob       text
 );
@@ -89,7 +90,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456'
 ,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 --,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
-,CAST('DVT' AS BYTEA),'DVT A','DVT A')
+,CAST('DVT' AS BYTEA),CAST('DVT' AS BYTEA),'DVT A','DVT A')
 ,(2,2222,123456789,123456789012345678,1234567890123456789012345
 ,123.12,123.11
 --,123400,0.002
@@ -98,7 +99,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:01.123456'
 ,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
 --,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
-,CAST('DVT' AS BYTEA),'DVT B','DVT B')
+,CAST('DVT' AS BYTEA),CAST('DVT DVT' AS BYTEA),'DVT B','DVT B')
 ,(3,3333,123456789,123456789012345678,1234567890123456789012345
 ,123.123,123.11
 --,123400,0.003
@@ -107,7 +108,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
 ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
 --,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
-,CAST('DVT' AS BYTEA),'DVT C','DVT C'
+,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
 );
 
  /* Following table used for validating generating table partitions */
@@ -123,7 +124,7 @@ CREATE TABLE public.test_generate_partitions (
         PRIMARY KEY (course_id, quarter_id, recd_timestamp, registration_date, approved));
 COMMENT ON TABLE public.test_generate_partitions IS 'Table for testing generate table partitions, consists of 32 rows with a composite primary key';
 
-INSERT INTO public.test_generate_partitions (course_id, quarter_id, recd_timestamp, registration_date, approved, grade) VALUES 
+INSERT INTO public.test_generate_partitions (course_id, quarter_id, recd_timestamp, registration_date, approved, grade) VALUES
         ('ALG001', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
         ('ALG001', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
         ('ALG001', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
