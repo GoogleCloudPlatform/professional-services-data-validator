@@ -522,9 +522,9 @@ class ConfigManager(object):
 
         for column in columns:
             if column.casefold() not in casefold_source_columns:
-                raise ValueError(f"Grouped Column DNE in source: {column}")
+                raise ValueError(f"Column DNE in source: {column}")
             if column.casefold() not in casefold_target_columns:
-                raise ValueError(f"Grouped Column DNE in target: {column}")
+                raise ValueError(f"Column DNE in target: {column}")
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
                 consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],

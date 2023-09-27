@@ -80,7 +80,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         supported_data_types.extend(["string", "!string"])
 
     if args.wildcard_include_timestamp:
-        supported_data_types.extend(["timestamp", "!timestamp"])
+        supported_data_types.extend(["timestamp", "!timestamp", "date", "!date"])
 
     cast_to_bigint = True if args.cast_to_bigint else False
     exclude_cols = True if args.exclude_columns else False
