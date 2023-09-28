@@ -323,12 +323,11 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_oracle_to_postgres():
     parser = cli_tools.configure_arg_parser()
-    # TODO Change count_cols, sum_cols and min_cols to include col_blob when issue-991 is complete.
-    count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_blob")])
+    count_cols = ",".join(ORA2PG_COLUMNS)
     # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
     # TODO Change sum_cols to include col_num_18 when issue-1007 is complete.
-    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_blob", "col_num_18")])
-    min_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_blob")])
+    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2", "col_num_18")])
+    min_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_char_2", "col_nchar_2")])
     args = parser.parse_args(
         [
             "validate",
