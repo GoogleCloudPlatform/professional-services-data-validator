@@ -421,18 +421,30 @@ def test_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_oracle_to_postgres():
-    # TODO Change --hash string below to include col_tstz when issue-706 is complete.
-    # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
-    parser = cli_tools.configure_arg_parser()
-    number_cols = "col_num_4,col_num_9,col_num_18,col_num_38,col_num,col_num_10_2"
-    float_cols = "col_num_float,col_float32,col_float64"
-    # TODO Change string_cols to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
-    string_cols = "col_varchar_30,col_char_2"
-    # date_cols = "col_date,col_ts,col_tstz,col_tsltz"
-    date_cols = "col_date,col_ts,col_tstz"
+    # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
+    # TODO Change hash_cols below to include col_float32,col_float64 when issue-841 is complete.
     # TODO col_raw is blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
-    # other_cols = "col_raw"
-    # Excluded CLOB/NCLOB columns because lob values cannot be concatenated
+    # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
+    # Excluded CLOB/NCLOB/BLOB columns because lob values cannot be concatenated
+    hash_cols = ",".join(
+        [
+            _
+            for _ in ORA2PG_COLUMNS
+            if _
+            not in (
+                "col_blob",
+                "col_clob",
+                "col_nclob",
+                "col_raw",
+                "col_float32",
+                "col_float64",
+                "col_tstz",
+                "col_nvarchar_30",
+                "col_nchar_2",
+            )
+        ]
+    )
+    parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
             "validate",
@@ -442,7 +454,7 @@ def test_row_validation_oracle_to_postgres():
             "-tbls=pso_data_validator.dvt_ora2pg_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            f"--hash={number_cols},{float_cols},{string_cols},{date_cols}",
+            f"--hash={hash_cols}",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
