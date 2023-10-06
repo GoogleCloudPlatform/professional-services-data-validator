@@ -339,6 +339,36 @@ def sa_cast_postgres(t, op):
     return sa.cast(sa_arg, t.get_sqla_type(typ))
 
 
+def sa_cast_mssql(t, op):
+    """A clone of SQLAlchemy._cast adapted to inject MAX keyword into any cast to VARCHAR."""
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    sa_arg = t.translate(arg)
+
+    # specialize going from an integer type to a timestamp
+    if arg_dtype.is_integer() and typ.is_timestamp():
+        return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
+
+    if arg_dtype.is_binary() and typ.is_string():
+        return sa.func.encode(sa_arg, "escape")
+
+    if typ.is_binary():
+        # decode yields a column of memoryview which is annoying to deal with
+        # in pandas. CAST(expr AS BYTEA) is correct and returns byte strings.
+        return sa.cast(sa_arg, sa.LargeBinary())
+
+    if typ.is_json() and not t.native_json_type:
+        return sa_arg
+
+    if typ.is_string():
+        # The default length on a cast to VARCHAR is 30, injecting MAX here.
+        return sa.func.convert(sa.sql.literal_column("VARCHAR(MAX)"), sa_arg)
+
+    return sa.cast(sa_arg, t.get_sqla_type(typ))
+
+
 def _sa_string_join(t, op):
     return sa.func.concat(*map(t.translate, op.arg))
 
@@ -416,6 +446,7 @@ PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
 
+MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.isnull, 2)
