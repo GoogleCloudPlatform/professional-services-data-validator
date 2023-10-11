@@ -85,6 +85,10 @@ def test_mysql_count_invalid_host():
         pass
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation():
     # This test is disabled.
     # When issue-777 is resolved we can remove these comments and the return statement below.
@@ -103,6 +107,10 @@ def test_schema_validation():
         pass
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_mysql_row():
     """Test row validation on MySQL"""
     try:
