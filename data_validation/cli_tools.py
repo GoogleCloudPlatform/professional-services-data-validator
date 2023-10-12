@@ -559,7 +559,7 @@ def _configure_column_parser(column_parser):
     optional_arguments.add_argument(
         "--exclude-columns",
         "-ec",
-        action="store_false",
+        action="store_true",
         help="Flag to indicate the list of columns should be excluded from validation and not included.",
     )
     optional_arguments.add_argument(
@@ -805,7 +805,7 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     optional_arguments.add_argument(
         "--exclude-columns",
         "-ec",
-        action="store_false",
+        action="store_true",
         help="Flag to indicate the list of columns should be excluded from validation and not included.",
     )
     optional_arguments.add_argument(
