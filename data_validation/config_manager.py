@@ -713,11 +713,11 @@ class ConfigManager(object):
         if arg_value:
             if exclude_cols:
                 cols_excluded = [x.casefold() for x in arg_value]
-                included_cols = []
-                for column in casefold_source_columns:
-                    if column not in cols_excluded:
-                        included_cols.append(column)
-
+                included_cols = [
+                    column
+                    for column in casefold_source_columns
+                    if column not in cols_excluded
+                ]
                 arg_value = included_cols
             else:
                 arg_value = [x.casefold() for x in arg_value]
