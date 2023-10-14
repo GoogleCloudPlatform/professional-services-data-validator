@@ -303,7 +303,7 @@ def config_runner(args):
             config_managers = build_config_managers_from_yaml(args, config_file_path)
         else: 
             if args.kube_completions :
-                logging.warning("--kube-completions or -kubecomp specified, however not running in Kubernetes Job completion, check your command line")
+                logging.warning("--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line")
             mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
             config_file_names = mgr.list_validations_in_dir(args.config_dir)
             config_managers = []
