@@ -90,9 +90,6 @@ def test_mysql_count_invalid_host():
     new=mock_get_connection_config,
 )
 def test_schema_validation():
-    # This test is disabled.
-    # When issue-777 is resolved we can remove these comments and the return statement below.
-    return
     try:
         data_validator = data_validation.DataValidation(
             CONFIG_SCHEMA_VALID,
