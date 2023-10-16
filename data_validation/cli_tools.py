@@ -296,6 +296,18 @@ def _configure_find_tables(subparsers):
         "--target-conn", "-tc", help="Target connection name"
     )
     find_tables_parser.add_argument(
+        "--secret-manager-type",
+        "-sm",
+        default=None,
+        help="Secret manager type to store credentials by default will be None ",
+    )
+    find_tables_parser.add_argument(
+        "--secret-manager-project-id",
+        "-sm-prj-id",
+        default=None,
+        help="Project ID for the secret manager that stores the credentials",
+    )
+    find_tables_parser.add_argument(
         "--allowed-schemas", "-as", help="List of source schemas to match."
     )
     find_tables_parser.add_argument(
@@ -313,6 +325,18 @@ def _configure_raw_query(subparsers):
     )
     query_parser.add_argument("--conn", "-c", help="Connection name to query")
     query_parser.add_argument("--query", "-q", help="Raw query to execute")
+    query_parser.add_argument(
+        "--secret-manager-type",
+        "-sm",
+        default=None,
+        help="Secret manager type to store credentials by default will be None ",
+    )
+    query_parser.add_argument(
+        "--secret-manager-project-id",
+        "-sm-prj-id",
+        default=None,
+        help="Project ID for the secret manager that stores the credentials",
+    )
 
 
 def _configure_validation_config_parser(subparsers):
@@ -891,6 +915,18 @@ def _add_common_arguments(optional_arguments, required_arguments):
 
     # Optional arguments
     optional_arguments.add_argument(
+        "--secret-manager-type",
+        "-sm",
+        default=None,
+        help="Secret manager type to store credentials by default will be None ",
+    )
+    optional_arguments.add_argument(
+        "--secret-manager-project-id",
+        "-sm-prj-id",
+        default=None,
+        help="Project ID for the secret manager that stores the credentials",
+    )
+    optional_arguments.add_argument(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
     )
     optional_arguments.add_argument(
@@ -952,6 +988,18 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
     )
 
     # Optional arguments
+    optional_arguments.add_argument(
+        "--secret-manager-type",
+        "-sm",
+        default=None,
+        help="Secret manager type to store credentials by default will be None ",
+    )
+    optional_arguments.add_argument(
+        "--secret-manager-project-id",
+        "-sm-prj-id",
+        default=None,
+        help="Project ID for the secret manager that stores the credentials",
+    )
     optional_arguments.add_argument(
         "--bq-result-handler",
         "-bqrh",
