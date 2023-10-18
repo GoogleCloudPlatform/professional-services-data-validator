@@ -70,20 +70,22 @@ def _extract(fmt: str):
 def _second(t, op):
     # extracting the second gives us the fractional part as well, so smash that
     # with a cast to SMALLINT
-    return sa.cast(sa.func.FLOOR(sa.extract('second', t.translate(op.arg))), sa.SMALLINT)
+    return sa.cast(
+        sa.func.FLOOR(sa.extract("second", t.translate(op.arg))), sa.SMALLINT
+    )
 
 
 _truncate_precisions = {
-    'us': 'microseconds',
-    'ms': 'milliseconds',
-    's': 'second',
-    'm': 'minute',
-    'h': 'hour',
-    'D': 'day',
-    'W': 'week',
-    'M': 'month',
-    'Q': 'quarter',
-    'Y': 'year',
+    "us": "microseconds",
+    "ms": "milliseconds",
+    "s": "second",
+    "m": "minute",
+    "h": "hour",
+    "D": "day",
+    "W": "week",
+    "M": "month",
+    "Q": "quarter",
+    "Y": "year",
 }
 
 
@@ -91,7 +93,7 @@ def _timestamp_truncate(t, op):
     arg = t.translate(op.arg)
     unit = op.unit
     if unit not in _truncate_precisions:
-        raise com.UnsupportedOperationError(f'Unsupported truncate unit {op.unit!r}')
+        raise com.UnsupportedOperationError(f"Unsupported truncate unit {op.unit!r}")
 
     return sa.func.datetrunc(sa.text(_truncate_precisions[unit]), arg)
 
@@ -108,7 +110,7 @@ def _cast(t, op):
         return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
 
     if arg_dtype.is_binary() and typ.is_string():
-        return sa.func.encode(sa_arg, 'escape')
+        return sa.func.encode(sa_arg, "escape")
 
     if typ.is_binary():
         #  decode yields a column of memoryview which is annoying to deal with
@@ -135,50 +137,50 @@ def _string_agg(t, op):
 
 
 _strftime_to_oracle_rules = {
-    '%a': 'TMDy',  # TM does it in a locale dependent way
-    '%A': 'TMDay',
-    '%b': 'TMMon',  # Sep
-    '%B': 'TMMonth',  # September
-    '%d': 'DD',  # day of month
-    '%H': 'HH24',  # 09
-    '%I': 'HH12',  # 09
-    '%j': 'DDD',  # zero padded day of year
-    '%m': 'MM',  # 01
-    '%M': 'MI',  # zero padded minute
-    '%p': 'AM',  # AM or PM
-    '%S': 'SS',  # zero padded second
-    '%U': 'WW',  # 1-based week of year
-    '%w': 'D',
-    '%y': 'YY',  # 15
-    '%Y': 'YYYY',  # 2015
-    '%Z': 'TZ',  # uppercase timezone name
+    "%a": "TMDy",  # TM does it in a locale dependent way
+    "%A": "TMDay",
+    "%b": "TMMon",  # Sep
+    "%B": "TMMonth",  # September
+    "%d": "DD",  # day of month
+    "%H": "HH24",  # 09
+    "%I": "HH12",  # 09
+    "%j": "DDD",  # zero padded day of year
+    "%m": "MM",  # 01
+    "%M": "MI",  # zero padded minute
+    "%p": "AM",  # AM or PM
+    "%S": "SS",  # zero padded second
+    "%U": "WW",  # 1-based week of year
+    "%w": "D",
+    "%y": "YY",  # 15
+    "%Y": "YYYY",  # 2015
+    "%Z": "TZ",  # uppercase timezone name
 }
 
 try:
 
     _strftime_to_oracle_rules.update(
         {
-            '%c': locale.nl_langinfo(locale.D_T_FMT),  # locale date and time
-            '%x': locale.nl_langinfo(locale.D_FMT),  # locale date
-            '%X': locale.nl_langinfo(locale.T_FMT),  # locale time
+            "%c": locale.nl_langinfo(locale.D_T_FMT),  # locale date and time
+            "%x": locale.nl_langinfo(locale.D_FMT),  # locale date
+            "%X": locale.nl_langinfo(locale.T_FMT),  # locale time
         }
     )
 except AttributeError:
     warnings.warn(
-        'locale specific date formats (%%c, %%x, %%X) are not yet implemented '
-        'for %s' % platform.system()
+        "locale specific date formats (%%c, %%x, %%X) are not yet implemented "
+        "for %s" % platform.system()
     )
 
 
 # translate strftime spec into mostly equivalent Oracle spec
 _scanner = re.Scanner(
     # double quotes need to be escaped
-    [('"', lambda scanner, token: r'\"')]
+    [('"', lambda scanner, token: r"\"")]
     + [
         (
-            '|'.join(
+            "|".join(
                 map(
-                    '(?:{})'.format,
+                    "(?:{})".format,
                     itertools.chain(
                         _strftime_to_oracle_rules.keys(),
                         [
@@ -186,10 +188,10 @@ _scanner = re.Scanner(
                             # generates this if your spec contains "%c" but we
                             # don't officially support it as a specifier so we
                             # need to special case it in the scanner
-                            '%e',
-                            r'\s+',
-                            r'[{}]'.format(re.escape(string.punctuation)),
-                            r'[^{}\s]+'.format(re.escape(string.punctuation)),
+                            "%e",
+                            r"\s+",
+                            r"[{}]".format(re.escape(string.punctuation)),
+                            r"[^{}\s]+".format(re.escape(string.punctuation)),
                         ],
                     ),
                 )
@@ -202,7 +204,7 @@ _scanner = re.Scanner(
 
 _lexicon_values = frozenset(_strftime_to_oracle_rules.values())
 
-_strftime_blacklist = frozenset(['%w', '%U', '%c', '%x', '%X', '%e'])
+_strftime_blacklist = frozenset(["%w", "%U", "%c", "%x", "%X", "%e"])
 
 
 def _reduce_tokens(tokens, arg):
@@ -212,9 +214,7 @@ def _reduce_tokens(tokens, arg):
     # reduced list of tokens that accounts for blacklisted values
     reduced = []
 
-    non_special_tokens = (
-        frozenset(_strftime_to_oracle_rules) - _strftime_blacklist
-    )
+    non_special_tokens = frozenset(_strftime_to_oracle_rules) - _strftime_blacklist
 
     # TODO: how much of a hack is this?
     for token in tokens:
@@ -229,18 +229,18 @@ def _reduce_tokens(tokens, arg):
 
         # we have a token that needs special treatment
         elif token in _strftime_blacklist:
-            if token == '%w':
-                value = sa.extract('dow', arg)  # 0 based day of week
-            elif token == '%U':
-                value = sa.cast(sa.func.to_char(arg, 'WW'), sa.SMALLINT) - 1
-            elif token == '%c' or token == '%x' or token == '%X':
+            if token == "%w":
+                value = sa.extract("dow", arg)  # 0 based day of week
+            elif token == "%U":
+                value = sa.cast(sa.func.to_char(arg, "WW"), sa.SMALLINT) - 1
+            elif token == "%c" or token == "%x" or token == "%X":
                 # re scan and tokenize this pattern
                 try:
                     new_pattern = _strftime_to_oracle_rules[token]
                 except KeyError:
                     raise ValueError(
-                        'locale specific date formats (%%c, %%x, %%X) are '
-                        'not yet implemented for %s' % platform.system()
+                        "locale specific date formats (%%c, %%x, %%X) are "
+                        "not yet implemented for %s" % platform.system()
                     )
 
                 new_tokens, _ = _scanner.scan(new_pattern)
@@ -248,12 +248,12 @@ def _reduce_tokens(tokens, arg):
                     sa.sql.ColumnElement.concat,
                     _reduce_tokens(new_tokens, arg),
                 )
-            elif token == '%e':
+            elif token == "%e":
                 # pad with spaces instead of zeros
-                value = sa.func.replace(sa.func.to_char(arg, 'DD'), '0', ' ')
+                value = sa.func.replace(sa.func.to_char(arg, "DD"), "0", " ")
 
             reduced += [
-                sa.func.to_char(arg, ''.join(curtokens)),
+                sa.func.to_char(arg, "".join(curtokens)),
                 sa.cast(value, sa.TEXT),
             ]
 
@@ -267,7 +267,7 @@ def _reduce_tokens(tokens, arg):
         # append result to r if we had more tokens or if we have no
         # blacklisted tokens
         if curtokens:
-            reduced.append(sa.func.to_char(arg, ''.join(curtokens)))
+            reduced.append(sa.func.to_char(arg, "".join(curtokens)))
     return reduced
 
 
@@ -278,7 +278,9 @@ def _strftime(t, op):
 
 
 def _regex_replace(t, op):
-    return sa.func.regexp_replace(t.translate(op.string), t.translate(op.pattern), t.translate(op.replacement))
+    return sa.func.regexp_replace(
+        t.translate(op.string), t.translate(op.pattern), t.translate(op.replacement)
+    )
 
 
 def _log(t, op):
@@ -294,7 +296,9 @@ def _log(t, op):
 
 
 def _regex_extract(t, op):
-    return sa.func.regex_extract(t.translate(op.string), t.translate(op.pattern), t.translate(op.index +1))
+    return sa.func.regex_extract(
+        t.translate(op.string), t.translate(op.pattern), t.translate(op.index + 1)
+    )
 
 
 def get_col(sa_table, op: ops.TableColumn):
@@ -333,7 +337,9 @@ def _table_column(t, op):
         timezone = op.output_dtype.timezone
         if timezone is not None:
             # Using literal_column on Oracle because the time zone string cannot be a bind.
-            out_expr = sa.literal_column(f"{out_expr.name} AT TIME ZONE '{timezone}'").label(op.name)
+            out_expr = sa.literal_column(
+                f"{out_expr.name} AT TIME ZONE '{timezone}'"
+            ).label(op.name)
 
     # If the column does not originate from the table set in the current SELECT
     # context, we should format as a subquery
@@ -354,7 +360,6 @@ def _round(t, op):
         return sa.func.round(sa_arg, t.translate(op.digits))
     else:
         return sa.func.round(sa_arg)
-
 
 
 def _string_join(t, op):
@@ -378,20 +383,27 @@ def _literal(t, op):
     else:
         return sa.literal(value)
 
+
 def _day_of_week_index(t, op):
-    return sa.func.to_char(t.translate(op.arg), 'd')
+    return sa.func.to_char(t.translate(op.arg), "d")
 
 
 def _day_of_week_name(t, op):
-    return sa.func.to_char(t.translate(op.arg), 'Day')
+    return sa.func.to_char(t.translate(op.arg), "Day")
 
 
 def _random(t, op):
     return sa.sql.literal_column("DBMS_RANDOM.VALUE")
 
+
 def _extract_epoch(t, op):
-    sub = operator.sub(sa.cast(t.translate(op.arg), sa.DATE), sa.sql.literal_column("DATE '1970-01-01'")).self_group()
-    mult = sa.cast(operator.mul(sub, sa.sql.literal_column("86400")), sa.dialects.oracle.NUMBER)
+    sub = operator.sub(
+        sa.cast(t.translate(op.arg), sa.DATE),
+        sa.sql.literal_column("DATE '1970-01-01'"),
+    ).self_group()
+    mult = sa.cast(
+        operator.mul(sub, sa.sql.literal_column("86400")), sa.dialects.oracle.NUMBER
+    )
     return mult
 
 
@@ -417,7 +429,7 @@ operation_registry.update(
         ops.Capitalize: unary(sa.func.initcap),
         ops.RegexSearch: fixed_arity(lambda x, y: x.op("~")(y), 2),
         ops.RegexReplace: _regex_replace,
-        ops.Translate: fixed_arity('translate', 3),
+        ops.Translate: fixed_arity("translate", 3),
         ops.RegexExtract: _regex_extract,
         ops.StringJoin: _string_join,
         # math
@@ -442,23 +454,19 @@ operation_registry.update(
         ops.TimestampSub: fixed_arity(operator.sub, 2),
         ops.TimestampDiff: fixed_arity(operator.sub, 2),
         ops.Strftime: _strftime,
-        ops.ExtractYear: _extract('year'),
-        ops.ExtractMonth: _extract('month'),
-        ops.ExtractDay: _extract('day'),
-        ops.ExtractDayOfYear: _extract('doy'),
-        ops.ExtractQuarter: _extract('quarter'),
+        ops.ExtractYear: _extract("year"),
+        ops.ExtractMonth: _extract("month"),
+        ops.ExtractDay: _extract("day"),
+        ops.ExtractDayOfYear: _extract("doy"),
+        ops.ExtractQuarter: _extract("quarter"),
         ops.ExtractEpochSeconds: _extract_epoch,
-        ops.ExtractHour: _extract('hour'),
-        ops.ExtractMinute: _extract('minute'),
+        ops.ExtractHour: _extract("hour"),
+        ops.ExtractMinute: _extract("minute"),
         ops.ExtractSecond: _second,
         ops.DayOfWeekIndex: _day_of_week_index,
         ops.DayOfWeekName: _day_of_week_name,
         ops.RandomScalar: _random,
         # now is in the timezone of the server, but we want UTC
-        ops.TimestampNow: lambda *args: sa.func.timezone('UTC', sa.func.now()),
-
+        ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
     }
 )
-
-
-
