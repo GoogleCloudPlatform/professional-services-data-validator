@@ -21,6 +21,7 @@ set -eo pipefail
 export PYTHONUNBUFFERED=1
 
 # Install nox
+python3.8 -m pip cache purge
 python3.8 -m pip install --upgrade --quiet nox pip
 python3.8 -m nox --version
 
