@@ -734,6 +734,11 @@ class ConfigManager(object):
                     "binary",
                     "!binary",
                 ]
+        else:
+            if exclude_cols:
+                raise ValueError(
+                    "Exclude columns flag cannot be present with '*' column aggregation"
+                )
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):

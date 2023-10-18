@@ -328,6 +328,19 @@ def test_build_config_aggregates_ec(module_under_test):
     assert aggregate_configs[1] == AGGREGATE_CONFIG_D
 
 
+def test_build_config_aggregates_ec_exception(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        config_manager.build_config_column_aggregates("sum", None, True, [])
+    assert (
+        str(excinfo.value)
+        == "Exclude columns flag cannot be present with '*' column aggregation"
+    )
+
+
 def test_build_config_aggregates_no_match(module_under_test):
     config_manager = module_under_test.ConfigManager(
         copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
