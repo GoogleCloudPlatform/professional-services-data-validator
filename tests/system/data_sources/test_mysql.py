@@ -152,6 +152,38 @@ def test_schema_validation_core_types():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mysql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--exclusion-columns=id",
+            "--filter-status=fail",
+            (
+                # MySQL integers go to BigQuery INT64.
+                "--allow-list=int8:int64,int16:int64,int32:int64"
+                # BigQuery does not have a float32 type.
+                "float32:float64"
+            ),
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_not_null_vs_nullable():
     """Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly."""
     parser = cli_tools.configure_arg_parser()
