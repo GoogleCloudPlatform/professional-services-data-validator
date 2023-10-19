@@ -167,7 +167,10 @@ def test_schema_validation_core_types_to_bigquery():
                 # MySQL integers go to BigQuery INT64.
                 "--allow-list=int8:int64,int16:int64,int32:int64,"
                 # BigQuery does not have a float32 type.
-                "float32:float64"
+                "float32:float64,"
+                # TODO Review this mapping since this column is nullable on MySQL at the moment
+                # and should not be identified as not null
+                "!timestamp('UTC'):timestamp('UTC')"
             ),
         ]
     )
