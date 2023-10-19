@@ -163,7 +163,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             "--exclusion-columns=id",
             (
-                # Integral Oracle NUMBERS go to BigQuery INT64.
+                # Integer Oracle NUMBERS go to BigQuery INT64.
                 "--allow-list=decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
                 # BigQuery does not have a float32 type.
                 "float32:float64"

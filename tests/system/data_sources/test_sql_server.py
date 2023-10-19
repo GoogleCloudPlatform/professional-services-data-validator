@@ -290,7 +290,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             "--exclusion-columns=id",
             (
-                # All SQL Server integrals go to BigQuery INT64.
+                # All SQL Server integers go to BigQuery INT64.
                 "--allow-list=int8:int64,int16:int64,int32:int64,"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
