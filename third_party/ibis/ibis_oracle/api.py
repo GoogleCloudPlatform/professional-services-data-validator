@@ -13,7 +13,8 @@
 # limitations under the License.
 from typing import Literal
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
-import cx_Oracle # NOQA fail early if the driver is missing
+import cx_Oracle  # NOQA fail early if the driver is missing
+
 
 def oracle_connect(
     host: str = "localhost",

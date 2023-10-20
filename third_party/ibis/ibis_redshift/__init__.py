@@ -22,23 +22,23 @@ from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_ma
 
 
 class Backend(BaseAlchemyBackend):
-    name = 'redshift'
+    name = "redshift"
     compiler = RedshiftCompiler
 
     def do_connect(
         self,
-        host: str = 'localhost',
+        host: str = "localhost",
         user: str = None,
         password: str = None,
         port: int = 5439,
-        database: str = 'public',
+        database: str = "public",
         schema: str = None,
         url: str = None,
         driver: Literal["psycopg2"] = "psycopg2",
     ) -> None:
-        
-        if driver != 'psycopg2':
-            raise NotImplementedError('psycopg2 is currently the only supported driver')
+
+        if driver != "psycopg2":
+            raise NotImplementedError("psycopg2 is currently the only supported driver")
 
         alchemy_url = self._build_alchemy_url(
             url=url,
@@ -47,7 +47,7 @@ class Backend(BaseAlchemyBackend):
             user=user,
             password=password,
             database=database,
-            driver=f'postgresql+{driver}',
+            driver=f"postgresql+{driver}",
         )
         self.database_name = alchemy_url.database
 
@@ -63,7 +63,7 @@ class Backend(BaseAlchemyBackend):
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
                 cur.execute("SET TIMEZONE = UTC")
-        
+
         super().do_connect(engine)
 
     def list_databases(self, like=None):
@@ -76,7 +76,7 @@ class Backend(BaseAlchemyBackend):
                 ).mappings()
             ]
         return self._filter_with_like(databases, like)
-    
+
     def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
         raw_name = util.guid()
         name = self._quote(raw_name)

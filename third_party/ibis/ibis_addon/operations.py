@@ -366,8 +366,10 @@ def _sa_string_join(t, op):
 def sa_format_new_id(t, op):
     return sa.func.NEWID()
 
+
 def sa_format_random(t, op):
     return sa.func.RANDOM()
+
 
 _BQ_DTYPE_TO_IBIS_TYPE["TIMESTAMP"] = dt.Timestamp(timezone="UTC")
 

@@ -29,6 +29,7 @@ _DTYPE_TO_IBIS_TYPE = {
     TypeCode.JSON: dt.json,
 }
 
+
 def dtype_from_spanner_field(field: Type) -> dt.DataType:
     """Convert Spanner `Type` to an ibis type."""
     typ = TypeCode(field.code)
@@ -37,6 +38,6 @@ def dtype_from_spanner_field(field: Type) -> dt.DataType:
     ibis_type = _DTYPE_TO_IBIS_TYPE.get(typ, typ)
     return ibis_type
 
+
 def schema_from_spanner(fields: List[StructType.Field]) -> sch.Schema:
     return sch.Schema({f.name: dtype_from_spanner_field(f.type_) for f in fields})
-    

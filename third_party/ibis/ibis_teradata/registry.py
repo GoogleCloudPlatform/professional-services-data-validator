@@ -70,7 +70,7 @@ def _table_column(t, op):
     #     proj_expr = table.projection([field_name]).to_array()
     #     return _table_array_view(translator, proj_expr)
 
-    alias = ctx.get_ref(op.table, search_parents=True)
+    alias = ctx.get_ref(table, search_parents=True)
     if alias is not None:
         quoted_name = f"{alias}.{quoted_name}"
 

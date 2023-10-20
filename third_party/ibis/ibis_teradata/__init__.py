@@ -56,7 +56,9 @@ class Backend(BaseSQLBackend):
                 param_dict = json.loads(json_params.replace("'", '"'))
                 self.teradata_config.update(param_dict)
             except json.JSONDecodeError:
-                print(f"Invalid JSON format in the parameter dictionary string: {json_params}")
+                print(
+                    f"Invalid JSON format in the parameter dictionary string: {json_params}"
+                )
 
         self.client = teradatasql.connect(**self.teradata_config)
         self.con = self.client.cursor()
