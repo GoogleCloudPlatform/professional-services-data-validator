@@ -105,6 +105,8 @@ YAML_CONFIGS_LIST = [
             {
                 "target_file_name": "0000.yaml",
                 "yaml_config": {
+                    'secret_manager_type': None,
+                    'secret_manager_project_id': None,
                     "source": "{'source_type':'Example'}",
                     "target": "{'source_type':'Example'}",
                     "result_handler": {},
@@ -153,6 +155,8 @@ YAML_CONFIGS_LIST = [
             {
                 "target_file_name": "0001.yaml",
                 "yaml_config": {
+                    'secret_manager_type': None,
+                    'secret_manager_project_id': None,
                     "source": "{'source_type':'Example'}",
                     "target": "{'source_type':'Example'}",
                     "result_handler": {},
@@ -201,6 +205,8 @@ YAML_CONFIGS_LIST = [
             {
                 "target_file_name": "0002.yaml",
                 "yaml_config": {
+                    'secret_manager_type': None,
+                    'secret_manager_project_id': None,
                     "source": "{'source_type':'Example'}",
                     "target": "{'source_type':'Example'}",
                     "result_handler": {},

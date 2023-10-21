@@ -21,6 +21,8 @@ TEST_CONN = {
 }
 TEST_VALIDATION_NAME = "citibike.yaml"
 TEST_VALIDATION_CONFIG = {
+    'secret_manager_type': None,
+    'secret_manager_project_id': None,
     "source": "example",
     "target": "example",
     "result_handler": {},
@@ -52,7 +54,7 @@ def test_create_and_get_connection_config(capsys, fs):
     manager = state_manager.StateManager()
     manager.create_connection(TEST_CONN_NAME, TEST_CONN)
 
-    config = manager.get_connection_config(TEST_CONN_NAME)
+    config = manager.get_connection_config(TEST_CONN_NAME, None, None)
     assert config == TEST_CONN
 
 
