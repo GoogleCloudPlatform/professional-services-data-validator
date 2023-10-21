@@ -86,6 +86,10 @@ over all columns ('*') will only run over numeric columns, unless the
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate column
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+                      Connection details stored in the GCP secret manager
+                        See: *Connections* section
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -163,6 +167,10 @@ apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML con
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate row
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+                      Connection details stored in the GCP secret manager
+                        See: *Connections* section
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -212,7 +220,10 @@ The command takes the same parameters as required for `Row Validation` *plus* a 
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
-
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+                      Connection details stored in the GCP secret manager
+                        See: *Connections* section
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -251,6 +262,10 @@ Note: An exclamation point before a data type (`!string`) signifies the column i
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate schema
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+                      Connection details stored in the GCP secret manager
+                        See: *Connections* section
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -289,6 +304,10 @@ Below is the command syntax for custom query column validations.
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate custom-query column
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+                      Connection details stored in the GCP secret manager
+                        See: *Connections* section
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -344,6 +363,10 @@ Below is the command syntax for custom query row validations.
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+                      Connection details stored in the GCP secret manager
+                        See: *Connections* section
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source

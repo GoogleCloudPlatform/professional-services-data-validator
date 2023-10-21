@@ -52,6 +52,8 @@ class PartitionBuilder:
             config_managers (list[ConfigManager]): List of config manager instances.
         """
         yaml_config = {
+            consts.YAML_SECRET_MANAGER_TYPE: self.args.secret_manager_type,
+            consts.YAML_SECRET_MANAGER_PROJECT_ID: self.args.secret_manager_project_id,
             consts.YAML_SOURCE: self.args.source_conn,
             consts.YAML_TARGET: self.args.target_conn,
             consts.YAML_RESULT_HANDLER: config_manager.result_handler_config,

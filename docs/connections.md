@@ -1,19 +1,27 @@
 # Data Validation Connections
-You will need to create connections before running any validations with the data validation tool. The tool allows users to 
-create these connections using the CLI. 
+You will need to specify connection information to connect to the database before running any validations with the data validation tool. The tool allows users two options to specify connection information a) save connection information in a file in the filesystem/GCS used by data validation tool and b) fetch connection information as a secret from the GCP secret manager. Saving the connection information in the secret manager is recommended as it is secure and supports password rotation. The user or service account running data validation tool must have `roles/secretmanager.secretAccessor` either at the project level or at the individual secret level to access secrets stored in the secret manager. Please see (Secret Manger IAM roles)[https://cloud.google.com/secret-manager/docs/access-control]
 
-These connections will automatically be saved either to `~/.config/google-pso-data-validator/` or 
-a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
-
-## GCS Connection Management (recommended)
-
-The connections can also be stored in GCS using `PSO_DV_CONFIG_HOME`.
-To do so simply add the GCS path to the environment. Note that if this path is set, query validation configs will also be saved here.
+If connection information is saved to the filesystem/GCS, it will be saved either to `~/.config/google-pso-data-validator/` or 
+a directory specified by the env variable `PSO_DV_CONFIG_HOME`. Note that if this path is set, query validation configs will also be saved here.
 
 eg.
 `export PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`
 
 ## Using GCP Secret Manager
+DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing and fetching secrets used to connect to your database. The entire connection information - typically host name, port number, user name, database, password can be stored as JSON name value pairs. The names and values are different for each host type. Please add a connection for the specific host type using the commands below and it will be saved in the configuration directory. Test the connection and then and save the connection configuration as a secret in the secret manager. The connection configuration can be found in the file <connection name>.connection.json in the directory mentioned above. Once the information is stored in the secret manager the file <connection name>.connection.json can be deleted for security reason. 
+
+If the secret-manager flags are present, the connection name should reference secret names instead of the secret itself. For example,
+the following BigQuery connection references a connection with name 'bq' stored in project MY-PROJECT.
+
+```
+data-validation query \
+    --secret-manager-type GCP \
+    --secret-manager-project-id <MY-PROJECT> \
+    --conn bq \
+    --query 'select * from bigquery-public-data.new_york_citibike.citibike_trips limit 10;'
+
+```
+-- Recommend Delete --
 DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing and referencing secrets in your connection configuration.
 
 If the secret-manager flags are present, the remaining connection flags should reference secret names instead of the secret itself. For example,

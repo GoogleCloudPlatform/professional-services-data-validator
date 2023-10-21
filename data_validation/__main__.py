@@ -275,7 +275,7 @@ def build_config_managers_from_args(
     configs = []
 
     # Get pre build configs to build ConfigManager objects
-    pre_build_configs_list = cli_tools.get_pre_build_configs(args, validate_cmd)
+    pre_build_configs_list = cli_tools.get_pre_build_configs(args, validate_cmd) # source and target connections created here for validations - can fix
 
     # Build a list of ConfigManager objects
     for pre_build_configs in pre_build_configs_list:
@@ -324,8 +324,13 @@ def build_config_managers_from_yaml(args, config_file_path):
         yaml_configs = cli_tools.get_validation(config_file_path)
 
     mgr = state_manager.StateManager()
-    source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE])
-    target_conn = mgr.get_connection_config(yaml_configs[consts.YAML_TARGET])
+    # Grab the JSON payload from the file or from the secret manager
+    source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE],
+                       yaml_configs[consts.YAML_SECRET_MANAGER_TYPE],
+                       yaml_configs[consts.YAML_SECRET_MANAGER_PROJECT_ID])
+    target_conn = mgr.get_connection_config(yaml_configs[consts.YAML_TARGET],
+                        yaml_configs[consts.YAML_SECRET_MANAGER_TYPE],
+                        yaml_configs[consts.YAML_SECRET_MANAGER_PROJECT_ID])
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
@@ -411,7 +416,11 @@ def find_tables_using_string_matching(args):
 def run_raw_query_against_connection(args):
     """Return results of raw query for ad hoc usage."""
     mgr = state_manager.StateManager()
-    client = clients.get_data_client(mgr.get_connection_config(args.conn))
+    if not args.secret_manager_type:
+        client = clients.get_data_client(mgr.get_connection_config(args.conn, None, None))
+    else:
+        # Secret manager specified, get JSON payload from secret manager
+        client = clients.get_data_client(mgr.get_connection_config(args.conn, args.secret_manager_type, args.secret_manager_project_id))
     cursor = client.raw_sql(args.query)
     res = cursor.fetchall()
     try:
@@ -428,6 +437,8 @@ def convert_config_to_yaml(args, config_managers):
         config_managers (list[ConfigManager]): List of config manager instances.
     """
     yaml_config = {
+        consts.YAML_SECRET_MANAGER_TYPE: args.secret_manager_type,
+        consts.YAML_SECRET_MANAGER_PROJECT_ID: args.secret_manager_project_id,
         consts.YAML_SOURCE: args.source_conn,
         consts.YAML_TARGET: args.target_conn,
         consts.YAML_RESULT_HANDLER: config_managers[0].result_handler_config,

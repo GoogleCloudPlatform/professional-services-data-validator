@@ -79,7 +79,9 @@ class ConfigManager(object):
                 self._source_conn = self._config.get(consts.CONFIG_SOURCE_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_SOURCE_CONN_NAME)
-                self._source_conn = self._state_manager.get_connection_config(conn_name)
+                self._source_conn = self._state_manager.get_connection_config(conn_name,
+                                        self._config.get(consts.CONFIG_SECRET_MANAGER_TYPE),
+                                        self._config.get(consts.CONFIG_SECRET_MANAGER_PROJECT_ID))
 
         return self._source_conn
 
@@ -90,7 +92,9 @@ class ConfigManager(object):
                 self._target_conn = self._config.get(consts.CONFIG_TARGET_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_TARGET_CONN_NAME)
-                self._target_conn = self._state_manager.get_connection_config(conn_name)
+                self._target_conn = self._state_manager.get_connection_config(conn_name,
+                                        self._config.get(consts.CONFIG_SECRET_MANAGER_TYPE),
+                                        self._config.get(consts.CONFIG_SECRET_MANAGER_PROJECT_ID))
 
         return self._target_conn
 
@@ -449,6 +453,8 @@ class ConfigManager(object):
     @staticmethod
     def build_config_manager(
         config_type,
+        secret_manager_type,
+        secret_manager_project_id,
         source_conn_name,
         target_conn_name,
         table_obj,
@@ -470,6 +476,8 @@ class ConfigManager(object):
         """Return a ConfigManager instance with available config."""
         config = {
             consts.CONFIG_TYPE: config_type,
+            consts.CONFIG_SECRET_MANAGER_TYPE: secret_manager_type,
+            consts.CONFIG_SECRET_MANAGER_PROJECT_ID: secret_manager_project_id,
             consts.CONFIG_SOURCE_CONN_NAME: source_conn_name,
             consts.CONFIG_TARGET_CONN_NAME: target_conn_name,
             consts.CONFIG_TABLE_NAME: table_obj.get(consts.CONFIG_TABLE_NAME, None),

@@ -41,5 +41,5 @@ validations:
 The change to the yaml file can be compatible, both backwards and forwards. When the new version of DVT reads a yaml file into a dict, it will start with a dict that looks like this: ```{secret_manager_type: None,
 secret_manager_project_id: None}``` which will be updated by the dict from the yaml file. If an old yaml file is used, the values will be set correctly. When the old version of DVT reads a new yaml file with values for ```secret_manager_type```, ```secret_manager_project_id```, these values will be quietly ignored. If there are no connections listed in the old DVT (which is likely), the validation will fail saying: `No such file or directory: '/home/user/.config/google-pso-data-validator/xxxx.connection.json'`
 
-Once this functionality is implemented, the existing functionality of retrieving connection information from the secret manger and storing them in `.config directory` becomes redundant. It can be removed to avoid confusion. 
+Once this functionality is implemented, the existing functionality of retrieving connection information from the secret manger and storing them in `.config` directory becomes redundant. It can be removed to avoid confusion. 
 ## Future Work

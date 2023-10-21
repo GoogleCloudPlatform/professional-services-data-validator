@@ -1088,14 +1088,14 @@ def list_connections():
     mgr = state_manager.StateManager()
     connections = mgr.list_connections()
     for conn_name in connections:
-        source_type = mgr.get_connection_config(conn_name).get("source_type")
+        source_type = mgr.get_connection_config(conn_name, None, None).get("source_type")
         logging.info(f"Connection Name: {conn_name} : {source_type}")
 
 
 def get_connection(connection_name):
     """Return dict connection details for a specific connection."""
     mgr = state_manager.StateManager()
-    return mgr.get_connection_config(connection_name)
+    return mgr.get_connection_config(connection_name, None, None)
 
 
 def store_validation(validation_file_name, yaml_config):
@@ -1340,9 +1340,10 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
 
     # Get source and target clients
     mgr = state_manager.StateManager()
-    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
-    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
-
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn, 
+                        args.secret_manager_type, args.secret_manager_project_id))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn,
+                        args.secret_manager_type, args.secret_manager_project_id))
     # Get format: text, csv, json, table. Default is table
     format = args.format if args.format else "table"
 
@@ -1382,6 +1383,8 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     for table_obj in tables_list:
         pre_build_configs = {
             "config_type": config_type,
+            "secret_manager_type": args.secret_manager_type,
+            "secret_manager_project_id": args.secret_manager_project_id,
             "source_conn_name": args.source_conn,
             "target_conn_name": args.target_conn,
             "table_obj": table_obj,

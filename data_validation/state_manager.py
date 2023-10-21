@@ -24,9 +24,10 @@ import os
 from typing import Dict, List
 
 from google.cloud import storage
-from yaml import Dumper, Loader, dump, load
+from yaml import Dumper, Loader, dump, load, SafeLoader
 
 from data_validation import client_info, consts
+from data_validation.secret_manager import SecretManagerBuilder
 
 
 class FileSystem(enum.Enum):
@@ -63,17 +64,23 @@ class StateManager(object):
         connection_path = self._get_connection_path(name)
         self._write_file(connection_path, json.dumps(config))
 
-    def get_connection_config(self, name: str) -> Dict[str, str]:
-        """Get a connection configuration from the expected file.
+    def get_connection_config(self, name: str, secret_manager_type: str, secret_manager_project_id:str) -> Dict[str, str]:
+        """Get a connection configuration from the expected file or from the secret manager
 
         Args:
             name: The name of the connection.
         Returns:
-            A dict of the connection values from the file.
+            A dict of the connection values from the file or secret manager.
         """
-        connection_path = self._get_connection_path(name)
-        conn_str = self._read_file(connection_path)
-
+        
+        if secret_manager_type is None:
+            # Connection stored in the file system
+            connection_path = self._get_connection_path(name)
+            conn_str = self._read_file(connection_path)
+        else :
+            # Get connection JSON from secret manager
+            sm = SecretManagerBuilder().build(secret_manager_type.lower())
+            conn_str = sm.maybe_secret(secret_manager_project_id, name)    
         return json.loads(conn_str)
 
     def list_connections(self) -> List[str]:
@@ -141,7 +148,10 @@ class StateManager(object):
             validation_path = self._get_validation_path(name)
 
         validation_bytes = self._read_file(validation_path)
-        return load(validation_bytes, Loader=Loader)
+        # For backward compatibility, we fill in empty secret manager stuff here
+        config_dict = {consts.YAML_SECRET_MANAGER_TYPE:None, consts.YAML_SECRET_MANAGER_PROJECT_ID:None}
+        config_dict.update(load(validation_bytes, Loader=SafeLoader))
+        return config_dict
 
     def list_validations(self):
         file_names = self._list_directory(self._get_validations_directory())
