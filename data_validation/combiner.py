@@ -94,7 +94,7 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
-    if isinstance(datatype, ibis.expr.datatypes.Timestamp):
+    if isinstance(datatype, (ibis.expr.datatypes.Timestamp, ibis.expr.datatypes.Date)):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
     elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(
@@ -115,7 +115,12 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
         target_value = field_differences["differences_target_value"]
 
     # Does not calculate difference between agg values for row hash due to int64 overflow
-    if is_value_comparison or isinstance(datatype, ibis.expr.datatypes.String):
+    if (
+        is_value_comparison
+        or isinstance(datatype, ibis.expr.datatypes.String)
+        or isinstance(target_value, ibis.expr.types.generic.NullColumn)
+        or isinstance(source_value, ibis.expr.types.generic.NullColumn)
+    ):
         # String data types i.e "None" can be returned for NULL timestamp/datetime aggs
         if is_value_comparison:
             difference = pct_difference = ibis.null()

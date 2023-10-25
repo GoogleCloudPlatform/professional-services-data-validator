@@ -164,7 +164,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             "--exclusion-columns=id",
             (
-                # All Hive integrals go to BigQuery INT64.
+                # All Hive integers go to BigQuery INT64.
                 "--allow-list=int8:int64,int16:int64,int32:int64,"
                 # Hive does not have a time zoned
                 "timestamp:timestamp('UTC'),"

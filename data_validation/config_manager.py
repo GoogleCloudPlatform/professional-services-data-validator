@@ -104,9 +104,9 @@ class ConfigManager(object):
         return self._config.get(consts.CONFIG_USE_RANDOM_ROWS) or False
 
     def random_row_batch_size(self):
-        """Return if the validation should use a random row filter."""
-        return (
-            int(self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE))
+        """Return batch size for random row filter."""
+        return int(
+            self._config.get(consts.CONFIG_RANDOM_ROW_BATCH_SIZE)
             or consts.DEFAULT_NUM_RANDOM_ROWS
         )
 
@@ -522,9 +522,9 @@ class ConfigManager(object):
 
         for column in columns:
             if column.casefold() not in casefold_source_columns:
-                raise ValueError(f"Grouped Column DNE in source: {column}")
+                raise ValueError(f"Column DNE in source: {column}")
             if column.casefold() not in casefold_target_columns:
-                raise ValueError(f"Grouped Column DNE in target: {column}")
+                raise ValueError(f"Column DNE in target: {column}")
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
                 consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
@@ -593,12 +593,15 @@ class ConfigManager(object):
     def append_pre_agg_calc_field(
         self, source_column, target_column, agg_type, column_type, column_position
     ) -> dict:
-        """Append calculated field for length(string) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
+        """Append calculated field for length(string | binary) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
-        if column_type == "string":
+        if column_type in ["string", "!string"]:
             calc_func = "length"
 
-        elif column_type == "timestamp" or column_type == "!timestamp":
+        elif column_type in ["binary", "!binary"]:
+            calc_func = "byte_length"
+
+        elif column_type in ["timestamp", "!timestamp", "date", "!date"]:
             if (
                 self.source_client.name == "bigquery"
                 or self.target_client.name == "bigquery"
@@ -669,6 +672,37 @@ class ConfigManager(object):
                 )
             )
 
+        def require_pre_agg_calc_field(
+            column_type: str, agg_type: str, cast_to_bigint: bool
+        ) -> bool:
+            if column_type in ["string", "!string"]:
+                return True
+            elif column_type in ["binary", "!binary"]:
+                if agg_type == "count":
+                    # Oracle BLOB is invalid for use with SQL COUNT function.
+                    return bool(
+                        self.source_client.name == "oracle"
+                        or self.target_client.name == "oracle"
+                    )
+                else:
+                    # Convert to length for any min/max/sum on binary columns.
+                    return True
+            elif cast_to_bigint and column_type in ["int32", "!int32"]:
+                return True
+            elif column_type in [
+                "timestamp",
+                "!timestamp",
+                "date",
+                "!date",
+            ] and agg_type in (
+                "sum",
+                "avg",
+                "bit_xor",
+            ):
+                # For timestamps: do not convert to epoch seconds for min/max
+                return True
+            return False
+
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
@@ -679,16 +713,23 @@ class ConfigManager(object):
         if arg_value:
             arg_value = [x.casefold() for x in arg_value]
             if supported_types:
-                supported_types.extend(["string", "!string", "timestamp", "!timestamp"])
+                # This mutates external supported_types, making it local as part of adding more values.
+                supported_types = supported_types + [
+                    "string",
+                    "!string",
+                    "timestamp",
+                    "!timestamp",
+                    "date",
+                    "!date",
+                    "binary",
+                    "!binary",
+                ]
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
             # Get column type and remove precision/scale attributes
             source_column_ibis_type = source_table[
                 casefold_source_columns[column]
-            ].type()
-            target_column_ibis_type = target_table[
-                casefold_target_columns[column]
             ].type()
             column_type = str(source_column_ibis_type).split("(")[0]
 
@@ -706,22 +747,11 @@ class ConfigManager(object):
                     )
                 continue
 
-            if (
-                (column_type == "string" or column_type == "!string")
-                or (
-                    cast_to_bigint
-                    and (column_type == "int32" or column_type == "!int32")
-                )
-                or (
-                    (column_type == "timestamp" or column_type == "!timestamp")
-                    and agg_type
-                    in (
-                        "sum",
-                        "avg",
-                        "bit_xor",
-                    )  # For timestamps: do not convert to epoch seconds for min/max
-                )
-            ):
+            target_column_ibis_type = target_table[
+                casefold_target_columns[column]
+            ].type()
+
+            if require_pre_agg_calc_field(column_type, agg_type, cast_to_bigint):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
                     casefold_target_columns[column],
@@ -729,7 +759,6 @@ class ConfigManager(object):
                     column_type,
                     column_position,
                 )
-
             else:
                 aggregate_config = {
                     consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],

@@ -20,6 +20,7 @@ from ibis.backends.base.sql.alchemy import (
 from ibis.expr.operations import StringJoin
 import sqlalchemy as sa
 
+
 def _string_join(t, op):
     sep, elements = op.args
     columns = [str(col.name) for col in map(t.translate, elements)]
@@ -32,6 +33,7 @@ _operation_registry.update(
         StringJoin: _string_join,
     }
 )
+
 
 class RedShiftExprTranslator(AlchemyExprTranslator):
     _registry = _operation_registry

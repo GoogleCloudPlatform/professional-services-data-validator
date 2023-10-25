@@ -134,13 +134,13 @@ class DataValidation(object):
         filter_field = {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
             consts.CONFIG_FILTER_SOURCE_COLUMN: primary_key_info[
-                consts.CONFIG_SOURCE_COLUMN
+                consts.CONFIG_FIELD_ALIAS
             ],
             consts.CONFIG_FILTER_SOURCE_VALUE: random_rows[
                 primary_key_info[consts.CONFIG_SOURCE_COLUMN]
             ],
             consts.CONFIG_FILTER_TARGET_COLUMN: primary_key_info[
-                consts.CONFIG_TARGET_COLUMN
+                consts.CONFIG_FIELD_ALIAS
             ],
             consts.CONFIG_FILTER_TARGET_VALUE: random_rows[
                 primary_key_info[consts.CONFIG_SOURCE_COLUMN]

@@ -65,6 +65,8 @@ CONNECTION_SOURCE_FIELDS = {
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
         ["logmech", "(Optional) Log on mechanism"],
+        ["use_no_lock_tables", "Use an access lock for queries (defaults to False)"],
+        ["json_params", "(Optional) Additional teradatasql JSON string parameters"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -597,7 +599,7 @@ def _configure_column_parser(column_parser):
         "--wildcard-include-timestamp",
         "-wit",
         action="store_true",
-        help="Include timestamp fields for wildcard aggregations.",
+        help="Include timestamp/date fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
         "--cast-to-bigint",
@@ -815,7 +817,7 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         "--wildcard-include-timestamp",
         "-wit",
         action="store_true",
-        help="Include timestamp fields for wildcard aggregations.",
+        help="Include timestamp/date fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
         "--cast-to-bigint",
@@ -1078,8 +1080,16 @@ def get_validation(validation_name, config_dir=None):
         mgr = state_manager.StateManager(file_system_root_path=config_dir)
         return mgr.get_validation_config(validation_name, config_dir)
     else:
-        mgr = state_manager.StateManager()
-        return mgr.get_validation_config(validation_name)
+        if validation_name.startswith("gs://"):
+            obj_depth = len(validation_name.split("/"))
+            gcs_prefix = "/".join(validation_name.split("/")[: obj_depth - 1])
+            mgr = state_manager.StateManager(file_system_root_path=gcs_prefix)
+            return mgr.get_validation_config(
+                validation_name.split("/")[obj_depth - 1], gcs_prefix
+            )
+        else:
+            mgr = state_manager.StateManager()
+            return mgr.get_validation_config(validation_name)
 
 
 def list_validations():

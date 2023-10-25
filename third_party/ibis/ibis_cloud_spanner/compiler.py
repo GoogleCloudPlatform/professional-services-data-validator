@@ -22,6 +22,7 @@ from third_party.ibis.ibis_cloud_spanner import registry
 
 _NAME_REGEX = re.compile(r"[_A-Za-z][A-Za-z_0-9]*")
 
+
 class SpannerSelect(sql_compiler.Select):
     def format_limit(self):
         if not self.limit:
@@ -29,6 +30,7 @@ class SpannerSelect(sql_compiler.Select):
 
         limit_sql = f"TABLESAMPLE RESERVOIR ({self.limit.n} ROWS)"
         return limit_sql
+
 
 class SpannerExprTranslator(sql_compiler.ExprTranslator):
     """Translate expressions to strings."""
@@ -70,7 +72,9 @@ class SpannerExprTranslator(sql_compiler.ExprTranslator):
             raise KeyError(op)
         return f"@{op.name}"
 
+
 compiles = SpannerExprTranslator.compiles
+
 
 class SpannerCompiler(sql_compiler.Compiler):
     # Spanner uses BigQuery SQL syntax

@@ -14,6 +14,7 @@
 import pandas
 import warnings
 
+import json
 import teradatasql
 import ibis.expr.datatypes as dt
 import ibis.expr.types as ir
@@ -39,7 +40,8 @@ class Backend(BaseSQLBackend):
         password: str = None,
         port: int = 1025,
         logmech: str = "TD2",
-        use_no_lock_tables: bool = False,
+        use_no_lock_tables: str = "False",
+        json_params: str = None,
     ) -> None:
         self.teradata_config = {
             "host": host,
@@ -49,15 +51,26 @@ class Backend(BaseSQLBackend):
             "logmech": logmech,
         }
 
+        if json_params:
+            try:
+                param_dict = json.loads(json_params.replace("'", '"'))
+                self.teradata_config.update(param_dict)
+            except json.JSONDecodeError:
+                print(
+                    f"Invalid JSON format in the parameter dictionary string: {json_params}"
+                )
+
         self.client = teradatasql.connect(**self.teradata_config)
         self.con = self.client.cursor()
-        self.use_no_lock_tables = use_no_lock_tables
+        self.use_no_lock_tables = (
+            True if use_no_lock_tables.casefold() == "True".casefold() else False
+        )
 
     def close(self):
         """Close the connection."""
         self.con.close()
-    
-    def __del__ (self):
+
+    def __del__(self):
         self.con.close()
 
     @property
@@ -210,19 +223,21 @@ class Backend(BaseSQLBackend):
         kwargs.pop("timecontext", None)
         query_ast = self.compiler.to_ast_ensure_limit(expr, limit, params=params)
         sql = query_ast.compile()
-        self._log(sql)
-
-        schema = self.ast_schema(query_ast, **kwargs)
-
         self._register_in_memory_tables(expr)
 
         if self.use_no_lock_tables and sql.strip().startswith("SELECT"):
-            sql = self.NO_LOCK_SQL + self.compiled_sql
+            sql = self.NO_LOCK_SQL + sql
+
+        self._log(sql)
+
+        schema = self.ast_schema(query_ast, **kwargs)
+        # Date columns are in the Dataframe as "object", using parse_dates to ensure they have a better data type.
+        date_columns = [_ for _ in schema.names if schema.fields[_].is_date()]
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
-            df = pandas.read_sql(sql, self.client)
+            df = pandas.read_sql(sql, self.client, parse_dates=date_columns)
         return df
 
     # Methods we need to implement for BaseSQLBackend

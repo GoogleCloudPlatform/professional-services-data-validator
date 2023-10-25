@@ -47,7 +47,9 @@ def force_cast(self, target_type: dt.DataType) -> Value:
     try:
         op = ops.Cast(self, to=target_type)
     except parsy.ParseError:
-        raise SyntaxError(f"'{target_type}' is an invalid datatype provided to cast a ComparisonField")
+        raise SyntaxError(
+            f"'{target_type}' is an invalid datatype provided to cast a ComparisonField"
+        )
 
     if op.to.is_geospatial():
         from_geotype = self.type().geotype or "geometry"

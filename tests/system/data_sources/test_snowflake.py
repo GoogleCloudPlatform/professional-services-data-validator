@@ -188,7 +188,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             "--exclusion-columns=id",
             (
-                # Integral Snowflake NUMBERs to to BigQuery INT64.
+                # Integer Snowflake NUMBERs to to BigQuery INT64.
                 "--allow-list=decimal(38,0):int64,"
                 # TODO When issue-706 is complete remove the timestamp line below
                 "timestamp('UTC'):timestamp"

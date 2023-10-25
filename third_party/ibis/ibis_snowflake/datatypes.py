@@ -30,6 +30,7 @@ def sa_sf_numeric(_, satype, nullable=True):
         nullable=nullable,
     )
 
+
 @dt.dtype.register(SnowflakeDialect, BINARY)
 def sa_sf_binary(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)

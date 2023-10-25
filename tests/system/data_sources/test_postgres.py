@@ -571,7 +571,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--exclusion-columns=id",
             "--filter-status=fail",
             (
-                # PostgreSQL integrals go to BigQuery INT64.
+                # PostgreSQL integers go to BigQuery INT64.
                 "--allow-list=int16:int64,int32:int64,"
                 # BigQuery does not have a float32 type.
                 "float32:float64"
@@ -625,9 +625,9 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
-            "--sum=*",
-            "--min=*",
-            "--max=*",
+            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
