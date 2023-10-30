@@ -242,7 +242,13 @@ def integration_oracle(session):
     """
     _setup_session_requirements(session, extra_packages=["cx_Oracle"])
 
-    expected_env_vars = ["PROJECT_ID", "ORACLE_PASSWORD", "ORACLE_HOST"]
+    expected_env_vars = [
+        "PROJECT_ID",
+        "ORACLE_PASSWORD",
+        "ORACLE_HOST",
+        "POSTGRES_PASSWORD",
+        "CLOUD_SQL_CONNECTION"
+    ]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
