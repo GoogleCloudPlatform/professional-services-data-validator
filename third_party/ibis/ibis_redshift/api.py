@@ -14,12 +14,13 @@
 from typing import Literal
 from third_party.ibis.ibis_redshift import Backend as RedshiftBackend
 
+
 def redshift_connect(
-    host: str = 'localhost',
+    host: str = "localhost",
     user: str = None,
     password: str = None,
     port: int = 5439,
-    database: str = 'public',
+    database: str = "public",
     schema: str = None,
     url: str = None,
     driver: Literal["psycopg2"] = "psycopg2",

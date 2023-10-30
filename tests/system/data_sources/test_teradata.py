@@ -243,7 +243,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             "--exclusion-columns=id",
             (
-                # Teradata integrals go to BigQuery INT64.
+                # Teradata integers go to BigQuery INT64.
                 "--allow-list=int8:int64,int16:int64,int32:int64"
             ),
         ]

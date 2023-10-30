@@ -66,6 +66,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for supplied user"],
         ["logmech", "(Optional) Log on mechanism"],
         ["use_no_lock_tables", "Use an access lock for queries (defaults to False)"],
+        ["json_params", "(Optional) Additional teradatasql JSON string parameters"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],

@@ -2,6 +2,38 @@
 
 ## Untagged
 
+## [4.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.1.0...v4.2.0) (2023-09-28)
+
+
+### Features
+
+* Add more mappings to the allowlist configuration files for Oracle schema validations ([#953](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/953)) ([0fed588](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0fed588ee89e3e8f08691675c99c428f7bb22574))
+* Include date columns for min/max/sum validations ([#984](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/984)) ([6de9921](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6de992166d3e077fe1a3fe132d758ea82e700eda))
+* Include date columns in scope of wildcard_include_timestamp option ([#989](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/989)) ([a4cf773](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a4cf773a7b5302742e91306f945cb2a066a86861))
+* Support BQ decimal precision and scale for schema validation ([#960](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/960)) ([b1d4942](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b1d49428d8f1990f5eee61b9e6487dbc2f561369))
+* Support standard deviation for column agg ([#964](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/964)) ([bb81701](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bb8170109d40cd8af2ffe9a6c3e3be2ea9f185c4))
+
+
+### Bug Fixes
+
+* Add exception handling for invalid value to cast a comparison field  ([#957](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/957)) ([703ca75](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/703ca7522ef94641a333312b9fb8a34a827afaf3))
+* Add missing SnowflakeDialect mapping for BINARY data type ([#959](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/959)) ([9ad529a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9ad529a73a3d53c74b69a5f5fc7e005d0e389207))
+* Add not-null string to accepted date types in append_pre_agg_calc_field() ([#980](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/980)) ([76fcfc6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/76fcfc691f07ee86d582305f52c5e83fc65664f5))
+* Adjust set up for randow row batch size default value, but it maintains as 10,000 ([#986](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/986)) ([a20ccab](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a20ccabf87f77a0e91bb4d42991401b6fee5992e))
+* custom query row validation failing when SQL contains upper cased columns ([#994](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/994)) ([a9fed41](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a9fed4115afa7afa823128ce4df6770169a36a2d))
+* Fix warning and precision detection when target precision higher than source ([#965](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/965)) ([5f00ce1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5f00ce1b87e6b64f6e8d7a89d7f9fc542f4bc600))
+* generate-table-partitions-  fixes Issue 945 and Issue 950 ([#962](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/962)) ([c53f2fc](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c53f2fc8c652daf7f806838afb2f4f2c8fcfcb0c))
+* Prevent failure of column validation config generation if source column other than allow-list not present in target table. ([#974](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/974)) ([40a073e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/40a073e4ae60fe26b13f425f768cc42eed05d46a))
+* Prevent Oracle blob throwing exceptions during column validation ([#1005](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1005)) ([8df1cfa](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8df1cfaec19c62623f57dfe2a9d41240f2266cc8))
+* support for case insensitive PKs and Snowflake random row ([#998](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/998)) ([1a157ae](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1a157aed71bc9ba9470be49a892f096e7dfd02f5))
+* support for null columns, support for access locks ([#976](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/976)) ([f54bb4d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f54bb4dbdabab6ac130eac3a09adbfb706086860))
+* yaml validation files in gcs ([#977](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/977)) ([bf0fa0a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bf0fa0a3d215655c15d071ee9ab8fecc93b47d68))
+
+
+### Documentation
+
+* Add a new sample code for row hash validation of Oracle BLOB ([#997](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/997)) ([0bd48a2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0bd48a2efb142795408c5079c40f83e122250325))
+
 ## [4.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.0.0...v4.1.0) (2023-08-18)
 
 

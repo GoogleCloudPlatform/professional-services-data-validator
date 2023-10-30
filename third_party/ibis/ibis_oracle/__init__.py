@@ -53,7 +53,7 @@ class Backend(BaseAlchemyBackend):
             )
         else:
             sa_url = sa.engine.url.make_url(url)
-        
+
         self.database_name = sa_url.database
         engine = sa.create_engine(sa_url, poolclass=sa.pool.StaticPool)
 
@@ -61,11 +61,10 @@ class Backend(BaseAlchemyBackend):
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
                 cur.execute("ALTER SESSION SET TIME_ZONE='UTC'")
-    
+
         super().do_connect(engine)
 
-
-    def _metadata(self, query)  -> Iterable[Tuple[str, dt.DataType]]:
+    def _metadata(self, query) -> Iterable[Tuple[str, dt.DataType]]:
         if (
             re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
             is not None
@@ -75,7 +74,4 @@ class Backend(BaseAlchemyBackend):
         with self.begin() as con:
             result = con.exec_driver_sql(f"SELECT * FROM {query} t0 WHERE ROWNUM <= 1")
             cursor = result.cursor
-            yield from (
-                (column[0], _get_type(column))
-                for column in cursor.description
-            )
+            yield from ((column[0], _get_type(column)) for column in cursor.description)

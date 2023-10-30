@@ -29,7 +29,7 @@ echo "Finish CODE STYLE (FLAKE8)"
 
 # check code formatting and reformat, if needed
 echo "Start CODE FORMATTING (BLACK)"
-black data_validation samples tests noxfile.py setup.py
+black data_validation samples tests third_party noxfile.py setup.py
 echo "Finish CODE FORMATTING (BLACK)"
 
 # execute all previous checks in a virtual env the same way that is run by our build tool

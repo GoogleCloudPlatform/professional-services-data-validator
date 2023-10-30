@@ -35,9 +35,7 @@ def _metadata(self, query: str) -> sch.Schema:
     ORDER BY attnum"""
     with self.begin() as con:
         con.exec_driver_sql(f"CREATE TEMPORARY VIEW {name} AS {query}")
-        type_info = con.execute(
-            sa.text(type_info_sql).bindparams(raw_name=raw_name)
-        )
+        type_info = con.execute(sa.text(type_info_sql).bindparams(raw_name=raw_name))
         yield from ((col, _get_type(typestr)) for col, typestr in type_info)
         con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
 

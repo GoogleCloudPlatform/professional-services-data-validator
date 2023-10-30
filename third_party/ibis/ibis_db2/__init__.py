@@ -20,27 +20,28 @@ from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
 
+
 class Backend(BaseAlchemyBackend):
     name = "db2"
     compiler = Db2Compiler
 
     def do_connect(
         self,
-        host: str = 'localhost',
+        host: str = "localhost",
         user: str = None,
         password: str = None,
         port: int = 50000,
         database: str = None,
         url: str = None,
-        driver: str = 'ibm_db_sa',
+        driver: str = "ibm_db_sa",
     ) -> None:
         if url is None:
-            if driver != 'ibm_db_sa':
+            if driver != "ibm_db_sa":
                 raise NotImplementedError(
-                    'ibm_db_sa is currently the only supported driver'
+                    "ibm_db_sa is currently the only supported driver"
                 )
             sa_url = sa.engine.url.URL.create(
-                'ibm_db_sa',
+                "ibm_db_sa",
                 host=host,
                 port=port,
                 username=user,
@@ -49,7 +50,7 @@ class Backend(BaseAlchemyBackend):
             )
         else:
             sa_url = sa.engine.url.make_url(url)
-        
+
         engine = sa.create_engine(sa_url, poolclass=sa.pool.StaticPool)
         self.database_name = database
         self.url = sa_url
@@ -58,19 +59,19 @@ class Backend(BaseAlchemyBackend):
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
                 cur.execute("SET TIMEZONE = UTC")
-    
+
         super().do_connect(engine)
-    
+
     def find_db(self):
         return self.url
-    
-    def _metadata(self, query)  -> Iterable[Tuple[str, dt.DataType]]:
+
+    def _metadata(self, query) -> Iterable[Tuple[str, dt.DataType]]:
         if (
             re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
             is not None
         ):
             query = f"({query})"
-        
+
         with self.begin() as con:
             result = con.exec_driver_sql(f"SELECT * FROM {query} t0 LIMIT 1")
             cursor = result.cursor

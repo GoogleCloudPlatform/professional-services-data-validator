@@ -32,7 +32,14 @@ DEFAULT_PYTHON_VERSION = "3.10"
 # Python versions used for testing.
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10"]
 
-BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
+BLACK_PATHS = (
+    "data_validation",
+    "samples",
+    "tests",
+    "third_party",
+    "noxfile.py",
+    "setup.py",
+)
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
 UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
 
@@ -41,7 +48,7 @@ def _setup_session_requirements(session, extra_packages=[]):
     """Install requirements for nox tests."""
 
     session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
-    session.install("-e", ".")
+    session.install("--no-cache-dir", "-e", ".")
 
     if extra_packages:
         session.install(*extra_packages)

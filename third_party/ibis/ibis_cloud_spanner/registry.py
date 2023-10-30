@@ -23,6 +23,7 @@ STRFTIME_FORMAT_FUNCTIONS = {
     dt.Timestamp(timezone="UTC"): "TIMESTAMP",
 }
 
+
 def _compiles_strftime(translator, op):
     """Timestamp formatting."""
     arg = op.arg
@@ -57,4 +58,9 @@ def _compiles_strftime(translator, op):
             strftime_format_func_name, fmt_string, arg_formatted
         )
 
-_registry.update({ops.Strftime: _compiles_strftime,})
+
+_registry.update(
+    {
+        ops.Strftime: _compiles_strftime,
+    }
+)

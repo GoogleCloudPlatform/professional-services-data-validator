@@ -571,7 +571,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--exclusion-columns=id",
             "--filter-status=fail",
             (
-                # PostgreSQL integrals go to BigQuery INT64.
+                # PostgreSQL integers go to BigQuery INT64.
                 "--allow-list=int16:int64,int32:int64,"
                 # BigQuery does not have a float32 type.
                 "float32:float64"

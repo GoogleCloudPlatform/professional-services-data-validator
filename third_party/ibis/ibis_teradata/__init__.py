@@ -14,6 +14,7 @@
 import pandas
 import warnings
 
+import json
 import teradatasql
 import ibis.expr.datatypes as dt
 import ibis.expr.types as ir
@@ -40,6 +41,7 @@ class Backend(BaseSQLBackend):
         port: int = 1025,
         logmech: str = "TD2",
         use_no_lock_tables: str = "False",
+        json_params: str = None,
     ) -> None:
         self.teradata_config = {
             "host": host,
@@ -48,6 +50,15 @@ class Backend(BaseSQLBackend):
             "dbs_port": port,
             "logmech": logmech,
         }
+
+        if json_params:
+            try:
+                param_dict = json.loads(json_params.replace("'", '"'))
+                self.teradata_config.update(param_dict)
+            except json.JSONDecodeError:
+                print(
+                    f"Invalid JSON format in the parameter dictionary string: {json_params}"
+                )
 
         self.client = teradatasql.connect(**self.teradata_config)
         self.con = self.client.cursor()
