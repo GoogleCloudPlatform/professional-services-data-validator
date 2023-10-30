@@ -312,6 +312,11 @@ def sa_format_binary_length_mssql(translator, op):
     return sa.func.datalength(arg)
 
 
+def sa_format_binary_length_oracle(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.dbms_lob.getlength(arg)
+
+
 def sa_cast_postgres(t, op):
     # Add cast from numeric to string
     arg = op.arg
@@ -366,8 +371,10 @@ def _sa_string_join(t, op):
 def sa_format_new_id(t, op):
     return sa.func.NEWID()
 
+
 def sa_format_random(t, op):
     return sa.func.RANDOM()
+
 
 _BQ_DTYPE_TO_IBIS_TYPE["TIMESTAMP"] = dt.Timestamp(timezone="UTC")
 
@@ -436,7 +443,7 @@ ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 OracleExprTranslator._registry[ToChar] = sa_format_to_char
-OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length
+OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
 
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
