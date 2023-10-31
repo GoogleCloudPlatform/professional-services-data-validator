@@ -98,6 +98,7 @@ steps:
   - 'ORACLE_HOST=10.128.15.246'
   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
   secretEnv: ['ORACLE_PASSWORD', 'POSTGRES_PASSWORD']
+  waitFor: ['proxy-install']
 - id: integration_hive
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
