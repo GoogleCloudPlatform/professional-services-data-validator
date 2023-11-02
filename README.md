@@ -494,6 +494,10 @@ you to run ad hoc queries.
 
 ```
 data-validation query
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+          Connection details stored in the GCP secret manager
+          See: *Connections* section
   --conn or -c CONN
           The connection name to be queried
   --query or -q QUERY
@@ -515,9 +519,19 @@ target. The `find-tables` command:
 Note that our default value for the `score-cutoff` parameter is 1 and it seeks for identical matches. If no matches occur, reduce this value as deemed necessary. By using smaller numbers such as 0.7, 0.65 etc you can get more matches. For reference, we make use of [this jaro_similarity method](https://jamesturk.github.io/jellyfish/functions/#jaro-similarity) for the string comparison.
 
 ```
-data-validation find-tables --source-conn source --target-conn target \
-    --allowed-schemas pso_data_validator \
-    --score-cutoff 1
+data-validation find-tables \
+  [--secret-manager-type or -sm gcp]
+  [--secret-manager-project-id or -sm-prj-id PROJECT_ID]
+                  Connection details stored in the GCP secret manager
+                  See: *Connections* section
+  --source-conn or -sc SOURCE_CONN \
+                  Source connection details
+                  See: *Data Source Configurations* section for each data source
+  --target-conn or -tc TARGET_CONN \
+                  Target connection details
+                  See: *Connections* section for each data source
+  --allowed-schemas pso_data_validator \
+  --score-cutoff 1
 ```
 
 ### Using Beta CLI Features

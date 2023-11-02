@@ -399,9 +399,11 @@ def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
     score_cutoff = args.score_cutoff or 1
 
-    mgr = state_manager.StateManager()
-    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
-    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
+    mgr = state_manager.StateManager() 
+    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn,
+                                args.secret_manager_type, args.secret_manager_project_id))
+    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn,
+                                args.secret_manager_type, args.secret_manager_project_id))
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
