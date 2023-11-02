@@ -38,10 +38,12 @@ class Backend(BaseSQLBackend):
         instance_id: str,
         database_id: str = None,
         project_id: str = None,
-        credentials = None,
+        credentials=None,
     ) -> None:
 
-        self.spanner_client = spanner.Client(project=project_id, credentials=credentials)
+        self.spanner_client = spanner.Client(
+            project=project_id, credentials=credentials
+        )
         self.instance = self.spanner_client.instance(instance_id)
         self.database_name = self.instance.database(database_id)
         (
