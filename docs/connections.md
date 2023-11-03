@@ -151,6 +151,7 @@ data-validation connections add
 
 ## MSSQL Server
 MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
+For connection query parameter options, see https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections.
 
 ```
 data-validation connections add 
@@ -162,6 +163,8 @@ data-validation connections add
     --user USER                                         MSSQL user
     --password PASSWORD                                 MSSQL password
     --database DATABASE                                 MSSQL database
+    [--url URL]                                         SQLAlchemy connection URL
+    [--query QUERY]                                     Connection query parameters i.e. '{"TrustServerCertificate": "yes"}'
 ```
 
 ## Postgres
