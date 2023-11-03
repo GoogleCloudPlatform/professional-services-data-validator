@@ -17,6 +17,7 @@ from ibis.backends.base.sql.alchemy import (
 )
 from third_party.ibis.ibis_db2.registry import operation_registry
 
+
 class Db2ExprTranslator(AlchemyExprTranslator):
     _registry = operation_registry.copy()
     _rewrites = AlchemyExprTranslator._rewrites.copy()

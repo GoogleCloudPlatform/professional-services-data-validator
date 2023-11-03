@@ -16,17 +16,17 @@
 # from third_party.ibis.ibis_db2.compiler import dialect, rewrites  # noqa: F401
 
 from third_party.ibis.ibis_db2 import Backend as DB2Backend
-import ibm_db_sa #NOQA fail early if driver is missing
+import ibm_db_sa  # NOQA fail early if driver is missing
 
 
 def db2_connect(
-    host: str = 'localhost',
+    host: str = "localhost",
     user: str = None,
     password: str = None,
     port: int = 50000,
     database: str = None,
     url: str = None,
-    driver: str = 'ibm_db_sa',
+    driver: str = "ibm_db_sa",
 ):
     backend = DB2Backend()
     backend.do_connect(

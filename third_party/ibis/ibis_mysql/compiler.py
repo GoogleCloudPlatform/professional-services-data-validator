@@ -16,8 +16,9 @@ from ibis.backends.base.sql.alchemy import AlchemyCompiler
 from ibis.backends.mysql import Backend as MySqlBackend
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 
-from third_party.ibis.ibis_mysql.base_sql_compiler.select_builder import \
-    NewSelectBuilder
+from third_party.ibis.ibis_mysql.base_sql_compiler.select_builder import (
+    NewSelectBuilder,
+)
 
 
 # We extend the default SelectBuilder here https://github.com/ibis-project/ibis/blob/5.1.0/ibis/backends/base/sql/compiler/select_builder.py#L34

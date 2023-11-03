@@ -98,3 +98,17 @@ source_agg_value   | dfb1bcf4eae00791a2cb06899495f46a3fb9e08467eb81499b5122a0917
 target_agg_value   | dfb1bcf4eae00791a2cb06899495f46a3fb9e08467eb81499b5122a0917085a8
 validation_status  | success
 ```
+
+# Data Validation of Oracle CLOB
+
+The method above can also be used on CLOB columns with only a small change to
+the PostgreSQL `--target-query`, for example:
+```
+data-validation validate custom-query row \
+ -sc ora_conn -tc pg_conn \
+ --source-query="SELECT id,CASE WHEN DBMS_LOB.GETLENGTH(col_clob) = 0 OR col_clob IS NULL THEN NULL ELSE LOWER(DBMS_CRYPTO.HASH(col_clob,4)) END col_clob FROM dvt_test.tab_clob" \
+ --target-query="SELECT id,encode(sha256(convert_to(col_clob,'UTF8')),'hex') AS col_clob FROM dvt_test.tab_clob" \
+ --primary-keys=id \
+ --comparison-fields=col_clob \
+ --format=text
+```

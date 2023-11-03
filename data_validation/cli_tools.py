@@ -81,6 +81,8 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
+        ["query", "Connection query parameters"],
+        ["url", "SQL Server SQLAlchemy connection URL"],
     ],
     "MySQL": [
         ["host", "Desired MySQL host (default localhost)"],
