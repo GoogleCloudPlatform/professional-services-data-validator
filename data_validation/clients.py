@@ -195,9 +195,6 @@ def get_all_tables(client, allowed_schemas=None):
     """
     table_objs = []
     schemas = list_schemas(client)
-
-    print("======= CLIENT - ALL SCHEMAS: " + str(schemas))
-    
     for schema_name in schemas:
         if allowed_schemas and schema_name not in allowed_schemas:
             continue
