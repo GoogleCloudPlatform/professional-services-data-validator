@@ -368,6 +368,9 @@ def get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
     table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
+
+    print(f"TABLE MAP: {str(table_objs)}")
+
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -389,6 +392,9 @@ def find_tables_using_string_matching(args):
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
+
+    #print(f"SOURCE TABLE MAP: {str(source_table_map)}")
+    print(f"TARGET TABLE MAP: {str(target_table_map)}")
 
     table_configs = _compare_match_tables(
         source_table_map, target_table_map, score_cutoff=score_cutoff

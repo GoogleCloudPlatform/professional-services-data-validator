@@ -182,7 +182,7 @@ def list_schemas(client):
 
 def list_tables(client, schema_name):
     """Return a list of tables in the DB schema."""
-    if client.name in ["oracle", "postgres", "db2", "mssql", "redshift", "snowflake"]:
+    if client.name in ["postgres", "db2", "mssql", "redshift", "snowflake"]:
         return client.list_tables()
     return client.list_tables(database=schema_name)
 
@@ -195,6 +195,9 @@ def get_all_tables(client, allowed_schemas=None):
     """
     table_objs = []
     schemas = list_schemas(client)
+
+    print("======= CLIENT - ALL SCHEMAS: " + str(schemas))
+    
     for schema_name in schemas:
         if allowed_schemas and schema_name not in allowed_schemas:
             continue
