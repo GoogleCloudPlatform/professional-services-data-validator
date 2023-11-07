@@ -25,6 +25,7 @@ def mssql_connect(
     url: str = None,
     driver: Literal["pyodbc"] = "pyodbc",
     odbc_driver: str = "ODBC Driver 17 for SQL Server",
+    query: str = None,
 ):
     backend = MsSqlBackend()
     backend.do_connect(
@@ -36,5 +37,6 @@ def mssql_connect(
         url=url,
         driver=driver,
         odbc_driver=odbc_driver,
+        query=query,
     )
     return backend
