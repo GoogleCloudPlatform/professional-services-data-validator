@@ -83,19 +83,18 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         supported_data_types.extend(["timestamp", "!timestamp", "date", "!date"])
 
     cast_to_bigint = True if args.cast_to_bigint else False
-    exclude_cols = True if args.exclude_columns else False
 
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, exclude_cols, None, cast_to_bigint=cast_to_bigint
+            "count", col_args, args.exclude_columns, None, cast_to_bigint=cast_to_bigint
         )
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
             "sum",
             col_args,
-            exclude_cols,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -104,7 +103,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "avg",
             col_args,
-            exclude_cols,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -113,7 +112,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "min",
             col_args,
-            exclude_cols,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -122,7 +121,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max",
             col_args,
-            exclude_cols,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -131,7 +130,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "bit_xor",
             col_args,
-            exclude_cols,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -140,7 +139,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "std",
             col_args,
-            exclude_cols,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )

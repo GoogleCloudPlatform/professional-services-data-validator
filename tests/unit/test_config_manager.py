@@ -313,6 +313,7 @@ def test_build_config_aggregates(module_under_test):
         "min", ["c"], False, []
     )
     assert aggregate_configs[0] == AGGREGATE_CONFIG_C
+    assert len(aggregate_configs) == 1
 
 
 def test_build_config_aggregates_ec(module_under_test):
