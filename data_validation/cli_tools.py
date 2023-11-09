@@ -396,18 +396,6 @@ def _configure_connection_parser(subparsers):
     add_parser.add_argument(
         "--connection-name", "-c", help="Name of connection used as reference"
     )
-    add_parser.add_argument(
-        "--secret-manager-type",
-        "-sm",
-        default=None,
-        help="Secret manager type to store credentials by default will be None ",
-    )
-    add_parser.add_argument(
-        "--secret-manager-project-id",
-        "-sm-prj-id",
-        default=None,
-        help="Project ID for the secret manager that stores the credentials",
-    )
     _configure_database_specific_parsers(add_parser)
 
 
@@ -1038,10 +1026,6 @@ def get_connection_config_from_args(args):
     """Return dict with connection config supplied."""
     config = {
         consts.SOURCE_TYPE: args.connect_type,
-        consts.SECRET_MANAGER_TYPE: getattr(args, consts.SECRET_MANAGER_TYPE),
-        consts.SECRET_MANAGER_PROJECT_ID: getattr(
-            args, consts.SECRET_MANAGER_PROJECT_ID
-        ),
     }
 
     if args.connect_type == "Raw":
@@ -1088,7 +1072,9 @@ def list_connections():
     mgr = state_manager.StateManager()
     connections = mgr.list_connections()
     for conn_name in connections:
-        source_type = mgr.get_connection_config(conn_name, None, None).get("source_type")
+        source_type = mgr.get_connection_config(conn_name, None, None).get(
+            "source_type"
+        )
         logging.info(f"Connection Name: {conn_name} : {source_type}")
 
 
@@ -1118,10 +1104,12 @@ def get_validation(validation_name, config_dir=None):
     else:
         if validation_name.startswith("gs://"):
             obj_depth = len(validation_name.split("/"))
-            gcs_prefix = '/'.join(validation_name.split('/')[:obj_depth-1])
+            gcs_prefix = "/".join(validation_name.split("/")[: obj_depth - 1])
             mgr = state_manager.StateManager(file_system_root_path=gcs_prefix)
-            return mgr.get_validation_config(validation_name.split('/')[obj_depth-1],gcs_prefix)
-        else: 
+            return mgr.get_validation_config(
+                validation_name.split("/")[obj_depth - 1], gcs_prefix
+            )
+        else:
             mgr = state_manager.StateManager()
             return mgr.get_validation_config(validation_name)
 
@@ -1340,10 +1328,16 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
 
     # Get source and target clients
     mgr = state_manager.StateManager()
-    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn, 
-                        args.secret_manager_type, args.secret_manager_project_id))
-    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn,
-                        args.secret_manager_type, args.secret_manager_project_id))
+    source_client = clients.get_data_client(
+        mgr.get_connection_config(
+            args.source_conn, args.secret_manager_type, args.secret_manager_project_id
+        )
+    )
+    target_client = clients.get_data_client(
+        mgr.get_connection_config(
+            args.target_conn, args.secret_manager_type, args.secret_manager_project_id
+        )
+    )
     # Get format: text, csv, json, table. Default is table
     format = args.format if args.format else "table"
 

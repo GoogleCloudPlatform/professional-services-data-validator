@@ -21,8 +21,8 @@ TEST_CONN = {
 }
 TEST_VALIDATION_NAME = "citibike.yaml"
 TEST_VALIDATION_CONFIG = {
-    'secret_manager_type': None,
-    'secret_manager_project_id': None,
+    "secret_manager_type": None,
+    "secret_manager_project_id": None,
     "source": "example",
     "target": "example",
     "result_handler": {},

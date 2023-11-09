@@ -16,7 +16,6 @@ import json
 import logging
 import os
 import sys
-import copy
 
 from yaml import Dumper, dump
 from argparse import Namespace
@@ -275,7 +274,9 @@ def build_config_managers_from_args(
     configs = []
 
     # Get pre build configs to build ConfigManager objects
-    pre_build_configs_list = cli_tools.get_pre_build_configs(args, validate_cmd) # source and target connections created here for validations - can fix
+    pre_build_configs_list = cli_tools.get_pre_build_configs(
+        args, validate_cmd
+    )  # source and target connections created here for validations - can fix
 
     # Build a list of ConfigManager objects
     for pre_build_configs in pre_build_configs_list:
@@ -292,18 +293,29 @@ def build_config_managers_from_args(
 
 def config_runner(args):
     if args.config_dir:
-        if args.kube_completions and (('JOB_COMPLETION_INDEX' in os.environ.keys()) or ('CLOUD_RUN_TASK_INDEX' in os.environ.keys())) :
+        if args.kube_completions and (
+            ("JOB_COMPLETION_INDEX" in os.environ.keys())
+            or ("CLOUD_RUN_TASK_INDEX" in os.environ.keys())
+        ):
             # Running in Kubernetes in Job completions - only run the yaml file corresponding to index
-            job_index = int(os.environ.get('JOB_COMPLETION_INDEX')) if 'JOB_COMPLETION_INDEX' in os.environ.keys() \
-                else int(os.environ.get('CLOUD_RUN_TASK_INDEX'))
-            config_file_path = args.config_dir + '{:04d}'.format(job_index) + '.yaml' if args.config_dir.endswith('/') \
-                else args.config_dir + '/' + '{:04d}'.format(job_index) + '.yaml'
-            setattr(args, 'config_dir', None)
-            setattr(args, 'config_file', config_file_path)
+            job_index = (
+                int(os.environ.get("JOB_COMPLETION_INDEX"))
+                if "JOB_COMPLETION_INDEX" in os.environ.keys()
+                else int(os.environ.get("CLOUD_RUN_TASK_INDEX"))
+            )
+            config_file_path = (
+                args.config_dir + "{:04d}".format(job_index) + ".yaml"
+                if args.config_dir.endswith("/")
+                else args.config_dir + "/" + "{:04d}".format(job_index) + ".yaml"
+            )
+            setattr(args, "config_dir", None)
+            setattr(args, "config_file", config_file_path)
             config_managers = build_config_managers_from_yaml(args, config_file_path)
-        else: 
-            if args.kube_completions :
-                logging.warning("--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line")
+        else:
+            if args.kube_completions:
+                logging.warning(
+                    "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line"
+                )
             mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
             config_file_names = mgr.list_validations_in_dir(args.config_dir)
             config_managers = []
@@ -325,12 +337,16 @@ def build_config_managers_from_yaml(args, config_file_path):
 
     mgr = state_manager.StateManager()
     # Grab the JSON payload from the file or from the secret manager
-    source_conn = mgr.get_connection_config(yaml_configs[consts.YAML_SOURCE],
-                       yaml_configs[consts.YAML_SECRET_MANAGER_TYPE],
-                       yaml_configs[consts.YAML_SECRET_MANAGER_PROJECT_ID])
-    target_conn = mgr.get_connection_config(yaml_configs[consts.YAML_TARGET],
-                        yaml_configs[consts.YAML_SECRET_MANAGER_TYPE],
-                        yaml_configs[consts.YAML_SECRET_MANAGER_PROJECT_ID])
+    source_conn = mgr.get_connection_config(
+        yaml_configs[consts.YAML_SOURCE],
+        yaml_configs[consts.YAML_SECRET_MANAGER_TYPE],
+        yaml_configs[consts.YAML_SECRET_MANAGER_PROJECT_ID],
+    )
+    target_conn = mgr.get_connection_config(
+        yaml_configs[consts.YAML_TARGET],
+        yaml_configs[consts.YAML_SECRET_MANAGER_TYPE],
+        yaml_configs[consts.YAML_SECRET_MANAGER_PROJECT_ID],
+    )
 
     source_client = clients.get_data_client(source_conn)
     target_client = clients.get_data_client(target_conn)
@@ -399,11 +415,17 @@ def find_tables_using_string_matching(args):
     """Return JSON String with matched tables for use in validations."""
     score_cutoff = args.score_cutoff or 1
 
-    mgr = state_manager.StateManager() 
-    source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn,
-                                args.secret_manager_type, args.secret_manager_project_id))
-    target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn,
-                                args.secret_manager_type, args.secret_manager_project_id))
+    mgr = state_manager.StateManager()
+    source_client = clients.get_data_client(
+        mgr.get_connection_config(
+            args.source_conn, args.secret_manager_type, args.secret_manager_project_id
+        )
+    )
+    target_client = clients.get_data_client(
+        mgr.get_connection_config(
+            args.target_conn, args.secret_manager_type, args.secret_manager_project_id
+        )
+    )
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
@@ -419,10 +441,16 @@ def run_raw_query_against_connection(args):
     """Return results of raw query for ad hoc usage."""
     mgr = state_manager.StateManager()
     if not args.secret_manager_type:
-        client = clients.get_data_client(mgr.get_connection_config(args.conn, None, None))
+        client = clients.get_data_client(
+            mgr.get_connection_config(args.conn, None, None)
+        )
     else:
         # Secret manager specified, get JSON payload from secret manager
-        client = clients.get_data_client(mgr.get_connection_config(args.conn, args.secret_manager_type, args.secret_manager_project_id))
+        client = clients.get_data_client(
+            mgr.get_connection_config(
+                args.conn, args.secret_manager_type, args.secret_manager_project_id
+            )
+        )
     cursor = client.raw_sql(args.query)
     res = cursor.fetchall()
     try:

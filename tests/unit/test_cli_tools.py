@@ -44,8 +44,8 @@ CLI_ADD_CONNECTION_ARGS = [
 ]
 
 TEST_VALIDATION_CONFIG = {
-    'secret_manager_type': None,
-    'secret_manager_project_id': None,
+    "secret_manager_type": None,
+    "secret_manager_project_id": None,
     "source": "example",
     "target": "example",
     "result_handler": {},

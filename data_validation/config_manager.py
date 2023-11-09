@@ -79,9 +79,11 @@ class ConfigManager(object):
                 self._source_conn = self._config.get(consts.CONFIG_SOURCE_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_SOURCE_CONN_NAME)
-                self._source_conn = self._state_manager.get_connection_config(conn_name,
-                                        self._config.get(consts.CONFIG_SECRET_MANAGER_TYPE),
-                                        self._config.get(consts.CONFIG_SECRET_MANAGER_PROJECT_ID))
+                self._source_conn = self._state_manager.get_connection_config(
+                    conn_name,
+                    self._config.get(consts.CONFIG_SECRET_MANAGER_TYPE),
+                    self._config.get(consts.CONFIG_SECRET_MANAGER_PROJECT_ID),
+                )
 
         return self._source_conn
 
@@ -92,9 +94,11 @@ class ConfigManager(object):
                 self._target_conn = self._config.get(consts.CONFIG_TARGET_CONN)
             else:
                 conn_name = self._config.get(consts.CONFIG_TARGET_CONN_NAME)
-                self._target_conn = self._state_manager.get_connection_config(conn_name,
-                                        self._config.get(consts.CONFIG_SECRET_MANAGER_TYPE),
-                                        self._config.get(consts.CONFIG_SECRET_MANAGER_PROJECT_ID))
+                self._target_conn = self._state_manager.get_connection_config(
+                    conn_name,
+                    self._config.get(consts.CONFIG_SECRET_MANAGER_TYPE),
+                    self._config.get(consts.CONFIG_SECRET_MANAGER_PROJECT_ID),
+                )
 
         return self._target_conn
 

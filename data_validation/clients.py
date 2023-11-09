@@ -23,7 +23,6 @@ import pandas
 from google.cloud import bigquery
 
 from data_validation import client_info, consts, exceptions
-from data_validation.secret_manager import SecretManagerBuilder
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
@@ -208,30 +207,14 @@ def get_all_tables(client, allowed_schemas=None):
 
 def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
-    connection_config = copy.deepcopy(connection_config)
-    source_type = connection_config.pop(consts.SOURCE_TYPE)
-    secret_manager_type = connection_config.pop(consts.SECRET_MANAGER_TYPE, None)
-    secret_manager_project_id = connection_config.pop(
-        consts.SECRET_MANAGER_PROJECT_ID, None
-    )
-
-    decrypted_connection_config = {}
-    if secret_manager_type is not None:
-        sm = SecretManagerBuilder().build(secret_manager_type.lower())
-        for config_item in connection_config:
-            decrypted_connection_config[config_item] = sm.maybe_secret(
-                secret_manager_project_id, connection_config[config_item]
-            )
-    else:
-        decrypted_connection_config = connection_config
+    connection_copy = copy.deepcopy(connection_config)
+    source_type = connection_copy.pop(consts.SOURCE_TYPE)
 
     # The ibis_bigquery.connect expects a credentials object, not a string.
-    if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in decrypted_connection_config:
-        key_path = decrypted_connection_config.pop(
-            consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
-        )
+    if consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH in connection_copy:
+        key_path = connection_copy.pop(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
         if key_path:
-            decrypted_connection_config[
+            connection_copy[
                 "credentials"
             ] = google.oauth2.service_account.Credentials.from_service_account_file(
                 key_path
@@ -244,7 +227,7 @@ def get_data_client(connection_config):
         raise Exception(msg)
 
     try:
-        data_client = CLIENT_LOOKUP[source_type](**decrypted_connection_config)
+        data_client = CLIENT_LOOKUP[source_type](**connection_copy)
         data_client._source_type = source_type
     except Exception as e:
         msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
