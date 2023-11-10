@@ -58,4 +58,17 @@ def _get_type(typestr: str) -> dt.DataType:
     return _parse_numeric(typestr)
 
 
+def list_schemas(self, like=None):
+    with self.begin() as con:
+        # Databases on Postgres are not the same as schemas and for this method we need the schema list (SQL query reference: https://dba.stackexchange.com/a/127668)
+        schemas = [
+            row.nspname
+            for row in con.exec_driver_sql(
+                "SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' ORDER BY 1"
+            ).mappings()
+        ]
+    return self._filter_with_like(schemas, like)
+
+
 PostgresBackend._metadata = _metadata
+PostgresBackend.list_databases = list_schemas

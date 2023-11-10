@@ -391,9 +391,6 @@ def find_tables_using_string_matching(args):
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
     target_table_map = get_table_map(target_client)
 
-    # print(f"SOURCE TABLE MAP: {str(source_table_map)}")
-    # print(f"TARGET TABLE MAP: {str(target_table_map)}")
-
     table_configs = _compare_match_tables(
         source_table_map, target_table_map, score_cutoff=score_cutoff
     )
