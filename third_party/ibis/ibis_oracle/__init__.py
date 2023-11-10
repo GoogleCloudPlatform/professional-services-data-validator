@@ -61,6 +61,8 @@ class Backend(BaseAlchemyBackend):
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
                 cur.execute("ALTER SESSION SET TIME_ZONE='UTC'")
+                # Standardise numeric formatting on en_US (issue 1033).
+                cur.execute("ALTER SESSION SET NLS_NUMERIC_CHARACTERS='.,'")
 
         super().do_connect(engine)
 
