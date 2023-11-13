@@ -312,6 +312,11 @@ def sa_format_binary_length_mssql(translator, op):
     return sa.func.datalength(arg)
 
 
+def sa_format_binary_length_oracle(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.dbms_lob.getlength(arg)
+
+
 def sa_cast_postgres(t, op):
     # Add cast from numeric to string
     arg = op.arg
@@ -438,7 +443,7 @@ ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 OracleExprTranslator._registry[ToChar] = sa_format_to_char
-OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length
+OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
 
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
