@@ -711,15 +711,14 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         if arg_value:
+            arg_value = [x.casefold() for x in arg_value]
             if exclude_cols:
-                cols_excluded = [x.casefold() for x in arg_value]
-                arg_value = [
+                included_cols = [
                     column
                     for column in casefold_source_columns
-                    if column not in cols_excluded
+                    if column not in arg_value
                 ]
-            else:
-                arg_value = [x.casefold() for x in arg_value]
+                arg_value = included_cols
 
             if supported_types:
                 # This mutates external supported_types, making it local as part of adding more values.
