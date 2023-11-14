@@ -288,7 +288,7 @@ data-validation connections add
 
 
 ## DB2
-DB2 requires the `ibm_db_sa` package.
+DB2 requires the `ibm_db_sa` package. We currently support only IBM DB2 LUW - Universal Database for Linux/Unix/Windows versions 9.7 onwards.
 ```
 data-validation connections add 
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)

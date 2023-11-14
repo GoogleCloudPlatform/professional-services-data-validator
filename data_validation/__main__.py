@@ -392,6 +392,7 @@ def get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
     table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
+
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
