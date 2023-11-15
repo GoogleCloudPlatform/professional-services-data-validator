@@ -124,13 +124,11 @@ def test_mysql_generate_table_partitions():
     assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
-mock.patch(
+@mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-
-
-def test_mysql_dry_run(mock_conn, capsys):
+def test_mysql_dry_run(capsys):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
