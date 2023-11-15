@@ -648,7 +648,7 @@ class ConfigManager(object):
         return aggregate_config
 
     def build_config_column_aggregates(
-        self, agg_type, arg_value, supported_types, cast_to_bigint=False
+        self, agg_type, arg_value, exclude_cols, supported_types, cast_to_bigint=False
     ):
         """Return list of aggregate objects of given agg_type."""
 
@@ -712,6 +712,14 @@ class ConfigManager(object):
 
         if arg_value:
             arg_value = [x.casefold() for x in arg_value]
+            if exclude_cols:
+                included_cols = [
+                    column
+                    for column in casefold_source_columns
+                    if column not in arg_value
+                ]
+                arg_value = included_cols
+
             if supported_types:
                 # This mutates external supported_types, making it local as part of adding more values.
                 supported_types = supported_types + [
@@ -724,6 +732,11 @@ class ConfigManager(object):
                     "binary",
                     "!binary",
                 ]
+        else:
+            if exclude_cols:
+                raise ValueError(
+                    "Exclude columns flag cannot be present with '*' column aggregation"
+                )
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):

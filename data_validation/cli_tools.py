@@ -560,6 +560,12 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
     )
     optional_arguments.add_argument(
+        "--exclude-columns",
+        "-ec",
+        action="store_true",
+        help="Flag to indicate the list of columns should be excluded from validation and not included.",
+    )
+    optional_arguments.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -798,6 +804,12 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         "--std",
         "-std",
         help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+    )
+    optional_arguments.add_argument(
+        "--exclude-columns",
+        "-ec",
+        action="store_true",
+        help="Flag to indicate the list of columns should be excluded from validation and not included.",
     )
     optional_arguments.add_argument(
         "--wildcard-include-string-len",

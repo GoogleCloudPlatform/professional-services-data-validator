@@ -66,11 +66,11 @@ AGGREGATE_CONFIG_A = {
     consts.CONFIG_TYPE: "sum",
 }
 
-GROUPED_COLUMN_CONFIG_A = {
-    consts.CONFIG_SOURCE_COLUMN: "a",
-    consts.CONFIG_TARGET_COLUMN: "a",
-    consts.CONFIG_FIELD_ALIAS: "a",
-    consts.CONFIG_CAST: None,
+AGGREGATE_CONFIG_B = {
+    consts.CONFIG_SOURCE_COLUMN: "b",
+    consts.CONFIG_TARGET_COLUMN: "b",
+    consts.CONFIG_FIELD_ALIAS: "sum__b",
+    consts.CONFIG_TYPE: "sum",
 }
 
 AGGREGATE_CONFIG_C = {
@@ -78,6 +78,20 @@ AGGREGATE_CONFIG_C = {
     consts.CONFIG_TARGET_COLUMN: "length__c",
     consts.CONFIG_FIELD_ALIAS: "min__length__c",
     consts.CONFIG_TYPE: "min",
+}
+
+AGGREGATE_CONFIG_D = {
+    consts.CONFIG_SOURCE_COLUMN: "d",
+    consts.CONFIG_TARGET_COLUMN: "d",
+    consts.CONFIG_FIELD_ALIAS: "sum__d",
+    consts.CONFIG_TYPE: "sum",
+}
+
+GROUPED_COLUMN_CONFIG_A = {
+    consts.CONFIG_SOURCE_COLUMN: "a",
+    consts.CONFIG_TARGET_COLUMN: "a",
+    consts.CONFIG_FIELD_ALIAS: "a",
+    consts.CONFIG_CAST: None,
 }
 
 CUSTOM_QUERY_VALIDATION_CONFIG = {
@@ -123,7 +137,7 @@ class MockIbisClient(object):
 
 class MockIbisTable(object):
     def __init__(self):
-        self.columns = ["a", "b", "c"]
+        self.columns = ["a", "b", "c", "d"]
 
     def __getitem__(self, key):
         return MockIbisColumn(key)
@@ -289,11 +303,43 @@ def test_build_config_aggregates(module_under_test):
         copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    aggregate_configs = config_manager.build_config_column_aggregates("sum", ["a"], [])
+    aggregate_configs = config_manager.build_config_column_aggregates(
+        "sum", ["a"], False, []
+    )
+    assert len(aggregate_configs) == 1
     assert aggregate_configs[0] == AGGREGATE_CONFIG_A
 
-    aggregate_configs = config_manager.build_config_column_aggregates("min", ["c"], [])
+    aggregate_configs = config_manager.build_config_column_aggregates(
+        "min", ["c"], False, []
+    )
     assert aggregate_configs[0] == AGGREGATE_CONFIG_C
+    assert len(aggregate_configs) == 1
+
+
+def test_build_config_aggregates_ec(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    aggregate_configs = config_manager.build_config_column_aggregates(
+        "sum", ["a", "c"], True, []
+    )
+    assert len(aggregate_configs) == 2
+    assert aggregate_configs[0] == AGGREGATE_CONFIG_B
+    assert aggregate_configs[1] == AGGREGATE_CONFIG_D
+
+
+def test_build_config_aggregates_ec_exception(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        config_manager.build_config_column_aggregates("sum", None, True, [])
+    assert (
+        str(excinfo.value)
+        == "Exclude columns flag cannot be present with '*' column aggregation"
+    )
 
 
 def test_build_config_aggregates_no_match(module_under_test):
@@ -302,7 +348,7 @@ def test_build_config_aggregates_no_match(module_under_test):
     )
 
     aggregate_configs = config_manager.build_config_column_aggregates(
-        "sum", ["a"], ["float64"]
+        "sum", ["a"], False, ["float64"]
     )
     assert not aggregate_configs
 

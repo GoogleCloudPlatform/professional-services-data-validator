@@ -87,37 +87,61 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, None, cast_to_bigint=cast_to_bigint
+            "count", col_args, args.exclude_columns, None, cast_to_bigint=cast_to_bigint
         )
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "sum",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "avg",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "min",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "max",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.bit_xor:
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "bit_xor", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "bit_xor",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.std:
         col_args = None if args.std == "*" else cli_tools.get_arg_list(args.std)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "std", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "std",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     return aggregate_configs
 
