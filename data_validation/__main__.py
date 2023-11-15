@@ -468,16 +468,37 @@ def run_validation(config_manager, dry_run=False, verbose=False):
         result_handler=None,
         verbose=verbose,
     )
+
     if dry_run:
+        sql_alchemy_clients = [
+            "mysql",
+            "oracle",
+            "postgres",
+            "db2",
+            "mssql",
+            "redshift",
+            "snowflake",
+        ]
+
+        source_query = validator.validation_builder.get_source_query().compile()
+        if config_manager.source_client.name in sql_alchemy_clients:
+            source_query = source_query.compile(
+                config_manager.source_client.con.engine,
+                compile_kwargs={"literal_binds": True},
+            )
+
+        target_query = validator.validation_builder.get_target_query().compile()
+        if config_manager.target_client.name in sql_alchemy_clients:
+            target_query = target_query.compile(
+                config_manager.target_client.con.engine,
+                compile_kwargs={"literal_binds": True},
+            )
+
         print(
             json.dumps(
                 {
-                    "source_query": str(
-                        validator.validation_builder.get_source_query().compile()
-                    ),
-                    "target_query": str(
-                        validator.validation_builder.get_target_query().compile()
-                    ),
+                    "source_query": str(source_query),
+                    "target_query": str(target_query),
                 },
                 indent=4,
             )
