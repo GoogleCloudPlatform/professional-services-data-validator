@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 from unittest import mock
 
@@ -1131,6 +1132,35 @@ def test_bigquery_generate_table_partitions(mock_conn):
         len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
     assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_dry_run(mock_conn, capsys):
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--hash=col_string",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    main.run_validation(config_managers[0], dry_run=True)
+    out, err = capsys.readouterr()
+    assert err == ""
+    dry_run = json.loads(out)
+    assert (
+        dry_run["source_query"]
+        == f"WITH t0 AS (\n  SELECT t6.*, t6.`col_string` AS `cast__col_string`\n  FROM `{PROJECT_ID}.pso_data_validator.dvt_core_types` t6\n),\nt1 AS (\n  SELECT t0.*,\n         IFNULL(t0.`cast__col_string`, 'DEFAULT_REPLACEMENT_STRING') AS `ifnull__cast__col_string`\n  FROM t0\n),\nt2 AS (\n  SELECT t1.*,\n         rtrim(t1.`ifnull__cast__col_string`) AS `rstrip__ifnull__cast__col_string`\n  FROM t1\n),\nt3 AS (\n  SELECT t2.*,\n         upper(t2.`rstrip__ifnull__cast__col_string`) AS `upper__rstrip__ifnull__cast__col_string`\n  FROM t2\n),\nt4 AS (\n  SELECT t3.*,\n         ARRAY_TO_STRING([t3.`upper__rstrip__ifnull__cast__col_string`], '') AS `concat__all`\n  FROM t3\n)\nSELECT t5.`hash__all`, t5.`id`\nFROM (\n  SELECT t4.*, TO_HEX(SHA256(t4.`concat__all`)) AS `hash__all`\n  FROM t4\n) t5"
+    )
 
 
 @mock.patch(
