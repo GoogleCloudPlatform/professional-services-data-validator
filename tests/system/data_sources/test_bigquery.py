@@ -1153,9 +1153,9 @@ def test_bigquery_dry_run(mock_conn, capsys):
     )
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    main.run_validation(config_manager, dry_run=True)
+    main.run_validation(config_managers[0], dry_run=True)
     out, err = capsys.readouterr()
+    assert err == ""
     dry_run = json.loads(out)
     assert (
         dry_run["source_query"]
