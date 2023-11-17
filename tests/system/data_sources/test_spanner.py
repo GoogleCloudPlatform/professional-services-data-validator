@@ -285,6 +285,7 @@ def test_column_validation_core_types(spanner_connection_config, database_id):
             "-tc=mock-conn",
             f"-tbls={database_id}.dvt_core_types",
             "--filter-status=fail",
+            "--grouped-columns=col_varchar_30",
             "--sum=*",
             "--min=*",
             "--max=*",
