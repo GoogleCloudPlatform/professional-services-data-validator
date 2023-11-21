@@ -62,6 +62,7 @@ import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
+from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 
 # TD requires teradatasql
 try:
@@ -471,6 +472,8 @@ RedShiftExprTranslator._registry[BinaryLength] = sa_format_binary_length
 Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
 Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
 Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
+
+SpannerExprTranslator._registry[RawSQL] = format_raw_sql
 
 if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
