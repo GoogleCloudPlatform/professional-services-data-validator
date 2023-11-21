@@ -29,3 +29,4 @@ rewrites = OracleExprTranslator.rewrites
 
 class OracleCompiler(AlchemyCompiler):
     translator_class = OracleExprTranslator
+    supports_indexed_grouping_keys = False

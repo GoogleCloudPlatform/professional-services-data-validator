@@ -251,6 +251,7 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
+            "--grouped-columns=col_varchar_30",
             "--sum=*",
             "--min=*",
             "--max=*",
