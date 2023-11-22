@@ -7,6 +7,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from google.api_core.exceptions import PermissionDenied, NotFound
+import google.auth
 
 class SecretManagerBuilder:
     def build(self, client_type):
@@ -45,5 +47,10 @@ class GCPSecretManager:
             # Return the decoded payload.
             payload = response.payload.data.decode("UTF-8")
             return payload
-        except BaseException:
-            return secret_id
+        except (PermissionDenied, NotFound) as inst:
+            credentials, project_id = google.auth.default()
+            if hasattr(credentials, "service_account_email"):
+                print("Service Account " + credentials.service_account_email + " in use.", flush=True)
+            else:
+                print("WARNING: no service account credential. User account credential?", flush=True)
+            raise ValueError(inst.args[0])
