@@ -20,12 +20,14 @@ TEST_PROJECT_NAME = "pso-kokoro-resources"
 CONN_CONFIG = "pso-kokoro-resources"
 NON_EXIST_NAME = "nona"
 
+
 def test_retrieve_connection_config():
     manager = secret_manager.SecretManagerBuilder().build("gcp")
     config = manager.maybe_secret(TEST_PROJECT_NAME, TEST_CONN_NAME)
     assert config == CONN_CONFIG
 
+
 def test_retrieve_nonexistent_secret():
     manager = secret_manager.SecretManagerBuilder().build("gcp")
     with pytest.raises(ValueError):
-        config = manager.maybe_secret(TEST_PROJECT_NAME, NON_EXIST_NAME)
+        manager.maybe_secret(TEST_PROJECT_NAME, NON_EXIST_NAME)

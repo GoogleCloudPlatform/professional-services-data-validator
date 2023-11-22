@@ -1,16 +1,11 @@
 # Data Validation Connections
-You will need to specify connection information to connect to the database before running any validations with the data validation tool. The tool allows users two options to specify connection information a) save connection information in a file in the filesystem/GCS used by data validation tool and b) fetch connection information as a secret from the GCP secret manager. Saving the connection information in the secret manager is recommended as it is secure and supports password rotation. The user or service account running data validation tool must have `roles/secretmanager.secretAccessor` either at the project level or at the individual secret level to access secrets stored in the secret manager. Please see (Secret Manger IAM roles)[https://cloud.google.com/secret-manager/docs/access-control]
+You will need to specify connection configuration (host, port, username, password etc.) to connect to the database before running any validations with the data validation tool. The tool validates connections when the configuration is provided via the `connections add` command before storing the connection in the filesystem. The configuration is stored as JSON key value pairs which are specific to the datasource type (BigQuery, Postgres, Oracle). DVT currently only stores the configuration information in the filesystem/GCS. Users can copy the contents of the file into a secret in the GCP secret manager. Once the connection configuration is stored in the secret manager the tool can use it. DVT reads configuration information from the filesystem (by default) or from the secret manager if the secret manager type ("gcp") and project are provided. When DVT is run in a distributed environment (multiple VMs or containers) using a secret manager is recommended. Secret manager also keeps passwords and other configuration information secure and supports password rotation. The user or service account running data validation tool must have `roles/secretmanager.secretAccessor` either at the project level or at the individual secret level to access secrets stored in the secret manager. Please see (Secret Manger IAM roles)[https://cloud.google.com/secret-manager/docs/access-control]
 
-If connection information is saved to the filesystem/GCS, it will be saved either to `~/.config/google-pso-data-validator/` or 
-a directory specified by the env variable `PSO_DV_CONFIG_HOME`. Note that if this path is set, query validation configs will also be saved here.
-
+By default the connection configuration is saved the directory `~/.config/google-pso-data-validator/`. If the env variable `PSO_DV_CONFIG_HOME` is specified the configuration information is stored here. `PSO_DV_CONFIG_HOME` can specify a location in the filesystem or GCS.  
 eg.
-`export PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`
+`export PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`.  If `PSO_DV_CONFIG_HOME` is specified, the query validation configs will also be saved there. 
 
-## Using GCP Secret Manager
-DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing and fetching secrets used to connect to your database. The entire connection information - typically host name, port number, user name, database, password can be stored as JSON name value pairs. The names and values are different for each host type. Please add a connection for the specific host type using the commands below and it will be saved in the configuration directory. Test the connection and then and save the connection configuration as a secret in the secret manager. The connection configuration can be found in the file <connection name>.connection.json in the directory mentioned above. Once the information is stored in the secret manager the file <connection name>.connection.json can be deleted for security reason. 
-
-If the secret-manager flags are present, the connection name should reference secret names instead of the secret itself. For example,
+If the secret-manager flags are present, the connection name should reference secret names. For example,
 the following BigQuery connection references a connection with name 'bq' stored in project MY-PROJECT.
 
 ```
@@ -21,25 +16,14 @@ data-validation query \
     --query 'select * from bigquery-public-data.new_york_citibike.citibike_trips limit 10;'
 
 ```
--- Recommend Delete --
-DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing and referencing secrets in your connection configuration.
-
-If the secret-manager flags are present, the remaining connection flags should reference secret names instead of the secret itself. For example,
-the following BigQuery connection references a secret with name 'dvt-project-id' stored in project MY-PROJECT.
-
-```
-data-validation connections add \
-    --secret-manager-type GCP \
-    --secret-manager-project-id <MY-PROJECT> \
-    --connection-name bq BigQuery \
-    --project-id 'dvt-project-id'
-
-```
+DVT only supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing and referencing secrets in your connection configuration.
 
 ## List existing connections
 ```
 data-validation connections list
 ```
+Lists connections that have been validated and stored in the filesystem. This command does not access secrets in the secret manager.
+
 ## List supporting connection types
 ```
 data-validation connections add -h
@@ -74,8 +58,6 @@ Below are the connection parameters for each database.
 ## Raw
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Raw                     Connection name
     --json JSON                                         Raw JSON for connection
 ```
@@ -85,13 +67,11 @@ The raw JSON can also be found in the connection config file. For example,
 ## Google BigQuery
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME BigQuery                Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
     [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
 ```
-
+DVT allows you to use and store service account keys. Google does *not* recommend using [service account keys](https://cloud.google.com/iam/docs/best-practices-service-accounts#service-account-keys). Google recommends using [service account impersonation](https://cloud.google.com/iam/docs/service-account-impersonation). 
 ### User/Service account needs following BigQuery permissions to run DVT:
 * bigquery.jobs.create (BigQuery JobUser role)
 * bigquery.readsessions.create (BigQuery Read Session User)
@@ -101,31 +81,27 @@ data-validation connections add
 ### If you plan to store validation results in BigQuery:
 * bigquery.tables.update (BigQuery Data Editor)
 * bigquery.tables.updateData (BigQuery Data Editor)
-
+The service account key option is not usable when the connection is stored in the secret manager. An example BigQuery configuration stored in the secret manager is `{"source_type": "BigQuery", "project_id": "xxx-flash-dance"}`
 
 ## Google Spanner
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Spanner                 Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
     --instance-id MY_INSTANCE                           Spanner instance to connect to
     --database-id MY-DB                                 Spanner database (schema) to connect to
     [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
 ```
-
+Please see comments in the BigQuery section about using service account keys. An example Spanner configuration stored in the secret manager is `{"source_type": "xxxxxx", "project_id": "xxx-flash-dance"}`
 ###  User/Service account needs following Spanner role to run DVT:
 * roles/spanner.databaseReader
 
 ## Teradata
 Please note that Teradata is not-native to this package and must be installed
-via `pip install teradatasql` if you have a license.
+via `pip install teradatasql` if you have a license. An example Teradata configuration stored in the secret manager is `{"source_type": "Teradata", "host": "10.xx.xx.xx", "port": "1025", "user_name": "yyyy", "password": "zzzz"}`
 
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Teradata                Connection name
     --host HOST                                         Teradata host
     --port PORT                                         Teradata port, defaults to 1025
@@ -136,11 +112,9 @@ data-validation connections add
 
 ## Oracle
 Please note the Oracle package is not installed by default. You will need to follow [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
-Then `pip install cx_Oracle`.
+Then `pip install cx_Oracle`. An example Oracle configuration stored in the secret manager is `{"source_type": "Oracle", "host": "10.xx.xx.xxx", "port": "1521", "user": "aaaaaaa", "password": "bbbbbbbb", "database": "XEPDB1"}`
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Oracle                  Connection name
     --host HOST                                         Oracle host
     --port PORT                                         Oracle port, defaults to 1521
@@ -156,12 +130,10 @@ data-validation connections add
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ## MSSQL Server
-MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
+MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`. An example MS SQL Server configuration stored in the secret manager is `{"source_type": "MSSQL", "host": "127.xx.xx.xx", "port": "1433", "user": "aaaaaaaaa", "password": "bbbbbbbbb", "database": "ccccccc"}`
 
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME MSSQL                   Connection name
     --host HOST                                         MSSQL host
     --port PORT                                         MSSQL port, defaults to 1433
@@ -171,10 +143,9 @@ data-validation connections add
 ```
 
 ## Postgres
+An example Postgres configuration stored in the secret manager is `{"source_type": "Postgres", "host": "127.xx.xx.xxx", "port": "5432", "user": "aaaaaaaa", "password": "bbbbbbbb", "database": "cccccccccc"}`
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Postgres                Connection name
     --host HOST                                         Postgres host
     --port PORT                                         Postgres port, defaults to 5432
@@ -184,11 +155,9 @@ data-validation connections add
 ```
 
 ## AlloyDB
-Please note AlloyDB supports same connection config as Postgres.
+Please note AlloyDB supports same connection config as Postgres. An example AlloyDB configuration stored in the secret manager is `{"source_type": "Postgres", "host": "127.xx.xx.xxx", "port": "5432", "user": "aaaaaaaa", "password": "bbbbbbbb", "database": "cccccccccc"}`
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Postgres                Connection name
     --host HOST                                         Postgres host
     --port PORT                                         Postgres port, defaults to 5432
@@ -198,10 +167,9 @@ data-validation connections add
 ```
 
 ## MySQL
+An example MySQL configuration stored in the secret manager is `{"source_type": "MySQL", "host": "127.xx.xx.xxx", "port": "3306", "user": "aaaaaaaa", "password": "bbbbbbb", "database": "ccccccccc"}`
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME MySQL                   Connection name
     --host HOST                                         MySQL host
     --port PORT                                         MySQL port, defaults to 3306
@@ -211,10 +179,9 @@ data-validation connections add
 ```
 
 ## Redshift
+An example Redshift configuration stored in the secret manager is `{"source_type": "Redshift", "host": "xxxx-cluster.xxxxx.xxxx.redshift.amazonaws.com", "port": "5439", "user": "aaaaaaa", "password": "bbbbbbb", "database": "cccccccc"}`
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Redshift                Connection name
     --host HOST                                         Redshift host
     --port PORT                                         Redshift port, defaults to 5439
@@ -226,8 +193,6 @@ data-validation connections add
 ## FileSystem (CSV or JSON only)
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME FileSystem              Connection name
     --table-name TABLE_NAME                             Table name to use as reference for file data
     --file-path FILE_PATH                               Local, GCS, or S3 file path
@@ -235,10 +200,10 @@ data-validation connections add
 ```
 
 ## Impala
+An example Impala configuration stored in the secret manager is `{"source_type": "Impala", "host": "10.xxx.xx.xxx", "port": "10000", "database": "ccccccc"}`
+
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Impala                  Connection name
     --host HOST                                         Impala host
     --port PORT                                         Impala port
@@ -264,15 +229,12 @@ Please note that for Group By validations, the following property must be set in
  ```
  pip install ibis-framework[impala]
  ```
- Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
  
  Hive connections are based on the Ibis Impala connection which uses [impyla](https://github.com/cloudera/impyla).
  Only Hive >=0.11 is supported due to impyla's dependency on HiveServer2.
 
  ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Impala                  Connection name
     --host HOST                                         Hive host
     --port PORT                                         Hive port, defaults to 10000
@@ -294,8 +256,6 @@ data-validation connections add
 DB2 requires the `ibm_db_sa` package.
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME DB2                     Connection name
     --host HOST                                         DB2 host
     --port PORT                                         DB2 port, defaults to 50000
@@ -308,11 +268,9 @@ data-validation connections add
 
 ## Snowflake
 Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
-For details on connection parameters, see the [Ibis Snowflake connection parameters](https://ibis-project.org/backends/snowflake/#connection-parameters).
+For details on connection parameters, see the [Ibis Snowflake connection parameters](https://ibis-project.org/backends/snowflake/#connection-parameters). An example Snowflake configuration stored in the secret manager is `{"source_type": "Snowflake", "user": "aaaaaaaa", "password": "bbbbbbbb", "account": "ccccccccc", "database": "ddddddd/public"}`
 ```
 data-validation connections add 
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Snowflake               Connection name
     --user USER                                         Snowflake user
     --password PASSWORD                                 Snowflake password
