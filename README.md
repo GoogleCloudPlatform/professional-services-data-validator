@@ -335,6 +335,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
                         See: *Validation Reports* section
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
+  [--config-file or -c CONFIG_FILE]
+                        YAML Config File Path to be used for storing validations.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -396,6 +398,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         See: *Validation Reports* section
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
+  [--config-file or -c CONFIG_FILE]
+                        YAML Config File Path to be used for storing validations.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -432,12 +436,14 @@ For example, this flag can be used as follows:
 }
 ```
 
-### YAML Configuration Files
+### Running DVT with YAML Configuration Files
 
-You can customize the configuration for any given validation by providing use
-case specific CLI arguments or editing the YAML configuration file.
+Running DVT with YAML configuration files is the recommended approach if:
+* you want to customize the configuration for any given validation by providing use case specific CLI arguments or editing the YAML configuration file OR
+* you want to run DVT at scale (i.e. row validations across many partitions)
+Nearly every validation command can take the argument `-c <file-name>` (the `generate-table-partitions` command takes  `-cdir <directory-name>`) where one or more yaml files are produced. These yaml files can be modified (for more specific validations), see below) 
 
-For example, the following command creates a YAML file for the validation of the
+The following command creates a YAML file for the validation of the
 `new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
 citibike.yaml`.
@@ -462,6 +468,24 @@ OR
 
 data-validation configs run -cdir gs://my-bucket/my-validations/
 ```
+#### Scaling DVT to run 10's to 1000's of validations concurrently
+The above example `configs run -cdir` shows how you can run multiple validations with one command. If the directory used has been created by `generate-table-partitions`, you will have partition files numbered from `0000.yaml` to `<partno>.yaml`, where `<partno>` is one less than the total number of partitions. These can be run as mentioned above and the partitions will be validated in order. This could take a long time if the number of partitions is large.
+
+DVT validations can be run concurrently (horizontal scaling) using GKE (Kubernetes Jobs) or Cloud Run Jobs, GCP's managed Kubernetes offering. In order to run DVT in a container, you have to build a docker image, [see instructions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/docker#readme). When creating yamls with `generate-table-partitions` you must use the secret manager for the connection configuration. We recommend that you use the bq-result-handler to save your validation results. In order to validate partitions concurrently, run DVT in Kubernetes or Cloud Run as shown below:
+```
+data-validation (--verbose or -v) (--log-level or -ll) configs run
+  [--kube-comp or -kc]
+  --config-dir or -cdir GCS_DIRECTORY 
+              where GCS_DIRECTORY = CONFIG_DIR/SOURCE_SCHEMA.SOURCE_TABLE, where CONFIG_DIR, SOURCE_SCHEMA and SOURCE_TABLE are
+              the arguments provided to generate-table-partitions to generate the partition yamls. GCS_DIRECTORY is the directory
+              where the partition files numbered 0000.yaml to <partno>.yaml are stored.
+```
+
+The Cloud Run and Kubernetes pods must run in a network with access to the database servers. Every Cloud Run job is associated with a [service account](https://cloud.google.com/run/docs/securing/service-identity). You need to ensure that this service account has access to Google Cloud Storage (to read yaml files), Google Secret Manager (to read the secret with connection configuration) and BigQuery (to publish results). If you are using Kubernetes, you will need to use a service account with the same privileges as mentioned for Cloud Run. In Kubernetes, you will need to set up [workload identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) so the DVT container can impersonate the service account.
+
+In Cloud Run, the [job](https://cloud.google.com/run/docs/create-jobs) must be run as multiple, independent tasks with the task count set to the number of partitions generated. In Kubernetes, set the number of completions to the number of partitions generated - see [Kubernetes Parallel Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/#parallel-jobs). The option `--kube-comp or -kc` tells DVT that many DVT containers are running in a Kubernetes cluster. Each DVT container only validates the specific partition yaml (based on the index assigned by Kubernetes control plane). If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (a `--config-file` is provided instead), the option is ignored.
+
+By default, each partition validation is retried upto 3 times if there is any error. In Kubernetes and Cloud Run, you can set the parallelism to the number you want. If the parallelism is set to too high a number, then the databases being queried can become overloaded, resulting in timeouts and errors. If you are validating 1000's of partitions in parallel, you may find that setting the parallelism too high (say 100) may result in timeouts and slow down the validation.   
 
 View the complete YAML file for a Grouped Column validation on the
 [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.

@@ -9,7 +9,7 @@
 
 from google.api_core.exceptions import PermissionDenied, NotFound
 import google.auth
-
+import logging
 
 class SecretManagerBuilder:
     def build(self, client_type):
@@ -51,13 +51,9 @@ class GCPSecretManager:
         except (PermissionDenied, NotFound) as inst:
             credentials, project_id = google.auth.default()
             if hasattr(credentials, "service_account_email"):
-                print(
-                    "Service Account " + credentials.service_account_email + " in use.",
-                    flush=True,
+                logging.error(
+                    "Service Account " + credentials.service_account_email + " in use."
                 )
             else:
-                print(
-                    "WARNING: no service account credential. User account credential?",
-                    flush=True,
-                )
+                logging.error("No service account credential. User account credential?")
             raise ValueError(inst.args[0])
