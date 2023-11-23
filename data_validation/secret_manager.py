@@ -11,6 +11,7 @@ from google.api_core.exceptions import PermissionDenied, NotFound
 import google.auth
 import logging
 
+
 class SecretManagerBuilder:
     def build(self, client_type):
         """
