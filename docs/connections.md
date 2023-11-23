@@ -135,7 +135,7 @@ data-validation connections add
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ## MSSQL Server
-MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`. An example MS SQL Server configuration stored in the secret manager is `{"source_type": "MSSQL", "host": "127.xx.xx.xx", "port": "1433", "user": "aaaaaaaaa", "password": "bbbbbbbbb", "database": "ccccccc"}`
+MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`. For connection query parameter options, see https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections. An example MS SQL Server configuration stored in the secret manager is `{"source_type": "MSSQL", "host": "127.xx.xx.xx", "port": "1433", "user": "aaaaaaaaa", "password": "bbbbbbbbb", "database": "ccccccc"}`
 
 ```
 data-validation connections add 
