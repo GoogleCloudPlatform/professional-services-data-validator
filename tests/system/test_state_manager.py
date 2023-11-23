@@ -36,7 +36,7 @@ def test_gcs_create_and_get_connection_config():
     manager = state_manager.StateManager(GCS_STATE_PATH)
     manager.create_connection(TEST_CONN_NAME, TEST_CONN)
 
-    config = manager.get_connection_config(TEST_CONN_NAME)
+    config = manager.get_connection_config(TEST_CONN_NAME, None, None)
     assert config == TEST_CONN
 
 
