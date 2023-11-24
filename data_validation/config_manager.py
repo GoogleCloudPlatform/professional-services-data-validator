@@ -406,6 +406,8 @@ class ConfigManager(object):
         """Return Dict object formatted for a Yaml file."""
         config = copy.deepcopy(self.config)
 
+        # The yaml file has the connection information, secret manager and the result handler at the root level
+        # not in the validations block. Therefore these are removed before saving to the file.
         config.pop(consts.CONFIG_SOURCE_CONN, None)
         config.pop(consts.CONFIG_TARGET_CONN, None)
 
@@ -413,6 +415,9 @@ class ConfigManager(object):
         config.pop(consts.CONFIG_TARGET_CONN_NAME, None)
 
         config.pop(consts.CONFIG_RESULT_HANDLER, None)
+
+        config.pop(consts.CONFIG_SECRET_MANAGER_TYPE, None)
+        config.pop(consts.CONFIG_SECRET_MANAGER_PROJECT_ID, None)
 
         return config
 
