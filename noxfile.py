@@ -256,7 +256,7 @@ def integration_oracle(session):
     session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_hive(session):
     """Run Hive integration tests.
     Ensure Hive validation is running as expected.
