@@ -24,7 +24,7 @@ import os
 from typing import Dict, List
 
 from google.cloud import storage
-from yaml import Dumper, dump, load, SafeLoader
+from yaml import Dumper, dump, load, Loader
 
 from data_validation import client_info, consts
 from data_validation.secret_manager import SecretManagerBuilder
@@ -155,7 +155,9 @@ class StateManager(object):
             consts.YAML_SECRET_MANAGER_TYPE: None,
             consts.YAML_SECRET_MANAGER_PROJECT_ID: None,
         }
-        config_dict.update(load(validation_bytes, Loader=SafeLoader))
+        # Using Loader instead of SafeLoader here since SafeLoader does not handle tuples well
+        # Some of the labels may be tuples.
+        config_dict.update(load(validation_bytes, Loader=Loader))
         return config_dict
 
     def list_validations(self):
