@@ -474,6 +474,8 @@ Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
 Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
+SpannerExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
+SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
