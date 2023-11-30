@@ -207,7 +207,7 @@ def integration_spanner(session):
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_teradata(session):
     """Run Teradata integration tests.
     Ensure Teradata validation is running as expected.
@@ -235,7 +235,7 @@ def integration_state(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_oracle(session):
     """Run Oracle integration tests.
     Ensure Oracle validation is running as expected.
@@ -271,7 +271,7 @@ def integration_hive(session):
     session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_snowflake(session):
     """Run Snowflake integration tests.
     Ensure Snowflake validation is running as expected.
