@@ -25,12 +25,12 @@ from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_ma
 def do_connect(
     self,
     host: str = "localhost",
-    user: str | None = None,
-    password: str | None = None,
+    user: str = None,
+    password: str = None,
     port: int = 5432,
-    database: str | None = None,
-    schema: str | None = None,
-    url: str | None = None,
+    database: str = None,
+    schema: str = None,
+    url: str = None,
     driver: Literal["psycopg2"] = "psycopg2",
 ) -> None:
     # Override do_connect() method to remove DDL queries to CREATE/DROP FUNCTION
