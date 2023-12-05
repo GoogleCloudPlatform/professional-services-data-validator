@@ -18,10 +18,8 @@ import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 import sqlalchemy as sa
 from ibis import util
-from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.postgres import Backend as PostgresBackend
-from ibis.backends.postgres.datatypes import (_BRACKETS, _parse_numeric,
-                                              _type_mapping)
+from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
 
 
 def do_connect(
