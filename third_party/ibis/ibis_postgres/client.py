@@ -52,7 +52,10 @@ def do_connect(
         connect_args["options"] = f"-csearch_path={schema}"
 
     engine = sa.create_engine(
-        alchemy_url, connect_args=connect_args, poolclass=sa.pool.StaticPool
+        alchemy_url,
+        connect_args=connect_args,
+        poolclass=sa.pool.StaticPool,
+        isolation_level="AUTOCOMMIT",
     )
 
     @sa.event.listens_for(engine, "connect")
@@ -67,23 +70,38 @@ def do_connect(
     self._temp_views: set[str] = set()
 
 
-def _metadata(self, query: str) -> sch.Schema:
-    raw_name = util.guid()
-    name = self._quote(raw_name)
+def _metadata(self, query: str):
+    # New metadata function for Spanner PostgreSQL.
+    # This function gets the schema of Spanner query results to build validation queries on top of.
+    name = "span" + util.guid()
     type_info_sql = """\
-    SELECT
-    attname,
-    format_type(atttypid, atttypmod) AS type
-    FROM pg_attribute
-    WHERE attrelid = CAST(:raw_name AS regclass)
-    AND attnum > 0
-    AND NOT attisdropped
-    ORDER BY attnum"""
+    SELECT column_name, data_type FROM information_schema.columns
+    WHERE table_name = :raw_name
+    """
     with self.begin() as con:
-        con.exec_driver_sql(f"CREATE TEMPORARY VIEW {name} AS {query}")
-        type_info = con.execute(sa.text(type_info_sql).bindparams(raw_name=raw_name))
+        con.exec_driver_sql(f"CREATE VIEW {name} AS {query}")
+        type_info = con.execute(sa.text(type_info_sql).bindparams(raw_name=name))
         yield from ((col, _get_type(typestr)) for col, typestr in type_info)
         con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
+
+
+# def _metadata(self, query: str) -> sch.Schema:
+#     raw_name = util.guid()
+#     name = self._quote(raw_name)
+#     type_info_sql = """\
+#     SELECT
+#     attname,
+#     format_type(atttypid, atttypmod) AS type
+#     FROM pg_attribute
+#     WHERE attrelid = CAST(:raw_name AS regclass)
+#     AND attnum > 0
+#     AND NOT attisdropped
+#     ORDER BY attnum"""
+#     with self.begin() as con:
+#         con.exec_driver_sql(f"CREATE TEMPORARY VIEW {name} AS {query}")
+#         type_info = con.execute(sa.text(type_info_sql).bindparams(raw_name=raw_name))
+#         yield from ((col, _get_type(typestr)) for col, typestr in type_info)
+#         con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
 
 
 def _get_type(typestr: str) -> dt.DataType:
