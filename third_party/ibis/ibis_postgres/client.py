@@ -79,7 +79,7 @@ def _metadata(self, query: str):
     WHERE table_name = :raw_name
     """
     with self.begin() as con:
-        con.exec_driver_sql(f"CREATE VIEW {name} AS {query}")
+        con.exec_driver_sql(f"CREATE VIEW {name} AS SELECT * FROM ({query}) t0 LIMIT 1")
         type_info = con.execute(sa.text(type_info_sql).bindparams(raw_name=name))
         yield from ((col, _get_type(typestr)) for col, typestr in type_info)
         con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
