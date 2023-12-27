@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 from unittest import mock
 
@@ -54,16 +55,6 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_FILTER_STATUS: None,
 }
 
-CONFIG_SCHEMA_VALID = {
-    consts.CONFIG_SOURCE_CONN: CONN,
-    consts.CONFIG_TARGET_CONN: CONN,
-    consts.CONFIG_TYPE: "Column",
-    consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
-    consts.CONFIG_TABLE_NAME: "entries",
-    consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: None,
-}
-
 
 def mock_get_connection_config(*args):
     if args[1] in ("mysql-conn", "mock-conn"):
@@ -79,357 +70,6 @@ def test_mysql_count_invalid_host():
             verbose=False,
         )
         df = data_validator.execute()
-        assert df["source_agg_value"][0] == df["target_agg_value"][0]
-    except exceptions.DataClientConnectionFailure:
-        # Local Testing will not work for MySQL
-        pass
-
-
-def test_schema_validation():
-    # This test is disabled.
-    # When issue-777 is resolved we can remove these comments and the return statement below.
-    return
-    try:
-        data_validator = data_validation.DataValidation(
-            CONFIG_SCHEMA_VALID,
-            verbose=False,
-        )
-        df = data_validator.execute()
-
-        for validation in df.to_dict(orient="records"):
-            assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
-    except exceptions.DataClientConnectionFailure:
-        # Local Testing will not work for MySQL
-        pass
-
-
-def test_mysql_row():
-    """Test row validation on MySQL"""
-    try:
-        config_row_valid = {
-            consts.CONFIG_SOURCE_CONN: CONN,
-            consts.CONFIG_TARGET_CONN: CONN,
-            # Validation Type
-            consts.CONFIG_TYPE: "Row",
-            # Configuration Required Depending on Validator Type
-            consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
-            consts.CONFIG_TABLE_NAME: "test_data_types_mysql_row",
-            consts.CONFIG_COMPARISON_FIELDS: [
-                {
-                    "source_column": "hash__all",
-                    "target_column": "hash__all",
-                    "field_alias": "hash__all",
-                    "cast": None,
-                }
-            ],
-            consts.CONFIG_CALCULATED_FIELDS: [
-                {
-                    "source_calculated_columns": ["serial_col"],
-                    "target_calculated_columns": ["serial_col"],
-                    "field_alias": "cast__serial_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["int_col"],
-                    "target_calculated_columns": ["int_col"],
-                    "field_alias": "cast__int_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["text_col"],
-                    "target_calculated_columns": ["text_col"],
-                    "field_alias": "cast__text_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["char_col"],
-                    "target_calculated_columns": ["char_col"],
-                    "field_alias": "cast__char_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["varchar_col"],
-                    "target_calculated_columns": ["varchar_col"],
-                    "field_alias": "cast__varchar_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["float_col"],
-                    "target_calculated_columns": ["float_col"],
-                    "field_alias": "cast__float_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["decimal_col"],
-                    "target_calculated_columns": ["decimal_col"],
-                    "field_alias": "cast__decimal_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["datetime_col"],
-                    "target_calculated_columns": ["datetime_col"],
-                    "field_alias": "cast__datetime_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["date_col"],
-                    "target_calculated_columns": ["date_col"],
-                    "field_alias": "cast__date_col",
-                    "type": "cast",
-                    "depth": 0,
-                },
-                {
-                    "source_calculated_columns": ["cast__serial_col"],
-                    "target_calculated_columns": ["cast__serial_col"],
-                    "field_alias": "ifnull__cast__serial_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__int_col"],
-                    "target_calculated_columns": ["cast__int_col"],
-                    "field_alias": "ifnull__cast__int_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__text_col"],
-                    "target_calculated_columns": ["cast__text_col"],
-                    "field_alias": "ifnull__cast__text_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__char_col"],
-                    "target_calculated_columns": ["cast__char_col"],
-                    "field_alias": "ifnull__cast__char_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__varchar_col"],
-                    "target_calculated_columns": ["cast__varchar_col"],
-                    "field_alias": "ifnull__cast__varchar_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__float_col"],
-                    "target_calculated_columns": ["cast__float_col"],
-                    "field_alias": "ifnull__cast__float_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__decimal_col"],
-                    "target_calculated_columns": ["cast__decimal_col"],
-                    "field_alias": "ifnull__cast__decimal_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__datetime_col"],
-                    "target_calculated_columns": ["cast__datetime_col"],
-                    "field_alias": "ifnull__cast__datetime_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["cast__date_col"],
-                    "target_calculated_columns": ["cast__date_col"],
-                    "field_alias": "ifnull__cast__date_col",
-                    "type": "ifnull",
-                    "depth": 1,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__serial_col"],
-                    "target_calculated_columns": ["ifnull__cast__serial_col"],
-                    "field_alias": "rstrip__ifnull__cast__serial_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__int_col"],
-                    "target_calculated_columns": ["ifnull__cast__int_col"],
-                    "field_alias": "rstrip__ifnull__cast__int_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__text_col"],
-                    "target_calculated_columns": ["ifnull__cast__text_col"],
-                    "field_alias": "rstrip__ifnull__cast__text_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__char_col"],
-                    "target_calculated_columns": ["ifnull__cast__char_col"],
-                    "field_alias": "rstrip__ifnull__cast__char_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__varchar_col"],
-                    "target_calculated_columns": ["ifnull__cast__varchar_col"],
-                    "field_alias": "rstrip__ifnull__cast__varchar_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__float_col"],
-                    "target_calculated_columns": ["ifnull__cast__float_col"],
-                    "field_alias": "rstrip__ifnull__cast__float_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__decimal_col"],
-                    "target_calculated_columns": ["ifnull__cast__decimal_col"],
-                    "field_alias": "rstrip__ifnull__cast__decimal_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__datetime_col"],
-                    "target_calculated_columns": ["ifnull__cast__datetime_col"],
-                    "field_alias": "rstrip__ifnull__cast__datetime_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["ifnull__cast__date_col"],
-                    "target_calculated_columns": ["ifnull__cast__date_col"],
-                    "field_alias": "rstrip__ifnull__cast__date_col",
-                    "type": "rstrip",
-                    "depth": 2,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__serial_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__serial_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__serial_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__int_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__int_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__int_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__text_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__text_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__text_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__char_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__char_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__char_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__varchar_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__varchar_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__varchar_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__float_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__float_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__float_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__decimal_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__decimal_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__decimal_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__datetime_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__datetime_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__datetime_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": ["rstrip__ifnull__cast__date_col"],
-                    "target_calculated_columns": ["rstrip__ifnull__cast__date_col"],
-                    "field_alias": "upper__rstrip__ifnull__cast__date_col",
-                    "type": "upper",
-                    "depth": 3,
-                },
-                {
-                    "source_calculated_columns": [
-                        "upper__rstrip__ifnull__cast__serial_col",
-                        "upper__rstrip__ifnull__cast__int_col",
-                        "upper__rstrip__ifnull__cast__text_col",
-                        "upper__rstrip__ifnull__cast__char_col",
-                        "upper__rstrip__ifnull__cast__varchar_col",
-                        "upper__rstrip__ifnull__cast__float_col",
-                        "upper__rstrip__ifnull__cast__decimal_col",
-                        "upper__rstrip__ifnull__cast__datetime_col",
-                        "upper__rstrip__ifnull__cast__date_col",
-                    ],
-                    "target_calculated_columns": [
-                        "upper__rstrip__ifnull__cast__serial_col",
-                        "upper__rstrip__ifnull__cast__int_col",
-                        "upper__rstrip__ifnull__cast__text_col",
-                        "upper__rstrip__ifnull__cast__char_col",
-                        "upper__rstrip__ifnull__cast__varchar_col",
-                        "upper__rstrip__ifnull__cast__float_col",
-                        "upper__rstrip__ifnull__cast__decimal_col",
-                        "upper__rstrip__ifnull__cast__datetime_col",
-                        "upper__rstrip__ifnull__cast__date_col",
-                    ],
-                    "field_alias": "concat__all",
-                    "type": "concat",
-                    "depth": 4,
-                },
-                {
-                    "source_calculated_columns": ["concat__all"],
-                    "target_calculated_columns": ["concat__all"],
-                    "field_alias": "hash__all",
-                    "type": "hash",
-                    "depth": 5,
-                },
-            ],
-            consts.CONFIG_PRIMARY_KEYS: [
-                {
-                    "source_column": "serial_col",
-                    "target_column": "serial_col",
-                    "field_alias": "serial_col",
-                    "cast": None,
-                }
-            ],
-            consts.CONFIG_FORMAT: "table",
-            consts.CONFIG_FILTER_STATUS: None,
-            consts.CONFIG_RANDOM_ROW_BATCH_SIZE: "5",
-            consts.CONFIG_USE_RANDOM_ROWS: True,
-        }
-
-        data_validator = data_validation.DataValidation(
-            config_row_valid,
-            verbose=False,
-        )
-        df = data_validator.execute()
-
         assert df["source_agg_value"][0] == df["target_agg_value"][0]
     except exceptions.DataClientConnectionFailure:
         # Local Testing will not work for MySQL
@@ -488,6 +128,35 @@ def test_mysql_generate_table_partitions():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_mysql_dry_run(capsys):
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "--hash=col_string",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    main.run_validation(config_managers[0], dry_run=True)
+    out, err = capsys.readouterr()
+    assert err == ""
+    dry_run = json.loads(out)
+    assert (
+        dry_run["source_query"]
+        == "SELECT t0.hash__all, t0.id \nFROM (SELECT t1.id AS id, t1.col_int8 AS col_int8, t1.col_int16 AS col_int16, t1.col_int32 AS col_int32, t1.col_int64 AS col_int64, t1.col_dec_20 AS col_dec_20, t1.col_dec_38 AS col_dec_38, t1.col_dec_10_2 AS col_dec_10_2, t1.col_float32 AS col_float32, t1.col_float64 AS col_float64, t1.col_varchar_30 AS col_varchar_30, t1.col_char_2 AS col_char_2, t1.col_string AS col_string, t1.col_date AS col_date, t1.col_datetime AS col_datetime, t1.col_tstz AS col_tstz, t1.cast__col_string AS cast__col_string, t1.ifnull__cast__col_string AS ifnull__cast__col_string, t1.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, t1.upper__rstrip__ifnull__cast__col_string AS upper__rstrip__ifnull__cast__col_string, t1.concat__all AS concat__all, sha2(t1.concat__all, '256') AS hash__all \nFROM (SELECT t2.id AS id, t2.col_int8 AS col_int8, t2.col_int16 AS col_int16, t2.col_int32 AS col_int32, t2.col_int64 AS col_int64, t2.col_dec_20 AS col_dec_20, t2.col_dec_38 AS col_dec_38, t2.col_dec_10_2 AS col_dec_10_2, t2.col_float32 AS col_float32, t2.col_float64 AS col_float64, t2.col_varchar_30 AS col_varchar_30, t2.col_char_2 AS col_char_2, t2.col_string AS col_string, t2.col_date AS col_date, t2.col_datetime AS col_datetime, t2.col_tstz AS col_tstz, t2.cast__col_string AS cast__col_string, t2.ifnull__cast__col_string AS ifnull__cast__col_string, t2.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, t2.upper__rstrip__ifnull__cast__col_string AS upper__rstrip__ifnull__cast__col_string, concat_ws('', t2.upper__rstrip__ifnull__cast__col_string) AS concat__all \nFROM (SELECT t3.id AS id, t3.col_int8 AS col_int8, t3.col_int16 AS col_int16, t3.col_int32 AS col_int32, t3.col_int64 AS col_int64, t3.col_dec_20 AS col_dec_20, t3.col_dec_38 AS col_dec_38, t3.col_dec_10_2 AS col_dec_10_2, t3.col_float32 AS col_float32, t3.col_float64 AS col_float64, t3.col_varchar_30 AS col_varchar_30, t3.col_char_2 AS col_char_2, t3.col_string AS col_string, t3.col_date AS col_date, t3.col_datetime AS col_datetime, t3.col_tstz AS col_tstz, t3.cast__col_string AS cast__col_string, t3.ifnull__cast__col_string AS ifnull__cast__col_string, t3.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, upper(t3.rstrip__ifnull__cast__col_string) AS upper__rstrip__ifnull__cast__col_string \nFROM (SELECT t4.id AS id, t4.col_int8 AS col_int8, t4.col_int16 AS col_int16, t4.col_int32 AS col_int32, t4.col_int64 AS col_int64, t4.col_dec_20 AS col_dec_20, t4.col_dec_38 AS col_dec_38, t4.col_dec_10_2 AS col_dec_10_2, t4.col_float32 AS col_float32, t4.col_float64 AS col_float64, t4.col_varchar_30 AS col_varchar_30, t4.col_char_2 AS col_char_2, t4.col_string AS col_string, t4.col_date AS col_date, t4.col_datetime AS col_datetime, t4.col_tstz AS col_tstz, t4.cast__col_string AS cast__col_string, t4.ifnull__cast__col_string AS ifnull__cast__col_string, TRIM(TRAILING '\f' FROM TRIM(TRAILING '\u000b' FROM TRIM(TRAILING '\r' FROM TRIM(TRAILING '\n' FROM TRIM(TRAILING '\t' FROM TRIM(TRAILING ' ' FROM (t4.ifnull__cast__col_string))))))) AS rstrip__ifnull__cast__col_string \nFROM (SELECT t5.id AS id, t5.col_int8 AS col_int8, t5.col_int16 AS col_int16, t5.col_int32 AS col_int32, t5.col_int64 AS col_int64, t5.col_dec_20 AS col_dec_20, t5.col_dec_38 AS col_dec_38, t5.col_dec_10_2 AS col_dec_10_2, t5.col_float32 AS col_float32, t5.col_float64 AS col_float64, t5.col_varchar_30 AS col_varchar_30, t5.col_char_2 AS col_char_2, t5.col_string AS col_string, t5.col_date AS col_date, t5.col_datetime AS col_datetime, t5.col_tstz AS col_tstz, t5.cast__col_string AS cast__col_string, coalesce(t5.cast__col_string, 'DEFAULT_REPLACEMENT_STRING') AS ifnull__cast__col_string \nFROM (SELECT t6.id AS id, t6.col_int8 AS col_int8, t6.col_int16 AS col_int16, t6.col_int32 AS col_int32, t6.col_int64 AS col_int64, t6.col_dec_20 AS col_dec_20, t6.col_dec_38 AS col_dec_38, t6.col_dec_10_2 AS col_dec_10_2, t6.col_float32 AS col_float32, t6.col_float64 AS col_float64, t6.col_varchar_30 AS col_varchar_30, t6.col_char_2 AS col_char_2, t6.col_string AS col_string, t6.col_date AS col_date, t6.col_datetime AS col_datetime, t6.col_tstz AS col_tstz, t6.col_string AS cast__col_string \nFROM dvt_core_types AS t6) AS t5) AS t4) AS t3) AS t2) AS t1) AS t0"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_core_types():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
@@ -498,6 +167,41 @@ def test_schema_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_core_types_to_bigquery():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mysql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_core_types",
+            "--exclusion-columns=id",
+            "--filter-status=fail",
+            (
+                # MySQL integers go to BigQuery INT64.
+                "--allow-list=int8:int64,int16:int64,int32:int64,"
+                # BigQuery does not have a float32 type.
+                "float32:float64,"
+                # TODO Review this mapping since this column is nullable on MySQL at the moment
+                # and should not be identified as not null
+                "!timestamp('UTC'):timestamp('UTC')"
+            ),
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -547,6 +251,7 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
+            "--grouped-columns=col_varchar_30",
             "--sum=*",
             "--min=*",
             "--max=*",

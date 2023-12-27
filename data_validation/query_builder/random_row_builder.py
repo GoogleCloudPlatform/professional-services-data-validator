@@ -32,6 +32,7 @@ RANDOM_SORT_SUPPORTS = [
     "mysql",
     "spanner",
     "redshift",
+    "snowflake",
 ]
 
 

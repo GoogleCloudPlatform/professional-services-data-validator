@@ -32,7 +32,14 @@ DEFAULT_PYTHON_VERSION = "3.10"
 # Python versions used for testing.
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10"]
 
-BLACK_PATHS = ("data_validation", "samples", "tests", "noxfile.py", "setup.py")
+BLACK_PATHS = (
+    "data_validation",
+    "samples",
+    "tests",
+    "third_party",
+    "noxfile.py",
+    "setup.py",
+)
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
 UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
 
@@ -41,7 +48,7 @@ def _setup_session_requirements(session, extra_packages=[]):
     """Install requirements for nox tests."""
 
     session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
-    session.install("-e", ".")
+    session.install("--no-cache-dir", "-e", ".")
 
     if extra_packages:
         session.install(*extra_packages)
@@ -200,7 +207,7 @@ def integration_spanner(session):
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_teradata(session):
     """Run Teradata integration tests.
     Ensure Teradata validation is running as expected.
@@ -228,14 +235,20 @@ def integration_state(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_oracle(session):
     """Run Oracle integration tests.
     Ensure Oracle validation is running as expected.
     """
     _setup_session_requirements(session, extra_packages=["cx_Oracle"])
 
-    expected_env_vars = ["PROJECT_ID", "ORACLE_PASSWORD", "ORACLE_HOST"]
+    expected_env_vars = [
+        "PROJECT_ID",
+        "ORACLE_PASSWORD",
+        "ORACLE_HOST",
+        "POSTGRES_PASSWORD",
+        "CLOUD_SQL_CONNECTION",
+    ]
     for env_var in expected_env_vars:
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
@@ -243,7 +256,7 @@ def integration_oracle(session):
     session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_hive(session):
     """Run Hive integration tests.
     Ensure Hive validation is running as expected.
@@ -258,7 +271,7 @@ def integration_hive(session):
     session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_snowflake(session):
     """Run Snowflake integration tests.
     Ensure Snowflake validation is running as expected.

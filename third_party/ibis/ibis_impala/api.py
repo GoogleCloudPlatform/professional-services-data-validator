@@ -16,7 +16,6 @@ import ibis
 from ibis.backends.impala import Backend as ImpalaBackend
 from ibis.backends.impala.client import ImpalaConnection
 
-from pathlib import Path
 from typing import Literal
 
 from ibis.backends.impala import udf
@@ -48,20 +47,20 @@ def do_connect(
 ):
     self._temp_objects = set()
     self._hdfs = hdfs_client
-   
+
     params = {
-        'host': host,
-        'port': port,
-        'database': database,
-        'timeout': timeout,
-        'use_ssl': use_ssl,
-        'ca_cert': ca_cert,
-        'user': user,
-        'password': password,
-        'auth_mechanism': auth_mechanism,
-        'kerberos_service_name': kerberos_service_name,
-        'use_http_transport': use_http_transport,
-        'http_path': http_path,
+        "host": host,
+        "port": port,
+        "database": database,
+        "timeout": timeout,
+        "use_ssl": use_ssl,
+        "ca_cert": ca_cert,
+        "user": user,
+        "password": password,
+        "auth_mechanism": auth_mechanism,
+        "kerberos_service_name": kerberos_service_name,
+        "use_http_transport": use_http_transport,
+        "http_path": http_path,
     }
     self.con = ImpalaConnection(pool_size=pool_size, **params)
     self._ensure_temp_db_exists()
@@ -207,6 +206,7 @@ ibis.backends.impala._chunks_to_pandas_array = _chunks_to_pandas_array
 ImpalaBackend.get_schema = get_schema
 ImpalaBackend._get_schema_using_query = _get_schema_using_query
 ImpalaBackend.do_connect = do_connect
+
 
 def impala_connect(
     host: str = "localhost",

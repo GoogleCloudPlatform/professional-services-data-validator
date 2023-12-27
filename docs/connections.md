@@ -124,6 +124,8 @@ data-validation connections add
     --user-name USER                                    Teradata user
     --password PASSWORD                                 Teradata password
     [--logmech LOGMECH]                                 Teradata logmech, defaults to "TD2"
+    [--use-no-lock-tables USE_NO_LOCK_TABLES]           Use access lock for queries, defaults to "False"
+    [--json-params JSON_PARAMS]                         Additional teradatasql JSON string parameters (Optional)
 ```
 
 ## Oracle
@@ -149,6 +151,7 @@ data-validation connections add
 
 ## MSSQL Server
 MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
+For connection query parameter options, see https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections.
 
 ```
 data-validation connections add 
@@ -160,6 +163,8 @@ data-validation connections add
     --user USER                                         MSSQL user
     --password PASSWORD                                 MSSQL password
     --database DATABASE                                 MSSQL database
+    [--url URL]                                         SQLAlchemy connection URL
+    [--query QUERY]                                     Connection query parameters i.e. '{"TrustServerCertificate": "yes"}'
 ```
 
 ## Postgres
@@ -283,7 +288,7 @@ data-validation connections add
 
 
 ## DB2
-DB2 requires the `ibm_db_sa` package.
+DB2 requires the `ibm_db_sa` package. We currently support only IBM DB2 LUW - Universal Database for Linux/Unix/Windows versions 9.7 onwards.
 ```
 data-validation connections add 
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)

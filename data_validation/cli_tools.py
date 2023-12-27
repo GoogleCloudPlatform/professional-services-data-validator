@@ -65,6 +65,8 @@ CONNECTION_SOURCE_FIELDS = {
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
         ["logmech", "(Optional) Log on mechanism"],
+        ["use_no_lock_tables", "Use an access lock for queries (defaults to False)"],
+        ["json_params", "(Optional) Additional teradatasql JSON string parameters"],
     ],
     "Oracle": [
         ["host", "Desired Oracle host"],
@@ -79,6 +81,8 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
+        ["query", "Connection query parameters"],
+        ["url", "SQL Server SQLAlchemy connection URL"],
     ],
     "MySQL": [
         ["host", "Desired MySQL host (default localhost)"],
@@ -562,6 +566,12 @@ def _configure_column_parser(column_parser):
         help="Comma separated list of columns to use in GroupBy 'col_a,col_b'",
     )
     optional_arguments.add_argument(
+        "--exclude-columns",
+        "-ec",
+        action="store_true",
+        help="Flag to indicate the list of columns should be excluded from validation and not included.",
+    )
+    optional_arguments.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
@@ -593,7 +603,7 @@ def _configure_column_parser(column_parser):
         "--wildcard-include-timestamp",
         "-wit",
         action="store_true",
-        help="Include timestamp fields for wildcard aggregations.",
+        help="Include timestamp/date fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
         "--cast-to-bigint",
@@ -802,6 +812,12 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
     )
     optional_arguments.add_argument(
+        "--exclude-columns",
+        "-ec",
+        action="store_true",
+        help="Flag to indicate the list of columns should be excluded from validation and not included.",
+    )
+    optional_arguments.add_argument(
         "--wildcard-include-string-len",
         "-wis",
         action="store_true",
@@ -811,7 +827,7 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         "--wildcard-include-timestamp",
         "-wit",
         action="store_true",
-        help="Include timestamp fields for wildcard aggregations.",
+        help="Include timestamp/date fields for wildcard aggregations.",
     )
     optional_arguments.add_argument(
         "--cast-to-bigint",

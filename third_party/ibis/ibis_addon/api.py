@@ -23,10 +23,19 @@ def cast(self, target_type: dt.DataType) -> Value:
     """Override ibis.expr.api's cast method.
     This allows for Timestamp-typed columns to be cast to Timestamp, since Ibis interprets some similar but non-equivalent types (eg. DateTime) to Timestamp (GitHub issue #451).
     """
+
+    def same_type(from_type, to_type) -> bool:
+        # The data type for Non-nullable columns if prefixed with "!", this is causing deviations
+        # between nullable and non-nullable columns. The second comparison below is catering for this.
+        return bool(
+            from_type == to_type
+            or str(from_type).lstrip("!") == str(to_type).lstrip("!")
+        )
+
     # validate
     op = ops.Cast(self, to=target_type)
 
-    if op.to == self.type() and not op.to.is_timestamp():
+    if same_type(op.to, self.type()) and not op.to.is_timestamp():
         # noop case if passed type is the same
         return self
 
@@ -47,7 +56,9 @@ def force_cast(self, target_type: dt.DataType) -> Value:
     try:
         op = ops.Cast(self, to=target_type)
     except parsy.ParseError:
-        raise SyntaxError(f"'{target_type}' is an invalid datatype provided to cast a ComparisonField")
+        raise SyntaxError(
+            f"'{target_type}' is an invalid datatype provided to cast a ComparisonField"
+        )
 
     if op.to.is_geospatial():
         from_geotype = self.type().geotype or "geometry"

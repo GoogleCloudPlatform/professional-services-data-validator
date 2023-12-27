@@ -55,13 +55,14 @@ from ibis.expr.operations import (
     Value,
     ExtractEpochSeconds,
 )
-from ibis.expr.types import NumericValue, TemporalValue
+from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
 import third_party.ibis.ibis_mysql.compiler
 import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
 from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
+from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 
 # TD requires teradatasql
 try:
@@ -74,6 +75,12 @@ try:
     from ibis.backends.snowflake import SnowflakeExprTranslator
 except Exception:
     SnowflakeExprTranslator = None
+
+
+class BinaryLength(Value):
+    arg = rlz.one_of([rlz.value(dt.Binary)])
+    output_dtype = dt.int32
+    output_shape = rlz.shape_like("arg")
 
 
 class ToChar(Value):
@@ -92,6 +99,10 @@ class ToChar(Value):
 
 class RawSQL(Comparison):
     pass
+
+
+def compile_binary_length(binary_value):
+    return BinaryLength(binary_value).to_expr()
 
 
 def compile_to_char(numeric_value, fmt):
@@ -292,6 +303,21 @@ def sa_format_to_char(translator, op):
     return sa.func.to_char(arg, fmt)
 
 
+def sa_format_binary_length(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.length(arg)
+
+
+def sa_format_binary_length_mssql(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.datalength(arg)
+
+
+def sa_format_binary_length_oracle(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.dbms_lob.getlength(arg)
+
+
 def sa_cast_postgres(t, op):
     # Add cast from numeric to string
     arg = op.arg
@@ -347,6 +373,10 @@ def sa_format_new_id(t, op):
     return sa.func.NEWID()
 
 
+def sa_format_random(t, op):
+    return sa.func.RANDOM()
+
+
 _BQ_DTYPE_TO_IBIS_TYPE["TIMESTAMP"] = dt.Timestamp(timezone="UTC")
 
 
@@ -390,12 +420,15 @@ def _bigquery_field_to_ibis_dtype(field):
     return ibis_type
 
 
+BinaryValue.byte_length = compile_binary_length
+
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
 
 BigQueryExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[Strftime] = strftime_bigquery
+BigQueryExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
@@ -406,15 +439,18 @@ ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 ImpalaExprTranslator._registry[RandomScalar] = fixed_arity("RAND", 0)
 ImpalaExprTranslator._registry[Strftime] = strftime_impala
+ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
 OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
 OracleExprTranslator._registry[ToChar] = sa_format_to_char
+OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
 
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
+PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 MsSqlExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -422,23 +458,34 @@ MsSqlExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.isnull, 2)
 MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
 MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 MsSqlExprTranslator._registry[Strftime] = strftime_mssql
+MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
 
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
 MySQLExprTranslator._registry[Strftime] = strftime_mysql
+MySQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
 RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
+RedShiftExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
 Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
+Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
+
+SpannerExprTranslator._registry[RawSQL] = format_raw_sql
+SpannerExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
+SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
     TeradataExprTranslator._registry[HashBytes] = format_hashbytes_teradata
+    TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[HashBytes] = sa_format_hashbytes_snowflake
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
     SnowflakeExprTranslator._registry[ExtractEpochSeconds] = sa_epoch_time_snowflake
+    SnowflakeExprTranslator._registry[RandomScalar] = sa_format_random
+    SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length

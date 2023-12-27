@@ -21,7 +21,8 @@ def teradata_connect(
     password: str = None,
     port: int = 1025,
     logmech: str = "TD2",
-    use_no_lock_tables: bool = False,
+    use_no_lock_tables: str = "False",
+    json_params: str = None,
 ):
     backend = TeradataBackend()
     backend.do_connect(
@@ -31,5 +32,6 @@ def teradata_connect(
         port=port,
         logmech=logmech,
         use_no_lock_tables=use_no_lock_tables,
+        json_params=json_params,
     )
     return backend

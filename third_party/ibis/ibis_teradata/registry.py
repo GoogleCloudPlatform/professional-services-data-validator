@@ -70,7 +70,7 @@ def _table_column(t, op):
     #     proj_expr = table.projection([field_name]).to_array()
     #     return _table_array_view(translator, proj_expr)
 
-    alias = ctx.get_ref(op.table, search_parents=True)
+    alias = ctx.get_ref(table, search_parents=True)
     if alias is not None:
         quoted_name = f"{alias}.{quoted_name}"
 
@@ -228,13 +228,16 @@ def _string_join(translator, op):
 
 def _extract_epoch(translator, op):
     arg = translator.translate(op.arg)
-    utc_expression = "AT TIME ZONE 'GMT'" if op.arg.output_dtype.timezone else ""
-    
+    utc_expression = (
+        "AT TIME ZONE 'GMT'" if getattr(op.arg.output_dtype, "timezone", None) else ""
+    )
+    extract_arg = f"CAST({arg} AS TIMESTAMP)" if op.arg.output_dtype.is_date() else arg
+
     return (
         f"(CAST ({arg} AS DATE {utc_expression}) - DATE '1970-01-01') * 86400 + "
-        f"(EXTRACT(HOUR FROM {arg} {utc_expression}) * 3600) + "
-        f"(EXTRACT(MINUTE FROM {arg} {utc_expression}) * 60) + "
-        f"(EXTRACT(SECOND FROM {arg} {utc_expression}))"
+        f"(EXTRACT(HOUR FROM {extract_arg} {utc_expression}) * 3600) + "
+        f"(EXTRACT(MINUTE FROM {extract_arg} {utc_expression}) * 60) + "
+        f"(EXTRACT(SECOND FROM {extract_arg} {utc_expression}))"
     )
 
 

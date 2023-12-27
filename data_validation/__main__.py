@@ -81,44 +81,68 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         supported_data_types.extend(["string", "!string"])
 
     if args.wildcard_include_timestamp:
-        supported_data_types.extend(["timestamp", "!timestamp"])
+        supported_data_types.extend(["timestamp", "!timestamp", "date", "!date"])
 
     cast_to_bigint = True if args.cast_to_bigint else False
 
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, None, cast_to_bigint=cast_to_bigint
+            "count", col_args, args.exclude_columns, None, cast_to_bigint=cast_to_bigint
         )
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "sum",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "avg",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "min",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "max",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.bit_xor:
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "bit_xor", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "bit_xor",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.std:
         col_args = None if args.std == "*" else cli_tools.get_arg_list(args.std)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "std", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "std",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     return aggregate_configs
 
@@ -405,6 +429,7 @@ def get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
     table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
+
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -480,16 +505,37 @@ def run_validation(config_manager, dry_run=False, verbose=False):
         result_handler=None,
         verbose=verbose,
     )
+
     if dry_run:
+        sql_alchemy_clients = [
+            "mysql",
+            "oracle",
+            "postgres",
+            "db2",
+            "mssql",
+            "redshift",
+            "snowflake",
+        ]
+
+        source_query = validator.validation_builder.get_source_query().compile()
+        if config_manager.source_client.name in sql_alchemy_clients:
+            source_query = source_query.compile(
+                config_manager.source_client.con.engine,
+                compile_kwargs={"literal_binds": True},
+            )
+
+        target_query = validator.validation_builder.get_target_query().compile()
+        if config_manager.target_client.name in sql_alchemy_clients:
+            target_query = target_query.compile(
+                config_manager.target_client.con.engine,
+                compile_kwargs={"literal_binds": True},
+            )
+
         print(
             json.dumps(
                 {
-                    "source_query": str(
-                        validator.validation_builder.get_source_query().compile()
-                    ),
-                    "target_query": str(
-                        validator.validation_builder.get_target_query().compile()
-                    ),
+                    "source_query": str(source_query),
+                    "target_query": str(target_query),
                 },
                 indent=4,
             )

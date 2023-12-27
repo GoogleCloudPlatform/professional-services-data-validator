@@ -47,9 +47,7 @@ def _get_type(col: _FieldDescription) -> dt.DataType:
     typename = col[1]
     typ = _type_mapping.get(typename)
     if typ is None:
-        raise NotImplementedError(
-            f"Oracle type {typename} is not supported"
-        )
+        raise NotImplementedError(f"Oracle type {typename} is not supported")
 
     if typename == cx_Oracle.DB_TYPE_NUMBER:
         if col[4] == 0 and col[5] == -127:
@@ -62,23 +60,24 @@ def _get_type(col: _FieldDescription) -> dt.DataType:
 
 
 _type_mapping = {
-        cx_Oracle.DB_TYPE_VARCHAR: dt.String,
-        cx_Oracle.DB_TYPE_NVARCHAR: dt.String,
-        cx_Oracle.DB_TYPE_CHAR: dt.String,
-        cx_Oracle.DB_TYPE_NCHAR: dt.String,
-        cx_Oracle.DB_TYPE_DATE: dt.Date,
-        cx_Oracle.DB_TYPE_TIMESTAMP: dt.Timestamp,
-        cx_Oracle.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="UTC"),
-        cx_Oracle.DB_TYPE_RAW: dt.Binary,
-        cx_Oracle.DB_TYPE_BFILE: dt.Binary,
-        cx_Oracle.DB_TYPE_NUMBER: dt.Decimal,
-        cx_Oracle.DB_TYPE_LONG: dt.String,
-        cx_Oracle.DB_TYPE_NCLOB: dt.String,
-        cx_Oracle.DB_TYPE_CLOB: dt.String,
-        cx_Oracle.DB_TYPE_BLOB: dt.Binary,
-        cx_Oracle.DB_TYPE_BINARY_FLOAT: dt.Float32,
-        cx_Oracle.DB_TYPE_BINARY_DOUBLE: dt.Float64,
-    }
+    cx_Oracle.DB_TYPE_VARCHAR: dt.String,
+    cx_Oracle.DB_TYPE_NVARCHAR: dt.String,
+    cx_Oracle.DB_TYPE_CHAR: dt.String,
+    cx_Oracle.DB_TYPE_NCHAR: dt.String,
+    cx_Oracle.DB_TYPE_DATE: dt.Date,
+    cx_Oracle.DB_TYPE_TIMESTAMP: dt.Timestamp,
+    cx_Oracle.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="UTC"),
+    cx_Oracle.DB_TYPE_RAW: dt.Binary,
+    cx_Oracle.DB_TYPE_BFILE: dt.Binary,
+    cx_Oracle.DB_TYPE_NUMBER: dt.Decimal,
+    cx_Oracle.DB_TYPE_LONG: dt.String,
+    cx_Oracle.DB_TYPE_NCLOB: dt.String,
+    cx_Oracle.DB_TYPE_CLOB: dt.String,
+    cx_Oracle.DB_TYPE_BLOB: dt.Binary,
+    cx_Oracle.DB_TYPE_BINARY_FLOAT: dt.Float32,
+    cx_Oracle.DB_TYPE_BINARY_DOUBLE: dt.Float64,
+}
+
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.CLOB)
 def sa_oracle_CLOB(_, satype, nullable=True):
@@ -100,6 +99,12 @@ def sa_oracle_NUMBER(_, satype, nullable=True):
     return dt.Decimal(satype.precision, satype.scale, nullable=nullable)
 
 
+@dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.FLOAT)
+def sa_oracle_FLOAT(_, satype, nullable=True):
+    # Oracle FLOAT is a NUMBER under the hood.
+    return dt.Decimal(nullable=nullable)
+
+
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BFILE)
 def sa_oracle_BFILE(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
@@ -114,29 +119,36 @@ def sa_oracle_RAW(_, satype, nullable=True):
 def sa_oracle_DATE(_, satype, nullable=True):
     return dt.Date(nullable=nullable)
 
+
 @dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.VARCHAR2))
 def sa_oracle_VARCHAR2(_, satype, nullable=True):
     return dt.String(nullable=nullable)
+
 
 @dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.VARCHAR))
 def sa_oracle_VARCHAR(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
+
 @dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.NVARCHAR))
 def sa_oracle_NVARCHAR(_, satype, nullable=True):
     return dt.String(nullable=nullable)
+
 
 @dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.NVARCHAR2))
 def sa_oracle_NVARCHAR2(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
+
 @dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.CHAR))
 def sa_oracle_CHAR(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
+
 @dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.NCHAR))
 def sa_oracle_NCHAR(_, satype, nullable=True):
     return dt.String(nullable=nullable)
+
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.TIMESTAMP)
 def sa_oracle_TIMESTAMP(_, satype, nullable=True):
@@ -145,17 +157,21 @@ def sa_oracle_TIMESTAMP(_, satype, nullable=True):
     else:
         return dt.Timestamp(nullable=nullable)
 
+
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BLOB)
 def sa_oracle_BLOB(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
+
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BINARY_FLOAT)
 def sa_oracle_BINARY_FLOAT(_, satype, nullable=True):
     return dt.Float32(nullable=nullable)
 
+
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BINARY_DOUBLE)
 def sa_oracle_BINARY_DOUBLE(_, satype, nullable=True):
     return dt.Float64(nullable=nullable)
+
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.ROWID)
 def sa_oracle_ROWID(_, satype, nullable=True):

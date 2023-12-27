@@ -188,7 +188,7 @@ def test_schema_validation_core_types_to_bigquery():
             "--filter-status=fail",
             "--exclusion-columns=id",
             (
-                # Integral Snowflake NUMBERs to to BigQuery INT64.
+                # Integer Snowflake NUMBERs to to BigQuery INT64.
                 "--allow-list=decimal(38,0):int64,"
                 # TODO When issue-706 is complete remove the timestamp line below
                 "timestamp('UTC'):timestamp"
@@ -243,6 +243,7 @@ def test_column_validation_core_types():
             "-tc=mock-conn",
             "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
             "--filter-status=fail",
+            "--grouped-columns=col_varchar_30",
             "--sum=COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",
             "--min=COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",
             "--max=COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",

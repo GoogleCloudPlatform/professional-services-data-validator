@@ -342,6 +342,14 @@ class CalculatedField(object):
         )
 
     @staticmethod
+    def byte_length(config, fields):
+        return CalculatedField(
+            ibis.expr.types.BinaryValue.byte_length,
+            config,
+            fields,
+        )
+
+    @staticmethod
     def rstrip(config, fields):
         return CalculatedField(
             ibis.expr.types.StringValue.rstrip,

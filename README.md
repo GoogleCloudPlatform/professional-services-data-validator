@@ -79,7 +79,7 @@ Below is the command syntax for column validations. To run a grouped column
 validation, simply specify the `--grouped-columns` flag.
 
 You can specify a list of string columns for aggregations in order to calculate
-an aggregation over the `length(string_col)`. Similarly, you can specify timestamp
+an aggregation over the `length(string_col)`. Similarly, you can specify timestamp/date
 columns for aggregation over the `unix_seconds(timestamp_col)`. Running an aggregation
 over all columns ('*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` or `--wildcard-include-timestamp` flags are present.
@@ -100,13 +100,14 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Comma separated list of columns for Group By i.e col_a,col_b
   [--primary-keys or -pk PRIMARY_KEYS]
                         Comma separated list of columns to use as primary keys
-                        (Note) Only use with grouped column validation. See *Primary Keys* section. 
+                        (Note) Only use with grouped column validation. See *Primary Keys* section.
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--exclude-columns or -ec]   Flag to indicate the list of columns provided should be excluded and not included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -115,7 +116,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
   [--wildcard-include-string-len or -wis]
                         If flag is present, include string columns in aggregation as len(string_col)
   [--wildcard-include-timestamp or -wit]
-                        If flag is present, include timestamp columns in aggregation as unix_seconds(ts_col)
+                        If flag is present, include timestamp/date columns in aggregation as unix_seconds(ts_col)
   [--cast-to-bigint or -ctb]
                         If flag is present, cast all int32 columns to int64 before aggregation
   [--filters SOURCE_FILTER:TARGET_FILTER]
@@ -141,7 +142,7 @@ The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data
 
 #### Row Validations
 
-(Note: Row hash validation not supported for FileSystem connections. 
+(Note: Row hash validation not supported for FileSystem connections.
 In addition, please note that SHA256 is not a supported function on Teradata systems.
 If you wish to perform this comparison on Teradata you will need to
 [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).)
@@ -208,7 +209,7 @@ When performing row validations, Data Validation Tool brings each row into memor
 
 The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`). You can then run the configs in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
-The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported. 
+The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
@@ -311,6 +312,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--exclude-columns or -ec]   Flag to indicate the list of columns provided should be excluded and not included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
