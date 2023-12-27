@@ -1070,10 +1070,12 @@ def get_validation(validation_name, config_dir=None):
     else:
         if validation_name.startswith("gs://"):
             obj_depth = len(validation_name.split("/"))
-            gcs_prefix = '/'.join(validation_name.split('/')[:obj_depth-1])
+            gcs_prefix = "/".join(validation_name.split("/")[: obj_depth - 1])
             mgr = state_manager.StateManager(file_system_root_path=gcs_prefix)
-            return mgr.get_validation_config(validation_name.split('/')[obj_depth-1],gcs_prefix)
-        else: 
+            return mgr.get_validation_config(
+                validation_name.split("/")[obj_depth - 1], gcs_prefix
+            )
+        else:
             mgr = state_manager.StateManager()
             return mgr.get_validation_config(validation_name)
 
