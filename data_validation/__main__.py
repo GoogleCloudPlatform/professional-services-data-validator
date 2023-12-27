@@ -16,7 +16,6 @@ import json
 import logging
 import os
 import sys
-import copy
 
 from yaml import Dumper, dump
 from argparse import Namespace

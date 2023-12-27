@@ -172,6 +172,6 @@ def test_config_runner_3(mock_args, mock_run, caplog):
     # assert no warnings
     assert caplog.messages == []
     # assert that only one config manager and one validation corresponding to JOB_COMPLETION_INDEX is set.
-    assert mock_run.call_args.args[0].config_dir == None
+    assert mock_run.call_args.args[0].config_dir is None
     assert os.path.basename(mock_run.call_args.args[0].config_file) == "0002.yaml"
     assert len(mock_run.call_args.args[1]) == 1
