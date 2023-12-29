@@ -195,6 +195,7 @@ CREATE TABLE pso_data_validator.dvt_pg_types
 );
 COMMENT ON TABLE pso_data_validator.dvt_pg_types IS 'PostgreSQL data types integration test table';
 
+CREATE EXTENSION pgcrypto;
 INSERT INTO pso_data_validator.dvt_pg_types
 (col_int2,col_int4,col_int8,col_dec,col_dec_10_2
 --,col_money
