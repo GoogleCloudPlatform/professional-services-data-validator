@@ -314,8 +314,9 @@ def build_config_managers_from_args(
 
 
 def config_runner(args):
-    """Config Runner is where the decision is made to run one or multiple validations.
-    If multiple validations are to be run and if the associated configuration files
+    """Config Runner is where the decision is made to run validations from one or more files.
+    One file can produce multiple validations - for example when more than one set of tables are being validated
+    between the source and target. If multiple files are to be run and if the associated configuration files
     are numbered sequentially, say from '0000.yaml' to '0012.yaml' (for 13 validations),
     it is possible to run them concurrently in a Kubernetes / Cloud Run environment.
     If the user wants that, they need to specify a -kc or --kube-completions which tells

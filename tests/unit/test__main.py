@@ -110,21 +110,25 @@ def test__compare_match_tables():
 
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_1),
 )
-def test_config_runner_1(mock_args, mock_run, caplog):
+def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
     """config_runner, runs the validations, so we have to mock run_validations and examine the arguments
-    passed to it. We want to run multiple scenarios, hence the complexity in mocking parse args
-    with an iterable. We have to check that the warning is
-    in the logger - hence using caplog. Currently, the following scenarios are tested.
-    1. 2 examples where -kc is used and a warning is reported
-    2. 1 example where -kc is used correctly and only the appropriate file is used/called
+    passed to it. Build Config Managers reads the yaml files and builds the validation configs,
+    which also includes creating a connection to the database. That is beyond a unit test, so mock
+    build_config_managers_from_yaml.
+    First test - run validation on a single file - and provide the -kc argument
+    Expected result
+    1. One config manager created
+    2. Warning about inappropriate use of -kc
     Other test cases can be developed.
     """
     caplog.set_level(logging.WARNING)
-
-    # First test - validation for a single file and call it with -kc, warning to be issued
     args = cli_tools.get_parsed_args()
     caplog.clear()
     main.config_runner(args)
@@ -138,15 +142,22 @@ def test_config_runner_1(mock_args, mock_run, caplog):
 
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_2),
 )
-def test_config_runner_2(mock_args, mock_run, caplog):
+def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
 
+    """Second test - run validation on a directory - and provide the -kc argument,
+    but not running in a Kubernetes Completion Configuration. Expected result
+    1. Multiple (3) config manager created for validation
+    2. Warning about inappropriate use of -kc"""
     caplog.set_level(logging.WARNING)
-    # Second test - provide a config directory and call it with -kc, not running in Kubernetes, so warning required.
     args = cli_tools.get_parsed_args()
-
+    caplog.clear()
     main.config_runner(args)
     # assert warning is seen
     assert caplog.messages == [
@@ -158,16 +169,25 @@ def test_config_runner_2(mock_args, mock_run, caplog):
 
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
-def test_config_runner_3(mock_args, mock_run, caplog):
-    # Third test - provide a config directory and call it -kc, fake Kubernetes by setting JOB_COMPLETION_INDEX
-    # this will result in only one validation being performed.
-
+def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
+    """Second test - run validation on a directory - and provide the -kc argument,
+    have system believe it is running in a Kubernetes Completion Environment. Expected result
+    1. No warnings
+    2. run validation called as though config file is provided (config_dir is None)
+    3. run validation config file name corresponds to value of JOB_COMPLETION_INDEX
+    4. One config manager created for validation
+    """
     caplog.set_level(logging.WARNING)
     os.environ["JOB_COMPLETION_INDEX"] = "2"
     args = cli_tools.get_parsed_args()
+    caplog.clear()
     main.config_runner(args)
     # assert no warnings
     assert caplog.messages == []
