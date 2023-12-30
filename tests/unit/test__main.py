@@ -64,7 +64,7 @@ CONFIG_RUNNER_ARGS_1 = {
     "command": "configs",
     "validation_config_cmd": "run",
     "dry_run": False,
-    "config_file": "gs://pso-kokoro-mudupalli/dvt_test2/0000.yaml",
+    "config_file": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations/first.yaml",
     "config_dir": None,
     "kube_completions": True,
 }
