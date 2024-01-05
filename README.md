@@ -418,7 +418,7 @@ For example, this flag can be used as follows:
 ### Running DVT with YAML Configuration Files
 
 Running DVT with YAML configuration files is the recommended approach if:
-* you want to customize the configuration for any given validation by providing use case specific CLI arguments or editing the YAML configuration file OR
+* you want to customize the configuration for any given validation OR
 * you want to run DVT at scale (i.e. row validations across many partitions)
 Nearly every validation command can take the argument `-c <file-name>` (the `generate-table-partitions` command takes  `-cdir <directory-name>`) where one or more yaml files are produced. These yaml files can be modified (for more specific validations), see below
 
