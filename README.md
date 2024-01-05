@@ -420,7 +420,7 @@ For example, this flag can be used as follows:
 Running DVT with YAML configuration files is the recommended approach if:
 * you want to customize the configuration for any given validation OR
 * you want to run DVT at scale (i.e. row validations across many partitions)
-Nearly every validation command can take the argument `-c <file-name>` (the `generate-table-partitions` command takes  `-cdir <directory-name>`) where one or more yaml files are produced. These yaml files can be modified (for more specific validations), see below
+Nearly every validation command can take the argument `-c <file-name>` (the `generate-table-partitions` command takes  `-cdir <directory-name>`) where one or more yaml files are produced. These yaml files can be modified for custom validations.
 
 The following command creates a YAML file for the validation of the
 `new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
