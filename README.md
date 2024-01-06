@@ -458,7 +458,7 @@ The above example `configs run -cdir` shows how you can run multiple validations
 DVT validations can be run concurrently (horizontal scaling) using GKE (Kubernetes Jobs) or Cloud Run Jobs. In order to run DVT in a container, you have to build a docker image, [see instructions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/docker#readme). Set the `PSO_DV_CONFIG_HOME` environment variable to point to a GCS prefix where the connection configuration files are stored. In Cloud Run you can use the option `--set-env-vars` or `--update-env-vars` to pass [the environment variable](https://cloud.google.com/run/docs/configuring/services/environment-variables#setting). We recommend that you use the `bq-result-handler` to save your validation results. In order to validate partitions concurrently, run DVT in Kubernetes or Cloud Run as shown below:
 ```
 data-validation (--verbose or -v) (--log-level or -ll) configs run
-  [--kube-completions or -kc]
+  [--kube-completions or -kc] Specifies that validation is being run in Kubernetes or Cloud Run in indexed completion mode.
               specifies to DVT that validation being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. In Kubernetes, set the number of completions to the number of partitions being validated. In Cloud Run, set the number of tasks to the number of partitions being validated. Multiple containers run validations and each container only performs the validation associated with its index (i.e. runs its own <index>.yaml file).
   --config-dir or -cdir GCS_DIRECTORY 
               where GCS_DIRECTORY = CONFIG_DIR/SOURCE_SCHEMA.SOURCE_TABLE, where CONFIG_DIR, SOURCE_SCHEMA and SOURCE_TABLE are
