@@ -459,7 +459,7 @@ DVT validations can be run concurrently (horizontal scaling) using GKE (Kubernet
 ```
 data-validation (--verbose or -v) (--log-level or -ll) configs run
   [--kube-completions or -kc] Specifies that validation is being run in Kubernetes or Cloud Run in indexed completion mode.
-              specifies to DVT that validation being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. In Kubernetes, set the number of completions to the number of partitions being validated. In Cloud Run, set the number of tasks to the number of partitions being validated. Multiple containers run validations and each container only performs the validation associated with its index (i.e. runs its own <index>.yaml file).
+              specifies to DVT that validation being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. Please see [internal documentation](./docs/internal/kubernetes_jobs.md) for more details.
   --config-dir or -cdir GCS_DIRECTORY 
               where GCS_DIRECTORY = CONFIG_DIR/SOURCE_SCHEMA.SOURCE_TABLE, where CONFIG_DIR, SOURCE_SCHEMA and SOURCE_TABLE are
               the arguments provided to generate-table-partitions to generate the partition yamls. GCS_DIRECTORY is the directory
