@@ -459,12 +459,13 @@ DVT validations can be run concurrently (horizontal scaling) using GKE (Kubernet
 ```
 data-validation (--verbose or -v) (--log-level or -ll) configs run
   [--kube-completions or -kc] Specifies that validation is being run in Kubernetes or Cloud Run in indexed completion mode.
-              specifies to DVT that validation being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. Please see [internal documentation](./docs/internal/kubernetes_jobs.md) for more details.
+              specifies to DVT that validation being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run.
   --config-dir or -cdir GCS_DIRECTORY 
               where GCS_DIRECTORY = CONFIG_DIR/SOURCE_SCHEMA.SOURCE_TABLE, where CONFIG_DIR, SOURCE_SCHEMA and SOURCE_TABLE are
               the arguments provided to generate-table-partitions to generate the partition yamls. GCS_DIRECTORY is the directory
               where the partition files numbered 0000.yaml to <partno-1>.yaml are stored.
 ```
+If you are not familiar with Kubernetes or Cloud Run Jobs, review the [internal docs](docs/internal/kubernetes_jobs.md) for an overview of the orchestration of multiple validations.
 
 The Cloud Run and Kubernetes pods must run in a network with access to the database servers. Every Cloud Run job is associated with a [service account](https://cloud.google.com/run/docs/securing/service-identity). You need to ensure that this service account has access to Google Cloud Storage (to read connection configuration and yaml files) and BigQuery (to publish results). If you are using Kubernetes, you will need to use a service account with the same privileges as mentioned for Cloud Run. In Kubernetes, you will need to set up [workload identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) so the DVT container can impersonate the service account.
 
