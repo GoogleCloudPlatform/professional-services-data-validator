@@ -46,7 +46,8 @@ CONN = {
 }
 
 PG2PG_COLUMNS = [
-    "id" "col_int2",
+    "id",
+    "col_int2",
     "col_int4",
     "col_int8",
     "col_dec",
@@ -557,7 +558,10 @@ def test_schema_validation(cloud_sql):
     new=mock_get_connection_config,
 )
 def test_schema_validation_pg_types():
-    """Test schema validation on most PostgreSQL scalar data types."""
+    """Test schema validation on most PostgreSQL scalar data types.
+    This used to use the dvt_core_types table but that is covered by subsequent BigQuery
+    testing therefore this test can cover off an extended list of data types.
+    """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -643,6 +647,8 @@ def test_column_validation_pg_types():
     Actual values are not well tested because this is PostgreSQL to PostgreSQL, this is shaking
     out the code path for all types. PostgreSQL to BigQuery and Oracle to PostgreSQL tests
     will cover testing of returned data values.
+    This used to use the dvt_core_types table but that is covered by subsequent BigQuery
+    testing therefore this test can cover off an extended list of data types.
     """
     parser = cli_tools.configure_arg_parser()
     count_cols = ",".join(PG2PG_COLUMNS)
@@ -710,6 +716,8 @@ def test_row_validation_pg_types():
     Actual values are not well tested because this is PostgreSQL to PostgreSQL, this is shaking
     out the code path for all types. PostgreSQL to BigQuery and Oracle to PostgreSQL tests
     will cover testing of returned data values.
+    This used to use the dvt_core_types table but that is covered by subsequent BigQuery
+    testing therefore this test can cover off an extended list of data types.
     """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
