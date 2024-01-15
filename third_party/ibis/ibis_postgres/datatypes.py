@@ -18,5 +18,5 @@ from sqlalchemy.dialects.postgresql.base import PGDialect
 
 
 @dt.dtype.register(PGDialect, postgresql.OID)
-def _oid(_, sa_type, nullable=True):
+def sa_pg_oid(_, sa_type, nullable=True):
     return dt.int32(nullable=nullable)
