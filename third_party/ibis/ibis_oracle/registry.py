@@ -23,6 +23,7 @@ import operator
 
 import sqlalchemy as sa
 
+from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 import ibis.common.exceptions as com
 import ibis.expr.operations as ops
 
@@ -103,24 +104,15 @@ def _cast(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
-    sa_arg = t.translate(arg)
+    # Specialize going from a binary float type to a string.
+    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
+        sa_arg = t.translate(arg)
+        # This prevents output in scientific notation but we still have
+        # problems with the lossy nature of BINARY_FLOAT/DOUBLE.
+        return sa.func.to_char(sa_arg, "TM9")
 
-    # specialize going from an integer type to a timestamp
-    if arg_dtype.is_integer() and typ.is_timestamp():
-        return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
-
-    if arg_dtype.is_binary() and typ.is_string():
-        return sa.func.encode(sa_arg, "escape")
-
-    if typ.is_binary():
-        #  decode yields a column of memoryview which is annoying to deal with
-        # in pandas. CAST(expr AS BYTEA) is correct and returns byte strings.
-        return sa.cast(sa_arg, sa.LargeBinary())
-
-    if typ.is_json() and not t.native_json_type:
-        return sa_arg
-
-    return sa.cast(sa_arg, t.get_sqla_type(typ))
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
 
 
 def _typeof(t, op):
@@ -157,7 +149,6 @@ _strftime_to_oracle_rules = {
 }
 
 try:
-
     _strftime_to_oracle_rules.update(
         {
             "%c": locale.nl_langinfo(locale.D_T_FMT),  # locale date and time

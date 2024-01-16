@@ -28,7 +28,10 @@ import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
 import sqlalchemy as sa
-from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arity
+from ibis.backends.base.sql.alchemy.registry import (
+    fixed_arity as sa_fixed_arity,
+    _cast as sa_fixed_cast,
+)
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
@@ -324,8 +327,6 @@ def sa_cast_postgres(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
-    sa_arg = t.translate(arg)
-
     # Specialize going from numeric(p,s>0) to string
     if (
         arg_dtype.is_decimal()
@@ -333,6 +334,7 @@ def sa_cast_postgres(t, op):
         and arg_dtype.scale > 0
         and typ.is_string()
     ):
+        sa_arg = t.translate(arg)
         # When casting a number to string PostgreSQL includes the full scale, e.g.:
         #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
         #     100.00
@@ -347,22 +349,23 @@ def sa_cast_postgres(t, op):
         )
         return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
 
-    # specialize going from an integer type to a timestamp
-    if arg_dtype.is_integer() and typ.is_timestamp():
-        return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
 
-    if arg_dtype.is_binary() and typ.is_string():
-        return sa.func.encode(sa_arg, "escape")
 
-    if typ.is_binary():
-        #  decode yields a column of memoryview which is annoying to deal with
-        # in pandas. CAST(expr AS BYTEA) is correct and returns byte strings.
-        return sa.cast(sa_arg, sa.LargeBinary())
+def sa_cast_mssql(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
 
-    if typ.is_json() and not t.native_json_type:
-        return sa_arg
+    # Specialize going from a binary float type to a string.
+    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
+        sa_arg = t.translate(arg)
+        # This prevents output in scientific notation, at least for my tests it did.
+        return sa.func.format(sa_arg, "G")
 
-    return sa.cast(sa_arg, t.get_sqla_type(typ))
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
 
 
 def _sa_string_join(t, op):
@@ -458,6 +461,7 @@ MsSqlExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.isnull, 2)
 MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
 MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 MsSqlExprTranslator._registry[Strftime] = strftime_mssql
+MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
 
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
