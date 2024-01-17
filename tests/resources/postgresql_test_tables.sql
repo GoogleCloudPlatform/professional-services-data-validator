@@ -166,3 +166,63 @@ CREATE TABLE pso_data_validator.dvt_null_not_null
 ,   col_src_n_trg_nn   TIMESTAMP(0)
 );
 COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, PostgreSQL is assumed to be a DVT source (not target).';
+
+DROP TABLE pso_data_validator.dvt_pg_types;
+CREATE TABLE pso_data_validator.dvt_pg_types
+(   id              serial NOT NULL PRIMARY KEY
+,   col_int2        smallint
+,   col_int4        int
+,   col_int8        bigint
+,   col_dec         decimal
+,   col_dec_10_2    decimal(10,2)
+--,   col_money       money
+,   col_float32     real
+,   col_float64     double precision
+,   col_varchar_30  varchar(30)
+,   col_char_2      char(2)
+,   col_text        text
+,   col_date        date
+,   col_ts          timestamp(6) without time zone
+,   col_tstz        timestamp(6) with time zone
+,   col_time        time(6) without time zone
+,   col_timetz      time(6) with time zone
+,   col_binary      bytea
+,   col_bool        boolean
+--,   col_bit         bit(3)
+--,   col_bitv        bit varying(3)
+,   col_uuid        uuid
+,   col_oid         oid
+);
+COMMENT ON TABLE pso_data_validator.dvt_pg_types IS 'PostgreSQL data types integration test table';
+
+CREATE EXTENSION pgcrypto;
+INSERT INTO pso_data_validator.dvt_pg_types
+(col_int2,col_int4,col_int8,col_dec,col_dec_10_2
+--,col_money
+,col_float32,col_float64
+,col_varchar_30,col_char_2,col_text
+,col_date,col_ts,col_tstz,col_time,col_timetz
+,col_binary,col_bool
+--,col_bit,col_bitv
+,col_uuid,col_oid)
+VALUES
+(1111,123456789,123456789012345678,12345678901234567890.12345,123.12
+--,123.12
+,123456.1,12345678.1
+,'Hello DVT','A ','Hello DVT'
+,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456'
+,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
+,TIME'00:00:01.123456',TIME WITH TIME ZONE'00:00:01.123456 +00:00'
+,CAST('DVT' AS BYTEA),CAST(0 AS BOOLEAN)
+--,B'101', B'101'
+,gen_random_uuid(),1)
+,(2222,223456789,223456789012345678,22345678901234567890.12345,223.12
+--,223.12
+,223456.1,22345678.1
+,'Hello DVT','B ','Hello DVT'
+,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:02.123456'
+,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 +00:00'
+,TIME'00:00:02.123456',TIME WITH TIME ZONE'00:00:02.123456 +00:00'
+,CAST('DVT' AS BYTEA),CAST(0 AS BOOLEAN)
+--,B'011', B'110'
+,gen_random_uuid(),2);
