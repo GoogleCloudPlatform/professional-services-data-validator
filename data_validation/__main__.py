@@ -235,7 +235,6 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
 
         # For custom-query row command
         if args.custom_query_type == consts.ROW_VALIDATION.lower():
-
             # Append Comparison fields
             if args.comparison_fields is not None:
                 comparison_fields = cli_tools.get_arg_list(
@@ -267,7 +266,6 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
 
     # Append ROW_VALIDATION configs
     if config_manager.validation_type == consts.ROW_VALIDATION:
-
         # Append calculated fields: --hash/--concat
         config_manager.append_calculated_fields(
             get_calculated_config(args, config_manager)
