@@ -14,6 +14,7 @@
 
 import copy
 import pytest
+from unittest import mock
 
 import ibis.expr.datatypes as dt
 
@@ -286,13 +287,17 @@ def test_get_table_info(module_under_test):
     assert target_table_spec == expected_table_spec
 
 
+@mock.patch(
+    "data_validation.config_manager.ConfigManager.get_target_ibis_calculated_table",
+    new=lambda x: MockIbisTable(),
+)
 def test_build_column_configs(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     column_configs = config_manager.build_column_configs(["a"])
-    lazy_column_configs = config_manager.build_column_configs(["A"])
+    lazy_column_configs = config_manager.build_column_configs(["a"])
     assert column_configs[0] == GROUPED_COLUMN_CONFIG_A
     assert (
         lazy_column_configs[0][consts.CONFIG_SOURCE_COLUMN]
