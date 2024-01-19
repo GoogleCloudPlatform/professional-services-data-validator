@@ -759,7 +759,7 @@ def test_row_validation_large_decimals_to_bigquery():
             "-tbls=pso_data_validator.dvt_large_decimals",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=id,col_data",
+            "--hash=id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
