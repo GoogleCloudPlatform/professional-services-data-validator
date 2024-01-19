@@ -453,6 +453,7 @@ def test_row_validation_core_types_to_bigquery():
 def test_row_validation_large_decimals_to_bigquery():
     """Oracle to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals for the primary key join column plus the hash columns.
     """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(

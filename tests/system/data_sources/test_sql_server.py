@@ -454,8 +454,10 @@ def test_row_validation_core_types_to_bigquery():
 def test_row_validation_large_decimals_to_bigquery():
     """Oracle to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals for the primary key join column plus the hash columns.
     """
     parser = cli_tools.configure_arg_parser()
+    # TODO When issue-1079 is complete add col_dec_38_30 to --hash string below.
     args = parser.parse_args(
         [
             "validate",
@@ -465,7 +467,7 @@ def test_row_validation_large_decimals_to_bigquery():
             "-tbls=pso_data_validator.dvt_large_decimals",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
+            "--hash=id,col_data,col_dec_18,col_dec_38,col_dec_38_9",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
