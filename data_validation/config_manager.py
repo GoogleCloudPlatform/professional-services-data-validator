@@ -526,8 +526,12 @@ class ConfigManager(object):
             if column.casefold() not in casefold_target_columns:
                 raise ValueError(f"Column DNE in target: {column}")
 
-            source_ibis_type = source_table[casefold_source_columns[column]].type()
-            target_ibis_type = target_table[casefold_target_columns[column]].type()
+            source_ibis_type = source_table[
+                casefold_source_columns[column.casefold()]
+            ].type()
+            target_ibis_type = target_table[
+                casefold_target_columns[column.casefold()]
+            ].type()
             cast_type = (
                 "string"
                 if self._decimal_column_too_big_for_pandas(
