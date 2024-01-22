@@ -54,6 +54,14 @@ def _cast(t, op):
     arg, target_type = op.args
     arg_formatted = t.translate(arg)
     input_dtype = arg.output_dtype
+
+    # Specialize going from a binary float type to a string.
+    # Trying to avoid scientific notation.
+    if (input_dtype.is_float32() or input_dtype.is_float64()) and op.to.is_string():
+        # Cannot return sa.func.to_char because t (TeradataExprTranslator) returns
+        # a string containing the column and not a SQLAlchemy Column object.
+        return f"TO_CHAR({arg_formatted},'TM9')"
+
     return teradata_cast(arg_formatted, input_dtype, target_type)
 
 

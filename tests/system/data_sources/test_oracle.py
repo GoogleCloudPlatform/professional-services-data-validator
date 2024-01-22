@@ -394,7 +394,7 @@ def test_row_validation_core_types():
 )
 def test_row_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types row validation"""
-    # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
+    # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -423,9 +423,9 @@ def test_row_validation_core_types_to_bigquery():
 )
 def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
-    # TODO Change hash_cols below to include col_float32,col_float64 when issue-841 is complete.
     # TODO col_raw is blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
+    # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded CLOB/NCLOB/BLOB columns because lob values cannot be concatenated
     hash_cols = ",".join(
         [
