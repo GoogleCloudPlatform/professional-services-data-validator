@@ -39,7 +39,7 @@ source env/bin/activate
 python -m pip install --upgrade pip
 python -m pip install .
 ```
-ț
+
 ## Local Testing
 
 This project uses [Nox](https://nox.thea.codes/en/stable/) for managing tests. Install nox to your local environment and it will handle creating the virtual environments required for each test.
@@ -50,7 +50,7 @@ To run our local testing suite, use:
 
 See [our script](tests/local_check.sh) for using nox to run tests step by step.
 
-You can also test with pytest directly:
+You can also run pytest directly:
 ```python
 pip install pyfakefs==4.6.2
 pytest tests/unit
@@ -64,7 +64,7 @@ black $BLACK_PATHS # Find this variable in our noxfile
 flake8 data_validation
 flake8 tests
 ```
-The above is similar to our [nox lint test](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/179d1c5378e1c727f579cb5083a2565f9a772f45/noxfile.py#L91).
+The above is similar to our [noxfile lint test](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/noxfile.py).
 
 ## Conventional Commits
 
