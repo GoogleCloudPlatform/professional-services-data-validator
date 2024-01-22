@@ -48,7 +48,23 @@ To run our local testing suite, use:
 
 `python3 -m nox --envdir ~/dvt/envs/ -s unit_small blacken lint`
 
-You can also use [our script](tests/local_check.sh) with all checks step by step.
+See [our script](tests/local_check.sh) for using nox to run tests step by step.
+
+You can also run pytest directly:
+```python
+pip install pyfakefs==4.6.2
+pytest tests/unit
+```
+
+To lint your code, run:
+```
+pip install black==22.3.0
+pip install flake8
+black $BLACK_PATHS # Find this variable in our noxfile
+flake8 data_validation
+flake8 tests
+```
+The above is similar to our [noxfile lint test](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/noxfile.py).
 
 ## Conventional Commits
 

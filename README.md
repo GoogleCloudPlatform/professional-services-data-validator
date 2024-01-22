@@ -73,6 +73,8 @@ Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud
 ([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
 to learn more about how DVT uses the CLI to generate SQL queries.
 
+Note that we do not support nested or complex columns for column or row validations.
+
 #### Column Validations
 
 Below is the command syntax for column validations. To run a grouped column
@@ -98,9 +100,6 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   [--grouped-columns or -gc GROUPED_COLUMNS]
                         Comma separated list of columns for Group By i.e col_a,col_b
-  [--primary-keys or -pk PRIMARY_KEYS]
-                        Comma separated list of columns to use as primary keys
-                        (Note) Only use with grouped column validation. See *Primary Keys* section.
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
@@ -135,8 +134,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
-The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
-sum , min, etc.) is provided, the default aggregation will run.
+The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
+use [YAML configs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop#running-dvt-with-yaml-configuration-files).
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
 
