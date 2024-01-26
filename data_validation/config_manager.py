@@ -525,11 +525,26 @@ class ConfigManager(object):
                 raise ValueError(f"Column DNE in source: {column}")
             if column.casefold() not in casefold_target_columns:
                 raise ValueError(f"Column DNE in target: {column}")
+
+            source_ibis_type = source_table[
+                casefold_source_columns[column.casefold()]
+            ].type()
+            target_ibis_type = target_table[
+                casefold_target_columns[column.casefold()]
+            ].type()
+            cast_type = (
+                "string"
+                if self._decimal_column_too_big_for_pandas(
+                    source_ibis_type, target_ibis_type
+                )
+                else None
+            )
+
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
                 consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
                 consts.CONFIG_FIELD_ALIAS: column,
-                consts.CONFIG_CAST: None,
+                consts.CONFIG_CAST: cast_type,
             }
             column_configs.append(column_config)
 
@@ -647,30 +662,34 @@ class ConfigManager(object):
 
         return aggregate_config
 
+    def _decimal_column_too_big_for_pandas(
+        self,
+        source_column_ibis_type: dt.DataType,
+        target_column_ibis_type: dt.DataType,
+    ) -> bool:
+        """Identifies Decimal columns that will cause problems in a Pandas Dataframe, i.e.
+        is of greater precision than a 64bit int/real can hold."""
+        return bool(
+            (
+                isinstance(source_column_ibis_type, dt.Decimal)
+                and (
+                    source_column_ibis_type.precision is None
+                    or source_column_ibis_type.precision > 18
+                )
+            )
+            and (
+                isinstance(target_column_ibis_type, dt.Decimal)
+                and (
+                    target_column_ibis_type.precision is None
+                    or target_column_ibis_type.precision > 18
+                )
+            )
+        )
+
     def build_config_column_aggregates(
         self, agg_type, arg_value, exclude_cols, supported_types, cast_to_bigint=False
     ):
         """Return list of aggregate objects of given agg_type."""
-
-        def decimal_too_big_for_64bit(
-            source_column_ibis_type, target_column_ibis_type
-        ) -> bool:
-            return bool(
-                (
-                    isinstance(source_column_ibis_type, dt.Decimal)
-                    and (
-                        source_column_ibis_type.precision is None
-                        or source_column_ibis_type.precision > 18
-                    )
-                )
-                and (
-                    isinstance(target_column_ibis_type, dt.Decimal)
-                    and (
-                        target_column_ibis_type.precision is None
-                        or target_column_ibis_type.precision > 18
-                    )
-                )
-            )
 
         def require_pre_agg_calc_field(
             column_type: str, agg_type: str, cast_to_bigint: bool
@@ -781,7 +800,7 @@ class ConfigManager(object):
                     ),
                     consts.CONFIG_TYPE: agg_type,
                 }
-                if decimal_too_big_for_64bit(
+                if self._decimal_column_too_big_for_pandas(
                     source_column_ibis_type, target_column_ibis_type
                 ):
                     aggregate_config[consts.CONFIG_CAST] = "string"

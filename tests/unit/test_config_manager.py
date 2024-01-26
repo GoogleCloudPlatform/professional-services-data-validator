@@ -14,6 +14,9 @@
 
 import copy
 import pytest
+from unittest import mock
+
+import ibis.expr.datatypes as dt
 
 from data_validation import consts
 
@@ -284,13 +287,17 @@ def test_get_table_info(module_under_test):
     assert target_table_spec == expected_table_spec
 
 
+@mock.patch(
+    "data_validation.config_manager.ConfigManager.get_target_ibis_calculated_table",
+    new=lambda x: MockIbisTable(),
+)
 def test_build_column_configs(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
     column_configs = config_manager.build_column_configs(["a"])
-    lazy_column_configs = config_manager.build_column_configs(["A"])
+    lazy_column_configs = config_manager.build_column_configs(["a"])
     assert column_configs[0] == GROUPED_COLUMN_CONFIG_A
     assert (
         lazy_column_configs[0][consts.CONFIG_SOURCE_COLUMN]
@@ -489,3 +496,41 @@ def test__get_comparison_max_col_length(module_under_test):
     assert (
         "902" in new_identifier
     ), f"Column name should contain ID 902: {new_identifier}"
+
+
+def test__decimal_column_too_big_for_pandas(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    # Both smaller is ok for Pandas.
+    c1 = dt.Decimal(1, 0)
+    c2 = dt.Decimal(1, 0)
+    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    c1 = dt.Int32()
+    c2 = dt.Int32()
+    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    c1 = dt.Int64()
+    c2 = dt.Int64()
+    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+
+    # Either smaller means the actual data must be ok for Pandas.
+    c1 = dt.Decimal(20, 0)
+    c2 = dt.Decimal(1, 0)
+    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    c1 = dt.Decimal(1, 0)
+    c2 = dt.Decimal(20, 0)
+    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    c1 = dt.Int64()
+    c2 = dt.Decimal(20, 0)
+    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    c1 = dt.Decimal(20, 0)
+    c2 = dt.Int64()
+    assert not config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    # Both unsuitable for Pandas.
+    c1 = dt.Decimal(20, 0)
+    c2 = dt.Decimal(20, 0)
+    assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
+    c1 = dt.Decimal(38, 10)
+    c2 = dt.Decimal(38, 10)
+    assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
