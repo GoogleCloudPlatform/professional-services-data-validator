@@ -340,6 +340,23 @@ class DataValidation(object):
                 verbose=self.verbose,
             )
 
+        if self.config_manager.validation_type == consts.COLUMN_VALIDATION or (
+            self.config_manager.validation_type == consts.CUSTOM_QUERY
+            and self.config_manager.custom_query_type == "column"
+        ):
+            # Postprocess the results Dataframe fixing pct_diff for Decimal columns that have
+            # been compared as Strings. This is not ideal but I (NJ@2024-01-29) couldn't
+            # find a way to pass Decimals through Ibis/Pandas. This only applies to column
+            # aggregations and therefore result_df should be small, i.e. minimal overhead.
+
+            decimals_cast_as_string = (
+                self.config_manager.column_validations_on_decimals_cast_as_string()
+            )
+
+            result_df = combiner.fixup_pct_diff_for_decimals_cast_as_string(
+                result_df, decimals_cast_as_string
+            )
+
         return result_df
 
     def combine_data(self, source_df, target_df, join_on_fields):

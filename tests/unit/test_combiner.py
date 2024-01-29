@@ -973,3 +973,75 @@ def test_generate_report_with_nan_agg_value(
         .reindex(sorted(expected.columns), axis=1)
     )
     pandas.testing.assert_frame_equal(report, expected)
+
+
+@pytest.mark.parametrize(
+    ("results_df", "columns_cast_as_string", "expect_nan"),
+    [
+        (
+            pandas.DataFrame(
+                {
+                    "validation_name": [
+                        "count",
+                        "count_string",
+                        "sum__col_dec_38",
+                        "sum__col_dec_4",
+                    ],
+                    "validation_type": ["Column", "Column", "Column", "Column"],
+                    "source_column_name": [
+                        None,
+                        "col_string",
+                        "col_dec_38",
+                        "col_dec_4",
+                    ],
+                    "source_agg_value": [10, 10, "12345678901234567890", 1234],
+                    "target_agg_value": [10, 10, "12345678901234567890", 1234],
+                    "difference": [10, 10, _NAN, 100],
+                    "pct_difference": [0, 0, _NAN, 0],
+                }
+            ),
+            ["sum__col_dec_38"],
+            False,
+        ),
+        (
+            pandas.DataFrame(
+                {
+                    "validation_name": [
+                        "count",
+                        "count_string",
+                        "sum__col_dec_38",
+                        "sum__col_dec_4",
+                    ],
+                    "validation_type": ["Column", "Column", "Column", "Column"],
+                    "source_column_name": [
+                        None,
+                        "col_string",
+                        "col_dec_38",
+                        "col_dec_4",
+                    ],
+                    "source_agg_value": [10, 10, "12345678901234567890", 1234],
+                    "target_agg_value": [10, 10, "12345678901234567890", 1234],
+                    "difference": [10, 10, _NAN, 100],
+                    "pct_difference": [0, 0, _NAN, 0],
+                }
+            ),
+            [],
+            True,
+        ),
+    ],
+)
+def test_fixup_pct_diff_for_decimals_cast_as_string(
+    module_under_test, results_df, columns_cast_as_string, expect_nan
+):
+    results_df = module_under_test.fixup_pct_diff_for_decimals_cast_as_string(
+        results_df, columns_cast_as_string
+    )
+
+    if expect_nan:
+        assert pandas.isna(results_df["difference"][2])
+        assert pandas.isna(results_df["pct_difference"][2])
+    else:
+        assert not pandas.isna(results_df["difference"][2])
+        assert results_df["difference"][2] == 0
+        assert not pandas.isna(results_df["pct_difference"][2])
+        assert results_df["pct_difference"][2] == 0

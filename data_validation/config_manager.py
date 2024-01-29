@@ -1041,3 +1041,21 @@ class ConfigManager(object):
                 f"spaces. input query: '{inline_query}'"
             )
         return query
+
+    def column_validations_on_decimals_cast_as_string(self) -> list[str]:
+        """For some aggregations Decimal column values can overflow 64 bit float/int, when this
+        happens we cast the SQL results to String before passing on to a Dataframe.
+        This method finds validation columns where we have done that so we can deal with any
+        side effects in the final results."""
+        decimal_source_columns = [
+            k
+            for k, v in self.get_source_ibis_calculated_table().schema().items()
+            if isinstance(v, dt.Decimal)
+        ]
+        decimals_cast_as_string = [
+            _[consts.CONFIG_FIELD_ALIAS]
+            for _ in self.aggregates
+            if _.get(consts.CONFIG_CAST) == "string"
+            and _[consts.CONFIG_SOURCE_COLUMN] in decimal_source_columns
+        ]
+        return decimals_cast_as_string

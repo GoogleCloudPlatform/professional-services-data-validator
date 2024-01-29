@@ -19,16 +19,86 @@ original data type is used.
 """
 
 import datetime
+from decimal import Decimal
 import functools
 import json
 import logging
+import math
+
 import ibis
-import ibis.expr.datatypes
+import ibis.expr.datatypes as dt
 
 from data_validation import consts
 
 DEFAULT_SOURCE = "source"
 DEFAULT_TARGET = "target"
+
+
+def _pct_difference_calc(source_value, target_value, for_ibis=True) -> tuple:
+    """Encapsulates Ibis formula used to calculate row difference.
+    Also includes a non-Ibis version which can be used to post-process column validation data
+    and fix data for Decimal validations that overflowed int/float64.
+    """
+    if for_ibis:
+        # If we change this calc then be sure to change the one in the "else" too.
+        difference = (target_value - source_value).cast("float64")
+
+        pct_difference_nonzero = (
+            ibis.literal(100.0)
+            * difference.cast("float32")
+            / (
+                source_value.case()
+                .when(ibis.literal(0), target_value)
+                .else_(source_value)
+                .end()
+            ).cast("float64")
+        ).cast("float64")
+
+        # Considers case that source and target agg values can both be 0
+        pct_difference = (
+            ibis.case()
+            .when(difference == ibis.literal(0), ibis.literal(0).cast("float64"))
+            .else_(pct_difference_nonzero)
+            .end()
+        )
+    else:
+        # A non Ibis/Pandas equivalent of the above calculation.
+        calc_source_value = Decimal(source_value)
+        calc_target_value = Decimal(target_value)
+        difference = calc_target_value - calc_source_value
+        pct_difference_nonzero = float(
+            100
+            * difference
+            / (calc_target_value if calc_source_value == 0 else calc_source_value)
+        )
+        # Considers case that source and target agg values can both be 0
+        pct_difference = float(0) if difference == 0 else pct_difference_nonzero
+    return difference, pct_difference
+
+
+def fixup_pct_diff_for_decimals_cast_as_string(df, decimals_cast_as_string: list[str]):
+    """For some aggregations Decimal column values can overflow 64 bit float/int, when this happens
+    we cast the SQL results to String before passing on to a Dataframe.
+    This method deals with the side effect that pct_diff becomes "NaN" in the results for String columns.
+    """
+
+    def fixup_pct_diff_nan(row):
+        if (
+            math.isnan(row.pct_difference)
+            and row.validation_name in decimals_cast_as_string
+        ):
+            difference, pct_difference = _pct_difference_calc(
+                row.source_agg_value, row.target_agg_value, for_ibis=False
+            )
+            row.difference, row.pct_difference = difference, pct_difference
+        return row
+
+    df = df.apply(
+        fixup_pct_diff_nan,
+        axis=1,
+    )
+
+    return df
 
 
 def generate_report(
@@ -94,12 +164,10 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
-    if isinstance(datatype, (ibis.expr.datatypes.Timestamp, ibis.expr.datatypes.Date)):
+    if isinstance(datatype, (dt.Timestamp, dt.Date)):
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
-    elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(
-        datatype, ibis.expr.datatypes.Float64
-    ):
+    elif isinstance(datatype, dt.Decimal) or isinstance(datatype, dt.Float64):
         source_value = (
             field_differences["differences_source_value"]
             .cast("float32")
@@ -117,7 +185,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     # Does not calculate difference between agg values for row hash due to int64 overflow
     if (
         is_value_comparison
-        or isinstance(datatype, ibis.expr.datatypes.String)
+        or isinstance(datatype, dt.String)
         or isinstance(target_value, ibis.expr.types.generic.NullColumn)
         or isinstance(source_value, ibis.expr.types.generic.NullColumn)
     ):
@@ -140,27 +208,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
             .end()
         )
     else:
-        difference = (target_value - source_value).cast("float64")
-
-        pct_difference_nonzero = (
-            ibis.literal(100.0)
-            * difference.cast("float32")
-            / (
-                source_value.case()
-                .when(ibis.literal(0), target_value)
-                .else_(source_value)
-                .end()
-            ).cast("float64")
-        ).cast("float64")
-
-        # Considers case that source and target agg values can both be 0
-        pct_difference = (
-            ibis.case()
-            .when(difference == ibis.literal(0), ibis.literal(0).cast("float64"))
-            .else_(pct_difference_nonzero)
-            .end()
-        )
-
+        difference, pct_difference = _pct_difference_calc(source_value, target_value)
         th_diff = (pct_difference.abs() - pct_threshold).cast("float64")
         validation_status = (
             ibis.case()
