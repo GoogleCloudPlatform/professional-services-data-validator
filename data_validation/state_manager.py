@@ -27,7 +27,6 @@ from google.cloud import storage
 from yaml import Dumper, Loader, dump, load
 
 from data_validation import client_info, consts
-from data_validation.config_manager import ConfigManager
 
 
 class FileSystem(enum.Enum):
@@ -117,7 +116,7 @@ class StateManager(object):
         yaml_config_str = dump(yaml_config, Dumper=Dumper)
         self._write_file(validation_path, yaml_config_str)
 
-    def create_validation_json(self, name: str, json_config: list[ConfigManager]):
+    def create_validation_json(self, name: str, json_config: Dict[str, str]):
         """Create a validation file and store the given config as JSON.
 
         Args:
@@ -125,7 +124,8 @@ class StateManager(object):
             json_config (list[ConfigManager]): List of config manager instances.
         """
         validation_path = self._get_validation_path(name)
-        self._write_file(validation_path, json_config)
+        json_config_str = json.dumps(json_config)
+        self._write_file(validation_path, json_config_str)
 
     def create_partition_yaml(self, target_file_path: str, yaml_config: Dict[str, str]):
         """Create a validation file and store the given config as YAML.

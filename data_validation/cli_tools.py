@@ -913,6 +913,11 @@ def _add_common_arguments(optional_arguments, required_arguments):
         help="Store the validation in the YAML Config File Path specified",
     )
     optional_arguments.add_argument(
+        "--config-file-json",
+        "-cj",
+        help="Store the validation in the JSON Config File Path specified",
+    )
+    optional_arguments.add_argument(
         "--format",
         "-fmt",
         default="table",
