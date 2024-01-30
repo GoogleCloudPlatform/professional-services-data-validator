@@ -345,11 +345,6 @@ def _configure_validation_config_parser(subparsers):
         "-cdir",
         help="Directory path containing YAML Config Files to be used for running validations.",
     )
-    run_parser.add_argument(
-        "--config-file-json",
-        "-cj",
-        help="JSON Config File path to be used for building or running validations.",
-    )
 
     get_parser = configs_subparsers.add_parser(
         "get", help="Get and print a validation config"
@@ -358,11 +353,6 @@ def _configure_validation_config_parser(subparsers):
         "--config-file",
         "-c",
         help="YAML Config File Path to be used for building or running validations.",
-    )
-    get_parser.add_argument(
-        "--config-file-json",
-        "-cj",
-        help="JSON Config File Path to be used for building or running validations.",
     )
 
 
