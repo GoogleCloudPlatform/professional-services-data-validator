@@ -54,7 +54,7 @@ Before using this tool, you will need to create connections to the source and
 target tables. Once the connections are created, you can run validations on
 those tables. Validation results can be printed to stdout (default) or outputted
 to BigQuery (recommended). DVT also allows you to save or edit validation
-configurations in a YAML file. This is useful for running common validations or
+configurations in a YAML or JSON file. This is useful for running common validations or
 updating the configuration.
 
 ### Managing Connections
@@ -124,6 +124,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         See: *Filters* section
   [--config-file or -c CONFIG_FILE]
                         YAML Config File Path to be used for storing validations.
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations.
   [--threshold or -th THRESHOLD]
                         Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
@@ -191,6 +193,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         See: *Filters* section
   [--config-file or -c CONFIG_FILE]
                         YAML Config File Path to be used for storing validations.
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -268,6 +272,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
                         YAML Config File Path to be used for storing validations.
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
   [--filter-status or -fs STATUSES_LIST]
@@ -419,7 +425,7 @@ For example, the following command creates a YAML file for the validation of the
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
 citibike.yaml`.
 
-The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
+The validation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
 env variable if that has been set; otherwise, it is saved to wherever the tool is run.
 
 You can now edit the YAML file if, for example, the `new_york_citibike` table is
@@ -444,6 +450,10 @@ View the complete YAML file for a Grouped Column validation on the
 [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
 You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`.
+
+### [TODO] JSON Configuration Files
+
+Add
 
 ### Validation Reports
 
