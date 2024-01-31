@@ -18,6 +18,7 @@ from unittest import mock
 import logging
 from data_validation import cli_tools
 
+
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
     "command": "validate",
@@ -55,7 +56,7 @@ CLI_ADD_ORACLE_STD_CONNECTION_ARGS = [
     "connections",
     "add",
     "--connection-name",
-    "ora_test",
+    "ora_std_test",
     "Oracle",
     "--password=p",
     "--host=localhost",
@@ -68,7 +69,7 @@ CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
     "connections",
     "add",
     "--connection-name",
-    "ora_test",
+    "ora_wal_test",
     "Oracle",
     "--url=oracle+cx_oracle://@dvt_user_db",
 ]
@@ -165,17 +166,25 @@ def test_bad_add_connection():
         _ = parser.parse_args(CLI_ADD_CONNECTION_BAD_ARGS)
 
 
-def test_create_and_list_connections_oracle():
+@mock.patch(
+    "data_validation.state_manager.StateManager._write_file",
+)
+def test_create_connections_oracle(mock_write_file):
     # Create standard connection
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_ADD_ORACLE_STD_CONNECTION_ARGS)
     conn = cli_tools.get_connection_config_from_args(args)
+    assert "url" not in conn
+    import pdb
+
+    pdb.set_trace()
     cli_tools.store_connection(args.connection_name, conn)
 
     # Create wallet based connection
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS)
     conn = cli_tools.get_connection_config_from_args(args)
+    assert "url" in conn
     cli_tools.store_connection(args.connection_name, conn)
 
 
