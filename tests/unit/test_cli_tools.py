@@ -175,9 +175,6 @@ def test_create_connections_oracle(mock_write_file):
     args = parser.parse_args(CLI_ADD_ORACLE_STD_CONNECTION_ARGS)
     conn = cli_tools.get_connection_config_from_args(args)
     assert "url" not in conn
-    import pdb
-
-    pdb.set_trace()
     cli_tools.store_connection(args.connection_name, conn)
 
     # Create wallet based connection
