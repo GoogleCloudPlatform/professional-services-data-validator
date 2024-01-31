@@ -121,7 +121,7 @@ class StateManager(object):
 
         Args:
             name (String): The name of the validation.
-            json_config (list[ConfigManager]): List of config manager instances.
+            json_config (Dict): A dictionary with the validation details.
         """
         validation_path = self._get_validation_path(name)
         json_config_str = json.dumps(json_config)

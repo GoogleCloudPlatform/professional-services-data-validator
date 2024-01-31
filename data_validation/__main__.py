@@ -45,7 +45,7 @@ LOG_LEVEL_MAP = {
 
 
 def _get_arg_config_file(args):
-    """Return String yaml config file path."""
+    """Return String YAML config file path."""
     if not args.config_file:
         raise ValueError("YAML Config File was not supplied.")
 
@@ -53,7 +53,7 @@ def _get_arg_config_file(args):
 
 
 def _get_arg_config_file_json(args):
-    """Return String json config file path."""
+    """Return String JSON config file path."""
     if not args.config_file_json:
         raise ValueError("JSON Config File was not supplied.")
 
