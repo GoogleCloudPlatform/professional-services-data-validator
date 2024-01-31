@@ -43,6 +43,36 @@ CLI_ADD_CONNECTION_ARGS = [
     "example-project",
 ]
 
+CLI_ADD_CONNECTION_BAD_ARGS = [
+    "connections",
+    "add",
+    "--bad-name",
+    "test",
+    "BigQuery",
+]
+
+CLI_ADD_ORACLE_STD_CONNECTION_ARGS = [
+    "connections",
+    "add",
+    "--connection-name",
+    "ora_test",
+    "Oracle",
+    "--password=p",
+    "--host=localhost",
+    "--port=1521",
+    "--user=u",
+    "--database=d",
+]
+
+CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
+    "connections",
+    "add",
+    "--connection-name",
+    "ora_test",
+    "Oracle",
+    "--url=oracle+cx_oracle://@dvt_user_db",
+]
+
 TEST_VALIDATION_CONFIG = {
     "source": "example",
     "target": "example",
@@ -127,6 +157,26 @@ def test_create_and_list_connections(caplog, fs):
     # List Connection
     cli_tools.list_connections()
     assert "Connection Name: test : BigQuery" in caplog.records[1].msg
+
+
+def test_bad_add_connection():
+    with pytest.raises(SystemExit):
+        parser = cli_tools.configure_arg_parser()
+        _ = parser.parse_args(CLI_ADD_CONNECTION_BAD_ARGS)
+
+
+def test_create_and_list_connections_oracle():
+    # Create standard connection
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_ADD_ORACLE_STD_CONNECTION_ARGS)
+    conn = cli_tools.get_connection_config_from_args(args)
+    cli_tools.store_connection(args.connection_name, conn)
+
+    # Create wallet based connection
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS)
+    conn = cli_tools.get_connection_config_from_args(args)
+    cli_tools.store_connection(args.connection_name, conn)
 
 
 def test_configure_arg_parser_list_and_run_validation_configs():
