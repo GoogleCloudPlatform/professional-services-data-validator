@@ -62,10 +62,20 @@ from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
 import third_party.ibis.ibis_mysql.compiler
 import third_party.ibis.ibis_postgres.client
-from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
-from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
+
+# DB2 requires ibm_db_dbi
+try:
+    from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
+except Exception:
+    Db2ExprTranslator = None
+
+# Oracle requires cx_Oracle
+try:
+    from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
+except Exception:
+    OracleExprTranslator = None
 
 # TD requires teradatasql
 try:
@@ -444,10 +454,11 @@ ImpalaExprTranslator._registry[RandomScalar] = fixed_arity("RAND", 0)
 ImpalaExprTranslator._registry[Strftime] = strftime_impala
 ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
-OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
-OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
-OracleExprTranslator._registry[ToChar] = sa_format_to_char
-OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
+if OracleExprTranslator:
+    OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
+    OracleExprTranslator._registry[ToChar] = sa_format_to_char
+    OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
 
 PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -473,9 +484,10 @@ RedShiftExprTranslator._registry[HashBytes] = sa_format_hashbytes_redshift
 RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
 RedShiftExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
-Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
-Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
-Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
+if Db2ExprTranslator:
+    Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
+    Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
 SpannerExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
