@@ -14,11 +14,7 @@
 
 FROM python:3.9-bullseye
 
-
-
 USER root
-
-ENV PYTHONWARNINGS="ignore:Unverified HTTPS request"
 
 SHELL ["/bin/bash", "-c"]
 
