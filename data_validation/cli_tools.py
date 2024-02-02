@@ -74,6 +74,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to"],
+        ["url", "Oracle SQLAlchemy connection URL"],
     ],
     "MSSQL": [
         ["host", "Desired SQL Server host (default localhost)"],
@@ -99,18 +100,18 @@ CONNECTION_SOURCE_FIELDS = {
         ["connect_args", "(Optional) Additional connection arg mapping"],
     ],
     "Postgres": [
-        ["host", "Desired Postgres host."],
-        ["port", "Postgres port to connect on (ie. 5432)"],
+        ["host", "Desired PostgreSQL host."],
+        ["port", "PostgreSQL port to connect on (e.g. 5432)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
-        ["database", "Database in postgres to connect to (default postgres)"],
+        ["database", "Database in PostgreSQL to connect to (default postgres)"],
     ],
     "Redshift": [
-        ["host", "Desired Postgres host."],
-        ["port", "Postgres port to connect on (ie. 5439)"],
+        ["host", "Desired Redshift host."],
+        ["port", "Redshift port to connect on (e.g. 5439)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
-        ["database", "Database in postgres to connect to (default postgres)"],
+        ["database", "Database in Redshift to connect to"],
     ],
     "Spanner": [
         ["project_id", "GCP Project to use for Spanner"],
@@ -125,7 +126,7 @@ CONNECTION_SOURCE_FIELDS = {
     ],
     "Impala": [
         ["host", "Desired Impala host"],
-        ["port", "Desired Imapala port (10000 if not provided)"],
+        ["port", "Desired Impala port (10000 if not provided)"],
         ["database", "Desired Impala database (default if not provided)"],
         ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
         [
@@ -401,8 +402,9 @@ def _configure_database_specific_parsers(parser):
     raw_parser.add_argument("--json", "-j", help="Json string config")
 
     for database in CONNECTION_SOURCE_FIELDS:
+        article = "an" if database[0].lower() in "aeiou" else "a"
         db_parser = subparsers.add_parser(
-            database, help=f"Store a {database} connection"
+            database, help=f"Store {article} {database} connection"
         )
 
         for field_obj in CONNECTION_SOURCE_FIELDS[database]:
