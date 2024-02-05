@@ -25,6 +25,9 @@ class Backend(BaseAlchemyBackend):
     name = "oracle"
     compiler = OracleCompiler
 
+    def __init__(self, arraysize: int = 500):
+        self.arraysize = arraysize
+
     def do_connect(
         self,
         host: str = "localhost",
@@ -55,7 +58,7 @@ class Backend(BaseAlchemyBackend):
             sa_url = sa.engine.url.make_url(url)
 
         self.database_name = sa_url.database
-        engine = sa.create_engine(sa_url, poolclass=sa.pool.StaticPool)
+        engine = sa.create_engine(sa_url, poolclass=sa.pool.StaticPool, arraysize=self.arraysize)
 
         @sa.event.listens_for(engine, "connect")
         def connect(dbapi_connection, connection_record):
