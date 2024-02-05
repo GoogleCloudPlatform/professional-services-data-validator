@@ -69,7 +69,10 @@ def unit(session):
         "--cov-config=.coveragerc",
         "--cov-report=term",
         os.path.join("tests", "unit"),
-        env={"PSO_DV_CONFIG_HOME": "", "PROJECT_ID": os.environ.get("PROJECT_ID", "pso-kokoro-resources")},
+        env={
+            "PSO_DV_CONFIG_HOME": "",
+            "PROJECT_ID": os.environ.get("PROJECT_ID", "pso-kokoro-resources"),
+        },
         *session.posargs,
     )
 
