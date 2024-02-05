@@ -90,8 +90,8 @@ CONFIG_RUNNER_ARGS_3 = {
 }
 TEST_JSON_VALIDATION_CONFIG = {
     consts.CONFIG_TYPE: "Column",
-    consts.CONFIG_SOURCE_CONN_NAME: "bq",
-    consts.CONFIG_TARGET_CONN_NAME: "bq",
+    consts.CONFIG_SOURCE_CONN_NAME: "mock-conn",
+    consts.CONFIG_TARGET_CONN_NAME: "mock-conn",
     consts.CONFIG_TABLE_NAME: "dvt_core_types",
     consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
     consts.CONFIG_TARGET_SCHEMA_NAME: "pso_data_validator",
