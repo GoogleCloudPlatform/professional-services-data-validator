@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import argparse
+import logging
+import os
 from unittest import mock
 
 from data_validation import cli_tools, consts
@@ -56,6 +58,36 @@ RESULT_TABLE_CONFIGS = [
         "target_table_name": "table",
     }
 ]
+
+CONFIG_RUNNER_ARGS_1 = {
+    "verbose": False,
+    "log_level": "INFO",
+    "command": "configs",
+    "validation_config_cmd": "run",
+    "dry_run": False,
+    "config_file": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations/first.yaml",
+    "config_dir": None,
+    "kube_completions": True,
+}
+CONFIG_RUNNER_ARGS_2 = {
+    "verbose": False,
+    "log_level": "INFO",
+    "dry_run": False,
+    "command": "configs",
+    "validation_config_cmd": "run",
+    "kube_completions": True,
+    "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations",
+}
+
+CONFIG_RUNNER_ARGS_3 = {
+    "verbose": False,
+    "log_level": "INFO",
+    "dry_run": False,
+    "command": "configs",
+    "validation_config_cmd": "run",
+    "kube_completions": True,
+    "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/4partitions",
+}
 TEST_JSON_VALIDATION_CONFIG = {
     consts.CONFIG_TYPE: "Column",
     consts.CONFIG_SOURCE_CONN_NAME: "bq",
@@ -102,6 +134,95 @@ def test__compare_match_tables():
     table_configs = main._compare_match_tables(SOURCE_TABLE_MAP, TARGET_TABLE_MAP)
 
     assert table_configs == RESULT_TABLE_CONFIGS
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_1),
+)
+def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
+    """config_runner, runs the validations, so we have to mock run_validations and examine the arguments
+    passed to it. Build Config Managers reads the yaml files and builds the validation configs,
+    which also includes creating a connection to the database. That is beyond a unit test, so mock
+    build_config_managers_from_yaml.
+    First test - run validation on a single file - and provide the -kc argument
+    Expected result
+    1. One config manager created
+    2. Warning about inappropriate use of -kc
+    Other test cases can be developed.
+    """
+    caplog.set_level(logging.WARNING)
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
+    # assert warning is seen
+    assert caplog.messages == [
+        "--kube-completions or -kc specified, which requires a config directory, however a specific config file is provided."
+    ]
+    # assert that only one config manager object is present
+    assert len(mock_run.call_args.args[1]) == 1
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_2),
+)
+def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
+
+    """Second test - run validation on a directory - and provide the -kc argument,
+    but not running in a Kubernetes Completion Configuration. Expected result
+    1. Multiple (3) config manager created for validation
+    2. Warning about inappropriate use of -kc"""
+    caplog.set_level(logging.WARNING)
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
+    # assert warning is seen
+    assert caplog.messages == [
+        "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
+    ]
+    # assert that 3 config managers are present
+    assert len(mock_run.call_args.args[1]) == 3
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
+    """Second test - run validation on a directory - and provide the -kc argument,
+    have system believe it is running in a Kubernetes Completion Environment. Expected result
+    1. No warnings
+    2. run validation called as though config file is provided (config_dir is None)
+    3. run validation config file name corresponds to value of JOB_COMPLETION_INDEX
+    4. One config manager created for validation
+    """
+    caplog.set_level(logging.WARNING)
+    os.environ["JOB_COMPLETION_INDEX"] = "2"
+    args = cli_tools.get_parsed_args()
+    caplog.clear()
+    main.config_runner(args)
+    # assert no warnings
+    assert caplog.messages == []
+    # assert that only one config manager and one validation corresponding to JOB_COMPLETION_INDEX is set.
+    assert mock_run.call_args.args[0].config_dir is None
+    assert os.path.basename(mock_run.call_args.args[0].config_file) == "0002.yaml"
+    assert len(mock_run.call_args.args[1]) == 1
 
 
 @mock.patch(

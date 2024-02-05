@@ -73,6 +73,8 @@ Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud
 ([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
 to learn more about how DVT uses the CLI to generate SQL queries.
 
+Note that we do not support nested or complex columns for column or row validations.
+
 #### Column Validations
 
 Below is the command syntax for column validations. To run a grouped column
@@ -98,15 +100,13 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   [--grouped-columns or -gc GROUPED_COLUMNS]
                         Comma separated list of columns for Group By i.e col_a,col_b
-  [--primary-keys or -pk PRIMARY_KEYS]
-                        Comma separated list of columns to use as primary keys
-                        (Note) Only use with grouped column validation. See *Primary Keys* section.
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--exclude-columns or -ec]   Flag to indicate the list of columns provided should be excluded and not included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -136,8 +136,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
-The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
-sum , min, etc.) is provided, the default aggregation will run.
+The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
+use [YAML configs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop#running-dvt-with-yaml-configuration-files).
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
 
@@ -317,11 +317,14 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--exclude-columns or -ec]   Flag to indicate the list of columns provided should be excluded and not included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
+  [--config-file or -c CONFIG_FILE]
+                        YAML Config File Path to be used for storing validations.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -379,6 +382,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         See: *Validation Reports* section
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
+  [--config-file or -c CONFIG_FILE]
+                        YAML Config File Path to be used for storing validations.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -415,12 +420,14 @@ For example, this flag can be used as follows:
 }
 ```
 
-### YAML Configuration Files
+### Running DVT with YAML Configuration Files
 
-You can customize the configuration for any given validation by providing use
-case specific CLI arguments or editing the YAML configuration file.
+Running DVT with YAML configuration files is the recommended approach if:
+* you want to customize the configuration for any given validation OR
+* you want to run DVT at scale (i.e. row validations across many partitions)
+Nearly every validation command can take the argument `-c <file-name>` (the `generate-table-partitions` command takes  `-cdir <directory-name>`) where one or more yaml files are produced. These yaml files can be modified for custom validations.
 
-For example, the following command creates a YAML file for the validation of the
+The following command creates a YAML file for the validation of the
 `new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
 citibike.yaml`.
@@ -450,6 +457,26 @@ View the complete YAML file for a Grouped Column validation on the
 [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
 You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`.
+#### Scaling DVT to run 10's to 1000's of validations concurrently
+The above example `configs run -cdir` shows how you can run multiple validations with one command. If the directory used has been created by `generate-table-partitions`, you will have partition files numbered from `0000.yaml` to `<partno-1>.yaml`, where `<partno>` is the total number of partitions. These can be run as mentioned above and the partitions will be validated in order. This could take a long time if the number of partitions is large.
+
+DVT validations can be run concurrently (horizontal scaling) using GKE (Kubernetes Jobs) or Cloud Run Jobs. In order to run DVT in a container, you have to build a docker image, [see instructions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/docker#readme). Set the `PSO_DV_CONFIG_HOME` environment variable to point to a GCS prefix where the connection configuration files are stored. In Cloud Run you can use the option `--set-env-vars` or `--update-env-vars` to pass [the environment variable](https://cloud.google.com/run/docs/configuring/services/environment-variables#setting). We recommend that you use the `bq-result-handler` to save your validation results. In order to validate partitions concurrently, run DVT in Kubernetes or Cloud Run as shown below:
+```
+data-validation (--verbose or -v) (--log-level or -ll) configs run
+  [--kube-completions or -kc] Specifies that validation is being run in Kubernetes or Cloud Run in indexed completion mode.
+              specifies to DVT that validation being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run.
+  --config-dir or -cdir GCS_DIRECTORY 
+              where GCS_DIRECTORY = CONFIG_DIR/SOURCE_SCHEMA.SOURCE_TABLE, where CONFIG_DIR, SOURCE_SCHEMA and SOURCE_TABLE are
+              the arguments provided to generate-table-partitions to generate the partition yamls. GCS_DIRECTORY is the directory
+              where the partition files numbered 0000.yaml to <partno-1>.yaml are stored.
+```
+If you are not familiar with Kubernetes or Cloud Run Jobs, review the [internal docs](docs/internal/kubernetes_jobs.md) for an overview of the orchestration of multiple validations.
+
+The Cloud Run and Kubernetes pods must run in a network with access to the database servers. Every Cloud Run job is associated with a [service account](https://cloud.google.com/run/docs/securing/service-identity). You need to ensure that this service account has access to Google Cloud Storage (to read connection configuration and yaml files) and BigQuery (to publish results). If you are using Kubernetes, you will need to use a service account with the same privileges as mentioned for Cloud Run. In Kubernetes, you will need to set up [workload identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) so the DVT container can impersonate the service account.
+
+In Cloud Run, the [job](https://cloud.google.com/run/docs/create-jobs) must be run as multiple, independent tasks with the task count set to the number of partitions generated. In Kubernetes, set the number of completions to the number of partitions generated - see [Kubernetes Parallel Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/#parallel-jobs). The option `--kube-completions or -kc` tells DVT that many DVT containers are running in a Kubernetes cluster. Each DVT container only validates the specific partition yaml (based on the index assigned by Kubernetes control plane). If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (a `--config-file` is provided instead), a warning is issued.
+
+By default, each partition validation is retried up to 3 times if there is an error. In Kubernetes and Cloud Run, you can set the parallelism to the number you want. Keep in mind that if you are validating 1000's of partitions in parallel, you may find that setting the parallelism too high (say 100) may result in timeouts and slow down the validation.   
 
 ### [TODO] JSON Configuration Files
 

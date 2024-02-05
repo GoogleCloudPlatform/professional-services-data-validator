@@ -25,7 +25,7 @@ python3.8 -m pip install --upgrade --quiet nox pip
 python3.8 -m nox --version
 
 # When NOX_SESSION is set, it only runs the specified session
-if [[ -n "${NOX_SESSION:-}" &&  ( "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" || "$NOX_SESSION" == "integration_mysql" ) ]]; then
+if [[ -n "${NOX_SESSION:-}" &&  ( "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" || "$NOX_SESSION" == "integration_mysql" || "$NOX_SESSION" =~ integration_oracle.* ) ]]; then
     ./cloud_sql_proxy -instances="$CLOUD_SQL_CONNECTION" & python3.8 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 elif [[ -n "${NOX_SESSION:-}" ]]; then
     python3.8 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"

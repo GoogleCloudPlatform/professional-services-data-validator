@@ -95,37 +95,61 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, None, cast_to_bigint=cast_to_bigint
+            "count", col_args, args.exclude_columns, None, cast_to_bigint=cast_to_bigint
         )
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "sum",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "avg",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "min",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "max",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.bit_xor:
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "bit_xor", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "bit_xor",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.std:
         col_args = None if args.std == "*" else cli_tools.get_arg_list(args.std)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "std", col_args, supported_data_types, cast_to_bigint=cast_to_bigint
+            "std",
+            col_args,
+            args.exclude_columns,
+            supported_data_types,
+            cast_to_bigint=cast_to_bigint,
         )
     return aggregate_configs
 
@@ -219,7 +243,6 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
 
         # For custom-query row command
         if args.custom_query_type == consts.ROW_VALIDATION.lower():
-
             # Append Comparison fields
             if args.comparison_fields is not None:
                 comparison_fields = cli_tools.get_arg_list(
@@ -251,7 +274,6 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
 
     # Append ROW_VALIDATION configs
     if config_manager.validation_type == consts.ROW_VALIDATION:
-
         # Append calculated fields: --hash/--concat
         config_manager.append_calculated_fields(
             get_calculated_config(args, config_manager)
@@ -298,14 +320,51 @@ def build_config_managers_from_args(
 
 
 def config_runner(args):
+    """Config Runner is where the decision is made to run validations from one or more files.
+    One file can produce multiple validations - for example when more than one set of tables are being validated
+    between the source and target. If multiple files are to be run and if the associated configuration files
+    are numbered sequentially, say from '0000.yaml' to '0012.yaml' (for 13 validations),
+    it is possible to run them concurrently in a Kubernetes / Cloud Run environment.
+    If the user wants that, they need to specify a -kc or --kube-completions which tells
+    DVT to only run the validation corresponding to the index number provided in the
+    JOB_COMPLETION_INDEX (for Kubernetes) or CLOUD_RUN_TASK_INDEX (for Cloud Run) environment
+    variable. This environment variable is set by the Kubernetes/Cloud Run container orchestrator.
+    The orchestrator spins up containers to complete each validation, one at a time.
+    """
     if args.config_dir:
-        mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
-        config_file_names = mgr.list_validations_in_dir(args.config_dir)
-
-        config_managers = []
-        for file in config_file_names:
-            config_managers.extend(build_config_managers_from_yaml(args, file))
+        if args.kube_completions and (
+            ("JOB_COMPLETION_INDEX" in os.environ.keys())
+            or ("CLOUD_RUN_TASK_INDEX" in os.environ.keys())
+        ):
+            # Running in Kubernetes in Job completions - only run the yaml file corresponding to index
+            job_index = (
+                int(os.environ.get("JOB_COMPLETION_INDEX"))
+                if "JOB_COMPLETION_INDEX" in os.environ.keys()
+                else int(os.environ.get("CLOUD_RUN_TASK_INDEX"))
+            )
+            config_file_path = (
+                f"{args.config_dir}{job_index:04d}.yaml"
+                if args.config_dir.endswith("/")
+                else f"{args.config_dir}/{job_index:04d}.yaml"
+            )
+            setattr(args, "config_dir", None)
+            setattr(args, "config_file", config_file_path)
+            config_managers = build_config_managers_from_yaml(args, config_file_path)
+        else:
+            if args.kube_completions:
+                logging.warning(
+                    "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
+                )
+            mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
+            config_file_names = mgr.list_validations_in_dir(args.config_dir)
+            config_managers = []
+            for file in config_file_names:
+                config_managers.extend(build_config_managers_from_yaml(args, file))
     else:
+        if args.kube_completions:
+            logging.warning(
+                "--kube-completions or -kc specified, which requires a config directory, however a specific config file is provided."
+            )
         config_file_path = _get_arg_config_file(args)
         config_managers = build_config_managers_from_yaml(args, config_file_path)
 
@@ -376,6 +435,7 @@ def get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
     table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
+
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -471,16 +531,37 @@ def run_validation(config_manager, dry_run=False, verbose=False):
         result_handler=None,
         verbose=verbose,
     )
+
     if dry_run:
+        sql_alchemy_clients = [
+            "mysql",
+            "oracle",
+            "postgres",
+            "db2",
+            "mssql",
+            "redshift",
+            "snowflake",
+        ]
+
+        source_query = validator.validation_builder.get_source_query().compile()
+        if config_manager.source_client.name in sql_alchemy_clients:
+            source_query = source_query.compile(
+                config_manager.source_client.con.engine,
+                compile_kwargs={"literal_binds": True},
+            )
+
+        target_query = validator.validation_builder.get_target_query().compile()
+        if config_manager.target_client.name in sql_alchemy_clients:
+            target_query = target_query.compile(
+                config_manager.target_client.con.engine,
+                compile_kwargs={"literal_binds": True},
+            )
+
         print(
             json.dumps(
                 {
-                    "source_query": str(
-                        validator.validation_builder.get_source_query().compile()
-                    ),
-                    "target_query": str(
-                        validator.validation_builder.get_target_query().compile()
-                    ),
+                    "source_query": str(source_query),
+                    "target_query": str(target_query),
                 },
                 indent=4,
             )

@@ -21,12 +21,12 @@ from sqlalchemy.dialects.mssql.base import MSDialect
 # Override DATETIMEOFFSET and DATETIME to remove timestamp
 # scale of 7 for valid schema matching
 @dt.dtype.register(MSDialect, mssql.DATETIMEOFFSET)
-def _datetimeoffset(_, sa_type, nullable=True):
+def sa_mssql_datetimeoffset(_, sa_type, nullable=True):
     return dt.Timestamp(timezone="UTC", nullable=nullable)
 
 
 @dt.dtype.register(MSDialect, mssql.DATETIME2)
-def _datetime2(_, sa_type, nullable=True):
+def sa_mssql_datetime2(_, sa_type, nullable=True):
     return dt.Timestamp(nullable=nullable)
 
 

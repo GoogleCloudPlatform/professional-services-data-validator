@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "4.2.0"
+version = "4.3.0"
 release_status = "Development Status :: 3 - Alpha"
 
 with open("README.md", "r") as fh:
@@ -41,7 +41,7 @@ dependencies = [
     "PyYAML==6.0",
     "pandas==1.5.3",
     "proto-plus==1.22.3",
-    "pyarrow==10.0.1",
+    "pyarrow==14.0.1",
     "pydata-google-auth==1.8.0",
     "google-cloud-bigquery==3.11.3",
     "google-cloud-bigquery-storage==2.20.0",

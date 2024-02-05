@@ -45,6 +45,29 @@ CONN = {
     "database": POSTGRES_DATABASE,
 }
 
+PG2PG_COLUMNS = [
+    "id",
+    "col_int2",
+    "col_int4",
+    "col_int8",
+    "col_dec",
+    "col_dec_10_2",
+    "col_float32",
+    "col_float64",
+    "col_varchar_30",
+    "col_char_2",
+    "col_text",
+    "col_date",
+    "col_ts",
+    "col_tstz",
+    "col_time",
+    "col_timetz",
+    "col_binary",
+    "col_bool",
+    "col_uuid",
+    "col_oid",
+]
+
 
 @pytest.fixture
 def cloud_sql(request):
@@ -534,7 +557,11 @@ def test_schema_validation(cloud_sql):
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_core_types():
+def test_schema_validation_pg_types():
+    """Test schema validation on most PostgreSQL scalar data types.
+    This used to use the dvt_core_types table but that is covered by subsequent BigQuery
+    testing therefore this test can cover off an extended list of data types.
+    """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -542,7 +569,7 @@ def test_schema_validation_core_types():
             "schema",
             "-sc=mock-conn",
             "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
+            "-tbls=pso_data_validator.dvt_pg_types",
             "--filter-status=fail",
         ]
     )
@@ -615,19 +642,30 @@ def test_schema_validation_not_null_vs_nullable():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_core_types():
+def test_column_validation_pg_types():
+    """Test column validation on most PostgreSQL scalar data types.
+    Actual values are not well tested because this is PostgreSQL to PostgreSQL, this is shaking
+    out the code path for all types. PostgreSQL to BigQuery and Oracle to PostgreSQL tests
+    will cover testing of returned data values.
+    This used to use the dvt_core_types table but that is covered by subsequent BigQuery
+    testing therefore this test can cover off an extended list of data types.
+    """
     parser = cli_tools.configure_arg_parser()
+    count_cols = ",".join(PG2PG_COLUMNS)
+    sum_cols = ",".join([_ for _ in PG2PG_COLUMNS if _ not in ("col_oid")])
     args = parser.parse_args(
         [
             "validate",
             "column",
             "-sc=mock-conn",
             "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
+            "-tbls=pso_data_validator.dvt_pg_types",
             "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+            "--grouped-columns=col_varchar_30",
+            f"--sum={count_cols}",
+            f"--sum={sum_cols}",
+            f"--min={count_cols}",
+            f"--max={count_cols}",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)
@@ -673,7 +711,14 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_core_types():
+def test_row_validation_pg_types():
+    """Test row hash validation on most PostgreSQL scalar data types.
+    Actual values are not well tested because this is PostgreSQL to PostgreSQL, this is shaking
+    out the code path for all types. PostgreSQL to BigQuery and Oracle to PostgreSQL tests
+    will cover testing of returned data values.
+    This used to use the dvt_core_types table but that is covered by subsequent BigQuery
+    testing therefore this test can cover off an extended list of data types.
+    """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -681,10 +726,41 @@ def test_row_validation_core_types():
             "row",
             "-sc=mock-conn",
             "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
+            "-tbls=pso_data_validator.dvt_pg_types",
             "--primary-keys=id",
             "--filter-status=fail",
             "--hash=*",
+        ]
+    )
+    config_managers = main.build_config_managers_from_args(args)
+    assert len(config_managers) == 1
+    config_manager = config_managers[0]
+    validator = data_validation.DataValidation(config_manager.config, verbose=False)
+    df = validator.execute()
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_large_decimals_to_bigquery():
+    """PostgreSQL to BigQuery dvt_large_decimals row validation.
+    See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals for the primary key join column plus the hash columns.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=pg-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_large_decimals",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
         ]
     )
     config_managers = main.build_config_managers_from_args(args)

@@ -45,13 +45,13 @@ Above command executes validations stored in a config file named citibike.yaml.
 #### Generate partitions and save as multiple configuration files
 ````shell script
 data-validation generate-table-partitions \
+  -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_trees.tree_census_2015 \
   --primary-keys tree_id \
   --hash '*' \
   --filters 'tree_id>3000' \
   -cdir partitions_dir \
-  --partition-key tree_id \
   --partition-num 200
 ````
 Above command creates multiple partitions based on `--partition-key`. Number of generated configuration files is decided by `--partition-num`
