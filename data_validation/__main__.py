@@ -437,7 +437,7 @@ def convert_config_to_yaml(args, config_managers):
     return yaml_config
 
 
-def convert_config_to_json(args, config_managers) -> dict:
+def convert_config_to_json(config_managers) -> dict:
     """Return dict objects formatted for json validations.
     JSON configs correspond to ConfigManager objects and therefore can only correspond to
     one table validation.
@@ -533,7 +533,7 @@ def store_json_config_file(args, config_managers):
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
     """
-    json_config = convert_config_to_json(args, config_managers)
+    json_config = convert_config_to_json(config_managers)
     config_file_path = _get_arg_config_file_json(args)
     cli_tools.store_validation_json(config_file_path, json_config)
 

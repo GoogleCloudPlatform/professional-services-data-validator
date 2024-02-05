@@ -142,7 +142,7 @@ class StateManager(object):
         """Get a validation configuration from the expected file.
 
         Args:
-            name: The name of the validation.
+            name: The name of the validation file.
         Returns:
             A dict of the validation values from the file.
         """
