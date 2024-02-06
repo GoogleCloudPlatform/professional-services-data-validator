@@ -31,7 +31,7 @@ default_args = {
 }
 
 with DAG(
-    "kubernetes_pod_operator",
+    "dvt_dag_kubernetes_pod_operator",
     default_args=default_args,
     schedule_interval=None,
     dagrun_timeout=timedelta(minutes=60),
