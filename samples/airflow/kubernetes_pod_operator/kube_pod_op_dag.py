@@ -15,11 +15,8 @@
 """
 
 from datetime import timedelta
-
 import airflow
 from airflow import DAG
-from airflow import models
-from airflow.kubernetes.secret import Secret
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import (
     KubernetesPodOperator,
 )
