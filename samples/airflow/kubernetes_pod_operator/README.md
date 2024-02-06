@@ -8,7 +8,7 @@
 ### Instructions
 
 1. Download the DAG file in this directory
-2. Update the DAF configuration for your use case (update PROJECT_ID, optional gcs bucket)
+2. Update the DAG configuration for your use case (update PROJECT_ID, optional gcs bucket)
 3. Upload it to the DAGs folder in your Composer environment
 
 ### Build Docker Image
