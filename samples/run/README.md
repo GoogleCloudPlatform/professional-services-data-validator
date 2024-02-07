@@ -34,7 +34,7 @@ gcloud run deploy --image gcr.io/${PROJECT_ID}/data-validation \
 
 You can easily run a request via Python.  For a quick test, we have provided this logic in `test.py` to run a validation against a public BigQuery table. The example is similar and also shows how you can forward results to BigQuery from the Cloud Run job:
 
-```
+```python
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,8 @@ def get_cloud_run_url(service_name, project_id):
 
   return re.findall("URL:.*\n", description)[0].split()[1].strip()
 
-
+# You can get the JSON content specific for your scenario by using our CLI and providing the argument to generate the JSON config file [`--config-file-json` or `-cj <filepath>.json`]. 
+# IMPORTANT: do not forget to make the necessary adjustments between JSON and Python objects, check this link as a reference: https://python-course.eu/applications-python/json-and-python.php.
 data = {
     "source_conn": {
         "source_type": "BigQuery",
