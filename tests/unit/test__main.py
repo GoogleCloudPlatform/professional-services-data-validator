@@ -21,6 +21,7 @@ from data_validation import cli_tools, consts
 from data_validation import __main__ as main
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
+PROJECT_ID = os.getenv("PROJECT_ID")
 
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
@@ -78,7 +79,6 @@ CONFIG_RUNNER_ARGS_2 = {
     "kube_completions": True,
     "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations",
 }
-
 CONFIG_RUNNER_ARGS_3 = {
     "verbose": False,
     "log_level": "INFO",
@@ -88,6 +88,7 @@ CONFIG_RUNNER_ARGS_3 = {
     "kube_completions": True,
     "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/4partitions",
 }
+
 TEST_JSON_VALIDATION_CONFIG = {
     consts.CONFIG_TYPE: "Column",
     consts.CONFIG_SOURCE_CONN_NAME: "mock-conn",
