@@ -927,7 +927,7 @@ def _add_common_arguments(optional_arguments, required_arguments):
     optional_arguments.add_argument(
         "--config-file-json",
         "-cj",
-        help="Store the validation config in the JSON File Path specified to be used for application purposes, since we only support generating a JSON config file and all other features are exclusive for YAML config files",
+        help="Store the validation config in the JSON File Path specified to be used for application use cases",
     )
     optional_arguments.add_argument(
         "--format",

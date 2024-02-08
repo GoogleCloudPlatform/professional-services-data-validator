@@ -126,7 +126,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         YAML Config File Path to be used for storing validations and other features.
                         See: *Running DVT with YAML Configuration Files* section
   [--config-file-json or -cj CONFIG_FILE_JSON]
-                        JSON Config File Path to be used for storing validations for application purposes, since we only support generating a JSON config file and all other features are exclusive for YAML config files.
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--threshold or -th THRESHOLD]
                         Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
@@ -196,7 +196,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         YAML Config File Path to be used for storing validations and other features.
                         See: *Running DVT with YAML Configuration Files* section
   [--config-file-json or -cj CONFIG_FILE_JSON]
-                        JSON Config File Path to be used for storing validations for application purposes, since we only support generating a JSON config file and all other features are exclusive for YAML config files.
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -276,7 +276,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
                         YAML Config File Path to be used for storing validations and other features.
                         See: *Running DVT with YAML Configuration Files* section
   [--config-file-json or -cj CONFIG_FILE_JSON]
-                        JSON Config File Path to be used for storing validations for application purposes, since we only support generating a JSON config file and all other features are exclusive for YAML config files.
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
   [--filter-status or -fs STATUSES_LIST]
@@ -330,7 +330,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
                         YAML Config File Path to be used for storing validations and other features.
                         See: *Running DVT with YAML Configuration Files* section
   [--config-file-json or -cj CONFIG_FILE_JSON]
-                        JSON Config File Path to be used for storing validations for application purposes, since we only support generating a JSON config file and all other features are exclusive for YAML config files.
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -392,7 +392,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         YAML Config File Path to be used for storing validations and other features.
                         See: *Running DVT with YAML Configuration Files* section
   [--config-file-json or -cj CONFIG_FILE_JSON]
-                        JSON Config File Path to be used for storing validations for application purposes, since we only support generating a JSON config file and all other features are exclusive for YAML config files.
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
