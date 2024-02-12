@@ -45,11 +45,19 @@ LOG_LEVEL_MAP = {
 
 
 def _get_arg_config_file(args):
-    """Return String yaml config file path."""
+    """Return String YAML config file path."""
     if not args.config_file:
         raise ValueError("YAML Config File was not supplied.")
 
     return args.config_file
+
+
+def _get_arg_config_file_json(args):
+    """Return String JSON config file path."""
+    if not args.config_file_json:
+        raise ValueError("JSON Config File was not supplied.")
+
+    return args.config_file_json
 
 
 def get_aggregate_config(args, config_manager: ConfigManager):
@@ -489,6 +497,26 @@ def convert_config_to_yaml(args, config_managers):
     return yaml_config
 
 
+def convert_config_to_json(config_managers) -> dict:
+    """Return dict objects formatted for json validations.
+    JSON configs correspond to ConfigManager objects and therefore can only correspond to
+    one table validation.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
+
+    if len(config_managers) > 1:
+        raise ValueError(
+            "JSON configs can only be created for single table validations."
+        )
+    config_manager = config_managers[0]
+    json_config = config_manager.config
+    json_config[consts.CONFIG_SOURCE_CONN] = config_manager.get_source_connection()
+    json_config[consts.CONFIG_TARGET_CONN] = config_manager.get_target_connection()
+    return json_config
+
+
 def run_validation(config_manager, dry_run=False, verbose=False):
     """Run a single validation.
 
@@ -552,7 +580,7 @@ def run_validations(args, config_managers):
     for config_manager in config_managers:
         if config_manager.config and consts.CONFIG_FILE in config_manager.config:
             logging.info(
-                "Currently running the validation for yml file: %s",
+                "Currently running the validation for YAML file: %s",
                 config_manager.config[consts.CONFIG_FILE],
             )
             try:
@@ -580,6 +608,17 @@ def store_yaml_config_file(args, config_managers):
     cli_tools.store_validation(config_file_path, yaml_configs)
 
 
+def store_json_config_file(args, config_managers):
+    """Build a JSON config file from the supplied configs.
+
+    Args:
+        config_managers (list[ConfigManager]): List of config manager instances.
+    """
+    json_config = convert_config_to_json(config_managers)
+    config_file_path = _get_arg_config_file_json(args)
+    cli_tools.store_validation_json(config_file_path, json_config)
+
+
 def partition_and_store_config_files(args: Namespace) -> None:
     """Build multiple YAML Config files using user specified partition logic
 
@@ -597,7 +636,7 @@ def partition_and_store_config_files(args: Namespace) -> None:
 
 def run(args) -> None:
     """Splits execution into:
-    1. Build and save single Yaml Config file
+    1. Build and save single Config file (YAML or JSON)
     2. Run Validations
 
     Args:
@@ -609,6 +648,8 @@ def run(args) -> None:
     config_managers = build_config_managers_from_args(args)
     if args.config_file:
         store_yaml_config_file(args, config_managers)
+    elif args.config_file_json:
+        store_json_config_file(args, config_managers)
     else:
         run_validations(args, config_managers)
 

@@ -84,6 +84,7 @@ terraform.rc
 
 # Custom
 *.yaml
+*.json
 partitions_dir
 setup.sh
 

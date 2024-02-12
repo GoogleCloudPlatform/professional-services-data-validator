@@ -77,7 +77,6 @@ CONFIG_RUNNER_ARGS_2 = {
     "kube_completions": True,
     "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations",
 }
-
 CONFIG_RUNNER_ARGS_3 = {
     "verbose": False,
     "log_level": "INFO",

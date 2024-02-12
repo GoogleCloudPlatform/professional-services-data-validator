@@ -15,19 +15,14 @@ By default, the DAG will output the results to BigQuery as a result handler.
 ### Instructions
 
 1. Download the DAG file in this directory
-2. Update the JSON configuration for your use case (update table names, etc.)
+2. Get the JSON configuration for your use case, explained in the next section
 3. Upload it to the DAGs folder in your Airflow environment
 
-### Limitations 
+## JSON Configuration 
 
-The Airflow DAG expects the raw config JSON which is not the same as a YAML config converted to JSON.
+The Airflow DAG expects a JSON config content which is not the same as a YAML config converted to JSON format. The parameters in a typical YAML config file for DVT are slightly different from the JSON config file version, which is generated after DVT parses the YAML.
 
-Parameters in a typical YAML config file are slightly different from the raw JSON config, 
-which is generated after DVT parses the YAML. The [build_config_manager()](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/config_manager.py#L429) 
-method generates the JSON config and should be used as a reference.
-
-Our Cloud Run sample also expects a raw JSON config in the `'data'` variable shown
-[here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/run#test-cloud-run-endpoint).
+You can get the JSON content specific for your scenario by using our CLI and providing the argument to generate the JSON config file [`--config-file-json` or `-cj <filepath>.json`]. IMPORTANT: do not forget to make the necessary adjustments between JSON and Python objects, check [this link as a reference](https://python-course.eu/applications-python/json-and-python.php).
 
 For example, the following YAML config is equivalent to the JSON config below, where the source param is written as `source_conn`.
 
@@ -58,6 +53,3 @@ validations:
     ]
 }
 ```
-
-For more implementation details, [this](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/data_validation/config_manager.py#L444) 
-is where the raw JSON config is generated in the DVT code.

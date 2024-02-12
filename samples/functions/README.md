@@ -32,7 +32,9 @@ cd ../../
 ```
 
 ### JSON Configuration 
-Below is an example of the JSON configuration that can be passed to the Cloud Function.
+
+Below is an example of the JSON configuration that can be passed to the Cloud Function. You can get the JSON content specific for your scenario by using our CLI and providing the argument to generate the JSON config file [`--config-file-json` or `-cj <filepath>.json`]. IMPORTANT: do not forget to make the necessary adjustments between JSON and Python objects, check [this link as a reference](https://python-course.eu/applications-python/json-and-python.php).
+
 ```json
 {
    "config":{

@@ -116,6 +116,17 @@ class StateManager(object):
         yaml_config_str = dump(yaml_config, Dumper=Dumper)
         self._write_file(validation_path, yaml_config_str)
 
+    def create_validation_json(self, name: str, json_config: Dict[str, str]):
+        """Create a validation file and store the given config as JSON.
+
+        Args:
+            name (String): The name of the validation.
+            json_config (Dict): A dictionary with the validation details.
+        """
+        validation_path = self._get_validation_path(name)
+        json_config_str = json.dumps(json_config)
+        self._write_file(validation_path, json_config_str)
+
     def create_partition_yaml(self, target_file_path: str, yaml_config: Dict[str, str]):
         """Create a validation file and store the given config as YAML.
 
@@ -131,7 +142,7 @@ class StateManager(object):
         """Get a validation configuration from the expected file.
 
         Args:
-            name: The name of the validation.
+            name: The name of the validation file.
         Returns:
             A dict of the validation values from the file.
         """

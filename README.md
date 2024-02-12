@@ -53,8 +53,8 @@ setup steps needed to install and use the Data Validation Tool.
 Before using this tool, you will need to create connections to the source and
 target tables. Once the connections are created, you can run validations on
 those tables. Validation results can be printed to stdout (default) or outputted
-to BigQuery (recommended). DVT also allows you to save or edit validation
-configurations in a YAML file. This is useful for running common validations or
+to BigQuery (recommended). DVT also allows you to save and edit validation
+configurations in a YAML or JSON file. This is useful for running common validations or
 updating the configuration.
 
 ### Managing Connections
@@ -123,7 +123,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
   [--config-file or -c CONFIG_FILE]
-                        YAML Config File Path to be used for storing validations.
+                        YAML Config File Path to be used for storing validations and other features.
+                        See: *Running DVT with YAML Configuration Files* section
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--threshold or -th THRESHOLD]
                         Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
@@ -159,7 +162,7 @@ and finally hashing the row.
 
 Under the hood, row validation uses
 [Calculated Fields](https://github.com/GoogleCloudPlatform/professional-services-data-validator#calculated-fields) to
-apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML config to customize your row validation.
+apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML or JSON config file to customize your row validation.
 
 ```
 data-validation (--verbose or -v) (--log-level or -ll) validate row
@@ -190,7 +193,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
   [--config-file or -c CONFIG_FILE]
-                        YAML Config File Path to be used for storing validations.
+                        YAML Config File Path to be used for storing validations and other features.
+                        See: *Running DVT with YAML Configuration Files* section
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -267,7 +273,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
-                        YAML Config File Path to be used for storing validations.
+                        YAML Config File Path to be used for storing validations and other features.
+                        See: *Running DVT with YAML Configuration Files* section
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
                         Defaults  to table.
   [--filter-status or -fs STATUSES_LIST]
@@ -318,7 +327,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
-                        YAML Config File Path to be used for storing validations.
+                        YAML Config File Path to be used for storing validations and other features.
+                        See: *Running DVT with YAML Configuration Files* section
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -377,7 +389,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
-                        YAML Config File Path to be used for storing validations.
+                        YAML Config File Path to be used for storing validations and other features.
+                        See: *Running DVT with YAML Configuration Files* section
+  [--config-file-json or -cj CONFIG_FILE_JSON]
+                        JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
   [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
@@ -426,7 +441,7 @@ The following command creates a YAML file for the validation of the
 my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
 citibike.yaml`.
 
-The vaildation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
+The validation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
 env variable if that has been set; otherwise, it is saved to wherever the tool is run.
 
 You can now edit the YAML file if, for example, the `new_york_citibike` table is
@@ -627,7 +642,7 @@ significant figure.
 
 Once a calculated field is defined, it can be referenced by other calculated
 fields at any "depth" or higher. Depth controls how many subqueries are executed
-in the resulting query. For example, with the following YAML config...
+in the resulting query. For example, with the following YAML config:
 
 ```yaml
 - calculated_fields:
@@ -648,7 +663,7 @@ in the resulting query. For example, with the following YAML config...
       depth: 1 # calculated one query above
 ```
 
-is equivalent to the following SQL query...
+is equivalent to the following SQL query:
 
 ```sql
 SELECT

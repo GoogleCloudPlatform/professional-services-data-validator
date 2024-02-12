@@ -321,7 +321,7 @@ def _configure_raw_query(subparsers):
 
 
 def _configure_validation_config_parser(subparsers):
-    """Configure arguments to run a data validation YAML config."""
+    """Configure arguments to run a data validation YAML config file."""
     validation_config_parser = subparsers.add_parser(
         "configs", help="Run validations stored in a YAML config file"
     )
@@ -922,7 +922,12 @@ def _add_common_arguments(optional_arguments, required_arguments):
     optional_arguments.add_argument(
         "--config-file",
         "-c",
-        help="Store the validation in the YAML Config File Path specified",
+        help="Store the validation config in the YAML File Path specified",
+    )
+    optional_arguments.add_argument(
+        "--config-file-json",
+        "-cj",
+        help="Store the validation config in the JSON File Path specified to be used for application use cases",
     )
     optional_arguments.add_argument(
         "--format",
@@ -1072,6 +1077,12 @@ def store_validation(validation_file_name, yaml_config):
     """Store the validation YAML config under the given name."""
     mgr = state_manager.StateManager()
     mgr.create_validation_yaml(validation_file_name, yaml_config)
+
+
+def store_validation_json(validation_file_name, json_config):
+    """Store the validation JSON config under the given name."""
+    mgr = state_manager.StateManager()
+    mgr.create_validation_json(validation_file_name, json_config)
 
 
 def store_partition(target_file_path, yaml_config, target_folder_path=None):

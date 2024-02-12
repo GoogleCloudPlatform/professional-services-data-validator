@@ -39,7 +39,8 @@ def get_cloud_run_url(service_name, project_id):
 
     return re.findall("URL:.*\n", description)[0].split()[1].strip()
 
-
+# You can get the JSON content specific for your scenario by using our CLI and providing the argument to generate the JSON config file [`--config-file-json` or `-cj <filepath>.json`]. 
+# IMPORTANT: do not forget to make the necessary adjustments between JSON and Python objects, check this link as a reference: https://python-course.eu/applications-python/json-and-python.php.
 data = {
     "source_conn": {
         "source_type": "BigQuery",
