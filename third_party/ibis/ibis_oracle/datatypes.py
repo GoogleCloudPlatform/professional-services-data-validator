@@ -68,6 +68,7 @@ _type_mapping = {
     cx_Oracle.DB_TYPE_TIMESTAMP: dt.Timestamp,
     cx_Oracle.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="UTC"),
     cx_Oracle.DB_TYPE_RAW: dt.Binary,
+    cx_Oracle.DB_TYPE_LONG_RAW: dt.Binary,
     cx_Oracle.DB_TYPE_BFILE: dt.Binary,
     cx_Oracle.DB_TYPE_NUMBER: dt.Decimal,
     cx_Oracle.DB_TYPE_LONG: dt.String,
