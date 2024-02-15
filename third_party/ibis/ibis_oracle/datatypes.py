@@ -86,7 +86,7 @@ _type_mapping = {
 # I (nj@2024-02-15) felt the simplest change was to add LONG RAW to SQL Alchemy
 # as a RAW variant, as below.
 if "LONG RAW" not in OracleDialect_cx_oracle.ischema_names:
-    OracleDialect_cx_oracle.ischema_names["LONG RAW"] = oracle.LONG  # oracle.RAW
+    OracleDialect_cx_oracle.ischema_names["LONG RAW"] = oracle.RAW
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.CLOB)
