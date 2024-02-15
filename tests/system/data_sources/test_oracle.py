@@ -77,6 +77,7 @@ ORA2PG_COLUMNS = [
     "col_ts",
     "col_tstz",
     "col_raw",
+    "col_long_raw",
     "col_blob",
     "col_clob",
     "col_nclob",
@@ -423,7 +424,7 @@ def test_row_validation_core_types_to_bigquery():
 )
 def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
-    # TODO col_raw is blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
+    # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded CLOB/NCLOB/BLOB columns because lob values cannot be concatenated
@@ -437,6 +438,7 @@ def test_row_validation_oracle_to_postgres():
                 "col_clob",
                 "col_nclob",
                 "col_raw",
+                "col_long_raw",
                 "col_float32",
                 "col_float64",
                 "col_tstz",
