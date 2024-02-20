@@ -68,6 +68,7 @@ _type_mapping = {
     cx_Oracle.DB_TYPE_TIMESTAMP: dt.Timestamp,
     cx_Oracle.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="UTC"),
     cx_Oracle.DB_TYPE_RAW: dt.Binary,
+    cx_Oracle.DB_TYPE_LONG_RAW: dt.Binary,
     cx_Oracle.DB_TYPE_BFILE: dt.Binary,
     cx_Oracle.DB_TYPE_NUMBER: dt.Decimal,
     cx_Oracle.DB_TYPE_LONG: dt.String,
@@ -77,6 +78,15 @@ _type_mapping = {
     cx_Oracle.DB_TYPE_BINARY_FLOAT: dt.Float32,
     cx_Oracle.DB_TYPE_BINARY_DOUBLE: dt.Float64,
 }
+
+# SQL Alchemy doesn't support LONG RAW which drops us into Ibis 5.1.0 method:
+# _handle_failed_column_type_inference().
+# This method has a flaw that is doesn't prefix the table name with the schema
+# which causes a table not found exception.
+# I (nj@2024-02-15) felt the simplest change was to add LONG RAW to SQL Alchemy
+# as a RAW variant, as below.
+if "LONG RAW" not in OracleDialect_cx_oracle.ischema_names:
+    OracleDialect_cx_oracle.ischema_names["LONG RAW"] = oracle.RAW
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.CLOB)
