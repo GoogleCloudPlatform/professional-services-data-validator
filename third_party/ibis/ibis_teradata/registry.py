@@ -19,6 +19,8 @@ import string
 import warnings
 from multipledispatch import Dispatcher
 
+import sqlalchemy as sa
+
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 
@@ -249,6 +251,15 @@ def _extract_epoch(translator, op):
     )
 
 
+def _reduction_count(t, op):
+    arg = op.args
+    arg_formatted = t.translate(arg)
+
+    count = t.count(arg_formatted)
+
+    return teradata_cast(arg_formatted, count, dt.int64)
+
+
 """ Add New Customizations to Operations registry """
 _operation_registry.update(
     {
@@ -258,5 +269,6 @@ _operation_registry.update(
         ops.IfNull: fixed_arity("NVL", 2),
         ops.StringJoin: _string_join,
         ops.ExtractEpochSeconds: _extract_epoch,
+        ops.Count: _reduction_count,
     }
 )
