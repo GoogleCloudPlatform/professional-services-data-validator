@@ -502,10 +502,19 @@ class ConfigManager(object):
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
         for field in fields:
             column_config = {
-                consts.CONFIG_SOURCE_COLUMN: field,
-                consts.CONFIG_TARGET_COLUMN: field,
+                consts.CONFIG_SOURCE_COLUMN: casefold_source_columns.get(
+                    field.casefold(), field
+                ),
+                consts.CONFIG_TARGET_COLUMN: casefold_target_columns.get(
+                    field.casefold(), field
+                ),
                 consts.CONFIG_FIELD_ALIAS: field,
                 consts.CONFIG_CAST: None,
             }
@@ -513,7 +522,7 @@ class ConfigManager(object):
         return field_configs
 
     def build_column_configs(self, columns):
-        """Return list of grouped column config objects."""
+        """Return list of column config objects."""
         column_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
