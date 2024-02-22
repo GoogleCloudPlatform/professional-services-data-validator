@@ -232,12 +232,23 @@ class Backend(BaseSQLBackend):
 
         schema = self.ast_schema(query_ast, **kwargs)
         # Date columns are in the Dataframe as "object", using parse_dates to ensure they have a better data type.
-        date_columns = [_ for _ in schema.names if schema.fields[_].is_date()]
+        date_columns = [
+            _
+            for _ in schema.names
+            if schema.fields[_].is_date() or schema.fields[_].is_timestamp()
+        ]
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
             df = pandas.read_sql(sql, self.client, parse_dates=date_columns)
+
+        if df.empty:
+            # Empty Dataframe infers an "object" data type, update to float64.
+            float_columns = {
+                _: float for _ in schema.names if schema.fields[_].is_float64()
+            }
+            df = df.astype(float_columns)
         return df
 
     # Methods we need to implement for BaseSQLBackend
