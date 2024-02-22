@@ -348,11 +348,11 @@ def _join_pivots(source, target, differences, join_on_fields):
         source_difference["aggregation_type"]
         .fillna(target["aggregation_type"])
         .name("aggregation_type"),
-        source_difference["table_name"].name("source_table_name"),
-        source_difference["column_name"].name("source_column_name"),
+        source_difference["table_name"].fillna(source["table_name"]).name("source_table_name"),
+        source_difference["column_name"].fillna(source["column_name"]).name("source_column_name"),
         source_difference["agg_value"].name("source_agg_value"),
-        target["table_name"].name("target_table_name"),
-        target["column_name"].name("target_column_name"),
+        target["table_name"].fillna("LALALA").name("target_table_name"),
+        target["column_name"].fillna("LALALA").name("target_column_name"),
         target["agg_value"].name("target_agg_value"),
         group_by_columns,
         source_difference["primary_keys"],
@@ -362,6 +362,24 @@ def _join_pivots(source, target, differences, join_on_fields):
         source_difference["pct_threshold"],
         source_difference["validation_status"],
     ]
+    # joined_fillna_source = joined.join(source, join_keys, how="outer")[
+    #     joined["validation_name"],
+    #     joined["validation_type"],
+    #     joined["aggregation_type"],
+    #     joined["source_table_name"].fillna(source["table_name"]).name("source_table_name"),
+    #     joined["column_name"].fillna(source["column_name"]).name("source_column_name"),
+    #     joined["source_agg_value"],
+    #     joined["table_name"],
+    #     joined["target_column_name"],
+    #     joined["target_agg_value"],
+    #     group_by_columns,
+    #     joined["primary_keys"],
+    #     joined["num_random_rows"],
+    #     joined["difference"],
+    #     joined["pct_difference"],
+    #     joined["pct_threshold"],
+    #     joined["validation_status"],
+    # ]
     return joined
 
 
