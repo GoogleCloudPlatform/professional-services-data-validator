@@ -24,6 +24,7 @@ import json
 import logging
 import ibis
 import ibis.expr.datatypes
+import pandas as pd
 
 from data_validation import consts
 
@@ -86,13 +87,27 @@ def generate_report(
     )
     target_df = client.execute(target_pivot)
 
+    # trying to populate the empty df with same amount of rows and columns (type included)
+    #if source_df.empty:
+        #source_df = pd.DataFrame().reindex_like(target_df)
+    #if target_df.empty:
+        #target_df = pd.DataFrame().reindex_like(source_df)
+
+    # Add n blank rows
+    n = 3
+    new_index = pd.RangeIndex(len(df)*(n+1))
+    new_df = pd.DataFrame(np.nan, index=new_index, columns=df.columns)
+    ids = np.arange(len(df))*(n+1)
+    new_df.loc[ids] = df.values
+    print(new_df)
+
     con = ibis.pandas.connect(
         {"source": source_df, "differences": differences_df, "target": target_df}
     )
     joined = _join_pivots(
         con.tables.source, con.tables.target, con.tables.differences, join_on_fields
     )
-
+    
     documented = _add_metadata(joined, run_metadata)
 
     if verbose:
@@ -101,6 +116,7 @@ def generate_report(
 
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
+    breakpoint()
     return result_df
 
 
@@ -348,11 +364,11 @@ def _join_pivots(source, target, differences, join_on_fields):
         source_difference["aggregation_type"]
         .fillna(target["aggregation_type"])
         .name("aggregation_type"),
-        source_difference["table_name"].fillna(source["table_name"]).name("source_table_name"),
-        source_difference["column_name"].fillna(source["column_name"]).name("source_column_name"),
+        source_difference["table_name"].name("source_table_name"),
+        source_difference["column_name"].name("source_column_name"),
         source_difference["agg_value"].name("source_agg_value"),
-        target["table_name"].fillna("LALALA").name("target_table_name"),
-        target["column_name"].fillna("LALALA").name("target_column_name"),
+        target["table_name"].name("target_table_name"),
+        target["column_name"].name("target_column_name"),
         target["agg_value"].name("target_agg_value"),
         group_by_columns,
         source_difference["primary_keys"],
@@ -362,24 +378,6 @@ def _join_pivots(source, target, differences, join_on_fields):
         source_difference["pct_threshold"],
         source_difference["validation_status"],
     ]
-    # joined_fillna_source = joined.join(source, join_keys, how="outer")[
-    #     joined["validation_name"],
-    #     joined["validation_type"],
-    #     joined["aggregation_type"],
-    #     joined["source_table_name"].fillna(source["table_name"]).name("source_table_name"),
-    #     joined["column_name"].fillna(source["column_name"]).name("source_column_name"),
-    #     joined["source_agg_value"],
-    #     joined["table_name"],
-    #     joined["target_column_name"],
-    #     joined["target_agg_value"],
-    #     group_by_columns,
-    #     joined["primary_keys"],
-    #     joined["num_random_rows"],
-    #     joined["difference"],
-    #     joined["pct_difference"],
-    #     joined["pct_threshold"],
-    #     joined["validation_status"],
-    # ]
     return joined
 
 
@@ -394,4 +392,7 @@ def _add_metadata(joined, run_metadata):
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),
     ]
+
+    #joined.source_table_name.fillna(run_metadata.validations.[COLUMN].source_table_name, inplace=True)
+
     return joined
