@@ -24,7 +24,6 @@ import json
 import logging
 import ibis
 import ibis.expr.datatypes
-import pandas as pd
 
 from data_validation import consts
 
@@ -87,20 +86,6 @@ def generate_report(
     )
     target_df = client.execute(target_pivot)
 
-    # trying to populate the empty df with same amount of rows and columns (type included)
-    #if source_df.empty:
-        #source_df = pd.DataFrame().reindex_like(target_df)
-    #if target_df.empty:
-        #target_df = pd.DataFrame().reindex_like(source_df)
-
-    # Add n blank rows
-    n = 3
-    new_index = pd.RangeIndex(len(df)*(n+1))
-    new_df = pd.DataFrame(np.nan, index=new_index, columns=df.columns)
-    ids = np.arange(len(df))*(n+1)
-    new_df.loc[ids] = df.values
-    print(new_df)
-
     con = ibis.pandas.connect(
         {"source": source_df, "differences": differences_df, "target": target_df}
     )
@@ -116,7 +101,12 @@ def generate_report(
 
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
-    breakpoint()
+
+    key = next(iter(run_metadata.validations))
+    # get the first validation metadata object to fill source or target empty table names
+    result_df.source_table_name.fillna(run_metadata.validations[key].get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True)
+    result_df.target_table_name.fillna(run_metadata.validations[key].get_table_name(consts.RESULT_TYPE_TARGET), inplace=True)
+    
     return result_df
 
 
@@ -392,7 +382,5 @@ def _add_metadata(joined, run_metadata):
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),
     ]
-
-    #joined.source_table_name.fillna(run_metadata.validations.[COLUMN].source_table_name, inplace=True)
 
     return joined
