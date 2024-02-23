@@ -2,6 +2,36 @@
 
 ## Untagged
 
+## [4.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.3.0...v4.4.0) (2024-02-22)
+
+
+### Features
+
+* Add --url to Oracle connections add options ([#1083](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1083)) ([2f078c2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2f078c2fed590fd5db66a2fa0e8492d247d7132f))
+* Add PostgreSQL OID support ([#1076](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1076)) ([58f8fcb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/58f8fcb56d6b6c73647a925550085fea8e7a0562))
+* Add support to generate a JSON config file only for applications purposes ([#1089](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1089)) ([d463038](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d4630386500d61cade69c2f9d9cc1fa75cd27269))
+* set default oracle sql alchemy arraysize to 500 ([#1088](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1088)) ([1672ac5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1672ac5f8c7d640af93e88f02f247f48e212892f))
+* Support for Kubernetes ([#1058](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1058)) ([fdbdbe0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/fdbdbe06bd7a5a52cae63b4d701d7eb7270f20fa))
+
+
+### Bug Fixes
+
+* Add support for cx_Oracle's DB_TYPE_LONG_RAW ([#1095](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1095)) ([90547ef](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/90547efea22ae6b5b9acf9a1e3e4d2bde028dba9))
+* Better casts to string for binary floats/doubles ([#1078](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1078)) ([15bfc4c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/15bfc4c85e43894f03288cf10aa7888a95342a05))
+* case-insensitive comparison field support ([#1103](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1103)) ([d28786f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d28786ffb9860a14f8774214baf8ed738a887165))
+* Fix merge issue for Teradata empty dataframes ([#1100](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1100)) ([cc91fa2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cc91fa296d25ae2490d00a897eb1933920a805d7))
+* increase upper limit on recursion columns ([#1090](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1090)) ([c599ebf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c599ebfdd32e24e5e3712e76961caeed76bebc95))
+* Remove DDL automatically issued by Ibis for Postgres connections ([#1067](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1067)) ([c2b660b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c2b660b4f63a1fe1ca1dd258ff943f16b866e4b2))
+* Row validation primary key columns &gt;64bit int/float are cast to string ([#1080](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1080)) ([9e70e9e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9e70e9eabf96827c440776927c812ba3c64a3f97))
+* Spanner generate-partition to use BQ dialect ([#1066](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1066)) ([f3cc565](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f3cc565b1cbb33e60412210bdeae986678417fcc))
+* spanner hash function to return string instead of bytes ([#1062](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1062)) ([722dff9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/722dff91a5af6cf6c9ef134117ea4dd31c568438))
+
+
+### Documentation
+
+* Add Airflow Kubernetes pod operator samples ([#1087](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1087)) ([7d5ea91](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7d5ea91163fe20268d1666d02fbe8e37f944fef3))
+* Updates on nested column limitations, contributing guide examples and incorrect example ([#1082](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1082)) ([cc0f60a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cc0f60a4921f2a37a9b376c7646978674c7a1dd2))
+
 ## [4.3.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.2.0...v4.3.0) (2023-11-28)
 
 
