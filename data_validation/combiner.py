@@ -92,7 +92,7 @@ def generate_report(
     joined = _join_pivots(
         con.tables.source, con.tables.target, con.tables.differences, join_on_fields
     )
-    
+
     documented = _add_metadata(joined, run_metadata)
 
     if verbose:
@@ -104,9 +104,15 @@ def generate_report(
 
     key = next(iter(run_metadata.validations))
     # get the first validation metadata object to fill source or target empty table names
-    result_df.source_table_name.fillna(run_metadata.validations[key].get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True)
-    result_df.target_table_name.fillna(run_metadata.validations[key].get_table_name(consts.RESULT_TYPE_TARGET), inplace=True)
-    
+    result_df.source_table_name.fillna(
+        run_metadata.validations[key].get_table_name(consts.RESULT_TYPE_SOURCE),
+        inplace=True,
+    )
+    result_df.target_table_name.fillna(
+        run_metadata.validations[key].get_table_name(consts.RESULT_TYPE_TARGET),
+        inplace=True,
+    )
+
     return result_df
 
 
