@@ -37,7 +37,7 @@ class ValidationMetadata(object):
     num_random_rows: int
     threshold: float
 
-    def get_table_name(self, result_type):
+    def get_table_name(self, result_type: str) -> str:
         if result_type == consts.RESULT_TYPE_SOURCE:
             return (
                 self.source_table_schema + "." + self.source_table_name
@@ -53,7 +53,7 @@ class ValidationMetadata(object):
         else:
             raise ValueError(f"Unexpected result_type: {result_type}")
 
-    def get_column_name(self, result_type):
+    def get_column_name(self, result_type: str) -> str:
         if result_type == consts.RESULT_TYPE_SOURCE:
             return self.source_column_name
         elif result_type == consts.RESULT_TYPE_TARGET:
