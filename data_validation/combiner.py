@@ -24,9 +24,8 @@ import json
 import logging
 import ibis
 import ibis.expr.datatypes
-import numpy as np
 
-from data_validation import consts, metadata
+from data_validation import consts
 
 DEFAULT_SOURCE = "source"
 DEFAULT_TARGET = "target"
@@ -103,29 +102,17 @@ def generate_report(
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
 
-    first = next(iter(run_metadata.validations))
-    # get the first validation metadata object to fill source or target empty table names
-    result_df.source_table_name.fillna(
-        _get_table_name_when_null(
-            run_metadata.validations[first], consts.RESULT_TYPE_SOURCE
-        ),
-        inplace=True,
-    )
-    result_df.target_table_name.fillna(
-        _get_table_name_when_null(
-            run_metadata.validations[first], consts.RESULT_TYPE_TARGET
-        ),
-        inplace=True,
-    )
+    # get the first validation metadata object to fill source and/or target empty table names
+    first = run_metadata.validations[next(iter(run_metadata.validations))]
+    if first.validation_type != consts.CUSTOM_QUERY:
+        result_df.source_table_name.fillna(
+            first.get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True
+        )
+        result_df.target_table_name.fillna(
+            first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
+        )
 
     return result_df
-
-
-def _get_table_name_when_null(
-    validation: metadata.ValidationMetadata, result_type: str
-) -> str:
-    value = validation.get_table_name(result_type)
-    return value if value is not None else np.nan
 
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
