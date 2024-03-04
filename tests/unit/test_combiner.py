@@ -567,23 +567,9 @@ def test_generate_report_without_group_by(
                         )
                     ]
                     * 6,
-                    "source_table_name": [
-                        "bq-public.source_dataset.test_source",
-                        "bq-public.source_dataset.test_source",
-                        _NAN,
-                        _NAN,
-                        "bq-public.source_dataset.test_source",
-                        "bq-public.source_dataset.test_source",
-                    ],
+                    "source_table_name": ["bq-public.source_dataset.test_source"] * 6,
                     "source_column_name": [None] * 6,
-                    "target_table_name": [
-                        "bq-public.target_dataset.test_target",
-                        "bq-public.target_dataset.test_target",
-                        "bq-public.target_dataset.test_target",
-                        "bq-public.target_dataset.test_target",
-                        _NAN,
-                        _NAN,
-                    ],
+                    "target_table_name": ["bq-public.target_dataset.test_target"] * 6,
                     "target_column_name": [None] * 6,
                     "validation_type": ["Column"] * 6,
                     "aggregation_type": ["count"] * 6,
