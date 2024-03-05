@@ -101,6 +101,17 @@ def generate_report(
 
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
+
+    # get the first validation metadata object to fill source and/or target empty table names
+    first = run_metadata.validations[next(iter(run_metadata.validations))]
+    if first.validation_type != consts.CUSTOM_QUERY:
+        result_df.source_table_name.fillna(
+            first.get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True
+        )
+        result_df.target_table_name.fillna(
+            first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
+        )
+
     return result_df
 
 
@@ -376,4 +387,5 @@ def _add_metadata(joined, run_metadata):
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),
     ]
+
     return joined
