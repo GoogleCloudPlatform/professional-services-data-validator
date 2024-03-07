@@ -364,7 +364,7 @@ def sa_cast_decimal_when_scale_padded(t, op):
 
 def sa_cast_postgres(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded(t, op)
-    if custom_cast:
+    if custom_cast is not None:
         return custom_cast
 
     # Follow the original Ibis code path.
@@ -388,7 +388,7 @@ def sa_cast_mssql(t, op):
 
 def sa_cast_snowflake(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded(t, op)
-    if custom_cast:
+    if custom_cast is not None:
         return custom_cast
 
     # Follow the original Ibis code path.
