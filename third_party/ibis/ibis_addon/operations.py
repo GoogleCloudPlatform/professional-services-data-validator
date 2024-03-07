@@ -516,6 +516,7 @@ if TeradataExprTranslator:
     TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if SnowflakeExprTranslator:
+    SnowflakeExprTranslator._registry[Cast] = sa_cast_snowflake
     SnowflakeExprTranslator._registry[HashBytes] = sa_format_hashbytes_snowflake
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
