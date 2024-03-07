@@ -386,6 +386,15 @@ def sa_cast_mssql(t, op):
     return sa_fixed_cast(t, op)
 
 
+def sa_cast_mysql(t, op):
+    custom_cast = sa_cast_decimal_when_scale_padded(t, op)
+    if custom_cast is not None:
+        return custom_cast
+
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
+
+
 def sa_cast_snowflake(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded(t, op)
     if custom_cast is not None:
@@ -492,6 +501,7 @@ MsSqlExprTranslator._registry[Strftime] = strftime_mssql
 MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
 
+MySQLExprTranslator._registry[Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
 MySQLExprTranslator._registry[Strftime] = strftime_mysql
