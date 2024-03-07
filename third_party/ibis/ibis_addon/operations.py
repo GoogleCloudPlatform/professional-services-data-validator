@@ -331,8 +331,8 @@ def sa_format_binary_length_oracle(translator, op):
     return sa.func.dbms_lob.getlength(arg)
 
 
-def sa_cast_decimal_when_scale_padded(t, op):
-    """Caters for engines that fully pad scale with 0s when casting decimal to string."""
+def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
+    """Caters for engines that fully pad scale with 0s when casting decimal to string and support FM format."""
     # Add cast from numeric to string
     arg = op.arg
     typ = op.to
@@ -346,7 +346,7 @@ def sa_cast_decimal_when_scale_padded(t, op):
         and typ.is_string()
     ):
         sa_arg = t.translate(arg)
-        # When casting a number to string PostgreSQL includes the full scale, e.g.:
+        # When casting a number to string PostgreSQL and Snowflake include the full scale, e.g.:
         #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
         #     100.00
         # This doesn't match most engines which would return "100".
@@ -363,7 +363,7 @@ def sa_cast_decimal_when_scale_padded(t, op):
 
 
 def sa_cast_postgres(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded(t, op)
+    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
         return custom_cast
 
@@ -387,16 +387,32 @@ def sa_cast_mssql(t, op):
 
 
 def sa_cast_mysql(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded(t, op)
-    if custom_cast is not None:
-        return custom_cast
+    # Add cast from numeric to string
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    # Specialize going from numeric(p,s>0) to string
+    if (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        # When casting a number to string MySQL includes the full scale, e.g.:
+        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS CHAR);
+        #     100.00
+        # This doesn't match most engines which would return "100".
+        # We've used a workaround from StackOverflow:
+        #   https://stackoverflow.com/a/20111398
+        return sa_fixed_cast(t, op) + sa.literal(0)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
 
 
 def sa_cast_snowflake(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded(t, op)
+    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
         return custom_cast
 
