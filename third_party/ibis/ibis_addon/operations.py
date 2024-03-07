@@ -331,7 +331,8 @@ def sa_format_binary_length_oracle(translator, op):
     return sa.func.dbms_lob.getlength(arg)
 
 
-def sa_cast_postgres(t, op):
+def sa_cast_decimal_when_scale_padded(t, op):
+    """Caters for engines that fully pad scale with 0s when casting decimal to string."""
     # Add cast from numeric to string
     arg = op.arg
     typ = op.to
@@ -358,6 +359,13 @@ def sa_cast_postgres(t, op):
             "FM" + ("9" * (precision - arg_dtype.scale)) + "." + ("9" * arg_dtype.scale)
         )
         return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+    return None
+
+
+def sa_cast_postgres(t, op):
+    custom_cast = sa_cast_decimal_when_scale_padded(t, op)
+    if custom_cast:
+        return custom_cast
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -373,6 +381,15 @@ def sa_cast_mssql(t, op):
         sa_arg = t.translate(arg)
         # This prevents output in scientific notation, at least for my tests it did.
         return sa.func.format(sa_arg, "G")
+
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
+
+
+def sa_cast_snowflake(t, op):
+    custom_cast = sa_cast_decimal_when_scale_padded(t, op)
+    if custom_cast:
+        return custom_cast
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
