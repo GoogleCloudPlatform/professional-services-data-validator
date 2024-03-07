@@ -331,7 +331,8 @@ def sa_format_binary_length_oracle(translator, op):
     return sa.func.dbms_lob.getlength(arg)
 
 
-def sa_cast_postgres(t, op):
+def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
+    """Caters for engines that fully pad scale with 0s when casting decimal to string and support FM format."""
     # Add cast from numeric to string
     arg = op.arg
     typ = op.to
@@ -345,7 +346,7 @@ def sa_cast_postgres(t, op):
         and typ.is_string()
     ):
         sa_arg = t.translate(arg)
-        # When casting a number to string PostgreSQL includes the full scale, e.g.:
+        # When casting a number to string PostgreSQL and Snowflake include the full scale, e.g.:
         #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
         #     100.00
         # This doesn't match most engines which would return "100".
@@ -358,6 +359,13 @@ def sa_cast_postgres(t, op):
             "FM" + ("9" * (precision - arg_dtype.scale)) + "." + ("9" * arg_dtype.scale)
         )
         return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+    return None
+
+
+def sa_cast_postgres(t, op):
+    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
+    if custom_cast is not None:
+        return custom_cast
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -373,6 +381,40 @@ def sa_cast_mssql(t, op):
         sa_arg = t.translate(arg)
         # This prevents output in scientific notation, at least for my tests it did.
         return sa.func.format(sa_arg, "G")
+
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
+
+
+def sa_cast_mysql(t, op):
+    # Add cast from numeric to string
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    # Specialize going from numeric(p,s>0) to string
+    if (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        # When casting a number to string MySQL includes the full scale, e.g.:
+        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS CHAR);
+        #     100.00
+        # This doesn't match most engines which would return "100".
+        # We've used a workaround from StackOverflow:
+        #   https://stackoverflow.com/a/20111398
+        return sa_fixed_cast(t, op) + sa.literal(0)
+
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
+
+
+def sa_cast_snowflake(t, op):
+    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
+    if custom_cast is not None:
+        return custom_cast
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -475,6 +517,7 @@ MsSqlExprTranslator._registry[Strftime] = strftime_mssql
 MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
 
+MySQLExprTranslator._registry[Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_mysql
 MySQLExprTranslator._registry[Strftime] = strftime_mysql
@@ -499,6 +542,7 @@ if TeradataExprTranslator:
     TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if SnowflakeExprTranslator:
+    SnowflakeExprTranslator._registry[Cast] = sa_cast_snowflake
     SnowflakeExprTranslator._registry[HashBytes] = sa_format_hashbytes_snowflake
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SnowflakeExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
