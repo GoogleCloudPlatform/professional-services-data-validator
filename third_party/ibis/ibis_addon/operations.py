@@ -416,6 +416,14 @@ def sa_cast_snowflake(t, op):
     if custom_cast is not None:
         return custom_cast
 
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    sa_arg = t.translate(arg)
+    if arg_dtype.is_binary() and typ.is_string():
+        return sa.func.hex_encode(sa_arg)
+
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
 
