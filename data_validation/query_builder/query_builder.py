@@ -112,7 +112,7 @@ class AggregateField(object):
             agg_field = self.expr(ibis_table)
 
         if self.cast:
-            agg_field = agg_field.cast(self.cast)
+            agg_field = agg_field.force_cast(self.cast)
 
         if self.alias:
             agg_field = agg_field.name(self.alias)
