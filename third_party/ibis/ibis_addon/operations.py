@@ -42,6 +42,7 @@ from ibis.backends.bigquery.client import (
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import (
     STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS,
+    bigquery_cast,
 )
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
@@ -120,6 +121,12 @@ def compile_binary_length(binary_value):
 
 def compile_to_char(numeric_value, fmt):
     return ToChar(numeric_value, fmt=fmt).to_expr()
+
+
+@bigquery_cast.register(str, dt.Binary, dt.String)
+def bigquery_cast_generate(compiled_arg, from_, to):
+    """Cast of binary to string should be hex conversion."""
+    return f"TO_HEX({compiled_arg})"
 
 
 def format_hash_bigquery(translator, op):
