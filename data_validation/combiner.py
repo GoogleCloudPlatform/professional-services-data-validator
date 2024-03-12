@@ -66,6 +66,9 @@ def generate_report(
     source_names = source.schema().names
     target_names = target.schema().names
 
+    print (source.schema())
+    print (target.schema())
+
     if source_names != target_names:
         raise ValueError(
             "Expected source and target to have same schema, got "

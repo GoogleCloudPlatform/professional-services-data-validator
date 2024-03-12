@@ -232,11 +232,12 @@ class Backend(BaseSQLBackend):
 
         schema = self.ast_schema(query_ast, **kwargs)
         # Date columns are in the Dataframe as "object", using parse_dates to ensure they have a better data type.
-        date_columns = [
-            _
-            for _ in schema.names
-            if schema.fields[_].is_date() or schema.fields[_].is_timestamp()
-        ]
+        # date_columns = [
+        #     _
+        #     for _ in schema.names
+        #     if schema.fields[_].is_date() or schema.fields[_].is_timestamp()
+        # ]
+        date_columns = None
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support

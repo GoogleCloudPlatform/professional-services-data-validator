@@ -311,6 +311,9 @@ class DataValidation(object):
             )
 
             try:
+                print(source_df.dtypes)
+                print(target_df.dtypes)
+
                 result_df = combiner.generate_report(
                     pandas_client,
                     self.run_metadata,
