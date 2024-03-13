@@ -82,7 +82,7 @@ class DataValidation(object):
         # Apply random row filter before validations run
         if self.config_manager.use_random_rows():
             self._add_random_row_filter()
-
+        breakpoint()
         # Run correct execution for the given validation type
         if self.config_manager.validation_type == consts.ROW_VALIDATION:
             grouped_fields = self.validation_builder.pop_grouped_fields()
@@ -146,6 +146,7 @@ class DataValidation(object):
                 primary_key_info[consts.CONFIG_SOURCE_COLUMN]
             ],
         }
+        breakpoint()
         self.validation_builder.add_filter(filter_field)
 
     def query_too_large(self, rows_df, grouped_fields):

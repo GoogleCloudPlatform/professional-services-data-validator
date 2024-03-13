@@ -92,7 +92,7 @@ class RandomRowBuilder(object):
             # and does not require a sort by
             if data_client.name == "teradata" or data_client.name == "spanner":
                 return table[self.primary_keys].limit(self.batch_size)
-
+            
             return (
                 table[self.primary_keys].order_by(ibis.random()).limit(self.batch_size)
             )
