@@ -543,7 +543,7 @@ class ConfigManager(object):
             ].type()
             cast_type = (
                 "string"
-                if self._decimal_column_too_big_for_pandas(
+                if self._key_column_needs_casting_to_string(
                     source_ibis_type, target_ibis_type
                 )
                 else None
@@ -693,6 +693,17 @@ class ConfigManager(object):
                     or target_column_ibis_type.precision > 18
                 )
             )
+        )
+
+    def _key_column_needs_casting_to_string(
+        self,
+        source_column_ibis_type: dt.DataType,
+        target_column_ibis_type: dt.DataType,
+    ) -> bool:
+        return bool(
+            self._decimal_column_too_big_for_pandas(source_column_ibis_type, target_column_ibis_type)
+            or isinstance(source_column_ibis_type, dt.Binary)
+            or isinstance(target_column_ibis_type, dt.Binary)
         )
 
     def build_config_column_aggregates(
