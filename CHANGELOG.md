@@ -2,6 +2,21 @@
 
 ## Untagged
 
+## [4.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.4.0...v4.5.0) (2024-03-18)
+
+
+### Features
+
+* Support GCS files in configs list command ([#1108](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1108)) ([b49e1c3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b49e1c373eacee6dab075cd72e6064cb46966b13))
+
+
+### Bug Fixes
+
+* Add table names to report results when source and/or target dataframes are empty ([#1104](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1104)) ([812ed62](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/812ed6274fdbc1f8847caa1d0d2013ae4acb9041))
+* Fixes issue casting Snowflake decimal with scale&gt;0 to string ([#1110](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1110)) ([34446a4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/34446a48d6a760ff57f9aa1e29796434d3e9663b))
+* force cast for aggregates ([#1114](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1114)) ([44b60cf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/44b60cfa16199a097ff7f67522b5c15541ee8f79))
+* Teradata large timestamp handling ([#1117](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1117)) ([842d8b7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/842d8b7591dd2803e97c059ae9dd3e188b225c4e))
+
 ## [4.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.3.0...v4.4.0) (2024-02-22)
 
 
