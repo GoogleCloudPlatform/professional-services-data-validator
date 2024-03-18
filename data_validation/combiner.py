@@ -66,9 +66,6 @@ def generate_report(
     source_names = source.schema().names
     target_names = target.schema().names
 
-    print (source.schema())
-    print (target.schema())
-
     if source_names != target_names:
         raise ValueError(
             "Expected source and target to have same schema, got "
@@ -120,12 +117,10 @@ def generate_report(
 
 def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
     pct_threshold = ibis.literal(validation.threshold)
-    if isinstance(datatype, (ibis.expr.datatypes.Timestamp, ibis.expr.datatypes.Date)):
+    if datatype.is_timestamp() or datatype.is_date():
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
-    elif isinstance(datatype, ibis.expr.datatypes.Decimal) or isinstance(
-        datatype, ibis.expr.datatypes.Float64
-    ):
+    elif datatype.is_decimal() or datatype.is_float64():
         source_value = (
             field_differences["differences_source_value"]
             .cast("float32")
@@ -143,7 +138,7 @@ def _calculate_difference(field_differences, datatype, validation, is_value_comp
     # Does not calculate difference between agg values for row hash due to int64 overflow
     if (
         is_value_comparison
-        or isinstance(datatype, ibis.expr.datatypes.String)
+        or datatype.is_string()
         or isinstance(target_value, ibis.expr.types.generic.NullColumn)
         or isinstance(source_value, ibis.expr.types.generic.NullColumn)
     ):
