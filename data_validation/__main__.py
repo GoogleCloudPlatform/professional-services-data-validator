@@ -61,7 +61,7 @@ def _get_arg_config_file_json(args):
 
 
 def get_aggregate_config(args, config_manager: ConfigManager):
-    """Return list of formated aggregation objects.
+    """Return list of formatted aggregation objects.
 
     Args:
         config_manager (ConfigManager): Validation config manager instance.
@@ -672,7 +672,8 @@ def run_validation_configs(args):
     if args.validation_config_cmd == "run":
         config_runner(args)
     elif args.validation_config_cmd == "list":
-        cli_tools.list_validations()
+        config_dir = args.config_dir or "./"
+        cli_tools.list_validations(config_dir=config_dir)
     elif args.validation_config_cmd == "get":
         # Get and print yaml file config.
         yaml = cli_tools.get_validation(_get_arg_config_file(args))
