@@ -60,9 +60,6 @@ from ibis.expr.operations import (
     Value,
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
-
-import third_party.ibis.ibis_mysql.compiler
-import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
@@ -126,19 +123,19 @@ def compile_to_char(numeric_value, fmt):
 def format_hash_bigquery(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({rg})"
+        return f"FARM_FINGERPRINT({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def format_hashbytes_bigquery(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
         return f"TO_HEX(SHA256({arg}))"
-    elif how == "farm_fingerprint":
+    elif op.how == "farm_fingerprint":
         return f"FARM_FINGERPRINT({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def format_hashbytes_teradata(translator, op):
@@ -150,7 +147,7 @@ def format_hashbytes_teradata(translator, op):
     elif op.how == "md5":
         return f"rtrim(hash_md5({arg}))"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def strftime_bigquery(translator, op):
@@ -445,7 +442,6 @@ def execute_epoch_seconds_new(op, data, **kwargs):
         return (series // 1_000_000_000).astype(np.int32)
     except:
         return pd.Series(np.nan)
-
 
 execute_epoch_seconds = execute_epoch_seconds_new
 
