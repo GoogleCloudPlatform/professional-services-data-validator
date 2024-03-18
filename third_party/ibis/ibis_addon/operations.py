@@ -443,6 +443,7 @@ def execute_epoch_seconds_new(op, data, **kwargs):
     except:
         return pd.Series(np.nan)
 
+
 execute_epoch_seconds = execute_epoch_seconds_new
 
 BinaryValue.byte_length = compile_binary_length
