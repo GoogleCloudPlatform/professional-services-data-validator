@@ -60,6 +60,9 @@ from ibis.expr.operations import (
     Value,
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
+
+import third_party.ibis.ibis_mysql.compiler
+import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
