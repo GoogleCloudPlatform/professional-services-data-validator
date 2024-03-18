@@ -232,23 +232,32 @@ class Backend(BaseSQLBackend):
 
         schema = self.ast_schema(query_ast, **kwargs)
         # Date columns are in the Dataframe as "object", using parse_dates to ensure they have a better data type.
-        date_columns = [
-            _
-            for _ in schema.names
-            if schema.fields[_].is_date() or schema.fields[_].is_timestamp()
-        ]
+        date_cols = {
+            _: "datetime64[ns]" for _ in schema.names if schema.fields[_].is_date()
+        }
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
-            df = pandas.read_sql(sql, self.client, parse_dates=date_columns)
+            df = pandas.read_sql(sql, self.client)
+
+            try:
+                # Cast date_cols as datetime64. Large timestamps i.e. '9999-12-31'
+                # will throw OutOfBoundsDatetime so keep those as 'object' data type.
+                df = df.astype(date_cols)
+            except pandas._libs.tslibs.np_datetime.OutOfBoundsDatetime as e:
+                pass
 
         if df.empty:
-            # Empty Dataframe infers an "object" data type, update to float64.
-            float_columns = {
-                _: float for _ in schema.names if schema.fields[_].is_float64()
-            }
-            df = df.astype(float_columns)
+            # Empty df infers an 'object' data type, update to float64 and datetime64.
+            dtypes = {}
+            for name in schema.names:
+                if schema.fields[name].is_float64():
+                    dtypes[name] = "float"
+                if schema.fields[name].is_date() or schema.fields[name].is_timestamp():
+                    dtypes[name] = "datetime64[ns]"
+            df = df.astype(dtypes)
+
         return df
 
     # Methods we need to implement for BaseSQLBackend

@@ -22,23 +22,22 @@ extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
+import datetime
+
 import google.cloud.bigquery as bq
 import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
+import pandas as pd
 import sqlalchemy as sa
-from ibis.backends.base.sql.alchemy.registry import (
-    fixed_arity as sa_fixed_arity,
-    _cast as sa_fixed_cast,
-)
+from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
+from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
-from ibis.backends.bigquery.client import (
-    _DTYPE_TO_IBIS_TYPE as _BQ_DTYPE_TO_IBIS_TYPE,
-    _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD,
-)
+from ibis.backends.bigquery.client import _DTYPE_TO_IBIS_TYPE as _BQ_DTYPE_TO_IBIS_TYPE
+from ibis.backends.bigquery.client import _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import (
     STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS,
@@ -46,24 +45,26 @@ from ibis.backends.bigquery.registry import (
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
+from ibis.backends.pandas.dispatch import execute_node
+from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.expr.operations import (
     Cast,
     Comparison,
+    ExtractEpochSeconds,
     HashBytes,
     IfNull,
     RandomScalar,
     Strftime,
     StringJoin,
     Value,
-    ExtractEpochSeconds,
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
 import third_party.ibis.ibis_mysql.compiler
 import third_party.ibis.ibis_postgres.client
-from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
+from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
 # DB2 requires ibm_db_dbi
 try:
@@ -125,19 +126,19 @@ def compile_to_char(numeric_value, fmt):
 def format_hash_bigquery(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({rg})"
+        return f"FARM_FINGERPRINT({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def format_hashbytes_bigquery(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
         return f"TO_HEX(SHA256({arg}))"
-    elif how == "farm_fingerprint":
+    elif op.how == "farm_fingerprint":
         return f"FARM_FINGERPRINT({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def format_hashbytes_teradata(translator, op):
@@ -149,7 +150,7 @@ def format_hashbytes_teradata(translator, op):
     elif op.how == "md5":
         return f"rtrim(hash_md5({arg}))"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def strftime_bigquery(translator, op):
@@ -474,6 +475,21 @@ def _bigquery_field_to_ibis_dtype(field):
         ibis_type = dt.Array(ibis_type)
     return ibis_type
 
+
+@execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
+def execute_epoch_seconds_new(op, data, **kwargs):
+    import numpy as np
+
+    convert = getattr(data, "view", data.astype)
+    # Add try/except to handle large timestamps outside of datetime64[ns]as per Issue #1053
+    try:
+        series = convert(np.int64)
+        return (series // 1_000_000_000).astype(np.int32)
+    except:
+        return pd.Series(np.nan)
+
+
+execute_epoch_seconds = execute_epoch_seconds_new
 
 BinaryValue.byte_length = compile_binary_length
 
