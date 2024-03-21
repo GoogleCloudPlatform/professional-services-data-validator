@@ -476,18 +476,30 @@ def _bigquery_field_to_ibis_dtype(field):
     return ibis_type
 
 
+def string_to_epoch(ts: str):
+    "Function to convert string timestamp to epoch seconds"
+    from dateutil.parser import isoparse
+    from dateutil.tz import UTC
+    from datetime import datetime, timezone
+
+    parsed_ts = isoparse(ts).astimezone(UTC)
+    return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+
+
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
 def execute_epoch_seconds_new(op, data, **kwargs):
     import numpy as np
 
     convert = getattr(data, "view", data.astype)
-    # Add try/except to handle large timestamps outside of datetime64[ns]as per Issue #1053
     try:
         series = convert(np.int64)
         return (series // 1_000_000_000).astype(np.int32)
-    except:
-        return pd.Series(np.nan)
-
+    except TypeError:
+        # Catch 'TypeError' for large timestamps beyond max datetime64[ns] as per Issue #1053
+        # Cast to string instead to work around datetime64[ns] limitation
+        series = data.astype("string")
+        epoch_series = series.map(string_to_epoch)
+        return epoch_series
 
 execute_epoch_seconds = execute_epoch_seconds_new
 
