@@ -41,6 +41,7 @@ from ibis.backends.bigquery.client import _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_S
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import (
     STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS,
+    bigquery_cast,
 )
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
@@ -121,6 +122,12 @@ def compile_binary_length(binary_value):
 
 def compile_to_char(numeric_value, fmt):
     return ToChar(numeric_value, fmt=fmt).to_expr()
+
+
+@bigquery_cast.register(str, dt.Binary, dt.String)
+def bigquery_cast_generate(compiled_arg, from_, to):
+    """Cast of binary to string should be hex conversion."""
+    return f"TO_HEX({compiled_arg})"
 
 
 def format_hash_bigquery(translator, op):
@@ -416,6 +423,14 @@ def sa_cast_snowflake(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
         return custom_cast
+
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    sa_arg = t.translate(arg)
+    if arg_dtype.is_binary() and typ.is_string():
+        return sa.func.hex_encode(sa_arg, sa.literal(0))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
