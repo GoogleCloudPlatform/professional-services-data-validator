@@ -186,6 +186,10 @@ class ConfigManager(object):
         )
 
     @property
+    def primary_keys_with_types(self):
+        return 
+
+    @property
     def primary_keys(self):
         """Return Primary keys from Config"""
         return self._config.get(consts.CONFIG_PRIMARY_KEYS, [])
