@@ -82,7 +82,7 @@ class DataValidation(object):
         # Apply random row filter before validations run
         if self.config_manager.use_random_rows():
             self._add_random_row_filter()
-        #breakpoint()
+        # breakpoint()
         # Run correct execution for the given validation type
         if self.config_manager.validation_type == consts.ROW_VALIDATION:
             grouped_fields = self.validation_builder.pop_grouped_fields()
@@ -128,12 +128,22 @@ class DataValidation(object):
                 self.validation_builder.source_builder,
             )
 
+        # This might not be the best way to cast the random ids to string (hex).
+        # Happy to receive guidance.
+        if query[primary_key_info[consts.CONFIG_SOURCE_COLUMN]].type().is_binary():
+            query = query.mutate(
+                **{
+                    primary_key_info[consts.CONFIG_SOURCE_COLUMN]: query[
+                        primary_key_info[consts.CONFIG_SOURCE_COLUMN]
+                    ].cast("string")
+                }
+            )
         # TODO: check if primary keys is BINARY, if yes add cast to query object
         # either to the WHERE clause or for each value inside IS IN clause
         #
         # 1) select KEY_FIELD from ISSUE1070 where DV_ID in (TO_BINARY('64484B73565932494C47'), TO_BINARY('344172796A627255766D'));
         # 2) select KEY_FIELD from ISSUE1070 where HEX_ENCODE(DV_ID) in ('64484B73565932494C47', '344172796A627255766D');
-        
+
         random_rows = self.config_manager.source_client.execute(query)
         if len(random_rows) == 0:
             return
@@ -152,7 +162,7 @@ class DataValidation(object):
                 primary_key_info[consts.CONFIG_SOURCE_COLUMN]
             ],
         }
-        #breakpoint()
+        # breakpoint()
         self.validation_builder.add_filter(filter_field)
 
     def query_too_large(self, rows_df, grouped_fields):
