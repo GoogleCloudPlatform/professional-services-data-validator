@@ -279,7 +279,6 @@ class ValidationBuilder(object):
                 filter_field[consts.CONFIG_FILTER_TARGET_COLUMN],
                 filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
             )
-        breakpoint()
 
         # TODO(issues/40): Add metadata around filters
         self.source_builder.add_filter_field(source_filter)
