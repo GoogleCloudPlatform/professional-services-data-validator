@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import string
 from typing import TYPE_CHECKING
 
@@ -33,6 +34,7 @@ def binary_key_assertions(df):
     ), "Not all rows have status 'success'"
     # Validate a sample primary key value is hex(ish).
     sample_gbc = df["group_by_columns"].to_list().pop()
+    sample_gbc = json.loads(sample_gbc)
     sample_key = [v for _, v in sample_gbc.items()].pop()
     assert all(_ in string.hexdigits for _ in sample_key)
 
