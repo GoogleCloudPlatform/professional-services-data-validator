@@ -60,7 +60,7 @@ def null_not_null_assertions(df):
             ), f"Column: {column_name}, status: {status} != {consts.VALIDATION_STATUS_FAIL}"
 
 
-def run_test_from_cli_args(args: "Namespace") -> DataFrame:
+def run_test_from_cli_args(args: "Namespace") -> "DataFrame":
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
     config_manager = config_managers[0]
