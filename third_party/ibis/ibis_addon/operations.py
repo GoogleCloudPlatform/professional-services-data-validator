@@ -397,6 +397,12 @@ def sa_cast_mssql(t, op):
         sa_arg = t.translate(arg)
         # This prevents output in scientific notation, at least for my tests it did.
         return sa.func.format(sa_arg, "G")
+    elif arg_dtype.is_binary() and typ.is_string():
+        sa_arg = t.translate(arg)
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(
+            sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
+        )
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)

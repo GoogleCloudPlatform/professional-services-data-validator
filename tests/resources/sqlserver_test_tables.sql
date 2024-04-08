@@ -94,3 +94,19 @@ INSERT INTO pso_data_validator.dvt_large_decimals VALUES
 ,32345678901234567890123456789012345678
 ,32345678901234567890123456789.123456789
 ,32345678.123456789012345678901234567890);
+
+-- We have to use the exact length for the varbinary column
+-- because SQL Server right pads values to the length, not
+-- very "var"!
+DROP TABLE pso_data_validator.dvt_binary;
+CREATE TABLE pso_data_validator.dvt_binary
+(   binary_id       varbinary(9) NOT NULL PRIMARY KEY
+,   int_id          int NOT NULL
+,   other_data      varchar(100)
+);
+CREATE UNIQUE INDEX dvt_binary_int_id_uk ON pso_data_validator.dvt_binary (int_id);
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-1' AS binary), 1, 'Row 1');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-2' AS binary), 2, 'Row 2');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-3' AS binary), 3, 'Row 3');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS binary), 4, 'Row 4');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS binary), 5, 'Row 5');
