@@ -328,7 +328,15 @@ def _configure_validation_config_parser(subparsers):
     configs_subparsers = validation_config_parser.add_subparsers(
         dest="validation_config_cmd"
     )
-    _ = configs_subparsers.add_parser("list", help="List your validation configs")
+    list_parser = configs_subparsers.add_parser(
+        "list", help="List your validation configs"
+    )
+    list_parser.add_argument(
+        "--config-dir",
+        "-cdir",
+        help="Directory path from which to list validation YAML configs.",
+    )
+
     run_parser = configs_subparsers.add_parser(
         "run", help="Run your validation configs"
     )
@@ -1109,10 +1117,10 @@ def get_validation(validation_name, config_dir=None):
             return mgr.get_validation_config(validation_name)
 
 
-def list_validations():
+def list_validations(config_dir="./"):
     """List all saved validation YAMLs."""
-    mgr = state_manager.StateManager()
-    validations = mgr.list_validations()
+    mgr = state_manager.StateManager(file_system_root_path=config_dir)
+    validations = mgr.list_validations_in_dir(config_dir=config_dir)
 
     logging.info("Validation YAMLs found:")
     for validation_name in validations:

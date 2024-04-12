@@ -106,7 +106,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
-  [--exclude-columns or -ec]   Flag to indicate the list of columns provided should be excluded and not included.
+  [--exclude-columns or -ec]
+                        Flag to indicate the list of columns provided should be excluded and not included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -131,8 +132,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Float value. Maximum pct_difference allowed for validation to be considered a success. Defaults to 0.0
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
-  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
-                        Defaults to table.
+  [--format or -fmt FORMAT]
+                        Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
@@ -199,8 +200,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
-  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
-                        Defaults to table.
+  [--format or -fmt FORMAT]
+                        Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--use-random-row or -rr]
                         Finds a set of random rows of the first primary key supplied.
   [--random-row-batch-size or -rbs]
@@ -320,7 +321,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
-  [--exclude-columns or -ec]   Flag to indicate the list of columns provided should be excluded and not included.
+  [--exclude-columns or -ec]   
+                        Flag to indicate the list of columns provided should be excluded and not included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -333,8 +335,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
                         JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
-  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
-                        Defaults to table.
+  [--format or -fmt FORMAT]
+                        Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
@@ -395,8 +397,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         JSON Config File Path to be used for storing validations only for application purposes.
   [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
                         Comma-separated key value pair labels for the run.
-  [--format or -fmt]    Format for stdout output. Supported formats are (text, csv, json, table).
-                        Defaults to table.
+  [--format or -fmt FORMAT]
+                        Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
@@ -434,56 +436,51 @@ For example, this flag can be used as follows:
 Running DVT with YAML configuration files is the recommended approach if:
 * you want to customize the configuration for any given validation OR
 * you want to run DVT at scale (i.e. row validations across many partitions)
-Nearly every validation command can take the argument `-c <file-name>` (the `generate-table-partitions` command takes  `-cdir <directory-name>`) where one or more yaml files are produced. These yaml files can be modified for custom validations.
 
-The following command creates a YAML file for the validation of the
-`new_york_citibike` table: `data-validation validate column -sc my_bq_conn -tc
-my_bq_conn -tbls bigquery-public-data.new_york_citibike.citibike_trips -c
-citibike.yaml`.
+We recommend generating YAML configs with the `--config-file <file-name>` flag when running a validation command. The validation 
+config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME` env variable if that has been set;
+otherwise, it is saved to wherever the tool is run.
 
-The validation config file is saved to the GCS path specified by the `PSO_DV_CONFIG_HOME`
-env variable if that has been set; otherwise, it is saved to wherever the tool is run.
-
-You can now edit the YAML file if, for example, the `new_york_citibike` table is
-stored in datasets that have different names in the source and target systems.
-Once the file is updated and saved, the following command runs the
-validation:
+You can use the `data-validation configs` command to run and view YAMLs.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) configs run -c citibike.yaml
+data-validation (--verbose or -v) (--log-level or -ll) configs run
+  [--config-file or -c CONFIG_FILE]
+                        Path to YAML config file to run. Supports local and GCS paths.
+  [--config-dir or -cdir CONFIG_DIR]
+                        Directory path containing YAML configs to be run sequentially. Supports local and GCS paths.
+  [--dry-run or -dr]    If this flag is present, prints the source and target SQL generated in lieu of running the validation.
+  [--kube-completions or -kc]
+                        Flag to indicate usage in Kubernetes index completion mode.
+                        See *Scaling DVT to run 10's to 1000's of validations concurrently* section
 ```
 
-You can also specify a directory to read from using the --config-dir (or -cdir) flag. All yaml files in that directory will be run as validations. Support both local and GCS paths. For example:
 ```
-data-validation configs run -cdir ./my-validations/
+data-validation configs list
+  [--config-dir or -cdir CONFIG_DIR]
+                        GCS or local directory from which to list validation YAML configs. Defaults to current local directory.
+```
 
-OR
-
-data-validation configs run -cdir gs://my-bucket/my-validations/
+```
+data-validation configs get
+  [--config-file or -c CONFIG_FILE] GCS or local path of validation YAML to print.
 ```
 
 View the complete YAML file for a Grouped Column validation on the
 [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
-You can view a list of all saved validation YAML files using `data-validation configs list`, and print a YAML config using `data-validation configs get -c citibike.yaml`.
+
 #### Scaling DVT to run 10's to 1000's of validations concurrently
-The above example `configs run -cdir` shows how you can run multiple validations with one command. If the directory used has been created by `generate-table-partitions`, you will have partition files numbered from `0000.yaml` to `<partno-1>.yaml`, where `<partno>` is the total number of partitions. These can be run as mentioned above and the partitions will be validated in order. This could take a long time if the number of partitions is large.
 
-DVT validations can be run concurrently (horizontal scaling) using GKE (Kubernetes Jobs) or Cloud Run Jobs. In order to run DVT in a container, you have to build a docker image, [see instructions](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/docker#readme). Set the `PSO_DV_CONFIG_HOME` environment variable to point to a GCS prefix where the connection configuration files are stored. In Cloud Run you can use the option `--set-env-vars` or `--update-env-vars` to pass [the environment variable](https://cloud.google.com/run/docs/configuring/services/environment-variables#setting). We recommend that you use the `bq-result-handler` to save your validation results. In order to validate partitions concurrently, run DVT in Kubernetes or Cloud Run as shown below:
-```
-data-validation (--verbose or -v) (--log-level or -ll) configs run
-  [--kube-completions or -kc] Specifies that validation is being run in Kubernetes or Cloud Run in indexed completion mode.
-              specifies to DVT that validation being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run.
-  --config-dir or -cdir GCS_DIRECTORY 
-              where GCS_DIRECTORY = CONFIG_DIR/SOURCE_SCHEMA.SOURCE_TABLE, where CONFIG_DIR, SOURCE_SCHEMA and SOURCE_TABLE are
-              the arguments provided to generate-table-partitions to generate the partition yamls. GCS_DIRECTORY is the directory
-              where the partition files numbered 0000.yaml to <partno-1>.yaml are stored.
-```
-If you are not familiar with Kubernetes or Cloud Run Jobs, review the [internal docs](docs/internal/kubernetes_jobs.md) for an overview of the orchestration of multiple validations.
+As described above, you can run multiple validation configs sequentially with the `--config-dir` flag. To optimize the validation speed for large tables, you can run DVT concurrently using GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Kubernetes](docs/internal/kubernetes_jobs.md) for a detailed overview.
 
-The Cloud Run and Kubernetes pods must run in a network with access to the database servers. Every Cloud Run job is associated with a [service account](https://cloud.google.com/run/docs/securing/service-identity). You need to ensure that this service account has access to Google Cloud Storage (to read connection configuration and yaml files) and BigQuery (to publish results). If you are using Kubernetes, you will need to use a service account with the same privileges as mentioned for Cloud Run. In Kubernetes, you will need to set up [workload identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) so the DVT container can impersonate the service account.
+In order to validate partitions concurrently, both the `--kube-completions` and `--config-dir` flags are required. The `--kube-completions` flag specifies that the validation is being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. The `--config-dir` flag will specify the directory with the YAML files to be executed in parallel. If you used `generate-table-partitions` to generate the YAMLs, this would be the directory where the partition files numbered `0000.yaml` to `<partition_num - 1>.yaml` are stored i.e (`my_config_dir/source_schema.source_table/`)
 
-In Cloud Run, the [job](https://cloud.google.com/run/docs/create-jobs) must be run as multiple, independent tasks with the task count set to the number of partitions generated. In Kubernetes, set the number of completions to the number of partitions generated - see [Kubernetes Parallel Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/#parallel-jobs). The option `--kube-completions or -kc` tells DVT that many DVT containers are running in a Kubernetes cluster. Each DVT container only validates the specific partition yaml (based on the index assigned by Kubernetes control plane). If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (a `--config-file` is provided instead), a warning is issued.
+In order to run DVT in a container, you have to build a Docker image - [see instructions here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/docker#readme). You will also need to set the `PSO_DV_CONFIG_HOME` environment variable to point to a GCS prefix where the connection configuration files are stored. In Cloud Run you can use the option `--set-env-vars` or `--update-env-vars` to pass [the environment variable](https://cloud.google.com/run/docs/configuring/services/environment-variables#setting). We recommend that you use the `bq-result-handler` to save your validation results to BigQuery. 
+
+The Cloud Run and Kubernetes pods must run in a network with access to the database servers. Every Cloud Run job is associated with a [service account](https://cloud.google.com/run/docs/securing/service-identity). You need to ensure that this service account has access to Google Cloud Storage (to read connection configuration and YAML files) and BigQuery (to publish results). If you are using Kubernetes, you will need to use a service account with the same privileges as mentioned for Cloud Run. In Kubernetes, you will need to set up [workload identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) so the DVT container can impersonate the service account.
+
+In Cloud Run, the [job](https://cloud.google.com/run/docs/create-jobs) must be run as multiple, independent tasks with the task count set to the number of partitions generated. In Kubernetes, set the number of completions to the number of partitions generated - see [Kubernetes Parallel Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/#parallel-jobs). The option `--kube-completions or -kc` tells DVT that many DVT containers are running in a Kubernetes cluster. Each DVT container only validates the specific partition YAML (based on the index assigned by Kubernetes control plane). If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (a `--config-file` is provided instead), a warning is issued.
 
 By default, each partition validation is retried up to 3 times if there is an error. In Kubernetes and Cloud Run, you can set the parallelism to the number you want. Keep in mind that if you are validating 1000's of partitions in parallel, you may find that setting the parallelism too high (say 100) may result in timeouts and slow down the validation.   
 

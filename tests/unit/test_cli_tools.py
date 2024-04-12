@@ -206,9 +206,9 @@ def test_create_and_list_and_get_validations(caplog, fs):
 
     # List validation configs
     cli_tools.list_validations()
-    assert "Validation YAMLs found:" in caplog.records[1].msg
+    assert "Validation YAMLs found:" in caplog.records[2].msg
 
-    # Retrive the stored vaildation config
+    # Retrieve the stored validation config
     yaml_config = cli_tools.get_validation("example_validation.yaml")
     assert yaml_config == TEST_VALIDATION_CONFIG
 

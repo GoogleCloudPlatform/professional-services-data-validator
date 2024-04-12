@@ -22,16 +22,17 @@ extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
+import datetime
+
 import google.cloud.bigquery as bq
 import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
+import pandas as pd
 import sqlalchemy as sa
-from ibis.backends.base.sql.alchemy.registry import (
-    fixed_arity as sa_fixed_arity,
-    _cast as sa_fixed_cast,
-)
+from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
+from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import (
@@ -50,24 +51,26 @@ from ibis.backends.bigquery.registry import (
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
+from ibis.backends.pandas.dispatch import execute_node
+from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.expr.operations import (
     Cast,
     Comparison,
+    ExtractEpochSeconds,
     HashBytes,
     IfNull,
     RandomScalar,
     Strftime,
     StringJoin,
     Value,
-    ExtractEpochSeconds,
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
 import third_party.ibis.ibis_mysql.compiler
 import third_party.ibis.ibis_postgres.client
-from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
+from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
 # DB2 requires ibm_db_dbi
 try:
@@ -135,19 +138,19 @@ def bigquery_cast_generate(compiled_arg, from_, to):
 def format_hash_bigquery(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({rg})"
+        return f"FARM_FINGERPRINT({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def format_hashbytes_bigquery(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
         return f"TO_HEX(SHA256({arg}))"
-    elif how == "farm_fingerprint":
+    elif op.how == "farm_fingerprint":
         return f"FARM_FINGERPRINT({arg})"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def format_hashbytes_teradata(translator, op):
@@ -159,7 +162,7 @@ def format_hashbytes_teradata(translator, op):
     elif op.how == "md5":
         return f"rtrim(hash_md5({arg}))"
     else:
-        raise ValueError(f"unexpected value for 'how': {how}")
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
 
 def strftime_bigquery(translator, op):
@@ -539,6 +542,34 @@ def _bigquery_field_to_ibis_dtype(field):
         ibis_type = dt.Array(ibis_type)
     return ibis_type
 
+
+def string_to_epoch(ts: str):
+    "Function to convert string timestamp to epoch seconds"
+    from dateutil.parser import isoparse
+    from dateutil.tz import UTC
+    from datetime import datetime, timezone
+
+    parsed_ts = isoparse(ts).astimezone(UTC)
+    return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+
+
+@execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
+def execute_epoch_seconds_new(op, data, **kwargs):
+    import numpy as np
+
+    convert = getattr(data, "view", data.astype)
+    try:
+        series = convert(np.int64)
+        return (series // 1_000_000_000).astype(np.int32)
+    except TypeError:
+        # Catch 'TypeError' for large timestamps beyond max datetime64[ns] as per Issue #1053
+        # Cast to string instead to work around datetime64[ns] limitation
+        series = data.astype("string")
+        epoch_series = series.map(string_to_epoch)
+        return epoch_series
+
+
+execute_epoch_seconds = execute_epoch_seconds_new
 
 BinaryValue.byte_length = compile_binary_length
 
