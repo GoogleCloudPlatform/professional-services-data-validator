@@ -96,6 +96,8 @@ def parse_type(t):
             else:
                 t = t.replace(":char", ":string")
             return t
+        elif "binary" in t:
+            return "binary"
         else:
             raise Exception(t)
 

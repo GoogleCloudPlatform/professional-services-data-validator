@@ -34,7 +34,10 @@ from ibis.backends.base.sql.alchemy.registry import (
 )
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
-from ibis.backends.base.sql.registry import fixed_arity
+from ibis.backends.base.sql.registry import (
+    fixed_arity,
+    type_to_sql_string as base_type_to_sql_string,
+)
 from ibis.backends.bigquery.client import (
     _DTYPE_TO_IBIS_TYPE as _BQ_DTYPE_TO_IBIS_TYPE,
     _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD,
@@ -369,6 +372,23 @@ def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
     return None
 
 
+def sa_cast_hive(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    arg_formatted = t.translate(arg)
+
+    if arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return f"lower(hex({arg_formatted}))"
+
+    # Follow the original Ibis code path.
+    # Cannot use sa_fixed_cast() because of ImpalaExprTranslator ancestry.
+    sql_type = base_type_to_sql_string(typ)
+    return "CAST({} AS {})".format(arg_formatted, sql_type)
+
+
 def sa_cast_postgres(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
@@ -535,6 +555,7 @@ AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[HashBytes] = format_hashbytes_base
 
+ImpalaExprTranslator._registry[Cast] = sa_cast_hive
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 ImpalaExprTranslator._registry[RandomScalar] = fixed_arity("RAND", 0)
