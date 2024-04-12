@@ -458,6 +458,7 @@ def sa_cast_snowflake(t, op):
 
     sa_arg = t.translate(arg)
     if arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.hex_encode(sa_arg, sa.literal(0))
 
     # Follow the original Ibis code path.
