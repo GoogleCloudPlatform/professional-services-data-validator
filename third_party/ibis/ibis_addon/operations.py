@@ -451,6 +451,10 @@ def sa_cast_mysql(t, op):
         # We've used a workaround from StackOverflow:
         #   https://stackoverflow.com/a/20111398
         return sa_fixed_cast(t, op) + sa.literal(0)
+    elif arg_dtype.is_binary() and typ.is_string():
+        sa_arg = t.translate(arg)
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(sa.func.hex(sa_arg))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
