@@ -701,7 +701,9 @@ class ConfigManager(object):
         target_column_ibis_type: dt.DataType,
     ) -> bool:
         return bool(
-            self._decimal_column_too_big_for_pandas(source_column_ibis_type, target_column_ibis_type)
+            self._decimal_column_too_big_for_pandas(
+                source_column_ibis_type, target_column_ibis_type
+            )
             or isinstance(source_column_ibis_type, dt.Binary)
             or isinstance(target_column_ibis_type, dt.Binary)
         )
