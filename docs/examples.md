@@ -51,10 +51,10 @@ data-validation generate-table-partitions \
   --primary-keys tree_id \
   --hash '*' \
   --filters 'tree_id>3000' \
-  -cdir partitions_dir \
+  --config-dir partitions_dir \
   --partition-num 200
 ````
-Above command creates multiple partitions based on `--partition-key`. Number of generated configuration files is decided by `--partition-num`
+Above command creates multiple partitions based on the primary key. Number of generated configuration files is decided by `--partition-num`
  
 #### Run COUNT validations for all columns
 ````shell script
