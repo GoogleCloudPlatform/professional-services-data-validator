@@ -21,7 +21,10 @@ import pytest
 
 from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
-
+from tests.system.data_sources.common_functions import (
+    binary_key_assertions,
+    run_test_from_cli_args,
+)
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
@@ -354,6 +357,30 @@ def test_row_validation_core_types_to_bigquery():
     df = validator.execute()
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_binary_pk_to_bigquery():
+    """Spanner to BigQuery dvt_binary row validation.
+    This is testing binary primary key join columns.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_binary",
+            "--primary-keys=binary_id",
+            "--hash=int_id,other_data",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    binary_key_assertions(df)
 
 
 @mock.patch(
