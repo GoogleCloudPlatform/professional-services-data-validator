@@ -104,7 +104,7 @@ VALUES
  ,TIMESTAMP '1970-01-03 00:00:03-03:00');
 
 --Add values to dvt_binary table to test both binary pk matching and binary hash/concat comparisons.
-INSERT INTO pso_data_validator.dvt_binary VALUES
+INSERT INTO dvt_binary VALUES
 (CAST('DVT-key-1' AS BYTES), 1, 'Row 1'),
 (CAST('DVT-key-2' AS BYTES), 2, 'Row 2'),
 (CAST('DVT-key-3' AS BYTES), 3, 'Row 3'),

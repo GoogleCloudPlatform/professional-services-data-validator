@@ -73,7 +73,7 @@ CREATE TABLE dvt_core_types (
 ) PRIMARY KEY (id);
 
 --Integration test table used to test both binary pk matching and binary hash/concat comparisons.
-CREATE TABLE pso_data_validator.dvt_binary
+CREATE TABLE dvt_binary
 (   binary_id       BYTES(MAX) NOT NULL
 ,   int_id          INT64 NOT NULL
 ,   other_data      STRING(100)
