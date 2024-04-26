@@ -237,11 +237,7 @@ def test_schema_validation_core_types():
             "--filter-status=fail",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -266,11 +262,7 @@ def test_column_validation_core_types():
             "--max=*",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -295,11 +287,7 @@ def test_column_validation_core_types_to_bigquery():
             "--max=*",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -322,11 +310,7 @@ def test_row_validation_core_types():
             "--hash=*",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -350,11 +334,7 @@ def test_row_validation_core_types_to_bigquery():
             "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_string,col_tstz",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -403,10 +383,6 @@ def test_custom_query_validation_core_types():
             "--count=*",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
