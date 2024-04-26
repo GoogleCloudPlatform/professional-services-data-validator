@@ -500,25 +500,32 @@ class QueryBuilder(object):
         """
 
         # Build Query Expressions
+        compiled_filters = self.compile_filter_fields(table)
+        filtered_table = table.filter(compiled_filters) if compiled_filters else table
+
         if self.calculated_fields:
             depth_limit = max(
                 field.config.get(consts.CONFIG_DEPTH, 0)
                 for field in self.calculated_fields
             )
             for n in range(0, (depth_limit + 1)):
-                table = table.mutate(self.compile_calculated_fields(table, n))
+                filtered_table = filtered_table.mutate(
+                    self.compile_calculated_fields(filtered_table, n)
+                )
 
         if (
             validation_type == consts.ROW_VALIDATION
             or validation_type == consts.CUSTOM_QUERY
         ):
             if self.comparison_fields:
-                table = table.projection(self.compile_comparison_fields(table))
+                filtered_table = filtered_table.projection(
+                    self.compile_comparison_fields(filtered_table)
+                )
         else:
             if self.comparison_fields:
-                table = table.mutate(self.compile_comparison_fields(table))
-        compiled_filters = self.compile_filter_fields(table)
-        filtered_table = table.filter(compiled_filters) if compiled_filters else table
+                filtered_table = filtered_table.mutate(
+                    self.compile_comparison_fields(filtered_table)
+                )
         compiled_groups = self.compile_group_fields(filtered_table)
         grouped_table = (
             filtered_table.group_by(compiled_groups)
