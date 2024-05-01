@@ -93,3 +93,16 @@ INSERT INTO udf.dvt_large_decimals VALUES
 ,32345678901234567890123456789012345678
 ,32345678901234567890123456789.123456789
 ,32345678.123456789012345678901234567890);
+
+DROP TABLE udf.dvt_binary;
+CREATE TABLE udf.dvt_binary
+(   binary_id       VARBYTE(16) NOT NULL PRIMARY KEY
+,   int_id          NUMBER(10) NOT NULL
+,   other_data      VARCHAR(100)
+);
+COMMENT ON TABLE udf.dvt_binary IS 'Integration test table used to test both binary pk matching and binary hash/concat comparisons.';
+INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-1','ascii'), 1, 'Row 1');
+INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-2','ascii'), 2, 'Row 2');
+INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-3','ascii'), 3, 'Row 3');
+INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-4','ascii'), 4, 'Row 4');
+INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-5','ascii'), 5, 'Row 5');

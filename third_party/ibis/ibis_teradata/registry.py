@@ -21,7 +21,6 @@ from multipledispatch import Dispatcher
 
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
-
 from ibis.common.exceptions import UnsupportedOperationError
 from ibis.backends.base.sql.registry import operation_registry, fixed_arity
 from third_party.ibis.ibis_teradata.datatypes import ibis_type_to_teradata_type
@@ -42,6 +41,11 @@ teradata_cast = Dispatcher("teradata_cast")
 @teradata_cast.register(str, dt.Timestamp, dt.Integer)
 def teradata_cast_timestamp_to_integer(compiled_arg, from_, to):
     return "UNIX_MICROS({})".format(compiled_arg)
+
+
+@teradata_cast.register(str, dt.Binary, dt.String)
+def teradata_cast_binary_to_string(compiled_arg, from_, to):
+    return "LOWER(FROM_BYTES({}, 'base16'))".format(compiled_arg)
 
 
 @teradata_cast.register(str, dt.DataType, dt.DataType)

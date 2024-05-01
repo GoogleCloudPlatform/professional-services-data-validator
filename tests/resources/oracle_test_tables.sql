@@ -179,3 +179,18 @@ INSERT INTO pso_data_validator.dvt_large_decimals VALUES
 ,32345678901234567890123456789.123456789
 ,32345678.123456789012345678901234567890);
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_binary;
+CREATE TABLE pso_data_validator.dvt_binary
+(   binary_id       RAW(16) NOT NULL PRIMARY KEY
+,   int_id          NUMBER(10) NOT NULL
+,   other_data      VARCHAR2(100)
+);
+CREATE UNIQUE INDEX pso_data_validator.dvt_binary_int_id_uk ON pso_data_validator.dvt_binary (int_id);
+COMMENT ON TABLE pso_data_validator.dvt_binary IS 'Integration test table used to test both binary pk matching and binary hash/concat comparisons.';
+INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-1'), 1, 'Row 1');
+INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-2'), 2, 'Row 2');
+INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-3'), 3, 'Row 3');
+INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-4'), 4, 'Row 4');
+INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-5'), 5, 'Row 5');
+COMMIT;
