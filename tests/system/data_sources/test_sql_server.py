@@ -23,7 +23,11 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
 from data_validation.partition_builder import PartitionBuilder
-from tests.system.data_sources.common_functions import null_not_null_assertions
+from tests.system.data_sources.common_functions import (
+    binary_key_assertions,
+    null_not_null_assertions,
+    run_test_from_cli_args,
+)
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
@@ -265,11 +269,7 @@ def test_schema_validation_core_types():
             "--filter-status=fail",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -297,11 +297,7 @@ def test_schema_validation_core_types_to_bigquery():
             ),
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -322,11 +318,7 @@ def test_schema_validation_not_null_vs_nullable():
             "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     null_not_null_assertions(df)
 
 
@@ -351,11 +343,7 @@ def test_column_validation_core_types():
             "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_date,col_datetime,col_tstz,col_varchar_30,col_char_2,col_string",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -381,11 +369,7 @@ def test_column_validation_core_types_to_bigquery():
             "--max=col_int8,col_int16,col_int32,col_int64,col_float64,col_date,col_datetime,col_tstz,col_dec_10_2,col_dec_20,col_dec_38,col_varchar_30,col_char_2,col_string",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -410,11 +394,7 @@ def test_row_validation_core_types():
             "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz,col_dec_20,col_dec_38",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -440,11 +420,7 @@ def test_row_validation_core_types_to_bigquery():
             "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -472,11 +448,7 @@ def test_row_validation_large_decimals_to_bigquery():
             "--hash=id,col_data,col_dec_18,col_dec_38,col_dec_38_9",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -485,8 +457,32 @@ def test_row_validation_large_decimals_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_binary_pk_to_bigquery():
+    """SQL Server to BigQuery dvt_binary row validation.
+    This is testing binary primary key join columns.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=sql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_binary",
+            "--primary-keys=binary_id",
+            "--hash=int_id,other_data",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_column_validation_core_types_to_bigquery():
-    """Oracle to BigQuery dvt_core_types custom-query column validation"""
+    """SQL Server to BigQuery dvt_core_types custom-query column validation"""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -501,11 +497,7 @@ def test_custom_query_column_validation_core_types_to_bigquery():
             "--count=*",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -531,11 +523,7 @@ def test_custom_query_row_validation_core_types_to_bigquery():
             "--comparison-fields=col_int64,col_varchar_30,col_date",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
@@ -561,10 +549,6 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
             "--hash=col_int64,col_varchar_30,col_date",
         ]
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
+    df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0

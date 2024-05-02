@@ -97,3 +97,17 @@ CREATE TABLE `pso_data_validator`.`dvt_null_not_null`
 ,   col_src_nn_trg_n   datetime(0) NOT NULL
 ,   col_src_n_trg_nn   datetime(0)
 ) COMMENT 'Nullable integration test table, MySQL is assumed to be a DVT source (not target).';
+
+DROP TABLE `pso_data_validator`.`dvt_binary`;
+CREATE TABLE `pso_data_validator`.`dvt_binary`
+(   binary_id       varbinary(16) NOT NULL PRIMARY KEY
+,   int_id          int NOT NULL
+,   other_data      varchar(100)
+) COMMENT 'Integration test table used to test both binary pk matching and binary hash/concat comparisons.';
+CREATE UNIQUE INDEX `dvt_binary_int_id_uk` ON `pso_data_validator`.`dvt_binary` (int_id);
+INSERT INTO pso_data_validator.dvt_binary VALUES
+('DVT-key-1', 1, 'Row 1'),
+('DVT-key-2', 2, 'Row 2'),
+('DVT-key-3', 3, 'Row 3'),
+('DVT-key-4', 4, 'Row 4'),
+('DVT-key-5', 5, 'Row 5');

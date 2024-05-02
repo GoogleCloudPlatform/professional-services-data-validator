@@ -102,3 +102,13 @@ VALUES
  ,'Hello DVT','C ','Hello DVT'
  ,DATE '1970-01-03',TIMESTAMP '1970-01-03 00:00:03'
  ,TIMESTAMP '1970-01-03 00:00:03-03:00');
+
+--Add values to dvt_binary table to test both binary pk matching and binary hash/concat comparisons.
+INSERT INTO dvt_binary
+(binary_id,int_id,other_data)
+VALUES
+(CAST('DVT-key-1' AS BYTES), 1, 'Row 1'),
+(CAST('DVT-key-2' AS BYTES), 2, 'Row 2'),
+(CAST('DVT-key-3' AS BYTES), 3, 'Row 3'),
+(CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
+(CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
