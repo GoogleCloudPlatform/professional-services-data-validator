@@ -321,7 +321,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
-  [--exclude-columns or -ec]   
+  [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
@@ -481,7 +481,7 @@ The Cloud Run and Kubernetes pods must run in a network with access to the datab
 
 In Cloud Run, the [job](https://cloud.google.com/run/docs/create-jobs) must be run as multiple, independent tasks with the task count set to the number of partitions generated. In Kubernetes, set the number of completions to the number of partitions generated - see [Kubernetes Parallel Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/#parallel-jobs). The option `--kube-completions or -kc` tells DVT that many DVT containers are running in a Kubernetes cluster. Each DVT container only validates the specific partition YAML (based on the index assigned by Kubernetes control plane). If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (a `--config-file` is provided instead), a warning is issued.
 
-By default, each partition validation is retried up to 3 times if there is an error. In Kubernetes and Cloud Run, you can set the parallelism to the number you want. Keep in mind that if you are validating 1000's of partitions in parallel, you may find that setting the parallelism too high (say 100) may result in timeouts and slow down the validation.   
+By default, each partition validation is retried up to 3 times if there is an error. In Kubernetes and Cloud Run, you can set the parallelism to the number you want. Keep in mind that if you are validating 1000's of partitions in parallel, you may find that setting the parallelism too high (say 100) may result in timeouts and slow down the validation.
 
 ### Validation Reports
 
@@ -586,7 +586,8 @@ with calculated fields as shown in [this example](https://github.com/GoogleCloud
 
 Filters let you apply a WHERE statement to your validation query (ie. `SELECT *
 FROM table WHERE created_at > 30 days ago AND region_id = 71;`). The filter is
-written in the syntax of the given source.
+written in the syntax of the given source and must reference columns in the
+underlying table, not projected DVT expressions.
 
 Note that you are writing the query to execute, which does not have to match
 between source and target as long as the results can be expected to align. If

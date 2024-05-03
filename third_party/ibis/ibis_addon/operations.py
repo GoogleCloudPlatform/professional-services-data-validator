@@ -35,12 +35,18 @@ from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
-from ibis.backends.base.sql.registry import fixed_arity
-from ibis.backends.bigquery.client import _DTYPE_TO_IBIS_TYPE as _BQ_DTYPE_TO_IBIS_TYPE
-from ibis.backends.bigquery.client import _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD
+from ibis.backends.base.sql.registry import (
+    fixed_arity,
+    type_to_sql_string as base_type_to_sql_string,
+)
+from ibis.backends.bigquery.client import (
+    _DTYPE_TO_IBIS_TYPE as _BQ_DTYPE_TO_IBIS_TYPE,
+    _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD,
+)
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import (
     STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS,
+    bigquery_cast,
 )
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
@@ -121,6 +127,12 @@ def compile_binary_length(binary_value):
 
 def compile_to_char(numeric_value, fmt):
     return ToChar(numeric_value, fmt=fmt).to_expr()
+
+
+@bigquery_cast.register(str, dt.Binary, dt.String)
+def bigquery_cast_generate(compiled_arg, from_, to):
+    """Cast of binary to string should be hex conversion."""
+    return f"TO_HEX({compiled_arg})"
 
 
 def format_hash_bigquery(translator, op):
@@ -363,10 +375,36 @@ def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
     return None
 
 
+def sa_cast_hive(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    arg_formatted = t.translate(arg)
+
+    if arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return f"lower(hex({arg_formatted}))"
+
+    # Follow the original Ibis code path.
+    # Cannot use sa_fixed_cast() because of ImpalaExprTranslator ancestry.
+    sql_type = base_type_to_sql_string(typ)
+    return "CAST({} AS {})".format(arg_formatted, sql_type)
+
+
 def sa_cast_postgres(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
         return custom_cast
+
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    if arg_dtype.is_binary() and typ.is_string():
+        sa_arg = t.translate(arg)
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.encode(sa_arg, sa.literal("hex"))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -382,6 +420,12 @@ def sa_cast_mssql(t, op):
         sa_arg = t.translate(arg)
         # This prevents output in scientific notation, at least for my tests it did.
         return sa.func.format(sa_arg, "G")
+    elif arg_dtype.is_binary() and typ.is_string():
+        sa_arg = t.translate(arg)
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(
+            sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
+        )
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -407,6 +451,24 @@ def sa_cast_mysql(t, op):
         # We've used a workaround from StackOverflow:
         #   https://stackoverflow.com/a/20111398
         return sa_fixed_cast(t, op) + sa.literal(0)
+    elif arg_dtype.is_binary() and typ.is_string():
+        sa_arg = t.translate(arg)
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(sa.func.hex(sa_arg))
+
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
+
+
+def sa_cast_oracle(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    sa_arg = t.translate(arg)
+    if arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(sa.func.rawtohex(sa_arg))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -416,6 +478,15 @@ def sa_cast_snowflake(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
         return custom_cast
+
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    sa_arg = t.translate(arg)
+    if arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.hex_encode(sa_arg, sa.literal(0))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -519,6 +590,7 @@ AlchemyExprTranslator._registry[HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[HashBytes] = format_hashbytes_base
 
+ImpalaExprTranslator._registry[Cast] = sa_cast_hive
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[HashBytes] = format_hashbytes_hive
 ImpalaExprTranslator._registry[RandomScalar] = fixed_arity("RAND", 0)
@@ -526,6 +598,7 @@ ImpalaExprTranslator._registry[Strftime] = strftime_impala
 ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if OracleExprTranslator:
+    OracleExprTranslator._registry[Cast] = sa_cast_oracle
     OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
     OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
     OracleExprTranslator._registry[ToChar] = sa_format_to_char

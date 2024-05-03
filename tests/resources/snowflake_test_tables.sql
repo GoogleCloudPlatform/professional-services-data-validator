@@ -93,3 +93,17 @@ CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_NULL_NOT_NULL
 ,   col_src_n_trg_nn   TIMESTAMP(0)
 );
 COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_NULL_NOT_NULL IS 'Nullable integration test table, Oracle is assumed to be a DVT source (not target).';
+
+DROP TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_BINARY;
+CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_BINARY
+(   BINARY_ID       BINARY(16) NOT NULL PRIMARY KEY
+,   INT_ID          NUMBER(10) NOT NULL
+,   OTHER_DATA      VARCHAR2(100)
+);
+COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_BINARY IS 'Integration test table used to test both binary pk matching and binary hash/concat comparisons.';
+INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.DVT_BINARY VALUES
+(TO_BINARY('DVT-key-1', 'UTF-8'), 1, 'Row 1'),
+(TO_BINARY('DVT-key-2', 'UTF-8'), 2, 'Row 2'),
+(TO_BINARY('DVT-key-3', 'UTF-8'), 3, 'Row 3'),
+(TO_BINARY('DVT-key-4', 'UTF-8'), 4, 'Row 4'),
+(TO_BINARY('DVT-key-5', 'UTF-8'), 5, 'Row 5');

@@ -127,7 +127,8 @@ def _cast(t, op):
         return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
 
     if arg_dtype.is_binary() and typ.is_string():
-        return sa.func.encode(sa_arg, "escape")
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(sa.func.hex(sa_arg))
 
     if typ.is_binary():
         #  decode yields a column of memoryview which is annoying to deal with
