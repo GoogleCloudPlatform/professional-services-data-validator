@@ -14,18 +14,16 @@
 
 import copy
 import logging
-from typing import Optional, Union, TYPE_CHECKING
-import yaml
+from typing import TYPE_CHECKING, Optional, Union
 
 import google.oauth2.service_account
-
 import ibis.expr.datatypes as dt
+import yaml
 
-from data_validation import clients, consts, state_manager
+from data_validation import clients, consts, gcs_helper, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 from data_validation.validation_builder import ValidationBuilder
-
 
 if TYPE_CHECKING:
     import ibis.expr.types.TableExpr
@@ -322,9 +320,8 @@ class ConfigManager(object):
             allow_list = allow_list.replace(" ", "")
             full_allow_list.append(allow_list)
         if allow_list_file:
-            mgr = state_manager.StateManager(file_system_root_path=allow_list_file)
             try:
-                allow_list_yaml = mgr.read_file(allow_list_file)
+                allow_list_yaml = gcs_helper.read_file(allow_list_file)
             except FileNotFoundError as e:
                 raise ValueError(
                     "Cannot locate --allow-list-file: {allow_list_file}"

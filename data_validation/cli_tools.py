@@ -49,10 +49,12 @@ import json
 import logging
 import sys
 import uuid
+import os
 from argparse import Namespace
 from typing import Dict, List
+from yaml import Dumper, Loader, dump, load
 
-from data_validation import clients, consts, state_manager
+from data_validation import clients, consts, state_manager, gcs_helper
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -1081,47 +1083,47 @@ def get_connection(connection_name):
     return mgr.get_connection_config(connection_name)
 
 
-def store_validation(validation_file_name, yaml_config):
-    """Store the validation YAML config under the given name."""
-    mgr = state_manager.StateManager()
-    mgr.create_validation_yaml(validation_file_name, yaml_config)
+def store_validation(validation_file_name, config, include_log=True):
+    """Store the validation config under the given name."""
+    validation_path = gcs_helper._get_validation_path(validation_file_name)
 
-
-def store_validation_json(validation_file_name, json_config):
-    """Store the validation JSON config under the given name."""
-    mgr = state_manager.StateManager()
-    mgr.create_validation_json(validation_file_name, json_config)
-
-
-def store_partition(target_file_path, yaml_config, target_folder_path=None):
-    """Store the partition YAML config under the given name."""
-    mgr = state_manager.StateManager(target_folder_path)
-    mgr.create_partition_yaml(target_file_path, yaml_config)
-
-
-def get_validation(validation_name, config_dir=None):
-    """Return validation YAML for a specific connection."""
-    if config_dir:
-        mgr = state_manager.StateManager(file_system_root_path=config_dir)
-        return mgr.get_validation_config(validation_name, config_dir)
+    if validation_file_name.endswith(".yaml"):
+        config_str = dump(config, Dumper=Dumper)
+    elif validation_file_name.endswith("json"):
+        config_str = json.dumps(config)
     else:
-        if validation_name.startswith("gs://"):
-            obj_depth = len(validation_name.split("/"))
-            gcs_prefix = "/".join(validation_name.split("/")[: obj_depth - 1])
-            mgr = state_manager.StateManager(file_system_root_path=gcs_prefix)
-            return mgr.get_validation_config(
-                validation_name.split("/")[obj_depth - 1], gcs_prefix
-            )
-        else:
-            mgr = state_manager.StateManager()
-            return mgr.get_validation_config(validation_name)
+        raise ValueError(f"Invalid validation file name: {validation_file_name}")
+
+    os.makedirs(os.path.dirname(validation_path), exist_ok=True)
+    gcs_helper.write_file(validation_path, config_str, include_log=include_log)
+
+
+def get_validation(name: str, config_dir: str = None):
+    """Return validation YAML config."""
+    if config_dir:
+        validation_path = os.path.join(config_dir, name)
+    else:
+        validation_path = gcs_helper._get_validation_path(name)
+
+    validation_bytes = gcs_helper.read_file(validation_path)
+    return load(validation_bytes, Loader=Loader)
 
 
 def list_validations(config_dir="./"):
-    """List all saved validation YAMLs."""
-    mgr = state_manager.StateManager(file_system_root_path=config_dir)
-    validations = mgr.list_validations_in_dir(config_dir=config_dir)
+    """List all saved validation YAMLs in a directory."""
+    logging.info(f"Looking for validations in path {config_dir}")
+    if gcs_helper._is_gcs_path(config_dir):
+        if not config_dir.endswith("/"):
+            config_dir += "/"
+        files = gcs_helper.list_gcs_directory(config_dir)
+    else:
+        files = os.listdir(config_dir)
 
+    return [file_name for file_name in files if file_name.endswith(".yaml")]
+
+
+def print_validations_in_dir(config_dir="./"):
+    validations = list_validations(config_dir=config_dir)
     logging.info("Validation YAMLs found:")
     for validation_name in validations:
         logging.info(validation_name)

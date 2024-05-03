@@ -19,14 +19,10 @@ and validation files.
 
 import enum
 import json
-import logging
 import os
 from typing import Dict, List
 
-from google.cloud import storage
-from yaml import Dumper, Loader, dump, load
-
-from data_validation import client_info, consts
+from data_validation import consts, gcs_helper
 
 
 class FileSystem(enum.Enum):
@@ -36,8 +32,8 @@ class FileSystem(enum.Enum):
 
 class StateManager(object):
     def __init__(self, file_system_root_path: str = None, verbose: bool = False):
-        """Initialize a StateManager which handles configuration
-        and state management files.
+        """Initialize a StateManager which handles connection configs locally
+        and in GCS.
 
         Args:
             file_system_root_path (String): A root file system path
@@ -61,7 +57,7 @@ class StateManager(object):
             config (Dict): A dictionary with the connection details.
         """
         connection_path = self._get_connection_path(name)
-        self._write_file(connection_path, json.dumps(config))
+        gcs_helper.write_file(connection_path, json.dumps(config))
 
     def get_connection_config(self, name: str) -> Dict[str, str]:
         """Get a connection configuration from the expected file.
@@ -72,7 +68,7 @@ class StateManager(object):
             A dict of the connection values from the file.
         """
         connection_path = self._get_connection_path(name)
-        conn_str = self._read_file(connection_path)
+        conn_str = gcs_helper.read_file(connection_path)
 
         return json.loads(conn_str)
 
@@ -84,9 +80,6 @@ class StateManager(object):
             for file_name in file_names
             if file_name.endswith(".connection.json")
         ]
-
-    def read_file(self, file_path: str) -> str:
-        return self._read_file(file_path)
 
     def _get_connections_directory(self) -> str:
         """Returns the connections directory path."""
@@ -105,121 +98,9 @@ class StateManager(object):
             self._get_connections_directory(), f"{name}.connection.json"
         )
 
-    def create_validation_yaml(self, name: str, yaml_config: Dict[str, str]):
-        """Create a validation file and store the given config as YAML.
-
-        Args:
-            name (String): The name of the validation.
-            yaml_config (Dict): A dictionary with the validation details.
-        """
-        validation_path = self._get_validation_path(name)
-        yaml_config_str = dump(yaml_config, Dumper=Dumper)
-        self._write_file(validation_path, yaml_config_str)
-
-    def create_validation_json(self, name: str, json_config: Dict[str, str]):
-        """Create a validation file and store the given config as JSON.
-
-        Args:
-            name (String): The name of the validation.
-            json_config (Dict): A dictionary with the validation details.
-        """
-        validation_path = self._get_validation_path(name)
-        json_config_str = json.dumps(json_config)
-        self._write_file(validation_path, json_config_str)
-
-    def create_partition_yaml(self, target_file_path: str, yaml_config: Dict[str, str]):
-        """Create a validation file and store the given config as YAML.
-
-        Args:
-            name (String): The name of the validation.
-            yaml_config (Dict): A dictionary with the validation details.
-        """
-        partition_path = self._get_partition_path(target_file_path)
-        yaml_config_str = dump(yaml_config, Dumper=Dumper)
-        self._write_partition(partition_path, yaml_config_str)
-
-    def get_validation_config(self, name: str, config_dir=None) -> Dict[str, str]:
-        """Get a validation configuration from the expected file.
-
-        Args:
-            name: The name of the validation file.
-        Returns:
-            A dict of the validation values from the file.
-        """
-        if config_dir:
-            validation_path = os.path.join(config_dir, name)
-        else:
-            validation_path = self._get_validation_path(name)
-
-        validation_bytes = self._read_file(validation_path)
-        return load(validation_bytes, Loader=Loader)
-
-    def list_validations(self):
-        file_names = self._list_directory(self._get_validations_directory())
-        return [file_name for file_name in file_names if file_name.endswith(".yaml")]
-
-    def list_validations_in_dir(self, config_dir):
-        logging.info(f"Looking for validations in path {config_dir}")
-        if config_dir.startswith("gs://"):
-            if not config_dir.endswith("/"):
-                config_dir += "/"
-            files = self._list_gcs_directory(config_dir)
-        else:
-            files = os.listdir(config_dir)
-
-        return [file_name for file_name in files if file_name.endswith(".yaml")]
-
-    def _get_validations_directory(self):
-        """Returns the validations directory path."""
-        if self.file_system == FileSystem.LOCAL:
-            # Validation configs should be written to tool root dir, not consts.DEFAULT_ENV_DIRECTORY as connections are
-            return "./"
-        return os.path.join(self.file_system_root_path, "validations/")
-
-    def _get_validation_path(self, name: str) -> str:
-        """Returns the full path to a validation.
-
-        Args:
-            name: The name of the validation.
-        """
-        return os.path.join(self._get_validations_directory(), f"{name}")
-
-    def _get_partition_path(self, name: str) -> str:
-        """Returns the full path to a validation.
-
-        Args:
-            name: The name of the validation.
-        """
-        if self.file_system == FileSystem.LOCAL:
-            return os.path.join("./", name)
-        return name
-
-    def _read_file(self, file_path: str) -> str:
-        if self.file_system == FileSystem.GCS:
-            return self._read_gcs_file(file_path)
-        else:
-            with open(file_path, "r") as f:
-                return f.read()
-
-    def _write_file(self, file_path: str, data: str):
-        if self.file_system == FileSystem.GCS:
-            self._write_gcs_file(file_path, data)
-        else:
-            with open(file_path, "w") as file:
-                file.write(data)
-
-        logging.info("Success! Config output written to {}".format(file_path))
-
-    def _write_partition(self, file_path: str, data: str):
-        if self.file_system == FileSystem.GCS:
-            self._write_gcs_file(file_path, data)
-        else:
-            with open(file_path, "w") as file:
-                file.write(data)
-
     def _list_directory(self, directory_path: str) -> List[str]:
         if self.file_system == FileSystem.GCS:
-            return self._list_gcs_directory(directory_path)
+            return gcs_helper.list_gcs_directory(directory_path)
         else:
             return os.listdir(directory_path)
 
@@ -236,42 +117,10 @@ class StateManager(object):
             if not os.path.exists(self._get_connections_directory()):
                 os.makedirs(self._get_connections_directory())
 
-    # GCS File Management Section
     def setup_gcs(self):
-        info = client_info.get_http_client_info()
-        self.storage_client = storage.Client(client_info=info)
         try:
-            self.gcs_bucket = self._get_gcs_bucket()
+            gcs_helper._get_gcs_bucket(self.file_system_root_path)
         except ValueError as e:
             raise ValueError(
                 "GCS Path Failure {} -> {}".format(self.file_system_root_path, e)
             )
-
-    def _get_gcs_bucket(self):
-        bucket_name = self.file_system_root_path[5:].split("/")[0]
-        return self.storage_client.bucket(bucket_name)
-
-    def _get_gcs_file_path(self, gcs_file_path: str):
-        return str.join("", gcs_file_path[5:].split("/", 1)[1:])
-
-    def _read_gcs_file(self, file_path: str) -> str:
-        gcs_file_path = self._get_gcs_file_path(file_path)
-        blob = self.gcs_bucket.get_blob(gcs_file_path)
-        if not blob:
-            raise ValueError(f"Invalid Cloud Storage Path: {file_path}")
-        return blob.download_as_bytes()
-
-    def _write_gcs_file(self, file_path: str, data: str):
-        gcs_file_path = self._get_gcs_file_path(file_path)
-        blob = self.gcs_bucket.blob(gcs_file_path)
-        blob.upload_from_string(data)
-
-    def _list_gcs_directory(self, directory_path: str) -> List[str]:
-        gcs_prefix = self._get_gcs_file_path(directory_path)
-        blobs = [
-            f.name.replace(gcs_prefix, "")
-            for f in self.gcs_bucket.list_blobs(prefix=gcs_prefix, delimiter="/")
-            if f.name.replace(gcs_prefix, "")
-        ]
-
-        return blobs

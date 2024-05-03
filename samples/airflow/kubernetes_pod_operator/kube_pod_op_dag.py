@@ -55,7 +55,7 @@ with DAG(
         get_logs=True,
         env_vars={
             # Uncomment this env variable to reference connections stored in a GCS bucket
-            # "PSO_DV_CONFIG_HOME": "gs://{{BUCKET_NAME}}/",
+            # "PSO_DV_CONN_HOME": "gs://{{BUCKET_NAME}}/",
             "GOOGLE_CLOUD_PROJECT": "{{PROJECT_ID}}",
         },
     )
