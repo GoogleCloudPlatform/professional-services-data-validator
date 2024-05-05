@@ -165,6 +165,7 @@ def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
     # assert that validation is called thrice, once for each file
     assert mock_run.call_count == 3
 
+
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_yaml",

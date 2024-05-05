@@ -371,6 +371,7 @@ def config_runner(args):
         config_managers = build_config_managers_from_yaml(args, config_file_path)
         run_validations(args, config_managers)
 
+
 def build_config_managers_from_yaml(args, config_file_path):
     """Returns List[ConfigManager] instances ready to be executed."""
     if "config_dir" in args and args.config_dir:
