@@ -474,20 +474,6 @@ def sa_cast_oracle(t, op):
     return sa_fixed_cast(t, op)
 
 
-def sa_cast_oracle(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.rawtohex(sa_arg)
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
-
-
 def sa_cast_snowflake(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
