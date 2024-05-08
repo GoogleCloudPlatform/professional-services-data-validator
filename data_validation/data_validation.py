@@ -128,14 +128,8 @@ class DataValidation(object):
                 self.validation_builder.source_builder,
             )
 
-        # TODO: check if primary keys is BINARY, if yes add cast to query object
-        # either to the WHERE clause or for each value inside IS IN clause
-        #
-        # 1) select KEY_FIELD from ISSUE1070 where DV_ID in (TO_BINARY('64484B73565932494C47'), TO_BINARY('344172796A627255766D'));
-        # 2) select KEY_FIELD from ISSUE1070 where HEX_ENCODE(DV_ID) in ('64484B73565932494C47', '344172796A627255766D');
-
-        # [Neil] This might not be the best way to cast the random ids to string (hex). Happy to receive guidance.
-        # [Helen] Neil applied the 2nd approach and it works! I think we should pass this branch along to the customer and afterwards check if all connections work with this string casting
+        # check if source table's primary key is BINARY and force cast it to STRING using Ibis
+        # translated SQL example: "select KEY_FIELD from ISSUE1070 where HEX_ENCODE(DV_ID) in ('64484B73565932494C47', '344172796A627255766D');"
         if query[primary_key_info[consts.CONFIG_SOURCE_COLUMN]].type().is_binary():
             query = query.mutate(
                 **{
