@@ -119,7 +119,7 @@ class StateManager(object):
 
     def setup_gcs(self):
         try:
-            gcs_helper._get_gcs_bucket(self.file_system_root_path)
+            gcs_helper.get_gcs_bucket(self.file_system_root_path)
         except ValueError as e:
             raise ValueError(
                 "GCS Path Failure {} -> {}".format(self.file_system_root_path, e)

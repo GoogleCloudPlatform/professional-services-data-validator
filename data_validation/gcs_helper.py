@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@ def _is_gcs_path(file_path: str) -> bool:
     return True if file_path.startswith("gs://") else False
 
 
-def _get_validation_path(name: str) -> str:
+def get_validation_path(name: str) -> str:
     """Returns the full path to a validation."""
     if _is_gcs_path(name):
         return name
     return os.path.join("./", name)
 
 
-def _get_gcs_bucket(gcs_file_path: str) -> storage.Bucket:
+def get_gcs_bucket(gcs_file_path: str) -> storage.Bucket:
     """Returns storage.Bucket given GCS file path with prefix."""
     bucket_name = gcs_file_path[5:].split("/")[0]
     info = client_info.get_http_client_info()
@@ -47,11 +47,11 @@ def _get_gcs_file_path(gcs_file_path: str) -> str:
     Returns relative object file path i.e. `path/to/file.yaml`
     given full GCS file path with prefix.
     """
-    return str.join("", gcs_file_path[5:].split("/", 1)[1:])
+    return "".join(gcs_file_path[5:].split("/", 1)[1:])
 
 
 def _read_gcs_file(file_path: str) -> bytes:
-    gcs_bucket = _get_gcs_bucket(file_path)
+    gcs_bucket = get_gcs_bucket(file_path)
     blob = gcs_bucket.blob(_get_gcs_file_path(file_path))
     if not blob:
         raise ValueError(f"Invalid Cloud Storage Path: {file_path}")
@@ -59,7 +59,7 @@ def _read_gcs_file(file_path: str) -> bytes:
 
 
 def _write_gcs_file(file_path: str, data: str):
-    gcs_bucket = _get_gcs_bucket(file_path)
+    gcs_bucket = get_gcs_bucket(file_path)
     blob = gcs_bucket.blob(_get_gcs_file_path(file_path))
     blob.upload_from_string(data)
 
@@ -76,6 +76,7 @@ def write_file(file_path: str, data: str, include_log: bool = True):
     if _is_gcs_path(file_path):
         _write_gcs_file(file_path, data)
     else:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w") as file:
             file.write(data)
 
@@ -85,7 +86,7 @@ def write_file(file_path: str, data: str, include_log: bool = True):
 
 def list_gcs_directory(directory_path: str) -> List[str]:
     gcs_prefix = _get_gcs_file_path(directory_path)
-    gcs_bucket = _get_gcs_bucket(directory_path)
+    gcs_bucket = get_gcs_bucket(directory_path)
     blobs = [
         f.name.replace(gcs_prefix, "")
         for f in gcs_bucket.list_blobs(prefix=gcs_prefix, delimiter="/")

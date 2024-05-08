@@ -562,7 +562,7 @@ def test_cli_store_yaml_then_run_directory_gcs(mock_conn):
     main.config_runner(run_config_args)
 
     # Clean up
-    bucket = gcs_helper._get_gcs_bucket(bucket_name)
+    bucket = gcs_helper.get_gcs_bucket(bucket_name)
     bucket.blob(yaml_file_name1).delete()
     bucket.blob(yaml_file_name2).delete()
 

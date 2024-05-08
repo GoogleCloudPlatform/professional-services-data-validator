@@ -1085,7 +1085,7 @@ def get_connection(connection_name):
 
 def store_validation(validation_file_name, config, include_log=True):
     """Store the validation config under the given name."""
-    validation_path = gcs_helper._get_validation_path(validation_file_name)
+    validation_path = gcs_helper.get_validation_path(validation_file_name)
 
     if validation_file_name.endswith(".yaml"):
         config_str = dump(config, Dumper=Dumper)
@@ -1094,7 +1094,6 @@ def store_validation(validation_file_name, config, include_log=True):
     else:
         raise ValueError(f"Invalid validation file name: {validation_file_name}")
 
-    os.makedirs(os.path.dirname(validation_path), exist_ok=True)
     gcs_helper.write_file(validation_path, config_str, include_log=include_log)
 
 
@@ -1103,7 +1102,7 @@ def get_validation(name: str, config_dir: str = None):
     if config_dir:
         validation_path = os.path.join(config_dir, name)
     else:
-        validation_path = gcs_helper._get_validation_path(name)
+        validation_path = gcs_helper.get_validation_path(name)
 
     validation_bytes = gcs_helper.read_file(validation_path)
     return load(validation_bytes, Loader=Loader)
