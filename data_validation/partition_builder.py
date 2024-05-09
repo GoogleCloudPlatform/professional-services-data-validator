@@ -361,8 +361,8 @@ class PartitionBuilder:
                 yaml_config = partition["yaml_config"]
                 target_file_name = partition["target_file_name"]
                 target_file_path = os.path.join(target_folder_path, target_file_name)
-                cli_tools.store_partition(
-                    target_file_path, yaml_config, target_folder_path
+                cli_tools.store_validation(
+                    target_file_path, yaml_config, include_log=False
                 )
 
         logging.info(

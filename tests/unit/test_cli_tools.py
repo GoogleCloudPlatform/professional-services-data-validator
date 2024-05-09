@@ -167,7 +167,7 @@ def test_bad_add_connection():
 
 
 @mock.patch(
-    "data_validation.state_manager.StateManager._write_file",
+    "data_validation.gcs_helper.write_file",
 )
 def test_create_connections_oracle(mock_write_file):
     # Create standard connection
@@ -205,7 +205,7 @@ def test_create_and_list_and_get_validations(caplog, fs):
     assert WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     # List validation configs
-    cli_tools.list_validations()
+    cli_tools.print_validations_in_dir()
     assert "Validation YAMLs found:" in caplog.records[2].msg
 
     # Retrieve the stored validation config
