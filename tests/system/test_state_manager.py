@@ -11,25 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 import pytest
 
-from data_validation import state_manager
+from data_validation import gcs_helper, state_manager
 
-
-GCS_STATE_PATH = "gs://pso-kokoro-resources/state/"
+PROJECT_ID = os.getenv("PROJECT_ID")
+GCS_STATE_PATH = f"gs://{PROJECT_ID}/state/"
 TEST_CONN_NAME = "example"
 TEST_CONN = {
     "source_type": "BigQuery",
     "project_id": "my-project",
 }
 
-
-def test_get_gcs_file_path():
-    manager = state_manager.StateManager(GCS_STATE_PATH)
-    result_path = manager._get_gcs_file_path(GCS_STATE_PATH + "file/path/name.json")
-
-    assert result_path == "state/file/path/name.json"
+BUCKET_NAME = f"gs://{PROJECT_ID}"
+GCS_STATE_DIR_PATH = f"{BUCKET_NAME}/state/"
+GCS_STATE_FULL_PATH = f"{BUCKET_NAME}/state/test.txt"
+TEST_DATA = "TEST_DATA"
 
 
 def test_gcs_create_and_get_connection_config():
@@ -55,3 +53,22 @@ def test_create_invalid_gcs_path_raises():
 
     with pytest.raises(ValueError, match=r"GCS Path Failure .*"):
         state_manager.StateManager(files_directory)
+
+
+def test_get_gcs_file_path():
+    result_path = gcs_helper._get_gcs_file_path(
+        GCS_STATE_DIR_PATH + "file/path/name.json"
+    )
+    assert result_path == "state/file/path/name.json"
+
+
+def test_read_and_write_gcs_file():
+    gcs_helper.write_file(GCS_STATE_FULL_PATH, TEST_DATA)
+    data = gcs_helper.read_file(GCS_STATE_FULL_PATH)
+    assert data == b"TEST_DATA"
+
+
+def test_list_gcs_dir():
+    gcs_helper.write_file(GCS_STATE_FULL_PATH, TEST_DATA)
+    blobs = gcs_helper.list_gcs_directory(GCS_STATE_DIR_PATH)
+    assert "test.txt" in blobs

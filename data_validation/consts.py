@@ -99,7 +99,7 @@ CONFIG_TYPES = [
 
 # State Manager Fields
 DEFAULT_ENV_DIRECTORY = "~/.config/google-pso-data-validator/"
-ENV_DIRECTORY_VAR = "PSO_DV_CONFIG_HOME"
+ENV_DIRECTORY_VAR = "PSO_DV_CONN_HOME"
 
 # Yaml File Config Fields
 YAML_RESULT_HANDLER = "result_handler"
