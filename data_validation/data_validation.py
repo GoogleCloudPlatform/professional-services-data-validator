@@ -128,6 +128,17 @@ class DataValidation(object):
                 self.validation_builder.source_builder,
             )
 
+        # check if source table's primary key is BINARY and force cast it to STRING using Ibis
+        # translated SQL example: "select KEY_FIELD from ISSUE1070 where HEX_ENCODE(DV_ID) in ('64484B73565932494C47', '344172796A627255766D');"
+        if query[primary_key_info[consts.CONFIG_SOURCE_COLUMN]].type().is_binary():
+            query = query.mutate(
+                **{
+                    primary_key_info[consts.CONFIG_SOURCE_COLUMN]: query[
+                        primary_key_info[consts.CONFIG_SOURCE_COLUMN]
+                    ].cast("string")
+                }
+            )
+
         random_rows = self.config_manager.source_client.execute(query)
         if len(random_rows) == 0:
             return
