@@ -261,3 +261,18 @@ INSERT INTO pso_data_validator.dvt_large_decimals VALUES
 ,32345678901234567890123456789012345678
 ,32345678901234567890123456789.123456789
 ,32345678.123456789012345678901234567890);
+
+DROP TABLE pso_data_validator.dvt_binary;
+CREATE TABLE pso_data_validator.dvt_binary
+(   binary_id       bytea NOT NULL PRIMARY KEY
+,   int_id          int NOT NULL
+,   other_data      varchar(100)
+);
+CREATE UNIQUE INDEX dvt_binary_int_id_uk ON pso_data_validator.dvt_binary (int_id);
+COMMENT ON TABLE pso_data_validator.dvt_binary IS 'Integration test table used to test both binary pk matching and binary hash/concat comparisons.';
+INSERT INTO pso_data_validator.dvt_binary VALUES
+(CAST('DVT-key-1' AS bytea), 1, 'Row 1'),
+(CAST('DVT-key-2' AS bytea), 2, 'Row 2'),
+(CAST('DVT-key-3' AS bytea), 3, 'Row 3'),
+(CAST('DVT-key-4' AS bytea), 4, 'Row 4'),
+(CAST('DVT-key-5' AS bytea), 5, 'Row 5');

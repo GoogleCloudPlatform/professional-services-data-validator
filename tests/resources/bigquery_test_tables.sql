@@ -89,3 +89,16 @@ INSERT INTO `pso_data_validator`.`dvt_large_decimals` VALUES
 ,BIGNUMERIC '32345678901234567890123456789012345678'
 ,NUMERIC '32345678901234567890123456789.123456789'
 ,BIGNUMERIC '32345678.123456789012345678901234567890');
+
+DROP TABLE `pso_data_validator`.`dvt_binary`;
+CREATE TABLE `pso_data_validator`.`dvt_binary`
+(   binary_id       BYTES(16) NOT NULL
+,   int_id          INT64 NOT NULL
+,   other_data      STRING(100)
+) OPTIONS (description='Integration test table used to test both binary pk matching and binary hash/concat comparisons.');
+INSERT INTO `pso_data_validator`.`dvt_binary` VALUES
+(CAST('DVT-key-1' AS BYTES), 1, 'Row 1'),
+(CAST('DVT-key-2' AS BYTES), 2, 'Row 2'),
+(CAST('DVT-key-3' AS BYTES), 3, 'Row 3'),
+(CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
+(CAST('DVT-key-5' AS BYTES), 5, 'Row 5');

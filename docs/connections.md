@@ -3,15 +3,13 @@ You will need to create connections before running any validations with the data
 create these connections using the CLI.
 
 These connections will automatically be saved either to `~/.config/google-pso-data-validator/` or
-a directory specified by the env variable `PSO_DV_CONFIG_HOME`.
+a directory specified by the env variable `PSO_DV_CONN_HOME`.
 
 ## GCS Connection Management (recommended)
 
-The connections can also be stored in GCS using `PSO_DV_CONFIG_HOME`.
-To do so simply add the GCS path to the environment. Note that if this path is set, query validation configs will also be saved here.
-
-eg.
-`export PSO_DV_CONFIG_HOME=gs://my-bucket/my/connections/path/`
+The connections can also be stored in GCS using `PSO_DV_CONN_HOME`.
+To do so simply add the GCS path to the environment i.e
+`export PSO_DV_CONN_HOME=gs://my-bucket/my/connections/path/`
 
 ## Using GCP Secret Manager
 DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing and referencing secrets in your connection configuration.
