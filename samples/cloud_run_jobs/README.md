@@ -1,8 +1,6 @@
 # Distributed Data Validation with Cloud Run Jobs
 
-This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). Distributed DVT usage alleviates memory constraints when running large table validations. This will require table partitions to be generated beforehand with the `generate-table-partitions` command, which will divide your large table into chunks with filters and store each chunk in a YAML configuration file. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator?#generate-table-partitions-for-large-table-row-validations).
-
-The Cloud Run Job can then distribute each YAML configuration as a Cloud Run Task in parallel.
+This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). Distributed DVT usage alleviates memory constraints when running large table validations. In this sample, you will first generate table partitions with the `generate-table-partitions` command, which will partition your large table into smaller pieces with filters. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator?#generate-table-partitions-for-large-table-row-validations).The Cloud Run Job can then distribute each partition's YAML configuration as a Cloud Run Task in parallel.
 
 ## Quickstart
 
@@ -61,9 +59,11 @@ The `generate-table-partitions` command will create a folder named `bigquery-pub
 ### Create a Cloud Run Job
 
 First, ensure you have the [correct permissions](https://cloud.google.com/run/docs/create-jobs#iam_permissions_required_to_create_and_execute) to create and
-execute Cloud Run Jobs.
+execute Cloud Run Jobs. Also, make sure that the Cloud Run service account has access to Google Cloud Storage (to read connection configuration and YAML files) and BigQuery (to publish results).
 
 Set the number of tasks to the number of partitions you created. In this example, we created 50 partitions.
+
+By default, each partition validation is retried up to 3 times if there is an error. Keep in mind that if you are validating 1000's of partitions in parallel, you may find that setting the parallelism too high (say 100) may result in timeouts and slow down the validation.
 
 ```
 export JOB_NAME=<CLOUD_RUN_JOB_NAME>
@@ -76,7 +76,7 @@ gcloud run jobs create ${JOB_NAME}
   --region ${REGION}
 ```
 
-We set the `--log-level (-ll)` flag to 'WARNING' to prevent logging validation results to stdout as well as to BigQuery. The `--kube-completions (-kc)` flag indicates you are running in Kubernetes or Cloud Run and signals DVT to only run the validation corresponding to the `CLOUD_RUN_TASK_INDEX` environment variable that is set by Cloud Run itself.
+We set the `--log-level (-ll)` flag to 'WARNING' to prevent logging validation results to stdout as well as to BigQuery. The `--kube-completions (-kc)` flag indicates you are running in Kubernetes or Cloud Run and signals DVT to only run the validation corresponding to the `CLOUD_RUN_TASK_INDEX` environment variable that is set by Cloud Run.
 
 See the full list of supported flags for the `gcloud run jobs create` command [here](https://cloud.google.com/sdk/gcloud/reference/run/jobs/create).
 
