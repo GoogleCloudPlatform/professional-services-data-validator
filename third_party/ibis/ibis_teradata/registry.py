@@ -48,6 +48,11 @@ def teradata_cast_binary_to_string(compiled_arg, from_, to):
     return "LOWER(FROM_BYTES({}, 'base16'))".format(compiled_arg)
 
 
+@teradata_cast.register(str, dt.String, dt.Binary)
+def teradata_cast_string_to_binary(compiled_arg, from_, to):
+    return "TO_BYTES({}, 'base16')".format(compiled_arg)
+
+
 @teradata_cast.register(str, dt.DataType, dt.DataType)
 def teradata_cast_generate(compiled_arg, from_, to):
     sql_type = ibis_type_to_teradata_type(to)
