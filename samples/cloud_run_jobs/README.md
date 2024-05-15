@@ -71,7 +71,7 @@ export REGION=<REGION> # i.e us-central1
 gcloud run jobs create ${JOB_NAME} 
   --image gcr.io/${PROJECT_ID}/data-validation 
   --tasks 50 --max-retries 2 --parallelism 15 
-  --set-env-vars PSO_DV_CONN_HOME=$PSO_DV_CONN_HOME 
+  --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} 
   --args "-ll, WARNING, configs,run,-kc,-cdir,gs://${CONFIG_GCS_BUCKET_NAME}/bigquery-public-data.new_york_trees.tree_census_2015"
   --region ${REGION}
 ```
