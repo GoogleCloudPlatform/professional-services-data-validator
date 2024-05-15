@@ -162,8 +162,8 @@ def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
     assert caplog.messages == [
         "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
     ]
-    # assert that 3 config managers are present
-    assert len(mock_run.call_args.args[1]) == 3
+    # assert that validation is called thrice, once for each file
+    assert mock_run.call_count == 3
 
 
 @mock.patch("data_validation.__main__.run_validations")
