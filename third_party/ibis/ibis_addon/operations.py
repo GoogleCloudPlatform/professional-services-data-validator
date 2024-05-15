@@ -130,9 +130,15 @@ def compile_to_char(numeric_value, fmt):
 
 
 @bigquery_cast.register(str, dt.Binary, dt.String)
-def bigquery_cast_generate(compiled_arg, from_, to):
+def bigquery_cast_from_binary_generate(compiled_arg, from_, to):
     """Cast of binary to string should be hex conversion."""
     return f"TO_HEX({compiled_arg})"
+
+
+@bigquery_cast.register(str, dt.String, dt.Binary)
+def bigquery_cast_to_binary_generate(compiled_arg, from_, to):
+    """Cast of binary to string should be hex conversion."""
+    return f"FROM_HEX({compiled_arg})"
 
 
 def format_hash_bigquery(translator, op):
