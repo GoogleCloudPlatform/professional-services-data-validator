@@ -385,6 +385,9 @@ def sa_cast_hive(t, op):
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return f"lower(hex({arg_formatted}))"
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return f"unhex({arg_formatted})"
 
     # Follow the original Ibis code path.
     # Cannot use sa_fixed_cast() because of ImpalaExprTranslator ancestry.
@@ -418,17 +421,19 @@ def sa_cast_mssql(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
+    sa_arg = t.translate(arg)
     # Specialize going from a binary float type to a string.
     if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
-        sa_arg = t.translate(arg)
         # This prevents output in scientific notation, at least for my tests it did.
         return sa.func.format(sa_arg, "G")
     elif arg_dtype.is_binary() and typ.is_string():
-        sa_arg = t.translate(arg)
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.lower(
             sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
         )
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(1))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
