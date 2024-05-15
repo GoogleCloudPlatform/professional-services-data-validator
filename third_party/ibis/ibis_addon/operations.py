@@ -439,7 +439,7 @@ def sa_cast_mssql(t, op):
         )
     elif arg_dtype.is_string() and typ.is_binary():
         # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(1))
+        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
