@@ -356,6 +356,7 @@ def config_runner(args):
             setattr(args, "config_dir", None)
             setattr(args, "config_file", config_file_path)
             config_managers = build_config_managers_from_yaml(args, config_file_path)
+            run_validations(args, config_managers)
         else:
             if args.kube_completions:
                 logging.warning(
@@ -364,7 +365,8 @@ def config_runner(args):
             config_file_names = cli_tools.list_validations(config_dir=args.config_dir)
             config_managers = []
             for file in config_file_names:
-                config_managers.extend(build_config_managers_from_yaml(args, file))
+                config_managers = build_config_managers_from_yaml(args, file)
+                run_validations(args, config_managers)
     else:
         if args.kube_completions:
             logging.warning(
@@ -372,8 +374,7 @@ def config_runner(args):
             )
         config_file_path = _get_arg_config_file(args)
         config_managers = build_config_managers_from_yaml(args, config_file_path)
-
-    run_validations(args, config_managers)
+        run_validations(args, config_managers)
 
 
 def build_config_managers_from_yaml(args, config_file_path):
