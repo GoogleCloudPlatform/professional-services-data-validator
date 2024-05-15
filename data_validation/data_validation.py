@@ -128,9 +128,11 @@ class DataValidation(object):
                 self.validation_builder.source_builder,
             )
 
-        # check if source table's primary key is BINARY and force cast it to STRING using Ibis
-        # translated SQL example: "select KEY_FIELD from ISSUE1070 where HEX_ENCODE(DV_ID) in ('64484B73565932494C47', '344172796A627255766D');"
+        # Check if source table's primary key is BINARY, if so then
+        # force cast the id columns to STRING (HEX).
+        binary_conversion_required = False
         if query[primary_key_info[consts.CONFIG_SOURCE_COLUMN]].type().is_binary():
+            binary_conversion_required = True
             query = query.mutate(
                 **{
                     primary_key_info[consts.CONFIG_SOURCE_COLUMN]: query[
@@ -142,20 +144,23 @@ class DataValidation(object):
         random_rows = self.config_manager.source_client.execute(query)
         if len(random_rows) == 0:
             return
+
+        random_values = list(random_rows[primary_key_info[consts.CONFIG_SOURCE_COLUMN]])
+        if binary_conversion_required:
+            # For binary ids we have a list of hex strings for our IN list.
+            # Each of these needs to be cast back to binary.
+            random_values = [ibis.literal(_).cast("binary") for _ in random_values]
+
         filter_field = {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
             consts.CONFIG_FILTER_SOURCE_COLUMN: primary_key_info[
                 consts.CONFIG_FIELD_ALIAS
             ],
-            consts.CONFIG_FILTER_SOURCE_VALUE: random_rows[
-                primary_key_info[consts.CONFIG_SOURCE_COLUMN]
-            ],
+            consts.CONFIG_FILTER_SOURCE_VALUE: random_values,
             consts.CONFIG_FILTER_TARGET_COLUMN: primary_key_info[
                 consts.CONFIG_FIELD_ALIAS
             ],
-            consts.CONFIG_FILTER_TARGET_VALUE: random_rows[
-                primary_key_info[consts.CONFIG_SOURCE_COLUMN]
-            ],
+            consts.CONFIG_FILTER_TARGET_VALUE: random_values,
         }
 
         self.validation_builder.add_filter(filter_field)
