@@ -331,8 +331,10 @@ def test_row_validation_binary_pk_to_bigquery():
             "-tbls=pso_data_validator.dvt_binary",
             "--primary-keys=binary_id",
             "--hash=int_id,other_data",
-            "--use-random-row",
-            "--random-row-batch-size=5",
+            # We have a bug in our test Hive instance that returns
+            # zero rows on binary IN lists with >1 element.
+            # "--use-random-row",
+            # "--random-row-batch-size=5",
         ]
     )
     df = run_test_from_cli_args(args)
