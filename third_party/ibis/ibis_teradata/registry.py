@@ -68,7 +68,7 @@ def teradata_cast_decimal_to_string(compiled_arg, from_, to):
         return f"RTRIM(TO_CHAR({compiled_arg},'{fmt}'),'.')"
     elif from_.scale is not None and from_.scale == 0:
         fmt = "FM" + ("9" * (precision - from_.scale))
-        return f"RTRIM(TO_CHAR({compiled_arg},'{fmt}'),'.')"
+        return f"TO_CHAR({compiled_arg},'{fmt}')"
     return "TO_CHAR({},'TM9')".format(compiled_arg)
 
 
