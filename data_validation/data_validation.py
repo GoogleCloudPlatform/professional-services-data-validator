@@ -106,10 +106,15 @@ class DataValidation(object):
             raise ValueError("Primary Keys are required for Random Row Filters")
 
         # Filter for only first primary key (multi-pk filter not supported)
-        primary_key_info = self.config_manager.primary_keys[0]
+        source_pk_column = self.config_manager.primary_keys[0][
+            consts.CONFIG_SOURCE_COLUMN
+        ]
+        target_pk_column = self.config_manager.primary_keys[0][
+            consts.CONFIG_TARGET_COLUMN
+        ]
 
         randomRowBuilder = RandomRowBuilder(
-            [primary_key_info[consts.CONFIG_SOURCE_COLUMN]],
+            [source_pk_column],
             self.config_manager.random_row_batch_size(),
         )
 
@@ -131,21 +136,17 @@ class DataValidation(object):
         # Check if source table's primary key is BINARY, if so then
         # force cast the id columns to STRING (HEX).
         binary_conversion_required = False
-        if query[primary_key_info[consts.CONFIG_SOURCE_COLUMN]].type().is_binary():
+        if query[source_pk_column].type().is_binary():
             binary_conversion_required = True
             query = query.mutate(
-                **{
-                    primary_key_info[consts.CONFIG_SOURCE_COLUMN]: query[
-                        primary_key_info[consts.CONFIG_SOURCE_COLUMN]
-                    ].cast("string")
-                }
+                **{source_pk_column: query[source_pk_column].cast("string")}
             )
 
         random_rows = self.config_manager.source_client.execute(query)
         if len(random_rows) == 0:
             return
 
-        random_values = list(random_rows[primary_key_info[consts.CONFIG_SOURCE_COLUMN]])
+        random_values = list(random_rows[source_pk_column])
         if binary_conversion_required:
             # For binary ids we have a list of hex strings for our IN list.
             # Each of these needs to be cast back to binary.
@@ -153,13 +154,9 @@ class DataValidation(object):
 
         filter_field = {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
-            consts.CONFIG_FILTER_SOURCE_COLUMN: primary_key_info[
-                consts.CONFIG_FIELD_ALIAS
-            ],
+            consts.CONFIG_FILTER_SOURCE_COLUMN: source_pk_column,
             consts.CONFIG_FILTER_SOURCE_VALUE: random_values,
-            consts.CONFIG_FILTER_TARGET_COLUMN: primary_key_info[
-                consts.CONFIG_FIELD_ALIAS
-            ],
+            consts.CONFIG_FILTER_TARGET_COLUMN: target_pk_column,
             consts.CONFIG_FILTER_TARGET_VALUE: random_values,
         }
 
