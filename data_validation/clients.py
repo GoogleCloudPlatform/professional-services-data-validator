@@ -134,6 +134,10 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=database_name, schema=schema_name)
     elif client.name == "pandas":
         return client.table(table_name, schema=schema_name)
+    elif client.name == 'teradata':
+        it = client.table(table_name, database=schema_name)
+        it = it.relabel(dict(zip(it.columns, [_.lower() for _ in it.columns])))
+        return it
     else:
         return client.table(table_name, database=schema_name)
 
