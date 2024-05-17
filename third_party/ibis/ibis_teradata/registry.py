@@ -48,6 +48,30 @@ def teradata_cast_binary_to_string(compiled_arg, from_, to):
     return "LOWER(FROM_BYTES({}, 'base16'))".format(compiled_arg)
 
 
+@teradata_cast.register(str, dt.Decimal, dt.String)
+def teradata_cast_decimal_to_string(compiled_arg, from_, to):
+    """Specialize cast from decimal to string.
+
+    Teradata has two behaviours we need to avoid:
+    1) SELECT CAST(CAST(7 AS DECIMAL(5,2)) AS VARCHAR(64));
+    7.00
+    2) SELECT CAST(CAST(-0.7 AS DECIMAL(5,2)) AS VARCHAR(64));
+    -.70
+
+    This function uses a format mask to give these results from above examples:
+    1) 7
+    2) -0.7
+    """
+    precision = from_.precision or 38
+    if from_.scale and from_.scale > 0:
+        fmt = "FM" + ("9" * (precision - from_.scale)) + "." + ("9" * from_.scale)
+        return f"RTRIM(TO_CHAR({compiled_arg},'{fmt}'),'.')"
+    elif from_.scale is not None and from_.scale == 0:
+        fmt = "FM" + ("9" * (precision - from_.scale))
+        return f"RTRIM(TO_CHAR({compiled_arg},'{fmt}'),'.')"
+    return "TO_CHAR({},'TM9')".format(compiled_arg)
+
+
 @teradata_cast.register(str, dt.DataType, dt.DataType)
 def teradata_cast_generate(compiled_arg, from_, to):
     sql_type = ibis_type_to_teradata_type(to)
