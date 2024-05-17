@@ -48,7 +48,10 @@ def _get_arg_config_file(args):
     """Return String YAML config file path."""
     if not args.config_file:
         raise ValueError("YAML Config File was not supplied.")
-
+    elif not args.config_file.endswith(".yaml"):
+        raise ValueError(
+            f"Invalid YAML config name: {args.config_file}. Provide YAML file extension."
+        )
     return args.config_file
 
 
@@ -56,7 +59,10 @@ def _get_arg_config_file_json(args):
     """Return String JSON config file path."""
     if not args.config_file_json:
         raise ValueError("JSON Config File was not supplied.")
-
+    elif not args.config_file_json.endswith(".json"):
+        raise ValueError(
+            f"Invalid JSON config name: {args.config_file_json}. Provide JSON file extension."
+        )
     return args.config_file_json
 
 
@@ -350,16 +356,17 @@ def config_runner(args):
             setattr(args, "config_dir", None)
             setattr(args, "config_file", config_file_path)
             config_managers = build_config_managers_from_yaml(args, config_file_path)
+            run_validations(args, config_managers)
         else:
             if args.kube_completions:
                 logging.warning(
                     "--kube-completions or -kc specified, however not running in Kubernetes Job completion, check your command line."
                 )
-            mgr = state_manager.StateManager(file_system_root_path=args.config_dir)
-            config_file_names = mgr.list_validations_in_dir(args.config_dir)
+            config_file_names = cli_tools.list_validations(config_dir=args.config_dir)
             config_managers = []
             for file in config_file_names:
-                config_managers.extend(build_config_managers_from_yaml(args, file))
+                config_managers = build_config_managers_from_yaml(args, file)
+                run_validations(args, config_managers)
     else:
         if args.kube_completions:
             logging.warning(
@@ -367,13 +374,12 @@ def config_runner(args):
             )
         config_file_path = _get_arg_config_file(args)
         config_managers = build_config_managers_from_yaml(args, config_file_path)
-
-    run_validations(args, config_managers)
+        run_validations(args, config_managers)
 
 
 def build_config_managers_from_yaml(args, config_file_path):
     """Returns List[ConfigManager] instances ready to be executed."""
-    if "config_dir" in args and args.config_dir:
+    if args.config_dir:
         yaml_configs = cli_tools.get_validation(config_file_path, args.config_dir)
     else:
         yaml_configs = cli_tools.get_validation(config_file_path)
@@ -616,7 +622,7 @@ def store_json_config_file(args, config_managers):
     """
     json_config = convert_config_to_json(config_managers)
     config_file_path = _get_arg_config_file_json(args)
-    cli_tools.store_validation_json(config_file_path, json_config)
+    cli_tools.store_validation(config_file_path, json_config)
 
 
 def partition_and_store_config_files(args: Namespace) -> None:
@@ -673,7 +679,7 @@ def run_validation_configs(args):
         config_runner(args)
     elif args.validation_config_cmd == "list":
         config_dir = args.config_dir or "./"
-        cli_tools.list_validations(config_dir=config_dir)
+        cli_tools.print_validations_in_dir(config_dir=config_dir)
     elif args.validation_config_cmd == "get":
         # Get and print yaml file config.
         yaml = cli_tools.get_validation(_get_arg_config_file(args))
