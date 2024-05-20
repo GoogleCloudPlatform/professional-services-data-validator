@@ -992,7 +992,7 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         help="Number of partitions/config files to generate, a number from 1 to 10,000",
         type=_check_no_partitions,
         metavar="[2-10000]",
-ls    )
+    )
 
     # Optional arguments
     optional_arguments.add_argument(
