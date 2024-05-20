@@ -50,6 +50,7 @@ import logging
 import sys
 import uuid
 import os
+import re
 from argparse import Namespace
 from typing import Dict, List
 from yaml import Dumper, Loader, dump, load
@@ -954,6 +955,16 @@ def _add_common_arguments(optional_arguments, required_arguments):
     )
 
 
+def _check_no_partitions(value):
+    """Check that number of partitions less than limit
+    Using function to validate rather than choices as error message prints all choices."""
+    if not (re.match(r"\d*$", value) and int(value) < 10001 and int(value) > 1):
+        raise argparse.ArgumentTypeError(
+            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+        )
+    return int(value)
+
+
 def _add_common_partition_arguments(optional_arguments, required_arguments):
     """Add all arguments common to get-partition command"""
 
@@ -978,10 +989,9 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate",
-        type=int,
-        choices=range(1, 1001),
-        metavar="[1-1000]",
+        help="Number of partitions/config files to generate, a number from 1 to 10,000",
+        type=_check_no_partitions,
+        metavar="[2-10000]",
     )
 
     # Optional arguments
