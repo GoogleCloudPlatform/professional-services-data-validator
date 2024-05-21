@@ -36,7 +36,7 @@ dependencies = [
     "ibis-framework==5.1.0",
     "impyla==0.18.0",
     "SQLAlchemy==1.4.49",
-    "PyMySQL==1.1.0",
+    "PyMySQL==1.1.1",
     "psycopg2-binary==2.9.6",
     "PyYAML==6.0",
     "pandas==1.5.3",
