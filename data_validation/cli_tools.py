@@ -50,7 +50,6 @@ import logging
 import sys
 import uuid
 import os
-import re
 from argparse import Namespace
 from typing import Dict, List
 from yaml import Dumper, Loader, dump, load
@@ -958,7 +957,7 @@ def _add_common_arguments(optional_arguments, required_arguments):
 def _check_no_partitions(value: str) -> int:
     """Check that number of partitions is between [2-10,000]
     Using function to validate rather than choices as error message prints all choices."""
-    if not (re.match(r"\d*$", value) and int(value) < 10001 and int(value) > 1):
+    if value.isdigit() and (int(value) > 10000 or int(value) < 2):
         raise argparse.ArgumentTypeError(
             f"{value} is not valid for number of partitions, use number in range 2 to 10000"
         )
