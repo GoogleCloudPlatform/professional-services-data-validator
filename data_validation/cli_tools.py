@@ -957,11 +957,12 @@ def _add_common_arguments(optional_arguments, required_arguments):
 def _check_no_partitions(value: str) -> int:
     """Check that number of partitions is between [2-10,000]
     Using function to validate rather than choices as error message prints all choices."""
-    if value.isdigit() and (int(value) > 10000 or int(value) < 2):
+    if value.isdigit() and 2 <= int(value) <= 10000:
+        return int(value)
+    else:
         raise argparse.ArgumentTypeError(
             f"{value} is not valid for number of partitions, use number in range 2 to 10000"
         )
-    return int(value)
 
 
 def _add_common_partition_arguments(optional_arguments, required_arguments):
