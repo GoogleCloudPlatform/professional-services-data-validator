@@ -130,9 +130,15 @@ def compile_to_char(numeric_value, fmt):
 
 
 @bigquery_cast.register(str, dt.Binary, dt.String)
-def bigquery_cast_generate(compiled_arg, from_, to):
+def bigquery_cast_from_binary_generate(compiled_arg, from_, to):
     """Cast of binary to string should be hex conversion."""
     return f"TO_HEX({compiled_arg})"
+
+
+@bigquery_cast.register(str, dt.String, dt.Binary)
+def bigquery_cast_to_binary_generate(compiled_arg, from_, to):
+    """Cast of binary to string should be hex conversion."""
+    return f"FROM_HEX({compiled_arg})"
 
 
 def format_hash_bigquery(translator, op):
@@ -385,6 +391,9 @@ def sa_cast_hive(t, op):
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return f"lower(hex({arg_formatted}))"
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return f"unhex({arg_formatted})"
 
     # Follow the original Ibis code path.
     # Cannot use sa_fixed_cast() because of ImpalaExprTranslator ancestry.
@@ -401,10 +410,13 @@ def sa_cast_postgres(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
+    sa_arg = t.translate(arg)
     if arg_dtype.is_binary() and typ.is_string():
-        sa_arg = t.translate(arg)
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.encode(sa_arg, sa.literal("hex"))
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.decode(sa_arg, sa.literal("hex"))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -415,17 +427,19 @@ def sa_cast_mssql(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
+    sa_arg = t.translate(arg)
     # Specialize going from a binary float type to a string.
     if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
-        sa_arg = t.translate(arg)
         # This prevents output in scientific notation, at least for my tests it did.
         return sa.func.format(sa_arg, "G")
     elif arg_dtype.is_binary() and typ.is_string():
-        sa_arg = t.translate(arg)
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.lower(
             sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
         )
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -437,6 +451,7 @@ def sa_cast_mysql(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
+    sa_arg = t.translate(arg)
     # Specialize going from numeric(p,s>0) to string
     if (
         arg_dtype.is_decimal()
@@ -452,9 +467,11 @@ def sa_cast_mysql(t, op):
         #   https://stackoverflow.com/a/20111398
         return sa_fixed_cast(t, op) + sa.literal(0)
     elif arg_dtype.is_binary() and typ.is_string():
-        sa_arg = t.translate(arg)
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.lower(sa.func.hex(sa_arg))
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.unhex(sa_arg)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -469,6 +486,9 @@ def sa_cast_oracle(t, op):
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.lower(sa.func.rawtohex(sa_arg))
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.hextoraw(sa_arg)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -487,6 +507,9 @@ def sa_cast_snowflake(t, op):
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.hex_encode(sa_arg, sa.literal(0))
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.hex_decode_binary(sa_arg)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
