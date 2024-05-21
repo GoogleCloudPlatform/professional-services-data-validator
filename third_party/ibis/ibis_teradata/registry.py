@@ -48,6 +48,11 @@ def teradata_cast_binary_to_string(compiled_arg, from_, to):
     return "LOWER(FROM_BYTES({}, 'base16'))".format(compiled_arg)
 
 
+@teradata_cast.register(str, dt.String, dt.Binary)
+def teradata_cast_string_to_binary(compiled_arg, from_, to):
+    return "TO_BYTES({}, 'base16')".format(compiled_arg)
+
+
 @teradata_cast.register(str, dt.Decimal, dt.String)
 def teradata_cast_decimal_to_string(compiled_arg, from_, to):
     """Specialize cast from decimal to string.
