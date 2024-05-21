@@ -2,6 +2,34 @@
 
 ## Untagged
 
+## [5.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.5.0...v5.0.0) (2024-05-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* Support for GCS config paths decoupled from environment variables ([#1129](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1129))
+* Filters not working correctly in Snowflake ([#1126](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1126))
+
+### Features
+
+* Add support for random row sampling on binary id columns ([#1135](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1135)) ([c3d2155](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c3d21557d33da4c10f4dc2b903a9c82a68adc787))
+* Control Teradata decimal format when cast to string ([#1138](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1138)) ([e68e2a6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e68e2a6965057ce57dc6957627f09a9603b718ab))
+* Support for GCS config paths decoupled from environment variables ([#1129](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1129)) ([72e41b7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/72e41b7192b95b00284500514b19d26fed48ca85))
+
+
+### Bug Fixes
+
+* Filters not working correctly in Snowflake ([#1126](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1126)) ([9845643](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/984564318b2fc6bf3f60a8a4d15078666bcf8264))
+* Fix casting from binary to string on Snowflake & BigQuery ([#1113](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1113)) ([4f5ae81](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4f5ae812420baee9b36e475c511edda4c98653ba))
+* Issue 1127 configs dir fails with more than 40 files ([#1130](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1130)) ([15c81cf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/15c81cf65e0de0cff275a5db5abf1c2fe71c2aa1))
+* Teradata's ValueError after large timestamp epoch second handling ([#1121](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1121)) ([ee8d6da](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ee8d6daf3b20f03dada4d99949b11d5c62b1baf2))
+
+
+### Documentation
+
+* Add custom-query code snippet for Cloud Run sample documentation ([#1124](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1124)) ([93bb64f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/93bb64fd45771a509104be75aceebd86b3a36d63))
+* Distributed DVT Cloud Run Jobs sample ([#1133](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1133)) ([f51f327](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f51f32751bfb8713ac04de6456421a3d4a8ff1ce))
+
 ## [4.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.4.0...v4.5.0) (2024-03-18)
 
 
