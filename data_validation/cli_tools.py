@@ -989,7 +989,7 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate, a number from 1 to 10,000",
+        help="Number of partitions/config files to generate, a number from 2 to 10,000",
         type=_check_no_partitions,
         metavar="[2-10000]",
     )
