@@ -324,6 +324,7 @@ def test_row_validation_core_types_to_bigquery():
 def test_row_validation_binary_pk_to_bigquery():
     """Snowflake to BigQuery dvt_binary row validation.
     This is testing binary primary key join columns.
+    Includes random row filter test.
     """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
@@ -335,6 +336,8 @@ def test_row_validation_binary_pk_to_bigquery():
             "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_BINARY=pso_data_validator.dvt_binary",
             "--primary-keys=binary_id",
             "--hash=int_id,other_data",
+            "--use-random-row",
+            "--random-row-batch-size=5",
         ]
     )
     df = run_test_from_cli_args(args)
