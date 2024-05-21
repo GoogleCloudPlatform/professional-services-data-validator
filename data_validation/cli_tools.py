@@ -956,7 +956,7 @@ def _add_common_arguments(optional_arguments, required_arguments):
 
 
 def _check_no_partitions(value):
-    """Check that number of partitions less than limit
+    """Check that number of partitions is between [2-10,000]
     Using function to validate rather than choices as error message prints all choices."""
     if not (re.match(r"\d*$", value) and int(value) < 10001 and int(value) > 1):
         raise argparse.ArgumentTypeError(
