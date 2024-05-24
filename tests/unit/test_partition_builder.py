@@ -381,13 +381,6 @@ def test_class_object_creation(module_under_test):
     args = parser.parse_args(CLI_ARGS_SINGLE_KEY)
     builder = module_under_test.PartitionBuilder(config_managers, args)
     assert builder.table_count == len(config_managers)
-    assert builder.primary_keys == ["id"]
-
-    # multiple primary keys are present
-    args = parser.parse_args(CLI_ARGS_MULTIPLE_KEYS)
-    builder = module_under_test.PartitionBuilder(config_managers, args)
-    assert builder.table_count == len(config_managers)
-    assert builder.primary_keys == ["region_id", "station_id"]
 
 
 def test_add_partition_filters_to_config(module_under_test):

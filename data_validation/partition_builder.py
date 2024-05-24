@@ -32,7 +32,6 @@ class PartitionBuilder:
         self.table_count = len(config_managers)
         self.args = args
         self.config_dir = self._get_arg_config_dir()
-        self.primary_keys = self._get_primary_keys()
 
     def _get_arg_config_dir(self) -> str:
         """Return String yaml config folder path."""
@@ -40,10 +39,6 @@ class PartitionBuilder:
             raise ValueError("YAML Config Dir Path was not supplied.")
 
         return self.args.config_dir
-
-    def _get_primary_keys(self) -> str:
-        """Return the Primary Keys"""
-        return cli_tools.get_arg_list(self.args.primary_keys)
 
     def _get_yaml_from_config(self, config_manager: ConfigManager) -> Dict:
         """Return dict objects formatted for yaml validations.
@@ -106,8 +101,13 @@ class PartitionBuilder:
         for config_manager in self.config_managers:  # For each pair of tables
             validation_builder = ValidationBuilder(config_manager)
 
+            source_pks, target_pks = [], []
+            for pk in config_manager.primary_keys:
+                source_pks.append(pk["source_column"])
+                target_pks.append(pk["target_column"])
+
             source_partition_row_builder = PartitionRowBuilder(
-                self.primary_keys,
+                source_pks,
                 config_manager.source_client,
                 config_manager.source_schema,
                 config_manager.source_table,
@@ -115,7 +115,7 @@ class PartitionBuilder:
             )
             source_table = source_partition_row_builder.query
             target_partition_row_builder = PartitionRowBuilder(
-                self.primary_keys,
+                target_pks,
                 config_manager.target_client,
                 config_manager.target_schema,
                 config_manager.target_table,
@@ -150,9 +150,9 @@ class PartitionBuilder:
             # First we number each row in the source table. Using row_number instead of ntile since it is
             # available on all platforms (Teradata does not support NTILE). For our purposes, it is likely
             # more efficient
-            window1 = ibis.window(order_by=self.primary_keys)
+            window1 = ibis.window(order_by=source_pks)
             row_number = (ibis.row_number().over(window1) + 1).name(consts.DVT_POS_COL)
-            dvt_keys = self.primary_keys.copy()
+            dvt_keys = source_pks.copy()
             dvt_keys.append(row_number)
             rownum_table = source_table.select(dvt_keys)
             # Rownum table is just the primary key columns in the source table along with
@@ -182,7 +182,7 @@ class PartitionBuilder:
                 )
                 > 0
             )
-            first_keys_table = rownum_table[cond].order_by(self.primary_keys)
+            first_keys_table = rownum_table[cond].order_by(source_pks)
 
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first element of each partition
@@ -219,13 +219,13 @@ class PartitionBuilder:
 
             filter_source_clause = less_than_value(
                 source_table,
-                self.primary_keys,
-                first_elements[1, : len(self.primary_keys)],
+                source_pks,
+                first_elements[1, : len(source_pks)],
             )
             filter_target_clause = less_than_value(
                 target_table,
-                self.primary_keys,
-                first_elements[1, : len(self.primary_keys)],
+                target_pks,
+                first_elements[1, : len(target_pks)],
             )
             source_where_list.append(
                 self._extract_where(
@@ -243,21 +243,21 @@ class PartitionBuilder:
             for i in range(1, first_elements.shape[0] - 1):
                 filter_source_clause = geq_value(
                     source_table,
-                    self.primary_keys,
-                    first_elements[i, : len(self.primary_keys)],
+                    source_pks,
+                    first_elements[i, : len(source_pks)],
                 ) & less_than_value(
                     source_table,
-                    self.primary_keys,
-                    first_elements[i + 1, : len(self.primary_keys)],
+                    source_pks,
+                    first_elements[i + 1, : len(source_pks)],
                 )
                 filter_target_clause = geq_value(
                     target_table,
-                    self.primary_keys,
-                    first_elements[i, : len(self.primary_keys)],
+                    target_pks,
+                    first_elements[i, : len(target_pks)],
                 ) & less_than_value(
                     target_table,
-                    self.primary_keys,
-                    first_elements[i + 1, : len(self.primary_keys)],
+                    target_pks,
+                    first_elements[i + 1, : len(target_pks)],
                 )
                 source_where_list.append(
                     self._extract_where(
@@ -273,13 +273,13 @@ class PartitionBuilder:
                 )
             filter_source_clause = geq_value(
                 source_table,
-                self.primary_keys,
-                first_elements[len(first_elements) - 1, : len(self.primary_keys)],
+                source_pks,
+                first_elements[len(first_elements) - 1, : len(source_pks)],
             )
             filter_target_clause = geq_value(
                 target_table,
-                self.primary_keys,
-                first_elements[len(first_elements) - 1, : len(self.primary_keys)],
+                target_pks,
+                first_elements[len(first_elements) - 1, : len(target_pks)],
             )
             source_where_list.append(
                 self._extract_where(
