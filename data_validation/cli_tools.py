@@ -954,6 +954,17 @@ def _add_common_arguments(optional_arguments, required_arguments):
     )
 
 
+def _check_no_partitions(value: str) -> int:
+    """Check that number of partitions is between [2-10,000]
+    Using function to validate rather than choices as error message prints all choices."""
+    if value.isdigit() and 2 <= int(value) <= 10000:
+        return int(value)
+    else:
+        raise argparse.ArgumentTypeError(
+            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+        )
+
+
 def _add_common_partition_arguments(optional_arguments, required_arguments):
     """Add all arguments common to get-partition command"""
 
@@ -978,10 +989,9 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate",
-        type=int,
-        choices=range(1, 1001),
-        metavar="[1-1000]",
+        help="Number of partitions/config files to generate, a number from 2 to 10,000",
+        type=_check_no_partitions,
+        metavar="[2-10000]",
     )
 
     # Optional arguments
