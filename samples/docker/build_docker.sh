@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-export PACKAGE_VERSION=$(grep 'version = ' ../../pyproject.toml | awk '{print $3;}' | sed 's/"//g')
+export PACKAGE_VERSION=$(grep 'version = ' ../../pyproject.toml | awk '{print $3;}' | sed 's/[^0-9.]*//g')
 
 python3 -m venv rel_venv
 source rel_venv/bin/activate
