@@ -166,11 +166,40 @@ CONNECTION_SOURCE_FIELDS = {
 }
 
 
+def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: Namespace):
+    # This is where we make additional checks if the arguments provided are what we expect
+    # For example, only one of -tbls and custom query options can be provided
+    if (
+        parsed_args.tables_list
+    ):  # Tables_list is not None - so source and target queries all must be None
+        if (
+            parsed_args.source_query_file
+            or parsed_args.source_query
+            or parsed_args.target_query_file
+            or parsed_args.target_query
+        ):
+            parser.error(
+                f"{parsed_args.command}: when --tables-list/-tbls is specified, --source-query-file/-sqf, --source-query/-sq, --target-query-file/-tqf and --target-query/-tq must not be specified"
+            )
+        else:
+            return
+    elif (parsed_args.source_query_file or parsed_args.source_query) and (
+        parsed_args.target_query_file or parsed_args.target_query
+    ):
+        return
+    else:
+        parser.error(
+            f"{parsed_args.command}: Must specify both source (--source-query-file/-sqf or --source-query/-sq) and target (--target-query-file/-tqf or --target-query/-tq) - when --tables-list/-tbls is not specified"
+        )
+
+
 def get_parsed_args() -> Namespace:
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
     args = ["--help"] if len(sys.argv) == 1 else None
-    return parser.parse_args(args)
+    parsed_args = parser.parse_args(args)
+    _check_custom_query_args(parser, parsed_args)
+    return parsed_args
 
 
 def configure_arg_parser():
@@ -221,6 +250,46 @@ def _configure_partition_parser(subparsers):
         "-filters",
         help="Filters in the format source_filter:target_filter",
     )
+    # User can provide tables or custom queries, but not both
+    # However, Argprase does not support adding an argument_group to an argument_group or adding a
+    # mutually_exclusive_group or argument_group to a mutually_exclusive_group since version 3.11.
+    # We are only ensuring leaf level mutual exclusivity here and will need to check higher level
+    # mutual exclusivity in the code - i.e. a) when --tables-list is present, there can be no custom
+    # query parameters and b) when custom query parameters are specified, both source and target must be
+    # specified.
+    optional_arguments.add_argument(
+        "--tables-list",
+        "-tbls",
+        help=(
+            "Comma separated tables list in the form "
+            "'schema.table=target_schema.target_table'"
+        ),
+    )
+
+    source_mutually_exclusive = optional_arguments.add_mutually_exclusive_group()
+    source_mutually_exclusive.add_argument(
+        "--source-query-file",
+        "-sqf",
+        help="File containing the source sql query",
+    )
+    source_mutually_exclusive.add_argument(
+        "--source-query",
+        "-sq",
+        help="Source sql query",
+    )
+
+    # Group for mutually exclusive target query arguments. Either must be supplied
+    target_mutually_exclusive = optional_arguments.add_mutually_exclusive_group()
+    target_mutually_exclusive.add_argument(
+        "--target-query-file",
+        "-tqf",
+        help="File containing the target sql query",
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query",
+        "-tq",
+        help="Target sql query",
+    )
 
     # Group all required arguments together
     required_arguments = partition_parser.add_argument_group("required arguments")
@@ -229,15 +298,6 @@ def _configure_partition_parser(subparsers):
         "-pk",
         required=True,
         help="Comma separated list of primary key columns 'col_a,col_b'",
-    )
-    required_arguments.add_argument(
-        "--tables-list",
-        "-tbls",
-        required=True,
-        help=(
-            "Comma separated tables list in the form "
-            "'schema.table=target_schema.target_table'"
-        ),
     )
 
     # Group for mutually exclusive required arguments. Either must be supplied

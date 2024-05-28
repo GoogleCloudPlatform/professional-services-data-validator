@@ -704,6 +704,7 @@ def main():
         format="%(asctime)s-%(levelname)s: %(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
+    breakpoint()
     if args.command == "connections":
         run_connections(args)
     elif args.command == "configs":
