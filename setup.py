@@ -27,7 +27,7 @@ with open("README.md", "r") as fh:
 dependencies = [
     # Dependency corrections from our requirements
     "attrs==23.1.0",
-    "grpcio==1.53.0",
+    "grpcio==1.53.2",
     "lazy-object-proxy==1.9.0",
     "marshmallow==3.19.0",
     # Core dependencies
@@ -36,7 +36,7 @@ dependencies = [
     "ibis-framework==5.1.0",
     "impyla==0.18.0",
     "SQLAlchemy==1.4.49",
-    "PyMySQL==1.1.0",
+    "PyMySQL==1.1.1",
     "psycopg2-binary==2.9.6",
     "PyYAML==6.0",
     "pandas==1.5.3",
@@ -52,7 +52,7 @@ dependencies = [
     "tabulate==0.9.0",
     "Flask==2.3.2",
     "parsy==2.1",
-    "google-cloud-secret-manager<=2.15.0",
+    "google-cloud-secret-manager>=2.16.0",
 ]
 
 extras_require = {
