@@ -7,17 +7,18 @@ name = "google-pso-data-validator"
 version = "5.0.0"  # Dynamic if using setuptools_scm, else keep static
 description = "A package to enable easy data validation"
 readme = "README.md"
+requires-python = ">=3.8"
 
 authors = [
-    {name = "Dylan Hercher", email = "dhercher@google.com"}
+    {name = "PSO DVT Engineering team", email = "data-validator-eng@google.com"}
 ]
 maintainers = [
-    {name = "Dylan Hercher", email = "dhercher@google.com"} 
+    {name = "PSO DVT Engineering team", email = "data-validator-eng@google.com"} 
 ]
 
 license = {text = "Apache Software License"}
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.8",
@@ -63,7 +64,3 @@ data-validation = "data_validation.__main__:main"
 
 [tool.setuptools]
 packages = ["data_validation", "data_validation.query_builder", "data_validation.result_handlers"]
-
-# (Optional) Static metadata if NOT using setuptools_scm:
-# [tool.setuptools.dynamic]
-# version = {"attr" = "data_validation.__version__"}  
