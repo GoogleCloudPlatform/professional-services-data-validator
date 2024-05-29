@@ -169,28 +169,33 @@ CONNECTION_SOURCE_FIELDS = {
 def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: Namespace):
     # This is where we make additional checks if the arguments provided are what we expect
     # For example, only one of -tbls and custom query options can be provided
-    if (
-        parsed_args.tables_list
-    ):  # Tables_list is not None - so source and target queries all must be None
+    if hasattr(parsed_args, "tables_list") and hasattr(
+        parsed_args, "source_query"
+    ):  # New Format
         if (
-            parsed_args.source_query_file
-            or parsed_args.source_query
-            or parsed_args.target_query_file
-            or parsed_args.target_query
+            parsed_args.tables_list
+        ):  # Tables_list is not None - so source and target queries all must be None
+            if (
+                parsed_args.source_query_file
+                or parsed_args.source_query
+                or parsed_args.target_query_file
+                or parsed_args.target_query
+            ):
+                parser.error(
+                    f"{parsed_args.command}: when --tables-list/-tbls is specified, --source-query-file/-sqf, --source-query/-sq, --target-query-file/-tqf and --target-query/-tq must not be specified"
+                )
+            else:
+                return
+        elif (parsed_args.source_query_file or parsed_args.source_query) and (
+            parsed_args.target_query_file or parsed_args.target_query
         ):
-            parser.error(
-                f"{parsed_args.command}: when --tables-list/-tbls is specified, --source-query-file/-sqf, --source-query/-sq, --target-query-file/-tqf and --target-query/-tq must not be specified"
-            )
-        else:
             return
-    elif (parsed_args.source_query_file or parsed_args.source_query) and (
-        parsed_args.target_query_file or parsed_args.target_query
-    ):
-        return
+        else:
+            parser.error(
+                f"{parsed_args.command}: Must specify both source (--source-query-file/-sqf or --source-query/-sq) and target (--target-query-file/-tqf or --target-query/-tq) - when --tables-list/-tbls is not specified"
+            )
     else:
-        parser.error(
-            f"{parsed_args.command}: Must specify both source (--source-query-file/-sqf or --source-query/-sq) and target (--target-query-file/-tqf or --target-query/-tq) - when --tables-list/-tbls is not specified"
-        )
+        return  # old format - only one of them is present
 
 
 def get_parsed_args() -> Namespace:
