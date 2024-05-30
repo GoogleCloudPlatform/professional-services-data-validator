@@ -25,6 +25,11 @@ from data_validation.query_builder.query_builder import (
 )
 
 
+def list_to_sublists(id_list: list, max_size: int) -> list:
+    """Return a list of items as a list of lists based on a max list length of max_size."""
+    return [id_list[_ : _ + max_size] for _ in range(0, len(id_list), max_size)]
+
+
 class ValidationBuilder(object):
     def __init__(self, config_manager):
         """Initialize a ValidationBuilder client which supplies the
@@ -59,6 +64,33 @@ class ValidationBuilder(object):
         self.add_config_filters()
         self.add_primary_keys()
         self.add_query_limit()
+
+    def _construct_isin_filter(self, column_name: str, in_list: list) -> FilterField:
+        """Return a FilterField object that is either isin(...) or (isin(...) OR isin(...) OR...)."""
+
+        def get_max_in_list_size():
+            if (
+                self.source_client.name == "snowflake"
+                and in_list
+                and getattr(in_list[0], "cast", None)
+            ):
+                # This is a workaround for Snowflake limitation:
+                #   SQL compilation error: In-list contains more than 50 non-constant values
+                # getattr(..., "cast") expression above is looking for lists where the contents are casts and not simple literals.
+                return 50
+            else:
+                return None
+
+        max_in_list_size = get_max_in_list_size()
+        if max_in_list_size and len(in_list) > max_in_list_size:
+            source_filters = [
+                FilterField.isin(column_name, _)
+                for _ in list_to_sublists(in_list, max_in_list_size)
+            ]
+            return FilterField.or_(source_filters)
+
+        else:
+            return FilterField.isin(column_name, in_list)
 
     def clone(self):
         cloned_builder = ValidationBuilder(self.config_manager)
@@ -271,11 +303,11 @@ class ValidationBuilder(object):
                 filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
             )
         elif filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_ISIN:
-            source_filter = FilterField.isin(
+            source_filter = self._construct_isin_filter(
                 filter_field[consts.CONFIG_FILTER_SOURCE_COLUMN],
                 filter_field[consts.CONFIG_FILTER_SOURCE_VALUE],
             )
-            target_filter = FilterField.isin(
+            target_filter = self._construct_isin_filter(
                 filter_field[consts.CONFIG_FILTER_TARGET_COLUMN],
                 filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
             )

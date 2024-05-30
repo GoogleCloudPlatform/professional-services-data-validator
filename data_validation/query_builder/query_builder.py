@@ -179,6 +179,10 @@ class FilterField(object):
         """
         return FilterField(None, left=expr)
 
+    @staticmethod
+    def or_(field_list: list):
+        return FilterField(ibis.or_, left=field_list)
+
     def compile(self, ibis_table):
         if self.expr is None:
             return operations.compile_raw_sql(ibis_table, self.left)
@@ -189,7 +193,10 @@ class FilterField(object):
         if self.right_field:
             self.right = ibis_table[self.right_field]
 
-        return self.expr(self.left, self.right)
+        if self.expr == ibis.or_:
+            return self.expr(*[_.compile(ibis_table) for _ in self.left])
+        else:
+            return self.expr(self.left, self.right)
 
 
 class ComparisonField(object):
