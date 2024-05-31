@@ -114,3 +114,16 @@ INSERT INTO `pso_data_validator`.`dvt_string_id` VALUES
 ('DVT-key-3', 'Row 3'),
 ('DVT-key-4', 'Row 4'),
 ('DVT-key-5', 'Row 5');
+
+DROP TABLE `pso_data_validator`.`dvt_char_id`;
+-- BigQuery does not have a specific padded CHAR data type.
+CREATE TABLE `pso_data_validator`.`dvt_char_id`
+(   id          STRING(6) NOT NULL
+,   other_data  STRING(100)
+) OPTIONS (description='Integration test table used to test CHAR pk matching.');
+INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
+('DVT1  ', 'Row 1'),
+('DVT2  ', 'Row 2'),
+('DVT3  ', 'Row 3'),
+('DVT4  ', 'Row 4'),
+('DVT5  ', 'Row 5');
