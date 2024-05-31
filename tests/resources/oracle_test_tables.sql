@@ -194,3 +194,16 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-3
 INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-4'), 4, 'Row 4');
 INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-5'), 5, 'Row 5');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_string_id;
+CREATE TABLE pso_data_validator.dvt_string_id
+(   id          VARCHAR2(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR2(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_string_id IS 'Integration test table used to test string pk matching.';
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-4', 'Row 4');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-5', 'Row 5');
+COMMIT;

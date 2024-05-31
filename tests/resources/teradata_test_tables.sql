@@ -106,3 +106,15 @@ INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-2','ascii'), 2, 'Row 2');
 INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-3','ascii'), 3, 'Row 3');
 INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-4','ascii'), 4, 'Row 4');
 INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-5','ascii'), 5, 'Row 5');
+
+DROP TABLE udf.dvt_string_id;
+CREATE TABLE udf.dvt_string_id
+(   id          VARCHAR(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE udf.dvt_string_id IS 'Integration test table used to test string pk matching.';
+INSERT INTO udf.dvt_string_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO udf.dvt_string_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO udf.dvt_string_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO udf.dvt_string_id VALUES ('DVT-key-4', 'Row 4');
+INSERT INTO udf.dvt_string_id VALUES ('DVT-key-5', 'Row 5');

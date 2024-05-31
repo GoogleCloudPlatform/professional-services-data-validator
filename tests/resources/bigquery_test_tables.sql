@@ -102,3 +102,15 @@ INSERT INTO `pso_data_validator`.`dvt_binary` VALUES
 (CAST('DVT-key-3' AS BYTES), 3, 'Row 3'),
 (CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
 (CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
+
+DROP TABLE `pso_data_validator`.`dvt_string_id`;
+CREATE TABLE `pso_data_validator`.`dvt_string_id`
+(   id          STRING(15) NOT NULL
+,   other_data  STRING(100)
+) OPTIONS (description='Integration test table used to test string pk matching.');
+INSERT INTO `pso_data_validator`.`dvt_string_id` VALUES
+('DVT-key-1', 'Row 1'),
+('DVT-key-2', 'Row 2'),
+('DVT-key-3', 'Row 3'),
+('DVT-key-4', 'Row 4'),
+('DVT-key-5', 'Row 5');
