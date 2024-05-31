@@ -194,3 +194,16 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-3
 INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-4'), 4, 'Row 4');
 INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-5'), 5, 'Row 5');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_datetime_id;
+CREATE TABLE pso_data_validator.dvt_datetime_id
+(   id          TIMESTAMP(3) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR2(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_datetime_id IS 'Integration test table used to test datetime pk matching.';
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 10:11:12.1', 'Row 1');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 10:11:13.2', 'Row 2');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 10:11:14.3', 'Row 3');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 10:11:15.4', 'Row 4');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 10:11:16.5', 'Row 5');
+COMMIT;

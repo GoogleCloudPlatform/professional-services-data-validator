@@ -102,3 +102,15 @@ INSERT INTO `pso_data_validator`.`dvt_binary` VALUES
 (CAST('DVT-key-3' AS BYTES), 3, 'Row 3'),
 (CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
 (CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
+
+DROP TABLE `pso_data_validator`.`dvt_datetime_id`;
+CREATE TABLE `pso_data_validator`.`dvt_datetime_id`
+(   id          DATETIME NOT NULL
+,   other_data  STRING(100)
+) OPTIONS (description='Integration test table used to test datetime pk matching.');
+INSERT INTO `pso_data_validator`.`dvt_datetime_id` VALUES
+(DATETIME'2020-01-01 10:11:12.1', 'Row 1'),
+(DATETIME'2020-01-01 10:11:13.2', 'Row 2'),
+(DATETIME'2020-01-01 10:11:14.3', 'Row 3'),
+(DATETIME'2020-01-01 10:11:15.4', 'Row 4'),
+(DATETIME'2020-01-01 10:11:16.5', 'Row 5');
