@@ -1034,8 +1034,7 @@ class ConfigManager(object):
         """Return query from input file"""
         query = ""
         try:
-            file = open(filename, "r")
-            query = file.read()
+            query = gcs_helper.read_file(filename, download_as_text=True)
             query = query.rstrip(";\n")
         except IOError:
             logging.error("Cannot read query file: ", filename)
@@ -1045,7 +1044,6 @@ class ConfigManager(object):
                 "Expected file with sql query, got empty file or file with white spaces. "
                 f"input file: {filename}"
             )
-        file.close()
         return query
 
     def get_query_from_inline(self, inline_query):
