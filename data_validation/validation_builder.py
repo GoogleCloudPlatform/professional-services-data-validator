@@ -78,6 +78,10 @@ class ValidationBuilder(object):
                 #   SQL compilation error: In-list contains more than 50 non-constant values
                 # getattr(..., "cast") expression above is looking for lists where the contents are casts and not simple literals.
                 return 50
+            elif self.source_client.name == "oracle" and in_list:
+                # This is a workaround for Oracle limitation:
+                #   ORA-01795: maximum number of expressions in a list is 1000
+                return 1000
             else:
                 return None
 
