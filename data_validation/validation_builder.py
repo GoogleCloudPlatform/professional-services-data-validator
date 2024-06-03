@@ -15,6 +15,7 @@ import logging
 from copy import deepcopy
 
 from data_validation import consts, metadata
+from data_validation.clients import get_max_in_list_size
 from data_validation.query_builder.query_builder import (
     AggregateField,
     CalculatedField,
@@ -65,27 +66,17 @@ class ValidationBuilder(object):
         self.add_primary_keys()
         self.add_query_limit()
 
-    def _construct_isin_filter(self, column_name: str, in_list: list) -> FilterField:
+    def _construct_isin_filter(
+        self, client, column_name: str, in_list: list
+    ) -> FilterField:
         """Return a FilterField object that is either isin(...) or (isin(...) OR isin(...) OR...)."""
 
-        def get_max_in_list_size():
-            if (
-                self.source_client.name == "snowflake"
-                and in_list
-                and getattr(in_list[0], "cast", None)
-            ):
-                # This is a workaround for Snowflake limitation:
-                #   SQL compilation error: In-list contains more than 50 non-constant values
-                # getattr(..., "cast") expression above is looking for lists where the contents are casts and not simple literals.
-                return 50
-            elif self.source_client.name == "oracle" and in_list:
-                # This is a workaround for Oracle limitation:
-                #   ORA-01795: maximum number of expressions in a list is 1000
-                return 1000
-            else:
-                return None
-
-        max_in_list_size = get_max_in_list_size()
+        max_in_list_size = get_max_in_list_size(
+            client,
+            in_list_over_expressions=bool(
+                in_list and getattr(in_list[0], "cast", None)
+            ),
+        )
         if max_in_list_size and len(in_list) > max_in_list_size:
             source_filters = [
                 FilterField.isin(column_name, _)
@@ -308,10 +299,12 @@ class ValidationBuilder(object):
             )
         elif filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_ISIN:
             source_filter = self._construct_isin_filter(
+                self.source_client,
                 filter_field[consts.CONFIG_FILTER_SOURCE_COLUMN],
                 filter_field[consts.CONFIG_FILTER_SOURCE_VALUE],
             )
             target_filter = self._construct_isin_filter(
+                self.target_client,
                 filter_field[consts.CONFIG_FILTER_TARGET_COLUMN],
                 filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
             )

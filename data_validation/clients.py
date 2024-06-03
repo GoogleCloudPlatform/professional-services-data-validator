@@ -274,6 +274,23 @@ def get_max_column_length(client):
     return 128
 
 
+def get_max_in_list_size(client, in_list_over_expressions=False):
+    if client.name == "snowflake":
+        if in_list_over_expressions:
+            # This is a workaround for Snowflake limitation:
+            #   SQL compilation error: In-list contains more than 50 non-constant values
+            # getattr(..., "cast") expression above is looking for lists where the contents are casts and not simple literals.
+            return 50
+        else:
+            return 16000
+    elif is_oracle_client(client):
+        # This is a workaround for Oracle limitation:
+        #   ORA-01795: maximum number of expressions in a list is 1000
+        return 1000
+    else:
+        return None
+
+
 CLIENT_LOOKUP = {
     "BigQuery": get_bigquery_client,
     "Impala": impala_connect,
