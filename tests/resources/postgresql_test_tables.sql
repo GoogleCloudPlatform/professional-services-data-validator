@@ -276,3 +276,16 @@ INSERT INTO pso_data_validator.dvt_binary VALUES
 (CAST('DVT-key-3' AS bytea), 3, 'Row 3'),
 (CAST('DVT-key-4' AS bytea), 4, 'Row 4'),
 (CAST('DVT-key-5' AS bytea), 5, 'Row 5');
+
+DROP TABLE pso_data_validator.dvt_char_id;
+CREATE TABLE pso_data_validator.dvt_char_id
+(   id          char(6) NOT NULL PRIMARY KEY
+,   other_data  varchar(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_char_id IS 'Integration test table used to test CHAR pk matching.';
+INSERT INTO pso_data_validator.dvt_char_id VALUES
+('DVT1', 'Row 1'),
+('DVT2', 'Row 2'),
+('DVT3', 'Row 3'),
+('DVT4', 'Row 4'),
+('DVT5', 'Row 5');

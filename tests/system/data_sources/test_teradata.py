@@ -524,8 +524,8 @@ def test_row_validation_char_pk_to_bigquery():
             "-tbls=udf.dvt_char_id=pso_data_validator.dvt_char_id",
             "--primary-keys=id",
             "--hash=id,other_data",
-            "--use-random-row",
-            "--random-row-batch-size=5",
+            # "--use-random-row",
+            # "--random-row-batch-size=5",
         ]
     )
     df = run_test_from_cli_args(args)

@@ -107,3 +107,17 @@ INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.DVT_BINARY VALUES
 (TO_BINARY('DVT-key-3', 'UTF-8'), 3, 'Row 3'),
 (TO_BINARY('DVT-key-4', 'UTF-8'), 4, 'Row 4'),
 (TO_BINARY('DVT-key-5', 'UTF-8'), 5, 'Row 5');
+
+DROP TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_CHAR_ID;
+-- Snowflake deviates from common CHAR semantics, strings are not space-padded.
+CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_CHAR_ID
+(   id          CHAR(6) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_CHAR_ID IS 'Integration test table used to test CHAR pk matching.';
+INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.DVT_CHAR_ID VALUES
+('DVT1  ', 'Row 1'),
+('DVT2  ', 'Row 2'),
+('DVT3  ', 'Row 3'),
+('DVT4  ', 'Row 4'),
+('DVT5  ', 'Row 5');

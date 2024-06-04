@@ -21,6 +21,7 @@ from data_validation import cli_tools, data_validation, consts, exceptions
 from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    id_type_test_assertions,
     null_not_null_assertions,
     run_test_from_cli_args,
 )
@@ -354,6 +355,35 @@ def test_row_validation_binary_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_char_pk_to_bigquery():
+    """MySQL to BigQuery dvt_char_id row validation.
+    This is testing CHAR primary key join columns.
+    Includes random row filter test.
+
+    Note that this test will fail unless PAD_CHAR_TO_FULL_LENGTH SQL mode is enabled.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mysql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_char_id",
+            "--primary-keys=id",
+            "--hash=id,other_data",
+            "--use-random-row",
+            "--random-row-batch-size=5",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
 
 
 @mock.patch(
