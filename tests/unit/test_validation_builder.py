@@ -266,6 +266,14 @@ def test_validation_add_filters(module_under_test):
                 pandas.Timestamp("2020-01-01 10:11:13"),
             ],
         },
+        # Test with many IDs.
+        {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
+            consts.CONFIG_FILTER_SOURCE_COLUMN: "id",
+            consts.CONFIG_FILTER_SOURCE_VALUE: range(0, 10000),
+            consts.CONFIG_FILTER_TARGET_COLUMN: "id",
+            consts.CONFIG_FILTER_TARGET_VALUE: range(0, 10000),
+        },
     ],
 )
 def test_validation_add_filter(module_under_test, filter_field: dict):
