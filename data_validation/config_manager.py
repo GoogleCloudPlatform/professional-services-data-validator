@@ -14,6 +14,8 @@
 
 import copy
 import logging
+import string
+import random
 from typing import TYPE_CHECKING, Optional, Union
 
 import google.oauth2.service_account
@@ -251,10 +253,12 @@ class ConfigManager(object):
     @property
     def full_source_table(self):
         """Return string value of target table."""
-        if self.source_schema:
+        if self.source_table and self.source_schema :
             return self.source_schema + "." + self.source_table
-        else:
+        elif self.source_table:
             return self.source_table
+        else :
+            return f"custom.{''.join(random.choice(string.ascii_lowercase) for _ in range(5))}"
 
     @property
     def labels(self):
