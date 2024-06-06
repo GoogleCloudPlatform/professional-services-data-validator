@@ -17,6 +17,7 @@ import ibis
 from data_validation import consts
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
+from third_party.ibis import ibis_teradata
 
 
 class AggregateField(object):
@@ -492,6 +493,21 @@ class QueryBuilder(object):
         # else:
         #     return [field.compile(table) for field in self.calculated_fields]
 
+    def _teradata_strip_pk(self, fields, table):
+        # at the moment a bit of a hack. Assume this is just for ROW VALIDATION, may not work for grouped
+        # column validation - which is a type of ROW validation with more than one column (I think)
+        # comparison fields lists all the fields we are interested - which will be projected. We need to
+        # make sure that the string fields have rstrip applied first.
+        proj_fields = [
+            ibis.expr.types.StringValue.rstrip(table[field.field_name]).name(
+                field.field_name
+            )
+            if table.schema().fields[field.field_name].is_string()
+            else field.field_name
+            for field in fields
+        ]
+        return table.projection(proj_fields)
+
     def compile(self, validation_type, table):
         """Return an Ibis query object
 
@@ -518,6 +534,10 @@ class QueryBuilder(object):
             or validation_type == consts.CUSTOM_QUERY
         ):
             if self.comparison_fields:
+                if isinstance(filtered_table._find_backend(), ibis_teradata.Backend):
+                    filtered_table = self._teradata_strip_pk(
+                        self.comparison_fields, filtered_table
+                    )
                 filtered_table = filtered_table.projection(
                     self.compile_comparison_fields(filtered_table)
                 )
