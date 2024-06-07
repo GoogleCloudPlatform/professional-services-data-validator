@@ -112,6 +112,10 @@ class ConfigManager(object):
         """Return number of random rows or None."""
         return self.random_row_batch_size() if self.use_random_rows() else None
 
+    def trim_string_pks(self):
+        """Return if the validation should trim string primary keys."""
+        return self._config.get(consts.CONFIG_TRIM_STRING_PKS) or False
+
     def process_in_memory(self):
         """Return whether to process in memory or on a remote platform."""
         return True
@@ -459,6 +463,7 @@ class ConfigManager(object):
         result_handler_config=None,
         filter_config=None,
         filter_status=None,
+        trim_string_pks=False,
         verbose=False,
     ):
         if isinstance(filter_config, dict):
@@ -487,6 +492,7 @@ class ConfigManager(object):
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
             consts.CONFIG_FILTER_STATUS: filter_status,
+            consts.CONFIG_TRIM_STRING_PKS: trim_string_pks,
         }
 
         return ConfigManager(

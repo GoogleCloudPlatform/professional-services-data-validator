@@ -194,7 +194,9 @@ class FilterField(object):
 
 
 class ComparisonField(object):
-    def __init__(self, field_name, alias=None, cast=None):
+    def __init__(
+        self, field_name: str, alias: str = None, cast: str = None, trim: bool = None
+    ):
         """A representation of a comparison field used to build a query.
 
         Args:
@@ -205,6 +207,7 @@ class ComparisonField(object):
         self.field_name = field_name
         self.alias = alias
         self.cast = cast
+        self.trim = trim
 
     def compile(self, ibis_table):
         # Fields are supplied on compile or on build
@@ -212,6 +215,10 @@ class ComparisonField(object):
         alias = self.alias or self.field_name
         if self.cast:
             comparison_field = comparison_field.force_cast(self.cast)
+        elif self.trim and isinstance(
+            comparison_field.type(), ibis.expr.datatypes.String
+        ):
+            comparison_field = ibis.expr.types.StringValue.rstrip(comparison_field)
         comparison_field = comparison_field.name(alias)
 
         return comparison_field
@@ -493,21 +500,6 @@ class QueryBuilder(object):
         # else:
         #     return [field.compile(table) for field in self.calculated_fields]
 
-    def _teradata_strip_pk(self, fields, table):
-        # at the moment a bit of a hack. Assume this is just for ROW VALIDATION, may not work for grouped
-        # column validation - which is a type of ROW validation with more than one column (I think)
-        # comparison fields lists all the fields we are interested - which will be projected. We need to
-        # make sure that the string fields have rstrip applied first.
-        proj_fields = [
-            ibis.expr.types.StringValue.rstrip(table[field.field_name]).name(
-                field.field_name
-            )
-            if table.schema().fields[field.field_name].is_string()
-            else field.field_name
-            for field in fields
-        ]
-        return table.projection(proj_fields)
-
     def compile(self, validation_type, table):
         """Return an Ibis query object
 
@@ -534,10 +526,6 @@ class QueryBuilder(object):
             or validation_type == consts.CUSTOM_QUERY
         ):
             if self.comparison_fields:
-                if isinstance(filtered_table._find_backend(), ibis_teradata.Backend):
-                    filtered_table = self._teradata_strip_pk(
-                        self.comparison_fields, filtered_table
-                    )
                 filtered_table = filtered_table.projection(
                     self.compile_comparison_fields(filtered_table)
                 )
