@@ -221,6 +221,13 @@ def _configure_partition_parser(subparsers):
         "-filters",
         help="Filters in the format source_filter:target_filter",
     )
+    optional_arguments.add_argument(
+        "--vals-per-yaml",
+        type=int,
+        default=1,
+        help="Puts multiple validations in a single yaml file",
+        metavar="<int>",
+    )
 
     # Group all required arguments together
     required_arguments = partition_parser.add_argument_group("required arguments")
@@ -955,13 +962,14 @@ def _add_common_arguments(optional_arguments, required_arguments):
 
 
 def _check_no_partitions(value: str) -> int:
-    """Check that number of partitions is between [2-10,000]
-    Using function to validate rather than choices as error message prints all choices."""
-    if value.isdigit() and 2 <= int(value) <= 10000:
+    """Check that number of yaml files will be less than 10000
+    Need to confirm that the check will be done after all arguments are read (?)"""
+    # if value.isdigit() and 2 <= int(value)/args.vals_per_yaml < 10000:
+    if value.isdigit() and 2 <= int(value) < 10000:
         return int(value)
     else:
         raise argparse.ArgumentTypeError(
-            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+            f"{value} will lead to more than 10,000 yaml files - which is not allowed. Use a larger number for --vals-per-yaml"
         )
 
 
@@ -989,9 +997,9 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate, a number from 2 to 10,000",
+        help="Number of partitions to divide the dataset into for validation",
         type=_check_no_partitions,
-        metavar="[2-10000]",
+        metavar="<int>",
     )
 
     # Optional arguments
