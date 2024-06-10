@@ -339,3 +339,28 @@ def test_row_validation_binary_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_core_types():
+    """Hive to Hive dvt_core_types custom-query validation"""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "custom-query",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "--source-query=select * from pso_data_validator.dvt_core_types",
+            "--target-query=select * from pso_data_validator.dvt_core_types",
+            "--filter-status=fail",
+            "--count=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
