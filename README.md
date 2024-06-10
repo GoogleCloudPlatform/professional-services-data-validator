@@ -208,7 +208,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
-  --trim-string-pks, -tsp
+  [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
 ```
 #### Generate Table Partitions for Large Table Row Validations

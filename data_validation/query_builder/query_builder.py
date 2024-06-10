@@ -17,7 +17,6 @@ import ibis
 from data_validation import consts
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
-from third_party.ibis import ibis_teradata
 
 
 class AggregateField(object):
@@ -215,10 +214,8 @@ class ComparisonField(object):
         alias = self.alias or self.field_name
         if self.cast:
             comparison_field = comparison_field.force_cast(self.cast)
-        elif self.trim and isinstance(
-            comparison_field.type(), ibis.expr.datatypes.String
-        ):
-            comparison_field = ibis.expr.types.StringValue.rstrip(comparison_field)
+        elif self.trim and comparison_field.type().is_string():
+            comparison_field = comparison_field.rstrip()
         comparison_field = comparison_field.name(alias)
 
         return comparison_field
