@@ -19,7 +19,7 @@ import setuptools
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
 version = "5.0.0"
-release_status = "Development Status :: 3 - Alpha"
+release_status = "Development Status :: 4 - Beta"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -27,7 +27,7 @@ with open("README.md", "r") as fh:
 dependencies = [
     # Dependency corrections from our requirements
     "attrs==23.1.0",
-    "grpcio==1.53.0",
+    "grpcio==1.53.2",
     "lazy-object-proxy==1.9.0",
     "marshmallow==3.19.0",
     # Core dependencies
@@ -36,7 +36,7 @@ dependencies = [
     "ibis-framework==5.1.0",
     "impyla==0.18.0",
     "SQLAlchemy==1.4.49",
-    "PyMySQL==1.1.0",
+    "PyMySQL==1.1.1",
     "psycopg2-binary==2.9.6",
     "PyYAML==6.0",
     "pandas==1.5.3",
@@ -47,12 +47,11 @@ dependencies = [
     "google-cloud-bigquery-storage==2.20.0",
     "google-cloud-spanner==3.36.0",
     "google-cloud-storage==2.10.0",
-    "setuptools>=34.0.0",
     "jellyfish==1.0.0",
     "tabulate==0.9.0",
     "Flask==2.3.2",
     "parsy==2.1",
-    "google-cloud-secret-manager<=2.15.0",
+    "google-cloud-secret-manager>=2.16.0",
 ]
 
 extras_require = {
@@ -74,11 +73,10 @@ setuptools.setup(
     name=name,
     description=description,
     version=version,
-    author="Dylan Hercher",
-    author_email="dhercher@google.com",
+    author="PSO DVT Engineering team",
+    author_email="data-validator-eng@google.com",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pypa/sampleproject",
     packages=packages,
     classifiers=[
         release_status,

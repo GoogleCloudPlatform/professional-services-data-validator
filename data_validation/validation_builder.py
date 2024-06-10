@@ -15,6 +15,7 @@ import logging
 from copy import deepcopy
 
 from data_validation import consts, metadata
+from data_validation.clients import get_max_in_list_size
 from data_validation.query_builder.query_builder import (
     AggregateField,
     CalculatedField,
@@ -23,6 +24,11 @@ from data_validation.query_builder.query_builder import (
     GroupedField,
     QueryBuilder,
 )
+
+
+def list_to_sublists(id_list: list, max_size: int) -> list:
+    """Return a list of items as a list of lists based on a max list length of max_size."""
+    return [id_list[_ : _ + max_size] for _ in range(0, len(id_list), max_size)]
 
 
 class ValidationBuilder(object):
@@ -59,6 +65,27 @@ class ValidationBuilder(object):
         self.add_config_filters()
         self.add_primary_keys()
         self.add_query_limit()
+
+    def _construct_isin_filter(
+        self, client, column_name: str, in_list: list
+    ) -> FilterField:
+        """Return a FilterField object that is either isin(...) or (isin(...) OR isin(...) OR...)."""
+
+        max_in_list_size = get_max_in_list_size(
+            client,
+            in_list_over_expressions=bool(
+                in_list and getattr(in_list[0], "cast", None)
+            ),
+        )
+        if max_in_list_size and len(in_list) > max_in_list_size:
+            source_filters = [
+                FilterField.isin(column_name, _)
+                for _ in list_to_sublists(in_list, max_in_list_size)
+            ]
+            return FilterField.or_(source_filters)
+
+        else:
+            return FilterField.isin(column_name, in_list)
 
     def clone(self):
         cloned_builder = ValidationBuilder(self.config_manager)
@@ -272,11 +299,13 @@ class ValidationBuilder(object):
                 filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
             )
         elif filter_field[consts.CONFIG_TYPE] == consts.FILTER_TYPE_ISIN:
-            source_filter = FilterField.isin(
+            source_filter = self._construct_isin_filter(
+                self.source_client,
                 filter_field[consts.CONFIG_FILTER_SOURCE_COLUMN],
                 filter_field[consts.CONFIG_FILTER_SOURCE_VALUE],
             )
-            target_filter = FilterField.isin(
+            target_filter = self._construct_isin_filter(
+                self.target_client,
                 filter_field[consts.CONFIG_FILTER_TARGET_COLUMN],
                 filter_field[consts.CONFIG_FILTER_TARGET_VALUE],
             )

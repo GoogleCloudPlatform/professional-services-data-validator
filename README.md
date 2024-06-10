@@ -311,12 +311,12 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
                         Source sql query
                         Either --source-query or --source-query-file must be provided
   --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
-                        File containing the source sql commands
+                        File containing the source sql command. Supports GCS and local paths.
   --target-query TARGET_QUERY, -tq TARGET_QUERY
                         Target sql query
                         Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
-                        File containing the target sql commands
+                        File containing the target sql command. Supports GCS and local paths.
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
@@ -373,12 +373,12 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         Source sql query
                         Either --source-query or --source-query-file must be provided
   --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
-                        File containing the source sql commands
+                        File containing the source sql command. Supports GCS and local paths.
   --target-query TARGET_QUERY, -tq TARGET_QUERY
                         Target sql query
                         Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
-                        File containing the target sql commands
+                        File containing the target sql command. Supports GCS and local paths.
   --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details

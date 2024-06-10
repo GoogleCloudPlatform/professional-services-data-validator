@@ -67,6 +67,9 @@ def test_read_and_write_gcs_file():
     data = gcs_helper.read_file(GCS_STATE_FULL_PATH)
     assert data == b"TEST_DATA"
 
+    data = gcs_helper.read_file(GCS_STATE_FULL_PATH, download_as_text=True)
+    assert data == "TEST_DATA"
+
 
 def test_list_gcs_dir():
     gcs_helper.write_file(GCS_STATE_FULL_PATH, TEST_DATA)
