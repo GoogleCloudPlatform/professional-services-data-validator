@@ -142,7 +142,7 @@ class DataValidation(object):
                 **{source_pk_column: query[source_pk_column].cast("string")}
             )
 
-        if self.config_manager.trim_string_pks:
+        if self.config_manager.trim_string_pks():
             query = query.mutate(**{source_pk_column: query[source_pk_column].rstrip()})
 
         random_rows = self.config_manager.source_client.execute(query)

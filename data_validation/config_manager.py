@@ -463,7 +463,7 @@ class ConfigManager(object):
         result_handler_config=None,
         filter_config=None,
         filter_status=None,
-        trim_string_pks=False,
+        trim_string_pks=None,
         verbose=False,
     ):
         if isinstance(filter_config, dict):

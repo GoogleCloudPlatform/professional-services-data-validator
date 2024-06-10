@@ -14,6 +14,7 @@
 
 import json
 import os
+import pytest
 from unittest import mock
 
 from data_validation import __main__ as main
@@ -368,6 +369,9 @@ def test_row_validation_char_pk_to_bigquery():
 
     Note that this test will fail unless PAD_CHAR_TO_FULL_LENGTH SQL mode is enabled.
     """
+    pytest.skip(
+        "Skipping test_row_validation_char_pk_to_bigquery because PAD_CHAR_TO_FULL_LENGTH SQL mode needs to be enabled."
+    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
