@@ -264,12 +264,13 @@ class ValidationBuilder(object):
         # grab calc field metadata
         alias = primary_key.get(consts.CONFIG_FIELD_ALIAS)
         cast = primary_key.get(consts.CONFIG_CAST)
+        trim = self.config_manager.trim_string_pks()
         # check if valid calc field and return correct object
         source_field = ComparisonField(
-            field_name=source_field_name, alias=alias, cast=cast
+            field_name=source_field_name, alias=alias, cast=cast, trim=trim
         )
         target_field = ComparisonField(
-            field_name=target_field_name, alias=alias, cast=cast
+            field_name=target_field_name, alias=alias, cast=cast, trim=trim
         )
         self.source_builder.add_comparison_field(source_field)
         self.target_builder.add_comparison_field(target_field)

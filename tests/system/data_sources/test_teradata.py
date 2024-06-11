@@ -20,6 +20,7 @@ from data_validation import cli_tools, data_validation, consts
 from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    id_type_test_assertions,
     null_not_null_assertions,
     run_test_from_cli_args,
 )
@@ -481,6 +482,60 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_string_pk_to_bigquery():
+    """Teradata to BigQuery dvt_string_id row validation.
+    This is testing string primary key join columns.
+    Includes random row filter test.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_string_id=pso_data_validator.dvt_string_id",
+            "--primary-keys=id",
+            "--hash=id,other_data",
+            "--use-random-row",
+            "--random-row-batch-size=5",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_char_pk_to_bigquery():
+    """Teradata to BigQuery dvt_char_id row validation.
+    This is testing CHAR primary key join columns.
+    Includes random row filter test.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_char_id=pso_data_validator.dvt_char_id",
+            "--primary-keys=id",
+            "--hash=id,other_data",
+            # We need to trim padded string PKs due to a Teradata client "quirk".
+            "--trim-string-pks",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_column_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types custom-query validation"""
     parser = cli_tools.configure_arg_parser()
@@ -507,7 +562,7 @@ def test_custom_query_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_validation_core_types_to_bigquery():
-    """Oracle to BigQuery dvt_core_types custom-query row validation"""
+    """Teradata to BigQuery dvt_core_types custom-query row validation"""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -533,7 +588,7 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_hash_validation_core_types_to_bigquery():
-    """Oracle to BigQuery dvt_core_types custom-query row validation"""
+    """Teradata to BigQuery dvt_core_types custom-query row validation"""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [

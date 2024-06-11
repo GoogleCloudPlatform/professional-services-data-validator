@@ -484,6 +484,15 @@ def _configure_row_parser(row_parser):
         "-rbs",
         help="Row batch size used for random row filters (default 10,000).",
     )
+    optional_arguments.add_argument(
+        "--trim-string-pks",
+        "-tsp",
+        action="store_true",
+        help=(
+            "Trims string based primary key values, intended for use when one engine uses "
+            "padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n))."
+        ),
+    )
 
     # Group required arguments
     required_arguments = row_parser.add_argument_group("required arguments")
@@ -956,7 +965,8 @@ def _add_common_arguments(optional_arguments, required_arguments):
 
 def _check_no_partitions(value: str) -> int:
     """Check that number of partitions is between [2-10,000]
-    Using function to validate rather than choices as error message prints all choices."""
+    Using function to validate rather than choices as error message prints all choices.
+    """
     if value.isdigit() and 2 <= int(value) <= 10000:
         return int(value)
     else:
@@ -1397,6 +1407,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "result_handler_config": result_handler_config,
             "filter_config": filter_config,
             "filter_status": filter_status,
+            "trim_string_pks": getattr(args, "trim_string_pks", False),
             "verbose": args.verbose,
         }
         pre_build_configs_list.append(pre_build_configs)
