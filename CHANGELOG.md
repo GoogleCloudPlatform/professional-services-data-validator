@@ -2,6 +2,23 @@
 
 ## Untagged
 
+## [5.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v5.0.0...v5.1.0) (2024-06-11)
+
+
+### Features
+
+* Add a workaround for a Snowflake IN list limitation ([#1152](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1152)) ([16b979e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/16b979eb4977316a36d063aac6ee406698d9636d))
+* Support `--trim-string-pks` flag for padded string semantics ([#1166](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1166)) ([a81f396](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a81f39673ff76dcc8f7c4f6092b95d5d92f5947f))
+* Support GCS custom query files ([#1155](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1155)) ([e3fe3d1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e3fe3d184ddb4ffecddf83f5a87e681d787ea9db))
+
+
+### Bug Fixes
+
+* Fixes bug in get_max_in_list_size ([#1158](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1158)) ([973e6b6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/973e6b64268c4ac62640a215be1a4788e61d07a1))
+* Removing t0 alias from column name, while getting schema from query. Adding Integration test for Hive Custom-Query ([#1164](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1164)) ([74a14af](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/74a14af0adf0c18fc3c29124da88bd0784185d4f))
+* Support PKs with different casing for generate-partitions ([#1142](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1142)) ([021ce75](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/021ce75581fd5ea85cb724132119eeeab007154a))
+* Update to support up to 10K partitions ([#1139](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1139)) ([210c352](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/210c352ae8a601833a6e34b13972145abc1d49a6))
+
 ## [5.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v4.5.0...v5.0.0) (2024-05-21)
 
 
