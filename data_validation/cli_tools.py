@@ -425,6 +425,12 @@ def _configure_row_parser(
     """Configure arguments to run row level validations."""
     # Group optional arguments
     optional_arguments.add_argument(
+        "--threshold",
+        "-th",
+        type=threshold_float,
+        help="Float max threshold for percent difference",
+    )
+    optional_arguments.add_argument(
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
