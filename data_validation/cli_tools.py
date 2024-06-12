@@ -202,75 +202,35 @@ def _configure_partition_parser(subparsers):
     """Configure arguments to generate partitioned config files."""
     partition_parser = subparsers.add_parser(
         "generate-table-partitions",
-        help=(
-            "Generate partitions for validation and store the Config files in "
-            "a directory"
-        ),
+        help=("Generate table partitions and store validation config files"),
     )
-
-    # Group all optional arguments together
     optional_arguments = partition_parser.add_argument_group("optional arguments")
-    optional_arguments.add_argument(
-        "--threshold",
-        "-th",
-        type=threshold_float,
-        help="Float max threshold for percent difference",
-    )
-    optional_arguments.add_argument(
-        "--filters",
-        "-filters",
-        help="Filters in the format source_filter:target_filter",
-    )
-
-    # Group all required arguments together
     required_arguments = partition_parser.add_argument_group("required arguments")
+
+    _configure_row_parser(
+        partition_parser,
+        optional_arguments,
+        required_arguments,
+        is_generate_partitions=True,
+    )
     required_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
+        "--config-dir",
+        "-cdir",
         required=True,
-        help="Comma separated list of primary key columns 'col_a,col_b'",
+        help="Directory path to store YAML config files. "
+        "GCS: Provide a full gs:// path of the target directory. "
+        "Eg: `gs://<BUCKET>/partitons_dir`. "
+        "Local: Provide a relative path of the target directory. "
+        "Eg: `partitions_dir`",
     )
     required_arguments.add_argument(
-        "--tables-list",
-        "-tbls",
+        "--partition-num",
+        "-pn",
         required=True,
-        help=(
-            "Comma separated tables list in the form "
-            "'schema.table=target_schema.target_table'"
-        ),
+        help="Number of partitions/config files to generate, a number from 2 to 10,000",
+        type=_check_no_partitions,
+        metavar="[2-10000]",
     )
-
-    # Group for mutually exclusive required arguments. Either must be supplied
-    mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(
-        required=True
-    )
-    mutually_exclusive_arguments.add_argument(
-        "--hash",
-        "-hash",
-        help=(
-            "Comma separated list of columns for hash 'col_a,col_b' or * for "
-            "all columns"
-        ),
-    )
-    mutually_exclusive_arguments.add_argument(
-        "--concat",
-        "-concat",
-        help=(
-            "Comma separated list of columns for concat 'col_a,col_b' or * "
-            "for all columns"
-        ),
-    )
-
-    mutually_exclusive_arguments.add_argument(
-        "--comparison-fields",
-        "-comp-fields",
-        help=(
-            "Individual columns to compare. If comparing a calculated field use "
-            "the column alias."
-        ),
-    )
-
-    _add_common_partition_arguments(optional_arguments, required_arguments)
 
 
 def _configure_beta_parser(subparsers):
@@ -444,7 +404,9 @@ def _configure_validate_parser(subparsers):
     _configure_column_parser(column_parser)
 
     row_parser = validate_subparsers.add_parser("row", help="Run a row validation")
-    _configure_row_parser(row_parser)
+    optional_arguments = row_parser.add_argument_group("optional arguments")
+    required_arguments = row_parser.add_argument_group("required arguments")
+    _configure_row_parser(row_parser, optional_arguments, required_arguments)
 
     schema_parser = validate_subparsers.add_parser(
         "schema", help="Run a schema validation"
@@ -457,11 +419,11 @@ def _configure_validate_parser(subparsers):
     _configure_custom_query_parser(custom_query_parser)
 
 
-def _configure_row_parser(row_parser):
+def _configure_row_parser(
+    parser, optional_arguments, required_arguments, is_generate_partitions=False
+):
     """Configure arguments to run row level validations."""
-
     # Group optional arguments
-    optional_arguments = row_parser.add_argument_group("optional arguments")
     optional_arguments.add_argument(
         "--threshold",
         "-th",
@@ -474,17 +436,6 @@ def _configure_row_parser(row_parser):
         help="Filters in the format source_filter:target_filter",
     )
     optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
-    )
-    optional_arguments.add_argument(
         "--trim-string-pks",
         "-tsp",
         action="store_true",
@@ -493,9 +444,21 @@ def _configure_row_parser(row_parser):
             "padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n))."
         ),
     )
+    # Generate-table-partitions does not support random row
+    if not is_generate_partitions:
+        optional_arguments.add_argument(
+            "--use-random-row",
+            "-rr",
+            action="store_true",
+            help="Finds a set of random rows of the first primary key supplied.",
+        )
+        optional_arguments.add_argument(
+            "--random-row-batch-size",
+            "-rbs",
+            help="Row batch size used for random row filters (default 10,000).",
+        )
 
     # Group required arguments
-    required_arguments = row_parser.add_argument_group("required arguments")
     required_arguments.add_argument(
         "--tables-list",
         "-tbls",
@@ -539,7 +502,11 @@ def _configure_row_parser(row_parser):
             "the column alias."
         ),
     )
-    _add_common_arguments(optional_arguments, required_arguments)
+    _add_common_arguments(
+        optional_arguments,
+        required_arguments,
+        is_generate_partitions=is_generate_partitions,
+    )
 
 
 def _configure_column_parser(column_parser):
@@ -917,7 +884,9 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     _add_common_arguments(optional_arguments, required_arguments)
 
 
-def _add_common_arguments(optional_arguments, required_arguments):
+def _add_common_arguments(
+    optional_arguments, required_arguments, is_generate_partitions=False
+):
     # Group all Required Arguments together
     required_arguments.add_argument(
         "--source-conn", "-sc", required=True, help="Source connection name"
@@ -938,16 +907,17 @@ def _add_common_arguments(optional_arguments, required_arguments):
         "-sa",
         help="Path to SA key file for result handler output",
     )
-    optional_arguments.add_argument(
-        "--config-file",
-        "-c",
-        help="Store the validation config in the YAML File Path specified",
-    )
-    optional_arguments.add_argument(
-        "--config-file-json",
-        "-cj",
-        help="Store the validation config in the JSON File Path specified to be used for application use cases",
-    )
+    if not is_generate_partitions:
+        optional_arguments.add_argument(
+            "--config-file",
+            "-c",
+            help="Store the validation config in the YAML File Path specified",
+        )
+        optional_arguments.add_argument(
+            "--config-file-json",
+            "-cj",
+            help="Store the validation config in the JSON File Path specified to be used for application use cases",
+        )
     optional_arguments.add_argument(
         "--format",
         "-fmt",
@@ -973,70 +943,6 @@ def _check_no_partitions(value: str) -> int:
         raise argparse.ArgumentTypeError(
             f"{value} is not valid for number of partitions, use number in range 2 to 10000"
         )
-
-
-def _add_common_partition_arguments(optional_arguments, required_arguments):
-    """Add all arguments common to get-partition command"""
-
-    # Group all Required Arguments together
-    required_arguments.add_argument(
-        "--source-conn", "-sc", required=True, help="Source connection name"
-    )
-    required_arguments.add_argument(
-        "--target-conn", "-tc", required=True, help="Target connection name"
-    )
-    required_arguments.add_argument(
-        "--config-dir",
-        "-cdir",
-        required=True,
-        help="Directory path to store YAML config files. "
-        "GCS: Provide a full gs:// path of the target directory. "
-        "Eg: `gs://<BUCKET>/partiitons_dir`. "
-        "Local: Provide a relative path of the target directory. "
-        "Eg: `partitions_dir`",
-    )
-    required_arguments.add_argument(
-        "--partition-num",
-        "-pn",
-        required=True,
-        help="Number of partitions/config files to generate, a number from 2 to 10,000",
-        type=_check_no_partitions,
-        metavar="[2-10000]",
-    )
-
-    # Optional arguments
-    optional_arguments.add_argument(
-        "--bq-result-handler",
-        "-bqrh",
-        help="BigQuery result handler config details",
-    )
-    optional_arguments.add_argument(
-        "--labels", "-l", help="Key value pair labels for validation run"
-    )
-    optional_arguments.add_argument(
-        "--service-account",
-        "-sa",
-        help="Path to SA key file for result handler output",
-    )
-    optional_arguments.add_argument(
-        "--format",
-        "-fmt",
-        default="table",
-        help=(
-            "Set the format for printing command output, Supported formats are "
-            "(text, csv, json, table). Defaults to table"
-        ),
-    )
-    optional_arguments.add_argument(
-        "--filter-status",
-        "-fs",
-        # TODO: update if we start to support other statuses
-        help=(
-            "Comma separated list of statuses to filter the validation results. "
-            "Supported statuses are (success, fail). If no list is provided, "
-            "all statuses are returned"
-        ),
-    )
 
 
 def get_connection_config_from_args(args):

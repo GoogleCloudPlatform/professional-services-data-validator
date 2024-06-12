@@ -246,10 +246,23 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   --partition-num [1-1000], -pn [1-1000]
                         Number of partitions/config files to generate
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt FORMAT]
+                        Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
 ```
 #### Schema Validations
 
