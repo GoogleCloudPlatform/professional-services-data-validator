@@ -2,6 +2,13 @@
 
 ## Untagged
 
+## [5.1.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v5.1.0...v5.1.1) (2024-06-12)
+
+
+### Documentation
+
+* Update generate-partitions flags ([#1168](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1168)) ([5a747c2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5a747c23ba5e140619feeb54ffcc7a00a6266877))
+
 ## [5.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v5.0.0...v5.1.0) (2024-06-11)
 
 
