@@ -195,10 +195,10 @@ def _if_null(op):
 
 def _get_schema_using_query(self, query):
     # Removing LIMIT 0 around query since it returns no results in Hive
-    cur = self.raw_sql(f"SELECT * FROM ({query}) t0 LIMIT 1")
+    cur = self.raw_sql(query + " LIMIT 1")
     cur.fetchall()
     cur.description = [
-        (description[0].replace("t0.", "", 1), *description[1:])
+        (description[0].split(".")[-1] if "." in description[0] else description[0], *description[1:])
         for description in cur.description
     ]
     ibis_fields = self._adapt_types(cur.description)
