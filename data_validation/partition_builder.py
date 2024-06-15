@@ -40,29 +40,34 @@ class PartitionBuilder:
 
         return self.args.config_dir
 
-    def _add_filters_get_yaml(self, config_manager: ConfigManager, source_filters:List[str], target_filters:List[str]) -> Dict:
+    def _add_filters_get_yaml(
+        self,
+        config_manager: ConfigManager,
+        source_filters: List[str],
+        target_filters: List[str],
+    ) -> Dict:
         """Return dict objects formatted for yaml validations. Qualify the configurations by adding the source and
             target filters provided. Each filter pair will result in a DVT execution. Running multiple validations
             sequentially minimizes the startup and shutdown overhead of containers - while still allowing some
             level of parallelism to improve throughput,
- 
+
 
         Args:
             config_managers (list[ConfigManager]): List of config manager instances.
         """
         # Create multiple yaml validation blocks corresponding to the filters provided
         yaml_validations = []
-        for (source_filter,target_filter) in zip(source_filters,target_filters) :
+        for (source_filter, target_filter) in zip(source_filters, target_filters):
             filter_dict = {
-                    "type": "custom",
-                    "source": source_filter,
-                    "target": target_filter,
-                }
+                "type": "custom",
+                "source": source_filter,
+                "target": target_filter,
+            }
             # Append partition new filter
             config_manager.filters.append(filter_dict)
             yaml_validations.append(config_manager.get_yaml_validation_block())
             config_manager.filters.pop()
-        
+
         yaml_config = {
             consts.YAML_SOURCE: self.args.source_conn,
             consts.YAML_TARGET: self.args.target_conn,
@@ -338,11 +343,23 @@ class PartitionBuilder:
                 "target_folder_name": config_manager.full_source_table,
                 "partitions": [],
             }
-            for i, pos in enumerate(range(0, len(filter_list[0]), self.args.vals_per_yaml)):
-                source_filters = filter_list[0][pos:pos+self.args.vals_per_yaml] if pos+self.args.vals_per_yaml < len(filter_list[0]) else filter_list[0][pos:]
-                target_filters = filter_list[1][pos:pos+self.args.vals_per_yaml] if pos+self.args.vals_per_yaml < len(filter_list[1]) else filter_list[1][pos:]
+            for i, pos in enumerate(
+                range(0, len(filter_list[0]), self.args.vals_per_yaml)
+            ):
+                source_filters = (
+                    filter_list[0][pos : pos + self.args.vals_per_yaml]
+                    if pos + self.args.vals_per_yaml < len(filter_list[0])
+                    else filter_list[0][pos:]
+                )
+                target_filters = (
+                    filter_list[1][pos : pos + self.args.vals_per_yaml]
+                    if pos + self.args.vals_per_yaml < len(filter_list[1])
+                    else filter_list[1][pos:]
+                )
                 # Build and append partition YAML
-                yaml_config = self._add_filters_get_yaml(config_manager, source_filters, target_filters)
+                yaml_config = self._add_filters_get_yaml(
+                    config_manager, source_filters, target_filters
+                )
                 yaml_configs_list[ind]["partitions"].append(
                     {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
                 )

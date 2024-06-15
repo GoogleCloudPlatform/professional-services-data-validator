@@ -527,12 +527,17 @@ def test_postgres_generate_table_partitions(cloud_sql):
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
-
+    yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
+    
+    # First confirm that the paritioning was done correctly
     assert len(partition_filters) == 1  # only one pair of tables
     assert (
         len(partition_filters[0][0]) == partition_builder.args.partition_num
     )  # assume no of table rows > partition_num
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+    breakpoint()
+
+    # Next, that the partitions were split into the files correctly
 
 
 def test_schema_validation(cloud_sql):
