@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import lru_cache
 import ibis
 from ibis.backends.impala import Backend as ImpalaBackend
 from ibis.backends.impala.client import ImpalaConnection
@@ -192,11 +193,11 @@ def _chunks_to_pandas_array(chunks):
 def _if_null(op):
     return ops.Coalesce((op.arg, op.ifnull_expr))
 
-
+@lru_cache(maxsize=2)
 def _get_schema_using_query(self, query):
     # Removing LIMIT 0 around query since it returns no results in Hive
     cur = self.raw_sql(query + " LIMIT 1")
-    cur.fetchall()
+    cur.fetchone()
     cur.description = [
         (description[0].split(".")[-1] if "." in description[0] else description[0], *description[1:])
         for description in cur.description
