@@ -25,6 +25,7 @@ from data_validation import cli_tools, data_validation, consts
 from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    id_type_test_assertions,
     null_not_null_assertions,
     run_test_from_cli_args,
 )
@@ -478,6 +479,35 @@ def test_row_validation_binary_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_to_bigquery():
+    """SQL Server to BigQuery dvt_pangrams row validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+
+    This needs more investigation on how to handle unicode characters in SQL Server.
+    """
+    pytest.skip(
+        "Skipping test_row_validation_pangrams_to_bigquery because failing on SQL Server."
+    )
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=sql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_pangrams",
+            "--primary-keys=id",
+            "--concat=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
 
 
 @mock.patch(
