@@ -75,12 +75,20 @@ except Exception:
 
 def get_bigquery_client(project_id, dataset_id="", credentials=None):
     info = client_info.get_http_client_info()
+    job_config = bigquery.QueryJobConfig(
+        connection_properties=[bigquery.ConnectionProperty("time_zone", "UTC")]
+    )
     google_client = bigquery.Client(
-        project=project_id, client_info=info, credentials=credentials
+        project=project_id,
+        client_info=info,
+        credentials=credentials,
+        default_query_job_config=job_config,
     )
 
     ibis_client = ibis.bigquery.connect(
-        project_id=project_id, dataset_id=dataset_id, credentials=credentials
+        project_id=project_id,
+        dataset_id=dataset_id,
+        credentials=credentials,
     )
 
     # Override the BigQuery client object to ensure the correct user agent is

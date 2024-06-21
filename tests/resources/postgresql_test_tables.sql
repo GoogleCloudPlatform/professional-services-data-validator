@@ -289,3 +289,25 @@ INSERT INTO pso_data_validator.dvt_char_id VALUES
 ('DVT3', 'Row 3'),
 ('DVT4', 'Row 4'),
 ('DVT5', 'Row 5');
+
+DROP TABLE pso_data_validator.dvt_pangrams;
+CREATE TABLE pso_data_validator.dvt_pangrams
+(   id          int
+,   lang        varchar(100)
+,   words       varchar(1000)
+,   words_en    varchar(1000)
+,   CONSTRAINT dvt_pangrams_pk PRIMARY KEY (id)
+);
+COMMENT ON TABLE pso_data_validator.dvt_pangrams IS 'Integration test table used to test unicode characters.';
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+INSERT INTO pso_data_validator.dvt_pangrams VALUES
+(1,'Hebrew', 'שפן אכל קצת גזר בטעם חסה, ודי',
+ 'A bunny ate some lettuce-flavored carrots, and he had enough'),
+(2,'Polish', 'Pchnąć w tę łódź jeża lub ośm skrzyń fig',
+ 'Push a hedgehog or eight crates of figs in this boat'),
+(3,'Russian', 'Съешь ещё этих мягких французских булок, да выпей же чаю',
+ 'Eat more of these soft French loaves and drink a tea'),
+(4,'Swedish', 'Schweiz för lyxfjäder på qvist bakom ugn',
+ 'Switzerland brings luxury feather on branch behind oven'),
+(5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi',
+ 'The sick person in pyjamas quickly trusted the swarthy driver');
