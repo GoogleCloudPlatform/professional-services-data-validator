@@ -186,12 +186,8 @@ def test_schema_validation_core_types_to_bigquery():
             "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
             "--exclusion-columns=id",
-            (
-                # Integer Snowflake NUMBERs to to BigQuery INT64.
-                "--allow-list=decimal(38,0):int64,"
-                # TODO When issue-706 is complete remove the timestamp line below
-                "timestamp('UTC'):timestamp"
-            ),
+            # Integer Snowflake NUMBERs to to BigQuery INT64.
+            "--allow-list=decimal(38,0):int64,",
         ]
     )
     df = run_test_from_cli_args(args)
