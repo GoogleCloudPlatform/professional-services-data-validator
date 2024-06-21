@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import pandas
 import json
-from yaml import dump, load, Dumper, Loader
 
 from data_validation.data_validation import DataValidation
 
