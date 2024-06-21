@@ -110,3 +110,17 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-2' AS binary), 2
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-3' AS binary), 3, 'Row 3');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS binary), 4, 'Row 4');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS binary), 5, 'Row 5');
+
+DROP TABLE pso_data_validator.dvt_pangrams;
+CREATE TABLE pso_data_validator.dvt_pangrams
+(   id          int NOT NULL PRIMARY KEY
+,   lang        varchar(100)
+,   words       nvarchar(1000)
+,   words_en    varchar(1000)
+);
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+INSERT INTO pso_data_validator.dvt_pangrams VALUES (1,'Hebrew', 'שפן אכל קצת גזר בטעם חסה, ודי', 'A bunny ate some lettuce-flavored carrots, and he had enough');
+INSERT INTO pso_data_validator.dvt_pangrams VALUES (2,'Polish', 'Pchnąć w tę łódź jeża lub ośm skrzyń fig', 'Push a hedgehog or eight crates of figs in this boat');
+INSERT INTO pso_data_validator.dvt_pangrams VALUES (3,'Russian', 'Съешь ещё этих мягких французских булок, да выпей же чаю', 'Eat more of these soft French loaves and drink a tea');
+INSERT INTO pso_data_validator.dvt_pangrams VALUES (4,'Swedish', 'Schweiz för lyxfjäder på qvist bakom ugn', 'Switzerland brings luxury feather on branch behind oven');
+INSERT INTO pso_data_validator.dvt_pangrams VALUES (5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi', 'The sick person in pyjamas quickly trusted the swarthy driver');
