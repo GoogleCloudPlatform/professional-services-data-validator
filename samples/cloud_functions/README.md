@@ -2,7 +2,7 @@
 
 DVT on Cloud Functions utilizes an HTTP trigger that accepts JSON data representing the DVT run configuration. Details on the JSON configuration is outlined below. The function returns a JSON string with the validation results. The function can also be configured to output results to BigQuery as a result handler.
 
-Keep in mind that Cloud Functions has a 9 minute timeout which may be unsuitable for complex validations. In this case, we recommend using Cloud Run as an alternative (24h timeout).
+Keep in mind that Cloud Functions gen1 has a maximum timeout of 9 minutes (60 minutes for gen2) which may be unsuitable for complex validations. In this case, we recommend using Cloud Run as an alternative (24h timeout).
 
 ### Quick Steps
 
@@ -20,18 +20,19 @@ zip -r data_validation.zip .
 gsutil cp data_validation.zip gs://${BUCKET}/
 
 gcloud functions deploy data-validation --region=${REGION} \
-	--entry-point=main \
-	--runtime=python38 --trigger-http \
-	--source=gs://${BUCKET}/data_validation.zip \
-	--service-account=${SERVICE_ACCOUNT} \
-	--project=${PROJECT_ID}
+  --entry-point=main \
+  --memory=512MB \
+  --runtime=python38 --trigger-http \
+  --source=gs://${BUCKET}/data_validation.zip \
+  --service-account=${SERVICE_ACCOUNT} \
+  --project=${PROJECT_ID}
 
 rm data_validation.zip
 rm requirements.txt
 cd ../../
 ```
 
-### JSON Configuration 
+### JSON Configuration
 
 Below is an example of the JSON configuration that can be passed to the Cloud Function. You can get the JSON content specific for your scenario by using our CLI and providing the argument to generate the JSON config file [`--config-file-json` or `-cj <filepath>.json`]. IMPORTANT: do not forget to make the necessary adjustments between JSON and Python objects, check [this link as a reference](https://python-course.eu/applications-python/json-and-python.php).
 
