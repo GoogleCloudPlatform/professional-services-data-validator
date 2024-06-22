@@ -12,8 +12,9 @@ gsutil cp data_validation.zip gs://${BUCKET}/
 
 gcloud functions deploy data-validation --region=${REGION} \
 	--entry-point=main \
-	--runtime=python38 --trigger-http \
-	--memory=512MB \
+	--gen2 --runtime=python38 --trigger-http \
+	--memory=512M \
+	--timeout=600s \
 	--source=gs://${BUCKET}/data_validation.zip \
 	--service-account=${SERVICE_ACCOUNT} \
 	--project=${PROJECT_ID}

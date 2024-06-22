@@ -2,7 +2,7 @@
 
 DVT on Cloud Functions utilizes an HTTP trigger that accepts JSON data representing the DVT run configuration. Details on the JSON configuration is outlined below. The function returns a JSON string with the validation results. The function can also be configured to output results to BigQuery as a result handler.
 
-Keep in mind that Cloud Functions gen1 has a maximum timeout of 9 minutes (60 minutes for gen2) which may be unsuitable for complex validations. In this case, we recommend using Cloud Run as an alternative (24h timeout).
+Keep in mind that Cloud Functions (gen2) has a maximum timeout of 60 minutes which may be unsuitable for some validations. In this case, we recommend using Cloud Run as an alternative (24h timeout). Defaults for `--timeout` and `--memory` have been included as a guide below to apply your own settings.
 
 ### Quick Steps
 
@@ -21,8 +21,9 @@ gsutil cp data_validation.zip gs://${BUCKET}/
 
 gcloud functions deploy data-validation --region=${REGION} \
   --entry-point=main \
-  --memory=512MB \
-  --runtime=python38 --trigger-http \
+  --gen2 --runtime=python38 --trigger-http \
+  --memory=512M \
+  --timeout=600s \
   --source=gs://${BUCKET}/data_validation.zip \
   --service-account=${SERVICE_ACCOUNT} \
   --project=${PROJECT_ID}
