@@ -205,14 +205,30 @@ def mock_get_connection_config(*args):
         return BQ_CONN
 
 
-# Expected result from partitioning table on 3 keys
+# Expected result from partitioning table on 3 keys, 9 partitions
 EXPECTED_PARTITION_FILTER = [
-    " course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 )",
-    " ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )"
-    + " AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 5678 ) )",
-    " ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 5678 ) )"
-    + " AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 9012 ) )",
-    " course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 9012 )",
+    [
+        " quarter_id <> 1111 AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+    ],
+    [
+        " quarter_id <> 1111 AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+    ],
 ]
 
 
@@ -239,18 +255,29 @@ def test_sqlserver_generate_table_partitions(cloud_sql):
             "-pk=course_id,quarter_id,student_id",
             "-hash=*",
             "-cdir=/home/users/yaml",
-            "-pn=4",
+            "-pn=9",
+            "-parts-per-file=5",
+            "-filters=quarter_id != 1111",
         ]
     )
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
+    yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
 
+    # First confirm that the paritioning was done correctly
     assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
+    # Number of partitions is as requested - assume table rows > partitions requested
+    assert len(partition_filters[0][0]) == partition_builder.args.partition_num
+    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+
+    # Next, that the partitions were split into the files correctly
+    # 2 files were created with upto 5 validations in each file
+    assert len(yaml_configs_list[0]["partitions"]) == 2
+    # 5 validations in the first file
+    assert len(yaml_configs_list[0]["partitions"][0]["yaml_config"]["validations"]) == 5
+    # 4 validations in the second file
+    assert len(yaml_configs_list[0]["partitions"][1]["yaml_config"]["validations"]) == 4
 
 
 @mock.patch(

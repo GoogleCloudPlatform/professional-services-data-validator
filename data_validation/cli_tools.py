@@ -954,14 +954,14 @@ def _add_common_arguments(optional_arguments, required_arguments):
     )
 
 
-def _check_no_partitions(value: str) -> int:
-    """Check that number of partitions is between [2-10,000]
+def check_no_yaml_files(partition_num, parts_per_file):
+    """Check that number of yaml files generated is less than 10,001
     Using function to validate rather than choices as error message prints all choices."""
-    if value.isdigit() and 2 <= int(value) <= 10000:
-        return int(value)
+    if math.ceil(partition_num / parts_per_file) < 10001:
+        return
     else:
         raise argparse.ArgumentTypeError(
-            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+            f"partition-num={partition_num} results in more than 10,000 yaml files. Reduce the number of partitions or increase the number of partitions within one file using the --parts-per-file argument"
         )
 
 
@@ -989,9 +989,8 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate, a number from 2 to 10,000",
-        type=_check_no_partitions,
-        metavar="[2-10000]",
+        type=int,
+        help="Number of partitions into which the table should be split",
     )
 
     # Optional arguments
@@ -1009,11 +1008,11 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         help="Path to SA key file for result handler output",
     )
     optional_arguments.add_argument(
-        "--vals-per-yaml",
-        "-vals-per-yaml",
+        "--parts-per-file",
+        "-parts-per-file",
         type=int,
         default=1,
-        help="Number of validations per yaml file.",
+        help="Number of partitions to be validated in a single yaml file.",
     )
     optional_arguments.add_argument(
         "--format",

@@ -77,12 +77,28 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    ' "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 )',
-    ' ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )'
-    + ' AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 5678 ) )',
-    ' ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 5678 ) )'
-    + ' AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 9012 ) )',
-    ' "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 9012 )',
+    [
+        ' quarter_id <> 1111 AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )',
+    ],
+    [
+        ' quarter_id <> 1111 AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )',
+    ],
 ]
 
 
@@ -109,18 +125,29 @@ def test_snowflake_generate_table_partitions():
             "-pk=COURSE_ID,QUARTER_ID,STUDENT_ID",
             "-hash=*",
             "-cdir=/home/users/yaml",
-            "-pn=4",
+            "-pn=9",
+            "-parts-per-file=5",
+            "-filters=quarter_id != 1111",
         ]
     )
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
+    yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
 
+    # First confirm that the paritioning was done correctly
     assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
+    # Number of partitions is as requested - assume table rows > partitions requested
+    assert len(partition_filters[0][0]) == partition_builder.args.partition_num
+    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
+
+    # Next, that the partitions were split into the files correctly
+    # 2 files were created with upto 5 validations in each file
+    assert len(yaml_configs_list[0]["partitions"]) == 2
+    # 5 validations in the first file
+    assert len(yaml_configs_list[0]["partitions"][0]["yaml_config"]["validations"]) == 5
+    # 4 validations in the second file
+    assert len(yaml_configs_list[0]["partitions"][1]["yaml_config"]["validations"]) == 4
 
 
 @mock.patch(

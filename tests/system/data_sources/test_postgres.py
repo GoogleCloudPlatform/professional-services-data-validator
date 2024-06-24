@@ -480,19 +480,29 @@ def mock_get_connection_config(*args):
         return BQ_CONN
 
 
-# Expected result from partitioning table on 3 keys
+# Expected result from partitioning table into 9 partitions on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) )"
-        + " AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) )"
-        + " AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
     ],
 ]
 
@@ -520,7 +530,8 @@ def test_postgres_generate_table_partitions(cloud_sql):
             "-pk=course_id,quarter_id,approved",
             "-hash=*",
             "-cdir=/home/users/yaml",
-            "-pn=3",
+            "-pn=9",
+            "-parts-per-file=5",
             "-filters=quarter_id != 1111",
         ]
     )
@@ -528,16 +539,20 @@ def test_postgres_generate_table_partitions(cloud_sql):
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
     yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
-    
+
     # First confirm that the paritioning was done correctly
     assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
+    # Number of partitions is as requested - assume table rows > partitions requested
+    assert len(partition_filters[0][0]) == partition_builder.args.partition_num
     assert partition_filters[0] == EXPECTED_PARTITION_FILTER
-    breakpoint()
 
     # Next, that the partitions were split into the files correctly
+    # 2 files were created with upto 5 validations in each file
+    assert len(yaml_configs_list[0]["partitions"]) == 2
+    # 5 validations in the first file
+    assert len(yaml_configs_list[0]["partitions"][0]["yaml_config"]["validations"]) == 5
+    # 4 validations in the second file
+    assert len(yaml_configs_list[0]["partitions"][1]["yaml_config"]["validations"]) == 4
 
 
 def test_schema_validation(cloud_sql):

@@ -344,16 +344,16 @@ class PartitionBuilder:
                 "partitions": [],
             }
             for i, pos in enumerate(
-                range(0, len(filter_list[0]), self.args.vals_per_file)
+                range(0, len(filter_list[0]), self.args.parts_per_file)
             ):
                 source_filters = (
-                    filter_list[0][pos : pos + self.args.vals_per_file]
-                    if pos + self.args.vals_per_file < len(filter_list[0])
+                    filter_list[0][pos : pos + self.args.parts_per_file]
+                    if pos + self.args.parts_per_file < len(filter_list[0])
                     else filter_list[0][pos:]
                 )
                 target_filters = (
-                    filter_list[1][pos : pos + self.args.vals_per_file]
-                    if pos + self.args.vals_per_file < len(filter_list[1])
+                    filter_list[1][pos : pos + self.args.parts_per_file]
+                    if pos + self.args.parts_per_file < len(filter_list[1])
                     else filter_list[1][pos:]
                 )
                 # Build and append partition YAML
