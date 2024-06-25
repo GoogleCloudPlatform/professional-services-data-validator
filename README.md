@@ -245,7 +245,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
   [--parts-per-file INT], [-parts-per-file INT] 
-                        Number of partitions in a yaml file. There is a cost to start up a container and have it run a yaml file. That cost can be spread across validating multiple partitions by specifying this optional argument. The default value is 1.
+                        Number of partitions in a yaml file. A yaml file can contain one (default) or more partitions. Having multiple partitions in one yaml file speads the cost of container start up accross multiple sequential validations. Different yaml files can be run in multiple containers in parallel.
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.

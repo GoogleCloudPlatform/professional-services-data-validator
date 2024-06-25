@@ -24,6 +24,7 @@ from data_validation import cli_tools, consts
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
 from data_validation.validation_builder import ValidationBuilder
+from data_validation.validation_builder import list_to_sublists
 
 
 class PartitionBuilder:
@@ -47,10 +48,9 @@ class PartitionBuilder:
         target_filters: List[str],
     ) -> Dict:
         """Return dict objects formatted for yaml validations. Qualify the configurations by adding the source and
-            target filters provided. Each filter pair will result in a DVT execution. Running multiple validations
-            sequentially minimizes the startup and shutdown overhead of containers - while still allowing some
-            level of parallelism to improve throughput,
-
+            target filters which validate individual partitions. Each filter pair will result in a DVT execution. Running multiple validations
+            sequentially spreads the startup and shutdown overhead of containers accross multiple partitions.
+            Parallelism can be achieved by running multiple yaml files in parallel.
 
         Args:
             config_managers (list[ConfigManager]): List of config manager instances.
@@ -341,26 +341,22 @@ class PartitionBuilder:
 
             yaml_configs_list[ind] = {
                 "target_folder_name": config_manager.full_source_table,
-                "partitions": [],
+                "yaml_files": [],
             }
-            for i, pos in enumerate(
-                range(0, len(filter_list[0]), self.args.parts_per_file)
-            ):
-                source_filters = (
-                    filter_list[0][pos : pos + self.args.parts_per_file]
-                    if pos + self.args.parts_per_file < len(filter_list[0])
-                    else filter_list[0][pos:]
-                )
-                target_filters = (
-                    filter_list[1][pos : pos + self.args.parts_per_file]
-                    if pos + self.args.parts_per_file < len(filter_list[1])
-                    else filter_list[1][pos:]
-                )
+
+            # Create a list of lists chunked by partitions per file
+            source_filters_list = list_to_sublists(
+                filter_list[0], self.args.parts_per_file
+            )
+            target_filters_list = list_to_sublists(
+                filter_list[1], self.args.parts_per_file
+            )
+            for i, source_filters in enumerate(source_filters_list):
                 # Build and append partition YAML
                 yaml_config = self._add_filters_get_yaml(
-                    config_manager, source_filters, target_filters
+                    config_manager, source_filters, target_filters_list[i]
                 )
-                yaml_configs_list[ind]["partitions"].append(
+                yaml_configs_list[ind]["yaml_files"].append(
                     {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
                 )
         return yaml_configs_list
@@ -379,9 +375,9 @@ class PartitionBuilder:
         for table in yaml_configs_list:
             target_folder_name = table["target_folder_name"]
             target_folder_path = os.path.join(self.config_dir, target_folder_name)
-            for partition in table["partitions"]:
-                yaml_config = partition["yaml_config"]
-                target_file_name = partition["target_file_name"]
+            for yaml_file in table["yaml_files"]:
+                yaml_config = yaml_file["yaml_config"]
+                target_file_name = yaml_file["target_file_name"]
                 target_file_path = os.path.join(target_folder_path, target_file_name)
                 cli_tools.store_validation(
                     target_file_path, yaml_config, include_log=False

@@ -955,14 +955,21 @@ def _add_common_arguments(optional_arguments, required_arguments):
     )
 
 
+def _check_positive(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+
 def check_no_yaml_files(partition_num, parts_per_file):
     """Check that number of yaml files generated is less than 10,001
-    Using function to validate rather than choices as error message prints all choices."""
+    Will be invoked after all the arguments are processed."""
     if math.ceil(partition_num / parts_per_file) < 10001:
         return
     else:
         raise argparse.ArgumentTypeError(
-            f"partition-num={partition_num} results in more than 10,000 yaml files. Reduce the number of partitions or increase the number of partitions within one file using the --parts-per-file argument"
+            f"partition-num={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by using the --parts-per-file argument or decreasing the number of partitions."
         )
 
 
@@ -990,7 +997,7 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
         "--partition-num",
         "-pn",
         required=True,
-        type=int,
+        type=_check_positive,
         help="Number of partitions into which the table should be split",
     )
 
@@ -1011,7 +1018,7 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
     optional_arguments.add_argument(
         "--parts-per-file",
         "-parts-per-file",
-        type=int,
+        type=_check_positive,
         default=1,
         help="Number of partitions to be validated in a single yaml file.",
     )
