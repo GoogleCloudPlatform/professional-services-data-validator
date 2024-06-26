@@ -172,11 +172,11 @@ def test_oracle_generate_table_partitions():
 
     # Next, that the partitions were split into the files correctly
     # 2 files were created with upto 5 validations in each file
-    assert len(yaml_configs_list[0]["partitions"]) == 2
+    assert len(yaml_configs_list[0]["yaml_files"]) == 2
     # 5 validations in the first file
-    assert len(yaml_configs_list[0]["partitions"][0]["yaml_config"]["validations"]) == 5
+    assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
     # 4 validations in the second file
-    assert len(yaml_configs_list[0]["partitions"][1]["yaml_config"]["validations"]) == 4
+    assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
 
 
 @mock.patch(
