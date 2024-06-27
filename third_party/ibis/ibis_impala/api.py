@@ -193,13 +193,17 @@ def _chunks_to_pandas_array(chunks):
 def _if_null(op):
     return ops.Coalesce((op.arg, op.ifnull_expr))
 
+
 @lru_cache(maxsize=2)
 def _get_schema_using_query(self, query):
     # Removing LIMIT 0 around query since it returns no results in Hive
     cur = self.raw_sql(query + " LIMIT 1")
     cur.fetchone()
     cur.description = [
-        (description[0].split(".")[-1] if "." in description[0] else description[0], *description[1:])
+        (
+            description[0].split(".")[-1] if "." in description[0] else description[0],
+            *description[1:],
+        )
         for description in cur.description
     ]
     ibis_fields = self._adapt_types(cur.description)
