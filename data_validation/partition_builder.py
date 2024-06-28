@@ -252,9 +252,6 @@ class PartitionBuilder:
                 )
             )
 
-            print(source_where_list)
-            print(target_where_list)
-
             for i in range(1, first_elements.shape[0] - 1):
                 filter_source_clause = geq_value(
                     source_table,
