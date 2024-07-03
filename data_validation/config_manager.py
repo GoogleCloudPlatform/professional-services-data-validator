@@ -975,7 +975,7 @@ class ConfigManager(object):
                 "cast",
                 "ifnull",
                 "rstrip",
-                "upper",
+                # "upper",
                 "concat",
                 "hash",
             ]
@@ -984,7 +984,7 @@ class ConfigManager(object):
                 "cast",
                 "ifnull",
                 "rstrip",
-                "upper",
+                # "upper",
                 "concat",
             ]
         column_aliases = {}
