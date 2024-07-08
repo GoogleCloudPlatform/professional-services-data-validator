@@ -187,6 +187,9 @@ def strftime_bigquery(translator, op):
             arg_formatted,
             arg_type.timezone if arg_type.timezone is not None else "UTC",
         )
+    # Deal with issue 1181 which appears to be due a GoogleSQL bug with dates before 1000 CE 
+    if format_str.value == '%Y-%m-%d' :
+        fmt_string="'%4Y-%m-%d'"
     return "FORMAT_{}({}, {})".format(
         strftime_format_func_name, fmt_string, arg_formatted
     )
@@ -658,6 +661,7 @@ if Db2ExprTranslator:
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
+SpannerExprTranslator._registry[Strftime] = strftime_bigquery
 SpannerExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
