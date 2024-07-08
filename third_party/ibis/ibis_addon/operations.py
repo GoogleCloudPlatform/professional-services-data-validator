@@ -178,6 +178,9 @@ def strftime_bigquery(translator, op):
     arg_type = arg.output_dtype
     strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
     fmt_string = translator.translate(format_str)
+    # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types
+    if format_str.value.startswith("%Y"):
+        fmt_string = fmt_string.replace("%Y", "%4Y", 1)
     arg_formatted = translator.translate(arg)
     if isinstance(arg_type, dt.Timestamp):
         return "FORMAT_{}({}, {}({}), {!r})".format(
@@ -187,9 +190,6 @@ def strftime_bigquery(translator, op):
             arg_formatted,
             arg_type.timezone if arg_type.timezone is not None else "UTC",
         )
-    # Deal with issue 1181 which appears to be due a GoogleSQL bug with dates before 1000 CE
-    if format_str.value == "%Y-%m-%d":
-        fmt_string = "'%4Y-%m-%d'"
     return "FORMAT_{}({}, {})".format(
         strftime_format_func_name, fmt_string, arg_formatted
     )
@@ -661,7 +661,6 @@ if Db2ExprTranslator:
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
-SpannerExprTranslator._registry[Strftime] = strftime_bigquery
 SpannerExprTranslator._registry[HashBytes] = format_hashbytes_bigquery
 SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
