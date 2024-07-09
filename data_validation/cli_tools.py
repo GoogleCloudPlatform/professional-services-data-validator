@@ -444,6 +444,14 @@ def _configure_row_parser(
             "padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n))."
         ),
     )
+    optional_arguments.add_argument(
+        "--case-insensitive-match",
+        "-cim",
+        action="store_true",
+        help=(
+            "Performs a case insensitive match by adding an UPPER() before comparison."
+        ),
+    )
     # Generate-table-partitions does not support random row
     if not is_generate_partitions:
         optional_arguments.add_argument(
@@ -1314,6 +1322,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "filter_config": filter_config,
             "filter_status": filter_status,
             "trim_string_pks": getattr(args, "trim_string_pks", False),
+            "case_insensitive_match": getattr(args, "case_insensitive_match", False),
             "verbose": args.verbose,
         }
         pre_build_configs_list.append(pre_build_configs)
