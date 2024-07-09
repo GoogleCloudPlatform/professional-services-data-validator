@@ -33,7 +33,7 @@ def _compiles_strftime(translator, op):
     fmt_string = translator.translate(format_str)
     # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types
     if format_str.value.startswith("%Y"):
-        fmt_string = fmt_string.replace("%Y", "%4Y", 1)
+        fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
     arg_formatted = translator.translate(arg)
     if isinstance(arg_type, dt.Timestamp) and arg_type.timezone is None:
         # As per issue-767, fixes issue in Spanner where TIMESTAMP() function
