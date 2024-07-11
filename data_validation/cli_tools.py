@@ -955,14 +955,14 @@ def _add_common_arguments(optional_arguments, required_arguments):
     )
 
 
-def _check_positive(value):
+def _check_positive(value: int) -> int:
     ivalue = int(value)
     if ivalue <= 0:
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
 
 
-def check_no_yaml_files(partition_num, parts_per_file):
+def check_no_yaml_files(partition_num:int, parts_per_file: int):
     """Check that number of yaml files generated is less than 10,001
     Will be invoked after all the arguments are processed."""
     if math.ceil(partition_num / parts_per_file) < 10001:
