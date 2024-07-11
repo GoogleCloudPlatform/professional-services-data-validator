@@ -962,7 +962,7 @@ def _check_positive(value: int) -> int:
     return ivalue
 
 
-def check_no_yaml_files(partition_num:int, parts_per_file: int):
+def check_no_yaml_files(partition_num: int, parts_per_file: int):
     """Check that number of yaml files generated is less than 10,001
     Will be invoked after all the arguments are processed."""
     if math.ceil(partition_num / parts_per_file) < 10001:
@@ -1017,7 +1017,7 @@ def _add_common_partition_arguments(optional_arguments, required_arguments):
     )
     optional_arguments.add_argument(
         "--parts-per-file",
-        "-parts-per-file",
+        "-ppf",
         type=_check_positive,
         default=1,
         help="Number of partitions to be validated in a single yaml file.",

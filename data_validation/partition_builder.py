@@ -41,19 +41,22 @@ class PartitionBuilder:
 
         return self.args.config_dir
 
-    def _add_filters_get_yaml(
+    def _add_filters_get_yaml_file(
         self,
         config_manager: ConfigManager,
         source_filters: List[str],
         target_filters: List[str],
     ) -> Dict:
-        """Return dict objects formatted for yaml validations. Qualify the configurations by adding the source and
-            target filters which validate individual partitions. Each filter pair will result in a DVT execution. Running multiple validations
-            sequentially spreads the startup and shutdown overhead of containers accross multiple partitions.
-            Parallelism can be achieved by running multiple yaml files in parallel.
+        """Given a ConfigManager object (from the. input args to generate-partitions), add the filters,
+            and return a dict that can be output to a yaml file to run validations. Each filter represents
+            one partition of the table.
 
         Args:
-            config_managers (list[ConfigManager]): List of config manager instances.
+            config_manager ConfigManager: List of config manager instances.
+            source_filters, target_filters: list of filters - for splitting the table into partitions.
+        Returns:
+            A dict which represents a yaml file. Since a yaml file can contain multiple partitions being validated
+            sequentially, there could be multiple yaml validation blocks.
         """
         # Create multiple yaml validation blocks corresponding to the filters provided
         yaml_validations = []
@@ -109,15 +112,14 @@ class PartitionBuilder:
         ).replace("t0.", "")
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
-        """Generate where clauses for each partition for each table pair. We have to create separate where for the source and
-            target as they may each have a different filter applied to them. We are partitioning the tables based on keys, so that
-            we get equivalent sized partitions that can be compared against each other. With this approach, we can validate the
-            partitions in parallel leading to horizontal scaling of DVT. The design doc for this section is available in
+        """Given self.config_managers - i.e. a list of table pairs for row validation, generate the paritition filter
+            list for each table pair, source and target. The partition filter is the string that is used in the where
+            clause - i.e. where 'x >=25 and x <50' The design doc for this section is available in
             docs/internal/partition_table_prd.md
 
         Returns:
-            A list of where clauses for the source tables for each table pair
-            Therefore you get a list of lists.
+            A list of list of list of strings for the source and target tables for each table pair
+            i.e. (list of strings - 1 per partition) x (source and target) x (number of table pairs)
         """
         master_filter_list = []
         for config_manager in self.config_managers:  # For each pair of tables
@@ -326,17 +328,16 @@ class PartitionBuilder:
         ConfigManager objects.
 
         Args:
-            partition_filters (List[List[List[str]]]): List of List of Partition filters
-            for all Table/ConfigManager objects, two list of filters for each configManager object,
-            one for the source and one for the target
-
+            self.config_managers is a list of table pairs to which the partition filters must be applied.
+            partition_filters (List[List[List[str]]]): List of a List of a list of Partition filters
+            - which is (list of filter strings, one per partition) x 2 (source & target) x number of table pairs
+            In most cases, generate-partitions is only called with one source and one target table - i.e. 1 pair.
         Returns:
-            yaml_configs_list (List[Dict]): List of YAML configs for all tables
+            yaml_configs_list (List[Dict]): List of YAML dicts (folder), one folder for each table pair being validated.
         """
         table_count = len(self.config_managers)
-        yaml_configs_list = [None] * table_count
-        for ind in range(table_count):
-            config_manager = self.config_managers[ind]
+        yaml_configs_list = [None] * len(self.config_managers)
+        for ind, config_manager in enumerate(self.config_managers):
             filter_list = partition_filters[ind]
 
             yaml_configs_list[ind] = {
@@ -345,16 +346,18 @@ class PartitionBuilder:
             }
 
             # Create a list of lists chunked by partitions per file
+            # Both source and target table are divided into the same number of partitions, so we are
+            # guaranteed filter_list[0] (source) and filter_list[1] (target) are of the same length
             source_filters_list = list_to_sublists(
                 filter_list[0], self.args.parts_per_file
             )
             target_filters_list = list_to_sublists(
                 filter_list[1], self.args.parts_per_file
             )
-            for i, source_filters in enumerate(source_filters_list):
+            for i in range(len(source_filters_list)):
                 # Build and append partition YAML
-                yaml_config = self._add_filters_get_yaml(
-                    config_manager, source_filters, target_filters_list[i]
+                yaml_config = self._add_filters_get_yaml_file(
+                    config_manager, source_filters_list[i], target_filters_list[i]
                 )
                 yaml_configs_list[ind]["yaml_files"].append(
                     {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}

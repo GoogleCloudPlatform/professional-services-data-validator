@@ -215,7 +215,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
 
 When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
-The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`). You can then run the configs in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+The command generates and stores multiple YAML validations each representing a chunk of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in one YAML file. The parameter parts -per-file, specifies the number of validations in one YAML file. The partitions are equally divided across many yaml files in one directory. You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
 The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
@@ -246,8 +246,8 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   --partition-num INT, -pn INT 
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
-  [--parts-per-file INT], [-parts-per-file INT] 
-                        Number of partitions in a yaml file. A yaml file can contain one (default) or more partitions. Having multiple partitions in one yaml file speads the cost of container start up accross multiple sequential validations. Different yaml files can be run in multiple containers in parallel.
+  [--parts-per-file INT], [-ppf INT] 
+                        Number of partitions in a yaml file, default value 1.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section

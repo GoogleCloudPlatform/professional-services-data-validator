@@ -1162,7 +1162,7 @@ def test_bigquery_generate_table_partitions(mock_conn):
             "-hash=*",
             "-cdir=/home/users/yaml",
             "-pn=9",
-            "-parts-per-file=5",
+            "-ppf=5",
             "-filters=quarter_id != 1111",
         ]
     )

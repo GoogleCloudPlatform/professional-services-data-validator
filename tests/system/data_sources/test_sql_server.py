@@ -256,7 +256,7 @@ def test_sqlserver_generate_table_partitions(cloud_sql):
             "-hash=*",
             "-cdir=/home/users/yaml",
             "-pn=9",
-            "-parts-per-file=5",
+            "-ppf=5",
             "-filters=quarter_id != 1111",
         ]
     )
