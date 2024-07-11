@@ -159,10 +159,9 @@ class ValidationBuilder(object):
 
     def add_config_calculated_fields(self):
         """Add calculated fields to Query"""
-        calc_fields = self.config_manager.calculated_fields
-        if calc_fields is not None:
-            for calc_field in calc_fields:
-                self.add_calc(calc_field)
+        # self.config_manager.calculated_fields could be None, hence the or [] below
+        for calc_field in self.config_manager.calculated_fields or []:
+            self.add_calc(calc_field)
 
     def add_primary_keys(self, primary_keys=None):
         primary_keys = primary_keys or self.config_manager.primary_keys
