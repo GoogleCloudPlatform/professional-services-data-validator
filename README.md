@@ -208,6 +208,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
@@ -246,10 +248,23 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
   [--parts-per-file INT], [-parts-per-file INT] 
                         Number of partitions in a yaml file. A yaml file can contain one (default) or more partitions. Having multiple partitions in one yaml file speads the cost of container start up accross multiple sequential validations. Different yaml files can be run in multiple containers in parallel.
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt FORMAT]
+                        Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
 ```
 #### Schema Validations
 
@@ -476,7 +491,7 @@ View the complete YAML file for a Grouped Column validation on the
 You can scale DVT for large table validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/internal/distributed_jobs.md) for a detailed overview.
 
 
-We recommend first generating table partitions with the `generate-table-partitions` command for your large tables. Then, use Cloud Run or GKE to distribute validating each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started. 
+We recommend first generating table partitions with the `generate-table-partitions` command for your large tables. Then, use Cloud Run or GKE to distribute validating each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started.
 
 When running DVT in a distributed fashion, both the `--kube-completions` and `--config-dir` flags are required. The `--kube-completions` flag specifies that the validation is being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (i.e. a `--config-file` is provided instead), a warning is issued.
 
