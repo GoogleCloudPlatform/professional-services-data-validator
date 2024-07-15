@@ -913,7 +913,7 @@ def check_no_yaml_files(partition_num: int, parts_per_file: int):
         return
     else:
         raise argparse.ArgumentTypeError(
-            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+            f"partition-num={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by using the --parts-per-file argument or decreasing the number of partitions."
         )
 
 
