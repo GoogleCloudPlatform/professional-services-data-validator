@@ -25,6 +25,7 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 )
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    id_type_test_assertions,
     null_not_null_assertions,
     run_test_from_cli_args,
 )
@@ -803,6 +804,57 @@ def test_row_validation_binary_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_char_pk_to_bigquery():
+    """PostgreSQL to BigQuery dvt_char_id row validation.
+    This is testing CHAR primary key join columns.
+    Includes random row filter test.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=pg-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_char_id",
+            "--primary-keys=id",
+            "--hash=id,other_data",
+            "--use-random-row",
+            "--random-row-batch-size=5",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_to_bigquery():
+    """PostgreSQL to BigQuery dvt_pangrams row validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=pg-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_pangrams",
+            "--primary-keys=id",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
 
 
 @mock.patch(

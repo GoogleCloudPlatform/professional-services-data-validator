@@ -203,75 +203,41 @@ def _configure_partition_parser(subparsers):
     """Configure arguments to generate partitioned config files."""
     partition_parser = subparsers.add_parser(
         "generate-table-partitions",
-        help=(
-            "Generate partitions for validation and store the Config files in "
-            "a directory"
-        ),
+        help=("Generate table partitions and store validation config files"),
     )
-
-    # Group all optional arguments together
     optional_arguments = partition_parser.add_argument_group("optional arguments")
-    optional_arguments.add_argument(
-        "--threshold",
-        "-th",
-        type=threshold_float,
-        help="Float max threshold for percent difference",
-    )
-    optional_arguments.add_argument(
-        "--filters",
-        "-filters",
-        help="Filters in the format source_filter:target_filter",
-    )
-
-    # Group all required arguments together
     required_arguments = partition_parser.add_argument_group("required arguments")
+
+    _configure_row_parser(
+        partition_parser,
+        optional_arguments,
+        required_arguments,
+        is_generate_partitions=True,
+    )
+    optional_arguments.add_argument(
+        "--parts-per-file",
+        "-ppf",
+        type=_check_positive,
+        default=1,
+        help="Number of partitions to be validated in a single yaml file.",
+    ) 
     required_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
+        "--config-dir",
+        "-cdir",
         required=True,
-        help="Comma separated list of primary key columns 'col_a,col_b'",
+        help="Directory path to store YAML config files. "
+        "GCS: Provide a full gs:// path of the target directory. "
+        "Eg: `gs://<BUCKET>/partitons_dir`. "
+        "Local: Provide a relative path of the target directory. "
+        "Eg: `partitions_dir`",
     )
     required_arguments.add_argument(
-        "--tables-list",
-        "-tbls",
+        "--partition-num",
+        "-pn",
         required=True,
-        help=(
-            "Comma separated tables list in the form "
-            "'schema.table=target_schema.target_table'"
-        ),
+        help="Number of partitions into which the table should be split",
+        type=_check_positive,
     )
-
-    # Group for mutually exclusive required arguments. Either must be supplied
-    mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(
-        required=True
-    )
-    mutually_exclusive_arguments.add_argument(
-        "--hash",
-        "-hash",
-        help=(
-            "Comma separated list of columns for hash 'col_a,col_b' or * for "
-            "all columns"
-        ),
-    )
-    mutually_exclusive_arguments.add_argument(
-        "--concat",
-        "-concat",
-        help=(
-            "Comma separated list of columns for concat 'col_a,col_b' or * "
-            "for all columns"
-        ),
-    )
-
-    mutually_exclusive_arguments.add_argument(
-        "--comparison-fields",
-        "-comp-fields",
-        help=(
-            "Individual columns to compare. If comparing a calculated field use "
-            "the column alias."
-        ),
-    )
-
-    _add_common_partition_arguments(optional_arguments, required_arguments)
 
 
 def _configure_beta_parser(subparsers):
@@ -445,7 +411,9 @@ def _configure_validate_parser(subparsers):
     _configure_column_parser(column_parser)
 
     row_parser = validate_subparsers.add_parser("row", help="Run a row validation")
-    _configure_row_parser(row_parser)
+    optional_arguments = row_parser.add_argument_group("optional arguments")
+    required_arguments = row_parser.add_argument_group("required arguments")
+    _configure_row_parser(row_parser, optional_arguments, required_arguments)
 
     schema_parser = validate_subparsers.add_parser(
         "schema", help="Run a schema validation"
@@ -458,11 +426,15 @@ def _configure_validate_parser(subparsers):
     _configure_custom_query_parser(custom_query_parser)
 
 
-def _configure_row_parser(row_parser):
+def _configure_row_parser(
+    parser,
+    optional_arguments,
+    required_arguments,
+    is_generate_partitions=False,
+    is_custom_query=False,
+):
     """Configure arguments to run row level validations."""
-
     # Group optional arguments
-    optional_arguments = row_parser.add_argument_group("optional arguments")
     optional_arguments.add_argument(
         "--threshold",
         "-th",
@@ -475,26 +447,45 @@ def _configure_row_parser(row_parser):
         help="Filters in the format source_filter:target_filter",
     )
     optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
+        "--trim-string-pks",
+        "-tsp",
         action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
+        help=(
+            "Trims string based primary key values, intended for use when one engine uses "
+            "padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n))."
+        ),
     )
     optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
+        "--case-insensitive-match",
+        "-cim",
+        action="store_true",
+        help=(
+            "Performs a case insensitive match by adding an UPPER() before comparison."
+        ),
     )
+    # Generate-table-partitions and custom-query does not support random row
+    if not (is_generate_partitions or is_custom_query):
+        optional_arguments.add_argument(
+            "--use-random-row",
+            "-rr",
+            action="store_true",
+            help="Finds a set of random rows of the first primary key supplied.",
+        )
+        optional_arguments.add_argument(
+            "--random-row-batch-size",
+            "-rbs",
+            help="Row batch size used for random row filters (default 10,000).",
+        )
 
     # Group required arguments
-    required_arguments = row_parser.add_argument_group("required arguments")
-    required_arguments.add_argument(
-        "--tables-list",
-        "-tbls",
-        default=None,
-        required=True,
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
-    )
+    if not is_custom_query:
+        required_arguments.add_argument(
+            "--tables-list",
+            "-tbls",
+            default=None,
+            required=True,
+            help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+        )
     required_arguments.add_argument(
         "--primary-keys",
         "-pk",
@@ -531,7 +522,11 @@ def _configure_row_parser(row_parser):
             "the column alias."
         ),
     )
-    _add_common_arguments(optional_arguments, required_arguments)
+    _add_common_arguments(
+        optional_arguments,
+        required_arguments,
+        is_generate_partitions=is_generate_partitions,
+    )
 
 
 def _configure_column_parser(column_parser):
@@ -691,42 +686,18 @@ def _configure_custom_query_parser(custom_query_parser):
 
 
 def _configure_custom_query_row_parser(custom_query_row_parser):
-    # Group optional arguments
     optional_arguments = custom_query_row_parser.add_argument_group(
         "optional arguments"
     )
-    optional_arguments.add_argument(
-        "--filters",
-        "-filters",
-        help="Filters in the format source_filter:target_filter",
-    )
-    optional_arguments.add_argument(
-        "--threshold",
-        "-th",
-        type=threshold_float,
-        help="Float max threshold for percent difference",
-    )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
-    )
-
-    # Group required arguments
     required_arguments = custom_query_row_parser.add_argument_group(
         "required arguments"
     )
-    required_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
-        required=True,
-        help="Comma separated list of primary key columns 'col_a,col_b'",
+
+    _configure_row_parser(
+        custom_query_row_parser,
+        optional_arguments,
+        required_arguments,
+        is_custom_query=True,
     )
 
     # Group for mutually exclusive source query arguments. Either must be supplied
@@ -758,30 +729,6 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         "-tq",
         help="Target sql query",
     )
-
-    # Group for mutually exclusive required arguments. Either must be supplied
-    required_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
-        required=True
-    )
-    required_mutually_exclusive.add_argument(
-        "--hash",
-        "-hash",
-        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
-    )
-    required_mutually_exclusive.add_argument(
-        "--concat",
-        "-concat",
-        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
-    )
-    required_mutually_exclusive.add_argument(
-        "--comparison-fields",
-        "-comp-fields",
-        help=(
-            "Individual columns to compare. If comparing a calculated field use "
-            "the column alias."
-        ),
-    )
-    _add_common_arguments(optional_arguments, required_arguments)
 
 
 def _configure_custom_query_column_parser(custom_query_column_parser):
@@ -909,7 +856,9 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     _add_common_arguments(optional_arguments, required_arguments)
 
 
-def _add_common_arguments(optional_arguments, required_arguments):
+def _add_common_arguments(
+    optional_arguments, required_arguments, is_generate_partitions=False
+):
     # Group all Required Arguments together
     required_arguments.add_argument(
         "--source-conn", "-sc", required=True, help="Source connection name"
@@ -930,16 +879,17 @@ def _add_common_arguments(optional_arguments, required_arguments):
         "-sa",
         help="Path to SA key file for result handler output",
     )
-    optional_arguments.add_argument(
-        "--config-file",
-        "-c",
-        help="Store the validation config in the YAML File Path specified",
-    )
-    optional_arguments.add_argument(
-        "--config-file-json",
-        "-cj",
-        help="Store the validation config in the JSON File Path specified to be used for application use cases",
-    )
+    if not is_generate_partitions:
+        optional_arguments.add_argument(
+            "--config-file",
+            "-c",
+            help="Store the validation config in the YAML File Path specified",
+        )
+        optional_arguments.add_argument(
+            "--config-file-json",
+            "-cj",
+            help="Store the validation config in the JSON File Path specified to be used for application use cases",
+        )
     optional_arguments.add_argument(
         "--format",
         "-fmt",
@@ -1370,8 +1320,8 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         args.command != "generate-table-partitions"
         and config_type != consts.SCHEMA_VALIDATION
     ):
-        use_random_rows = args.use_random_row
-        random_row_batch_size = args.random_row_batch_size
+        use_random_rows = getattr(args, "use_random_row", False)
+        random_row_batch_size = getattr(args, "random_row_batch_size", None)
 
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
@@ -1411,6 +1361,8 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "result_handler_config": result_handler_config,
             "filter_config": filter_config,
             "filter_status": filter_status,
+            "trim_string_pks": getattr(args, "trim_string_pks", False),
+            "case_insensitive_match": getattr(args, "case_insensitive_match", False),
             "verbose": args.verbose,
         }
         pre_build_configs_list.append(pre_build_configs)

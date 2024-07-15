@@ -178,6 +178,9 @@ def strftime_bigquery(translator, op):
     arg_type = arg.output_dtype
     strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
     fmt_string = translator.translate(format_str)
+    # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types
+    if format_str.value.startswith("%Y"):
+        fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
     arg_formatted = translator.translate(arg)
     if isinstance(arg_type, dt.Timestamp):
         return "FORMAT_{}({}, {}({}), {!r})".format(

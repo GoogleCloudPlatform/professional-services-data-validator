@@ -14,7 +14,7 @@
 
 import copy
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, List
 
 import google.oauth2.service_account
 import ibis.expr.datatypes as dt
@@ -111,6 +111,14 @@ class ConfigManager(object):
     def get_random_row_batch_size(self):
         """Return number of random rows or None."""
         return self.random_row_batch_size() if self.use_random_rows() else None
+
+    def trim_string_pks(self):
+        """Return if the validation should trim string primary keys."""
+        return self._config.get(consts.CONFIG_TRIM_STRING_PKS) or False
+
+    def case_insensitive_match(self):
+        """Return if the validation should perform a case insensitive match."""
+        return self._config.get(consts.CONFIG_CASE_INSENSITIVE_MATCH) or False
 
     def process_in_memory(self):
         """Return whether to process in memory or on a remote platform."""
@@ -459,6 +467,8 @@ class ConfigManager(object):
         result_handler_config=None,
         filter_config=None,
         filter_status=None,
+        trim_string_pks=None,
+        case_insensitive_match=None,
         verbose=False,
     ):
         if isinstance(filter_config, dict):
@@ -487,6 +497,8 @@ class ConfigManager(object):
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
             consts.CONFIG_FILTER_STATUS: filter_status,
+            consts.CONFIG_TRIM_STRING_PKS: trim_string_pks,
+            consts.CONFIG_CASE_INSENSITIVE_MATCH: case_insensitive_match,
         }
 
         return ConfigManager(
@@ -941,12 +953,23 @@ class ConfigManager(object):
 
         return col_config
 
+    def _get_order_of_operations(self, calc_type: str) -> List[str]:
+        """Return order of operations for row validation."""
+        order_of_operations = ["cast", "ifnull", "rstrip"]
+        if self.case_insensitive_match():
+            order_of_operations.append("upper")
+        if calc_type == "hash":
+            order_of_operations.extend(["concat", "hash"])
+        elif calc_type == "concat":
+            order_of_operations.append("concat")
+
+        return order_of_operations
+
     def build_dependent_aliases(self, calc_type, col_list=None):
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
 
-        order_of_operations = []
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -964,26 +987,9 @@ class ConfigManager(object):
                 if k in casefold_col_list
             }
 
-        if calc_type == "hash":
-            order_of_operations = [
-                "cast",
-                "ifnull",
-                "rstrip",
-                "upper",
-                "concat",
-                "hash",
-            ]
-        if calc_type == "concat":
-            order_of_operations = [
-                "cast",
-                "ifnull",
-                "rstrip",
-                "upper",
-                "concat",
-            ]
         column_aliases = {}
         col_names = []
-        for i, calc in enumerate(order_of_operations):
+        for i, calc in enumerate(self._get_order_of_operations(calc_type)):
             if i == 0:
                 previous_level = [x for x in casefold_source_columns.keys()]
             else:

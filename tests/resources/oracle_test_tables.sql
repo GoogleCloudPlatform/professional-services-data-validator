@@ -194,3 +194,62 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-3
 INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-4'), 4, 'Row 4');
 INSERT INTO pso_data_validator.dvt_binary VALUES (UTL_RAW.CAST_TO_RAW('DVT-key-5'), 5, 'Row 5');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_string_id;
+CREATE TABLE pso_data_validator.dvt_string_id
+(   id          VARCHAR2(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR2(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_string_id IS 'Integration test table used to test string pk matching.';
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-4', 'Row 4');
+INSERT INTO pso_data_validator.dvt_string_id VALUES ('DVT-key-5', 'Row 5');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_char_id;
+CREATE TABLE pso_data_validator.dvt_char_id
+(   id          CHAR(6) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR2(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_char_id IS 'Integration test table used to test CHAR pk matching.';
+INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT1', 'Row 1');
+INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT2', 'Row 2');
+INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT3', 'Row 3');
+INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT4', 'Row 4');
+INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT5', 'Row 5');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_pangrams;
+CREATE TABLE pso_data_validator.dvt_pangrams
+(   id          NUMBER(5)
+,   lang        VARCHAR2(100)
+,   words       VARCHAR2(1000 CHAR)
+,   words_en    VARCHAR2(1000)
+,   CONSTRAINT dvt_pangrams_pk PRIMARY KEY (id)
+);
+COMMENT ON TABLE pso_data_validator.dvt_pangrams IS 'Integration test table used to test unicode characters.';
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+-- Be sure to set "export NLS_LANG=.AL32UTF8" if inserting via SQL*Plus.
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (1,'Hebrew',
+        'שפן אכל קצת גזר בטעם חסה, ודי',
+        'A bunny ate some lettuce-flavored carrots, and he had enough');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (2,'Polish',
+        'Pchnąć w tę łódź jeża lub ośm skrzyń fig',
+        'Push a hedgehog or eight crates of figs in this boat');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (3,'Russian',
+        'Съешь ещё этих мягких французских булок, да выпей же чаю',
+        'Eat more of these soft French loaves and drink a tea');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (4,'Swedish',
+        'Schweiz för lyxfjäder på qvist bakom ugn',
+        'Switzerland brings luxury feather on branch behind oven');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (5,'Turkish',
+        'Pijamalı hasta yağız şoföre çabucak güvendi',
+        'The sick person in pyjamas quickly trusted the swarthy driver');
+COMMIT;

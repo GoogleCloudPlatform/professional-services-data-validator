@@ -210,6 +210,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
   [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
@@ -246,6 +248,11 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   --partition-num INT, -pn INT 
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
   [--parts-per-file INT], [-ppf INT] 
                         Number of partitions in a yaml file, default value 1.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
@@ -265,6 +272,8 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
   [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 #### Schema Validations
 
@@ -418,6 +427,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)

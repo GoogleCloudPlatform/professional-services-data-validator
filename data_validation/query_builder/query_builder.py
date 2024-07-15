@@ -200,7 +200,9 @@ class FilterField(object):
 
 
 class ComparisonField(object):
-    def __init__(self, field_name, alias=None, cast=None):
+    def __init__(
+        self, field_name: str, alias: str = None, cast: str = None, trim: bool = None
+    ):
         """A representation of a comparison field used to build a query.
 
         Args:
@@ -211,6 +213,7 @@ class ComparisonField(object):
         self.field_name = field_name
         self.alias = alias
         self.cast = cast
+        self.trim = trim
 
     def compile(self, ibis_table):
         # Fields are supplied on compile or on build
@@ -218,6 +221,8 @@ class ComparisonField(object):
         alias = self.alias or self.field_name
         if self.cast:
             comparison_field = comparison_field.force_cast(self.cast)
+        elif self.trim and comparison_field.type().is_string():
+            comparison_field = comparison_field.rstrip()
         comparison_field = comparison_field.name(alias)
 
         return comparison_field

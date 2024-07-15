@@ -107,6 +107,7 @@ class PartitionBuilder:
                 " ",
                 ibis.to_sql(table_expr, dialect="bigquery").sql.split("WHERE")[1],
             ).replace("t0.", "")
+
         return re.sub(
             r"\s\s+", " ", ibis.to_sql(table_expr).sql.split("WHERE")[1]
         ).replace("t0.", "")
@@ -176,7 +177,18 @@ class PartitionBuilder:
             # more efficient
             window1 = ibis.window(order_by=source_pks)
             row_number = (ibis.row_number().over(window1) + 1).name(consts.DVT_POS_COL)
-            dvt_keys = source_pks.copy()
+
+            if config_manager.trim_string_pks():
+                dvt_keys = []
+                for key in source_pks.copy():
+                    if source_table[key].type().is_string():
+                        rstrip_key = source_table[key].rstrip().name(key)
+                        dvt_keys.append(rstrip_key)
+                    else:
+                        dvt_keys.append(key)
+            else:
+                dvt_keys = source_pks.copy()
+
             dvt_keys.append(row_number)
             rownum_table = source_table.select(dvt_keys)
             # Rownum table is just the primary key columns in the source table along with
