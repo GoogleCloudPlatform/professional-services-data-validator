@@ -210,6 +210,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
   [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
@@ -265,6 +267,8 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
   [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 #### Schema Validations
 
@@ -418,6 +422,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)

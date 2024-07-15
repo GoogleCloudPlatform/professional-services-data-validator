@@ -159,10 +159,9 @@ class ValidationBuilder(object):
 
     def add_config_calculated_fields(self):
         """Add calculated fields to Query"""
-        calc_fields = self.config_manager.calculated_fields
-        if calc_fields is not None:
-            for calc_field in calc_fields:
-                self.add_calc(calc_field)
+        # self.config_manager.calculated_fields could be None, hence the or [] below
+        for calc_field in self.config_manager.calculated_fields or []:
+            self.add_calc(calc_field)
 
     def add_primary_keys(self, primary_keys=None):
         primary_keys = primary_keys or self.config_manager.primary_keys
@@ -264,12 +263,13 @@ class ValidationBuilder(object):
         # grab calc field metadata
         alias = primary_key.get(consts.CONFIG_FIELD_ALIAS)
         cast = primary_key.get(consts.CONFIG_CAST)
+        trim = self.config_manager.trim_string_pks()
         # check if valid calc field and return correct object
         source_field = ComparisonField(
-            field_name=source_field_name, alias=alias, cast=cast
+            field_name=source_field_name, alias=alias, cast=cast, trim=trim
         )
         target_field = ComparisonField(
-            field_name=target_field_name, alias=alias, cast=cast
+            field_name=target_field_name, alias=alias, cast=cast, trim=trim
         )
         self.source_builder.add_comparison_field(source_field)
         self.target_builder.add_comparison_field(target_field)

@@ -102,3 +102,48 @@ INSERT INTO `pso_data_validator`.`dvt_binary` VALUES
 (CAST('DVT-key-3' AS BYTES), 3, 'Row 3'),
 (CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
 (CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
+
+DROP TABLE `pso_data_validator`.`dvt_string_id`;
+CREATE TABLE `pso_data_validator`.`dvt_string_id`
+(   id          STRING(15) NOT NULL
+,   other_data  STRING(100)
+) OPTIONS (description='Integration test table used to test string pk matching.');
+INSERT INTO `pso_data_validator`.`dvt_string_id` VALUES
+('DVT-key-1', 'Row 1'),
+('DVT-key-2', 'Row 2'),
+('DVT-key-3', 'Row 3'),
+('DVT-key-4', 'Row 4'),
+('DVT-key-5', 'Row 5');
+
+DROP TABLE `pso_data_validator`.`dvt_char_id`;
+-- BigQuery does not have a specific padded CHAR data type.
+CREATE TABLE `pso_data_validator`.`dvt_char_id`
+(   id          STRING(6) NOT NULL
+,   other_data  STRING(100)
+) OPTIONS (description='Integration test table used to test CHAR pk matching.');
+INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
+('DVT1  ', 'Row 1'),
+('DVT2  ', 'Row 2'),
+('DVT3  ', 'Row 3'),
+('DVT4  ', 'Row 4'),
+('DVT5  ', 'Row 5');
+
+DROP TABLE `pso_data_validator`.`dvt_pangrams`;
+CREATE TABLE `pso_data_validator`.`dvt_pangrams`
+(   id          INT64
+,   lang        STRING(100)
+,   words       STRING(1000)
+,   words_en    STRING(1000)
+) OPTIONS (description='Integration test table used to test unicode characters.');
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+INSERT INTO `pso_data_validator`.`dvt_pangrams` VALUES
+(1,'Hebrew', 'שפן אכל קצת גזר בטעם חסה, ודי',
+ 'A bunny ate some lettuce-flavored carrots, and he had enough'),
+(2,'Polish', 'Pchnąć w tę łódź jeża lub ośm skrzyń fig',
+ 'Push a hedgehog or eight crates of figs in this boat'),
+(3,'Russian', 'Съешь ещё этих мягких французских булок, да выпей же чаю',
+ 'Eat more of these soft French loaves and drink a tea'),
+(4,'Swedish', 'Schweiz för lyxfjäder på qvist bakom ugn',
+ 'Switzerland brings luxury feather on branch behind oven'),
+(5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi',
+ 'The sick person in pyjamas quickly trusted the swarthy driver');

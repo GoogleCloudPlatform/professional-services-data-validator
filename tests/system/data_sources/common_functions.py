@@ -24,14 +24,21 @@ if TYPE_CHECKING:
     from pandas import DataFrame
 
 
-def binary_key_assertions(df):
-    """Standard assertions for binary key integration test.
-    These tests use BigQuery as a fixed target and execute against all other engines."""
-    # Should be 5 rows in the df all with status success.
-    assert len(df) == 5, "We expect 5 rows with status success from this validation"
+def id_type_test_assertions(df, expected_rows=5):
+    """Standard assertions for assorted primary key type integration tests."""
+    # Should be expected_rows rows in the df all with status success.
+    assert (
+        len(df) == expected_rows
+    ), f"We expect {expected_rows} rows with status success from this validation"
     assert all(
         _ == consts.VALIDATION_STATUS_SUCCESS for _ in df["validation_status"].to_list()
     ), "Not all rows have status 'success'"
+
+
+def binary_key_assertions(df):
+    """Standard assertions for binary key integration test.
+    These tests use BigQuery as a fixed target and execute against all other engines."""
+    id_type_test_assertions(df)
     # Validate a sample primary key value is hex(ish).
     sample_gbc = df["group_by_columns"].to_list().pop()
     sample_gbc = json.loads(sample_gbc)
