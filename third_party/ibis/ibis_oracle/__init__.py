@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sqlalchemy as sa
+from sqlalchemy.dialects.oracle.cx_oracle import OracleDialect_cx_oracle
 import re
 
 import ibis.expr.datatypes as dt
@@ -19,6 +20,29 @@ from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_oracle.compiler import OracleCompiler
 from third_party.ibis.ibis_oracle.datatypes import _get_type
+
+
+def _ora_denormalize_name(self, name):
+    """Modified version of sqlalchemy/engine/default.py.denormalize_name()
+
+    Removing self.identifier_preparer._requires_quotes() because the presence of
+    non standard characters should not affect whether we upper case or not.
+    """
+    if name is None:
+        return None
+
+    name_lower = name.lower()
+    name_upper = name.upper()
+    if name_upper == name_lower:
+        # name has no upper/lower conversion, e.g. non-european characters.
+        # return unchanged
+        return name
+    elif name_lower == name:
+        name = name_upper
+    return name
+
+
+OracleDialect_cx_oracle.denormalize_name = _ora_denormalize_name
 
 
 class Backend(BaseAlchemyBackend):
