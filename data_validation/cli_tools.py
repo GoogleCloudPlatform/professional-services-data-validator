@@ -220,7 +220,7 @@ def _configure_partition_parser(subparsers):
         type=_check_positive,
         default=1,
         help="Number of partitions to be validated in a single yaml file.",
-    ) 
+    )
     required_arguments.add_argument(
         "--config-dir",
         "-cdir",
