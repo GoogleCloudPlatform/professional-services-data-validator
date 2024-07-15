@@ -52,7 +52,7 @@ class PartitionBuilder:
             one partition of the table.
 
         Args:
-            config_manager ConfigManager: List of config manager instances.
+            config_manager ConfigManager: Config manager instance.
             source_filters, target_filters: list of filters - for splitting the table into partitions.
         Returns:
             A dict which represents a yaml file. Since a yaml file can contain multiple partitions being validated
