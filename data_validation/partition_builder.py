@@ -347,7 +347,6 @@ class PartitionBuilder:
         Returns:
             yaml_configs_list (List[Dict]): List of YAML dicts (folder), one folder for each table pair being validated.
         """
-        table_count = len(self.config_managers)
         yaml_configs_list = [None] * len(self.config_managers)
         for ind, config_manager in enumerate(self.config_managers):
             filter_list = partition_filters[ind]

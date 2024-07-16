@@ -255,11 +255,6 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Service account to use for BigQuery result handler output.
   [--parts-per-file INT], [-ppf INT] 
                         Number of partitions in a yaml file, default value 1.
-  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
-                        BigQuery destination for validation results. Defaults to stdout.
-                        See: *Validation Reports* section
-  [--service-account or -sa PATH_TO_SA_KEY]
-                        Service account to use for BigQuery result handler output.
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
