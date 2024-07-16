@@ -75,3 +75,18 @@ def run_test_from_cli_args(args: "Namespace") -> "DataFrame":
     config_manager = config_managers[0]
     validator = data_validation.DataValidation(config_manager.config, verbose=False)
     return validator.execute()
+
+
+def find_tables_assertions(command_output: str):
+    assert isinstance(command_output, str)
+    assert command_output
+    output_dict = json.loads(command_output)
+    assert output_dict
+    assert isinstance(output_dict, list)
+    assert isinstance(output_dict[0], dict)
+    assert len(output_dict) > 1
+    assert all(_["schema_name"] == "pso_data_validator" for _ in output_dict)
+    assert all(_["target_schema_name"] == "pso_data_validator" for _ in output_dict)
+    # Assert that a couple of known tables are in the map.
+    assert "dvt_core_types" in [_["table_name"] for _ in output_dict]
+    assert "dvt_core_types" in [_["target_table_name"] for _ in output_dict]

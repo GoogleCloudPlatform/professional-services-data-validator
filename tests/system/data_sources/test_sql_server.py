@@ -25,6 +25,7 @@ from data_validation import cli_tools, data_validation, consts
 from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
     run_test_from_cli_args,
@@ -585,3 +586,22 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """SQL Server to BigQuery test of find-tables command."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "find-tables",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "--allowed-schemas=pso_data_validator",
+        ]
+    )
+    output = main.find_tables_using_string_matching(args)
+    find_tables_assertions(output)
