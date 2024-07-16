@@ -462,7 +462,15 @@ def find_tables_using_string_matching(args):
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
     source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
-    target_table_map = get_table_map(target_client)
+    target_schema_filter = None
+    if score_cutoff == 1:
+        # No fuzzy matching therefore the schemas matched in the source will apply to the target.
+        target_schema_filter = list(
+            set(_["schema_name"] for _ in source_table_map.values())
+        )
+    target_table_map = get_table_map(
+        target_client, allowed_schemas=target_schema_filter
+    )
 
     table_configs = _compare_match_tables(
         source_table_map, target_table_map, score_cutoff=score_cutoff
