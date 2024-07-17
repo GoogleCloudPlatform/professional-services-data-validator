@@ -15,9 +15,7 @@
 import os
 from unittest import mock
 
-from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
-from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
@@ -26,6 +24,7 @@ from tests.system.data_sources.common_functions import (
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
+from tests.system.data_sources.common_functions import test_generate_partitions
 
 
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
@@ -137,47 +136,8 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_oracle_generate_table_partitions():
-    """Test generate table partitions on Oracle
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.test_generate_partitions=pso_data_validator.test_generate_partitions",
-            "-pk=course_id,quarter_id,student_id",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=9",
-            "-ppf=5",
-            "-filters=quarter_id != 1111",
-        ]
-    )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
-    yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
-
-    # First confirm that the paritioning was done correctly
-    assert len(partition_filters) == 1  # only one pair of tables
-    # Number of partitions is as requested - assume table rows > partitions requested
-    assert len(partition_filters[0][0]) == partition_builder.args.partition_num
-    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
-
-    # Next, that the partitions were split into the files correctly
-    # 2 files were created with upto 5 validations in each file
-    assert len(yaml_configs_list[0]["yaml_files"]) == 2
-    # 5 validations in the first file
-    assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
-    # 4 validations in the second file
-    assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
+    """Test generate table partitions on Oracle"""
+    test_generate_partitions(EXPECTED_PARTITION_FILTER)
 
 
 @mock.patch(

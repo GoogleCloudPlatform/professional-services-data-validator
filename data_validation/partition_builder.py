@@ -47,16 +47,17 @@ class PartitionBuilder:
         source_filters: List[str],
         target_filters: List[str],
     ) -> Dict:
-        """Given a ConfigManager object (from the. input args to generate-partitions), add the filters,
-            and return a dict that can be output to a yaml file to run validations. Each filter represents
-            one partition of the table.
+        """Given a ConfigManager object (from the input args to generate-partitions), add a source
+            and target filter, one at a time to create a validation block (one partition of the table).
+            The returned dict contains the config manager with multiple validation blocks,
+            which can be written to a yaml file. The number of validation blocks = length of the
+            filter lists is always equal to or less than parts-per-file parameter.
 
         Args:
             config_manager ConfigManager: Config manager instance.
             source_filters, target_filters: list of filters - for splitting the table into partitions.
         Returns:
-            A dict which represents a yaml file. Since a yaml file can contain multiple partitions being validated
-            sequentially, there could be multiple yaml validation blocks.
+            A dict which represents a yaml file.
         """
         # Create multiple yaml validation blocks corresponding to the filters provided
         yaml_validations = []
@@ -340,10 +341,12 @@ class PartitionBuilder:
         ConfigManager objects.
 
         Args:
-            self.config_managers is a list of table pairs to which the partition filters must be applied.
-            partition_filters (List[List[List[str]]]): List of a List of a list of Partition filters
+            self.config_managers is a list of config_manager objects. Each config_manager object in
+            list refers to a table pair (source and target) that are validated against each other.
+            In most cases, this list is of length 1 because it was invoked as -tbls src=targ. If it
+            was invoked with -tbls src1=targ1,src2=targ2 the self.config_managers will be of length
+            2. Partition_filters is a list of list of lists of Partition filters
             - which is (list of filter strings, one per partition) x 2 (source & target) x number of table pairs
-            In most cases, generate-partitions is only called with one source and one target table - i.e. 1 pair.
         Returns:
             yaml_configs_list (List[Dict]): List of YAML dicts (folder), one folder for each table pair being validated.
         """
