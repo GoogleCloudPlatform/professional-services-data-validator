@@ -24,7 +24,7 @@ from tests.system.data_sources.common_functions import (
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
-from tests.system.data_sources.common_functions import test_generate_partitions
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
@@ -137,7 +137,7 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_oracle_generate_table_partitions():
     """Test generate table partitions on Oracle"""
-    test_generate_partitions(EXPECTED_PARTITION_FILTER)
+    generate_partitions_test(EXPECTED_PARTITION_FILTER)
 
 
 @mock.patch(

@@ -23,7 +23,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import test_generate_partitions
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
 HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
@@ -132,7 +132,7 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_hive_generate_table_partitions():
     """Test generate table partitions on Hive"""
-    test_generate_partitions(EXPECTED_PARTITION_FILTER)
+    generate_partitions_test(EXPECTED_PARTITION_FILTER)
 
 
 @mock.patch(

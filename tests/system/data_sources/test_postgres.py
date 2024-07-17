@@ -27,9 +27,9 @@ from tests.system.data_sources.common_functions import (
     id_type_test_assertions,
     null_not_null_assertions,
     run_test_from_cli_args,
+    generate_partitions_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import test_generate_partitions
 
 # Local testing requires the Cloud SQL Proxy.
 # https://cloud.google.com/sql/docs/postgres/connect-admin-proxy
@@ -513,7 +513,7 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_postgres_generate_table_partitions(cloud_sql):
     """Test generate table partitions on Postgres"""
-    test_generate_partitions(
+    generate_partitions_test(
         EXPECTED_PARTITION_FILTER,
         tables="public.test_generate_partitions",
         pk="course_id,quarter_id,approved",

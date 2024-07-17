@@ -23,7 +23,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import test_generate_partitions
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 
 TERADATA_USER = os.getenv("TERADATA_USER", "udf")
@@ -382,7 +382,7 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_teradata_generate_table_partitions():
     """Test generate table partitions on BigQuery"""
-    test_generate_partitions(
+    generate_partitions_test(
         EXPECTED_PARTITION_FILTER,
         tables="udf.test_generate_partitions",
         filters="quarter_id <> 1111",

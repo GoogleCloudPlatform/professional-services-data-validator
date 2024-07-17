@@ -26,7 +26,7 @@ from data_validation import (
 )
 from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
-from tests.system.data_sources.common_functions import test_generate_partitions
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 
 PROJECT_ID = os.environ["PROJECT_ID"]
@@ -1146,7 +1146,7 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_bigquery_generate_table_partitions(mock_conn):
     """Test generate table partitions on BigQuery"""
-    test_generate_partitions(EXPECTED_PARTITION_FILTER)
+    generate_partitions_test(EXPECTED_PARTITION_FILTER)
 
 
 @mock.patch(
@@ -1207,7 +1207,7 @@ def test_schema_validation_core_types(mock_conn):
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
-def test_column_validation_core_types():
+def test_column_validation_core_types(mock_conn):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [

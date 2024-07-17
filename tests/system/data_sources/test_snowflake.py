@@ -25,7 +25,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import test_generate_partitions
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
@@ -109,7 +109,7 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_snowflake_generate_table_partitions():
     """Test generate table partitions on Snowflake"""
-    test_generate_partitions(
+    generate_partitions_test(
         EXPECTED_PARTITION_FILTER,
         tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
     )

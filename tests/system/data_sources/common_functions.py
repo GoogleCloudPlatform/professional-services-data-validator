@@ -82,22 +82,23 @@ def run_test_from_cli_args(args: "Namespace") -> "DataFrame":
     return validator.execute()
 
 
-def test_generate_partitions(
+def generate_partitions_test(
     expected_filter: str,
     pk="course_id,quarter_id,student_id",
     tables="pso_data_validator.test_generate_partitions",
     filters="quarter_id != 1111",
 ):
-    """Test generate table partitions for a database. Usually only the partition_filter we expect is different
+    """Test generate table partitions for a database. Usually only the partition_filter is different
     because of the differences in SQL between the databases. Some databases have different table names,
     Teradata has a different syntax for inequality and Postgres has different column names/types for primary keys.
     The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
     check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
+    a database that can handle SQL with row_number(), hence doing this as part of system testing.
     What we are checking
     1. the shape of the partition list is 1, number of partitions (only one table in the list)
     2. value of the partition list matches what we expect.
     """
+
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [

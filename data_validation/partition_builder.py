@@ -51,7 +51,8 @@ class PartitionBuilder:
             and target filter, one at a time to create a validation block (one partition of the table).
             The returned dict contains the config manager with multiple validation blocks,
             which can be written to a yaml file. The number of validation blocks = length of the
-            filter lists is always equal to or less than parts-per-file parameter.
+            filter lists = parts-per-file parameter (except for the last file because
+            parts-per-file may not divide partition-num evenly).
 
         Args:
             config_manager ConfigManager: Config manager instance.
@@ -114,10 +115,11 @@ class PartitionBuilder:
         ).replace("t0.", "")
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
-        """Given self.config_managers - i.e. a list of table pairs for row validation, generate the paritition filter
-            list for each table pair, source and target. The partition filter is the string that is used in the where
-            clause - i.e. where 'x >=25 and x <50' The design doc for this section is available in
-            docs/internal/partition_table_prd.md
+        """The PartitionBuilder object contains the configuration of the table pairs (source and target)
+           to be validated and the args (number of partitions). Generate the partitions for each table
+           pair and return the partition filter list for all table pairs . A partition
+           filter is the string that is used in the where clause - e.g. 'x >=25 and x <50'. The design
+           doc for this section is available in docs/internal/partition_table_prd.md
 
         Returns:
             A list of list of list of strings for the source and target tables for each table pair

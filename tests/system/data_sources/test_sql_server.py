@@ -28,7 +28,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import test_generate_partitions
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 
 # Local testing requires the Cloud SQL Proxy.
@@ -238,7 +238,7 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_sqlserver_generate_table_partitions(cloud_sql):
     """Test generate table partitions on sqlserver"""
-    test_generate_partitions(
+    generate_partitions_test(
         EXPECTED_PARTITION_FILTER, tables="dbo.test_generate_partitions"
     )
 
