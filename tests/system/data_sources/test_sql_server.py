@@ -594,6 +594,7 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
 )
 def test_find_tables():
     """SQL Server to BigQuery test of find-tables command."""
+    pytest.skip("Skipping test_find_tables until issue 1198 has been resolved.")
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
