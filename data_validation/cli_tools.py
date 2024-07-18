@@ -50,6 +50,7 @@ import logging
 import sys
 import uuid
 import os
+import math
 from argparse import Namespace
 from typing import Dict, List
 from yaml import Dumper, Loader, dump, load
@@ -213,6 +214,13 @@ def _configure_partition_parser(subparsers):
         required_arguments,
         is_generate_partitions=True,
     )
+    optional_arguments.add_argument(
+        "--parts-per-file",
+        "-ppf",
+        type=_check_positive,
+        default=1,
+        help="Number of partitions to be validated in a single yaml file.",
+    )
     required_arguments.add_argument(
         "--config-dir",
         "-cdir",
@@ -227,9 +235,8 @@ def _configure_partition_parser(subparsers):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate, a number from 2 to 10,000",
-        type=_check_no_partitions,
-        metavar="[2-10000]",
+        help="Number of partitions into which the table should be split",
+        type=_check_positive,
     )
 
 
@@ -898,15 +905,21 @@ def _add_common_arguments(
     )
 
 
-def _check_no_partitions(value: str) -> int:
-    """Check that number of partitions is between [2-10,000]
-    Using function to validate rather than choices as error message prints all choices.
-    """
-    if value.isdigit() and 2 <= int(value) <= 10000:
-        return int(value)
+def _check_positive(value: int) -> int:
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+
+def check_no_yaml_files(partition_num: int, parts_per_file: int):
+    """Check that number of yaml files generated is less than 10,001
+    Will be invoked after all the arguments are processed."""
+    if math.ceil(partition_num / parts_per_file) < 10001:
+        return
     else:
         raise argparse.ArgumentTypeError(
-            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+            f"partition-num={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by using the --parts-per-file argument or decreasing the number of partitions."
         )
 
 

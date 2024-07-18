@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 CREATE SCHEMA pso_data_validator;
-DROP TABLE pso_data_validator.dvt_core_types;
+DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
 CREATE TABLE pso_data_validator.dvt_core_types
 (   id              int NOT NULL PRIMARY KEY
 ,   col_int8        smallint
@@ -51,7 +51,7 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
  ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 -03:00');
 
-DROP TABLE pso_data_validator.dvt_ora2pg_types;
+DROP TABLE IF EXISTS pso_data_validator.dvt_ora2pg_types;
 CREATE TABLE pso_data_validator.dvt_ora2pg_types
 (   id              int NOT NULL PRIMARY KEY
 ,   col_num_4       smallint
@@ -116,7 +116,6 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 );
 
  /* Following table used for validating generating table partitions */
-\c guestbook
 drop table if exists public.test_generate_partitions ;
 CREATE TABLE public.test_generate_partitions (
         course_id VARCHAR(12),
@@ -162,7 +161,7 @@ INSERT INTO public.test_generate_partitions (course_id, quarter_id, recd_timesta
         ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
         ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5);
 
-DROP TABLE pso_data_validator.dvt_null_not_null;
+DROP TABLE IF EXISTS pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null
 (   col_nn             TIMESTAMP(0) NOT NULL
 ,   col_nullable       TIMESTAMP(0)
@@ -171,7 +170,7 @@ CREATE TABLE pso_data_validator.dvt_null_not_null
 );
 COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, PostgreSQL is assumed to be a DVT source (not target).';
 
-DROP TABLE pso_data_validator.dvt_pg_types;
+DROP TABLE IF EXISTS pso_data_validator.dvt_pg_types;
 CREATE TABLE pso_data_validator.dvt_pg_types
 (   id              serial NOT NULL PRIMARY KEY
 ,   col_int2        smallint
@@ -231,7 +230,7 @@ VALUES
 --,B'011', B'110'
 ,gen_random_uuid(),2);
 
-DROP TABLE pso_data_validator.dvt_large_decimals;
+DROP TABLE IF EXISTS pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
 (   id              DECIMAL(38) NOT NULL PRIMARY KEY
 ,   col_data        VARCHAR(10)
@@ -262,7 +261,7 @@ INSERT INTO pso_data_validator.dvt_large_decimals VALUES
 ,32345678901234567890123456789.123456789
 ,32345678.123456789012345678901234567890);
 
-DROP TABLE pso_data_validator.dvt_binary;
+DROP TABLE IF EXISTS pso_data_validator.dvt_binary;
 CREATE TABLE pso_data_validator.dvt_binary
 (   binary_id       bytea NOT NULL PRIMARY KEY
 ,   int_id          int NOT NULL
