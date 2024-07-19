@@ -188,6 +188,22 @@ data-validation connections add
     --user USER                                         Postgres user
     --password PASSWORD                                 Postgres password
     --database DATABASE                                 Postgres database
+    [--hostaddr HOSTADDR]                               May be required to supply an address that differs from the name in the host option
+    [--sslcert SSLCERT]                                 Local path to your client certificate (client-cert.pem) file
+    [--sslkey SSLKEY]                                   Local path to your private client key (client-key.pem) file
+    [--sslrootcert] SSLROOTCERT                         Local path to your root certificate (server-ca.pem) file
+    [--sslmode SSLMODE]                                 SSL mode
+```
+
+### Example TLS connection
+```
+data-validation connections add --connection-name pg_tls_ca Postgres \
+--host=10.1.0.2 --user=dvt_user --password=secret-password-123 \
+--database=appdb \
+--sslcert="/path/to/certs/client-cert.pem" \
+--sslkey=/path/to/certs/client-key.pem \
+--sslrootcert=/path/to/certs/server-ca.pem \
+--sslmode=verify-ca
 ```
 
 ## AlloyDB
@@ -202,6 +218,11 @@ data-validation connections add
     --user USER                                         Postgres user
     --password PASSWORD                                 Postgres password
     --database DATABASE                                 Postgres database
+    [--hostaddr HOSTADDR]                               May be required to supply an address that differs from the name in the host option
+    [--sslcert SSLCERT]                                 Local path to your client certificate (client-cert.pem) file
+    [--sslkey SSLKEY]                                   Local path to your private client key (client-key.pem) file
+    [--sslrootcert] SSLROOTCERT                         Local path to your root certificate (server-ca.pem) file
+    [--sslmode SSLMODE]                                 SSL mode
 ```
 
 ## MySQL
