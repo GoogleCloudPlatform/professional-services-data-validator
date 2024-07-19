@@ -217,7 +217,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
 
 When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
-The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`). You can then run the configs in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+The command generates and stores multiple YAML validations each representing a chunk of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in one YAML file. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
 The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
@@ -245,14 +245,16 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Directory Path to store YAML Config Files
                         GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
-  --partition-num [1-1000], -pn [1-1000]
-                        Number of partitions/config files to generate
+  --partition-num INT, -pn INT 
+                        Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
+  [--parts-per-file INT], [-ppf INT] 
+                        Number of partitions in a yaml file, default value 1.
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
