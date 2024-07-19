@@ -101,7 +101,7 @@ PARTITION_FILTERS_LIST = [
 YAML_CONFIGS_LIST = [
     {
         "target_folder_name": "test_table",
-        "partitions": [
+        "yaml_files": [
             {
                 "target_file_name": "0000.yaml",
                 "yaml_config": {
