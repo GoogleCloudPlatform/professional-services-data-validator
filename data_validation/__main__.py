@@ -715,6 +715,7 @@ def main():
     elif args.command == "validate":
         validate(args)
     elif args.command == "generate-table-partitions":
+        cli_tools.check_no_yaml_files(args.partition_num, args.parts_per_file)
         partition_and_store_config_files(args)
     elif args.command == "deploy":
         from data_validation import app
