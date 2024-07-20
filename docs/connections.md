@@ -189,6 +189,7 @@ data-validation connections add
     --password PASSWORD                                 Postgres password
     --database DATABASE                                 Postgres database
 ```
+DVT uses psycopg2, a python PostgreSQL adapter which supports a large number of connection parameters such as sslcerts, sslmode - [the complete list is here](https://www.postgresql.org/docs/current/libpq-envars.html). These can be set by setting the corresponding environment variable before invoking DVT. The parameters provided to DVT via the `connections add` command take precedence over the environment variables.
 
 ## AlloyDB
 Please note AlloyDB supports same connection config as Postgres.
