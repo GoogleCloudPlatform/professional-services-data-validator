@@ -20,7 +20,7 @@ import pytest
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools, data_validation, consts, __main__ as main
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_assertions,

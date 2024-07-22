@@ -17,8 +17,7 @@ from unittest import mock
 
 import pytest
 
-from data_validation import __main__ as main
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools, data_validation, consts, __main__ as main
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
