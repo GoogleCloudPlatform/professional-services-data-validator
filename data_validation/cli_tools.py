@@ -108,6 +108,23 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
         ["database", "Database in PostgreSQL to connect to (default postgres)"],
+        [
+            "hostaddr",
+            "(Optional) May be required to supply an address that differs from the name in the host option",
+        ],
+        [
+            "sslcert",
+            "(Optional) Local path to your client certificate (client-cert.pem) file",
+        ],
+        [
+            "sslkey",
+            "(Optional) Local path to your private client key (client-key.pem) file",
+        ],
+        [
+            "sslrootcert",
+            "(Optional) Local path to your root certificate (server-ca.pem) file",
+        ],
+        ["sslmode", "(Optional) SSL mode"],
     ],
     "Redshift": [
         ["host", "Desired Redshift host."],
