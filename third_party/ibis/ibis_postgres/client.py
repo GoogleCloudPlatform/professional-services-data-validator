@@ -32,6 +32,11 @@ def do_connect(
     schema: str = None,
     url: str = None,
     driver: Literal["psycopg2"] = "psycopg2",
+    hostaddr: str = None,
+    sslcert: str = None,
+    sslkey: str = None,
+    sslrootcert: str = None,
+    sslmode: str = None,
 ) -> None:
     # Override do_connect() method to remove DDL queries to CREATE/DROP FUNCTION
     if driver != "psycopg2":
@@ -50,6 +55,16 @@ def do_connect(
     connect_args = {}
     if schema is not None:
         connect_args["options"] = f"-csearch_path={schema}"
+    if hostaddr:
+        connect_args["hostaddr"] = hostaddr
+    if sslcert:
+        connect_args["sslcert"] = sslcert
+    if sslkey:
+        connect_args["sslkey"] = sslkey
+    if sslrootcert:
+        connect_args["sslrootcert"] = sslrootcert
+    if sslmode:
+        connect_args["sslmode"] = sslmode
 
     engine = sa.create_engine(
         alchemy_url, connect_args=connect_args, poolclass=sa.pool.StaticPool
