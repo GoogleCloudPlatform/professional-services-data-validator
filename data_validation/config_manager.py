@@ -14,7 +14,7 @@
 
 import copy
 import logging
-from typing import TYPE_CHECKING, Optional, Union, List
+from typing import TYPE_CHECKING, Optional, Union, List, Dict
 
 import google.oauth2.service_account
 import ibis.expr.datatypes as dt
@@ -508,6 +508,49 @@ class ConfigManager(object):
             verbose=verbose,
         )
 
+    def _add_rstrip_for_td_str_comp_fields(self, comparison_fields: List[str]):
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        string_comp_fields = []
+        full_comp_fields = []
+        calculated_configs = []
+        for comparison_field in comparison_fields:
+            if comparison_field.casefold() not in casefold_source_columns:
+                raise ValueError(f"Column DNE in source: {comparison_field}")
+            if comparison_field.casefold() not in casefold_target_columns:
+                raise ValueError(f"Column DNE in target: {comparison_field}")
+
+            source_ibis_type = source_table[
+                casefold_source_columns[comparison_field.casefold()]
+            ].type()
+            target_ibis_type = target_table[
+                casefold_target_columns[comparison_field.casefold()]
+            ].type()
+
+            if source_ibis_type.is_string() or target_ibis_type.is_string():
+                string_comp_fields.append(comparison_field.casefold())
+                full_comp_fields.append(f"rstrip__{comparison_field.casefold()}")
+            else:
+                full_comp_fields.append(comparison_field)
+
+        for field in string_comp_fields:
+            calculated_configs.append(
+                self.build_config_calculated_fields(
+                    [casefold_source_columns[field]],
+                    [casefold_target_columns[field]],
+                    "rstrip",
+                    f"rstrip__{field}",
+                    0,
+                )
+            )
+
+        print(calculated_configs)
+        self.append_calculated_fields(calculated_configs)
+        return full_comp_fields
+
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
@@ -842,11 +885,11 @@ class ConfigManager(object):
 
     def build_config_calculated_fields(
         self,
-        source_reference,
-        target_reference,
-        calc_type,
-        alias,
-        depth,
+        source_reference: list,
+        target_reference: list,
+        calc_type: str,
+        alias: str,
+        depth: int,
         supported_types=None,
         arg_value=None,
         custom_params: Optional[dict] = None,
@@ -965,7 +1008,7 @@ class ConfigManager(object):
 
         return order_of_operations
 
-    def build_dependent_aliases(self, calc_type, col_list=None):
+    def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
