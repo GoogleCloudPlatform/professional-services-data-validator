@@ -291,25 +291,19 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
                 args.comparison_fields, default_value=[]
             )
 
+            # As per #1190, add rstrip for Teradata string comparison fields
             if (
                 config_manager.source_client.name == "teradata"
                 or config_manager.target_client.name == "teradata"
             ):
 
-                full_comp_fields = config_manager._add_rstrip_for_td_str_comp_fields(
+                comparison_fields = config_manager.add_rstrip_to_comp_fields(
                     comparison_fields
                 )
-                print(full_comp_fields)
-                comp_config = config_manager.build_config_comparison_fields(
-                    full_comp_fields
-                )
-                print(comp_config)
-                config_manager.append_comparison_fields(comp_config)
 
-            else:
-                config_manager.append_comparison_fields(
-                    config_manager.build_config_comparison_fields(comparison_fields)
-                )
+            config_manager.append_comparison_fields(
+                config_manager.build_config_comparison_fields(comparison_fields)
+            )
 
         # Append primary_keys
         primary_keys = cli_tools.get_arg_list(args.primary_keys)
