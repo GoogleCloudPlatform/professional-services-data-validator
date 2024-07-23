@@ -67,8 +67,6 @@ from ibis.expr.operations import (
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
-import third_party.ibis.ibis_mysql.compiler
-import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
@@ -203,7 +201,18 @@ def strftime_mysql(translator, op):
     fmt_string = translator.translate(format_string)
     if isinstance(arg_type, dt.Timestamp):
         fmt_string = "%Y-%m-%d %H:%i:%S"
-    return sa.func.date_format(arg_formatted, fmt_string)
+    if isinstance(
+        arg_formatted.type, sa.dialects.mysql.types.DATETIME
+    ):  # Unaffected by session time
+        return sa.func.date_format(arg_formatted, fmt_string)
+    else:
+        return sa.func.date_format(
+            sa.func.cast(
+                arg_formatted.op("AT TIME ZONE INTERVAL")("+00:00"),
+                sa.dialects.mysql.types.DATETIME,
+            ),
+            fmt_string,
+        )
 
 
 def strftime_mssql(translator, op):

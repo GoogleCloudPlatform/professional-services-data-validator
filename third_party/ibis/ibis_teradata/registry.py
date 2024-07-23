@@ -77,6 +77,13 @@ def teradata_cast_decimal_to_string(compiled_arg, from_, to):
     return "TO_CHAR({},'TM9')".format(compiled_arg)
 
 
+@teradata_cast.register(str, dt.Time, dt.String)
+def teradata_cast_time_to_string(compiled_arg, from_, to):
+    # Time always has a time zone associated with it in Teradata
+    # No format here, so only providing HH:MM:SS
+    return f"CAST({compiled_arg} at time zone 'gmt' as Varchar(8))"
+
+
 @teradata_cast.register(str, dt.DataType, dt.DataType)
 def teradata_cast_generate(compiled_arg, from_, to):
     sql_type = ibis_type_to_teradata_type(to)
@@ -239,7 +246,12 @@ def _strftime(translator, op):
     arg_formatted = translator.translate(arg)
     tokens, _ = _scanner.scan(fmt_string)
     translated_format = _reduce_tokens(tokens)
-    return "TO_CHAR({}, {})".format(arg_formatted, translated_format)
+    if arg.output_dtype.timezone:  # has a time zone component
+        return "TO_CHAR({} at time zone 'gmt', {})".format(
+            arg_formatted, translated_format
+        )
+    else:
+        return "TO_CHAR({}, {})".format(arg_formatted, translated_format)
 
 
 _date_units = {

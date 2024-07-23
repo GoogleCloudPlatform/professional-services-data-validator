@@ -22,6 +22,7 @@ _teradatasql_to_ibis_type = {
     int: dt.int64,
     float: dt.float64,
     datetime.datetime: dt.timestamp,
+    datetime.time: dt.Time,
     decimal.Decimal: dt.decimal,
     str: dt.string,
     bytes: dt.binary,
@@ -177,6 +178,12 @@ class TeradataTypeTranslator(object):
             )
 
         return "TIMESTAMP WITH TIME ZONE"
+
+    @classmethod
+    def to_ibis_from_AT(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.time(nullable=cls._col_data_nullable(col_data))
+        return "TIME WITH TIME ZONE"
 
 
 ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")
