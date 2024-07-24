@@ -378,7 +378,10 @@ def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
         #     return (sa.cast(sa.func.trim_scale(arg), typ))
         precision = arg_dtype.precision or 38
         fmt = (
-            "FM" + ("9" * (precision - arg_dtype.scale)) + "." + ("9" * arg_dtype.scale)
+            "FM"
+            + ("9" * (precision - arg_dtype.scale - 1))
+            + "0."
+            + ("9" * arg_dtype.scale)
         )
         return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
     return None
