@@ -233,9 +233,11 @@ def strftime_mssql(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-    result = sa.func.convert(sa.text("VARCHAR(32)"), arg, convert_style)
-    return result
 
+    if isinstance(arg.type, sa.dialects.mssql.base.DATETIMEOFFSET) : # issue 929
+        return sa.func.convert(sa.text("VARCHAR(19)"), arg.op("AT TIME ZONE")("UTC"), convert_style)
+    else:
+        return sa.func.convert(sa.text("VARCHAR(32)"), arg, convert_style)
 
 def strftime_impala(t, op):
     import sqlglot as sg
@@ -528,7 +530,10 @@ def sa_cast_snowflake(t, op):
 
 
 def _sa_string_join(t, op):
-    return sa.func.concat(*map(t.translate, op.arg))
+    if len(op.arg)== 1: # SQL Server concat errs on one argument (issue #1202), so casting to string - i.e. identity op
+        return sa.func.cast(t.translate(op.arg[0]), sa.types.String,)
+    else:
+        return sa.func.concat(*map(t.translate, op.arg))
 
 
 def sa_format_new_id(t, op):
