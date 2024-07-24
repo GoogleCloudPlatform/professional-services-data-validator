@@ -104,9 +104,38 @@ def _cast(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
-    # Specialize going from a binary float type to a string.
-    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
-        sa_arg = t.translate(arg)
+    sa_arg = t.translate(arg)
+    if arg_dtype.is_decimal() and typ.is_string():
+        # Specialize going from decimal type to a string.
+        # Oracle has an edge case that non-zero values <1 are converted to a string without a leading zero.
+        # For example 0.5 becomes ".5", -0.5 becomes "-.5". This does not match most supported engines.
+        # When we have precision/scale we can use a TO_CHAR format but Oracle supports NUMBER(*) - without precision/scale.
+        # The ugly expression here is the only efficient way I can come up with
+        # to get the output we want:
+        #   SELECT CASE WHEN c1>0 AND c1<1 THEN '0'||TO_CHAR(0.5)
+        #               WHEN c1>-1 AND c1<0 THEN '-0'||TO_CHAR(ABS(0.5))
+        #               ELSE TO_CHAR(c1) END
+        #   FROM (SELECT 0.5 c1 FROM dual);
+        #
+        #   CAS
+        #   ---
+        #   0.5
+        return sa.literal_column(
+            (
+                "CASE "
+                f"WHEN {sa_arg}>0 AND {sa_arg}<1 THEN '0'||TO_CHAR({sa_arg}) "
+                f"WHEN {sa_arg}>-1 AND {sa_arg}<0 THEN '-0'||TO_CHAR(ABS({sa_arg})) "
+                f"ELSE TO_CHAR({sa_arg}) END"
+            )
+        )
+    elif arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(sa.func.rawtohex(sa_arg))
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.hextoraw(sa_arg)
+    elif (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
+        # Specialize going from a binary float type to a string.
         # This prevents output in scientific notation but we still have
         # problems with the lossy nature of BINARY_FLOAT/DOUBLE.
         return sa.func.to_char(sa_arg, "TM9")
