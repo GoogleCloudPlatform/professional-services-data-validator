@@ -80,7 +80,7 @@ def teradata_cast_decimal_to_string(compiled_arg, from_, to):
 @teradata_cast.register(str, dt.Time, dt.String)
 def teradata_cast_time_to_string(compiled_arg, from_, to):
     # Time always has a time zone associated with it in Teradata
-    # No format here, so only providing HH:MM:SS
+    # No format here, so only providing HH:MM:SS, issue #1189
     return f"CAST({compiled_arg} at time zone 'gmt' as Varchar(8))"
 
 
@@ -246,7 +246,7 @@ def _strftime(translator, op):
     arg_formatted = translator.translate(arg)
     tokens, _ = _scanner.scan(fmt_string)
     translated_format = _reduce_tokens(tokens)
-    if arg.output_dtype.timezone:  # has a time zone component
+    if arg.output_dtype.timezone:  # has a time zone component issue 929
         return "TO_CHAR({} at time zone 'gmt', {})".format(
             arg_formatted, translated_format
         )

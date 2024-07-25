@@ -205,7 +205,7 @@ def strftime_mysql(translator, op):
         arg_formatted.type, sa.dialects.mysql.types.DATETIME
     ):  # Unaffected by session time
         return sa.func.date_format(arg_formatted, fmt_string)
-    else:
+    else: # TIMESTAMP type, issue #929
         return sa.func.date_format(
             sa.func.cast(
                 arg_formatted.op("AT TIME ZONE INTERVAL")("+00:00"),
