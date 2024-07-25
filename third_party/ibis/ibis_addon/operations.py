@@ -579,8 +579,13 @@ def string_to_epoch(ts: str):
     from dateutil.tz import UTC
     from datetime import datetime, timezone
 
-    parsed_ts = isoparse(ts).astimezone(UTC)
-    return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+    try:
+        parsed_ts = isoparse(ts).astimezone(UTC)
+        return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+    except ValueError:
+        # Dates that start with 0 cannot be converted to UTC
+        parsed_ts = isoparse(ts)
+        return (parsed_ts - datetime(1970, 1, 1)).total_seconds()
 
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
