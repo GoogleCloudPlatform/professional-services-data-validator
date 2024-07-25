@@ -246,7 +246,9 @@ def _strftime(translator, op):
     arg_formatted = translator.translate(arg)
     tokens, _ = _scanner.scan(fmt_string)
     translated_format = _reduce_tokens(tokens)
-    if arg.output_dtype.timezone:  # has a time zone component issue 929
+    if (
+        hasattr(arg.output_dtype, "timezone") and arg.output_dtype.timezone
+    ):  # has a time zone component issue 929
         return "TO_CHAR({} at time zone 'gmt', {})".format(
             arg_formatted, translated_format
         )

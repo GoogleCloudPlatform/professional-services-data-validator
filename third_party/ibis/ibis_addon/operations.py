@@ -202,10 +202,8 @@ def strftime_mysql(translator, op):
     if isinstance(arg_type, dt.Timestamp):
         fmt_string = "%Y-%m-%d %H:%i:%S"
     if isinstance(
-        arg_formatted.type, sa.dialects.mysql.types.DATETIME
-    ):  # Unaffected by session time
-        return sa.func.date_format(arg_formatted, fmt_string)
-    else:  # TIMESTAMP type, issue #929
+        arg_formatted.type, sa.dialects.mysql.types.TIMESTAMP
+    ):  # TIMESTAMP type, issue #929
         return sa.func.date_format(
             sa.func.cast(
                 arg_formatted.op("AT TIME ZONE INTERVAL")("+00:00"),
@@ -213,6 +211,8 @@ def strftime_mysql(translator, op):
             ),
             fmt_string,
         )
+    else:  # Date or DateTime, not affected by time zone
+        return sa.func.date_format(arg_formatted, fmt_string)
 
 
 def strftime_mssql(translator, op):
