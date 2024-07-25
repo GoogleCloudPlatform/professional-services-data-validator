@@ -80,14 +80,7 @@ class DataValidation(object):
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if hasattr(self, "config_manager"):
-            try:
-                if hasattr(self.config_manager.source_client, "con"):
-                    self.config_manager.source_client.con.dispose()
-                if hasattr(self.config_manager.target_client, "con"):
-                    self.config_manager.target_client.con.dispose()
-            except Exception as exc:
-                # No need to reraise, we can silently fail if exiting throws up an issue.
-                logging.warning("Exception closing connections: %s", str(exc))
+            self.config_manager.close_client_connections()
 
     # TODO(dhercher) we planned on shifting this to use an Execution Handler.
     # Leaving to to swast on the design of how this should look.

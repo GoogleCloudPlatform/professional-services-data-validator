@@ -92,6 +92,22 @@ class ConfigManager(object):
 
         return self._target_conn
 
+    def close_client_connections(self):
+        """Attempt to clean up any source/target connections, based on the client types.
+
+        Not all clients are covered here, we at least have Oracle and PostgreSQL for which we
+        have seen connections being accumulated.
+        https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1195
+        """
+        try:
+            if self.source_client and self.source_client.name in ("oracle", "postgres"):
+                self.source_client.con.dispose()
+            if self.target_client and self.target_client.name in ("oracle", "postgres"):
+                self.target_client.con.dispose()
+        except Exception as exc:
+            # No need to reraise, we can silently fail if exiting throws up an issue.
+            logging.warning("Exception closing connections: %s", str(exc))
+
     @property
     def validation_type(self):
         """Return string validation type (Column|Schema)."""
