@@ -527,6 +527,30 @@ def test_row_validation_char_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_char_comp_field_to_bigquery():
+    """Teradata to BigQuery char comparison field validation.
+    Due to a Teradata client "quirk" comparison fields should add an rstrip()
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "-comp-fields=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df, expected_rows=45)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_pangrams_to_bigquery():
     """Teradata to BigQuery dvt_pangrams row validation.
     This is testing comparisons across a wider set of characters than standard test data.
