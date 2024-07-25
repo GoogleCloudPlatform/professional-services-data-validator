@@ -205,7 +205,7 @@ def strftime_mysql(translator, op):
         arg_formatted.type, sa.dialects.mysql.types.DATETIME
     ):  # Unaffected by session time
         return sa.func.date_format(arg_formatted, fmt_string)
-    else: # TIMESTAMP type, issue #929
+    else:  # TIMESTAMP type, issue #929
         return sa.func.date_format(
             sa.func.cast(
                 arg_formatted.op("AT TIME ZONE INTERVAL")("+00:00"),
@@ -234,10 +234,13 @@ def strftime_mssql(translator, op):
             f"strftime format {pattern.value} not supported for SQL Server."
         )
 
-    if isinstance(arg.type, sa.dialects.mssql.base.DATETIMEOFFSET) : # issue 929
-        return sa.func.convert(sa.text("VARCHAR(19)"), arg.op("AT TIME ZONE")("UTC"), convert_style)
+    if isinstance(arg.type, sa.dialects.mssql.base.DATETIMEOFFSET):  # issue 929
+        return sa.func.convert(
+            sa.text("VARCHAR(19)"), arg.op("AT TIME ZONE")("UTC"), convert_style
+        )
     else:
         return sa.func.convert(sa.text("VARCHAR(32)"), arg, convert_style)
+
 
 def strftime_impala(t, op):
     import sqlglot as sg
@@ -530,8 +533,13 @@ def sa_cast_snowflake(t, op):
 
 
 def _sa_string_join(t, op):
-    if len(op.arg)== 1: # SQL Server concat errs on one argument (issue #1202), so casting to string - i.e. identity op
-        return sa.func.cast(t.translate(op.arg[0]), sa.types.String,)
+    if (
+        len(op.arg) == 1
+    ):  # SQL Server concat errs on one argument (issue #1202), so casting to string - i.e. identity op
+        return sa.func.cast(
+            t.translate(op.arg[0]),
+            sa.types.String,
+        )
     else:
         return sa.func.concat(*map(t.translate, op.arg))
 

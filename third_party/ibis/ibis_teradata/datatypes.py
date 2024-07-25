@@ -180,7 +180,7 @@ class TeradataTypeTranslator(object):
         return "TIMESTAMP WITH TIME ZONE"
 
     @classmethod
-    def to_ibis_from_AT(cls, col_data, return_ibis_type=True): # issue 1189
+    def to_ibis_from_AT(cls, col_data, return_ibis_type=True):  # issue 1189
         if return_ibis_type:
             return dt.time(nullable=cls._col_data_nullable(col_data))
         return "TIME WITH TIME ZONE"
