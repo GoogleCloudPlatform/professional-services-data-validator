@@ -14,7 +14,7 @@
 
 import copy
 import logging
-from typing import TYPE_CHECKING, Optional, Union, List
+from typing import TYPE_CHECKING, Optional, Union, List, Dict
 
 import google.oauth2.service_account
 import ibis.expr.datatypes as dt
@@ -524,6 +524,55 @@ class ConfigManager(object):
             verbose=verbose,
         )
 
+    def add_rstrip_to_comp_fields(self, comparison_fields: List[str]) -> List[str]:
+        """As per #1190, add an rstrip calculated field for Teradata string comparison fields.
+
+        Parameters:
+            comparison_fields: List[str] of comparison field columns
+        Returns:
+            comp_fields_with_aliases: List[str] of comparison field columns with rstrip aliases
+        """
+        logging.info(
+            "Adding rtrim() to string comparison fields due to Teradata CHAR padding."
+        )
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        comp_fields_with_aliases = []
+        calculated_configs = []
+        for field in comparison_fields:
+            if field.casefold() not in casefold_source_columns:
+                raise ValueError(f"Column DNE in source: {field}")
+            if field.casefold() not in casefold_target_columns:
+                raise ValueError(f"Column DNE in target: {field}")
+
+            source_ibis_type = source_table[
+                casefold_source_columns[field.casefold()]
+            ].type()
+            target_ibis_type = target_table[
+                casefold_target_columns[field.casefold()]
+            ].type()
+
+            if source_ibis_type.is_string() or target_ibis_type.is_string():
+                alias = f"rstrip__{field.casefold()}"
+                calculated_configs.append(
+                    self.build_config_calculated_fields(
+                        [casefold_source_columns[field.casefold()]],
+                        [casefold_target_columns[field.casefold()]],
+                        "rstrip",
+                        alias,
+                        0,
+                    )
+                )
+                comp_fields_with_aliases.append(alias)
+            else:
+                comp_fields_with_aliases.append(field)
+
+        self.append_calculated_fields(calculated_configs)
+        return comp_fields_with_aliases
+
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
@@ -614,7 +663,7 @@ class ConfigManager(object):
         cast_type=None,
         depth=0,
     ):
-        """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
+        """Create calculated field config used as a pre-aggregation step. Appends to calculated fields if does not already exist and returns created config."""
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [source_column],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: [target_column],
@@ -858,11 +907,11 @@ class ConfigManager(object):
 
     def build_config_calculated_fields(
         self,
-        source_reference,
-        target_reference,
-        calc_type,
-        alias,
-        depth,
+        source_reference: list,
+        target_reference: list,
+        calc_type: str,
+        alias: str,
+        depth: int,
         supported_types=None,
         arg_value=None,
         custom_params: Optional[dict] = None,
@@ -981,7 +1030,7 @@ class ConfigManager(object):
 
         return order_of_operations
 
-    def build_dependent_aliases(self, calc_type, col_list=None):
+    def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
