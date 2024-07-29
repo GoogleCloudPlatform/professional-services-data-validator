@@ -105,8 +105,12 @@ def _cast(t, op):
     arg_dtype = arg.output_dtype
 
     sa_arg = t.translate(arg)
-    if arg_dtype.is_decimal() and typ.is_string():
-        # Specialize going from decimal type to a string.
+    if (
+        arg_dtype.is_decimal()
+        and typ.is_string()
+        and (arg_dtype.scale is None or arg_dtype.scale > 0)
+    ):
+        # Specialize going from fractional decimal type to a string.
         # Oracle has an edge case that non-zero values <1 are converted to a string without a leading zero.
         # For example 0.5 becomes ".5", -0.5 becomes "-.5". This does not match most supported engines.
         # When we have precision/scale we can use a TO_CHAR format but Oracle supports NUMBER(*) - without precision/scale.
