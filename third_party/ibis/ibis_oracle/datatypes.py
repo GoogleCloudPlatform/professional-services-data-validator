@@ -168,9 +168,11 @@ def sa_oracle_TIMESTAMP(_, satype, nullable=True):
     else:
         return dt.Timestamp(nullable=nullable)
 
+
 @dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.INTERVAL))
 def sa_oracle_INTERVAL_DS(_, satype, nullable=True):
     return dt.Interval(nullable=nullable)
+
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BLOB)
 def sa_oracle_BLOB(_, satype, nullable=True):
