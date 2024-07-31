@@ -143,6 +143,8 @@ def _cast(t, op):
         # This prevents output in scientific notation but we still have
         # problems with the lossy nature of BINARY_FLOAT/DOUBLE.
         return sa.func.to_char(sa_arg, "TM9")
+    elif arg_dtype.is_interval() and typ.is_string():
+        return sa.func.to_char(sa_arg)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
