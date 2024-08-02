@@ -15,6 +15,7 @@
 
 import copy
 import logging
+from typing import TYPE_CHECKING
 import warnings
 
 import google.oauth2.service_account
@@ -28,6 +29,10 @@ from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
+
+if TYPE_CHECKING:
+    import ibis.expr.schema as sch
+
 
 ibis.options.sql.default_limit = None
 
@@ -155,7 +160,7 @@ def get_ibis_query(client, query):
     return iq
 
 
-def get_ibis_table_schema(client, schema_name, table_name):
+def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Schema":
     """Return Ibis Table Schema for Supplied Client.
 
     client (IbisClient): Client to use for table
@@ -243,10 +248,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config[
-                "credentials"
-            ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                key_path
+            decrypted_connection_config["credentials"] = (
+                google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
+                )
             )
 
     if source_type not in CLIENT_LOOKUP:

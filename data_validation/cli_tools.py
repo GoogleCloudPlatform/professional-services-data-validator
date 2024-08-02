@@ -44,6 +44,7 @@ data-validation
 """
 
 import argparse
+import copy
 import csv
 import json
 import logging
@@ -56,6 +57,7 @@ from typing import Dict, List
 from yaml import Dumper, Loader, dump, load
 
 from data_validation import clients, consts, state_manager, gcs_helper
+from data_validation.validation_builder import list_to_sublists
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -1293,8 +1295,34 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "filter_status": filter_status,
             "trim_string_pks": getattr(args, "trim_string_pks", False),
             "case_insensitive_match": getattr(args, "case_insensitive_match", False),
+            consts.CONFIG_ROW_CONCAT: getattr(args, consts.CONFIG_ROW_CONCAT, None),
+            consts.CONFIG_ROW_HASH: getattr(args, consts.CONFIG_ROW_HASH, None),
             "verbose": args.verbose,
         }
-        pre_build_configs_list.append(pre_build_configs)
+        if "*" in (
+            pre_build_configs[consts.CONFIG_ROW_CONCAT],
+            pre_build_configs[consts.CONFIG_ROW_HASH],
+        ):
+            # If we validate using "*" columns we are in danger of attempting to validate
+            # too many columns for the engines involved.
+            # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1216
+            source_ibis_cols = clients.get_ibis_table_schema(
+                source_client, table_obj["schema_name"], table_obj["table_name"]
+            )
+            if len(source_ibis_cols) > consts.MAX_CONCAT_COLUMN_COUNT:
+                for col_chunk in list_to_sublists(
+                    source_ibis_cols.names, consts.MAX_CONCAT_COLUMN_COUNT
+                ):
+                    col_csv = ",".join(col_chunk)
+                    pre_build_configs_copy = copy.copy(pre_build_configs)
+                    concat_override = col_csv if args.concat == "*" else args.concat
+                    hash_override = col_csv if args.hash == "*" else args.hash
+                    pre_build_configs_copy[consts.CONFIG_ROW_CONCAT] = concat_override
+                    pre_build_configs_copy[consts.CONFIG_ROW_HASH] = hash_override
+                    pre_build_configs_list.append(pre_build_configs_copy)
+            else:
+                pre_build_configs_list.append(pre_build_configs)
+        else:
+            pre_build_configs_list.append(pre_build_configs)
 
     return pre_build_configs_list

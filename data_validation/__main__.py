@@ -160,7 +160,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     return aggregate_configs
 
 
-def get_calculated_config(args, config_manager) -> List[dict]:
+def get_calculated_config(args, config_manager: ConfigManager) -> List[dict]:
     """Return list of formatted calculated objects.
 
     Args:
@@ -168,11 +168,19 @@ def get_calculated_config(args, config_manager) -> List[dict]:
     """
     calculated_configs = []
     fields = []
-    if args.hash:
-        col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
+    if config_manager.hash:
+        col_list = (
+            None
+            if config_manager.hash == "*"
+            else cli_tools.get_arg_list(config_manager.hash)
+        )
         fields = config_manager.build_dependent_aliases("hash", col_list)
-    elif args.concat:
-        col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
+    elif config_manager.concat:
+        col_list = (
+            None
+            if config_manager.concat == "*"
+            else cli_tools.get_arg_list(config_manager.concat)
+        )
         fields = config_manager.build_dependent_aliases("concat", col_list)
 
     if len(fields) > 0:
@@ -190,13 +198,13 @@ def get_calculated_config(args, config_manager) -> List[dict]:
                 custom_params=field.get("calc_params"),
             )
         )
-    if args.hash:
+    if config_manager.hash:
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(
                 ["hash__all"], depth=max_depth
             )
         )
-    elif args.concat:
+    elif config_manager.concat:
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(
                 ["concat__all"], depth=max_depth
