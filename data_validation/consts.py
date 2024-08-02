@@ -180,4 +180,4 @@ DVT_POS_COL = "dvt_pos_num"
 # A limit on the number of columns we will attempt in a single validation.
 # Beyond this we break the requested validation into multiple validations.
 # TODO Should this be an option with a default instead?
-MAX_CONCAT_COLUMN_COUNT = 100
+MAX_CONCAT_COLUMN_COUNT = 99
