@@ -177,7 +177,5 @@ SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
 # this cannot conflict with primary key column names
 DVT_POS_COL = "dvt_pos_num"
 
-# A limit on the number of columns we will attempt in a single validation.
-# Beyond this we break the requested validation into multiple validations.
-# TODO Should this be an option with a default instead?
-MAX_CONCAT_COLUMN_COUNT = 99
+# Default limit for the number of columns we will attempt in a single validation.
+MAX_CONCAT_COLUMNS_DEFAULT = 99

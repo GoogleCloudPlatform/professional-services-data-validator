@@ -14,7 +14,6 @@
 
 import argparse
 import logging
-import math
 import pytest
 from unittest import mock
 

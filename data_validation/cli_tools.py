@@ -465,6 +465,17 @@ def _configure_row_parser(
             "Performs a case insensitive match by adding an UPPER() before comparison."
         ),
     )
+    optional_arguments.add_argument(
+        "--max-concat-columns",
+        "-mrvc",
+        type=int,
+        default=consts.MAX_CONCAT_COLUMNS_DEFAULT,
+        help=(
+            "The maximum number of columns accepted by a --hash or --concat validation. When there are "
+            "more columns than this the validation will implicitly be split into multiple validations. "
+            f"Defaults to {consts.MAX_CONCAT_COLUMNS_DEFAULT}."
+        ),
+    )
     # Generate-table-partitions and custom-query does not support random row
     if not (is_generate_partitions or is_custom_query):
         optional_arguments.add_argument(
@@ -1344,14 +1355,17 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
                 table_obj["schema_name"],
                 table_obj["table_name"],
             )
-            pre_build_configs_list.extend(
-                _concat_column_count_configs(
-                    cols,
-                    pre_build_configs,
-                    consts.CONFIG_ROW_HASH if args.hash else consts.CONFIG_ROW_CONCAT,
-                    consts.MAX_CONCAT_COLUMN_COUNT,
-                )
+            additional_pre_build_configs = _concat_column_count_configs(
+                cols,
+                pre_build_configs,
+                consts.CONFIG_ROW_HASH if args.hash else consts.CONFIG_ROW_CONCAT,
+                args.max_concat_columns,
             )
+            if len(additional_pre_build_configs) > 1:
+                logging.info(
+                    f'Splitting validation into {len(additional_pre_build_configs)} queries: {table_obj["schema_name"]}.{table_obj["table_name"]} '
+                )
+            pre_build_configs_list.extend(additional_pre_build_configs)
         else:
             pre_build_configs_list.append(pre_build_configs)
 
