@@ -1194,8 +1194,41 @@ def split_table(table_ref, schema_required=True):
     return schema.strip(), table.strip()
 
 
+def _concat_column_count_configs(
+    cols: list[str],
+    pre_build_configs: dict,
+    arg_to_override: str,
+    max_col_count: int,
+) -> list:
+    """
+    Ensure we don't have too many columns for the engines involved.
+    https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1216
+    """
+    return_list = []
+    if len(cols) > max_col_count:
+        for col_chunk in list_to_sublists(cols, max_col_count):
+            col_csv = ",".join(col_chunk)
+            pre_build_configs_copy = copy.copy(pre_build_configs)
+            pre_build_configs_copy[arg_to_override] = col_csv
+            return_list.append(pre_build_configs_copy)
+    else:
+        return_list.append(pre_build_configs)
+    return return_list
+
+
 def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     """Return a dict of configurations to build ConfigManager object"""
+
+    def cols_from_arg(concat_arg: str, client, schema: str, table_name: str) -> list:
+        if concat_arg == "*":
+            # If validating with "*" then we need to expand to count the columns.
+            return clients.get_ibis_table_schema(
+                client,
+                schema,
+                table_name,
+            ).names
+        else:
+            return get_arg_list(concat_arg)
 
     # Since `generate-table-partitions` defaults to `validate_cmd=row`,
     # `validate_cmd` is passed along while calling this method
@@ -1299,29 +1332,26 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             consts.CONFIG_ROW_HASH: getattr(args, consts.CONFIG_ROW_HASH, None),
             "verbose": args.verbose,
         }
-        if "*" in (
-            pre_build_configs[consts.CONFIG_ROW_CONCAT],
-            pre_build_configs[consts.CONFIG_ROW_HASH],
+        if (
+            pre_build_configs[consts.CONFIG_ROW_CONCAT]
+            or pre_build_configs[consts.CONFIG_ROW_HASH]
         ):
-            # If we validate using "*" columns we are in danger of attempting to validate
-            # too many columns for the engines involved.
-            # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1216
-            source_ibis_cols = clients.get_ibis_table_schema(
-                source_client, table_obj["schema_name"], table_obj["table_name"]
+            # Ensure we don't have too many columns for the engines involved.
+            cols = cols_from_arg(
+                pre_build_configs[consts.CONFIG_ROW_HASH]
+                or pre_build_configs[consts.CONFIG_ROW_CONCAT],
+                source_client,
+                table_obj["schema_name"],
+                table_obj["table_name"],
             )
-            if len(source_ibis_cols) > consts.MAX_CONCAT_COLUMN_COUNT:
-                for col_chunk in list_to_sublists(
-                    source_ibis_cols.names, consts.MAX_CONCAT_COLUMN_COUNT
-                ):
-                    col_csv = ",".join(col_chunk)
-                    pre_build_configs_copy = copy.copy(pre_build_configs)
-                    concat_override = col_csv if args.concat == "*" else args.concat
-                    hash_override = col_csv if args.hash == "*" else args.hash
-                    pre_build_configs_copy[consts.CONFIG_ROW_CONCAT] = concat_override
-                    pre_build_configs_copy[consts.CONFIG_ROW_HASH] = hash_override
-                    pre_build_configs_list.append(pre_build_configs_copy)
-            else:
-                pre_build_configs_list.append(pre_build_configs)
+            pre_build_configs_list.extend(
+                _concat_column_count_configs(
+                    cols,
+                    pre_build_configs,
+                    consts.CONFIG_ROW_HASH if args.hash else consts.CONFIG_ROW_CONCAT,
+                    consts.MAX_CONCAT_COLUMN_COUNT,
+                )
+            )
         else:
             pre_build_configs_list.append(pre_build_configs)
 
