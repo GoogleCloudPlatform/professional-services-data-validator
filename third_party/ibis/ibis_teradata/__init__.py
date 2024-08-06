@@ -236,7 +236,7 @@ class Backend(BaseSQLBackend):
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
             df = pandas.read_sql(sql, self.client)
-                
+
             for col in schema.names:
                 if schema.fields[col].is_date():
                     # Cast date cols as datetime64. Large timestamps i.e. '9999-12-31'
