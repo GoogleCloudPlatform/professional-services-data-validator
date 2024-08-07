@@ -585,7 +585,7 @@ def test_row_validation_many_columns_to_postgres():
             "--filter-status=fail",
         ]
     )
-    run_many_columns_test_from_cli_args(args)
+    run_many_columns_test_from_cli_args(args, expected_config_managers=5)
 
 
 @mock.patch(
