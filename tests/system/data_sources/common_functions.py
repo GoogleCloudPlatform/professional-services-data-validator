@@ -82,6 +82,21 @@ def run_test_from_cli_args(args: "Namespace") -> "DataFrame":
     return validator.execute()
 
 
+def run_many_columns_test_from_cli_args(
+    args: "Namespace", expected_config_managers: int = 3
+):
+    config_managers = main.build_config_managers_from_args(args)
+    # We expect the validation to be split into multiple config managers.
+    assert (
+        len(config_managers) == expected_config_managers
+    ), f"Expected {expected_config_managers} but found: {len(config_managers)}"
+    for config_manager in config_managers:
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        df = validator.execute()
+        # With filter on failures the data frame should be empty.
+        assert len(df) == 0
+
+
 def find_tables_assertions(command_output: str):
     assert isinstance(command_output, str)
     assert command_output

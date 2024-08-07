@@ -20,6 +20,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    run_many_columns_test_from_cli_args,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -570,6 +571,30 @@ def test_row_validation_pangrams_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns_to_bigquery():
+    """Teradata to BigQuery dvt_many_cols row validation.
+    This is testing many columns logic for --concat, there's a test in Oracle for --hash.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_many_cols=pso_data_validator.dvt_many_cols",
+            "--primary-keys=id",
+            "--hash=*",
+            "--filter-status=fail",
+        ]
+    )
+    run_many_columns_test_from_cli_args(args)
 
 
 @mock.patch(

@@ -36,6 +36,7 @@ from tests.system.data_sources.test_bigquery import BQ_CONN
 
 # Cloud SQL proxy listens to localhost
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE", "guestbook")
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -45,7 +46,7 @@ CONN = {
     "host": POSTGRES_HOST,
     "user": "postgres",
     "password": POSTGRES_PASSWORD,
-    "port": 5432,
+    "port": POSTGRES_PORT,
     "database": POSTGRES_DATABASE,
 }
 
