@@ -2,6 +2,40 @@
 
 ## Untagged
 
+## [6.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v5.1.1...v6.0.0) (2024-08-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Failing validations of strings with extended ascii characters ([#1184](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1184))
+
+### Features
+
+* Add TLS options to PostgreSQL connections add ([#1199](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1199)) ([5506680](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/55066804a28ca8f2ade91613fc1c861354634778))
+* Enhance PostgreSQL connections add documentation ([#1200](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1200)) ([f179f5a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f179f5ae9e95366ebdf77778bc2f7232662f3a52))
+* generate-table-partitions write multiple partitions to a single yaml file ([#1178](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1178)) ([59a9a18](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/59a9a18b1ecd8797324768d999158654c8c5b2f2))
+
+
+### Bug Fixes
+
+* Apply RTRIM on string column when generating partitions with `-tsp` ([#1182](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1182)) ([9dcaad1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9dcaad16e3de7032597571bac7a6f671d1686498))
+* Close source and target connections after executing a validation ([#1197](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1197)) ([3dc9fa7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3dc9fa77677194f4b5ca99f8c1293f7e5cc042bb))
+* Ensure BigQuery queries are executed in UTC ([#1174](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1174)) ([a77cdd9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a77cdd9acd07b3f54be3b8a146461b91ab03621e))
+* Ensure Teradata OutofBound dates don't affect other date columns ([#1219](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1219)) ([e02609d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e02609d0161f7aaaa0786b1b89abbe1f08cca6c5))
+* Failing validations of strings with extended ascii characters ([#1184](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1184)) ([c8ac146](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c8ac1460608ce922da8105e65205117e1bf78be4))
+* Issue with GoogleSQL regarding dates before 1000CE ([#1186](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1186)) ([6107d9c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6107d9c480568147e1854ba4f6a88c3fe967dc5c))
+* More robust __exit__ on DataValidation() ([#1206](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1206)) ([13ec3ee](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/13ec3ee6dd25aa3e60c84b2af205ff78669b7946))
+* Oracle cast(decimal to string) caters for non-zero values &lt;1 ([#1204](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1204)) ([fa44466](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/fa444669e060fadc5edfd44a1f88e84bc48347bf))
+* Oracle INTERVAL exception in validate schema ([#1215](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1215)) ([f133f73](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f133f732a9f9b0da6e7190a3cbc670c8c58e087a))
+* Support char comparison fields in Teradata ([#1203](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1203)) ([dc19580](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dc19580eece27123d21adeb1fac0f5e8328bc588))
+* Support DATE '0001-01-01' comparison fields ([#1208](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1208)) ([cca0c4f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cca0c4fa702652b013b16eb2636078429e599f17))
+
+
+### Documentation
+
+* Fix some typos in Cloud Run readme ([#1188](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1188)) ([c8cd0de](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c8cd0de8795f7b2e14398fda8e3c1aca69085ec9))
+* Tweaks to Cloud Functions sample ([#1176](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1176)) ([7a49a95](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7a49a958e48f99df1e1c6a2685201161d835b878))
+
 ## [5.1.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v5.1.0...v5.1.1) (2024-06-12)
 
 
