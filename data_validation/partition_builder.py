@@ -238,33 +238,33 @@ class PartitionBuilder:
             # to find all rows before the row containing the values in the sort order. The next function geq_value, finds all
             # rows after the row containing the values in the sort order, including the row specified by values.
 
-            def less_than_func(table, keys, values):
-                if len(keys) == 1:
-                    return table.__getattr__(keys[0]) < values[0]
+            def less_than_value(table, keys, values):
+                if source_table[keys[0]].type().is_date():
+                    value = values[0].date()
                 else:
-                    return (table.__getattr__(keys[0]) < values[0]) | (
-                        (table.__getattr__(keys[0]) == values[0])
+                    value = values[0]
+
+                if len(keys) == 1:
+                    return table.__getattr__(keys[0]) < value
+                else:
+                    return (table.__getattr__(keys[0]) < value) | (
+                        (table.__getattr__(keys[0]) == value)
                         & less_than_value(table, keys[1:], values[1:])
                     )
 
-            less_than_value = (
-                lambda table, keys, values: table.__getattr__(keys[0]) < values[0]
-                if len(keys) == 1
-                else (table.__getattr__(keys[0]) < values[0])
-                | (
-                    (table.__getattr__(keys[0]) == values[0])
-                    & less_than_value(table, keys[1:], values[1:])
-                )
-            )
-            geq_value = (
-                lambda table, keys, values: table.__getattr__(keys[0]) >= values[0]
-                if len(keys) == 1
-                else (table.__getattr__(keys[0]) > values[0])
-                | (
-                    (table.__getattr__(keys[0]) == values[0])
-                    & geq_value(table, keys[1:], values[1:])
-                )
-            )
+            def geq_value(table, keys, values):
+                if source_table[keys[0]].type().is_date():
+                    value = values[0].date()
+                else:
+                    value = values[0]
+
+                if len(keys) == 1:
+                    return table.__getattr__(keys[0]) >= value
+                else:
+                    return (table.__getattr__(keys[0]) > value) | (
+                        (table.__getattr__(keys[0]) == value)
+                        & geq_value(table, keys[1:], values[1:])
+                    )
 
             filter_source_clause = less_than_value(
                 source_table,
