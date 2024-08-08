@@ -237,6 +237,16 @@ class PartitionBuilder:
             # Given a list of primary keys and corresponding values, the following lambda function builds the filter expression
             # to find all rows before the row containing the values in the sort order. The next function geq_value, finds all
             # rows after the row containing the values in the sort order, including the row specified by values.
+
+            def less_than_func(table, keys, values):
+                if len(keys) == 1:
+                    return table.__getattr__(keys[0]) < values[0]
+                else:
+                    return (table.__getattr__(keys[0]) < values[0]) | (
+                        (table.__getattr__(keys[0]) == values[0])
+                        & less_than_value(table, keys[1:], values[1:])
+                    )
+
             less_than_value = (
                 lambda table, keys, values: table.__getattr__(keys[0]) < values[0]
                 if len(keys) == 1
