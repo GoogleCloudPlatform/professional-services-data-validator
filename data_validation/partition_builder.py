@@ -240,6 +240,7 @@ class PartitionBuilder:
 
             def less_than_value(table, keys, values):
                 if source_table[keys[0]].type().is_date():
+                    # Ensure date PKs are treated as date literals as per #1191
                     value = values[0].date()
                 else:
                     value = values[0]
