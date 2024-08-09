@@ -532,9 +532,6 @@ class ConfigManager(object):
         Returns:
             comp_fields_with_aliases: List[str] of comparison field columns with rstrip aliases
         """
-        logging.info(
-            "Adding rtrim() to string comparison fields due to Teradata CHAR padding."
-        )
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
@@ -556,6 +553,9 @@ class ConfigManager(object):
             ].type()
 
             if source_ibis_type.is_string() or target_ibis_type.is_string():
+                logging.info(
+                    f"Adding rtrim() to string comparison field `{field.casefold()}` due to Teradata CHAR padding."
+                )
                 alias = f"rstrip__{field.casefold()}"
                 calculated_configs.append(
                     self.build_config_calculated_fields(
