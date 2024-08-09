@@ -570,7 +570,7 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_row_validation_many_columns_to_postgres():
     """Oracle to PostgreSQL dvt_many_cols row validation.
-    This is testing many columns logic for --hash, there's a test in Teradata for --concat.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
@@ -581,6 +581,7 @@ def test_row_validation_many_columns_to_postgres():
             "-tc=pg-conn",
             "-tbls=pso_data_validator.dvt_many_cols",
             "--primary-keys=id",
+            "--max-concat-columns=99",
             "--hash=*",
             "--filter-status=fail",
         ]

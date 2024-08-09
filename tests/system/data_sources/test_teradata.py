@@ -590,7 +590,6 @@ def test_row_validation_many_columns_to_bigquery():
             "-tc=bq-conn",
             "-tbls=udf.dvt_many_cols=pso_data_validator.dvt_many_cols",
             "--primary-keys=id",
-            "--max-concat-columns=400",
             "--hash=*",
             "--filter-status=fail",
         ]
