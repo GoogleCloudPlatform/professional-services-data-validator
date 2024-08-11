@@ -160,7 +160,7 @@ def format_hashbytes_bigquery(translator, op):
 def format_hashbytes_teradata(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
-        return f"rtrim(hash_sha256(TransUnicodeToUTF8(TRANSLATE({arg} using latin_to_unicode WITH ERROR))))"
+        return f"rtrim(hash_sha256(TransUnicodeToUTF8({arg})))"
     elif op.how == "sha512":
         return f"rtrim(hash_sha512({arg}))"
     elif op.how == "md5":
