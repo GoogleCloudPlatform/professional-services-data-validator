@@ -412,22 +412,20 @@ def test_row_validation_large_decimals_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_latin_to_bigquery():
-    """Teradata to BigQuery dvt latin columns in teradata vs STRING columns in BigQuery
-    """
-    row_validation_test(
-        tables="udf.dvt_latin=pso_data_validator.dvt_latin", hash="*"
-    )
+    """Teradata to BigQuery dvt latin columns in teradata vs STRING columns in BigQuery"""
+    row_validation_test(tables="udf.dvt_latin=pso_data_validator.dvt_latin", hash="*")
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
 def test_row_validation_pangrams_to_bigquery():
-    """Teradata to BigQuery dvt Unicode columns (non European languages) in teradata vs STRING columns in BigQuery
-    """
+    """Teradata to BigQuery dvt Unicode columns (non European languages) in teradata vs STRING columns in BigQuery"""
     row_validation_test(
         tables="udf.dvt_pangrams=pso_data_validator.dvt_pangrams", hash="*"
     )
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
