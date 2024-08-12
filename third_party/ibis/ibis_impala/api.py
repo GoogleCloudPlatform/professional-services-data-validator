@@ -26,6 +26,7 @@ import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 import numpy as np
 import fsspec
+import re
 
 
 def do_connect(
@@ -194,10 +195,27 @@ def _if_null(op):
     return ops.Coalesce((op.arg, op.ifnull_expr))
 
 
+def update_query_with_limit(query):
+    limit_pattern = re.compile(r"LIMIT\s+\d+(\s+OFFSET\s+\d+)?\s*;?\s*$", re.IGNORECASE)
+    last_limit_match = limit_pattern.search(query)
+
+    if last_limit_match:
+        new_query = (
+            query[: last_limit_match.start()]
+            + "LIMIT 1"
+            + query[last_limit_match.end() :]
+        )
+    else:
+        new_query = query + " LIMIT 1"
+
+    return new_query
+
+
 @lru_cache(maxsize=2)
 def _get_schema_using_query(self, query):
     # Removing LIMIT 0 around query since it returns no results in Hive
-    cur = self.raw_sql(query + " LIMIT 1")
+    updated_query = update_query_with_limit(query)
+    cur = self.raw_sql(updated_query)
     cur.fetchone()
     cur.description = [
         (
