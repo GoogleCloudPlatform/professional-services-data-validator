@@ -15,9 +15,10 @@
 import os
 from unittest import mock
 
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools, data_validation, consts, __main__ as main
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
     run_test_from_cli_args,
@@ -80,6 +81,7 @@ ORA2PG_COLUMNS = [
     "col_date",
     "col_ts",
     "col_tstz",
+    "col_interval_ds",
     "col_raw",
     "col_long_raw",
     "col_blob",
@@ -388,6 +390,7 @@ def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
     # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
+    # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded CLOB/NCLOB/BLOB columns because lob values cannot be concatenated
     hash_cols = ",".join(
@@ -406,6 +409,7 @@ def test_row_validation_oracle_to_postgres():
                 "col_tstz",
                 "col_nvarchar_30",
                 "col_nchar_2",
+                "col_interval_ds",
             )
         ]
     )
@@ -667,3 +671,22 @@ def test_custom_query_invalid_long_decimal():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be populated
     assert len(df) > 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Oracle to BigQuery test of find-tables command."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "find-tables",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "--allowed-schemas=pso_data_validator",
+        ]
+    )
+    output = main.find_tables_using_string_matching(args)
+    find_tables_assertions(output)

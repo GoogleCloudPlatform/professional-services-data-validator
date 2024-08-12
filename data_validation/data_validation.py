@@ -75,6 +75,13 @@ class DataValidation(object):
         # Initialize the default Result Handler if None was supplied
         self.result_handler = result_handler or self.config_manager.get_result_handler()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if hasattr(self, "config_manager"):
+            self.config_manager.close_client_connections()
+
     # TODO(dhercher) we planned on shifting this to use an Execution Handler.
     # Leaving to to swast on the design of how this should look.
     def execute(self):

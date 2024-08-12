@@ -77,6 +77,7 @@ _type_mapping = {
     cx_Oracle.DB_TYPE_BLOB: dt.Binary,
     cx_Oracle.DB_TYPE_BINARY_FLOAT: dt.Float32,
     cx_Oracle.DB_TYPE_BINARY_DOUBLE: dt.Float64,
+    cx_Oracle.DB_TYPE_INTERVAL_DS: dt.Interval,
 }
 
 # SQL Alchemy doesn't support LONG RAW which drops us into Ibis 5.1.0 method:
@@ -166,6 +167,11 @@ def sa_oracle_TIMESTAMP(_, satype, nullable=True):
         return dt.Timestamp(timezone="UTC", nullable=nullable)
     else:
         return dt.Timestamp(nullable=nullable)
+
+
+@dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.INTERVAL))
+def sa_oracle_INTERVAL_DS(_, satype, nullable=True):
+    return dt.Interval(nullable=nullable)
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BLOB)

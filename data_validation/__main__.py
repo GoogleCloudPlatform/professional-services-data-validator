@@ -160,7 +160,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     return aggregate_configs
 
 
-def get_calculated_config(args, config_manager):
+def get_calculated_config(args, config_manager) -> List[dict]:
     """Return list of formatted calculated objects.
 
     Args:
@@ -290,6 +290,17 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
             comparison_fields = cli_tools.get_arg_list(
                 args.comparison_fields, default_value=[]
             )
+
+            # As per #1190, add rstrip for Teradata string comparison fields
+            if (
+                config_manager.source_client.name == "teradata"
+                or config_manager.target_client.name == "teradata"
+            ):
+
+                comparison_fields = config_manager.add_rstrip_to_comp_fields(
+                    comparison_fields
+                )
+
             config_manager.append_comparison_fields(
                 config_manager.build_config_comparison_fields(comparison_fields)
             )
@@ -531,49 +542,49 @@ def run_validation(config_manager, dry_run=False, verbose=False):
         dry_run (bool): Print source and target SQL to stdout in lieu of validation.
         verbose (bool): Validation setting to log queries run.
     """
-    validator = DataValidation(
+    with DataValidation(
         config_manager.config,
         validation_builder=None,
         result_handler=None,
         verbose=verbose,
-    )
+    ) as validator:
 
-    if dry_run:
-        sql_alchemy_clients = [
-            "mysql",
-            "oracle",
-            "postgres",
-            "db2",
-            "mssql",
-            "redshift",
-            "snowflake",
-        ]
+        if dry_run:
+            sql_alchemy_clients = [
+                "mysql",
+                "oracle",
+                "postgres",
+                "db2",
+                "mssql",
+                "redshift",
+                "snowflake",
+            ]
 
-        source_query = validator.validation_builder.get_source_query().compile()
-        if config_manager.source_client.name in sql_alchemy_clients:
-            source_query = source_query.compile(
-                config_manager.source_client.con.engine,
-                compile_kwargs={"literal_binds": True},
+            source_query = validator.validation_builder.get_source_query().compile()
+            if config_manager.source_client.name in sql_alchemy_clients:
+                source_query = source_query.compile(
+                    config_manager.source_client.con.engine,
+                    compile_kwargs={"literal_binds": True},
+                )
+
+            target_query = validator.validation_builder.get_target_query().compile()
+            if config_manager.target_client.name in sql_alchemy_clients:
+                target_query = target_query.compile(
+                    config_manager.target_client.con.engine,
+                    compile_kwargs={"literal_binds": True},
+                )
+
+            print(
+                json.dumps(
+                    {
+                        "source_query": str(source_query),
+                        "target_query": str(target_query),
+                    },
+                    indent=4,
+                )
             )
-
-        target_query = validator.validation_builder.get_target_query().compile()
-        if config_manager.target_client.name in sql_alchemy_clients:
-            target_query = target_query.compile(
-                config_manager.target_client.con.engine,
-                compile_kwargs={"literal_binds": True},
-            )
-
-        print(
-            json.dumps(
-                {
-                    "source_query": str(source_query),
-                    "target_query": str(target_query),
-                },
-                indent=4,
-            )
-        )
-    else:
-        validator.execute()
+        else:
+            validator.execute()
 
 
 def run_validations(args, config_managers):

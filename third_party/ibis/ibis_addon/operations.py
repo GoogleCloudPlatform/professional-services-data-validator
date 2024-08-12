@@ -392,7 +392,10 @@ def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
         #     return (sa.cast(sa.func.trim_scale(arg), typ))
         precision = arg_dtype.precision or 38
         fmt = (
-            "FM" + ("9" * (precision - arg_dtype.scale)) + "." + ("9" * arg_dtype.scale)
+            "FM"
+            + ("9" * (precision - arg_dtype.scale - 1))
+            + "0."
+            + ("9" * arg_dtype.scale)
         )
         return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
     return None
@@ -494,23 +497,6 @@ def sa_cast_mysql(t, op):
     return sa_fixed_cast(t, op)
 
 
-def sa_cast_oracle(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.lower(sa.func.rawtohex(sa_arg))
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.hextoraw(sa_arg)
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
-
-
 def sa_cast_snowflake(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
@@ -601,8 +587,13 @@ def string_to_epoch(ts: str):
     from dateutil.tz import UTC
     from datetime import datetime, timezone
 
-    parsed_ts = isoparse(ts).astimezone(UTC)
-    return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+    try:
+        parsed_ts = isoparse(ts).astimezone(UTC)
+        return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+    except ValueError:
+        # Support DATE '0001-01-01' which throws error when converted to UTC
+        parsed_ts = isoparse(ts)
+        return (parsed_ts - datetime(1970, 1, 1)).total_seconds()
 
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
@@ -646,7 +637,6 @@ ImpalaExprTranslator._registry[Strftime] = strftime_impala
 ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if OracleExprTranslator:
-    OracleExprTranslator._registry[Cast] = sa_cast_oracle
     OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
     OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
     OracleExprTranslator._registry[ToChar] = sa_format_to_char

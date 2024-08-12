@@ -99,6 +99,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_ts          TIMESTAMP(6)
 ,   col_tstz        TIMESTAMP(6) WITH TIME ZONE
 --,   col_tsltz       TIMESTAMP(6) WITH LOCAL TIME ZONE
+,   col_interval_ds INTERVAL DAY(2) TO SECOND (3)
 ,   col_raw         RAW(16)
 ,   col_long_raw    LONG RAW
 ,   col_blob        BLOB
@@ -110,13 +111,14 @@ COMMENT ON TABLE pso_data_validator.dvt_ora2pg_types IS 'Oracle to PostgreSQL in
 -- Literals below match corresponding table in postgresql_test_tables.sql
 INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 (1,1111,123456789,123456789012345678,1234567890123456789012345
-,123.1,123.1
+,0.1,123.1
 --,123400,0.001
 ,123.123,123456.1,12345678.1
 ,'Hello DVT','A ','Hello DVT','A '
 ,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456'
 ,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT'),'DVT A','DVT A'
 );
@@ -129,6 +131,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:01.123456'
 ,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT DVT'),'DVT B','DVT B'
 );
@@ -141,6 +144,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
 ,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT DVT DVT'),'DVT C','DVT C'
 );

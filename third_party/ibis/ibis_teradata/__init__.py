@@ -231,22 +231,21 @@ class Backend(BaseSQLBackend):
         self._log(sql)
 
         schema = self.ast_schema(query_ast, **kwargs)
-        # Date columns are in the Dataframe as "object", using parse_dates to ensure they have a better data type.
-        date_cols = {
-            _: "datetime64[ns]" for _ in schema.names if schema.fields[_].is_date()
-        }
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
             warnings.simplefilter("ignore")
             df = pandas.read_sql(sql, self.client)
 
-            try:
-                # Cast date_cols as datetime64. Large timestamps i.e. '9999-12-31'
-                # will throw OutOfBoundsDatetime so keep those as 'object' data type.
-                df = df.astype(date_cols)
-            except pandas._libs.tslibs.np_datetime.OutOfBoundsDatetime as e:
-                pass
+            for col in schema.names:
+                if schema.fields[col].is_date():
+                    # Cast date cols as datetime64. Large timestamps i.e. '9999-12-31'
+                    # will throw OutOfBoundsDatetime so keep those as 'object' data type.
+                    dtype_mapping = {col: "datetime64[ns]"}
+                    try:
+                        df = df.astype(dtype_mapping)
+                    except pandas._libs.tslibs.np_datetime.OutOfBoundsDatetime as e:
+                        pass
 
         if df.empty:
             # Empty df infers an 'object' data type, update to float64 and datetime64.
