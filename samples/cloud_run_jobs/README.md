@@ -35,7 +35,7 @@ First, create a GCS path to store the YAML configs for this table.
 ```
 export CONFIG_GCS_BUCKET_NAME=<BUCKET_NAME>
 export CONFIG_GCS_BUCKET_LOCATION=<BUCKET_LOCATION> # i.e. 'us-central1'
-gcloud storage buckets create gs://${CONFIG_GCS_BUCKET_NAME} 
+gcloud storage buckets create gs://${CONFIG_GCS_BUCKET_NAME}
   --location=${CONFIG_GCS_BUCKET_LOCATION}
 ```
 
@@ -68,12 +68,12 @@ By default, each partition validation is retried up to 3 times if there is an er
 ```
 export JOB_NAME=<CLOUD_RUN_JOB_NAME>
 export REGION=<REGION> # i.e us-central1
-gcloud run jobs create ${JOB_NAME} 
-  --image gcr.io/${PROJECT_ID}/data-validation 
-  --tasks 50 --max-retries 2 --parallelism 15 
-  --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} 
-  --args "-ll, WARNING, configs,run,-kc,-cdir,gs://${CONFIG_GCS_BUCKET_NAME}/bigquery-public-data.new_york_trees.tree_census_2015"
-  --region ${REGION}
+gcloud run jobs create ${JOB_NAME} \
+  --image gcr.io/${PROJECT_ID}/data-validation \
+  --tasks 50 --max-retries 2 --parallelism 15 \
+  --region ${REGION} \
+  --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} \
+  --args="-ll,WARNING,configs,run,-kc,-cdir,gs://${CONFIG_GCS_BUCKET_NAME}/bigquery-public-data.new_york_trees.tree_census_2015"
 ```
 
 We set the `--log-level (-ll)` flag to 'WARNING' to prevent logging validation results to stdout as well as to BigQuery. The `--kube-completions (-kc)` flag indicates you are running in Kubernetes or Cloud Run and signals DVT to only run the validation corresponding to the `CLOUD_RUN_TASK_INDEX` environment variable that is set by Cloud Run.

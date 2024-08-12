@@ -50,6 +50,7 @@ import logging
 import sys
 import uuid
 import os
+import math
 from argparse import Namespace
 from typing import Dict, List
 from yaml import Dumper, Loader, dump, load
@@ -213,6 +214,13 @@ def _configure_partition_parser(subparsers):
         required_arguments,
         is_generate_partitions=True,
     )
+    optional_arguments.add_argument(
+        "--parts-per-file",
+        "-ppf",
+        type=_check_positive,
+        default=1,
+        help="Number of partitions to be validated in a single yaml file.",
+    )
     required_arguments.add_argument(
         "--config-dir",
         "-cdir",
@@ -227,9 +235,8 @@ def _configure_partition_parser(subparsers):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate, a number from 2 to 10,000",
-        type=_check_no_partitions,
-        metavar="[2-10000]",
+        help="Number of partitions into which the table should be split",
+        type=_check_positive,
     )
 
 
@@ -420,7 +427,11 @@ def _configure_validate_parser(subparsers):
 
 
 def _configure_row_parser(
-    parser, optional_arguments, required_arguments, is_generate_partitions=False
+    parser,
+    optional_arguments,
+    required_arguments,
+    is_generate_partitions=False,
+    is_custom_query=False,
 ):
     """Configure arguments to run row level validations."""
     # Group optional arguments
@@ -444,8 +455,16 @@ def _configure_row_parser(
             "padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n))."
         ),
     )
-    # Generate-table-partitions does not support random row
-    if not is_generate_partitions:
+    optional_arguments.add_argument(
+        "--case-insensitive-match",
+        "-cim",
+        action="store_true",
+        help=(
+            "Performs a case insensitive match by adding an UPPER() before comparison."
+        ),
+    )
+    # Generate-table-partitions and custom-query does not support random row
+    if not (is_generate_partitions or is_custom_query):
         optional_arguments.add_argument(
             "--use-random-row",
             "-rr",
@@ -459,13 +478,14 @@ def _configure_row_parser(
         )
 
     # Group required arguments
-    required_arguments.add_argument(
-        "--tables-list",
-        "-tbls",
-        default=None,
-        required=True,
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
-    )
+    if not is_custom_query:
+        required_arguments.add_argument(
+            "--tables-list",
+            "-tbls",
+            default=None,
+            required=True,
+            help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+        )
     required_arguments.add_argument(
         "--primary-keys",
         "-pk",
@@ -666,42 +686,18 @@ def _configure_custom_query_parser(custom_query_parser):
 
 
 def _configure_custom_query_row_parser(custom_query_row_parser):
-    # Group optional arguments
     optional_arguments = custom_query_row_parser.add_argument_group(
         "optional arguments"
     )
-    optional_arguments.add_argument(
-        "--filters",
-        "-filters",
-        help="Filters in the format source_filter:target_filter",
-    )
-    optional_arguments.add_argument(
-        "--threshold",
-        "-th",
-        type=threshold_float,
-        help="Float max threshold for percent difference",
-    )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
-    )
-
-    # Group required arguments
     required_arguments = custom_query_row_parser.add_argument_group(
         "required arguments"
     )
-    required_arguments.add_argument(
-        "--primary-keys",
-        "-pk",
-        required=True,
-        help="Comma separated list of primary key columns 'col_a,col_b'",
+
+    _configure_row_parser(
+        custom_query_row_parser,
+        optional_arguments,
+        required_arguments,
+        is_custom_query=True,
     )
 
     # Group for mutually exclusive source query arguments. Either must be supplied
@@ -733,30 +729,6 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         "-tq",
         help="Target sql query",
     )
-
-    # Group for mutually exclusive required arguments. Either must be supplied
-    required_mutually_exclusive = required_arguments.add_mutually_exclusive_group(
-        required=True
-    )
-    required_mutually_exclusive.add_argument(
-        "--hash",
-        "-hash",
-        help="Comma separated list of columns for hashing a concatenate 'col_a,col_b' or * for all columns",
-    )
-    required_mutually_exclusive.add_argument(
-        "--concat",
-        "-concat",
-        help="Comma separated list of columns for concat 'col_a,col_b' or * for all columns",
-    )
-    required_mutually_exclusive.add_argument(
-        "--comparison-fields",
-        "-comp-fields",
-        help=(
-            "Individual columns to compare. If comparing a calculated field use "
-            "the column alias."
-        ),
-    )
-    _add_common_arguments(optional_arguments, required_arguments)
 
 
 def _configure_custom_query_column_parser(custom_query_column_parser):
@@ -933,15 +905,21 @@ def _add_common_arguments(
     )
 
 
-def _check_no_partitions(value: str) -> int:
-    """Check that number of partitions is between [2-10,000]
-    Using function to validate rather than choices as error message prints all choices.
-    """
-    if value.isdigit() and 2 <= int(value) <= 10000:
-        return int(value)
+def _check_positive(value: int) -> int:
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+
+def check_no_yaml_files(partition_num: int, parts_per_file: int):
+    """Check that number of yaml files generated is less than 10,001
+    Will be invoked after all the arguments are processed."""
+    if math.ceil(partition_num / parts_per_file) < 10001:
+        return
     else:
         raise argparse.ArgumentTypeError(
-            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+            f"partition-num={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by using the --parts-per-file argument or decreasing the number of partitions."
         )
 
 
@@ -1272,8 +1250,8 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         args.command != "generate-table-partitions"
         and config_type != consts.SCHEMA_VALIDATION
     ):
-        use_random_rows = args.use_random_row
-        random_row_batch_size = args.random_row_batch_size
+        use_random_rows = getattr(args, "use_random_row", False)
+        random_row_batch_size = getattr(args, "random_row_batch_size", None)
 
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
@@ -1314,6 +1292,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "filter_config": filter_config,
             "filter_status": filter_status,
             "trim_string_pks": getattr(args, "trim_string_pks", False),
+            "case_insensitive_match": getattr(args, "case_insensitive_match", False),
             "verbose": args.verbose,
         }
         pre_build_configs_list.append(pre_build_configs)

@@ -14,7 +14,7 @@
 
 import copy
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, List, Dict
 
 import google.oauth2.service_account
 import ibis.expr.datatypes as dt
@@ -92,6 +92,22 @@ class ConfigManager(object):
 
         return self._target_conn
 
+    def close_client_connections(self):
+        """Attempt to clean up any source/target connections, based on the client types.
+
+        Not all clients are covered here, we at least have Oracle and PostgreSQL for which we
+        have seen connections being accumulated.
+        https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1195
+        """
+        try:
+            if self.source_client and self.source_client.name in ("oracle", "postgres"):
+                self.source_client.con.dispose()
+            if self.target_client and self.target_client.name in ("oracle", "postgres"):
+                self.target_client.con.dispose()
+        except Exception as exc:
+            # No need to reraise, we can silently fail if exiting throws up an issue.
+            logging.warning("Exception closing connections: %s", str(exc))
+
     @property
     def validation_type(self):
         """Return string validation type (Column|Schema)."""
@@ -115,6 +131,10 @@ class ConfigManager(object):
     def trim_string_pks(self):
         """Return if the validation should trim string primary keys."""
         return self._config.get(consts.CONFIG_TRIM_STRING_PKS) or False
+
+    def case_insensitive_match(self):
+        """Return if the validation should perform a case insensitive match."""
+        return self._config.get(consts.CONFIG_CASE_INSENSITIVE_MATCH) or False
 
     def process_in_memory(self):
         """Return whether to process in memory or on a remote platform."""
@@ -466,6 +486,7 @@ class ConfigManager(object):
         filter_config=None,
         filter_status=None,
         trim_string_pks=None,
+        case_insensitive_match=None,
         verbose=False,
     ):
         if isinstance(filter_config, dict):
@@ -495,6 +516,7 @@ class ConfigManager(object):
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
             consts.CONFIG_FILTER_STATUS: filter_status,
             consts.CONFIG_TRIM_STRING_PKS: trim_string_pks,
+            consts.CONFIG_CASE_INSENSITIVE_MATCH: case_insensitive_match,
         }
 
         return ConfigManager(
@@ -503,6 +525,55 @@ class ConfigManager(object):
             target_client=target_client,
             verbose=verbose,
         )
+
+    def add_rstrip_to_comp_fields(self, comparison_fields: List[str]) -> List[str]:
+        """As per #1190, add an rstrip calculated field for Teradata string comparison fields.
+
+        Parameters:
+            comparison_fields: List[str] of comparison field columns
+        Returns:
+            comp_fields_with_aliases: List[str] of comparison field columns with rstrip aliases
+        """
+        source_table = self.get_source_ibis_calculated_table()
+        target_table = self.get_target_ibis_calculated_table()
+        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
+        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
+
+        comp_fields_with_aliases = []
+        calculated_configs = []
+        for field in comparison_fields:
+            if field.casefold() not in casefold_source_columns:
+                raise ValueError(f"Column DNE in source: {field}")
+            if field.casefold() not in casefold_target_columns:
+                raise ValueError(f"Column DNE in target: {field}")
+
+            source_ibis_type = source_table[
+                casefold_source_columns[field.casefold()]
+            ].type()
+            target_ibis_type = target_table[
+                casefold_target_columns[field.casefold()]
+            ].type()
+
+            if source_ibis_type.is_string() or target_ibis_type.is_string():
+                logging.info(
+                    f"Adding rtrim() to string comparison field `{field.casefold()}` due to Teradata CHAR padding."
+                )
+                alias = f"rstrip__{field.casefold()}"
+                calculated_configs.append(
+                    self.build_config_calculated_fields(
+                        [casefold_source_columns[field.casefold()]],
+                        [casefold_target_columns[field.casefold()]],
+                        "rstrip",
+                        alias,
+                        0,
+                    )
+                )
+                comp_fields_with_aliases.append(alias)
+            else:
+                comp_fields_with_aliases.append(field)
+
+        self.append_calculated_fields(calculated_configs)
+        return comp_fields_with_aliases
 
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
@@ -594,7 +665,7 @@ class ConfigManager(object):
         cast_type=None,
         depth=0,
     ):
-        """Create calculated field config used as a pre-aggregation step. Appends to calulated fields if does not already exist and returns created config."""
+        """Create calculated field config used as a pre-aggregation step. Appends to calculated fields if does not already exist and returns created config."""
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [source_column],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: [target_column],
@@ -838,11 +909,11 @@ class ConfigManager(object):
 
     def build_config_calculated_fields(
         self,
-        source_reference,
-        target_reference,
-        calc_type,
-        alias,
-        depth,
+        source_reference: list,
+        target_reference: list,
+        calc_type: str,
+        alias: str,
+        depth: int,
         supported_types=None,
         arg_value=None,
         custom_params: Optional[dict] = None,
@@ -949,12 +1020,23 @@ class ConfigManager(object):
 
         return col_config
 
-    def build_dependent_aliases(self, calc_type, col_list=None):
+    def _get_order_of_operations(self, calc_type: str) -> List[str]:
+        """Return order of operations for row validation."""
+        order_of_operations = ["cast", "ifnull", "rstrip"]
+        if self.case_insensitive_match():
+            order_of_operations.append("upper")
+        if calc_type == "hash":
+            order_of_operations.extend(["concat", "hash"])
+        elif calc_type == "concat":
+            order_of_operations.append("concat")
+
+        return order_of_operations
+
+    def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
 
-        order_of_operations = []
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -972,26 +1054,9 @@ class ConfigManager(object):
                 if k in casefold_col_list
             }
 
-        if calc_type == "hash":
-            order_of_operations = [
-                "cast",
-                "ifnull",
-                "rstrip",
-                "upper",
-                "concat",
-                "hash",
-            ]
-        if calc_type == "concat":
-            order_of_operations = [
-                "cast",
-                "ifnull",
-                "rstrip",
-                "upper",
-                "concat",
-            ]
         column_aliases = {}
         col_names = []
-        for i, calc in enumerate(order_of_operations):
+        for i, calc in enumerate(self._get_order_of_operations(calc_type)):
             if i == 0:
                 previous_level = [x for x in casefold_source_columns.keys()]
             else:

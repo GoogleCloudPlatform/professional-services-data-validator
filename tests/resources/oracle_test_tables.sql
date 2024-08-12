@@ -99,6 +99,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_ts          TIMESTAMP(6)
 ,   col_tstz        TIMESTAMP(6) WITH TIME ZONE
 --,   col_tsltz       TIMESTAMP(6) WITH LOCAL TIME ZONE
+,   col_interval_ds INTERVAL DAY(2) TO SECOND (3)
 ,   col_raw         RAW(16)
 ,   col_long_raw    LONG RAW
 ,   col_blob        BLOB
@@ -110,13 +111,14 @@ COMMENT ON TABLE pso_data_validator.dvt_ora2pg_types IS 'Oracle to PostgreSQL in
 -- Literals below match corresponding table in postgresql_test_tables.sql
 INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 (1,1111,123456789,123456789012345678,1234567890123456789012345
-,123.1,123.1
+,0.1,123.1
 --,123400,0.001
 ,123.123,123456.1,12345678.1
 ,'Hello DVT','A ','Hello DVT','A '
 ,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456'
 ,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT'),'DVT A','DVT A'
 );
@@ -129,6 +131,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:01.123456'
 ,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT DVT'),'DVT B','DVT B'
 );
@@ -141,6 +144,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
 ,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 --,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT DVT DVT'),'DVT C','DVT C'
 );
@@ -219,4 +223,37 @@ INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT2', 'Row 2');
 INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT3', 'Row 3');
 INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT4', 'Row 4');
 INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT5', 'Row 5');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_pangrams;
+CREATE TABLE pso_data_validator.dvt_pangrams
+(   id          NUMBER(5)
+,   lang        VARCHAR2(100)
+,   words       VARCHAR2(1000 CHAR)
+,   words_en    VARCHAR2(1000)
+,   CONSTRAINT dvt_pangrams_pk PRIMARY KEY (id)
+);
+COMMENT ON TABLE pso_data_validator.dvt_pangrams IS 'Integration test table used to test unicode characters.';
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+-- Be sure to set "export NLS_LANG=.AL32UTF8" if inserting via SQL*Plus.
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (1,'Hebrew',
+        'שפן אכל קצת גזר בטעם חסה, ודי',
+        'A bunny ate some lettuce-flavored carrots, and he had enough');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (2,'Polish',
+        'Pchnąć w tę łódź jeża lub ośm skrzyń fig',
+        'Push a hedgehog or eight crates of figs in this boat');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (3,'Russian',
+        'Съешь ещё этих мягких французских булок, да выпей же чаю',
+        'Eat more of these soft French loaves and drink a tea');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (4,'Swedish',
+        'Schweiz för lyxfjäder på qvist bakom ugn',
+        'Switzerland brings luxury feather on branch behind oven');
+INSERT INTO pso_data_validator.dvt_pangrams
+VALUES (5,'Turkish',
+        'Pijamalı hasta yağız şoföre çabucak güvendi',
+        'The sick person in pyjamas quickly trusted the swarthy driver');
 COMMIT;

@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 CREATE SCHEMA pso_data_validator;
-DROP TABLE pso_data_validator.dvt_core_types;
+DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
 CREATE TABLE pso_data_validator.dvt_core_types
 (   id              int NOT NULL PRIMARY KEY
 ,   col_int8        smallint
@@ -51,7 +51,7 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
  ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 -03:00');
 
-DROP TABLE pso_data_validator.dvt_ora2pg_types;
+DROP TABLE IF EXISTS pso_data_validator.dvt_ora2pg_types;
 CREATE TABLE pso_data_validator.dvt_ora2pg_types
 (   id              int NOT NULL PRIMARY KEY
 ,   col_num_4       smallint
@@ -73,6 +73,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_ts          timestamp(6)
 ,   col_tstz        timestamp(6) with time zone
 --,   col_tsltz       timestamp(6) with time zone
+,   col_interval_ds INTERVAL DAY TO SECOND (3)
 ,   col_raw         bytea
 ,   col_long_raw    bytea
 ,   col_blob        bytea
@@ -84,13 +85,14 @@ COMMENT ON TABLE pso_data_validator.dvt_ora2pg_types IS 'Oracle to PostgreSQL in
 -- Literals below match corresponding table in oracle_test_tables.sql
 INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 (1,1111,123456789,123456789012345678,1234567890123456789012345
-,123.1,123.1
+,0.1,123.1
 --,123400,0.001
 ,123.123,123456.1,12345678.1
 ,'Hello DVT','A ','Hello DVT','A '
 ,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456'
 ,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 --,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
+,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
 ,CAST('DVT' AS BYTEA),CAST('DVT' AS BYTEA)
 ,CAST('DVT' AS BYTEA),'DVT A','DVT A')
 ,(2,2222,123456789,123456789012345678,1234567890123456789012345
@@ -101,6 +103,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:01.123456'
 ,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
 --,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
+,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
 ,CAST('DVT' AS BYTEA),CAST('DVT DVT' AS BYTEA)
 ,CAST('DVT DVT' AS BYTEA),'DVT B','DVT B')
 ,(3,3333,123456789,123456789012345678,1234567890123456789012345
@@ -111,12 +114,12 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
 ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
 --,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
+,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
 ,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA)
 ,CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
 );
 
  /* Following table used for validating generating table partitions */
-\c guestbook
 drop table if exists public.test_generate_partitions ;
 CREATE TABLE public.test_generate_partitions (
         course_id VARCHAR(12),
@@ -162,7 +165,7 @@ INSERT INTO public.test_generate_partitions (course_id, quarter_id, recd_timesta
         ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
         ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5);
 
-DROP TABLE pso_data_validator.dvt_null_not_null;
+DROP TABLE IF EXISTS pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null
 (   col_nn             TIMESTAMP(0) NOT NULL
 ,   col_nullable       TIMESTAMP(0)
@@ -171,7 +174,7 @@ CREATE TABLE pso_data_validator.dvt_null_not_null
 );
 COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, PostgreSQL is assumed to be a DVT source (not target).';
 
-DROP TABLE pso_data_validator.dvt_pg_types;
+DROP TABLE IF EXISTS pso_data_validator.dvt_pg_types;
 CREATE TABLE pso_data_validator.dvt_pg_types
 (   id              serial NOT NULL PRIMARY KEY
 ,   col_int2        smallint
@@ -231,7 +234,7 @@ VALUES
 --,B'011', B'110'
 ,gen_random_uuid(),2);
 
-DROP TABLE pso_data_validator.dvt_large_decimals;
+DROP TABLE IF EXISTS pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
 (   id              DECIMAL(38) NOT NULL PRIMARY KEY
 ,   col_data        VARCHAR(10)
@@ -262,7 +265,7 @@ INSERT INTO pso_data_validator.dvt_large_decimals VALUES
 ,32345678901234567890123456789.123456789
 ,32345678.123456789012345678901234567890);
 
-DROP TABLE pso_data_validator.dvt_binary;
+DROP TABLE IF EXISTS pso_data_validator.dvt_binary;
 CREATE TABLE pso_data_validator.dvt_binary
 (   binary_id       bytea NOT NULL PRIMARY KEY
 ,   int_id          int NOT NULL
@@ -289,3 +292,25 @@ INSERT INTO pso_data_validator.dvt_char_id VALUES
 ('DVT3', 'Row 3'),
 ('DVT4', 'Row 4'),
 ('DVT5', 'Row 5');
+
+DROP TABLE pso_data_validator.dvt_pangrams;
+CREATE TABLE pso_data_validator.dvt_pangrams
+(   id          int
+,   lang        varchar(100)
+,   words       varchar(1000)
+,   words_en    varchar(1000)
+,   CONSTRAINT dvt_pangrams_pk PRIMARY KEY (id)
+);
+COMMENT ON TABLE pso_data_validator.dvt_pangrams IS 'Integration test table used to test unicode characters.';
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+INSERT INTO pso_data_validator.dvt_pangrams VALUES
+(1,'Hebrew', 'שפן אכל קצת גזר בטעם חסה, ודי',
+ 'A bunny ate some lettuce-flavored carrots, and he had enough'),
+(2,'Polish', 'Pchnąć w tę łódź jeża lub ośm skrzyń fig',
+ 'Push a hedgehog or eight crates of figs in this boat'),
+(3,'Russian', 'Съешь ещё этих мягких французских булок, да выпей же чаю',
+ 'Eat more of these soft French loaves and drink a tea'),
+(4,'Swedish', 'Schweiz för lyxfjäder på qvist bakom ugn',
+ 'Switzerland brings luxury feather on branch behind oven'),
+(5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi',
+ 'The sick person in pyjamas quickly trusted the swarthy driver');

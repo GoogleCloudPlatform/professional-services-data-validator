@@ -189,6 +189,18 @@ data-validation connections add
     --password PASSWORD                                 Postgres password
     --database DATABASE                                 Postgres database
 ```
+DVT uses psycopg2, a Python PostgreSQL adapter which supports a large number of connection parameters including those to connect via TLS, [the complete list is here](https://www.postgresql.org/docs/current/libpq-envars.html). The parameters provided to DVT via the `connections add` command take precedence over the environment variables.
+
+### Example TLS connection
+```
+export PGSSLCERT="/path/to/certs/client-cert.pem" \
+export PGSSLKEY=/path/to/certs/client-key.pem \
+export PGSSLROOTCERT=/path/to/certs/server-ca.pem \
+export PGSSLMODE=verify-ca
+data-validation connections add --connection-name pg_tls_ca Postgres \
+--host=10.1.0.2 --user=dvt_user --password=secret-password-123 \
+--database=appdb
+```
 
 ## AlloyDB
 Please note AlloyDB supports same connection config as Postgres.
