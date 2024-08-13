@@ -33,7 +33,6 @@ def mssql_table_column(t, op):
         timezone = op.output_dtype.timezone
         if timezone is not None:
             # Using literal_column on Oracle because the time zone string cannot be a bind.
-            breakpoint()
             out_expr = sa.literal_column(
                 f"{out_expr.name} AT TIME ZONE '{timezone}'"
             ).label(op.name)

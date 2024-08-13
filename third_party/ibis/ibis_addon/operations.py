@@ -205,7 +205,7 @@ def strftime_mysql(translator, op):
     fmt_string = translator.translate(format_string)
     if isinstance(arg_type, dt.Timestamp):
         fmt_string = "%Y-%m-%d %H:%i:%S"
-    if arg_type.timezone:  # Timezone aware, issue #929
+    if hasattr(arg_type, "timezone") and arg_type.timezone: # Timezone aware, issue #929 
         return sa.func.date_format(
             sa.func.cast(
                 arg_formatted.op("AT TIME ZONE INTERVAL")("+00:00"),
@@ -235,13 +235,13 @@ def strftime_mssql(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-    breakpoint()
-    if isinstance(arg.type, sa.dialects.mssql.base.DATETIMEOFFSET):  # issue 929
+    arg_type = op.args[0].output_dtype
+    if hasattr(arg_type, "timezone") and arg_type.timezone:  # Timezone aware, issue #929 works for style 20 only convert adds a +00:00 which we must trim out
         return sa.func.convert(
             sa.text("VARCHAR(19)"), arg, convert_style
         )
     else:
-        return sa.func.convert(sa.text("VARCHAR(19)"), arg, convert_style)
+        return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
 
 
 def strftime_impala(t, op):
