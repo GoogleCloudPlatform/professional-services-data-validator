@@ -26,6 +26,7 @@ from tests.system.data_sources.common_functions import (
     find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
     generate_partitions_test,
 )
@@ -864,3 +865,27 @@ def test_find_tables():
     )
     output = main.find_tables_using_string_matching(args)
     find_tables_assertions(output)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """PostgreSQL dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(expected_config_managers=5)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """PostgreSQL dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        validation_type="custom-query", expected_config_managers=5
+    )

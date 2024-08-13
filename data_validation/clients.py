@@ -32,6 +32,7 @@ from third_party.ibis.ibis_redshift.api import redshift_connect
 
 if TYPE_CHECKING:
     import ibis.expr.schema as sch
+    import ibis.expr.types as ir
 
 
 ibis.options.sql.default_limit = None
@@ -41,6 +42,17 @@ warnings.filterwarnings(
     "ignore",
     "`BaseBackend.database` is deprecated; use equivalent methods in the backend",
 )
+
+
+IBIS_ALCHEMY_BACKENDS = [
+    "mysql",
+    "oracle",
+    "postgres",
+    "db2",
+    "mssql",
+    "redshift",
+    "snowflake",
+]
 
 
 def _raise_missing_client_error(msg):
@@ -151,7 +163,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=schema_name)
 
 
-def get_ibis_query(client, query):
+def get_ibis_query(client, query) -> "ir.Table":
     """Return Ibis Table from query expression for Supplied Client."""
     iq = client.sql(query)
     # Normalise all columns in the query to lower case.
@@ -168,18 +180,19 @@ def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Sch
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if client.name in [
-        "mysql",
-        "oracle",
-        "postgres",
-        "db2",
-        "mssql",
-        "redshift",
-        "snowflake",
-    ]:
+    if client.name in IBIS_ALCHEMY_BACKENDS:
         return client.table(table_name, schema=schema_name).schema()
     else:
         return client.get_schema(table_name, schema_name)
+
+
+def get_ibis_query_schema(client, query_str) -> "sch.Schema":
+    if client.name in IBIS_ALCHEMY_BACKENDS:
+        ibis_query = get_ibis_query(client, query_str)
+        return ibis_query.schema()
+    else:
+        # NJ: I'm not happy about calling a private method but don't see how I can avois it.
+        return client._get_schema_using_query(query_str)
 
 
 def list_schemas(client):

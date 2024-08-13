@@ -26,7 +26,10 @@ from data_validation import (
 )
 from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
-from tests.system.data_sources.common_functions import generate_partitions_test
+from tests.system.data_sources.common_functions import (
+    generate_partitions_test,
+    row_validation_many_columns_test,
+)
 
 
 PROJECT_ID = os.environ["PROJECT_ID"]
@@ -1313,3 +1316,25 @@ def test_column_validation_convert_config_to_json(mock_conn):
     json_config = main.convert_config_to_json(config_managers)
     # assert structure
     assert json_config == TEST_JSON_VALIDATION_CONFIG
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_row_validation_many_columns(mock_conn):
+    """BigQuery dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_custom_query_row_validation_many_columns(mock_conn):
+    """BigQuery dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(validation_type="custom-query")

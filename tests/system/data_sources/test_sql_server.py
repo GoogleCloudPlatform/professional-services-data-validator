@@ -26,7 +26,7 @@ from tests.system.data_sources.common_functions import (
     find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
-    run_many_columns_test_from_cli_args,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -505,31 +505,6 @@ def test_row_validation_pangrams_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_many_columns_to_bigquery():
-    """SQL Server to BigQuery dvt_many_cols row validation.
-    This is testing many columns logic for --hash, there's a Teradata test for --concat.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=sql-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_many_cols",
-            "--primary-keys=id",
-            "--max-concat-columns=254",
-            "--hash=*",
-            "--filter-status=fail",
-        ]
-    )
-    run_many_columns_test_from_cli_args(args, expected_config_managers=2)
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_custom_query_column_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types custom-query column validation"""
     parser = cli_tools.configure_arg_parser()
@@ -621,3 +596,27 @@ def test_find_tables():
     )
     output = main.find_tables_using_string_matching(args)
     find_tables_assertions(output)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """SQL Server dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(expected_config_managers=2)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """SQL Server dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        validation_type="custom-query", expected_config_managers=2
+    )

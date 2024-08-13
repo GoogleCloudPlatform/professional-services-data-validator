@@ -178,4 +178,13 @@ SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
 DVT_POS_COL = "dvt_pos_num"
 
 # Default limit for the number of columns we will attempt in a single validation.
-MAX_CONCAT_COLUMNS_DEFAULT = 99
+MAX_CONCAT_COLUMNS_DEFAULTS = {
+    # Preventing: The concat function requires 2 to 254 arguments
+    "mssql": 254,
+    # Minimizing risk of: ORA-01489: result of string concatenation is too long
+    "oracle": 125,
+    # Preventing: cannot pass more than 100 arguments to a function
+    "postgres": 99,
+    # Minimizing risk of: [Error 3556] Too many columns defined for this table.
+    "teradata": 500,
+}

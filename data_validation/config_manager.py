@@ -1114,32 +1114,3 @@ class ConfigManager(object):
                     column_aliases[name] = i
                     col_names.append(col)
         return col_names
-
-    def get_query_from_file(self, filename):
-        """Return query from input file"""
-        query = ""
-        try:
-            query = gcs_helper.read_file(filename, download_as_text=True)
-            query = query.rstrip(";\n")
-        except IOError:
-            logging.error("Cannot read query file: ", filename)
-
-        if not query or query.isspace():
-            raise ValueError(
-                "Expected file with sql query, got empty file or file with white spaces. "
-                f"input file: {filename}"
-            )
-        return query
-
-    def get_query_from_inline(self, inline_query):
-        """Return query from inline query arg"""
-
-        query = inline_query.strip()
-        query = query.rstrip(";\n")
-
-        if not query or query.isspace():
-            raise ValueError(
-                "Expected arg with sql query, got empty arg or arg with white "
-                f"spaces. input query: '{inline_query}'"
-            )
-        return query

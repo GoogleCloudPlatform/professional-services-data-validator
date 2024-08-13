@@ -422,37 +422,23 @@ def test_get_primary_keys_list(module_under_test):
 
 
 def test_custom_query_get_query_from_file(module_under_test):
-    config_manager = module_under_test.ConfigManager(
+    """Test we can construct ConfigManager for custom-query."""
+    _ = module_under_test.ConfigManager(
         CUSTOM_QUERY_VALIDATION_CONFIG,
         MockIbisClient(),
         MockIbisClient(),
         verbose=False,
     )
-    query = config_manager.get_query_from_file(config_manager.source_query_file)
-    assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
 
 
 def test_custom_query_get_query_from_inline(module_under_test):
-    config_manager = module_under_test.ConfigManager(
+    """Test we can construct ConfigManager for custom-query."""
+    _ = module_under_test.ConfigManager(
         CUSTOM_QUERY_INLINE_VALIDATION_CONFIG,
         MockIbisClient(),
         MockIbisClient(),
         verbose=False,
     )
-
-    # Assert query format
-    source_query = config_manager.get_query_from_inline(config_manager.source_query)
-    assert source_query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
-
-    # Assert exception for empty query or query with white spaces
-    try:
-        config_manager.get_query_from_inline(config_manager.target_query)
-        assert False
-    except ValueError as e:
-        assert e.args[0] == (
-            "Expected arg with sql query, got empty arg or arg "
-            "with white spaces. input query: ' '"
-        )
 
 
 def test__get_comparison_max_col_length(module_under_test):

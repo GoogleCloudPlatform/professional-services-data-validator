@@ -20,7 +20,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
-    run_many_columns_test_from_cli_args,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -577,30 +577,6 @@ def test_row_validation_pangrams_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_many_columns_to_bigquery():
-    """Teradata to BigQuery dvt_many_cols row validation.
-    This is testing many columns logic for --concat, there's a test in Oracle for --hash.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_many_cols=pso_data_validator.dvt_many_cols",
-            "--primary-keys=id",
-            "--hash=*",
-            "--filter-status=fail",
-        ]
-    )
-    run_many_columns_test_from_cli_args(args, expected_config_managers=1)
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_custom_query_column_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types custom-query validation"""
     parser = cli_tools.configure_arg_parser()
@@ -672,3 +648,27 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Teradata dvt_many_cols row validation.
+    This is testing many columns logic for --concat, there are other tests for --hash.
+    """
+    row_validation_many_columns_test(schema="udf", concat_arg="concat")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Teradata dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --concat, there are other tests for --hash.
+    """
+    row_validation_many_columns_test(
+        schema="udf", validation_type="custom-query", concat_arg="concat"
+    )

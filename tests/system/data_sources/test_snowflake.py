@@ -22,7 +22,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
-    run_many_columns_test_from_cli_args,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -395,30 +395,6 @@ def test_row_validation_pangrams_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_many_columns_to_bigquery():
-    """Snowflake to BigQuery dvt_many_cols row validation.
-    This is testing many columns logic for --hash, there's a Teradata test for --concat.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=snowflake-conn",
-            "-tc=bq-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_MANY_COLS=pso_data_validator.dvt_many_cols",
-            "--primary-keys=id",
-            "--hash=*",
-            "--filter-status=fail",
-        ]
-    )
-    run_many_columns_test_from_cli_args(args, expected_config_managers=1)
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_custom_query_validation_core_types():
     """Snowflake to Snowflake dvt_core_types custom-query validation"""
     parser = cli_tools.configure_arg_parser()
@@ -439,3 +415,32 @@ def test_custom_query_validation_core_types():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Snowflake dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        schema="PSO_DATA_VALIDATOR.PUBLIC",
+        table="DVT_MANY_COLS",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Snowflake dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        validation_type="custom-query",
+        schema="PSO_DATA_VALIDATOR.PUBLIC",
+        table="DVT_MANY_COLS",
+    )

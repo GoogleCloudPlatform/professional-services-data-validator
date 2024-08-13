@@ -547,3 +547,31 @@ def test_concat_column_count_configs(
         assert result == expected_result
     else:
         assert result == [pre_build_config]
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    ["tests/resources/custom-query.sql"],
+)
+def test_get_query_from_file(test_input: str):
+    query = cli_tools.get_query_from_file(test_input)
+    assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+
+@pytest.mark.parametrize(
+    "test_input,expect_exception",
+    [
+        (" 1; ", False),
+        (" SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013; ", False),
+        (" ", True),
+    ],
+)
+def test_get_query_from_inline(test_input: str, expect_exception: bool):
+    # Assert query format
+    if expect_exception:
+        # Assert exception.
+        with pytest.raises(ValueError):
+            query = cli_tools.get_query_from_inline(test_input)
+    else:
+        query = cli_tools.get_query_from_inline(test_input)
+        assert query in test_input
