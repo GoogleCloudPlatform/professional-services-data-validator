@@ -64,9 +64,13 @@ from ibis.expr.operations import (
     Strftime,
     StringJoin,
     Value,
+    TableColumn
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
+import third_party.ibis.ibis_mysql.compiler
+from third_party.ibis.ibis_mssql.registry import mssql_table_column
+import third_party.ibis.ibis_postgres.client
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
@@ -201,9 +205,7 @@ def strftime_mysql(translator, op):
     fmt_string = translator.translate(format_string)
     if isinstance(arg_type, dt.Timestamp):
         fmt_string = "%Y-%m-%d %H:%i:%S"
-    if isinstance(
-        arg_formatted.type, sa.dialects.mysql.types.TIMESTAMP
-    ):  # TIMESTAMP type, issue #929
+    if arg_type.timezone:  # Timezone aware, issue #929
         return sa.func.date_format(
             sa.func.cast(
                 arg_formatted.op("AT TIME ZONE INTERVAL")("+00:00"),
@@ -233,13 +235,13 @@ def strftime_mssql(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-
+    breakpoint()
     if isinstance(arg.type, sa.dialects.mssql.base.DATETIMEOFFSET):  # issue 929
         return sa.func.convert(
-            sa.text("VARCHAR(19)"), arg.op("AT TIME ZONE")("UTC"), convert_style
+            sa.text("VARCHAR(19)"), arg, convert_style
         )
     else:
-        return sa.func.convert(sa.text("VARCHAR(32)"), arg, convert_style)
+        return sa.func.convert(sa.text("VARCHAR(19)"), arg, convert_style)
 
 
 def strftime_impala(t, op):
@@ -656,6 +658,7 @@ MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 MsSqlExprTranslator._registry[Strftime] = strftime_mssql
 MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
+MsSqlExprTranslator._registry[TableColumn] = mssql_table_column
 
 MySQLExprTranslator._registry[Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql

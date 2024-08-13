@@ -121,7 +121,11 @@ def _table_column(t, op):
     alias = ctx.get_ref(table, search_parents=True)
     if alias is not None:
         quoted_name = f"{alias}.{quoted_name}"
-
+    if op.output_dtype.is_timestamp():
+        timezone = op.output_dtype.timezone
+        if timezone is not None:
+            timezone = "GMT" if timezone == "UTC" else timezone
+            quoted_name = f"{quoted_name} AT TIME ZONE '{timezone}'"    
     return quoted_name
 
 
@@ -246,14 +250,7 @@ def _strftime(translator, op):
     arg_formatted = translator.translate(arg)
     tokens, _ = _scanner.scan(fmt_string)
     translated_format = _reduce_tokens(tokens)
-    if (
-        hasattr(arg.output_dtype, "timezone") and arg.output_dtype.timezone
-    ):  # has a time zone component issue 929
-        return "TO_CHAR({} at time zone 'gmt', {})".format(
-            arg_formatted, translated_format
-        )
-    else:
-        return "TO_CHAR({}, {})".format(arg_formatted, translated_format)
+    return "TO_CHAR({}, {})".format(arg_formatted, translated_format)
 
 
 _date_units = {
