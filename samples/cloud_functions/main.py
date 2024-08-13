@@ -33,8 +33,10 @@ def main(request):
 
     request (flask.Request): HTTP request object.
     """
+    request = request.get_data()
     try:
-        config = request.json["config"]
+        request_json = json.loads(request.decode())
+        config = request_json.get("config")
         validator = DataValidation(config)
         df = validator.execute()
 
