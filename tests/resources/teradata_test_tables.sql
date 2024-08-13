@@ -173,6 +173,19 @@ INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 1234, TIMESTAMP 
 INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 2.1);
 INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 3.5);
 
+DROP TABLE udf.dvt_latin;
+CREATE TABLE udf.dvt_latin (
+    id INTEGER NOT NULL,
+    words VARCHAR(65) CHARACTER SET LATIN)
+UNIQUE PRIMARY INDEX ( id);
+COMMENT ON TABLE udf.dvt_latin IS 'Integration test table used to test latin characters.';
+
+INSERT INTO udf.dvt_latin VALUES (1, _latin '3231373520424F554C2E20435552C92D4C4142454C4C45'XCV);
+INSERT INTO udf.dvt_latin VALUES (2, _latin '4341502D53414E54C9'XCV);
+INSERT INTO udf.dvt_latin VALUES (3, _latin '47415350c9'XCV);
+INSERT INTO udf.dvt_latin VALUES (4, _latin '5341494E542D52454EC9'XCV);
+INSERT INTO udf.dvt_latin VALUES (5, _latin '5341494E54452D414E452D44452D4C412D50C9'XCV);
+
 DROP TABLE udf.dvt_pangrams;
 CREATE TABLE udf.dvt_pangrams
 (   id          NUMBER(5) NOT NULL PRIMARY KEY
