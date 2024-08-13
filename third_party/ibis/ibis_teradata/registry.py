@@ -125,7 +125,7 @@ def _table_column(t, op):
         timezone = op.output_dtype.timezone
         if timezone is not None:
             timezone = "GMT" if timezone == "UTC" else timezone
-            quoted_name = f"{quoted_name} AT TIME ZONE '{timezone}'"    
+            quoted_name = f"{quoted_name} AT TIME ZONE '{timezone}'"
     return quoted_name
 
 
@@ -284,7 +284,6 @@ def _extract_epoch(translator, op):
         "AT TIME ZONE 'GMT'" if getattr(op.arg.output_dtype, "timezone", None) else ""
     )
     extract_arg = f"CAST({arg} AS TIMESTAMP)" if op.arg.output_dtype.is_date() else arg
-
     return (
         f"(CAST ({arg} AS DATE {utc_expression}) - DATE '1970-01-01') * 86400 + "
         f"(EXTRACT(HOUR FROM {extract_arg} {utc_expression}) * 3600) + "
