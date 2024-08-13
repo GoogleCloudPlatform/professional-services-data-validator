@@ -130,9 +130,9 @@ class Backend(BaseSQLBackend):
         schema_list = schema_df.to_dict("records")
         schema = {}
         for col_data in schema_list:
-            schema[col_data["Column SQL Name"].rstrip()] = (
-                TeradataTypeTranslator.to_ibis(col_data)
-            )
+            schema[
+                col_data["Column SQL Name"].rstrip()
+            ] = TeradataTypeTranslator.to_ibis(col_data)
 
         return schema
 
@@ -159,9 +159,6 @@ class Backend(BaseSQLBackend):
         cur.fetchall()
         ibis_fields = self._adapt_types(cur.description)
         return sch.Schema(ibis_fields)
-
-    def get_schema_using_query(self, query):
-        return self._get_schema_using_query(query)
 
     def _adapt_types(self, descr):
         names = []
