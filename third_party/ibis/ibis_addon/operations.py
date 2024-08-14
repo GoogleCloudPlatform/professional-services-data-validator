@@ -231,10 +231,9 @@ def strftime_mssql(translator, op):
     arg_type = op.args[0].output_dtype
     if (
         hasattr(arg_type, "timezone") and arg_type.timezone
-    ):  # Timezone aware, issue #929 works for style 20 only convert adds a +00:00 which we must trim out
-        return sa.func.convert(sa.text("VARCHAR(19)"), arg, convert_style)
-    else:
-        return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
+    ):  # our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
+        arg = sa.cast(arg, sa.types.DateTime)
+    return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
 
 
 def strftime_impala(t, op):
@@ -516,8 +515,8 @@ def sa_cast_snowflake(t, op):
 def _sa_string_join(t, op):
     if (
         len(op.arg) == 1
-    ):  # SQL Server concat errs on one argument (issue #1202), so casting to string - i.e. identity op
-        return sa.func.cast(
+    ):  # SQL Server CONCAT errs when there is one column being hashed (issue #1202), renaming using type_coerce rather than CONCAT
+        return sa.type_coerce(
             t.translate(op.arg[0]),
             sa.types.String,
         )

@@ -397,7 +397,6 @@ def test_row_validation_core_types():
 def test_row_validation_core_types_to_bigquery():
     parser = cli_tools.configure_arg_parser()
     # TODO When issue-834 is complete add col_string to --hash string below.
-    # TODO Change --hash string below to include col_tstz when issue-929 is complete.
     # TODO When issue-1111 is complete add col_dec_10_2 to --hash string below.
     args = parser.parse_args(
         [
