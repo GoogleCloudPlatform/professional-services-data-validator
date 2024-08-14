@@ -128,6 +128,16 @@ INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
 ('DVT4  ', 'Row 4'),
 ('DVT5  ', 'Row 5');
 
+DROP TABLE `pso_data_validator`.`dvt_time_table`;
+CREATE TABLE `pso_data_validator`.`dvt_time_table`
+(   id          INTEGER NOT NULL
+,   col_time  Time
+) OPTIONS (description='Integration test table used to test Time Type');
+INSERT INTO `pso_data_validator`.`dvt_time_table` VALUES
+(1, '00:01:44'),
+(2, '04:02:00'),
+(3, '08:01:07');
+
 DROP TABLE `pso_data_validator`.`dvt_latin`;
 CREATE TABLE `pso_data_validator`.`dvt_latin`
 (   id          INT64
