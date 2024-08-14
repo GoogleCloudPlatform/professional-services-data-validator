@@ -131,7 +131,7 @@ INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
 DROP TABLE `pso_data_validator`.`dvt_time_table`;
 CREATE TABLE `pso_data_validator`.`dvt_time_table`
 (   id          INTEGER NOT NULL
-,   col_time  Time
+,   col_time  TIME
 ) OPTIONS (description='Integration test table used to test Time data type');
 INSERT INTO `pso_data_validator`.`dvt_time_table` VALUES
 (1, '00:01:44'),
