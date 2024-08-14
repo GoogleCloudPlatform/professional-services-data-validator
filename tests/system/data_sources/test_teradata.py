@@ -322,6 +322,7 @@ def test_column_validation_core_types_to_bigquery():
     # With filter on failures the data frame should be empty
     assert len(df) == 0
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -337,12 +338,13 @@ def test_column_validation_time_table_to_bigquery():
             "-tc=bq-conn",
             "-tbls=udf.dvt_time_table=pso_data_validator.dvt_time_table",
             "--filter-status=fail",
-            "--count=col_time"
+            "--count=col_time",
         ]
     )
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
@@ -353,6 +355,7 @@ def test_row_validation_time_table():
     row_validation_test(
         tables="udf.dvt_time_table=pso_data_validator.dvt_time_table", hash="*"
     )
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
