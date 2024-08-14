@@ -408,7 +408,7 @@ def test_row_validation_core_types_to_bigquery():
             "-tbls=pso_data_validator.dvt_core_types",
             "--primary-keys=id",
             "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime",
+            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
         ]
     )
     df = run_test_from_cli_args(args)
