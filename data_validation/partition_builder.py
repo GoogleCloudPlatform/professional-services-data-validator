@@ -239,32 +239,33 @@ class PartitionBuilder:
             # rows after the row containing the values in the sort order, including the row specified by values.
 
             def less_than_value(table, keys, values):
-                if source_table[keys[0]].type().is_date():
+                key_column = table.__getattr__(keys[0])
+                if key_column.type().is_date():
                     # Ensure date PKs are treated as date literals as per #1191
                     value = values[0].date()
                 else:
                     value = values[0]
 
                 if len(keys) == 1:
-                    return table.__getattr__(keys[0]) < value
+                    return key_column < value
                 else:
-                    return (table.__getattr__(keys[0]) < value) | (
-                        (table.__getattr__(keys[0]) == value)
+                    return (key_column < value) | (
+                        (key_column == value)
                         & less_than_value(table, keys[1:], values[1:])
                     )
 
             def geq_value(table, keys, values):
-                if source_table[keys[0]].type().is_date():
+                key_column = table.__getattr__(keys[0])
+                if key_column.type().is_date():
                     value = values[0].date()
                 else:
                     value = values[0]
 
                 if len(keys) == 1:
-                    return table.__getattr__(keys[0]) >= value
+                    return key_column >= value
                 else:
-                    return (table.__getattr__(keys[0]) > value) | (
-                        (table.__getattr__(keys[0]) == value)
-                        & geq_value(table, keys[1:], values[1:])
+                    return (key_column > value) | (
+                        (key_column == value) & geq_value(table, keys[1:], values[1:])
                     )
 
             filter_source_clause = less_than_value(
