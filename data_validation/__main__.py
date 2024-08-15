@@ -254,6 +254,17 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
                 comparison_fields = cli_tools.get_arg_list(
                     args.comparison_fields, default_value=[]
                 )
+
+                # As per #1190, add rstrip for Teradata string comparison fields
+                if (
+                    config_manager.source_client.name == "teradata"
+                    or config_manager.target_client.name == "teradata"
+                ):
+
+                    comparison_fields = config_manager.add_rstrip_to_comp_fields(
+                        comparison_fields
+                    )
+
                 config_manager.append_comparison_fields(
                     config_manager.build_config_comparison_fields(comparison_fields)
                 )
