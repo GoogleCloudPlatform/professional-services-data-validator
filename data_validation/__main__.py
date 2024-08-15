@@ -260,7 +260,6 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
                     config_manager.source_client.name == "teradata"
                     or config_manager.target_client.name == "teradata"
                 ):
-
                     comparison_fields = config_manager.add_rstrip_to_comp_fields(
                         comparison_fields
                     )
@@ -307,7 +306,6 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
                 config_manager.source_client.name == "teradata"
                 or config_manager.target_client.name == "teradata"
             ):
-
                 comparison_fields = config_manager.add_rstrip_to_comp_fields(
                     comparison_fields
                 )
