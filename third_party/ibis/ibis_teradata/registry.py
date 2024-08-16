@@ -77,6 +77,13 @@ def teradata_cast_decimal_to_string(compiled_arg, from_, to):
     return "TO_CHAR({},'TM9')".format(compiled_arg)
 
 
+@teradata_cast.register(str, dt.Time, dt.String)
+def teradata_cast_time_to_string(compiled_arg, from_, to):
+    # Time always has a time zone associated with it in Teradata
+    # No format here, so only providing HH:MM:SS, issue #1189
+    return f"CAST({compiled_arg} at time zone 'gmt' as Varchar(8))"
+
+
 @teradata_cast.register(str, dt.DataType, dt.DataType)
 def teradata_cast_generate(compiled_arg, from_, to):
     sql_type = ibis_type_to_teradata_type(to)
@@ -114,7 +121,11 @@ def _table_column(t, op):
     alias = ctx.get_ref(table, search_parents=True)
     if alias is not None:
         quoted_name = f"{alias}.{quoted_name}"
-
+    if op.output_dtype.is_timestamp():
+        timezone = op.output_dtype.timezone
+        if timezone is not None:
+            timezone = "GMT" if timezone == "UTC" else timezone
+            quoted_name = f"{quoted_name} AT TIME ZONE '{timezone}'"
     return quoted_name
 
 
@@ -269,16 +280,13 @@ def _string_join(translator, op):
 
 def _extract_epoch(translator, op):
     arg = translator.translate(op.arg)
-    utc_expression = (
-        "AT TIME ZONE 'GMT'" if getattr(op.arg.output_dtype, "timezone", None) else ""
-    )
+    # Since the change to table_column, column is already at UTC we don't need to set the time zone here
     extract_arg = f"CAST({arg} AS TIMESTAMP)" if op.arg.output_dtype.is_date() else arg
-
     return (
-        f"(CAST ({arg} AS DATE {utc_expression}) - DATE '1970-01-01') * 86400 + "
-        f"(EXTRACT(HOUR FROM {extract_arg} {utc_expression}) * 3600) + "
-        f"(EXTRACT(MINUTE FROM {extract_arg} {utc_expression}) * 60) + "
-        f"(EXTRACT(SECOND FROM {extract_arg} {utc_expression}))"
+        f"(CAST ({arg} AS DATE) - DATE '1970-01-01') * 86400 + "
+        f"(EXTRACT(HOUR FROM {extract_arg} ) * 3600) + "
+        f"(EXTRACT(MINUTE FROM {extract_arg} ) * 60) + "
+        f"(EXTRACT(SECOND FROM {extract_arg}))"
     )
 
 

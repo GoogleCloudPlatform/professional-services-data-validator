@@ -327,6 +327,40 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_time_table_to_bigquery():
+    # Unlike other temporal types, count is the only column validation supported for time
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_time_table=pso_data_validator.dvt_time_table",
+            "--filter-status=fail",
+            "--count=col_time",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_time_table():
+    """Validate time table against BQ"""
+    row_validation_test(
+        tables="udf.dvt_time_table=pso_data_validator.dvt_time_table", hash="*"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Validate core types against themselves in Teradata"""
     # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
@@ -384,10 +418,9 @@ def test_teradata_generate_table_partitions():
 def test_row_validation_core_types_to_bigquery():
     # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
     # [Error 3798] A column or character expression is larger than the max size.
-    # TODO Change --hash option to include col_tstz when issue-929 is complete.
     row_validation_test(
         tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime",
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
         filters="id>0 AND col_int8>0",
     )
 

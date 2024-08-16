@@ -119,6 +119,16 @@ INSERT INTO udf.dvt_string_id VALUES ('DVT-key-3', 'Row 3');
 INSERT INTO udf.dvt_string_id VALUES ('DVT-key-4', 'Row 4');
 INSERT INTO udf.dvt_string_id VALUES ('DVT-key-5', 'Row 5');
 
+DROP TABLE udf.dvt_time_table;
+CREATE TABLE udf.dvt_time_table
+(   id          INTEGER NOT NULL PRIMARY KEY
+,   col_time  TIME
+);
+COMMENT ON TABLE udf.dvt_time_table IS 'Integration test table used to test Time data type.';
+INSERT INTO udf.dvt_time_table VALUES (1, '01:01:44+01:00');
+INSERT INTO udf.dvt_time_table VALUES (2, '04:02:00+00:00');
+INSERT INTO udf.dvt_time_Table VALUES (3, '04:01:07-04:00');
+
 DROP TABLE udf.dvt_char_id;
 CREATE TABLE udf.dvt_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
