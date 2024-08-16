@@ -367,9 +367,10 @@ class ConfigManager(object):
 
     def get_source_ibis_table_from_query(self):
         """Return IbisTable from source."""
-        self._source_ibis_table = clients.get_ibis_query(
-            self.source_client, self.source_query
-        )
+        if not hasattr(self, "_source_ibis_table"):
+            self._source_ibis_table = clients.get_ibis_query(
+                self.source_client, self.source_query
+            )
         return self._source_ibis_table
 
     def get_source_ibis_calculated_table(self, depth=None):
@@ -396,9 +397,10 @@ class ConfigManager(object):
 
     def get_target_ibis_table_from_query(self):
         """Return IbisTable from source."""
-        self._target_ibis_table = clients.get_ibis_query(
-            self.target_client, self.target_query
-        )
+        if not hasattr(self, "_target_ibis_table"):
+            self._target_ibis_table = clients.get_ibis_query(
+                self.target_client, self.target_query
+            )
         return self._target_ibis_table
 
     def get_target_ibis_calculated_table(self, depth=None):
