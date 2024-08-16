@@ -32,7 +32,7 @@ def mssql_table_column(t, op):
     if op.output_dtype.is_timestamp():
         timezone = op.output_dtype.timezone
         if timezone is not None:
-            # Using literal_column on Oracle because the time zone string cannot be a bind.
+            # Using literal_column on SQL Server because the time zone string cannot be a bind.
             out_expr = sa.literal_column(
                 f"{out_expr.name} AT TIME ZONE '{timezone}'"
             ).label(op.name)
