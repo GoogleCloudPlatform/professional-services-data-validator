@@ -402,7 +402,7 @@ def test_row_validation_many_columns():
     """Spanner dvt_many_cols row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
-    row_validation_many_columns_test()
+    row_validation_many_columns_test(schema=None)
 
 
 @mock.patch(
@@ -413,4 +413,4 @@ def test_custom_query_row_validation_many_columns():
     """Spanner dvt_many_cols custom-query row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
-    row_validation_many_columns_test(validation_type="custom-query")
+    row_validation_many_columns_test(validation_type="custom-query", schema=None)
