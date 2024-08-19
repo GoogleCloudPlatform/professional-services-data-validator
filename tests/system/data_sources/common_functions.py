@@ -88,6 +88,7 @@ def row_validation_many_columns_test(
     validation_type: str = "row",
     concat_arg: str = "hash",
     expected_config_managers: int = 1,
+    target_conn: str = "mock-conn",
 ):
     """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
     parser = cli_tools.configure_arg_parser()
@@ -97,7 +98,7 @@ def row_validation_many_columns_test(
                 "validate",
                 "row",
                 "-sc=mock-conn",
-                "-tc=mock-conn",
+                f"-tc={target_conn}",
                 f"-tbls={schema}.{table}",
                 "--primary-keys=id",
                 f"--{concat_arg}=*",
