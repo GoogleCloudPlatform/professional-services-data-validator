@@ -64,11 +64,15 @@ from ibis.expr.operations import (
     Strftime,
     StringJoin,
     Value,
+    TableColumn,
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
-import third_party.ibis.ibis_mysql.compiler
-import third_party.ibis.ibis_postgres.client
+# Do not remove these lines, they trigger patching of Ibis code.
+import third_party.ibis.ibis_mysql.compiler  # noqa
+from third_party.ibis.ibis_mssql.registry import mssql_table_column
+import third_party.ibis.ibis_postgres.client  # noqa
+
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
@@ -162,7 +166,7 @@ def format_hashbytes_bigquery(translator, op):
 def format_hashbytes_teradata(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
-        return f"rtrim(hash_sha256({arg}))"
+        return f"rtrim(hash_sha256(TransUnicodeToUTF8({arg})))"
     elif op.how == "sha512":
         return f"rtrim(hash_sha512({arg}))"
     elif op.how == "md5":
@@ -224,8 +228,12 @@ def strftime_mssql(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-    result = sa.func.convert(sa.text("VARCHAR(32)"), arg, convert_style)
-    return result
+    arg_type = op.args[0].output_dtype
+    if (
+        hasattr(arg_type, "timezone") and arg_type.timezone
+    ):  # our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
+        arg = sa.cast(arg, sa.types.DateTime)
+    return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
 
 
 def strftime_impala(t, op):
@@ -505,7 +513,15 @@ def sa_cast_snowflake(t, op):
 
 
 def _sa_string_join(t, op):
-    return sa.func.concat(*map(t.translate, op.arg))
+    if (
+        len(op.arg) == 1
+    ):  # SQL Server CONCAT errs when there is one column being hashed (issue #1202), renaming using type_coerce rather than CONCAT
+        return sa.type_coerce(
+            t.translate(op.arg[0]),
+            sa.types.String,
+        )
+    else:
+        return sa.func.concat(*map(t.translate, op.arg))
 
 
 def sa_format_new_id(t, op):
@@ -634,6 +650,7 @@ MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 MsSqlExprTranslator._registry[Strftime] = strftime_mssql
 MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
+MsSqlExprTranslator._registry[TableColumn] = mssql_table_column
 
 MySQLExprTranslator._registry[Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql

@@ -377,9 +377,10 @@ class ConfigManager(object):
 
     def get_source_ibis_table_from_query(self):
         """Return IbisTable from source."""
-        self._source_ibis_table = clients.get_ibis_query(
-            self.source_client, self.source_query
-        )
+        if not hasattr(self, "_source_ibis_table"):
+            self._source_ibis_table = clients.get_ibis_query(
+                self.source_client, self.source_query
+            )
         return self._source_ibis_table
 
     def get_source_ibis_calculated_table(self, depth=None):
@@ -406,9 +407,10 @@ class ConfigManager(object):
 
     def get_target_ibis_table_from_query(self):
         """Return IbisTable from source."""
-        self._target_ibis_table = clients.get_ibis_query(
-            self.target_client, self.target_query
-        )
+        if not hasattr(self, "_target_ibis_table"):
+            self._target_ibis_table = clients.get_ibis_query(
+                self.target_client, self.target_query
+            )
         return self._target_ibis_table
 
     def get_target_ibis_calculated_table(self, depth=None):
@@ -546,9 +548,6 @@ class ConfigManager(object):
         Returns:
             comp_fields_with_aliases: List[str] of comparison field columns with rstrip aliases
         """
-        logging.info(
-            "Adding rtrim() to string comparison fields due to Teradata CHAR padding."
-        )
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
@@ -570,6 +569,9 @@ class ConfigManager(object):
             ].type()
 
             if source_ibis_type.is_string() or target_ibis_type.is_string():
+                logging.info(
+                    f"Adding rtrim() to string comparison field `{field.casefold()}` due to Teradata CHAR padding."
+                )
                 alias = f"rstrip__{field.casefold()}"
                 calculated_configs.append(
                     self.build_config_calculated_fields(

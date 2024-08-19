@@ -148,6 +148,35 @@ def find_tables_assertions(command_output: str):
     assert "dvt_core_types" in [_["target_table_name"] for _ in output_dict]
 
 
+def row_validation_test(
+    # pk="id",
+    tables="pso_data_validator.test_generate_partitions",
+    tc="bq-conn",
+    hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
+    filters="1=1",
+):
+    """Generic row validation test. All row validation tests expect an empty dataframe as the assertion
+    1.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            f"-tc={tc}",
+            f"-tbls={tables}",
+            f"--filters={filters}",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            f"--hash={hash}",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
 def generate_partitions_test(
     expected_filter: str,
     pk="course_id,quarter_id,student_id",

@@ -128,6 +128,29 @@ INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
 ('DVT4  ', 'Row 4'),
 ('DVT5  ', 'Row 5');
 
+DROP TABLE `pso_data_validator`.`dvt_time_table`;
+CREATE TABLE `pso_data_validator`.`dvt_time_table`
+(   id          INTEGER NOT NULL
+,   col_time  TIME
+) OPTIONS (description='Integration test table used to test Time data type');
+INSERT INTO `pso_data_validator`.`dvt_time_table` VALUES
+(1, '00:01:44'),
+(2, '04:02:00'),
+(3, '08:01:07');
+
+DROP TABLE `pso_data_validator`.`dvt_latin`;
+CREATE TABLE `pso_data_validator`.`dvt_latin`
+(   id          INT64
+,   words       STRING
+) OPTIONS (description='Integration test table used to test latin characters.');
+
+INSERT INTO `pso_data_validator`.`dvt_latin` (id, words) VALUES
+(1, '2175 BOUL. CURÉ-LABELLE'),
+(2, 'CAP-SANTÉ'),
+(3, 'GASPÉ'),
+(4, 'SAINT-RENÉ'),
+(5, 'SAINTE-ANE-DE-LA-PÉ');
+
 DROP TABLE `pso_data_validator`.`dvt_pangrams`;
 CREATE TABLE `pso_data_validator`.`dvt_pangrams`
 (   id          INT64
