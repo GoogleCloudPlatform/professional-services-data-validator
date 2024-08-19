@@ -398,7 +398,7 @@ def test_custom_query_validation_core_types():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_many_columns(mock_conn):
+def test_row_validation_many_columns():
     """Spanner dvt_many_cols row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
@@ -409,7 +409,7 @@ def test_row_validation_many_columns(mock_conn):
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_custom_query_row_validation_many_columns(mock_conn):
+def test_custom_query_row_validation_many_columns():
     """Spanner dvt_many_cols custom-query row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """

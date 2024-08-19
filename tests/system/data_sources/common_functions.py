@@ -92,6 +92,7 @@ def row_validation_many_columns_test(
 ):
     """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
     parser = cli_tools.configure_arg_parser()
+    schema_prefix = f"{schema}." if schema else ""
     if validation_type == "row":
         args = parser.parse_args(
             [
@@ -99,14 +100,14 @@ def row_validation_many_columns_test(
                 "row",
                 "-sc=mock-conn",
                 f"-tc={target_conn}",
-                f"-tbls={schema}.{table}",
+                f"-tbls={schema_prefix}{table}",
                 "--primary-keys=id",
                 f"--{concat_arg}=*",
                 "--filter-status=fail",
             ]
         )
     else:
-        query = f"SELECT * FROM {schema}.{table}"
+        query = f"SELECT * FROM {schema_prefix}{table}"
         args = parser.parse_args(
             [
                 "validate",
