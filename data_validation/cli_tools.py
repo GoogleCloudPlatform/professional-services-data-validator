@@ -1259,7 +1259,7 @@ def _max_concat_columns(
 
 
 def _concat_column_count_configs(
-    cols: list[str],
+    cols: list,
     pre_build_configs: dict,
     arg_to_override: str,
     max_col_count: int,
