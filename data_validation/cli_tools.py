@@ -467,7 +467,7 @@ def _configure_row_parser(
     )
     optional_arguments.add_argument(
         "--max-concat-columns",
-        "-mrvc",
+        "-mcc",
         type=int,
         help=(
             "The maximum number of columns accepted by a --hash or --concat validation. When there are "
