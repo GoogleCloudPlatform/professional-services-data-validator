@@ -928,34 +928,9 @@ class ConfigManager(object):
         calc_type: str,
         alias: str,
         depth: int,
-        supported_types=None,
-        arg_value=None,
         custom_params: Optional[dict] = None,
     ) -> dict:
         """Returns list of calculated fields"""
-        source_table = self.get_source_ibis_calculated_table(depth=depth)
-        target_table = self.get_target_ibis_calculated_table(depth=depth)
-
-        casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
-        casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
-
-        allowlist_columns = arg_value or casefold_source_columns
-        for column in casefold_source_columns:
-            column_type_str = str(source_table[casefold_source_columns[column]].type())
-            column_type = column_type_str.split("(")[0]
-            if column not in allowlist_columns:
-                continue
-            elif column not in casefold_target_columns:
-                logging.info(
-                    f"Skipping {calc_type} on {column} as column is not present in target table"
-                )
-                continue
-            elif supported_types and column_type not in supported_types:
-                if self.verbose:
-                    msg = f"Skipping {calc_type} on {column} due to data type: {column_type}"
-                    logging.info(msg)
-                continue
-
         calculated_config = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: source_reference,
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: target_reference,
