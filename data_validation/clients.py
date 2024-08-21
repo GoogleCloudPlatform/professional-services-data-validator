@@ -192,6 +192,7 @@ def get_ibis_query_schema(client, query_str) -> "sch.Schema":
         return ibis_query.schema()
     else:
         # NJ: I'm not happy about calling a private method but don't see how I can avoid it.
+        #     Ibis does not expose a public method like it does for get_schema().
         return client._get_schema_using_query(query_str)
 
 

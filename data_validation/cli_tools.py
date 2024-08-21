@@ -1416,7 +1416,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
                 table_obj,
                 query_str,
             )
-            additional_pre_build_configs = _concat_column_count_configs(
+            new_pre_build_configs = _concat_column_count_configs(
                 cols,
                 pre_build_configs,
                 consts.CONFIG_ROW_HASH if args.hash else consts.CONFIG_ROW_CONCAT,
@@ -1424,16 +1424,16 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
                     args.max_concat_columns, source_client, target_client
                 ),
             )
-            if len(additional_pre_build_configs) > 1:
+            if len(new_pre_build_configs) > 1:
                 message_type = (
                     f'{table_obj["schema_name"]}.{table_obj["table_name"]}'
                     if table_obj
                     else "custom query"
                 )
                 logging.info(
-                    f"Splitting validation into {len(additional_pre_build_configs)} queries for {message_type}"
+                    f"Splitting validation into {len(new_pre_build_configs)} queries for {message_type}"
                 )
-            pre_build_configs_list.extend(additional_pre_build_configs)
+            pre_build_configs_list.extend(new_pre_build_configs)
         else:
             pre_build_configs_list.append(pre_build_configs)
 

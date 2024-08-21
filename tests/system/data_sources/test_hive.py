@@ -406,6 +406,7 @@ def test_row_validation_many_columns():
     This must be down to minimal resources for our small Hive instance, disabling for now.
     """
     pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
+    # TODO Enable this test once we have access to a less flakey Hive cluster.
     row_validation_many_columns_test(target_conn="bq-conn")
 
 
@@ -420,6 +421,7 @@ def test_custom_query_row_validation_many_columns():
       java.lang.OutOfMemoryError: Java heap space
     """
     pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
+    # TODO Enable this test once we have access to a less flakey Hive cluster.
     row_validation_many_columns_test(
         validation_type="custom-query",
         target_conn="bq-conn",
