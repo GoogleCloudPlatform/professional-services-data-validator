@@ -234,6 +234,16 @@ class ConfigManager(object):
         )
 
     @property
+    def concat(self):
+        """Return field from Config"""
+        return self._config.get(consts.CONFIG_ROW_CONCAT, [])
+
+    @property
+    def hash(self):
+        """Return field from Config"""
+        return self._config.get(consts.CONFIG_ROW_HASH, [])
+
+    @property
     def filters(self):
         """Return Filters from Config"""
         return self._config.get(consts.CONFIG_FILTERS, [])
@@ -487,6 +497,8 @@ class ConfigManager(object):
         filter_status=None,
         trim_string_pks=None,
         case_insensitive_match=None,
+        concat=None,
+        hash=None,
         verbose=False,
     ):
         if isinstance(filter_config, dict):
@@ -517,6 +529,8 @@ class ConfigManager(object):
             consts.CONFIG_FILTER_STATUS: filter_status,
             consts.CONFIG_TRIM_STRING_PKS: trim_string_pks,
             consts.CONFIG_CASE_INSENSITIVE_MATCH: case_insensitive_match,
+            consts.CONFIG_ROW_CONCAT: concat,
+            consts.CONFIG_ROW_HASH: hash,
         }
 
         return ConfigManager(
@@ -1077,32 +1091,3 @@ class ConfigManager(object):
                     column_aliases[name] = i
                     col_names.append(col)
         return col_names
-
-    def get_query_from_file(self, filename):
-        """Return query from input file"""
-        query = ""
-        try:
-            query = gcs_helper.read_file(filename, download_as_text=True)
-            query = query.rstrip(";\n")
-        except IOError:
-            logging.error("Cannot read query file: ", filename)
-
-        if not query or query.isspace():
-            raise ValueError(
-                "Expected file with sql query, got empty file or file with white spaces. "
-                f"input file: {filename}"
-            )
-        return query
-
-    def get_query_from_inline(self, inline_query):
-        """Return query from inline query arg"""
-
-        query = inline_query.strip()
-        query = query.rstrip(";\n")
-
-        if not query or query.isspace():
-            raise ValueError(
-                "Expected arg with sql query, got empty arg or arg with white "
-                f"spaces. input query: '{inline_query}'"
-            )
-        return query

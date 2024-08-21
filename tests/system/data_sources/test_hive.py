@@ -15,11 +15,14 @@
 import os
 from unittest import mock
 
+import pytest
+
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -77,12 +80,15 @@ def mock_get_connection_config(*args):
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_schema_validation_core_types():
+def test_schema_validation_core_types():
     """
     Disabled this test in favour of test_schema_validation_core_types_to_bigquery().
     The Hive integration tests are too slow and timing out but I believe
     test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
     """
+    pytest.skip(
+        "Skipping test_schema_validation_core_types in favour of test_schema_validation_core_types_to_bigquery (due to elapsed time)."
+    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -169,12 +175,15 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_schema_validation_not_null_vs_nullable():
+def test_schema_validation_not_null_vs_nullable():
     """
     Disabled this test because we don't currently pull nullable from Hive.
       https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/934
     Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly.
     """
+    pytest.skip(
+        "Skipping test_schema_validation_not_null_vs_nullable because we don't currently pull nullable from Hive."
+    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -193,12 +202,15 @@ def disabled_test_schema_validation_not_null_vs_nullable():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_column_validation_core_types():
+def test_column_validation_core_types():
     """
     Disabled this test in favour of test_column_validation_core_types_to_bigquery().
     The Hive integration tests are too slow and timing out but I believe
     test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
     """
+    pytest.skip(
+        "Skipping test_column_validation_core_types in favour of test_column_validation_core_types_to_bigquery (due to elapsed time)."
+    )
     parser = cli_tools.configure_arg_parser()
     # Hive tests are really slow so I've excluded --min below assuming that --max is
     # effectively the same test when comparing an engine back to itself.
@@ -250,12 +262,15 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_row_validation_core_types():
+def test_row_validation_core_types():
     """
     Disabled this test in favour of test_row_validation_core_types_to_bigquery().
     The Hive integration tests are too slow and timing out but I believe
     test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
     """
+    pytest.skip(
+        "Skipping test_row_validation_core_types in favour of test_row_validation_core_types_to_bigquery (due to elapsed time)."
+    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -356,8 +371,9 @@ def test_row_validation_pangrams_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_custom_query_validation_core_types():
-    """Hive to Hive dvt_core_types custom-query validation"""
+def test_custom_query_validation_core_types_to_bigquery():
+    """Hive to BigQuery dvt_core_types custom-query validation
+    Using BigQuery target because Hive queries are really slow."""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -365,7 +381,7 @@ def test_custom_query_validation_core_types():
             "custom-query",
             "column",
             "-sc=mock-conn",
-            "-tc=mock-conn",
+            "-tc=bq-conn",
             "--source-query=select * from pso_data_validator.dvt_core_types",
             "--target-query=select * from pso_data_validator.dvt_core_types",
             "--filter-status=fail",
@@ -375,3 +391,38 @@ def test_custom_query_validation_core_types():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Hive dvt_many_cols row validation.
+    Using BigQuery target because Hive queries are really slow.
+    When executed individually this test passes but when executed during a full
+    integration test run I get:
+      impala.error.HiveServer2Error: java.lang.NullPointerException
+    This must be down to minimal resources for our small Hive instance, disabling for now.
+    """
+    pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
+    # TODO Enable this test once we have access to a less flakey Hive cluster.
+    row_validation_many_columns_test(target_conn="bq-conn")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Hive dvt_many_cols custom-query row validation.
+    Using BigQuery target because Hive queries are really slow.
+    I can't get this test to complete on our test infrastructure due to:
+      java.lang.OutOfMemoryError: Java heap space
+    """
+    pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
+    # TODO Enable this test once we have access to a less flakey Hive cluster.
+    row_validation_many_columns_test(
+        validation_type="custom-query",
+        target_conn="bq-conn",
+    )

@@ -20,6 +20,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
     generate_partitions_test,
     row_validation_test,
@@ -665,3 +666,27 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Teradata dvt_many_cols row validation.
+    This is testing many columns logic for --concat, there are other tests for --hash.
+    """
+    row_validation_many_columns_test(schema="udf", concat_arg="concat")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Teradata dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --concat, there are other tests for --hash.
+    """
+    row_validation_many_columns_test(
+        schema="udf", validation_type="custom-query", concat_arg="concat"
+    )

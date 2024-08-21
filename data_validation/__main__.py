@@ -160,7 +160,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     return aggregate_configs
 
 
-def get_calculated_config(args, config_manager) -> List[dict]:
+def get_calculated_config(args, config_manager: ConfigManager) -> List[dict]:
     """Return list of formatted calculated objects.
 
     Args:
@@ -168,11 +168,19 @@ def get_calculated_config(args, config_manager) -> List[dict]:
     """
     calculated_configs = []
     fields = []
-    if args.hash:
-        col_list = None if args.hash == "*" else cli_tools.get_arg_list(args.hash)
+    if config_manager.hash:
+        col_list = (
+            None
+            if config_manager.hash == "*"
+            else cli_tools.get_arg_list(config_manager.hash)
+        )
         fields = config_manager.build_dependent_aliases("hash", col_list)
-    elif args.concat:
-        col_list = None if args.concat == "*" else cli_tools.get_arg_list(args.concat)
+    elif config_manager.concat:
+        col_list = (
+            None
+            if config_manager.concat == "*"
+            else cli_tools.get_arg_list(config_manager.concat)
+        )
         fields = config_manager.build_dependent_aliases("concat", col_list)
 
     if len(fields) > 0:
@@ -190,13 +198,13 @@ def get_calculated_config(args, config_manager) -> List[dict]:
                 custom_params=field.get("calc_params"),
             )
         )
-    if args.hash:
+    if config_manager.hash:
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(
                 ["hash__all"], depth=max_depth
             )
         )
-    elif args.concat:
+    elif config_manager.concat:
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(
                 ["concat__all"], depth=max_depth
@@ -212,6 +220,7 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         args (Namespace): User specified Arguments
         config_manager (ConfigManager): Validation config manager instance.
     """
+
     # Append SCHEMA_VALIDATION configs
     if config_manager.validation_type == consts.SCHEMA_VALIDATION:
         if args.exclusion_columns is not None:
@@ -226,22 +235,18 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         config_manager.append_custom_query_type(args.custom_query_type)
 
         # Get source sql query from source sql file or inline query
-        if args.source_query:
-            source_query_str = config_manager.get_query_from_inline(args.source_query)
-        else:
-            source_query_str = config_manager.get_query_from_file(
-                args.source_query_file
+        config_manager.append_source_query(
+            cli_tools.get_query_from_query_args(
+                args.source_query, args.source_query_file
             )
-        config_manager.append_source_query(source_query_str)
+        )
 
         # Get target sql query from target sql file or inline query
-        if args.target_query:
-            target_query_str = config_manager.get_query_from_inline(args.target_query)
-        else:
-            target_query_str = config_manager.get_query_from_file(
-                args.target_query_file
+        config_manager.append_target_query(
+            cli_tools.get_query_from_query_args(
+                args.target_query, args.target_query_file
             )
-        config_manager.append_target_query(target_query_str)
+        )
 
         # For custom-query column command
         if args.custom_query_type == consts.COLUMN_VALIDATION.lower():

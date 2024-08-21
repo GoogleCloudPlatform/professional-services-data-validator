@@ -23,6 +23,7 @@ from data_validation import cli_tools, consts, data_validation
 from data_validation import __main__ as main
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -391,3 +392,25 @@ def test_custom_query_validation_core_types():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Spanner dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Spanner dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(validation_type="custom-query", schema=None)

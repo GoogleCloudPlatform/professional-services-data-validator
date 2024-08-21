@@ -82,6 +82,58 @@ def run_test_from_cli_args(args: "Namespace") -> "DataFrame":
     return validator.execute()
 
 
+def row_validation_many_columns_test(
+    schema: str = "pso_data_validator",
+    table: str = "dvt_many_cols",
+    validation_type: str = "row",
+    concat_arg: str = "hash",
+    expected_config_managers: int = 1,
+    target_conn: str = "mock-conn",
+):
+    """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
+    parser = cli_tools.configure_arg_parser()
+    schema_prefix = f"{schema}." if schema else ""
+    if validation_type == "row":
+        args = parser.parse_args(
+            [
+                "validate",
+                "row",
+                "-sc=mock-conn",
+                f"-tc={target_conn}",
+                f"-tbls={schema_prefix}{table}",
+                "--primary-keys=id",
+                f"--{concat_arg}=*",
+                "--filter-status=fail",
+            ]
+        )
+    else:
+        query = f"SELECT * FROM {schema_prefix}{table}"
+        args = parser.parse_args(
+            [
+                "validate",
+                "custom-query",
+                "row",
+                "-sc=mock-conn",
+                "-tc=mock-conn",
+                f"--source-query={query}",
+                f"--target-query={query}",
+                "--primary-keys=id",
+                f"--{concat_arg}=*",
+                "--filter-status=fail",
+            ]
+        )
+    config_managers = main.build_config_managers_from_args(args)
+    # We expect the validation to be split into multiple config managers.
+    assert (
+        len(config_managers) == expected_config_managers
+    ), f"Expected {expected_config_managers} but found: {len(config_managers)}"
+    for config_manager in config_managers:
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        df = validator.execute()
+        # With filter on failures the data frame should be empty.
+        assert len(df) == 0
+
+
 def find_tables_assertions(command_output: str):
     assert isinstance(command_output, str)
     assert command_output
