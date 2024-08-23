@@ -226,6 +226,10 @@ class PartitionBuilder:
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
+            if len(first_elements) < 1:
+                raise ValueError(
+                    "Invalid partition number for row count. More than one row per partition is required."
+                )
 
             # Once we have the first element of each partition, we can generate the where clause
             # i.e. greater than or equal to first element and less than first element of next partition
