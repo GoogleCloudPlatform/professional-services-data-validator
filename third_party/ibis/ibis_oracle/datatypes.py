@@ -91,9 +91,9 @@ if "LONG RAW" not in OracleDialect_cx_oracle.ischema_names:
     OracleDialect_cx_oracle.ischema_names["LONG RAW"] = oracle.RAW
 # Same as above but for LOCAL TIME ZONE.
 if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_cx_oracle.ischema_names:
-    OracleDialect_cx_oracle.ischema_names["TIMESTAMP WITH LOCAL TIME ZONE"] = (
-        oracle.TIMESTAMP(timezone=True)
-    )
+    OracleDialect_cx_oracle.ischema_names[
+        "TIMESTAMP WITH LOCAL TIME ZONE"
+    ] = oracle.TIMESTAMP(timezone=True)
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.CLOB)
