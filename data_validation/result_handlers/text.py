@@ -62,7 +62,7 @@ class TextResultHandler(object):
     def _get_formatted(self, result_df):
         return get_formatted(result_df, self.format, self.cols_filter_list)
 
-    def print_formatted_(self, result_df):
+    def print_formatted_(self, result_df) -> "DataFrame":
         """
         Utility for printing formatted results
         :param result_df
@@ -81,5 +81,5 @@ class TextResultHandler(object):
 
         return result_df
 
-    def execute(self, result_df):
+    def execute(self, result_df) -> str:
         return self.print_formatted_(result_df)

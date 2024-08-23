@@ -34,18 +34,24 @@ class BigQueryResultHandler(object):
     """
 
     def __init__(
-        self, bigquery_client, status_list=None, table_id="pso_data_validator.results"
+        self,
+        bigquery_client,
+        status_list: list = None,
+        table_id: str = "pso_data_validator.results",
+        text_format: str = "table",
     ):
         self._bigquery_client = bigquery_client
         self._table_id = table_id
         self._status_list = status_list
+        self._text_format = text_format
 
     @staticmethod
     def get_handler_for_project(
         project_id,
         status_list=None,
-        table_id="pso_data_validator.results",
+        table_id: str = "pso_data_validator.results",
         credentials=None,
+        text_format: str = "table",
     ):
         """Return BigQueryResultHandler instance for given project.
 
@@ -56,12 +62,17 @@ class BigQueryResultHandler(object):
                 Explicit credentials to use in case default credentials
                 aren't working properly.
             status_list (list): provided status to filter the results with
+            text_format (str, optional):
+                This allows the user to influence the text results written via logger.debug.
+                See: https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/871
         """
         info = client_info.get_http_client_info()
         client = bigquery.Client(
             project=project_id, client_info=info, credentials=credentials
         )
-        return BigQueryResultHandler(client, status_list=status_list, table_id=table_id)
+        return BigQueryResultHandler(
+            client, status_list=status_list, table_id=table_id, text_format=text_format
+        )
 
     def execute(self, result_df):
         if self._status_list is not None:
@@ -103,6 +114,8 @@ class BigQueryResultHandler(object):
         logger = logging.getLogger()
         if logger.isEnabledFor(logging.DEBUG):
             # Checking log level to avoid evaluating a large Dataframe that will never be logged.
-            logging.debug(text_handler.get_formatted(result_df))
+            logging.debug(
+                text_handler.get_formatted(result_df, format=self._text_format)
+            )
 
         return result_df
