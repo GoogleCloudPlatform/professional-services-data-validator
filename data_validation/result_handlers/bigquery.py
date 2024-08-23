@@ -14,12 +14,12 @@
 
 """Output validation report to BigQuery tables"""
 
+import logging
+
 from google.cloud import bigquery
 
 from data_validation import client_info
-import logging
-from data_validation import consts
-from data_validation.result_handlers.text import filter_validation_status
+from data_validation.result_handlers import text as text_handler
 
 
 class BigQueryResultHandler(object):
@@ -65,14 +65,10 @@ class BigQueryResultHandler(object):
 
     def execute(self, result_df):
         if self._status_list is not None:
-            result_df = filter_validation_status(self._status_list, result_df)
-
-        # handler also outputs the results to the console before saving to BQ
-        logging.info(
-            result_df.drop(consts.COLUMN_FILTER_LIST, axis=1).to_markdown(
-                tablefmt="fancy_grid", index=False
+            result_df = text_handler.filter_validation_status(
+                self._status_list, result_df
             )
-        )
+
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df
@@ -94,6 +90,19 @@ class BigQueryResultHandler(object):
                     f"Please update your BigQuery results table schema using the script : samples/bq_utils/add_columns_schema.sh.\n"
                     f"The latest release of DVT has added two fields 'primary_keys' and 'num_random_rows': {chunk_errors}"
                 )
-            raise RuntimeError(f"could not write rows: {chunk_errors}")
+            raise RuntimeError(f"Could not write rows: {chunk_errors}")
+
+        if result_df.empty:
+            logging.info("No results to write to BigQuery")
+        else:
+            logging.info(
+                f'Results written to BigQuery, run id: {result_df["run_id"][0]}'
+            )
+
+        # Handler also logs results after saving to BigQuery.
+        logger = logging.getLogger()
+        if logger.isEnabledFor(logging.DEBUG):
+            # Checking log level to avoid evaluating a large Dataframe that will never be logged.
+            logging.debug(text_handler.get_formatted(result_df))
 
         return result_df
