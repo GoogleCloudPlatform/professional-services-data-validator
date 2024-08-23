@@ -67,6 +67,7 @@ _type_mapping = {
     cx_Oracle.DB_TYPE_DATE: dt.Date,
     cx_Oracle.DB_TYPE_TIMESTAMP: dt.Timestamp,
     cx_Oracle.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="UTC"),
+    cx_Oracle.DB_TYPE_TIMESTAMP_LTZ: dt.Timestamp(timezone="UTC"),
     cx_Oracle.DB_TYPE_RAW: dt.Binary,
     cx_Oracle.DB_TYPE_LONG_RAW: dt.Binary,
     cx_Oracle.DB_TYPE_BFILE: dt.Binary,
@@ -88,6 +89,11 @@ _type_mapping = {
 # as a RAW variant, as below.
 if "LONG RAW" not in OracleDialect_cx_oracle.ischema_names:
     OracleDialect_cx_oracle.ischema_names["LONG RAW"] = oracle.RAW
+# Same as above but for LOCAL TIME ZONE.
+if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_cx_oracle.ischema_names:
+    OracleDialect_cx_oracle.ischema_names[
+        "TIMESTAMP WITH LOCAL TIME ZONE"
+    ] = oracle.TIMESTAMP(timezone=True)
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.CLOB)
