@@ -1034,7 +1034,7 @@ class ConfigManager(object):
         if col_list:
             casefold_col_list = [x.casefold() for x in col_list]
             if exclude_cols:
-                # Filter columns based on col_list if provided
+                # Exclude columns based on col_list if provided
                 casefold_source_columns = {
                     k: v
                     for (k, v) in casefold_source_columns.items()
@@ -1046,7 +1046,7 @@ class ConfigManager(object):
                     if k not in casefold_col_list
                 }
             else:
-                # Filter columns based on col_list if provided
+                # Include columns based on col_list if provided
                 casefold_source_columns = {
                     k: v
                     for (k, v) in casefold_source_columns.items()
@@ -1057,11 +1057,10 @@ class ConfigManager(object):
                     for (k, v) in casefold_target_columns.items()
                     if k in casefold_col_list
                 }
-        else:
-            if exclude_cols:
-                raise ValueError(
-                    "Exclude columns flag cannot be present with column list '*'"
-                )
+        elif exclude_cols:
+            raise ValueError(
+                "Exclude columns flag cannot be present with column list '*'"
+            )
 
         column_aliases = {}
         col_names = []
