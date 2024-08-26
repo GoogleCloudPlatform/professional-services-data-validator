@@ -203,33 +203,38 @@ class PartitionBuilder:
             # the remainder, i.e. row number * # of partitions % total number of rows is > 0 and <= number of partitions.
             # The remainder function does not work well with Teradata, hence writing that out explicitly.
             cond = (
-                (
-                    rownum_table[consts.DVT_POS_COL] * number_of_part
-                    - (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
-                    ).floor()
-                    * source_count
+                rownum_table
+                if source_count == number_of_part
+                else (
+                    (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part
+                        - (
+                            rownum_table[consts.DVT_POS_COL]
+                            * number_of_part
+                            / source_count
+                        ).floor()
+                        * source_count
+                    )
+                    <= number_of_part
                 )
-                <= number_of_part
-            ) & (
-                (
-                    rownum_table[consts.DVT_POS_COL] * number_of_part
-                    - (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
-                    ).floor()
-                    * source_count
+                & (
+                    (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part
+                        - (
+                            rownum_table[consts.DVT_POS_COL]
+                            * number_of_part
+                            / source_count
+                        ).floor()
+                        * source_count
+                    )
+                    > 0
                 )
-                > 0
             )
             first_keys_table = rownum_table[cond].order_by(source_pks)
 
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
-            if len(first_elements) < 1:
-                raise ValueError(
-                    "Invalid partition number for row count. More than one row per partition is required."
-                )
 
             # Once we have the first element of each partition, we can generate the where clause
             # i.e. greater than or equal to first element and less than first element of next partition
