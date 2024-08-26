@@ -520,3 +520,40 @@ def test__decimal_column_too_big_for_pandas(module_under_test):
     c1 = dt.Decimal(38, 10)
     c2 = dt.Decimal(38, 10)
     assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
+
+
+# def test_build_dependent_aliases(module_under_test):
+#    config_manager = module_under_test.ConfigManager(
+#        copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+#    )
+#
+#    #Only including col a
+#    aggregate_configs = config_manager.build_dependent_aliases(
+#        "hash", ["a"], False
+#    )
+#    assert TBD
+
+
+# def test_build_dependent_aliases_ec(module_under_test):
+#    config_manager = module_under_test.ConfigManager(
+#        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+#    )
+#
+#    #Excluding col a, should hash b,c and d.
+#    aggregate_configs = config_manager.build_dependent_aliases(
+#            "hash", ["a"] , True
+#        )
+#    assert TBD
+
+
+def test_build_dependent_aliases_exception(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        config_manager.build_dependent_aliases("hash", None, True)
+    assert (
+        str(excinfo.value)
+        == "Exclude columns flag cannot be present with column list '*'"
+    )

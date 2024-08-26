@@ -1021,7 +1021,9 @@ class ConfigManager(object):
 
         return order_of_operations
 
-    def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
+    def build_dependent_aliases(
+        self, calc_type: str, col_list=None, exclude_cols=False
+    ) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
@@ -1031,17 +1033,35 @@ class ConfigManager(object):
 
         if col_list:
             casefold_col_list = [x.casefold() for x in col_list]
-            # Filter columns based on col_list if provided
-            casefold_source_columns = {
-                k: v
-                for (k, v) in casefold_source_columns.items()
-                if k in casefold_col_list
-            }
-            casefold_target_columns = {
-                k: v
-                for (k, v) in casefold_target_columns.items()
-                if k in casefold_col_list
-            }
+            if exclude_cols:
+                # Filter columns based on col_list if provided
+                casefold_source_columns = {
+                    k: v
+                    for (k, v) in casefold_source_columns.items()
+                    if k not in casefold_col_list
+                }
+                casefold_target_columns = {
+                    k: v
+                    for (k, v) in casefold_target_columns.items()
+                    if k not in casefold_col_list
+                }
+            else:
+                # Filter columns based on col_list if provided
+                casefold_source_columns = {
+                    k: v
+                    for (k, v) in casefold_source_columns.items()
+                    if k in casefold_col_list
+                }
+                casefold_target_columns = {
+                    k: v
+                    for (k, v) in casefold_target_columns.items()
+                    if k in casefold_col_list
+                }
+        else:
+            if exclude_cols:
+                raise ValueError(
+                    "Exclude columns flag cannot be present with column list '*'"
+                )
 
         column_aliases = {}
         col_names = []
