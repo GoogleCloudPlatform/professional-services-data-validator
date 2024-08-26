@@ -475,6 +475,7 @@ class ConfigManager(object):
                 self.filter_status,
                 table_id=table_id,
                 credentials=credentials,
+                text_format=self._config.get(consts.CONFIG_FORMAT, "table"),
             )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")
