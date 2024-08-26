@@ -203,23 +203,32 @@ class PartitionBuilder:
             # the remainder, i.e. row number * # of partitions % total number of rows is > 0 and <= number of partitions.
             # The remainder function does not work well with Teradata, hence writing that out explicitly.
             cond = (
-                (
-                    rownum_table[consts.DVT_POS_COL] * number_of_part
-                    - (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
-                    ).floor()
-                    * source_count
+                rownum_table
+                if source_count == number_of_part
+                else (
+                    (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part
+                        - (
+                            rownum_table[consts.DVT_POS_COL]
+                            * number_of_part
+                            / source_count
+                        ).floor()
+                        * source_count
+                    )
+                    <= number_of_part
                 )
-                <= number_of_part
-            ) & (
-                (
-                    rownum_table[consts.DVT_POS_COL] * number_of_part
-                    - (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
-                    ).floor()
-                    * source_count
+                & (
+                    (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part
+                        - (
+                            rownum_table[consts.DVT_POS_COL]
+                            * number_of_part
+                            / source_count
+                        ).floor()
+                        * source_count
+                    )
+                    > 0
                 )
-                > 0
             )
             first_keys_table = rownum_table[cond].order_by(source_pks)
 
