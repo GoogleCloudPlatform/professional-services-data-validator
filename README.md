@@ -184,6 +184,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         See: *Calculated Fields* section for details
   --hash COLUMNS        Comma separated list of columns to hash or * for all columns
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
+  [--exclude-columns or -ec]
+                        Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -406,6 +408,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         (use if a common hash function is not available between databases)
   --primary-key or -pk JOIN_KEY
                        Common column between source and target tables for join
+  [--exclude-columns or -ec]
+                        Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section

@@ -444,6 +444,12 @@ def _configure_row_parser(
         help="Float max threshold for percent difference",
     )
     optional_arguments.add_argument(
+        "--exclude-columns",
+        "-ec",
+        action="store_true",
+        help="Flag to indicate the list of columns should be excluded from hash or concat instead of included.",
+    )
+    optional_arguments.add_argument(
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
