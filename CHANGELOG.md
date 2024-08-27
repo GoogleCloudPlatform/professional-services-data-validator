@@ -2,6 +2,32 @@
 
 ## Untagged
 
+## [6.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.0.0...v6.1.0) (2024-08-27)
+
+
+### Features
+
+* Add Oracle TIMESTAMP WITH LOCAL TIME ZONE support ([#1238](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1238)) ([1e9f458](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1e9f458c33ed072987779580ad3a20829ba5c7fc))
+* Add TIME data type support for Teradata, BigQuery and SQL Server ([#1229](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1229)) ([ab7007b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ab7007b0ae21a6f9e388aeb20a6778ed91096e0a))
+* Adding exclude_columns flag for row validation hash ([#1243](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1243)) ([a1fd616](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a1fd616e9f8b38ee464675faa629ee0dee9cdcf4))
+* Auto split row concat/hash validations when many columns ([#1233](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1233)) ([ae9b72d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ae9b72d7d2ce02dbfc72d436c702c56048255663))
+* BigQuery result handler logs textual output at DEBUG instead of INFO ([#1240](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1240)) ([a9aafa2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a9aafa20406c8c3d28abbd073c7a9c4f55799bbd))
+
+
+### Bug Fixes
+
+* Adds automatic RTRIM for custom query row validations for Teradata string comparison fields ([#1230](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1230)) ([5c1a2be](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5c1a2be602658dc513d7f9e54034200de7ad8f4d))
+* Bug for generate partitions with dates with different column names for PKs ([#1231](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1231)) ([5f51653](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5f51653344cdc8912ace5dfe30434a838dd4c861))
+* Fixing multiple function call, to get schema in custom-query validation for Hive ([#1180](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1180)) ([a584e5b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a584e5b435f727b2463044bcfa9a7ebef5bfe951))
+* support generate partitions for one row per partition ([#1241](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1241)) ([4099a29](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4099a29e40ed0fd94e42c3e1005a1e3a50d33a0c))
+* TD to BQ - Support hash row validation with Latin and Unicode Characters in Strings ([#1226](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1226)) ([e1b24ef](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e1b24efe94883ab4945908736630f283ea237d80))
+* TD to BQ generate partitions with date PKs ([#1220](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1220)) ([a03f3b0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a03f3b0ede2f4b7c8918782117267fdb3d09547d))
+
+
+### Documentation
+
+* Update Cloud Functions sample to support Cloud Scheduler job triggering ([#1228](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1228)) ([3a7c164](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3a7c1649acdc01a0982ed765db83ef53d4b307ba))
+
 ## [6.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v5.1.1...v6.0.0) (2024-08-06)
 
 
