@@ -47,6 +47,8 @@ CONFIG_RANDOM_ROW_BATCH_SIZE = "random_row_batch_size"
 CONFIG_PRIMARY_KEYS = "primary_keys"
 CONFIG_TRIM_STRING_PKS = "trim_string_pks"
 CONFIG_CASE_INSENSITIVE_MATCH = "case_insensitive_match"
+CONFIG_ROW_CONCAT = "concat"
+CONFIG_ROW_HASH = "hash"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
 CONFIG_THRESHOLD = "threshold"
@@ -174,3 +176,15 @@ SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
 # Constants for the named column used in generate partitions
 # this cannot conflict with primary key column names
 DVT_POS_COL = "dvt_pos_num"
+
+# Default limit for the number of columns we will attempt in a single validation.
+MAX_CONCAT_COLUMNS_DEFAULTS = {
+    # Preventing: The concat function requires 2 to 254 arguments
+    "mssql": 254,
+    # Minimizing risk of: ORA-01489: result of string concatenation is too long
+    "oracle": 125,
+    # Preventing: cannot pass more than 100 arguments to a function
+    "postgres": 99,
+    # Minimizing risk of: [Error 3556] Too many columns defined for this table.
+    "teradata": 500,
+}

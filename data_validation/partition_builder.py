@@ -24,6 +24,7 @@ from data_validation import cli_tools, consts
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
 from data_validation.validation_builder import ValidationBuilder
+from data_validation.validation_builder import list_to_sublists
 
 
 class PartitionBuilder:
@@ -40,17 +41,43 @@ class PartitionBuilder:
 
         return self.args.config_dir
 
-    def _get_yaml_from_config(self, config_manager: ConfigManager) -> Dict:
-        """Return dict objects formatted for yaml validations.
+    def _add_filters_get_yaml_file(
+        self,
+        config_manager: ConfigManager,
+        source_filters: List[str],
+        target_filters: List[str],
+    ) -> Dict:
+        """Given a ConfigManager object (from the input args to generate-partitions), add a source
+            and target filter, one at a time to create a validation block (one partition of the table).
+            The returned dict contains the config manager with multiple validation blocks,
+            which can be written to a yaml file. The number of validation blocks = length of the
+            filter lists = parts-per-file parameter (except for the last file because
+            parts-per-file may not divide partition-num evenly).
 
         Args:
-            config_managers (list[ConfigManager]): List of config manager instances.
+            config_manager ConfigManager: Config manager instance.
+            source_filters, target_filters: list of filters - for splitting the table into partitions.
+        Returns:
+            A dict which represents a yaml file.
         """
+        # Create multiple yaml validation blocks corresponding to the filters provided
+        yaml_validations = []
+        for (source_filter, target_filter) in zip(source_filters, target_filters):
+            filter_dict = {
+                "type": "custom",
+                "source": source_filter,
+                "target": target_filter,
+            }
+            # Append partition new filter
+            config_manager.filters.append(filter_dict)
+            yaml_validations.append(config_manager.get_yaml_validation_block())
+            config_manager.filters.pop()
+
         yaml_config = {
             consts.YAML_SOURCE: self.args.source_conn,
             consts.YAML_TARGET: self.args.target_conn,
             consts.YAML_RESULT_HANDLER: config_manager.result_handler_config,
-            consts.YAML_VALIDATIONS: [config_manager.get_yaml_validation_block()],
+            consts.YAML_VALIDATIONS: yaml_validations,
         }
         return yaml_config
 
@@ -88,15 +115,15 @@ class PartitionBuilder:
         ).replace("t0.", "")
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
-        """Generate where clauses for each partition for each table pair. We have to create separate where for the source and
-            target as they may each have a different filter applied to them. We are partitioning the tables based on keys, so that
-            we get equivalent sized partitions that can be compared against each other. With this approach, we can validate the
-            partitions in parallel leading to horizontal scaling of DVT. The design doc for this section is available in
-            docs/internal/partition_table_prd.md
+        """The PartitionBuilder object contains the configuration of the table pairs (source and target)
+           to be validated and the args (number of partitions). Generate the partitions for each table
+           pair and return the partition filter list for all table pairs . A partition
+           filter is the string that is used in the where clause - e.g. 'x >=25 and x <50'. The design
+           doc for this section is available in docs/internal/partition_table_prd.md
 
         Returns:
-            A list of where clauses for the source tables for each table pair
-            Therefore you get a list of lists.
+            A list of list of list of strings for the source and target tables for each table pair
+            i.e. (list of strings - 1 per partition) x (source and target) x (number of table pairs)
         """
         master_filter_list = []
         for config_manager in self.config_managers:  # For each pair of tables
@@ -176,23 +203,32 @@ class PartitionBuilder:
             # the remainder, i.e. row number * # of partitions % total number of rows is > 0 and <= number of partitions.
             # The remainder function does not work well with Teradata, hence writing that out explicitly.
             cond = (
-                (
-                    rownum_table[consts.DVT_POS_COL] * number_of_part
-                    - (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
-                    ).floor()
-                    * source_count
+                rownum_table
+                if source_count == number_of_part
+                else (
+                    (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part
+                        - (
+                            rownum_table[consts.DVT_POS_COL]
+                            * number_of_part
+                            / source_count
+                        ).floor()
+                        * source_count
+                    )
+                    <= number_of_part
                 )
-                <= number_of_part
-            ) & (
-                (
-                    rownum_table[consts.DVT_POS_COL] * number_of_part
-                    - (
-                        rownum_table[consts.DVT_POS_COL] * number_of_part / source_count
-                    ).floor()
-                    * source_count
+                & (
+                    (
+                        rownum_table[consts.DVT_POS_COL] * number_of_part
+                        - (
+                            rownum_table[consts.DVT_POS_COL]
+                            * number_of_part
+                            / source_count
+                        ).floor()
+                        * source_count
+                    )
+                    > 0
                 )
-                > 0
             )
             first_keys_table = rownum_table[cond].order_by(source_pks)
 
@@ -210,24 +246,36 @@ class PartitionBuilder:
             # Given a list of primary keys and corresponding values, the following lambda function builds the filter expression
             # to find all rows before the row containing the values in the sort order. The next function geq_value, finds all
             # rows after the row containing the values in the sort order, including the row specified by values.
-            less_than_value = (
-                lambda table, keys, values: table.__getattr__(keys[0]) < values[0]
-                if len(keys) == 1
-                else (table.__getattr__(keys[0]) < values[0])
-                | (
-                    (table.__getattr__(keys[0]) == values[0])
-                    & less_than_value(table, keys[1:], values[1:])
-                )
-            )
-            geq_value = (
-                lambda table, keys, values: table.__getattr__(keys[0]) >= values[0]
-                if len(keys) == 1
-                else (table.__getattr__(keys[0]) > values[0])
-                | (
-                    (table.__getattr__(keys[0]) == values[0])
-                    & geq_value(table, keys[1:], values[1:])
-                )
-            )
+
+            def less_than_value(table, keys, values):
+                key_column = table.__getattr__(keys[0])
+                if key_column.type().is_date():
+                    # Ensure date PKs are treated as date literals as per #1191
+                    value = values[0].date()
+                else:
+                    value = values[0]
+
+                if len(keys) == 1:
+                    return key_column < value
+                else:
+                    return (key_column < value) | (
+                        (key_column == value)
+                        & less_than_value(table, keys[1:], values[1:])
+                    )
+
+            def geq_value(table, keys, values):
+                key_column = table.__getattr__(keys[0])
+                if key_column.type().is_date():
+                    value = values[0].date()
+                else:
+                    value = values[0]
+
+                if len(keys) == 1:
+                    return key_column >= value
+                else:
+                    return (key_column > value) | (
+                        (key_column == value) & geq_value(table, keys[1:], values[1:])
+                    )
 
             filter_source_clause = less_than_value(
                 source_table,
@@ -316,43 +364,41 @@ class PartitionBuilder:
         ConfigManager objects.
 
         Args:
-            partition_filters (List[List[List[str]]]): List of List of Partition filters
-            for all Table/ConfigManager objects, two list of filters for each configManager object,
-            one for the source and one for the target
-
+            self.config_managers is a list of config_manager objects. Each config_manager object in
+            list refers to a table pair (source and target) that are validated against each other.
+            In most cases, this list is of length 1 because it was invoked as -tbls src=targ. If it
+            was invoked with -tbls src1=targ1,src2=targ2 the self.config_managers will be of length
+            2. Partition_filters is a list of list of lists of Partition filters
+            - which is (list of filter strings, one per partition) x 2 (source & target) x number of table pairs
         Returns:
-            yaml_configs_list (List[Dict]): List of YAML configs for all tables
+            yaml_configs_list (List[Dict]): List of YAML dicts (folder), one folder for each table pair being validated.
         """
-
-        table_count = len(self.config_managers)
-        yaml_configs_list = [None] * table_count
-        for ind in range(table_count):
-            config_manager = self.config_managers[ind]
+        yaml_configs_list = [None] * len(self.config_managers)
+        for ind, config_manager in enumerate(self.config_managers):
             filter_list = partition_filters[ind]
 
             yaml_configs_list[ind] = {
                 "target_folder_name": config_manager.full_source_table,
-                "partitions": [],
+                "yaml_files": [],
             }
-            for pos in range(len(filter_list[0])):
-                filter_dict = {
-                    "type": "custom",
-                    "source": filter_list[0][pos],
-                    "target": filter_list[1][pos],
-                }
-                # Append partition new filter
-                config_manager.filters.append(filter_dict)
 
+            # Create a list of lists chunked by partitions per file
+            # Both source and target table are divided into the same number of partitions, so we are
+            # guaranteed filter_list[0] (source) and filter_list[1] (target) are of the same length
+            source_filters_list = list_to_sublists(
+                filter_list[0], self.args.parts_per_file
+            )
+            target_filters_list = list_to_sublists(
+                filter_list[1], self.args.parts_per_file
+            )
+            for i in range(len(source_filters_list)):
                 # Build and append partition YAML
-                yaml_config = self._get_yaml_from_config(config_manager)
-                target_file_name = "0" * (4 - len(str(pos))) + str(pos) + ".yaml"
-                yaml_configs_list[ind]["partitions"].append(
-                    {"target_file_name": target_file_name, "yaml_config": yaml_config}
+                yaml_config = self._add_filters_get_yaml_file(
+                    config_manager, source_filters_list[i], target_filters_list[i]
                 )
-
-                # Pop last partition filter
-                config_manager.filters.pop()
-
+                yaml_configs_list[ind]["yaml_files"].append(
+                    {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
+                )
         return yaml_configs_list
 
     def _store_partitions(self, yaml_configs_list: List[Dict]) -> None:
@@ -369,9 +415,9 @@ class PartitionBuilder:
         for table in yaml_configs_list:
             target_folder_name = table["target_folder_name"]
             target_folder_path = os.path.join(self.config_dir, target_folder_name)
-            for partition in table["partitions"]:
-                yaml_config = partition["yaml_config"]
-                target_file_name = partition["target_file_name"]
+            for yaml_file in table["yaml_files"]:
+                yaml_config = yaml_file["yaml_config"]
+                target_file_name = yaml_file["target_file_name"]
                 target_file_path = os.path.join(target_folder_path, target_file_name)
                 cli_tools.store_validation(
                     target_file_path, yaml_config, include_log=False

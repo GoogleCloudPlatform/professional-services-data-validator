@@ -15,17 +15,18 @@
 import os
 from unittest import mock
 
-from data_validation import __main__ as main
+import pytest
+
 from data_validation import cli_tools, data_validation, consts
-from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
 HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
@@ -79,12 +80,15 @@ def mock_get_connection_config(*args):
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_schema_validation_core_types():
+def test_schema_validation_core_types():
     """
     Disabled this test in favour of test_schema_validation_core_types_to_bigquery().
     The Hive integration tests are too slow and timing out but I believe
     test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
     """
+    pytest.skip(
+        "Skipping test_schema_validation_core_types in favour of test_schema_validation_core_types_to_bigquery (due to elapsed time)."
+    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -103,12 +107,28 @@ def disabled_test_schema_validation_core_types():
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    " ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) )",
-    " ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )"
-    + " AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 5678 ) ) ) ) )",
-    " ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 5678 ) ) ) ) )"
-    + " AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 9012 ) ) ) ) )",
-    " ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 9012 ) ) ) )",
+    [
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )",
+    ],
+    [
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
+        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )",
+    ],
 ]
 
 
@@ -116,37 +136,9 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_bigquery_generate_table_partitions():
-    """Test generate table partitions on BigQuery
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=hive-conn",
-            "-tc=hive-conn",
-            "-tbls=pso_data_validator.test_generate_partitions=pso_data_validator.test_generate_partitions",
-            "-pk=course_id,quarter_id,student_id",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=4",
-        ]
-    )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
-
-    assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
+def test_hive_generate_table_partitions():
+    """Test generate table partitions on Hive"""
+    generate_partitions_test(EXPECTED_PARTITION_FILTER)
 
 
 @mock.patch(
@@ -183,12 +175,15 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_schema_validation_not_null_vs_nullable():
+def test_schema_validation_not_null_vs_nullable():
     """
     Disabled this test because we don't currently pull nullable from Hive.
       https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/934
     Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly.
     """
+    pytest.skip(
+        "Skipping test_schema_validation_not_null_vs_nullable because we don't currently pull nullable from Hive."
+    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -207,12 +202,15 @@ def disabled_test_schema_validation_not_null_vs_nullable():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_column_validation_core_types():
+def test_column_validation_core_types():
     """
     Disabled this test in favour of test_column_validation_core_types_to_bigquery().
     The Hive integration tests are too slow and timing out but I believe
     test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
     """
+    pytest.skip(
+        "Skipping test_column_validation_core_types in favour of test_column_validation_core_types_to_bigquery (due to elapsed time)."
+    )
     parser = cli_tools.configure_arg_parser()
     # Hive tests are really slow so I've excluded --min below assuming that --max is
     # effectively the same test when comparing an engine back to itself.
@@ -264,12 +262,15 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def disabled_test_row_validation_core_types():
+def test_row_validation_core_types():
     """
     Disabled this test in favour of test_row_validation_core_types_to_bigquery().
     The Hive integration tests are too slow and timing out but I believe
     test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
     """
+    pytest.skip(
+        "Skipping test_row_validation_core_types in favour of test_row_validation_core_types_to_bigquery (due to elapsed time)."
+    )
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -370,8 +371,9 @@ def test_row_validation_pangrams_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_custom_query_validation_core_types():
-    """Hive to Hive dvt_core_types custom-query validation"""
+def test_custom_query_validation_core_types_to_bigquery():
+    """Hive to BigQuery dvt_core_types custom-query validation
+    Using BigQuery target because Hive queries are really slow."""
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -379,7 +381,7 @@ def test_custom_query_validation_core_types():
             "custom-query",
             "column",
             "-sc=mock-conn",
-            "-tc=mock-conn",
+            "-tc=bq-conn",
             "--source-query=select * from pso_data_validator.dvt_core_types",
             "--target-query=select * from pso_data_validator.dvt_core_types",
             "--filter-status=fail",
@@ -389,3 +391,38 @@ def test_custom_query_validation_core_types():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Hive dvt_many_cols row validation.
+    Using BigQuery target because Hive queries are really slow.
+    When executed individually this test passes but when executed during a full
+    integration test run I get:
+      impala.error.HiveServer2Error: java.lang.NullPointerException
+    This must be down to minimal resources for our small Hive instance, disabling for now.
+    """
+    pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
+    # TODO Enable this test once we have access to a less flakey Hive cluster.
+    row_validation_many_columns_test(target_conn="bq-conn")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Hive dvt_many_cols custom-query row validation.
+    Using BigQuery target because Hive queries are really slow.
+    I can't get this test to complete on our test infrastructure due to:
+      java.lang.OutOfMemoryError: Java heap space
+    """
+    pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
+    # TODO Enable this test once we have access to a less flakey Hive cluster.
+    row_validation_many_columns_test(
+        validation_type="custom-query",
+        target_conn="bq-conn",
+    )

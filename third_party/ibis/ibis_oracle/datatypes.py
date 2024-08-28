@@ -67,6 +67,7 @@ _type_mapping = {
     cx_Oracle.DB_TYPE_DATE: dt.Date,
     cx_Oracle.DB_TYPE_TIMESTAMP: dt.Timestamp,
     cx_Oracle.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="UTC"),
+    cx_Oracle.DB_TYPE_TIMESTAMP_LTZ: dt.Timestamp(timezone="UTC"),
     cx_Oracle.DB_TYPE_RAW: dt.Binary,
     cx_Oracle.DB_TYPE_LONG_RAW: dt.Binary,
     cx_Oracle.DB_TYPE_BFILE: dt.Binary,
@@ -77,6 +78,7 @@ _type_mapping = {
     cx_Oracle.DB_TYPE_BLOB: dt.Binary,
     cx_Oracle.DB_TYPE_BINARY_FLOAT: dt.Float32,
     cx_Oracle.DB_TYPE_BINARY_DOUBLE: dt.Float64,
+    cx_Oracle.DB_TYPE_INTERVAL_DS: dt.Interval,
 }
 
 # SQL Alchemy doesn't support LONG RAW which drops us into Ibis 5.1.0 method:
@@ -87,6 +89,11 @@ _type_mapping = {
 # as a RAW variant, as below.
 if "LONG RAW" not in OracleDialect_cx_oracle.ischema_names:
     OracleDialect_cx_oracle.ischema_names["LONG RAW"] = oracle.RAW
+# Same as above but for LOCAL TIME ZONE.
+if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_cx_oracle.ischema_names:
+    OracleDialect_cx_oracle.ischema_names[
+        "TIMESTAMP WITH LOCAL TIME ZONE"
+    ] = oracle.TIMESTAMP(timezone=True)
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.CLOB)
@@ -166,6 +173,11 @@ def sa_oracle_TIMESTAMP(_, satype, nullable=True):
         return dt.Timestamp(timezone="UTC", nullable=nullable)
     else:
         return dt.Timestamp(nullable=nullable)
+
+
+@dt.dtype.register(OracleDialect_cx_oracle, (sa.dialects.oracle.INTERVAL))
+def sa_oracle_INTERVAL_DS(_, satype, nullable=True):
+    return dt.Interval(nullable=nullable)
 
 
 @dt.dtype.register(OracleDialect_cx_oracle, sa.dialects.oracle.BLOB)

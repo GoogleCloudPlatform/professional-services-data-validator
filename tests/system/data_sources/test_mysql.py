@@ -12,21 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 import pytest
 from unittest import mock
 
 from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts, exceptions
-from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
@@ -82,14 +82,30 @@ def test_mysql_count_invalid_host():
         pass
 
 
-# Expected result from partitioning table on 3 keys
+# Expected result from partitioning table on 3 keys, 9 partitions
 EXPECTED_PARTITION_FILTER = [
-    " course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 )",
-    " ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )"
-    + " AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 5678 ) )",
-    " ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 5678 ) )"
-    + " AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 9012 ) )",
-    " course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 9012 )",
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+    ],
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+    ],
 ]
 
 
@@ -98,36 +114,11 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_mysql_generate_table_partitions():
-    """Test generate table partitions on mysql
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.test_generate_partitions=pso_data_validator.test_generate_partitions",
-            "-pk=course_id,quarter_id,student_id",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=4",
-        ]
-    )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
+    """Test generate table partitions on mysql"""
+    generate_partitions_test(EXPECTED_PARTITION_FILTER)
 
-    assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
+
+EXPECTED_DRY_RUN = "SELECT t0.hash__all, t0.id \nFROM (SELECT t1.id AS id, t1.col_int8 AS col_int8, t1.col_int16 AS col_int16, t1.col_int32 AS col_int32, t1.col_int64 AS col_int64, t1.col_dec_20 AS col_dec_20, t1.col_dec_38 AS col_dec_38, t1.col_dec_10_2 AS col_dec_10_2, t1.col_float32 AS col_float32, t1.col_float64 AS col_float64, t1.col_varchar_30 AS col_varchar_30, t1.col_char_2 AS col_char_2, t1.col_string AS col_string, t1.col_date AS col_date, t1.col_datetime AS col_datetime, t1.col_tstz AS col_tstz, t1.cast__col_string AS cast__col_string, t1.ifnull__cast__col_string AS ifnull__cast__col_string, t1.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, t1.concat__all AS concat__all, sha2(t1.concat__all, '256') AS hash__all \nFROM (SELECT t2.id AS id, t2.col_int8 AS col_int8, t2.col_int16 AS col_int16, t2.col_int32 AS col_int32, t2.col_int64 AS col_int64, t2.col_dec_20 AS col_dec_20, t2.col_dec_38 AS col_dec_38, t2.col_dec_10_2 AS col_dec_10_2, t2.col_float32 AS col_float32, t2.col_float64 AS col_float64, t2.col_varchar_30 AS col_varchar_30, t2.col_char_2 AS col_char_2, t2.col_string AS col_string, t2.col_date AS col_date, t2.col_datetime AS col_datetime, t2.col_tstz AS col_tstz, t2.cast__col_string AS cast__col_string, t2.ifnull__cast__col_string AS ifnull__cast__col_string, t2.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, concat_ws('', t2.rstrip__ifnull__cast__col_string) AS concat__all \nFROM (SELECT t3.id AS id, t3.col_int8 AS col_int8, t3.col_int16 AS col_int16, t3.col_int32 AS col_int32, t3.col_int64 AS col_int64, t3.col_dec_20 AS col_dec_20, t3.col_dec_38 AS col_dec_38, t3.col_dec_10_2 AS col_dec_10_2, t3.col_float32 AS col_float32, t3.col_float64 AS col_float64, t3.col_varchar_30 AS col_varchar_30, t3.col_char_2 AS col_char_2, t3.col_string AS col_string, t3.col_date AS col_date, t3.col_datetime AS col_datetime, t3.col_tstz AS col_tstz, t3.cast__col_string AS cast__col_string, t3.ifnull__cast__col_string AS ifnull__cast__col_string, TRIM(TRAILING '\x0c' FROM TRIM(TRAILING '\x0b' FROM TRIM(TRAILING '\r' FROM TRIM(TRAILING '\n' FROM TRIM(TRAILING '\t' FROM TRIM(TRAILING ' ' FROM (t3.ifnull__cast__col_string))))))) AS rstrip__ifnull__cast__col_string \nFROM (SELECT t4.id AS id, t4.col_int8 AS col_int8, t4.col_int16 AS col_int16, t4.col_int32 AS col_int32, t4.col_int64 AS col_int64, t4.col_dec_20 AS col_dec_20, t4.col_dec_38 AS col_dec_38, t4.col_dec_10_2 AS col_dec_10_2, t4.col_float32 AS col_float32, t4.col_float64 AS col_float64, t4.col_varchar_30 AS col_varchar_30, t4.col_char_2 AS col_char_2, t4.col_string AS col_string, t4.col_date AS col_date, t4.col_datetime AS col_datetime, t4.col_tstz AS col_tstz, t4.cast__col_string AS cast__col_string, coalesce(t4.cast__col_string, 'DEFAULT_REPLACEMENT_STRING') AS ifnull__cast__col_string \nFROM (SELECT t5.id AS id, t5.col_int8 AS col_int8, t5.col_int16 AS col_int16, t5.col_int32 AS col_int32, t5.col_int64 AS col_int64, t5.col_dec_20 AS col_dec_20, t5.col_dec_38 AS col_dec_38, t5.col_dec_10_2 AS col_dec_10_2, t5.col_float32 AS col_float32, t5.col_float64 AS col_float64, t5.col_varchar_30 AS col_varchar_30, t5.col_char_2 AS col_char_2, t5.col_string AS col_string, t5.col_date AS col_date, t5.col_datetime AS col_datetime, t5.col_tstz AS col_tstz, t5.col_string AS cast__col_string \nFROM dvt_core_types AS t5) AS t4) AS t3) AS t2) AS t1) AS t0"
 
 
 @mock.patch(
@@ -149,14 +140,12 @@ def test_mysql_dry_run(capsys):
     )
     config_managers = main.build_config_managers_from_args(args)
     assert len(config_managers) == 1
-    main.run_validation(config_managers[0], dry_run=True)
-    out, err = capsys.readouterr()
-    assert err == ""
-    dry_run = json.loads(out)
-    assert (
-        dry_run["source_query"]
-        == "SELECT t0.hash__all, t0.id \nFROM (SELECT t1.id AS id, t1.col_int8 AS col_int8, t1.col_int16 AS col_int16, t1.col_int32 AS col_int32, t1.col_int64 AS col_int64, t1.col_dec_20 AS col_dec_20, t1.col_dec_38 AS col_dec_38, t1.col_dec_10_2 AS col_dec_10_2, t1.col_float32 AS col_float32, t1.col_float64 AS col_float64, t1.col_varchar_30 AS col_varchar_30, t1.col_char_2 AS col_char_2, t1.col_string AS col_string, t1.col_date AS col_date, t1.col_datetime AS col_datetime, t1.col_tstz AS col_tstz, t1.cast__col_string AS cast__col_string, t1.ifnull__cast__col_string AS ifnull__cast__col_string, t1.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, t1.concat__all AS concat__all, sha2(t1.concat__all, '256') AS hash__all \nFROM (SELECT t2.id AS id, t2.col_int8 AS col_int8, t2.col_int16 AS col_int16, t2.col_int32 AS col_int32, t2.col_int64 AS col_int64, t2.col_dec_20 AS col_dec_20, t2.col_dec_38 AS col_dec_38, t2.col_dec_10_2 AS col_dec_10_2, t2.col_float32 AS col_float32, t2.col_float64 AS col_float64, t2.col_varchar_30 AS col_varchar_30, t2.col_char_2 AS col_char_2, t2.col_string AS col_string, t2.col_date AS col_date, t2.col_datetime AS col_datetime, t2.col_tstz AS col_tstz, t2.cast__col_string AS cast__col_string, t2.ifnull__cast__col_string AS ifnull__cast__col_string, t2.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, concat_ws('', t2.rstrip__ifnull__cast__col_string) AS concat__all \nFROM (SELECT t3.id AS id, t3.col_int8 AS col_int8, t3.col_int16 AS col_int16, t3.col_int32 AS col_int32, t3.col_int64 AS col_int64, t3.col_dec_20 AS col_dec_20, t3.col_dec_38 AS col_dec_38, t3.col_dec_10_2 AS col_dec_10_2, t3.col_float32 AS col_float32, t3.col_float64 AS col_float64, t3.col_varchar_30 AS col_varchar_30, t3.col_char_2 AS col_char_2, t3.col_string AS col_string, t3.col_date AS col_date, t3.col_datetime AS col_datetime, t3.col_tstz AS col_tstz, t3.cast__col_string AS cast__col_string, t3.ifnull__cast__col_string AS ifnull__cast__col_string, TRIM(TRAILING '\x0c' FROM TRIM(TRAILING '\x0b' FROM TRIM(TRAILING '\r' FROM TRIM(TRAILING '\n' FROM TRIM(TRAILING '\t' FROM TRIM(TRAILING ' ' FROM (t3.ifnull__cast__col_string))))))) AS rstrip__ifnull__cast__col_string \nFROM (SELECT t4.id AS id, t4.col_int8 AS col_int8, t4.col_int16 AS col_int16, t4.col_int32 AS col_int32, t4.col_int64 AS col_int64, t4.col_dec_20 AS col_dec_20, t4.col_dec_38 AS col_dec_38, t4.col_dec_10_2 AS col_dec_10_2, t4.col_float32 AS col_float32, t4.col_float64 AS col_float64, t4.col_varchar_30 AS col_varchar_30, t4.col_char_2 AS col_char_2, t4.col_string AS col_string, t4.col_date AS col_date, t4.col_datetime AS col_datetime, t4.col_tstz AS col_tstz, t4.cast__col_string AS cast__col_string, coalesce(t4.cast__col_string, 'DEFAULT_REPLACEMENT_STRING') AS ifnull__cast__col_string \nFROM (SELECT t5.id AS id, t5.col_int8 AS col_int8, t5.col_int16 AS col_int16, t5.col_int32 AS col_int32, t5.col_int64 AS col_int64, t5.col_dec_20 AS col_dec_20, t5.col_dec_38 AS col_dec_38, t5.col_dec_10_2 AS col_dec_10_2, t5.col_float32 AS col_float32, t5.col_float64 AS col_float64, t5.col_varchar_30 AS col_varchar_30, t5.col_char_2 AS col_char_2, t5.col_string AS col_string, t5.col_date AS col_date, t5.col_datetime AS col_datetime, t5.col_tstz AS col_tstz, t5.col_string AS cast__col_string \nFROM dvt_core_types AS t5) AS t4) AS t3) AS t2) AS t1) AS t0"
-    )
+    with mock.patch("json.dumps") as mock_dump:
+        main.run_validation(config_managers[0], dry_run=True)
+        actual = mock_dump.call_args.args[0]["source_query"]
+        out, err = capsys.readouterr()
+        assert err == ""
+        assert actual == EXPECTED_DRY_RUN
 
 
 @mock.patch(
@@ -410,7 +399,7 @@ def test_row_validation_pangrams_to_bigquery():
             "row",
             "-sc=mysql-conn",
             "-tc=bq-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_PANGRAMS=pso_data_validator.dvt_pangrams",
+            "-tbls=pso_data_validator.dvt_pangrams",
             "--primary-keys=id",
             "--hash=*",
         ]
@@ -442,3 +431,25 @@ def test_custom_query_validation_core_types():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """MySQL dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """MySQL dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(validation_type="custom-query")

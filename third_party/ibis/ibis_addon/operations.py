@@ -64,11 +64,15 @@ from ibis.expr.operations import (
     Strftime,
     StringJoin,
     Value,
+    TableColumn,
 )
 from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 
-import third_party.ibis.ibis_mysql.compiler
-import third_party.ibis.ibis_postgres.client
+# Do not remove these lines, they trigger patching of Ibis code.
+import third_party.ibis.ibis_mysql.compiler  # noqa
+from third_party.ibis.ibis_mssql.registry import mssql_table_column
+import third_party.ibis.ibis_postgres.client  # noqa
+
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
@@ -162,7 +166,7 @@ def format_hashbytes_bigquery(translator, op):
 def format_hashbytes_teradata(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
-        return f"rtrim(hash_sha256({arg}))"
+        return f"rtrim(hash_sha256(TransUnicodeToUTF8({arg})))"
     elif op.how == "sha512":
         return f"rtrim(hash_sha512({arg}))"
     elif op.how == "md5":
@@ -224,8 +228,12 @@ def strftime_mssql(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-    result = sa.func.convert(sa.text("VARCHAR(32)"), arg, convert_style)
-    return result
+    arg_type = op.args[0].output_dtype
+    if (
+        hasattr(arg_type, "timezone") and arg_type.timezone
+    ):  # our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
+        arg = sa.cast(arg, sa.types.DateTime)
+    return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
 
 
 def strftime_impala(t, op):
@@ -378,7 +386,10 @@ def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
         #     return (sa.cast(sa.func.trim_scale(arg), typ))
         precision = arg_dtype.precision or 38
         fmt = (
-            "FM" + ("9" * (precision - arg_dtype.scale)) + "." + ("9" * arg_dtype.scale)
+            "FM"
+            + ("9" * (precision - arg_dtype.scale - 1))
+            + "0."
+            + ("9" * arg_dtype.scale)
         )
         return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
     return None
@@ -480,23 +491,6 @@ def sa_cast_mysql(t, op):
     return sa_fixed_cast(t, op)
 
 
-def sa_cast_oracle(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.lower(sa.func.rawtohex(sa_arg))
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.hextoraw(sa_arg)
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
-
-
 def sa_cast_snowflake(t, op):
     custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
     if custom_cast is not None:
@@ -519,7 +513,15 @@ def sa_cast_snowflake(t, op):
 
 
 def _sa_string_join(t, op):
-    return sa.func.concat(*map(t.translate, op.arg))
+    if (
+        len(op.arg) == 1
+    ):  # SQL Server CONCAT errs when there is one column being hashed (issue #1202), renaming using type_coerce rather than CONCAT
+        return sa.type_coerce(
+            t.translate(op.arg[0]),
+            sa.types.String,
+        )
+    else:
+        return sa.func.concat(*map(t.translate, op.arg))
 
 
 def sa_format_new_id(t, op):
@@ -579,8 +581,13 @@ def string_to_epoch(ts: str):
     from dateutil.tz import UTC
     from datetime import datetime, timezone
 
-    parsed_ts = isoparse(ts).astimezone(UTC)
-    return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+    try:
+        parsed_ts = isoparse(ts).astimezone(UTC)
+        return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
+    except ValueError:
+        # Support DATE '0001-01-01' which throws error when converted to UTC
+        parsed_ts = isoparse(ts)
+        return (parsed_ts - datetime(1970, 1, 1)).total_seconds()
 
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
@@ -624,7 +631,6 @@ ImpalaExprTranslator._registry[Strftime] = strftime_impala
 ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if OracleExprTranslator:
-    OracleExprTranslator._registry[Cast] = sa_cast_oracle
     OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
     OracleExprTranslator._registry[HashBytes] = sa_format_hashbytes_oracle
     OracleExprTranslator._registry[ToChar] = sa_format_to_char
@@ -644,6 +650,7 @@ MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
 MsSqlExprTranslator._registry[Strftime] = strftime_mssql
 MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
+MsSqlExprTranslator._registry[TableColumn] = mssql_table_column
 
 MySQLExprTranslator._registry[Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql

@@ -15,17 +15,18 @@
 import os
 from unittest import mock
 
-from data_validation import __main__ as main
-from data_validation import cli_tools, data_validation, consts
-from data_validation.partition_builder import PartitionBuilder
+from data_validation import cli_tools, data_validation, consts, __main__ as main
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
@@ -81,6 +82,7 @@ ORA2PG_COLUMNS = [
     "col_date",
     "col_ts",
     "col_tstz",
+    "col_interval_ds",
     "col_raw",
     "col_long_raw",
     "col_blob",
@@ -107,12 +109,28 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    " course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 )",
-    " ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )"
-    + " AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 5678 ) )",
-    " ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 5678 ) )"
-    + " AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 9012 ) )",
-    " course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 9012 )",
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+    ],
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+    ],
 ]
 
 
@@ -121,36 +139,8 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_oracle_generate_table_partitions():
-    """Test generate table partitions on Oracle
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.test_generate_partitions=pso_data_validator.test_generate_partitions",
-            "-pk=course_id,quarter_id,student_id",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=4",
-        ]
-    )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
-
-    assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
+    """Test generate table partitions on Oracle"""
+    generate_partitions_test(EXPECTED_PARTITION_FILTER)
 
 
 @mock.patch(
@@ -401,6 +391,7 @@ def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
     # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
+    # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded CLOB/NCLOB/BLOB columns because lob values cannot be concatenated
     hash_cols = ",".join(
@@ -419,6 +410,7 @@ def test_row_validation_oracle_to_postgres():
                 "col_tstz",
                 "col_nvarchar_30",
                 "col_nchar_2",
+                "col_interval_ds",
             )
         ]
     )
@@ -680,3 +672,46 @@ def test_custom_query_invalid_long_decimal():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be populated
     assert len(df) > 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Oracle to BigQuery test of find-tables command."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "find-tables",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "--allowed-schemas=pso_data_validator",
+        ]
+    )
+    output = main.find_tables_using_string_matching(args)
+    find_tables_assertions(output)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Oracle dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(expected_config_managers=4)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Oracle dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        validation_type="custom-query", expected_config_managers=4
+    )

@@ -15,17 +15,17 @@
 import os
 from unittest import mock
 
-from data_validation import __main__ as main
 from data_validation import cli_tools, data_validation, consts
-from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
+    generate_partitions_test,
+    row_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-
 
 TERADATA_USER = os.getenv("TERADATA_USER", "udf")
 TERADATA_PASSWORD = os.getenv("TERADATA_PASSWORD")
@@ -328,21 +328,18 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_core_types():
+def test_column_validation_time_table_to_bigquery():
+    # Unlike other temporal types, count is the only column validation supported for time
     parser = cli_tools.configure_arg_parser()
-    # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
-    # [Error 3798] A column or character expression is larger than the max size.
     args = parser.parse_args(
         [
             "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--primary-keys=id",
+            "column",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_time_table=pso_data_validator.dvt_time_table",
             "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
+            "--count=col_time",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -350,14 +347,54 @@ def test_row_validation_core_types():
     assert len(df) == 0
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_time_table():
+    """Validate time table against BQ"""
+    row_validation_test(
+        tables="udf.dvt_time_table=pso_data_validator.dvt_time_table", hash="*"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types():
+    """Validate core types against themselves in Teradata"""
+    # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
+    # [Error 3798] A column or character expression is larger than the max size.
+    row_validation_test(
+        tables="udf.dvt_core_types", tc="mock-conn", filters="id>0 AND col_int8>0"
+    )
+
+
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    ' ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 3 ) OR ( ( "quarter_id" = 3 ) AND ( "student_id" < 1234 ) ) ) )',
-    ' ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 3 ) OR ( ( "quarter_id" = 3 ) AND ( "student_id" >= 1234 ) ) ) ) )'
-    + ' AND ( ( "course_id" < \'GEO001\' ) OR ( ( "course_id" = \'GEO001\' ) AND ( ( "quarter_id" < 2 ) OR ( ( "quarter_id" = 2 ) AND ( "student_id" < 5678 ) ) ) ) )',
-    ' ( ( "course_id" > \'GEO001\' ) OR ( ( "course_id" = \'GEO001\' ) AND ( ( "quarter_id" > 2 ) OR ( ( "quarter_id" = 2 ) AND ( "student_id" >= 5678 ) ) ) ) )'
-    + ' AND ( ( "course_id" < \'TRI001\' ) OR ( ( "course_id" = \'TRI001\' ) AND ( ( "quarter_id" < 1 ) OR ( ( "quarter_id" = 1 ) AND ( "student_id" < 9012 ) ) ) ) )',
-    ' ( "course_id" > \'TRI001\' ) OR ( ( "course_id" = \'TRI001\' ) AND ( ( "quarter_id" > 1 ) OR ( ( "quarter_id" = 1 ) AND ( "student_id" >= 9012 ) ) ) )',
+    [
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) )',
+    ],
+    [
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
+        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) )',
+    ],
 ]
 
 
@@ -366,36 +403,13 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_teradata_generate_table_partitions():
-    """Test generate table partitions on BigQuery
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.test_generate_partitions=udf.test_generate_partitions",
-            "-pk=course_id,quarter_id,student_id",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=4",
-        ]
+    """Test generate table partitions on Teradata"""
+    generate_partitions_test(
+        EXPECTED_PARTITION_FILTER,
+        tables="udf.test_generate_partitions",
+        pk="course_id,quarter_id,recd_timestamp,registration_date,grade",
+        filters="course_id LIKE 'ALG%'",
     )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
-
-    assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
@@ -403,25 +417,13 @@ def test_teradata_generate_table_partitions():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
     # Excluded col_string because LONG VARCHAR column causes exception regardless of column contents:
     # [Error 3798] A column or character expression is larger than the max size.
-    # TODO Change --hash option to include col_tstz when issue-929 is complete.
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime",
-        ]
+    row_validation_test(
+        tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
+        filters="id>0 AND col_int8>0",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -433,22 +435,30 @@ def test_row_validation_large_decimals_to_bigquery():
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
     This is testing large decimals for the primary key join column plus the hash columns.
     """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_large_decimals=pso_data_validator.dvt_large_decimals",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
-        ]
+    row_validation_test(
+        tables="udf.dvt_large_decimals=pso_data_validator.dvt_large_decimals",
+        hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_latin_to_bigquery():
+    """Teradata to BigQuery dvt latin columns in teradata vs STRING columns in BigQuery"""
+    row_validation_test(tables="udf.dvt_latin=pso_data_validator.dvt_latin", hash="*")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_hash_to_bigquery():
+    """Teradata to BigQuery dvt Unicode columns (non European languages) in teradata vs STRING columns in BigQuery"""
+    row_validation_test(
+        tables="udf.dvt_pangrams=pso_data_validator.dvt_pangrams", hash="*"
+    )
 
 
 @mock.patch(
@@ -530,6 +540,30 @@ def test_row_validation_char_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_char_comp_field_to_bigquery():
+    """Teradata to BigQuery char comparison field validation.
+    Due to a Teradata client "quirk" comparison fields should add an rstrip()
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=td-conn",
+            "-tc=bq-conn",
+            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
+            "--primary-keys=id",
+            "-comp-fields=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df, expected_rows=45)
 
 
 @mock.patch(
@@ -632,3 +666,27 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Teradata dvt_many_cols row validation.
+    This is testing many columns logic for --concat, there are other tests for --hash.
+    """
+    row_validation_many_columns_test(schema="udf", concat_arg="concat")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Teradata dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --concat, there are other tests for --hash.
+    """
+    row_validation_many_columns_test(
+        schema="udf", validation_type="custom-query", concat_arg="concat"
+    )

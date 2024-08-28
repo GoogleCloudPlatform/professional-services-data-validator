@@ -44,17 +44,20 @@ data-validation
 """
 
 import argparse
+import copy
 import csv
 import json
 import logging
 import sys
 import uuid
 import os
+import math
 from argparse import Namespace
-from typing import Dict, List
+from typing import Dict, List, Optional
 from yaml import Dumper, Loader, dump, load
 
 from data_validation import clients, consts, state_manager, gcs_helper
+from data_validation.validation_builder import list_to_sublists
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -213,6 +216,13 @@ def _configure_partition_parser(subparsers):
         required_arguments,
         is_generate_partitions=True,
     )
+    optional_arguments.add_argument(
+        "--parts-per-file",
+        "-ppf",
+        type=_check_positive,
+        default=1,
+        help="Number of partitions to be validated in a single yaml file.",
+    )
     required_arguments.add_argument(
         "--config-dir",
         "-cdir",
@@ -227,9 +237,8 @@ def _configure_partition_parser(subparsers):
         "--partition-num",
         "-pn",
         required=True,
-        help="Number of partitions/config files to generate, a number from 2 to 10,000",
-        type=_check_no_partitions,
-        metavar="[2-10000]",
+        help="Number of partitions into which the table should be split",
+        type=_check_positive,
     )
 
 
@@ -435,6 +444,12 @@ def _configure_row_parser(
         help="Float max threshold for percent difference",
     )
     optional_arguments.add_argument(
+        "--exclude-columns",
+        "-ec",
+        action="store_true",
+        help="Flag to indicate the list of columns should be excluded from hash or concat instead of included.",
+    )
+    optional_arguments.add_argument(
         "--filters",
         "-filters",
         help="Filters in the format source_filter:target_filter",
@@ -454,6 +469,16 @@ def _configure_row_parser(
         action="store_true",
         help=(
             "Performs a case insensitive match by adding an UPPER() before comparison."
+        ),
+    )
+    optional_arguments.add_argument(
+        "--max-concat-columns",
+        "-mcc",
+        type=int,
+        help=(
+            "The maximum number of columns accepted by a --hash or --concat validation. When there are "
+            "more columns than this the validation will implicitly be split into multiple validations. "
+            "This option has engine specific defaults."
         ),
     )
     # Generate-table-partitions and custom-query does not support random row
@@ -898,15 +923,21 @@ def _add_common_arguments(
     )
 
 
-def _check_no_partitions(value: str) -> int:
-    """Check that number of partitions is between [2-10,000]
-    Using function to validate rather than choices as error message prints all choices.
-    """
-    if value.isdigit() and 2 <= int(value) <= 10000:
-        return int(value)
+def _check_positive(value: int) -> int:
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+
+def check_no_yaml_files(partition_num: int, parts_per_file: int):
+    """Check that number of yaml files generated is less than 10,001
+    Will be invoked after all the arguments are processed."""
+    if math.ceil(partition_num / parts_per_file) < 10001:
+        return
     else:
         raise argparse.ArgumentTypeError(
-            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
+            f"partition-num={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by using the --parts-per-file argument or decreasing the number of partitions."
         )
 
 
@@ -1179,8 +1210,101 @@ def split_table(table_ref, schema_required=True):
     return schema.strip(), table.strip()
 
 
+def get_query_from_file(filename):
+    """Return query from input file"""
+    query = ""
+    try:
+        query = gcs_helper.read_file(filename, download_as_text=True)
+        query = query.rstrip(";\n")
+    except IOError:
+        logging.error("Cannot read query file: ", filename)
+
+    if not query or query.isspace():
+        raise ValueError(
+            "Expected file with sql query, got empty file or file with white spaces. "
+            f"input file: {filename}"
+        )
+    return query
+
+
+def get_query_from_inline(inline_query):
+    """Return query from inline query arg"""
+
+    query = inline_query.strip()
+    query = query.rstrip(";\n")
+
+    if not query or query.isspace():
+        raise ValueError(
+            "Expected arg with sql query, got empty arg or arg with white "
+            f"spaces. input query: '{inline_query}'"
+        )
+    return query
+
+
+def get_query_from_query_args(query_str_arg, query_file_arg) -> str:
+    if query_str_arg:
+        return get_query_from_inline(query_str_arg)
+    else:
+        return get_query_from_file(query_file_arg)
+
+
+def _max_concat_columns(
+    max_concat_columns_option: int, source_client, target_client
+) -> Optional[int]:
+    """Determine any upper limit on number of columns allowed into concat() operation."""
+    if max_concat_columns_option:
+        # User specified limit takes precedence.
+        return max_concat_columns_option
+    else:
+        source_max = consts.MAX_CONCAT_COLUMNS_DEFAULTS.get(source_client.name, None)
+        target_max = consts.MAX_CONCAT_COLUMNS_DEFAULTS.get(target_client.name, None)
+        if source_max and target_max:
+            return min(source_max, target_max)
+        else:
+            return source_max or target_max
+
+
+def _concat_column_count_configs(
+    cols: list,
+    pre_build_configs: dict,
+    arg_to_override: str,
+    max_col_count: int,
+) -> list:
+    """
+    Ensure we don't have too many columns for the engines involved.
+    https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1216
+    """
+    return_list = []
+    if max_col_count and len(cols) > max_col_count:
+        for col_chunk in list_to_sublists(cols, max_col_count):
+            col_csv = ",".join(col_chunk)
+            pre_build_configs_copy = copy.copy(pre_build_configs)
+            pre_build_configs_copy[arg_to_override] = col_csv
+            return_list.append(pre_build_configs_copy)
+    else:
+        return_list.append(pre_build_configs)
+    return return_list
+
+
 def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     """Return a dict of configurations to build ConfigManager object"""
+
+    def cols_from_arg(concat_arg: str, client, table_obj: dict, query_str: str) -> list:
+        if concat_arg == "*":
+            # If validating with "*" then we need to expand to count the columns.
+            if table_obj:
+                return clients.get_ibis_table_schema(
+                    client,
+                    table_obj["schema_name"],
+                    table_obj["table_name"],
+                ).names
+            else:
+                return clients.get_ibis_query_schema(
+                    client,
+                    query_str,
+                ).names
+        else:
+            return get_arg_list(concat_arg)
 
     # Since `generate-table-partitions` defaults to `validate_cmd=row`,
     # `validate_cmd` is passed along while calling this method
@@ -1242,10 +1366,12 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
 
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
+    query_str = None
     if config_type == consts.CUSTOM_QUERY:
         tables_list = get_tables_list(
             None, default_value=[{}], is_filesystem=is_filesystem
         )
+        query_str = get_query_from_query_args(args.source_query, args.source_query_file)
     else:
         tables_list = get_tables_list(
             args.tables_list, default_value=[{}], is_filesystem=is_filesystem
@@ -1280,8 +1406,41 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "filter_status": filter_status,
             "trim_string_pks": getattr(args, "trim_string_pks", False),
             "case_insensitive_match": getattr(args, "case_insensitive_match", False),
+            consts.CONFIG_ROW_CONCAT: getattr(args, consts.CONFIG_ROW_CONCAT, None),
+            consts.CONFIG_ROW_HASH: getattr(args, consts.CONFIG_ROW_HASH, None),
             "verbose": args.verbose,
         }
-        pre_build_configs_list.append(pre_build_configs)
+        if (
+            pre_build_configs[consts.CONFIG_ROW_CONCAT]
+            or pre_build_configs[consts.CONFIG_ROW_HASH]
+        ):
+            # Ensure we don't have too many columns for the engines involved.
+            cols = cols_from_arg(
+                pre_build_configs[consts.CONFIG_ROW_HASH]
+                or pre_build_configs[consts.CONFIG_ROW_CONCAT],
+                source_client,
+                table_obj,
+                query_str,
+            )
+            new_pre_build_configs = _concat_column_count_configs(
+                cols,
+                pre_build_configs,
+                consts.CONFIG_ROW_HASH if args.hash else consts.CONFIG_ROW_CONCAT,
+                _max_concat_columns(
+                    args.max_concat_columns, source_client, target_client
+                ),
+            )
+            if len(new_pre_build_configs) > 1:
+                message_type = (
+                    f'{table_obj["schema_name"]}.{table_obj["table_name"]}'
+                    if table_obj
+                    else "custom query"
+                )
+                logging.info(
+                    f"Splitting validation into {len(new_pre_build_configs)} queries for {message_type}"
+                )
+            pre_build_configs_list.extend(new_pre_build_configs)
+        else:
+            pre_build_configs_list.append(pre_build_configs)
 
     return pre_build_configs_list

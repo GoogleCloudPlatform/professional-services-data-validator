@@ -17,26 +17,27 @@ from unittest import mock
 
 import pytest
 
-from data_validation import __main__ as main
-from data_validation import cli_tools, data_validation, consts
-from data_validation.partition_builder import PartitionBuilder
+from data_validation import cli_tools, data_validation, consts, __main__ as main
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
+    generate_partitions_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-
 
 # Local testing requires the Cloud SQL Proxy.
 # https://cloud.google.com/sql/docs/postgres/connect-admin-proxy
 
 # Cloud SQL proxy listens to localhost
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE", "guestbook")
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -46,7 +47,7 @@ CONN = {
     "host": POSTGRES_HOST,
     "user": "postgres",
     "password": POSTGRES_PASSWORD,
-    "port": 5432,
+    "port": POSTGRES_PORT,
     "database": POSTGRES_DATABASE,
 }
 
@@ -481,19 +482,29 @@ def mock_get_connection_config(*args):
         return BQ_CONN
 
 
-# Expected result from partitioning table on 3 keys
+# Expected result from partitioning table into 9 partitions on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) )"
-        + " AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) )"
-        + " AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
+        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
     ],
 ]
 
@@ -503,37 +514,12 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_postgres_generate_table_partitions(cloud_sql):
-    """Test generate table partitions on Postgres
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=public.test_generate_partitions=public.test_generate_partitions",
-            "-pk=course_id,quarter_id,approved",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=3",
-            "-filters=quarter_id != 1111",
-        ]
+    """Test generate table partitions on Postgres"""
+    generate_partitions_test(
+        EXPECTED_PARTITION_FILTER,
+        tables="public.test_generate_partitions",
+        pk="course_id,quarter_id,approved",
     )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
-
-    assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0] == EXPECTED_PARTITION_FILTER
 
 
 def test_schema_validation(cloud_sql):
@@ -860,3 +846,46 @@ def test_custom_query_validation_core_types():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """PostgreSQL to BigQuery test of find-tables command."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "find-tables",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "--allowed-schemas=pso_data_validator",
+        ]
+    )
+    output = main.find_tables_using_string_matching(args)
+    find_tables_assertions(output)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """PostgreSQL dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(expected_config_managers=5)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """PostgreSQL dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        validation_type="custom-query", expected_config_managers=5
+    )

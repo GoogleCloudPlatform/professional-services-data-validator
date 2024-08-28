@@ -106,8 +106,15 @@ class Backend(BaseAlchemyBackend):
 
         self.database_name = sa_url.database
         engine = sa.create_engine(
-            sa_url, poolclass=sa.pool.StaticPool, arraysize=self.arraysize
+            sa_url,
+            poolclass=sa.pool.StaticPool,
+            arraysize=self.arraysize,
         )
+        try:
+            # Identify the session in Oracle as DVT, no-op if this fails.
+            engine.raw_connection().connection.module = "DVT"
+        except Exception:
+            pass
 
         @sa.event.listens_for(engine, "connect")
         def connect(dbapi_connection, connection_record):
