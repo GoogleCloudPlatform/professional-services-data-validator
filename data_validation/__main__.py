@@ -466,13 +466,13 @@ def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8):
     return table_configs
 
 
-def get_table_map(client, allowed_schemas=None):
+def _get_table_map(client, allowed_schemas=None):
     """Return dict with searchable keys for table matching."""
     table_map = {}
     table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
 
     for table_obj in table_objs:
-        table_key = ".".join([t for t in table_obj if t])
+        table_key = ".".join([t for t in table_obj if t]).lower()
         table_map[table_key] = {
             consts.CONFIG_SCHEMA_NAME: table_obj[0],
             consts.CONFIG_TABLE_NAME: table_obj[1],
@@ -490,8 +490,8 @@ def find_tables_using_string_matching(args):
     target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
-    source_table_map = get_table_map(source_client, allowed_schemas=allowed_schemas)
-    target_table_map = get_table_map(target_client)
+    source_table_map = _get_table_map(source_client, allowed_schemas=allowed_schemas)
+    target_table_map = _get_table_map(target_client)
 
     table_configs = _compare_match_tables(
         source_table_map, target_table_map, score_cutoff=score_cutoff
