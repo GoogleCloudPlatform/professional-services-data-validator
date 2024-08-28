@@ -47,7 +47,6 @@ OracleDialect_cx_oracle.denormalize_name = _ora_denormalize_name
 
 
 class DVTOracleIdentifierPreparer(OracleIdentifierPreparer):
-
     def quote_identifier(self, value):
         """Quote an identifier.
 
