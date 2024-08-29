@@ -448,8 +448,7 @@ def _literal(t, op):
 
 
 def _random(t, expr):
-    # https://stackoverflow.com/a/38297161 
-    return sa.func.random(sa.func.setseed(1))
+    return sa.func.rand()
 
 
 def _day_of_week_index(t, op):
