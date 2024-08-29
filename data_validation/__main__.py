@@ -174,14 +174,18 @@ def get_calculated_config(args, config_manager: ConfigManager) -> List[dict]:
             if config_manager.hash == "*"
             else cli_tools.get_arg_list(config_manager.hash)
         )
-        fields = config_manager.build_dependent_aliases("hash", col_list)
+        fields = config_manager.build_dependent_aliases(
+            "hash", col_list, args.exclude_columns
+        )
     elif config_manager.concat:
         col_list = (
             None
             if config_manager.concat == "*"
             else cli_tools.get_arg_list(config_manager.concat)
         )
-        fields = config_manager.build_dependent_aliases("concat", col_list)
+        fields = config_manager.build_dependent_aliases(
+            "concat", col_list, args.exclude_columns
+        )
 
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])

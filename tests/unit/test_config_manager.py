@@ -62,6 +62,20 @@ SAMPLE_ROW_CONFIG = {
     consts.CONFIG_CALCULATED_FIELDS: ["name", "station_id"],
 }
 
+SAMPLE_ROW_CONFIG_DEP_ALIASES = {
+    # BigQuery Specific Connection Config
+    consts.CONFIG_SOURCE_CONN: {"type": "DNE connection"},
+    consts.CONFIG_TARGET_CONN: {"type": "DNE connection"},
+    # Validation Type
+    consts.CONFIG_TYPE: "Row",
+    # Configuration Required Depending on Validator Type
+    consts.CONFIG_SCHEMA_NAME: "bigquery-public-data.new_york_citibike",
+    consts.CONFIG_TABLE_NAME: "citibike_trips",
+    consts.CONFIG_GROUPED_COLUMNS: [],
+    consts.CONFIG_THRESHOLD: 0.0,
+    consts.CONFIG_PRIMARY_KEYS: [{"source_column": "c", "target_column": "c"}],
+}
+
 AGGREGATE_CONFIG_A = {
     consts.CONFIG_SOURCE_COLUMN: "a",
     consts.CONFIG_TARGET_COLUMN: "a",
@@ -141,6 +155,7 @@ class MockIbisClient(object):
 class MockIbisTable(object):
     def __init__(self):
         self.columns = ["a", "b", "c", "d"]
+        self.schema = MockIbisSchema()
 
     def __getitem__(self, key):
         return MockIbisColumn(key)
@@ -148,6 +163,20 @@ class MockIbisTable(object):
     def mutate(self, fields):
         self.columns = self.columns + fields
         return self
+
+
+class MockIbisSchema(object):
+    def __init__(self):
+        self.schema = {
+            "a": "int64",
+            "b": "int64",
+            "c": "!string",
+            "d": "int64",
+            "e": "int64",
+        }
+
+    def __call__(self):
+        return self.schema
 
 
 class MockIbisColumn(object):
@@ -520,3 +549,48 @@ def test__decimal_column_too_big_for_pandas(module_under_test):
     c1 = dt.Decimal(38, 10)
     c2 = dt.Decimal(38, 10)
     assert config_manager._decimal_column_too_big_for_pandas(c1, c2)
+
+
+def test_build_dependent_aliases(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_ROW_CONFIG_DEP_ALIASES, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    # Hash includes col a
+    dependent_aliases = config_manager.build_dependent_aliases(
+        "hash", ["a"], exclude_cols=False
+    )
+    concat_config = dependent_aliases[-2]
+    assert concat_config["source_reference"] == [
+        "rstrip__ifnull__cast__a",
+    ]
+
+
+def test_build_dependent_aliases_exclude_columns(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_ROW_CONFIG_DEP_ALIASES, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    # Hash excludes col a
+    dependent_aliases = config_manager.build_dependent_aliases(
+        "hash", ["a"], exclude_cols=True
+    )
+    concat_config = dependent_aliases[-2]
+    assert concat_config["source_reference"] == [
+        "rstrip__ifnull__cast__b",
+        "rstrip__ifnull__cast__c",
+        "rstrip__ifnull__cast__d",
+    ]
+
+
+def test_build_dependent_aliases_exception(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_ROW_CONFIG_DEP_ALIASES, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        config_manager.build_dependent_aliases("hash", None, True)
+    assert (
+        str(excinfo.value)
+        == "Exclude columns flag cannot be present with column list '*'"
+    )

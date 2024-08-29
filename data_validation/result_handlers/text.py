@@ -21,11 +21,34 @@ from the validation run.
 
 Output validation report to text-based log
 """
+from typing import TYPE_CHECKING
+
 from data_validation import consts
 
 
-def filter_validation_status(status_list, result_df):
+if TYPE_CHECKING:
+    from pandas import DataFrame
+
+
+def filter_validation_status(status_list, result_df: "DataFrame"):
     return result_df[result_df.validation_status.isin(status_list)]
+
+
+def get_formatted(
+    result_df: "DataFrame", format: str = "table", cols_filter_list: list = None
+) -> str:
+    """Expose formatting logic so it can be used in BigQuery handler."""
+    cols_filter_list = cols_filter_list or consts.COLUMN_FILTER_LIST
+    if format == "text":
+        return result_df.drop(cols_filter_list, axis=1).to_string(index=False)
+    elif format == "csv":
+        return result_df.to_csv(index=False)
+    elif format == "json":
+        return result_df.to_json(orient="index")
+    else:
+        return result_df.drop(cols_filter_list, axis=1).to_markdown(
+            tablefmt="fancy_grid", index=False
+        )
 
 
 class TextResultHandler(object):
@@ -37,18 +60,9 @@ class TextResultHandler(object):
         self.status_list = status_list
 
     def _get_formatted(self, result_df):
-        if self.format == "text":
-            return result_df.drop(self.cols_filter_list, axis=1).to_string(index=False)
-        elif self.format == "csv":
-            return result_df.to_csv(index=False)
-        elif self.format == "json":
-            return result_df.to_json(orient="index")
-        else:
-            return result_df.drop(self.cols_filter_list, axis=1).to_markdown(
-                tablefmt="fancy_grid", index=False
-            )
+        return get_formatted(result_df, self.format, self.cols_filter_list)
 
-    def print_formatted_(self, result_df):
+    def print_formatted_(self, result_df) -> "DataFrame":
         """
         Utility for printing formatted results
         :param result_df
@@ -67,5 +81,5 @@ class TextResultHandler(object):
 
         return result_df
 
-    def execute(self, result_df):
+    def execute(self, result_df) -> str:
         return self.print_formatted_(result_df)
