@@ -448,6 +448,7 @@ def _literal(t, op):
 
 
 def _random(t, expr):
+    sa.func.setseed(1)
     return sa.func.rand()
 
 
