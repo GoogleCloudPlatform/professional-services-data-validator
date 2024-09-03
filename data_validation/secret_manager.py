@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+
+from google.api_core import exceptions
+
 
 class SecretManagerBuilder:
     def build(self, client_type):
@@ -37,10 +41,11 @@ class GCPSecretManager:
         # Create the Secret Manager client.
         self.client = secretmanager.SecretManagerServiceClient()
 
-    def maybe_secret(self, project_id, secret_id, version_id="latest"):
-        """
-        Get information about the given secret.
-        :return String value with the secret value or the secret id if the secret value if not exists
+    def maybe_secret(self, project_id: str, secret_id: str, version_id="latest") -> str:
+        """Get information about the given secret.
+
+        Returns:
+            str: Secret value as a string or the secret id if the secret does not exist.
         """
         try:
             # Build the resource name of the secret.
@@ -50,5 +55,6 @@ class GCPSecretManager:
             # Return the decoded payload.
             payload = response.payload.data.decode("UTF-8")
             return payload
-        except BaseException:
+        except exceptions.NotFound:
+            # The secret does not exist and therefore we can assume it is just a token to be returned.
             return secret_id
