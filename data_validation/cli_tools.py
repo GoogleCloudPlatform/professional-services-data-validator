@@ -56,8 +56,9 @@ from argparse import Namespace
 from typing import Dict, List, Optional
 from yaml import Dumper, Loader, dump, load
 
-from data_validation import clients, consts, state_manager, gcs_helper
+from data_validation import clients, consts, find_tables, state_manager, gcs_helper
 from data_validation.validation_builder import list_to_sublists
+
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -645,7 +646,7 @@ def _configure_column_parser(column_parser):
         "-tbls",
         default=None,
         required=True,
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'. Or shorthand schema.* for all tables.",
     )
     _add_common_arguments(optional_arguments, required_arguments)
 
@@ -1151,7 +1152,7 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
 
     tables_list = []
     tables_mapping = list(csv.reader([arg_tables]))[0]
-    source_schema_required = False if is_filesystem else True
+    source_schema_required = bool(not is_filesystem)
 
     for mapping in tables_mapping:
         tables_map = mapping.split("=")
@@ -1388,6 +1389,9 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         filter_status = None
 
     pre_build_configs_list = []
+    tables_list = find_tables.expand_tables_of_asterisk(
+        tables_list, source_client, target_client
+    )
     for table_obj in tables_list:
         pre_build_configs = {
             "config_type": config_type,

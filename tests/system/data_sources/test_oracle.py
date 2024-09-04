@@ -15,7 +15,7 @@
 import os
 from unittest import mock
 
-from data_validation import cli_tools, data_validation, consts, __main__ as main
+from data_validation import cli_tools, data_validation, consts, find_tables
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_assertions,
@@ -689,7 +689,7 @@ def test_find_tables():
             "--allowed-schemas=pso_data_validator",
         ]
     )
-    output = main.find_tables_using_string_matching(args)
+    output = find_tables.find_tables_using_string_matching(args)
     find_tables_assertions(output)
 
 

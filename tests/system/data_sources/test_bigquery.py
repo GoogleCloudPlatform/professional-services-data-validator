@@ -22,6 +22,7 @@ from data_validation import (
     clients,
     consts,
     data_validation,
+    find_tables,
     gcs_helper,
 )
 from data_validation.query_builder import random_row_builder
@@ -692,7 +693,7 @@ def test_cli_find_tables():
 
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
-    tables_json = main.find_tables_using_string_matching(args)
+    tables_json = find_tables.find_tables_using_string_matching(args)
     assert isinstance(tables_json, str)
     assert STRING_MATCH_RESULT in tables_json
 
