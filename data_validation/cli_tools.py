@@ -1065,7 +1065,7 @@ def get_labels(arg_labels):
     return labels
 
 
-def get_filters(filter_value: str) -> list[dict]:
+def get_filters(filter_value: str) -> List[Dict]:
     """Returns filters for source and target from --filters argument.
     A filter is the condition that is used in a SQL WHERE clause.
     If only one filter is specified, it applies to both source and target
