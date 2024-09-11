@@ -87,7 +87,12 @@ over all columns ('*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` or `--wildcard-include-timestamp` flags are present.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate column
+data-validation  
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -136,6 +141,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+
 ```
 
 The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
@@ -166,7 +172,12 @@ Under the hood, row validation uses
 apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML or JSON config file to customize your row validation.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate row
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -213,7 +224,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
   [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
-                        Performs a case insensitive match by adding an UPPER() before comparison.
+                        Performs a case insensitive match by adding an UPPER() before comparison.                
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
@@ -224,8 +235,12 @@ The command generates and stores multiple YAML validations each representing a c
 The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
-
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  generate-table-partitions
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -270,7 +285,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
   [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
-                        Performs a case insensitive match by adding an UPPER() before comparison.
+                        Performs a case insensitive match by adding an UPPER() before comparison.     
 ```
 #### Schema Validations
 
@@ -280,7 +295,12 @@ types between source and target.
 Note: An exclamation point before a data type (`!string`) signifies the column is non-nullable or required.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate schema
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate schema
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -321,7 +341,12 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
 Below is the command syntax for custom query column validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query column
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate custom-query column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -383,7 +408,12 @@ in the SELECT statement of both source_query.sql and target_query.sql.  See *Pri
 Below is the command syntax for custom query row validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate custom-query row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -429,7 +459,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
   [--trim-string-pks, -tsp]
                         Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
-                        Performs a case insensitive match by adding an UPPER() before comparison.
+                        Performs a case insensitive match by adding an UPPER() before comparison.                    
 ```
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
@@ -441,7 +471,12 @@ The `validate` command takes a `--dry-run` command line flag that prints source
 and target SQL to stdout as JSON in lieu of performing a validation:
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate
   [--dry-run or -dr]    Prints source and target SQL to stdout in lieu of performing a validation.
 ```
 
@@ -472,7 +507,12 @@ GCS and local paths.
 You can use the `data-validation configs` command to run and view YAMLs.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) configs run
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.    
+  configs run
   [--config-file or -c CONFIG_FILE]
                         Path to YAML config file to run. Supports local and GCS paths.
   [--config-dir or -cdir CONFIG_DIR]
@@ -480,7 +520,7 @@ data-validation (--verbose or -v) (--log-level or -ll) configs run
   [--dry-run or -dr]    If this flag is present, prints the source and target SQL generated in lieu of running the validation.
   [--kube-completions or -kc]
                         Flag to indicate usage in Kubernetes index completion mode.
-                        See *Scaling DVT* section
+                        See *Scaling DVT* section                   
 ```
 
 ```
