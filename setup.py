@@ -47,7 +47,7 @@ dependencies = [
     "google-cloud-bigquery-storage==2.20.0",
     "google-cloud-spanner==3.36.0",
     "google-cloud-storage==2.10.0",
-    "jellyfish==1.0.0",
+    "jellyfish==1.1.0",
     "tabulate==0.9.0",
     "Flask==2.3.2",
     "parsy==2.1",
