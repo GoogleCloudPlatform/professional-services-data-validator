@@ -13,10 +13,13 @@
 # limitations under the License.
 
 import json
+import logging
 import pandas
 import pytest
 import random
 from datetime import datetime, timedelta
+from unittest import mock
+from google.cloud import bigquery
 
 import ibis.expr.datatypes as dt
 
@@ -363,6 +366,49 @@ SAMPLE_JSON_ROW_CONFIG = {
     consts.CONFIG_FILTER_STATUS: None,
 }
 
+# Row validation where we only care about failures and we write them to BQ
+SAMPLE_ROW_CONFIG_BQ_FAILURES = {
+    # BigQuery Specific Connection Config
+    "source_conn": SOURCE_CONN_CONFIG,
+    "target_conn": TARGET_CONN_CONFIG,
+    # Validation Type
+    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+    # Configuration Required Depending on Validator Type
+    "schema_name": None,
+    "table_name": "my_table",
+    "target_schema_name": None,
+    "target_table_name": "my_table",
+    consts.CONFIG_PRIMARY_KEYS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "id",
+            consts.CONFIG_SOURCE_COLUMN: "id",
+            consts.CONFIG_TARGET_COLUMN: "id",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_COMPARISON_FIELDS: [
+        {
+            consts.CONFIG_FIELD_ALIAS: "int_value",
+            consts.CONFIG_SOURCE_COLUMN: "int_value",
+            consts.CONFIG_TARGET_COLUMN: "int_value",
+            consts.CONFIG_CAST: None,
+        },
+        {
+            consts.CONFIG_FIELD_ALIAS: "text_value",
+            consts.CONFIG_SOURCE_COLUMN: "text_value",
+            consts.CONFIG_TARGET_COLUMN: "text_value",
+            consts.CONFIG_CAST: None,
+        },
+    ],
+    consts.CONFIG_RESULT_HANDLER: {
+            consts.CONFIG_TYPE: "BigQuery",
+            consts.PROJECT_ID: "my-project",
+            consts.TABLE_ID: "dataset.table_name",
+        },
+    consts.CONFIG_FORMAT: "text",
+    consts.CONFIG_FILTER_STATUS: ["fail"],
+}
+
 JSON_DATA = """[{"col_a":1,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 JSON_COLA_ZERO_DATA = """[{"col_a":null,"col_b":"a"}]"""
 JSON_BAD_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"},{"col_a":2,"col_b":"c"},{"col_a":3,"col_b":"d"},{"col_a":4,"col_b":"e"}]"""
@@ -703,3 +749,111 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     # 2 validations * (100 source + 1 target)
     assert len(result_df) == 202
     assert len(comparison_df) == 202
+
+
+def test_no_console_data_shown_for_validation_with_result_written_to_bq_in_info_mode(module_under_test, fs, caplog, monkeypatch):
+    # Mock the big query client
+    mock_bq_client = mock.create_autospec(bigquery.Client)
+    monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
+    # With some mocked data - source and target different
+    data = _generate_fake_data(rows=10, second_range=0)
+    trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data + trg_data)
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+    # ... and the log level being INFO
+    caplog.set_level(logging.INFO)
+    # When we validate
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG_BQ_FAILURES)
+    result_df = client.execute()
+    # Then...
+    # 2 failures returned
+    assert len(result_df) == 2
+    fail_df = result_df[
+        result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL
+    ]
+    assert len(fail_df) == 2
+    # Only the "Results written" message happens
+    # Important because the results could include sensitive data, which some users need to exclude
+    assert len(caplog.records) == 1
+    run_id = result_df.iloc[0]["run_id"]
+    assert caplog.records[0].message == f'Results written to BigQuery, run id: {run_id}'
+
+
+def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq_in_info_mode(module_under_test, fs, caplog, monkeypatch):
+    # Mock the big query client
+    mock_bq_client = mock.create_autospec(bigquery.Client)
+    monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
+    # With some mocked data - source and target the same
+    data = _generate_fake_data(rows=10, second_range=0)
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data)
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+    # ... and the log level being INFO
+    caplog.set_level(logging.INFO)
+    # When we validate
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG_BQ_FAILURES)
+    result_df = client.execute()
+    # Then...
+    # 0 failures returned
+    assert len(result_df) == 0
+    # Only the "No results" message happens
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == "No results to write to BigQuery"
+
+
+def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mode(module_under_test, fs, caplog, monkeypatch):
+    # Mock the big query client
+    mock_bq_client = mock.create_autospec(bigquery.Client)
+    monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
+    # With some mocked data - source and target different
+    data = _generate_fake_data(rows=10, second_range=0)
+    trg_data = _generate_fake_data(initial_id=11, rows=1, second_range=0)
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data + trg_data)
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+    # ... and the log level being DEBUG
+    caplog.set_level(logging.DEBUG)
+    # When we validate
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG_BQ_FAILURES)
+    result_df = client.execute()
+    # Then...
+    # 2 failures returned
+    assert len(result_df) == 2
+    fail_df = result_df[
+        result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL
+    ]
+    assert len(fail_df) == 2
+    # The "Results written" message happens + info about the failed data
+    assert len(caplog.records) == 2
+    run_id = result_df.iloc[0]["run_id"]
+    assert caplog.records[0].message == f'Results written to BigQuery, run id: {run_id}'
+    assert "validation_name validation_type source_table_name source_column_name source_agg_value target_agg_value pct_difference validation_status" in caplog.records[1].message
+    assert f'fail {run_id}' in caplog.records[1].message
+
+
+def test_console_data_shown_for_matching_validation_with_result_written_to_bq_in_debug_mode(module_under_test, fs, caplog, monkeypatch):
+    # Mock the big query client
+    mock_bq_client = mock.create_autospec(bigquery.Client)
+    monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
+    # With some mocked data - source and target the same
+    data = _generate_fake_data(rows=10, second_range=0)
+    source_json_data = _get_fake_json_data(data)
+    target_json_data = _get_fake_json_data(data)
+    _create_table_file(SOURCE_TABLE_FILE_PATH, source_json_data)
+    _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
+    # ... and the log level being DEBUG
+    caplog.set_level(logging.DEBUG)
+    # When we validate
+    client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG_BQ_FAILURES)
+    result_df = client.execute()
+    # Then...
+    # 0 failures returned
+    assert len(result_df) == 0
+    # The "Results written" message happens + "Empty DataFrame" because there are no failures to display
+    assert len(caplog.records) == 2
+    assert caplog.records[0].message == "No results to write to BigQuery"
+    assert caplog.records[1].message.startswith("Empty DataFrame")
