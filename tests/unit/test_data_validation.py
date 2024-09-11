@@ -853,7 +853,7 @@ def test_console_data_shown_for_matching_validation_with_result_written_to_bq_in
     # Then...
     # 0 failures returned
     assert len(result_df) == 0
-    # The "Results written" message happens + "Empty DataFrame" because there are no failures to display
+    # The "No results" message happens + "Empty DataFrame" because there are no failures to display
     assert len(caplog.records) == 2
     assert caplog.records[0].message == "No results to write to BigQuery"
     assert caplog.records[1].message.startswith("Empty DataFrame")
