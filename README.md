@@ -477,7 +477,7 @@ data-validation
   [--log-level or -ll]
                         Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
   validate
-  --dry-run or -dr    Prints source and target SQL to stdout in lieu of performing a validation.
+  [--dry-run or -dr]    Prints source and target SQL to stdout in lieu of performing a validation.
 ```
 
 For example, this flag can be used as follows:
