@@ -26,6 +26,7 @@ with open("README.md", "r") as fh:
 
 dependencies = [
     "attrs==24.2.0",
+    "Flask==3.0.3",
     "fsspec==2024.9.0",
     "google-api-python-client==2.144.0",
     "google-cloud-bigquery==3.25.0",
@@ -49,7 +50,6 @@ dependencies = [
     "PyYAML==6.0.2",
     "SQLAlchemy==2.0.34",
     "tabulate==0.9.0",
-    "Flask==3.0.3",
 ]
 
 extras_require = {
