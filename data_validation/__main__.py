@@ -222,8 +222,10 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         config_manager.append_allow_list(args.allow_list, args.allow_list_file)
 
     # Append CUSTOM_QUERY configs
-    if config_manager.validation_type == consts.CUSTOM_QUERY:
-        config_manager.append_custom_query_type(args.custom_query_type)
+    if (args.command =='generate-table-partitions' and args.tables_list is None) or \
+        config_manager.validation_type == consts.CUSTOM_QUERY :
+        if config_manager.validation_type == consts.CUSTOM_QUERY :
+            config_manager.append_custom_query_type(args.custom_query_type)
 
         # Get source sql query from source sql file or inline query
         if args.source_query:
@@ -244,11 +246,11 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         config_manager.append_target_query(target_query_str)
 
         # For custom-query column command
-        if args.custom_query_type == consts.COLUMN_VALIDATION.lower():
+        if args.command !='generate-table-partitions' and args.custom_query_type == consts.COLUMN_VALIDATION.lower():
             config_manager.append_aggregates(get_aggregate_config(args, config_manager))
 
         # For custom-query row command
-        if args.custom_query_type == consts.ROW_VALIDATION.lower():
+        if args.command !='generate-table-partitions' and args.custom_query_type == consts.ROW_VALIDATION.lower():
             # Append Comparison fields
             if args.comparison_fields is not None:
                 comparison_fields = cli_tools.get_arg_list(
