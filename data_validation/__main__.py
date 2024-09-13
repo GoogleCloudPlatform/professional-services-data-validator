@@ -228,22 +228,14 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
             config_manager.append_custom_query_type(args.custom_query_type)
 
         # Get source sql query from source sql file or inline query
-        if args.source_query:
-            source_query_str = config_manager.get_query_from_inline(args.source_query)
-        else:
-            source_query_str = config_manager.get_query_from_file(
-                args.source_query_file
-            )
-        config_manager.append_source_query(source_query_str)
+        config_manager.append_source_query(cli_tools.get_query_from_query_args(
+                args.source_query, args.source_query_file
+            ))
 
         # Get target sql query from target sql file or inline query
-        if args.target_query:
-            target_query_str = config_manager.get_query_from_inline(args.target_query)
-        else:
-            target_query_str = config_manager.get_query_from_file(
-                args.target_query_file
-            )
-        config_manager.append_target_query(target_query_str)
+        config_manager.append_target_query(cli_tools.get_query_from_query_args(
+                args.target_query, args.target_query_file
+            ))
 
         # For custom-query column command
         if args.command !='generate-table-partitions' and args.custom_query_type == consts.COLUMN_VALIDATION.lower():
@@ -717,6 +709,7 @@ def main():
     elif args.command == "validate":
         validate(args)
     elif args.command == "generate-table-partitions":
+        cli_tools.check_no_yaml_files(args.partition_num, args.parts_per_file)
         partition_and_store_config_files(args)
     elif args.command == "deploy":
         from data_validation import app
