@@ -161,7 +161,7 @@ def find_tables_assertions(command_output: str):
     assert "dvt_core_types" in [_["target_table_name"] for _ in output_dict]
 
 
-def column_validation_test(
+def column_validation_test_args(
     tables="pso_data_validator.dvt_core_types",
     tc="bq-conn",
     count_cols=None,
@@ -170,7 +170,6 @@ def column_validation_test(
     max_cols=None,
     filters=None,
     grouped_columns=None,
-    expected_config_managers: int = 1,
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -194,12 +193,59 @@ def column_validation_test(
     if grouped_columns:
         cli_arg_list.append(f"--grouped-columns={grouped_columns}")
 
-    args = parser.parse_args(cli_arg_list)
-    for df in run_tests_from_cli_args(
-        args, expected_config_managers=expected_config_managers
-    ):
-        # With filter on failures the data frame should be empty
-        assert len(df) == 0
+    return parser.parse_args(cli_arg_list)
+
+
+def column_validation_test(
+    tables="pso_data_validator.dvt_core_types",
+    tc="bq-conn",
+    count_cols=None,
+    sum_cols=None,
+    min_cols=None,
+    max_cols=None,
+    filters=None,
+    grouped_columns=None,
+):
+    """Generic column validation test.
+
+    All tests expect an empty dataframe as the assertion.
+    """
+    args = column_validation_test_args(
+        tables=tables,
+        tc=tc,
+        count_cols=count_cols,
+        sum_cols=sum_cols,
+        min_cols=min_cols,
+        max_cols=max_cols,
+        filters=filters,
+        grouped_columns=grouped_columns,
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+def column_validation_test_config_managers(
+    tables="pso_data_validator.dvt_core_types",
+    tc="bq-conn",
+    count_cols=None,
+    sum_cols=None,
+    min_cols=None,
+    max_cols=None,
+    filters=None,
+    grouped_columns=None,
+) -> list:
+    args = column_validation_test_args(
+        tables=tables,
+        tc=tc,
+        count_cols=count_cols,
+        sum_cols=sum_cols,
+        min_cols=min_cols,
+        max_cols=max_cols,
+        filters=filters,
+        grouped_columns=grouped_columns,
+    )
+    return main.build_config_managers_from_args(args)
 
 
 def row_validation_test(

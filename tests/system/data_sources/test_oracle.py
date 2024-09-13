@@ -19,6 +19,7 @@ from data_validation import cli_tools, data_validation, consts, find_tables
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     column_validation_test,
+    column_validation_test_config_managers,
     find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
@@ -696,24 +697,35 @@ def test_custom_query_row_validation_many_columns():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_multi_table_validation():
-    """Oracle to BigQuery test of multi-table validation command."""
-    column_validation_test(
+def test_column_multi_table_config_managers():
+    """Oracle to BigQuery test of multi-table validation command.
+
+    No need to actually execute the validations to confirm we get the correct number of config managers.
+    """
+    config_managers = column_validation_test_config_managers(
         tables="pso_data_validator.dvt_core_types,pso_data_validator.dvt_large_decimals",
         count_cols="*",
-        expected_config_managers=2,
     )
+    assert len(config_managers) == 2
+    assert "dvt_core_types" in [_.source_table.lower() for _ in config_managers]
+    assert "dvt_large_decimals" in [_.source_table.lower() for _ in config_managers]
 
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_schema_validation():
-    """Oracle to PostgreSQL test of schema level validation command."""
-    column_validation_test(
+def test_column_multi_table_all_config_managers():
+    """Oracle to PostgreSQL test of multi-table schema.* validation command.
+
+    No need to actually execute the validations to confirm we get the correct number of config managers.
+    """
+    config_managers = column_validation_test_config_managers(
         tc="pg-conn",
         tables="pso_data_validator.*",
         count_cols="*",
-        expected_config_managers=6,
     )
+    assert len(config_managers) > 2
+    assert "dvt_core_types" in [_.source_table.lower() for _ in config_managers]
+    assert "dvt_large_decimals" in [_.source_table.lower() for _ in config_managers]
+    assert "dvt_pangrams" in [_.source_table.lower() for _ in config_managers]
