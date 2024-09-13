@@ -18,6 +18,7 @@ from unittest import mock
 from data_validation import cli_tools, data_validation, consts, find_tables
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    column_validation_test,
     find_tables_assertions,
     id_type_test_assertions,
     null_not_null_assertions,
@@ -245,25 +246,17 @@ def test_schema_validation_oracle_to_postgres():
 )
 def test_column_validation_core_types():
     """Oracle to Oracle dvt_core_types column validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--filter-status=fail",
-            "--grouped-columns=col_varchar_30",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-        ]
+    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -271,24 +264,16 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
-    # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-        ]
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_core_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -296,7 +281,6 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_column_validation_oracle_to_postgres():
-    parser = cli_tools.configure_arg_parser()
     count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
     # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
     # TODO Change sum_cols to include col_num_18 when issue-1007 is complete.
@@ -314,23 +298,14 @@ def test_column_validation_oracle_to_postgres():
             if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
         ]
     )
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=ora-conn",
-            "-tc=pg-conn",
-            "-tbls=pso_data_validator.dvt_ora2pg_types",
-            "--filter-status=fail",
-            f"--count={count_cols}",
-            f"--sum={sum_cols}",
-            f"--min={min_cols}",
-            f"--max={min_cols}",
-        ]
+    column_validation_test(
+        tc="pg-conn",
+        tables="pso_data_validator.dvt_ora2pg_types",
+        count_cols=count_cols,
+        sum_cols=sum_cols,
+        min_cols=min_cols,
+        max_cols=min_cols,
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -714,4 +689,31 @@ def test_custom_query_row_validation_many_columns():
     """
     row_validation_many_columns_test(
         validation_type="custom-query", expected_config_managers=4
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_multi_table_validation():
+    """Oracle to BigQuery test of multi-table validation command."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_core_types,pso_data_validator.dvt_large_decimals",
+        count_cols="*",
+        expected_config_managers=2,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_schema_validation():
+    """Oracle to PostgreSQL test of schema level validation command."""
+    column_validation_test(
+        tc="pg-conn",
+        tables="pso_data_validator.*",
+        count_cols="*",
+        expected_config_managers=6,
     )
