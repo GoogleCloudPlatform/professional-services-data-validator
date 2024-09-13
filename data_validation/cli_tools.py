@@ -234,7 +234,7 @@ def configure_arg_parser():
 
 def _configure_partition_parser(subparsers):
     """Configure arguments to generate partitioned config files."""
-partition_parser = subparsers.add_parser(
+    partition_parser = subparsers.add_parser(
         "generate-table-partitions",
         help=("Generate table partitions and store validation config files"),
     )
@@ -311,6 +311,7 @@ partition_parser = subparsers.add_parser(
         "-tq",
         help="Target sql query",
     )
+
 
 def _configure_beta_parser(subparsers):
     """Configure beta commands for the parser."""
@@ -566,7 +567,7 @@ def _configure_row_parser(
         )
         # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
         # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
-        # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be 
+        # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
         # a required argument for validate row, validate column and validate schema.
         required_arguments.add_argument(
             "--tables-list",
@@ -576,10 +577,8 @@ def _configure_row_parser(
             help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
         )
 
-
     # Group required arguments
-    # Generate table partitions follows a new argument way where either the table names or queries can be provided, but not both.
-       required_arguments.add_argument(
+    required_arguments.add_argument(
         "--primary-keys",
         "-pk",
         required=True,
@@ -824,6 +823,7 @@ def _configure_custom_query_row_parser(custom_query_row_parser):
         help="Target sql query",
     )
 
+
 def _configure_custom_query_column_parser(custom_query_column_parser):
     # Group optional arguments
     optional_arguments = custom_query_column_parser.add_argument_group(
@@ -997,6 +997,7 @@ def _add_common_arguments(
         help="Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned",
     )
 
+
 def _check_no_partitions(value: str) -> int:
     """Check that number of partitions is between [2-10,000]
     Using function to validate rather than choices as error message prints all choices."""
@@ -1007,11 +1008,13 @@ def _check_no_partitions(value: str) -> int:
             f"{value} is not valid for number of partitions, use number in range 2 to 10000"
         )
 
+
 def _check_positive(value: int) -> int:
     ivalue = int(value)
     if ivalue <= 0:
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
+
 
 def check_no_yaml_files(partition_num: int, parts_per_file: int):
     """Check that number of yaml files generated is less than 10,001
@@ -1022,6 +1025,7 @@ def check_no_yaml_files(partition_num: int, parts_per_file: int):
         raise argparse.ArgumentTypeError(
             f"partition-num={partition_num} results in more than the maximum number of yaml files (i.e. 10,000). Reduce the number of yaml files by using the --parts-per-file argument or decreasing the number of partitions."
         )
+
 
 def get_connection_config_from_args(args):
     """Return dict with connection config supplied."""
@@ -1179,6 +1183,7 @@ def get_filters(filter_value: str) -> List[Dict]:
     filter_config.append(filter_dict)
     return filter_config
 
+
 def get_result_handler(rc_value, sa_file=None):
     """Returns dict of result handler config. Backwards compatible for JSON input.
 
@@ -1296,6 +1301,7 @@ def split_table(table_ref, schema_required=True):
     table = table_ref_list.pop()
     schema = ".".join(table_ref_list)
     return schema.strip(), table.strip()
+
 
 def get_query_from_file(filename):
     """Return query from input file"""

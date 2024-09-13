@@ -253,11 +253,11 @@ class ConfigManager(object):
     @property
     def full_source_table(self):
         """Return string value of target table."""
-        if self.source_table and self.source_schema :
+        if self.source_table and self.source_schema:
             return self.source_schema + "." + self.source_table
         elif self.source_table:
             return self.source_table
-        else :
+        else:
             return f"custom.{''.join(random.choice(string.ascii_lowercase) for _ in range(5))}"
 
     @property
@@ -355,7 +355,7 @@ class ConfigManager(object):
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
         n: Int the depth of subquery requested"""
-        if self.source_table is None: # either custom query or partition custom query
+        if self.source_table is None:  # either custom query or partition custom query
             table = self.get_source_ibis_table_from_query()
         else:
             table = self.get_source_ibis_table()
@@ -384,7 +384,7 @@ class ConfigManager(object):
     def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
         n: Int the depth of subquery requested"""
-        if self.target_table is None: # either custom query or partition custom query
+        if self.target_table is None:  # either custom query or partition custom query
             table = self.get_target_ibis_table_from_query()
         else:
             table = self.get_target_ibis_table()
