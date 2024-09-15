@@ -50,12 +50,12 @@ def _get_gcs_file_path(gcs_file_path: str) -> str:
     return "".join(gcs_file_path[5:].split("/", 1)[1:])
 
 
-def _read_gcs_file(file_path: str) -> bytes:
+def _read_gcs_file(file_path: str, download_as_text: bool = False):
     gcs_bucket = get_gcs_bucket(file_path)
     blob = gcs_bucket.blob(_get_gcs_file_path(file_path))
     if not blob:
         raise ValueError(f"Invalid Cloud Storage Path: {file_path}")
-    return blob.download_as_bytes()
+    return blob.download_as_text() if download_as_text else blob.download_as_bytes()
 
 
 def _write_gcs_file(file_path: str, data: str):
@@ -64,9 +64,9 @@ def _write_gcs_file(file_path: str, data: str):
     blob.upload_from_string(data)
 
 
-def read_file(file_path: str):
+def read_file(file_path: str, download_as_text: bool = False):
     if _is_gcs_path(file_path):
-        return _read_gcs_file(file_path)
+        return _read_gcs_file(file_path, download_as_text)
     else:
         with open(file_path, "r") as f:
             return f.read()

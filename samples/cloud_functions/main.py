@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import pandas
 import json
-from yaml import dump, load, Dumper, Loader
 
 from data_validation.data_validation import DataValidation
 
@@ -35,8 +33,10 @@ def main(request):
 
     request (flask.Request): HTTP request object.
     """
+    request = request.get_data()
     try:
-        config = request.json["config"]
+        request_json = json.loads(request.decode())
+        config = request_json.get("config")
         validator = DataValidation(config)
         df = validator.execute()
 

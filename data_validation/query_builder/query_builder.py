@@ -179,6 +179,10 @@ class FilterField(object):
         """
         return FilterField(None, left=expr)
 
+    @staticmethod
+    def or_(field_list: list):
+        return FilterField(ibis.or_, left=field_list)
+
     def compile(self, ibis_table):
         if self.expr is None:
             return operations.compile_raw_sql(ibis_table, self.left)
@@ -189,11 +193,16 @@ class FilterField(object):
         if self.right_field:
             self.right = ibis_table[self.right_field]
 
-        return self.expr(self.left, self.right)
+        if self.expr == ibis.or_:
+            return self.expr(*[_.compile(ibis_table) for _ in self.left])
+        else:
+            return self.expr(self.left, self.right)
 
 
 class ComparisonField(object):
-    def __init__(self, field_name, alias=None, cast=None):
+    def __init__(
+        self, field_name: str, alias: str = None, cast: str = None, trim: bool = None
+    ):
         """A representation of a comparison field used to build a query.
 
         Args:
@@ -204,6 +213,7 @@ class ComparisonField(object):
         self.field_name = field_name
         self.alias = alias
         self.cast = cast
+        self.trim = trim
 
     def compile(self, ibis_table):
         # Fields are supplied on compile or on build
@@ -211,6 +221,8 @@ class ComparisonField(object):
         alias = self.alias or self.field_name
         if self.cast:
             comparison_field = comparison_field.force_cast(self.cast)
+        elif self.trim and comparison_field.type().is_string():
+            comparison_field = comparison_field.rstrip()
         comparison_field = comparison_field.name(alias)
 
         return comparison_field

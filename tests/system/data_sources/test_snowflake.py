@@ -15,16 +15,18 @@
 import os
 from unittest import mock
 
-from data_validation import __main__ as main
+import pytest
+
 from data_validation import cli_tools, data_validation, consts
-from data_validation.partition_builder import PartitionBuilder
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    id_type_test_assertions,
     null_not_null_assertions,
+    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-
+from tests.system.data_sources.common_functions import generate_partitions_test
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
@@ -77,12 +79,28 @@ def mock_get_connection_config(*args):
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
-    ' "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 )',
-    ' ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )'
-    + ' AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 5678 ) )',
-    ' ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 5678 ) )'
-    + ' AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 9012 ) )',
-    ' "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 9012 )',
+    [
+        ' quarter_id <> 1111 AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )',
+    ],
+    [
+        ' quarter_id <> 1111 AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'ALG001\' OR "COURSE_ID" = \'ALG001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'GEO001\' OR "COURSE_ID" = \'GEO001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 1 OR "QUARTER_ID" = 1 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 2 OR "QUARTER_ID" = 2 AND "STUDENT_ID" >= 1234 ) ) AND ( "COURSE_ID" < \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" < 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" < 1234 ) )',
+        ' quarter_id <> 1111 AND ( "COURSE_ID" > \'TRI001\' OR "COURSE_ID" = \'TRI001\' AND ( "QUARTER_ID" > 3 OR "QUARTER_ID" = 3 AND "STUDENT_ID" >= 1234 ) )',
+    ],
 ]
 
 
@@ -91,36 +109,11 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_snowflake_generate_table_partitions():
-    """Test generate table partitions on Snowflake
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with ntile, hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
-            "-pk=COURSE_ID,QUARTER_ID,STUDENT_ID",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=4",
-        ]
+    """Test generate table partitions on Snowflake"""
+    generate_partitions_test(
+        EXPECTED_PARTITION_FILTER,
+        tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
     )
-    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
-    partition_builder = PartitionBuilder(config_managers, args)
-    partition_filters = partition_builder._get_partition_key_filters()
-
-    assert len(partition_filters) == 1  # only one pair of tables
-    assert (
-        len(partition_filters[0][0]) == partition_builder.args.partition_num
-    )  # assume no of table rows > partition_num
-    assert partition_filters[0][0] == EXPECTED_PARTITION_FILTER
 
 
 @mock.patch(
@@ -183,12 +176,8 @@ def test_schema_validation_core_types_to_bigquery():
             "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
             "--exclusion-columns=id",
-            (
-                # Integer Snowflake NUMBERs to to BigQuery INT64.
-                "--allow-list=decimal(38,0):int64,"
-                # TODO When issue-706 is complete remove the timestamp line below
-                "timestamp('UTC'):timestamp"
-            ),
+            # Integer Snowflake NUMBERs to to BigQuery INT64.
+            "--allow-list=decimal(38,0):int64,",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -348,6 +337,64 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_char_pk_to_bigquery():
+    """Snowflake to BigQuery dvt_char_id row validation - not executed.
+    This is testing CHAR primary key join columns.
+    Includes random row filter test.
+
+    Snowflake currently deviates from common CHAR semantics in that strings
+    shorter than the maximum length are not space-padded at the end.
+    This test is skipped.
+    """
+    pytest.skip(
+        "Skipping test_row_validation_char_pk_to_bigquery because of Snowflake CHAR semantics"
+    )
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=snowflake-conn",
+            "-tc=bq-conn",
+            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CHAR_ID=pso_data_validator.dvt_char_id",
+            "--primary-keys=id",
+            "--hash=id,other_data",
+            "--use-random-row",
+            "--random-row-batch-size=5",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_to_bigquery():
+    """Snowflake to BigQuery dvt_pangrams row validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=snowflake-conn",
+            "-tc=bq-conn",
+            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_PANGRAMS=pso_data_validator.dvt_pangrams",
+            "--primary-keys=id",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_validation_core_types():
     """Snowflake to Snowflake dvt_core_types custom-query validation"""
     parser = cli_tools.configure_arg_parser()
@@ -368,3 +415,32 @@ def test_custom_query_validation_core_types():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Snowflake dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        schema="PSO_DATA_VALIDATOR.PUBLIC",
+        table="DVT_MANY_COLS",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Snowflake dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        validation_type="custom-query",
+        schema="PSO_DATA_VALIDATOR.PUBLIC",
+        table="DVT_MANY_COLS",
+    )

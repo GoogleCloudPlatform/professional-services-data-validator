@@ -14,6 +14,7 @@
 
 from copy import deepcopy
 
+import pandas
 import pytest
 
 from data_validation import consts
@@ -138,6 +139,7 @@ BASE_QUERY = "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
 
 class MockIbisClient(object):
     _source_type = "BigQuery"
+    name = "bigquery"
 
 
 @pytest.fixture
@@ -227,3 +229,121 @@ def test_validation_add_filters(module_under_test):
     filter_field = builder.source_builder.filters[0]
 
     assert filter_field.left == "column_name > 100"
+
+
+@pytest.mark.parametrize(
+    "filter_field",
+    [
+        {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_CUSTOM,
+            "source": "id>0",
+            "target": "id>0",
+        },
+        {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_EQUALS,
+            consts.CONFIG_FILTER_SOURCE_COLUMN: "id",
+            consts.CONFIG_FILTER_SOURCE_VALUE: 1,
+            consts.CONFIG_FILTER_TARGET_COLUMN: "id",
+            consts.CONFIG_FILTER_TARGET_VALUE: 1,
+        },
+        {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
+            consts.CONFIG_FILTER_SOURCE_COLUMN: "id",
+            consts.CONFIG_FILTER_SOURCE_VALUE: [1, 2, 3, 4],
+            consts.CONFIG_FILTER_TARGET_COLUMN: "id",
+            consts.CONFIG_FILTER_TARGET_VALUE: [1, 2, 3, 4],
+        },
+        {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
+            consts.CONFIG_FILTER_SOURCE_COLUMN: "id",
+            consts.CONFIG_FILTER_SOURCE_VALUE: [
+                pandas.Timestamp("2020-01-01 10:11:14"),
+                pandas.Timestamp("2020-01-01 10:11:13"),
+            ],
+            consts.CONFIG_FILTER_TARGET_COLUMN: "id",
+            consts.CONFIG_FILTER_TARGET_VALUE: [
+                pandas.Timestamp("2020-01-01 10:11:14"),
+                pandas.Timestamp("2020-01-01 10:11:13"),
+            ],
+        },
+        # Test with many IDs.
+        {
+            consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
+            consts.CONFIG_FILTER_SOURCE_COLUMN: "id",
+            consts.CONFIG_FILTER_SOURCE_VALUE: range(0, 10000),
+            consts.CONFIG_FILTER_TARGET_COLUMN: "id",
+            consts.CONFIG_FILTER_TARGET_VALUE: range(0, 10000),
+        },
+    ],
+)
+def test_validation_add_filter(module_under_test, filter_field: dict):
+    mock_config_manager = ConfigManager(
+        COLUMN_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+    # Not currently checking effects, just that each filter type is accepted.
+    builder.add_filter(filter_field)
+
+
+@pytest.mark.parametrize(
+    "input_list,max_length,expected_result",
+    [
+        (
+            [],
+            3,
+            [],
+        ),
+        (
+            [1, 2],
+            3,
+            [
+                [1, 2],
+            ],
+        ),
+        (
+            [1, 2, 3],
+            3,
+            [
+                [1, 2, 3],
+            ],
+        ),
+        (
+            [1, 2, 3],
+            2,
+            [
+                [1, 2],
+                [3],
+            ],
+        ),
+        (
+            [1, 2, 3],
+            3,
+            [
+                [1, 2, 3],
+            ],
+        ),
+        (
+            [1, 2, 3, 4],
+            3,
+            [
+                [1, 2, 3],
+                [
+                    4,
+                ],
+            ],
+        ),
+        (
+            [1, 2, 3, 4, 5, 6],
+            3,
+            [
+                [1, 2, 3],
+                [4, 5, 6],
+            ],
+        ),
+    ],
+)
+def test_list_to_sublists(
+    module_under_test, input_list: list, max_length: int, expected_result: list
+):
+    result = module_under_test.list_to_sublists(input_list, max_length)
+    assert result == expected_result

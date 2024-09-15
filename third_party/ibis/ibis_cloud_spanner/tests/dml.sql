@@ -112,3 +112,5 @@ VALUES
 (CAST('DVT-key-3' AS BYTES), 3, 'Row 3'),
 (CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
 (CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
+
+INSERT INTO dvt_many_cols (id) VALUES (1);

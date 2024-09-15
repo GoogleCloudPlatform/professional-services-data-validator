@@ -15,6 +15,7 @@
 
 import copy
 import logging
+from typing import TYPE_CHECKING
 import warnings
 
 import google.oauth2.service_account
@@ -29,6 +30,11 @@ from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
 
+if TYPE_CHECKING:
+    import ibis.expr.schema as sch
+    import ibis.expr.types as ir
+
+
 ibis.options.sql.default_limit = None
 
 # Filter Ibis MySQL error when loading client.table()
@@ -36,6 +42,17 @@ warnings.filterwarnings(
     "ignore",
     "`BaseBackend.database` is deprecated; use equivalent methods in the backend",
 )
+
+
+IBIS_ALCHEMY_BACKENDS = [
+    "mysql",
+    "oracle",
+    "postgres",
+    "db2",
+    "mssql",
+    "redshift",
+    "snowflake",
+]
 
 
 def _raise_missing_client_error(msg):
@@ -75,12 +92,20 @@ except Exception:
 
 def get_bigquery_client(project_id, dataset_id="", credentials=None):
     info = client_info.get_http_client_info()
+    job_config = bigquery.QueryJobConfig(
+        connection_properties=[bigquery.ConnectionProperty("time_zone", "UTC")]
+    )
     google_client = bigquery.Client(
-        project=project_id, client_info=info, credentials=credentials
+        project=project_id,
+        client_info=info,
+        credentials=credentials,
+        default_query_job_config=job_config,
     )
 
     ibis_client = ibis.bigquery.connect(
-        project_id=project_id, dataset_id=dataset_id, credentials=credentials
+        project_id=project_id,
+        dataset_id=dataset_id,
+        credentials=credentials,
     )
 
     # Override the BigQuery client object to ensure the correct user agent is
@@ -138,7 +163,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         return client.table(table_name, database=schema_name)
 
 
-def get_ibis_query(client, query):
+def get_ibis_query(client, query) -> "ir.Table":
     """Return Ibis Table from query expression for Supplied Client."""
     iq = client.sql(query)
     # Normalise all columns in the query to lower case.
@@ -147,7 +172,7 @@ def get_ibis_query(client, query):
     return iq
 
 
-def get_ibis_table_schema(client, schema_name, table_name):
+def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Schema":
     """Return Ibis Table Schema for Supplied Client.
 
     client (IbisClient): Client to use for table
@@ -155,18 +180,20 @@ def get_ibis_table_schema(client, schema_name, table_name):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if client.name in [
-        "mysql",
-        "oracle",
-        "postgres",
-        "db2",
-        "mssql",
-        "redshift",
-        "snowflake",
-    ]:
+    if client.name in IBIS_ALCHEMY_BACKENDS:
         return client.table(table_name, schema=schema_name).schema()
     else:
         return client.get_schema(table_name, schema_name)
+
+
+def get_ibis_query_schema(client, query_str) -> "sch.Schema":
+    if client.name in IBIS_ALCHEMY_BACKENDS:
+        ibis_query = get_ibis_query(client, query_str)
+        return ibis_query.schema()
+    else:
+        # NJ: I'm not happy about calling a private method but don't see how I can avoid it.
+        #     Ibis does not expose a public method like it does for get_schema().
+        return client._get_schema_using_query(query_str)
 
 
 def list_schemas(client):
@@ -272,6 +299,23 @@ def get_max_column_length(client):
         if str(client.version)[:2] in ["10", "11"] or str(client.version)[:4] == "12.1":
             return 30
     return 128
+
+
+def get_max_in_list_size(client, in_list_over_expressions=False):
+    if client.name == "snowflake":
+        if in_list_over_expressions:
+            # This is a workaround for Snowflake limitation:
+            #   SQL compilation error: In-list contains more than 50 non-constant values
+            # getattr(..., "cast") expression above is looking for lists where the contents are casts and not simple literals.
+            return 50
+        else:
+            return 16000
+    elif is_oracle_client(client):
+        # This is a workaround for Oracle limitation:
+        #   ORA-01795: maximum number of expressions in a list is 1000
+        return 1000
+    else:
+        return None
 
 
 CLIENT_LOOKUP = {

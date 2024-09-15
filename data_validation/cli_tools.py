@@ -44,17 +44,21 @@ data-validation
 """
 
 import argparse
+import copy
 import csv
 import json
 import logging
 import sys
 import uuid
 import os
+import math
+import re
 from argparse import Namespace
-from typing import Dict, List
+from typing import Dict, List, Optional
 from yaml import Dumper, Loader, dump, load
 
 from data_validation import clients, consts, state_manager, gcs_helper
+from data_validation.validation_builder import list_to_sublists
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -254,6 +258,7 @@ def _configure_partition_parser(subparsers):
         default=1,
         help="Number of partitions to be validated in a single yaml file.",
     )
+
     required_arguments.add_argument(
         "--config-dir",
         "-cdir",
@@ -487,6 +492,9 @@ def _configure_validate_parser(subparsers):
     optional_arguments = row_parser.add_argument_group("optional arguments")
     required_arguments = row_parser.add_argument_group("required arguments")
     _configure_row_parser(row_parser, optional_arguments, required_arguments)
+    optional_arguments = row_parser.add_argument_group("optional arguments")
+    required_arguments = row_parser.add_argument_group("required arguments")
+    _configure_row_parser(row_parser, optional_arguments, required_arguments)
 
     schema_parser = validate_subparsers.add_parser(
         "schema", help="Run a schema validation"
@@ -613,6 +621,11 @@ def _configure_row_parser(
             "Individual columns to compare. If comparing a calculated field use "
             "the column alias."
         ),
+    )
+    _add_common_arguments(
+        optional_arguments,
+        required_arguments,
+        is_generate_partitions=is_generate_partitions,
     )
     _add_common_arguments(
         optional_arguments,
@@ -778,7 +791,6 @@ def _configure_custom_query_parser(custom_query_parser):
 
 
 def _configure_custom_query_row_parser(custom_query_row_parser):
-    # Group optional arguments
     optional_arguments = custom_query_row_parser.add_argument_group(
         "optional arguments"
     )
@@ -983,6 +995,7 @@ def _add_common_arguments(
             "-cj",
             help="Store the validation config in the JSON File Path specified to be used for application use cases",
         )
+
     optional_arguments.add_argument(
         "--format",
         "-fmt",
@@ -996,17 +1009,6 @@ def _add_common_arguments(
         # TODO: update if we start to support other statuses
         help="Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned",
     )
-
-
-def _check_no_partitions(value: str) -> int:
-    """Check that number of partitions is between [2-10,000]
-    Using function to validate rather than choices as error message prints all choices."""
-    if value.isdigit() and 2 <= int(value) <= 10000:
-        return int(value)
-    else:
-        raise argparse.ArgumentTypeError(
-            f"{value} is not valid for number of partitions, use number in range 2 to 10000"
-        )
 
 
 def _check_positive(value: int) -> int:
@@ -1382,6 +1384,23 @@ def _concat_column_count_configs(
 def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     """Return a dict of configurations to build ConfigManager object"""
 
+    def cols_from_arg(concat_arg: str, client, table_obj: dict, query_str: str) -> list:
+        if concat_arg == "*":
+            # If validating with "*" then we need to expand to count the columns.
+            if table_obj:
+                return clients.get_ibis_table_schema(
+                    client,
+                    table_obj["schema_name"],
+                    table_obj["table_name"],
+                ).names
+            else:
+                return clients.get_ibis_query_schema(
+                    client,
+                    query_str,
+                ).names
+        else:
+            return get_arg_list(concat_arg)
+
     # Since `generate-table-partitions` defaults to `validate_cmd=row`,
     # `validate_cmd` is passed along while calling this method
     if validate_cmd is None:
@@ -1437,15 +1456,17 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         args.command != "generate-table-partitions"
         and config_type != consts.SCHEMA_VALIDATION
     ):
-        use_random_rows = args.use_random_row
-        random_row_batch_size = args.random_row_batch_size
+        use_random_rows = getattr(args, "use_random_row", False)
+        random_row_batch_size = getattr(args, "random_row_batch_size", None)
 
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
+    query_str = None
     if config_type == consts.CUSTOM_QUERY:
         tables_list = get_tables_list(
             None, default_value=[{}], is_filesystem=is_filesystem
         )
+        query_str = get_query_from_query_args(args.source_query, args.source_query_file)
     else:
         tables_list = get_tables_list(
             args.tables_list, default_value=[{}], is_filesystem=is_filesystem
@@ -1478,8 +1499,43 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
             "result_handler_config": result_handler_config,
             "filter_config": filter_config,
             "filter_status": filter_status,
+            "trim_string_pks": getattr(args, "trim_string_pks", False),
+            "case_insensitive_match": getattr(args, "case_insensitive_match", False),
+            consts.CONFIG_ROW_CONCAT: getattr(args, consts.CONFIG_ROW_CONCAT, None),
+            consts.CONFIG_ROW_HASH: getattr(args, consts.CONFIG_ROW_HASH, None),
             "verbose": args.verbose,
         }
-        pre_build_configs_list.append(pre_build_configs)
+        if (
+            pre_build_configs[consts.CONFIG_ROW_CONCAT]
+            or pre_build_configs[consts.CONFIG_ROW_HASH]
+        ):
+            # Ensure we don't have too many columns for the engines involved.
+            cols = cols_from_arg(
+                pre_build_configs[consts.CONFIG_ROW_HASH]
+                or pre_build_configs[consts.CONFIG_ROW_CONCAT],
+                source_client,
+                table_obj,
+                query_str,
+            )
+            new_pre_build_configs = _concat_column_count_configs(
+                cols,
+                pre_build_configs,
+                consts.CONFIG_ROW_HASH if args.hash else consts.CONFIG_ROW_CONCAT,
+                _max_concat_columns(
+                    args.max_concat_columns, source_client, target_client
+                ),
+            )
+            if len(new_pre_build_configs) > 1:
+                message_type = (
+                    f'{table_obj["schema_name"]}.{table_obj["table_name"]}'
+                    if table_obj
+                    else "custom query"
+                )
+                logging.info(
+                    f"Splitting validation into {len(new_pre_build_configs)} queries for {message_type}"
+                )
+            pre_build_configs_list.extend(new_pre_build_configs)
+        else:
+            pre_build_configs_list.append(pre_build_configs)
 
     return pre_build_configs_list

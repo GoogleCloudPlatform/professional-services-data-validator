@@ -87,7 +87,12 @@ over all columns ('*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` or `--wildcard-include-timestamp` flags are present.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate column
+data-validation  
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -136,6 +141,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+
 ```
 
 The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
@@ -166,7 +172,12 @@ Under the hood, row validation uses
 apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML or JSON config file to customize your row validation.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate row
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -184,6 +195,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         See: *Calculated Fields* section for details
   --hash COLUMNS        Comma separated list of columns to hash or * for all columns
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
+  [--exclude-columns or -ec]
+                        Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -208,18 +221,26 @@ data-validation (--verbose or -v) (--log-level or -ll) validate row
                         Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.                
 ```
 #### Generate Table Partitions for Large Table Row Validations
 
 When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
-The command generates and stores multiple YAML configs that represent chunks of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`). You can then run the configs in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+The command generates and stores multiple YAML validations each representing a chunk of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in one YAML file. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
 The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
-
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  generate-table-partitions
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -241,13 +262,30 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Directory Path to store YAML Config Files
                         GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
-  --partition-num [1-1000], -pn [1-1000]
-                        Number of partitions/config files to generate
+  --partition-num INT, -pn INT 
+                        Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
+                        BigQuery destination for validation results. Defaults to stdout.
+                        See: *Validation Reports* section
+  [--service-account or -sa PATH_TO_SA_KEY]
+                        Service account to use for BigQuery result handler output.
+  [--parts-per-file INT], [-ppf INT] 
+                        Number of partitions in a yaml file, default value 1.
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
+  [--labels or -l KEY1=VALUE1,KEY2=VALUE2]
+                        Comma-separated key value pair labels for the run.
+  [--format or -fmt FORMAT]
+                        Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
+  [--filter-status or -fs STATUSES_LIST]
+                        Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.     
 ```
 #### Schema Validations
 
@@ -257,7 +295,12 @@ types between source and target.
 Note: An exclamation point before a data type (`!string`) signifies the column is non-nullable or required.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate schema
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate schema
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -298,7 +341,12 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
 Below is the command syntax for custom query column validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query column
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate custom-query column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -309,12 +357,12 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query col
                         Source sql query
                         Either --source-query or --source-query-file must be provided
   --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
-                        File containing the source sql commands
+                        File containing the source sql command. Supports GCS and local paths.
   --target-query TARGET_QUERY, -tq TARGET_QUERY
                         Target sql query
                         Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
-                        File containing the target sql commands
+                        File containing the target sql command. Supports GCS and local paths.
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
@@ -360,7 +408,12 @@ in the SELECT statement of both source_query.sql and target_query.sql.  See *Pri
 Below is the command syntax for custom query row validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate custom-query row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -371,12 +424,12 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         Source sql query
                         Either --source-query or --source-query-file must be provided
   --source-query-file SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
-                        File containing the source sql commands
+                        File containing the source sql command. Supports GCS and local paths.
   --target-query TARGET_QUERY, -tq TARGET_QUERY
                         Target sql query
                         Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
-                        File containing the target sql commands
+                        File containing the target sql command. Supports GCS and local paths.
   --comparison-fields or -comp-fields FIELDS
                         Comma separated list of columns to compare. Can either be a physical column or an alias
                         See: *Calculated Fields* section for details
@@ -385,6 +438,8 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         (use if a common hash function is not available between databases)
   --primary-key or -pk JOIN_KEY
                        Common column between source and target tables for join
+  [--exclude-columns or -ec]
+                        Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
                         BigQuery destination for validation results. Defaults to stdout.
                         See: *Validation Reports* section
@@ -401,6 +456,10 @@ data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+  [--trim-string-pks, -tsp]
+                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
+  [--case-insensitive-match, -cim]
+                        Performs a case insensitive match by adding an UPPER() before comparison.                    
 ```
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
@@ -412,7 +471,12 @@ The `validate` command takes a `--dry-run` command line flag that prints source
 and target SQL to stdout as JSON in lieu of performing a validation:
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate
   [--dry-run or -dr]    Prints source and target SQL to stdout in lieu of performing a validation.
 ```
 
@@ -443,7 +507,12 @@ GCS and local paths.
 You can use the `data-validation configs` command to run and view YAMLs.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) configs run
+data-validation 
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.    
+  configs run
   [--config-file or -c CONFIG_FILE]
                         Path to YAML config file to run. Supports local and GCS paths.
   [--config-dir or -cdir CONFIG_DIR]
@@ -451,7 +520,7 @@ data-validation (--verbose or -v) (--log-level or -ll) configs run
   [--dry-run or -dr]    If this flag is present, prints the source and target SQL generated in lieu of running the validation.
   [--kube-completions or -kc]
                         Flag to indicate usage in Kubernetes index completion mode.
-                        See *Scaling DVT* section
+                        See *Scaling DVT* section                   
 ```
 
 ```
@@ -474,7 +543,7 @@ View the complete YAML file for a Grouped Column validation on the
 You can scale DVT for large table validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/internal/distributed_jobs.md) for a detailed overview.
 
 
-We recommend first generating table partitions with the `generate-table-partitions` command for your large tables. Then, use Cloud Run or GKE to distribute validating each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started. 
+We recommend first generating table partitions with the `generate-table-partitions` command for your large tables. Then, use Cloud Run or GKE to distribute validating each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started.
 
 When running DVT in a distributed fashion, both the `--kube-completions` and `--config-dir` flags are required. The `--kube-completions` flag specifies that the validation is being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (i.e. a `--config-file` is provided instead), a warning is issued.
 

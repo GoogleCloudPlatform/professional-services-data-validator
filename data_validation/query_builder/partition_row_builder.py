@@ -58,7 +58,7 @@ class PartitionRowBuilder(object):
             custom_query (String) : Custom query provided instead of a table
             query_builder (QueryBuilder): QueryBuilder object.
         """
-        if table_name :
+        if table_name:
             table = clients.get_ibis_table(data_client, schema_name, table_name)
         else:
             table = clients.get_ibis_query(data_client, custom_query)

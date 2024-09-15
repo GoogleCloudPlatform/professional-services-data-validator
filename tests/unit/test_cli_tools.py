@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import argparse
+import logging
 import pytest
 from unittest import mock
-import logging
-from data_validation import cli_tools
+
+from data_validation import cli_tools, consts
 
 
 TEST_CONN = '{"source_type":"Example"}'
@@ -415,21 +416,51 @@ def test_get_result_handler(test_input, expected):
     "test_input,expected",
     [
         (
-            "source:target",
-            [{"type": "custom", "source": "source", "target": "target"}],
+            "id < 5:row_id <5",
+            [{"type": "custom", "source": "id < 5", "target": "row_id <5"}],
         ),
-        ("source", [{"type": "custom", "source": "source", "target": "source"}]),
+        ("id < 5", [{"type": "custom", "source": "id < 5", "target": "id < 5"}]),
+        (
+            "name != 'John'",
+            [
+                {
+                    "type": "custom",
+                    "source": "name != 'John'",
+                    "target": "name != 'John'",
+                }
+            ],
+        ),
+        (
+            "name != 'St. John''s'",
+            [
+                {
+                    "type": "custom",
+                    "source": "name != 'St. John''s'",
+                    "target": "name != 'St. John''s'",
+                }
+            ],
+        ),
+        (
+            "mod_timestamp >= '2024-04-01 16:00:00 UTC':mod_timestamp >= '2020-04-01 16:00:00 UTC'",
+            [
+                {
+                    "type": "custom",
+                    "source": "mod_timestamp >= '2024-04-01 16:00:00 UTC'",
+                    "target": "mod_timestamp >= '2020-04-01 16:00:00 UTC'",
+                }
+            ],
+        ),
     ],
 )
 def test_get_filters(test_input, expected):
-    """Test get filters from file function."""
+    """Test get filters."""
     res = cli_tools.get_filters(test_input)
     assert res == expected
 
 
 @pytest.mark.parametrize(
     "test_input",
-    [("source:"), ("invalid:filter:count")],
+    [(""), ("source:"), ("invalid:filter:count")],
 )
 def test_get_filters_err(test_input):
     """Test get filters function returns error."""
@@ -468,3 +499,109 @@ def test_split_table_err(
     """Test split table throws the right errors."""
     with pytest.raises(ValueError):
         cli_tools.split_table(test_input)
+
+
+@pytest.mark.parametrize(
+    "list_of_cols,max_col_count,pre_build_config,expected_result",
+    [
+        (
+            [str(_) for _ in range(5)],
+            6,
+            {"a": "a", consts.CONFIG_ROW_HASH: "*", consts.CONFIG_ROW_CONCAT: None},
+            # Fewer columns than threshold therefore no change.
+            None,
+        ),
+        (
+            [str(_) for _ in range(5)],
+            6,
+            {"a": "a", consts.CONFIG_ROW_HASH: None, consts.CONFIG_ROW_CONCAT: "*"},
+            # Fewer columns than threshold therefore no change.
+            None,
+        ),
+        (
+            [str(_) for _ in range(5)],
+            3,
+            {"a": "a", consts.CONFIG_ROW_HASH: "*", consts.CONFIG_ROW_CONCAT: None},
+            # 5 columns with max of 3 should give us 2 configs of CONFIG_ROW_HASH.
+            [
+                {
+                    "a": "a",
+                    consts.CONFIG_ROW_HASH: "0,1,2",
+                    consts.CONFIG_ROW_CONCAT: None,
+                },
+                {
+                    "a": "a",
+                    consts.CONFIG_ROW_HASH: "3,4",
+                    consts.CONFIG_ROW_CONCAT: None,
+                },
+            ],
+        ),
+        (
+            [str(_) for _ in range(5)],
+            3,
+            {"a": "a", consts.CONFIG_ROW_HASH: None, consts.CONFIG_ROW_CONCAT: "*"},
+            # 5 columns with max of 3 should give us 2 configs of CONFIG_ROW_CONCAT.
+            [
+                {
+                    "a": "a",
+                    consts.CONFIG_ROW_HASH: None,
+                    consts.CONFIG_ROW_CONCAT: "0,1,2",
+                },
+                {
+                    "a": "a",
+                    consts.CONFIG_ROW_HASH: None,
+                    consts.CONFIG_ROW_CONCAT: "3,4",
+                },
+            ],
+        ),
+    ],
+)
+def test_concat_column_count_configs(
+    list_of_cols: list,
+    max_col_count: int,
+    pre_build_config: dict,
+    expected_result: list,
+):
+    arg_name = (
+        consts.CONFIG_ROW_HASH
+        if pre_build_config[consts.CONFIG_ROW_HASH]
+        else consts.CONFIG_ROW_CONCAT
+    )
+    result = cli_tools._concat_column_count_configs(
+        list_of_cols,
+        pre_build_config,
+        arg_name,
+        max_col_count,
+    )
+    if expected_result:
+        assert result == expected_result
+    else:
+        assert result == [pre_build_config]
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    ["tests/resources/custom-query.sql"],
+)
+def test_get_query_from_file(test_input: str):
+    query = cli_tools.get_query_from_file(test_input)
+    assert query == "SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013"
+
+
+@pytest.mark.parametrize(
+    "test_input,expect_exception",
+    [
+        (" 1; ", False),
+        (" SELECT * FROM bigquery-public-data.usa_names.usa_1910_2013; ", False),
+        (" ", True),
+    ],
+)
+def test_get_query_from_inline(test_input: str, expect_exception: bool):
+    # Assert query format
+    if expect_exception:
+        # Assert exception.
+        with pytest.raises(ValueError):
+            query = cli_tools.get_query_from_inline(test_input)
+    else:
+        query = cli_tools.get_query_from_inline(test_input)
+        assert query in test_input
