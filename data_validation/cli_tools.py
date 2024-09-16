@@ -1397,9 +1397,10 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         filter_status = None
 
     pre_build_configs_list = []
-    tables_list = find_tables.expand_tables_of_asterisk(
-        tables_list, source_client, target_client
-    )
+    if config_type != consts.CUSTOM_QUERY:
+        tables_list = find_tables.expand_tables_of_asterisk(
+            tables_list, source_client, target_client
+        )
     for table_obj in tables_list:
         pre_build_configs = {
             "config_type": config_type,

@@ -129,7 +129,8 @@ def expand_tables_of_asterisk(
     new_list = []
     for mapping in tables_list:
         if (
-            mapping[consts.CONFIG_SCHEMA_NAME]
+            mapping
+            and mapping[consts.CONFIG_SCHEMA_NAME]
             and mapping[consts.CONFIG_TABLE_NAME] == "*"
             and consts.CONFIG_TARGET_SCHEMA_NAME not in mapping
             and consts.CONFIG_TARGET_TABLE_NAME not in mapping
