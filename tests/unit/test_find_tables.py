@@ -15,11 +15,37 @@
 import pytest
 from unittest import mock
 
+from data_validation import consts
+
 
 S1_TABLES = [
     ("s1", "t1"),
     ("s1", "t2"),
     ("s1", "t3"),
+]
+
+SCHEMA_TABLE_OBJ = {
+    consts.CONFIG_SCHEMA_NAME: "schema",
+    consts.CONFIG_TABLE_NAME: "table",
+}
+OTHER_SCHEMA_TABLE_OBJ = {
+    consts.CONFIG_SCHEMA_NAME: "schema",
+    consts.CONFIG_TABLE_NAME: "other_table",
+}
+SOURCE_TABLE_MAP = {
+    "schema_table": SCHEMA_TABLE_OBJ,
+}
+TARGET_TABLE_MAP = {
+    "schema_table": SCHEMA_TABLE_OBJ,
+    "schema_other_table": OTHER_SCHEMA_TABLE_OBJ,
+}
+RESULT_TABLE_CONFIGS = [
+    {
+        "schema_name": "schema",
+        "table_name": "table",
+        "target_schema_name": "schema",
+        "target_table_name": "table",
+    }
 ]
 
 
@@ -28,6 +54,15 @@ def module_under_test():
     from data_validation import find_tables
 
     return find_tables
+
+
+def test__compare_match_tables(module_under_test):
+    """Test matching tables from source and target."""
+    table_configs = module_under_test._compare_match_tables(
+        SOURCE_TABLE_MAP, TARGET_TABLE_MAP
+    )
+
+    assert table_configs == RESULT_TABLE_CONFIGS
 
 
 @pytest.mark.parametrize(
