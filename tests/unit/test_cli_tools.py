@@ -416,21 +416,51 @@ def test_get_result_handler(test_input, expected):
     "test_input,expected",
     [
         (
-            "source:target",
-            [{"type": "custom", "source": "source", "target": "target"}],
+            "id < 5:row_id <5",
+            [{"type": "custom", "source": "id < 5", "target": "row_id <5"}],
         ),
-        ("source", [{"type": "custom", "source": "source", "target": "source"}]),
+        ("id < 5", [{"type": "custom", "source": "id < 5", "target": "id < 5"}]),
+        (
+            "name != 'John'",
+            [
+                {
+                    "type": "custom",
+                    "source": "name != 'John'",
+                    "target": "name != 'John'",
+                }
+            ],
+        ),
+        (
+            "name != 'St. John''s'",
+            [
+                {
+                    "type": "custom",
+                    "source": "name != 'St. John''s'",
+                    "target": "name != 'St. John''s'",
+                }
+            ],
+        ),
+        (
+            "mod_timestamp >= '2024-04-01 16:00:00 UTC':mod_timestamp >= '2020-04-01 16:00:00 UTC'",
+            [
+                {
+                    "type": "custom",
+                    "source": "mod_timestamp >= '2024-04-01 16:00:00 UTC'",
+                    "target": "mod_timestamp >= '2020-04-01 16:00:00 UTC'",
+                }
+            ],
+        ),
     ],
 )
 def test_get_filters(test_input, expected):
-    """Test get filters from file function."""
+    """Test get filters."""
     res = cli_tools.get_filters(test_input)
     assert res == expected
 
 
 @pytest.mark.parametrize(
     "test_input",
-    [("source:"), ("invalid:filter:count")],
+    [(""), ("source:"), ("invalid:filter:count")],
 )
 def test_get_filters_err(test_input):
     """Test get filters function returns error."""
