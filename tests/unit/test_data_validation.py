@@ -401,10 +401,10 @@ SAMPLE_ROW_CONFIG_BQ_FAILURES = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: {
-            consts.CONFIG_TYPE: "BigQuery",
-            consts.PROJECT_ID: "my-project",
-            consts.TABLE_ID: "dataset.table_name",
-        },
+        consts.CONFIG_TYPE: "BigQuery",
+        consts.PROJECT_ID: "my-project",
+        consts.TABLE_ID: "dataset.table_name",
+    },
     consts.CONFIG_FORMAT: "text",
     consts.CONFIG_FILTER_STATUS: ["fail"],
 }
@@ -751,7 +751,9 @@ def test_bad_join_row_level_validation(module_under_test, fs):
     assert len(comparison_df) == 202
 
 
-def test_no_console_data_shown_for_validation_with_result_written_to_bq_in_info_mode(module_under_test, fs, caplog, monkeypatch):
+def test_no_console_data_shown_for_validation_with_result_written_to_bq_in_info_mode(
+    module_under_test, fs, caplog, monkeypatch
+):
     # Mock the big query client
     mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
@@ -770,18 +772,18 @@ def test_no_console_data_shown_for_validation_with_result_written_to_bq_in_info_
     # Then...
     # 2 failures returned
     assert len(result_df) == 2
-    fail_df = result_df[
-        result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL
-    ]
+    fail_df = result_df[result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL]
     assert len(fail_df) == 2
     # Only the "Results written" message happens
     # Important because the results could include sensitive data, which some users need to exclude
     assert len(caplog.records) == 1
     run_id = result_df.iloc[0]["run_id"]
-    assert caplog.records[0].message == f'Results written to BigQuery, run id: {run_id}'
+    assert caplog.records[0].message == f"Results written to BigQuery, run id: {run_id}"
 
 
-def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq_in_info_mode(module_under_test, fs, caplog, monkeypatch):
+def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq_in_info_mode(
+    module_under_test, fs, caplog, monkeypatch
+):
     # Mock the big query client
     mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
@@ -804,7 +806,9 @@ def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq
     assert caplog.records[0].message == "No results to write to BigQuery"
 
 
-def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mode(module_under_test, fs, caplog, monkeypatch):
+def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mode(
+    module_under_test, fs, caplog, monkeypatch
+):
     # Mock the big query client
     mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
@@ -823,19 +827,22 @@ def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mo
     # Then...
     # 2 failures returned
     assert len(result_df) == 2
-    fail_df = result_df[
-        result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL
-    ]
+    fail_df = result_df[result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL]
     assert len(fail_df) == 2
     # The "Results written" message happens + info about the failed data
     assert len(caplog.records) == 2
     run_id = result_df.iloc[0]["run_id"]
-    assert caplog.records[0].message == f'Results written to BigQuery, run id: {run_id}'
-    assert "validation_name validation_type source_table_name source_column_name source_agg_value target_agg_value pct_difference validation_status" in caplog.records[1].message
-    assert f'fail {run_id}' in caplog.records[1].message
+    assert caplog.records[0].message == f"Results written to BigQuery, run id: {run_id}"
+    assert (
+        "validation_name validation_type source_table_name source_column_name source_agg_value target_agg_value pct_difference validation_status"
+        in caplog.records[1].message
+    )
+    assert f"fail {run_id}" in caplog.records[1].message
 
 
-def test_console_data_shown_for_matching_validation_with_result_written_to_bq_in_debug_mode(module_under_test, fs, caplog, monkeypatch):
+def test_console_data_shown_for_matching_validation_with_result_written_to_bq_in_debug_mode(
+    module_under_test, fs, caplog, monkeypatch
+):
     # Mock the big query client
     mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
