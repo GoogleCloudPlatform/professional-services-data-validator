@@ -492,9 +492,6 @@ def _configure_validate_parser(subparsers):
     optional_arguments = row_parser.add_argument_group("optional arguments")
     required_arguments = row_parser.add_argument_group("required arguments")
     _configure_row_parser(row_parser, optional_arguments, required_arguments)
-    optional_arguments = row_parser.add_argument_group("optional arguments")
-    required_arguments = row_parser.add_argument_group("required arguments")
-    _configure_row_parser(row_parser, optional_arguments, required_arguments)
 
     schema_parser = validate_subparsers.add_parser(
         "schema", help="Run a schema validation"
@@ -621,11 +618,6 @@ def _configure_row_parser(
             "Individual columns to compare. If comparing a calculated field use "
             "the column alias."
         ),
-    )
-    _add_common_arguments(
-        optional_arguments,
-        required_arguments,
-        is_generate_partitions=is_generate_partitions,
     )
     _add_common_arguments(
         optional_arguments,
