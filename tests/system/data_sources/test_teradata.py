@@ -15,6 +15,8 @@
 import os
 from unittest import mock
 
+import pytest
+
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
@@ -690,3 +692,80 @@ def test_custom_query_row_validation_many_columns():
     row_validation_many_columns_test(
         schema="udf", validation_type="custom-query", concat_arg="concat"
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_identifiers():
+    """Test schema validation on a table with special characters in table and column names."""
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-XXX")
+    # TODO need to create issue in repo for this.
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=udf.dvt-identifier$_#",
+            "--filter-status=fail",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_identifiers():
+    """Test column validation on a table with special characters in table and column names."""
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-XXX")
+    # TODO need to create issue in repo for this.
+    # TODO need to use new common function once available.
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=udf.dvt-identifier$_#",
+            "--filters=COL#HASH IS NOT NULL",
+            "--filter-status=fail",
+            "--count=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_identifiers():
+    """Test row validation on a table with special characters in table and column names."""
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-XXX")
+    # TODO need to create issue in repo for this.
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=udf.dvt-identifier$_#",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0

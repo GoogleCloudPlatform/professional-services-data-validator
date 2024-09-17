@@ -667,7 +667,7 @@ COMMIT;
 
 DROP TABLE pso_data_validator."DVT-IDENTIFIER$_#";
 CREATE TABLE pso_data_validator."DVT-IDENTIFIER$_#"
-(   id            VARCHAR2(15) NOT NULL PRIMARY KEY
+(   id            NUMBER(6) NOT NULL PRIMARY KEY
 ,   "COL#HASH"    VARCHAR2(10)
 ,   "COL$DOLLAR"  VARCHAR2(10)
 ,   "COL-HYPHEN"  VARCHAR2(10)
@@ -675,9 +675,9 @@ CREATE TABLE pso_data_validator."DVT-IDENTIFIER$_#"
 ,   other_data    VARCHAR2(100)
 );
 COMMENT ON TABLE pso_data_validator."DVT-IDENTIFIER$_#" IS 'Integration test table used to test non-standard characters in identifiers.';
-INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES ('DVT-key-1','#','$','-','@','Row 1');
-INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES ('DVT-key-2','#','$','-','@','Row 2');
-INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES ('DVT-key-3','#','$','-','@','Row 3');
-INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES ('DVT-key-4','#','$','-','@','Row 4');
-INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES ('DVT-key-5','#','$','-','@','Row 5');
+INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (1,'#','$','-','@','Row 1');
+INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (2,'#','$','-','@','Row 2');
+INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (3,'#','$','-','@','Row 3');
+INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (4,'#','$','-','@','Row 4');
+INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (5,'#','$','-','@','Row 5');
 COMMIT;
