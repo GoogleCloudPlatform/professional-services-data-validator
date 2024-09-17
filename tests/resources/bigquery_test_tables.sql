@@ -575,3 +575,19 @@ CREATE TABLE `pso_data_validator`.`dvt_many_cols`
 , col_399 INT64
 ) OPTIONS (description='Integration test table used to test validating many columns.');
 INSERT INTO `pso_data_validator`.`dvt_many_cols` (id) VALUES (1);
+
+-- Name should contain $ and # but this is not supported in BigQuery: `pso_data_validator`.`dvt-identifier$_#`;
+DROP TABLE `pso_data_validator`.`dvt-identifier___`;
+CREATE TABLE `pso_data_validator`.`dvt-identifier___`
+(   id            INT64 NOT NULL
+,   `col#hash`    STRING
+,   `col_dollar`  STRING -- Name should contain $ but this is not supported in BigQuery
+,   `col-hyphen`  STRING
+,   `col_at`      STRING -- Name should contain @ but this is not supported in BigQuery
+,   other_data    STRING
+) OPTIONS (description='Integration test table used to test non-standard characters in identifiers.');
+INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (1,'#','$','-','@','Row 1');
+INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (2,'#','$','-','@','Row 2');
+INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (3,'#','$','-','@','Row 3');
+INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (4,'#','$','-','@','Row 4');
+INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (5,'#','$','-','@','Row 5');

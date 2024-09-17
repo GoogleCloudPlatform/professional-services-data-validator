@@ -720,3 +720,19 @@ CREATE TABLE pso_data_validator.dvt_many_cols
 );
 COMMENT ON TABLE pso_data_validator.dvt_many_cols IS 'Integration test table used to test validating many columns.';
 INSERT INTO pso_data_validator.dvt_many_cols (id) values (1);
+
+DROP TABLE pso_data_validator."dvt-identifier$_#";
+CREATE TABLE pso_data_validator."dvt-identifier$_#"
+(   id            VARCHAR(15) NOT NULL PRIMARY KEY
+,   "col#hash"    VARCHAR(10)
+,   "col$dollar"  VARCHAR(10)
+,   "col-hyphen"  VARCHAR(10)
+,   "col@at"      VARCHAR(10)
+,   other_data    VARCHAR(100)
+);
+COMMENT ON TABLE pso_data_validator."dvt-identifier$_#" IS 'Integration test table used to test non-standard characters in identifiers.';
+INSERT INTO pso_data_validator."dvt-identifier$_#" VALUES ('DVT-key-1','#','$','-','@','Row 1');
+INSERT INTO pso_data_validator."dvt-identifier$_#" VALUES ('DVT-key-2','#','$','-','@','Row 2');
+INSERT INTO pso_data_validator."dvt-identifier$_#" VALUES ('DVT-key-3','#','$','-','@','Row 3');
+INSERT INTO pso_data_validator."dvt-identifier$_#" VALUES ('DVT-key-4','#','$','-','@','Row 4');
+INSERT INTO pso_data_validator."dvt-identifier$_#" VALUES ('DVT-key-5','#','$','-','@','Row 5');
