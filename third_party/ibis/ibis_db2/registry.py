@@ -448,7 +448,8 @@ def _literal(t, op):
 
 
 def _random(t, expr):
-    return sa.func.rand(1)
+    # https://www.zobristinc.com/blog/db2-sql-error-sqlcode-418-sqlstate-42610/
+    return sa.func.rand(sa.cast(1, sa.INTEGER))
 
 
 def _day_of_week_index(t, op):
