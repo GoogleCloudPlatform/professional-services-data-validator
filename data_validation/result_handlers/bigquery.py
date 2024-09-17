@@ -107,7 +107,7 @@ class BigQueryResultHandler(object):
             logging.info("No results to write to BigQuery")
         else:
             logging.info(
-                f'Results written to BigQuery, run id: {result_df["run_id"][0]}'
+                f'Results written to BigQuery, run id: {result_df.iloc[0]["run_id"]}'
             )
 
         # Handler also logs results after saving to BigQuery.
