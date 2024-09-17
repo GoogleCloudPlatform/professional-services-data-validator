@@ -42,7 +42,7 @@ def get_formatted(
     if format == "text":
         return result_df.drop(cols_filter_list, axis=1).to_string(index=False)
     elif format == "csv":
-        return result_df.to_csv(index=False)
+        return result_df.to_csv(index=False, lineterminator="\n")
     elif format == "json":
         return result_df.to_json(orient="index")
     else:
