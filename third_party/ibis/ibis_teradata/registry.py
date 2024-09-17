@@ -290,6 +290,12 @@ def _extract_epoch(translator, op):
     )
 
 
+def _rstrip(translator, op):
+    arg = translator.translate(op.arg)
+    # Use regexp_replace to account for trailing tabs and spaces as per #1272
+    return f"REGEXP_REPLACE({arg}, '[ \\t]+$', '')"
+
+
 """ Add New Customizations to Operations registry """
 _operation_registry.update(
     {
@@ -299,5 +305,6 @@ _operation_registry.update(
         ops.IfNull: fixed_arity("NVL", 2),
         ops.StringJoin: _string_join,
         ops.ExtractEpochSeconds: _extract_epoch,
+        ops.RStrip: _rstrip,
     }
 )
