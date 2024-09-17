@@ -448,7 +448,7 @@ def _literal(t, op):
 
 
 def _random(t, expr):
-    return sa.func.random()
+    return sa.func.rand()
 
 
 def _day_of_week_index(t, op):
