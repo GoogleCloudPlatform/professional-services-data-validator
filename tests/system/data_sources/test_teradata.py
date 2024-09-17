@@ -700,8 +700,7 @@ def test_custom_query_row_validation_many_columns():
 )
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
-    pytest.skip("Skipping test_row_validation_identifiers because of issue-XXX")
-    # TODO need to create issue in repo for this.
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -724,8 +723,7 @@ def test_schema_validation_identifiers():
 )
 def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
-    pytest.skip("Skipping test_row_validation_identifiers because of issue-XXX")
-    # TODO need to create issue in repo for this.
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
     # TODO need to use new common function once available.
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
@@ -751,8 +749,7 @@ def test_column_validation_identifiers():
 )
 def test_row_validation_identifiers():
     """Test row validation on a table with special characters in table and column names."""
-    pytest.skip("Skipping test_row_validation_identifiers because of issue-XXX")
-    # TODO need to create issue in repo for this.
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [

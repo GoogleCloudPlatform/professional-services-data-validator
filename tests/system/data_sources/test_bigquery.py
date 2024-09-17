@@ -1374,8 +1374,7 @@ def test_schema_validation_identifiers(mock_conn):
 def test_column_validation_identifiers(mock_conn):
     """Test column validation on a table with special characters in table and column names."""
     # TODO need to use new common function once available.
-    pytest.skip("Skipping test_column_validation_identifiers because of issue-XXX")
-    # TODO need to create issue in repo for this.
+    pytest.skip("Skipping test_column_validation_identifiers because of issue-1271")
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
@@ -1400,8 +1399,7 @@ def test_column_validation_identifiers(mock_conn):
 )
 def test_row_validation_identifiers(mock_conn):
     """Test row validation on a table with special characters in table and column names."""
-    pytest.skip("Skipping test_row_validation_identifiers because of issue-XXX")
-    # TODO need to create issue in repo for this.
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [

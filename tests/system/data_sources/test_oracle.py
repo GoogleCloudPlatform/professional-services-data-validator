@@ -773,9 +773,8 @@ def test_column_validation_identifiers():
 def test_row_validation_identifiers():
     """Test row validation on a table with special characters in table and column names."""
     pytest.skip(
-        "Skipping test_row_validation_identifiers because concat_all expression does not enquote identifier names."
+        "Skipping test_row_validation_identifiers because concat_all expression does not enquote identifier names, issue-1271."
     )
-    # TODO need to create issue in repo for this.
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
         [
