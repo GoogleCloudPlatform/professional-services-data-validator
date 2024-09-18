@@ -292,8 +292,8 @@ def _extract_epoch(translator, op):
 
 def _rstrip(translator, op):
     arg = translator.translate(op.arg)
-    # Use regexp_replace to account for trailing tabs and spaces as per #1272
-    return f"REGEXP_REPLACE({arg}, '[ \\t]+$', '')"
+    # Rtrim parameter accounts for ' \t\x0b\n\r\x0c' as per #1272
+    return f"RTRIM({arg}, _latin '20090B0A0D0C'XCV)"
 
 
 """ Add New Customizations to Operations registry """
