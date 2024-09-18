@@ -17,6 +17,7 @@ import shutil
 import pytest
 import json
 import random
+import math
 from datetime import datetime, timedelta
 
 from data_validation import cli_tools
@@ -44,7 +45,8 @@ TARGET_CONN_CONFIG = {
 }
 
 TEST_CONN = "{'source_type':'Example'}"
-PARTITION_NUM = 3
+PARTITION_NUM = 9
+PARTS_PER_FILE = 5
 PARTITIONS_DIR = "test_partitions_dir"
 
 CLI_ARGS_SINGLE_KEY = [
@@ -67,6 +69,8 @@ CLI_ARGS_SINGLE_KEY = [
     PARTITIONS_DIR,
     "--partition-num",
     f"{PARTITION_NUM}",
+    "--parts-per-file",
+    f"{PARTS_PER_FILE}",
 ]
 
 # partition_key is not passed
@@ -88,14 +92,22 @@ CLI_ARGS_MULTIPLE_KEYS = [
     PARTITIONS_DIR,
     "--partition-num",
     f"{PARTITION_NUM}",
+    "--parts-per-file",
+    f"{PARTS_PER_FILE}",
     "--labels",
     "name=test_run",
 ]
 
 PARTITION_FILTERS_LIST = [
-    "id >= 0 and id < 333",
-    "id >= 333 and id < 666",
-    "id >= 666 and id < 1001",
+    "id >= 0 and id < 99",
+    "id >= 100 and id < 199",
+    "id >= 200 and id < 299",
+    "id >= 300 and id < 399",
+    "id >= 400 and id < 499",
+    "id >= 500 and id < 599",
+    "id >= 600 and id < 699",
+    "id >= 700 and id < 799",
+    "id >= 800 and id < 899",
 ]
 
 YAML_CONFIGS_LIST = [
@@ -142,11 +154,163 @@ YAML_CONFIGS_LIST = [
                             "filters": [
                                 {
                                     "type": "custom",
-                                    "source": "id >= 0 and id < 333",
-                                    "target": "id >= 0 and id < 333",
+                                    "source": "id >= 0 and id < 99",
+                                    "target": "id >= 0 and id < 99",
                                 }
                             ],
-                        }
+                        },
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 100 and id < 199",
+                                    "target": "id >= 100 and id < 199",
+                                }
+                            ],
+                        },
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 200 and id < 299",
+                                    "target": "id >= 200 and id < 299",
+                                }
+                            ],
+                        },
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 300 and id < 399",
+                                    "target": "id >= 300 and id < 399",
+                                }
+                            ],
+                        },
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 400 and id < 499",
+                                    "target": "id >= 400 and id < 499",
+                                }
+                            ],
+                        },
                     ],
                 },
             },
@@ -190,21 +354,11 @@ YAML_CONFIGS_LIST = [
                             "filters": [
                                 {
                                     "type": "custom",
-                                    "source": "id >= 333 and id < 666",
-                                    "target": "id >= 333 and id < 666",
+                                    "source": "id >= 500 and id < 599",
+                                    "target": "id >= 500 and id < 599",
                                 }
                             ],
-                        }
-                    ],
-                },
-            },
-            {
-                "target_file_name": "0002.yaml",
-                "yaml_config": {
-                    "source": "{'source_type':'Example'}",
-                    "target": "{'source_type':'Example'}",
-                    "result_handler": {},
-                    "validations": [
+                        },
                         {
                             "type": "Row",
                             "schema_name": None,
@@ -238,11 +392,87 @@ YAML_CONFIGS_LIST = [
                             "filters": [
                                 {
                                     "type": "custom",
-                                    "source": "id >= 666 and id < 1001",
-                                    "target": "id >= 666 and id < 1001",
+                                    "source": "id >= 600 and id < 699",
+                                    "target": "id >= 600 and id < 699",
                                 }
                             ],
-                        }
+                        },
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 700 and id < 799",
+                                    "target": "id >= 700 and id < 799",
+                                }
+                            ],
+                        },
+                        {
+                            "type": "Row",
+                            "schema_name": None,
+                            "table_name": "test_table",
+                            "target_schema_name": None,
+                            "target_table_name": "test_table",
+                            "primary_keys": [
+                                {
+                                    "field_alias": "id",
+                                    "source_column": "id",
+                                    "target_column": "id",
+                                    "cast": None,
+                                }
+                            ],
+                            "comparison_fields": [
+                                {
+                                    "field_alias": "int_value",
+                                    "source_column": "int_value",
+                                    "target_column": "int_value",
+                                    "cast": None,
+                                },
+                                {
+                                    "field_alias": "text_value",
+                                    "source_column": "text_value",
+                                    "target_column": "text_value",
+                                    "cast": None,
+                                },
+                            ],
+                            "format": "table",
+                            "filter_status": None,
+                            "filters": [
+                                {
+                                    "type": "custom",
+                                    "source": "id >= 800 and id < 899",
+                                    "target": "id >= 800 and id < 899",
+                                }
+                            ],
+                        },
                     ],
                 },
             },
@@ -403,6 +633,12 @@ def test_add_partition_filters_to_config(module_under_test):
     # Create PartitionBuilder object and get YAML configs list
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     yaml_configs_list = builder._add_partition_filters(master_filter_list)
+
+    assert len(yaml_configs_list[0]["yaml_files"]) == 2
+    # 5 validations in the first file
+    assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
+    # 4 validations in the second file
+    assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
     assert yaml_configs_list == expected_yaml_configs_list
 
 
@@ -431,6 +667,6 @@ def test_store_yaml_partitions_local(module_under_test):
     # Assert file count for 1 table and sample file names
     partition_dir_contents = os.listdir(os.path.join(PARTITIONS_DIR, "test_table"))
 
-    assert len(partition_dir_contents) == PARTITION_NUM
+    assert len(partition_dir_contents) == math.ceil(PARTITION_NUM / PARTS_PER_FILE)
     assert "0000.yaml" in partition_dir_contents
-    assert "0002.yaml" in partition_dir_contents
+    assert "0001.yaml" in partition_dir_contents

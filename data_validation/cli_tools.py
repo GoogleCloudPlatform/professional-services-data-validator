@@ -1454,7 +1454,9 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
     query_str = None
-    if config_type == consts.CUSTOM_QUERY:
+    if config_type == consts.CUSTOM_QUERY or (
+        args.command == "generate-table-partitions" and args.tables_list is None
+    ):
         tables_list = get_tables_list(
             None, default_value=[{}], is_filesystem=is_filesystem
         )

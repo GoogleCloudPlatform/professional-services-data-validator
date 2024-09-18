@@ -187,12 +187,8 @@ def generate_partitions_test(
     """Test generate table partitions for a database. Usually only the partition_filter is different
     because of the differences in SQL between the databases. Some databases have different table names,
     Teradata has a different syntax for inequality and Postgres has different column names/types for primary keys.
-    The unit tests, specifically test_add_partition_filters_to_config and test_store_yaml_partitions_local
-    check that yaml configurations are created and saved in local storage. Partitions can only be created with
-    a database that can handle SQL with row_number(), hence doing this as part of system testing.
-    What we are checking
-    1. the shape of the partition list is 1, number of partitions (only one table in the list)
-    2. value of the partition list matches what we expect.
+    The unit tests in tests/unit/test_partition_builder.py check if the filters are split into configs and
+    stored in the filesystem correctly.
     """
 
     parser = cli_tools.configure_arg_parser()
@@ -219,11 +215,3 @@ def generate_partitions_test(
     # Number of partitions is as requested - assume table rows > partitions requested
     assert len(partition_filters[0][0]) == partition_builder.args.partition_num
     assert partition_filters[0] == expected_filter
-
-    # Next, that the partitions were split into the files correctly
-    # 2 files were created with upto 5 validations in each file
-    assert len(yaml_configs_list[0]["yaml_files"]) == 2
-    # 5 validations in the first file
-    assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
-    # 4 validations in the second file
-    assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
