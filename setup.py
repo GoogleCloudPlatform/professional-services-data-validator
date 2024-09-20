@@ -41,6 +41,7 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "pyarrow==14.0.1", # ibis-framework 7.1.0 depends on pyarrow<15 and >=2
     "pydata-google-auth>=1.8.2",
+    "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
     "SQLAlchemy>=2.0.34",
     "tabulate>=0.9.0",
