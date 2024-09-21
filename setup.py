@@ -33,7 +33,7 @@ dependencies = [
     # Core dependencies
     "fsspec>=2022.8.2",
     "google-api-python-client==2.91.0",
-    "ibis-framework==5.1.0",
+    "ibis-framework==7.1.0",
     "impyla==0.18.0",
     "SQLAlchemy==1.4.49",
     "PyMySQL==1.1.1",
