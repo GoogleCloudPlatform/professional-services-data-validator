@@ -122,10 +122,10 @@ CREATE TABLE `pso_data_validator`.`dvt_char_id`
 ,   other_data  STRING(100)
 ) OPTIONS (description='Integration test table used to test CHAR pk matching.');
 INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
-('DVT1  ', 'Row 1'),
-('DVT2  ', 'Row 2'),
-('DVT3  ', 'Row 3'),
-('DVT4  ', 'Row 4'),
+('DVT1  ', 'Row 1	  '),
+('DVT2  ', 'Row 2  	'),
+('DVT3  ', 'Row 3  '),
+('DVT4  ', 'Row 4  	  '),
 ('DVT5  ', 'Row 5');
 
 DROP TABLE `pso_data_validator`.`dvt_time_table`;
