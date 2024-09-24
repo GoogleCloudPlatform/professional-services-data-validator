@@ -114,7 +114,7 @@ def test__compare_match_tables(module_under_test):
                 },
             ],
         ),
-        # Test that asterisk mixed woth other characters is not expanded
+        # Test that asterisk mixed with other characters is not expanded
         (
             [
                 {"schema_name": "s1", "table_name": "t*"},
