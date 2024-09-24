@@ -25,7 +25,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 dependencies = [
-    "Flask<=2.2", # Some versions of airflow such as 2.9.1 depend on flask<2.3 and >=2.2
+    "Flask>=2.2", # Some versions of airflow such as 2.9.1 depend on flask<2.3 and >=2.2
     "fsspec>=2024.9.0",
     "google-api-python-client>=2.144.0",
     "google-cloud-bigquery>=3.25.0",
@@ -43,7 +43,7 @@ dependencies = [
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
-    "SQLAlchemy>=2.0.34",
+    "SQLAlchemy>=1.4.49",
     "tabulate>=0.9.0",
 ]
 
