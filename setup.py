@@ -43,7 +43,7 @@ dependencies = [
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
-    "SQLAlchemy>=1.4.49",
+    "SQLAlchemy==1.4.49", # Pinned to 1.4.49, encountered SQL syntax errors above this version
     "tabulate>=0.9.0",
 ]
 
