@@ -116,7 +116,7 @@ def expand_tables_of_asterisk(
 
     We can be very specific in this function, we only expand arguments that are:
       {"schema_name": (str), "table_name": "*"}.
-    No partital wildcards or args that include target_schema/table_name are expanded.
+    No partial wildcards or args that include target_schema/table_name are expanded.
 
     Args:
         tables_list (list[dict]): List of schema/table name dicts.
@@ -132,8 +132,9 @@ def expand_tables_of_asterisk(
             mapping
             and mapping[consts.CONFIG_SCHEMA_NAME]
             and mapping[consts.CONFIG_TABLE_NAME] == "*"
-            and consts.CONFIG_TARGET_SCHEMA_NAME not in mapping
-            and consts.CONFIG_TARGET_TABLE_NAME not in mapping
+            # Looking for schema.* without a target side qualifier.
+            and not mapping.get(consts.CONFIG_TARGET_SCHEMA_NAME, None)
+            and not mapping.get(consts.CONFIG_TARGET_TABLE_NAME, None)
         ):
             # Expand the "*" to all tables in the schema.
             expanded_tables = get_mapped_table_configs(
