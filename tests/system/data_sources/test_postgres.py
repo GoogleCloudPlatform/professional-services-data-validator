@@ -17,7 +17,13 @@ from unittest import mock
 
 import pytest
 
-from data_validation import cli_tools, data_validation, consts, __main__ as main
+from data_validation import (
+    cli_tools,
+    data_validation,
+    consts,
+    find_tables,
+    __main__ as main,
+)
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
@@ -863,7 +869,7 @@ def test_find_tables():
             "--allowed-schemas=pso_data_validator",
         ]
     )
-    output = main.find_tables_using_string_matching(args)
+    output = find_tables.find_tables_using_string_matching(args)
     find_tables_assertions(output)
 
 

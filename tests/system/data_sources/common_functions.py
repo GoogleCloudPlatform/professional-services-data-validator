@@ -82,6 +82,22 @@ def run_test_from_cli_args(args: "Namespace") -> "DataFrame":
     return validator.execute()
 
 
+def run_tests_from_cli_args(
+    args: "Namespace",
+    expected_config_managers: int = 1,
+) -> list:
+    """Multi test version of run_test_from_cli_args()"""
+    config_managers = main.build_config_managers_from_args(args)
+    assert (
+        len(config_managers) == expected_config_managers
+    ), f"Expected {expected_config_managers} but found: {len(config_managers)}"
+    dfs = []
+    for config_manager in config_managers:
+        validator = data_validation.DataValidation(config_manager.config, verbose=False)
+        dfs.append(validator.execute())
+    return dfs
+
+
 def row_validation_many_columns_test(
     schema: str = "pso_data_validator",
     table: str = "dvt_many_cols",
@@ -122,14 +138,10 @@ def row_validation_many_columns_test(
                 "--filter-status=fail",
             ]
         )
-    config_managers = main.build_config_managers_from_args(args)
     # We expect the validation to be split into multiple config managers.
-    assert (
-        len(config_managers) == expected_config_managers
-    ), f"Expected {expected_config_managers} but found: {len(config_managers)}"
-    for config_manager in config_managers:
-        validator = data_validation.DataValidation(config_manager.config, verbose=False)
-        df = validator.execute()
+    for df in run_tests_from_cli_args(
+        args, expected_config_managers=expected_config_managers
+    ):
         # With filter on failures the data frame should be empty.
         assert len(df) == 0
 
@@ -147,6 +159,93 @@ def find_tables_assertions(command_output: str):
     # Assert that a couple of known tables are in the map.
     assert "dvt_core_types" in [_["table_name"] for _ in output_dict]
     assert "dvt_core_types" in [_["target_table_name"] for _ in output_dict]
+
+
+def column_validation_test_args(
+    tables="pso_data_validator.dvt_core_types",
+    tc="bq-conn",
+    count_cols=None,
+    sum_cols=None,
+    min_cols=None,
+    max_cols=None,
+    filters=None,
+    grouped_columns=None,
+):
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "validate",
+        "column",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        "--filter-status=fail",
+    ]
+    if count_cols:
+        cli_arg_list.append(f"--count={count_cols}")
+    if sum_cols:
+        cli_arg_list.append(f"--sum={sum_cols}")
+    if min_cols:
+        cli_arg_list.append(f"--min={min_cols}")
+    if max_cols:
+        cli_arg_list.append(f"--max={max_cols}")
+    if filters:
+        cli_arg_list.append(f"--filters={filters}")
+    if grouped_columns:
+        cli_arg_list.append(f"--grouped-columns={grouped_columns}")
+
+    return parser.parse_args(cli_arg_list)
+
+
+def column_validation_test(
+    tables="pso_data_validator.dvt_core_types",
+    tc="bq-conn",
+    count_cols=None,
+    sum_cols=None,
+    min_cols=None,
+    max_cols=None,
+    filters=None,
+    grouped_columns=None,
+):
+    """Generic column validation test.
+
+    All tests expect an empty dataframe as the assertion.
+    """
+    args = column_validation_test_args(
+        tables=tables,
+        tc=tc,
+        count_cols=count_cols,
+        sum_cols=sum_cols,
+        min_cols=min_cols,
+        max_cols=max_cols,
+        filters=filters,
+        grouped_columns=grouped_columns,
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+def column_validation_test_config_managers(
+    tables="pso_data_validator.dvt_core_types",
+    tc="bq-conn",
+    count_cols=None,
+    sum_cols=None,
+    min_cols=None,
+    max_cols=None,
+    filters=None,
+    grouped_columns=None,
+) -> list:
+    args = column_validation_test_args(
+        tables=tables,
+        tc=tc,
+        count_cols=count_cols,
+        sum_cols=sum_cols,
+        min_cols=min_cols,
+        max_cols=max_cols,
+        filters=filters,
+        grouped_columns=grouped_columns,
+    )
+    return main.build_config_managers_from_args(args)
 
 
 def row_validation_test(
