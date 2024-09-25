@@ -20,7 +20,7 @@ import pytest
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
-from data_validation import cli_tools, data_validation, consts, __main__ as main
+from data_validation import cli_tools, data_validation, consts, find_tables
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_assertions,
@@ -593,7 +593,7 @@ def test_find_tables():
             "--allowed-schemas=pso_data_validator",
         ]
     )
-    output = main.find_tables_using_string_matching(args)
+    output = find_tables.find_tables_using_string_matching(args)
     find_tables_assertions(output)
 
 
@@ -619,3 +619,74 @@ def test_custom_query_row_validation_many_columns():
     row_validation_many_columns_test(
         validation_type="custom-query", expected_config_managers=2
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_identifiers():
+    """Test schema validation on a table with special characters in table and column names."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt-identifier$_#",
+            "--filter-status=fail",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_identifiers():
+    """Test column validation on a table with special characters in table and column names."""
+    # TODO need to use new common function once available.
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt-identifier$_#",
+            '--filters="col#hash" IS NOT NULL',
+            "--filter-status=fail",
+            "--count=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_identifiers():
+    """Test row validation on a table with special characters in table and column names."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt-identifier$_#",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0

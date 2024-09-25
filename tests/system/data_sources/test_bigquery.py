@@ -16,12 +16,15 @@ import json
 import os
 from unittest import mock
 
+import pytest
+
 from data_validation import __main__ as main
 from data_validation import (
     cli_tools,
     clients,
     consts,
     data_validation,
+    find_tables,
     gcs_helper,
 )
 from data_validation.query_builder import random_row_builder
@@ -29,6 +32,7 @@ from data_validation.query_builder.query_builder import QueryBuilder
 from tests.system.data_sources.common_functions import (
     generate_partitions_test,
     row_validation_many_columns_test,
+    run_test_from_cli_args,
 )
 
 
@@ -692,7 +696,7 @@ def test_cli_find_tables():
 
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
-    tables_json = main.find_tables_using_string_matching(args)
+    tables_json = find_tables.find_tables_using_string_matching(args)
     assert isinstance(tables_json, str)
     assert STRING_MATCH_RESULT in tables_json
 
@@ -1340,3 +1344,76 @@ def test_custom_query_row_validation_many_columns(mock_conn):
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
     row_validation_many_columns_test(validation_type="custom-query")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_schema_validation_identifiers(mock_conn):
+    """Test schema validation on a table with special characters in table and column names."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt-identifier___",
+            "--filter-status=fail",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_column_validation_identifiers(mock_conn):
+    """Test column validation on a table with special characters in table and column names."""
+    # TODO need to use new common function once available.
+    pytest.skip("Skipping test_column_validation_identifiers because of issue-1271")
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "column",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt-identifier___",
+            '--filters="col#hash" IS NOT NULL',
+            "--filter-status=fail",
+            "--count=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_row_validation_identifiers(mock_conn):
+    """Test row validation on a table with special characters in table and column names."""
+    pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            "-tbls=pso_data_validator.dvt-identifier___",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0

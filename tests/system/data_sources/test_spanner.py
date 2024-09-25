@@ -19,8 +19,7 @@ from unittest import mock
 
 import pytest
 
-from data_validation import cli_tools, consts, data_validation
-from data_validation import __main__ as main
+from data_validation import cli_tools, consts, data_validation, find_tables
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     row_validation_many_columns_test,
@@ -199,7 +198,7 @@ def test_grouped_count_validator(grouped_config):
 def test_cli_find_tables():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
-    tables_json = main.find_tables_using_string_matching(args)
+    tables_json = find_tables.find_tables_using_string_matching(args)
     tables = json.loads(tables_json)
     assert isinstance(tables_json, str)
     assert {

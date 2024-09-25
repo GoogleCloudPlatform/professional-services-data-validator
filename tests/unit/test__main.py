@@ -17,7 +17,7 @@ import logging
 import os
 from unittest import mock
 
-from data_validation import cli_tools, consts
+from data_validation import cli_tools
 from data_validation import __main__ as main
 
 
@@ -33,30 +33,6 @@ CLI_ARGS = {
     "config_file": "example_test.yaml",
     "verbose": True,
 }
-
-SCHEMA_TABLE_OBJ = {
-    consts.CONFIG_SCHEMA_NAME: "schema",
-    consts.CONFIG_TABLE_NAME: "table",
-}
-OTHER_SCHEMA_TABLE_OBJ = {
-    consts.CONFIG_SCHEMA_NAME: "schema",
-    consts.CONFIG_TABLE_NAME: "other_table",
-}
-SOURCE_TABLE_MAP = {
-    "schema_table": SCHEMA_TABLE_OBJ,
-}
-TARGET_TABLE_MAP = {
-    "schema_table": SCHEMA_TABLE_OBJ,
-    "schema_other_table": OTHER_SCHEMA_TABLE_OBJ,
-}
-RESULT_TABLE_CONFIGS = [
-    {
-        "schema_name": "schema",
-        "table_name": "table",
-        "target_schema_name": "schema",
-        "target_table_name": "table",
-    }
-]
 
 CONFIG_RUNNER_ARGS_1 = {
     "verbose": False,
@@ -98,13 +74,6 @@ def test_configure_arg_parser(mock_args):
     file_path = main._get_arg_config_file(args)
 
     assert file_path == "example_test.yaml"
-
-
-def test__compare_match_tables():
-    """Test matching tables from source and target."""
-    table_configs = main._compare_match_tables(SOURCE_TABLE_MAP, TARGET_TABLE_MAP)
-
-    assert table_configs == RESULT_TABLE_CONFIGS
 
 
 @mock.patch("data_validation.__main__.run_validations")
@@ -149,7 +118,6 @@ def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_2),
 )
 def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
-
     """Second test - run validation on a directory - and provide the -kc argument,
     but not running in a Kubernetes Completion Configuration. Expected result
     1. Multiple (3) config manager created for validation

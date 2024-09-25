@@ -550,3 +550,21 @@ CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_MANY_COLS
 );
 COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_MANY_COLS IS 'Integration test table used to test validating many columns.';
 INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.DVT_MANY_COLS (id) VALUES (1);
+
+DROP TABLE PSO_DATA_VALIDATOR.PUBLIC."DVT-IDENTIFIER$_#";
+CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC."DVT-IDENTIFIER$_#"
+(   id            NUMBER(6) NOT NULL PRIMARY KEY
+,   "COL#HASH"    VARCHAR(10)
+,   "COL$DOLLAR"  VARCHAR(10)
+,   "COL-HYPHEN"  VARCHAR(10)
+,   "COL@AT"      VARCHAR(10)
+,   other_data    VARCHAR(100)
+);
+COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC."DVT-IDENTIFIER$_#" IS 'Integration test table used to test non-standard characters in identifiers.';
+INSERT INTO PSO_DATA_VALIDATOR.PUBLIC."DVT-IDENTIFIER$_#"
+VALUES
+(1,'#','$','-','@','Row 1'),
+(2,'#','$','-','@','Row 2'),
+(3,'#','$','-','@','Row 3'),
+(4,'#','$','-','@','Row 4'),
+(5,'#','$','-','@','Row 5');
