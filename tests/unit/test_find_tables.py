@@ -126,6 +126,25 @@ def test__compare_match_tables(module_under_test):
                 },
             ],
         ),
+        # Test that arg format s1.*=s2.t1 is not expanded.
+        (
+            [
+                {
+                    "schema_name": "s1",
+                    "table_name": "*",
+                    "target_schema_name": "s2",
+                    "target_table_name": "t1",
+                },
+            ],
+            [
+                {
+                    "schema_name": "s1",
+                    "table_name": "*",
+                    "target_schema_name": "s2",
+                    "target_table_name": "t1",
+                },
+            ],
+        ),
     ),
 )
 def test_expand_tables_of_asterisk(
