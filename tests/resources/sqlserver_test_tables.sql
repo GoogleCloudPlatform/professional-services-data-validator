@@ -529,3 +529,18 @@ CREATE TABLE pso_data_validator.dvt_many_cols
 , col_399 decimal(1)
 );
 INSERT INTO pso_data_validator.dvt_many_cols (id) values (1);
+
+DROP TABLE pso_data_validator.[dvt-identifier$_#];
+CREATE TABLE pso_data_validator.[dvt-identifier$_#]
+(   id            int NOT NULL PRIMARY KEY
+,   [col#hash]    varchar(10)
+,   [col$dollar]  varchar(10)
+,   [col-hyphen]  varchar(10)
+,   [col@at]      varchar(10)
+,   other_data    varchar(100)
+);
+INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (1,'#','$','-','@','Row 1');
+INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (2,'#','$','-','@','Row 2');
+INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (3,'#','$','-','@','Row 3');
+INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (4,'#','$','-','@','Row 4');
+INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (5,'#','$','-','@','Row 5');
