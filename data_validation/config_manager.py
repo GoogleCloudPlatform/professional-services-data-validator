@@ -953,6 +953,8 @@ class ConfigManager(object):
 
         if calc_type == consts.CONFIG_CUSTOM and custom_params:
             calculated_config.update(custom_params)
+        elif calc_type == consts.CONFIG_CAST and custom_params:
+            calculated_config[consts.CONFIG_DEFAULT_CAST] = custom_params
 
         return calculated_config
 
@@ -1017,6 +1019,11 @@ class ConfigManager(object):
                     ],
                 }
             }
+            col_config.update(custom_params)
+        elif isinstance(source_table_schema[source_column], dt.Boolean) or isinstance(
+            target_table_schema[target_column], dt.Boolean
+        ):
+            custom_params = {"calc_params": consts.CONFIG_CAST_BOOL_STRING}
             col_config.update(custom_params)
 
         return col_config
