@@ -2,6 +2,29 @@
 
 ## Untagged
 
+## [6.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.1.0...v6.2.0) (2024-09-27)
+
+
+### Features
+
+* Enhance --tables-list to support schema.* shorthand for find-tables command ([#1265](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1265)) ([cbd9bbb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cbd9bbbcfa97d8276e3dcd6cfb44ee252428b09c))
+
+
+### Bug Fixes
+
+* big query run id message ([#1263](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1263)) ([09659e0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/09659e0d22b2e40e6a6b127818a8907d7f0b397a))
+* cast count to bigint when generating partitions ([#1281](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1281)) ([a2861ca](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a2861ca747acb4b125253e59c66f28e2c0dcb3f0))
+* Explicit set the parameter for line terminator on converting datafram… ([#1269](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1269)) ([b20b2b5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b20b2b57d68e96b1f2d4688a2e2eaab8101ab5c6)), closes [#1248](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1248)
+* Oracle validations of tables with hyphen in name ([#1245](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1245)) ([4adaa79](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4adaa79d6eb7f9fc3ac2f596142d65dc36ef3602))
+* Set `RAND()` as default for DB2's random function ([#1246](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1246)) ([d01a40b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d01a40b14e5e090c1a99aa44fd8625fa8e515427))
+* Update Teradata rtrim() to account for tabs and other whitespace ([#1273](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1273)) ([db7e9d3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/db7e9d37e91be17ac5a71ff011073ea2ab61eb06))
+* Using datetime constants in filters ([#1259](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1259)) ([44863bd](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/44863bd81a913447d0b8d90d6c98130fea5f2ce5))
+
+
+### Documentation
+
+* Add comments on both verbose and log-level parameters, also alter the… ([#1257](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1257)) ([35caf98](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/35caf98afa9f57ed1f1ff3743766cdeed8bae0b1))
+
 ## [6.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.0.0...v6.1.0) (2024-08-27)
 
 
