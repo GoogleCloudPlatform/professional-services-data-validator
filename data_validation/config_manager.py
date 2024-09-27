@@ -805,9 +805,15 @@ class ConfigManager(object):
         """Return list of aggregate objects of given agg_type."""
 
         def require_pre_agg_calc_field(
-            column_type: str, agg_type: str, cast_to_bigint: bool
+            column_type: str,
+            target_column_type: str,
+            agg_type: str,
+            cast_to_bigint: bool,
         ) -> bool:
-            if column_type in ["string", "!string"]:
+            if column_type in ["string", "!string"] and target_column_type in [
+                "string",
+                "!string",
+            ]:
                 return True
             elif column_type in ["binary", "!binary"]:
                 if agg_type == "count":
@@ -877,6 +883,10 @@ class ConfigManager(object):
                 casefold_source_columns[column]
             ].type()
             column_type = str(source_column_ibis_type).split("(")[0]
+            target_column_ibis_type = target_table[
+                casefold_target_columns[column]
+            ].type()
+            target_column_type = str(target_column_ibis_type).split("(")[0]
 
             if column not in allowlist_columns:
                 continue
@@ -885,18 +895,19 @@ class ConfigManager(object):
                     f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
-            elif supported_types and column_type not in supported_types:
+            elif supported_types and (
+                column_type not in supported_types
+                or target_column_type not in supported_types
+            ):
                 if self.verbose:
                     logging.info(
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
                     )
                 continue
 
-            target_column_ibis_type = target_table[
-                casefold_target_columns[column]
-            ].type()
-
-            if require_pre_agg_calc_field(column_type, agg_type, cast_to_bigint):
+            if require_pre_agg_calc_field(
+                column_type, target_column_type, agg_type, cast_to_bigint
+            ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
                     casefold_target_columns[column],
