@@ -745,7 +745,7 @@ def test_row_validation_identifiers():
 def test_row_validation_bool_to_bigquery():
     """Test row validation on a table with bool data types in the target, Teradata does not have a bool type."""
     row_validation_test(
-        tables="pso_data_validator.dvt_bool",
+        tables="udf.dvt_bool",
         tc="bq-conn",
         hash="*",
     )
