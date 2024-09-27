@@ -805,3 +805,27 @@ def test_row_validation_identifiers():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_bool_to_postgres():
+    """Test row validation on a table with bool data types in the target, Oracle does not have a bool type."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=pg-conn",
+            "-tbls=pso_data_validator.dvt_bool",
+            "--primary-keys=id",
+            "--filter-status=fail",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
