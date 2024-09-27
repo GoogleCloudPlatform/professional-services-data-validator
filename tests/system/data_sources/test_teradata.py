@@ -26,6 +26,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
     generate_partitions_test,
     row_validation_test,
+    schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -214,20 +215,10 @@ def mock_get_connection_config(*args):
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.dvt_core_types",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="udf.dvt_core_types",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -235,25 +226,14 @@ def test_schema_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--exclusion-columns=id",
-            (
-                # Teradata integers go to BigQuery INT64.
-                "--allow-list=int8:int64,int16:int64,int32:int64"
-            ),
-        ]
+    schema_validation_test(
+        tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        allow_list=(
+            # Teradata integers go to BigQuery INT64.
+            "--allow-list=int8:int64,int16:int64,int32:int64"
+        ),
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -701,20 +681,10 @@ def test_custom_query_row_validation_many_columns():
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
     pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.dvt-identifier$_#",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="udf.dvt-identifier$_#",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -766,3 +736,16 @@ def test_row_validation_identifiers():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_bool_to_bigquery():
+    """Test row validation on a table with bool data types in the target, Teradata does not have a bool type."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="bq-conn",
+        hash="*",
+    )

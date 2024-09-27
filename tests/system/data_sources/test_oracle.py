@@ -26,7 +26,9 @@ from tests.system.data_sources.common_functions import (
     id_type_test_assertions,
     null_not_null_assertions,
     row_validation_many_columns_test,
+    row_validation_test,
     run_test_from_cli_args,
+    schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
@@ -153,20 +155,10 @@ def test_oracle_generate_table_partitions():
 )
 def test_schema_validation_core_types():
     """Oracle to Oracle dvt_core_types schema validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -175,27 +167,16 @@ def test_schema_validation_core_types():
 )
 def test_schema_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types schema validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--exclusion-columns=id",
-            (
-                # Integer Oracle NUMBERS go to BigQuery INT64.
-                "--allow-list=decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
-                # BigQuery does not have a float32 type.
-                "float32:float64"
-            ),
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        allow_list=(
+            # Integer Oracle NUMBERS go to BigQuery INT64.
+            "decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
+            # BigQuery does not have a float32 type.
+            "float32:float64"
+        ),
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -224,23 +205,11 @@ def test_schema_validation_not_null_vs_nullable():
 )
 def test_schema_validation_oracle_to_postgres():
     """Oracle to PostgreSQL schema validation"""
-
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=ora-conn",
-            "-tc=pg-conn",
-            "-tbls=pso_data_validator.dvt_ora2pg_types",
-            "--filter-status=fail",
-            "--exclusion-columns=id",
-            "--allow-list-file=samples/allow_list/oracle_to_postgres.yaml",
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="pg-conn",
+        allow_list_file="samples/allow_list/oracle_to_postgres.yaml",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -317,23 +286,12 @@ def test_column_validation_oracle_to_postgres():
 )
 def test_row_validation_core_types():
     """Oracle to Oracle dvt_core_types row validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        hash="*",
+        filters="id>0 AND col_int8>0",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -343,22 +301,11 @@ def test_row_validation_core_types():
 def test_row_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types row validation"""
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -392,22 +339,11 @@ def test_row_validation_oracle_to_postgres():
             )
         ]
     )
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=ora-conn",
-            "-tc=pg-conn",
-            "-tbls=pso_data_validator.dvt_ora2pg_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            f"--hash={hash_cols}",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_ora2pg_types",
+        tc="pg-conn",
+        hash=hash_cols,
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -419,22 +355,11 @@ def test_row_validation_large_decimals_to_bigquery():
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
     This is testing large decimals for the primary key join column plus the hash columns.
     """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_large_decimals",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -739,20 +664,10 @@ def test_column_multi_table_all_config_managers():
 )
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt-identifier$_#",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -813,19 +728,8 @@ def test_row_validation_identifiers():
 )
 def test_row_validation_bool_to_postgres():
     """Test row validation on a table with bool data types in the target, Oracle does not have a bool type."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=pg-conn",
-            "-tbls=pso_data_validator.dvt_bool",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="pg-conn",
+        hash="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
