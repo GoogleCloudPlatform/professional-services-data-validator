@@ -225,6 +225,8 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         config_manager (ConfigManager): Validation config manager instance.
     """
 
+    # If configuring generate-table-partitions, validation_type will be set to underlying validation either Row
+    # or custom query and, if custom query - args.custom_query_type will also be set.
     # Append SCHEMA_VALIDATION configs
     if config_manager.validation_type == consts.SCHEMA_VALIDATION:
         if args.exclusion_columns is not None:
@@ -234,10 +236,8 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
             )
         config_manager.append_allow_list(args.allow_list, args.allow_list_file)
 
-    # Append CUSTOM_QUERY configs
-    if (
-        args.command == "generate-table-partitions" and args.tables_list is None
-    ) or config_manager.validation_type == consts.CUSTOM_QUERY:
+    # Append configs specific to CUSTOM_QUERY (i.e. query strings or strings from files)
+    if config_manager.validation_type == consts.CUSTOM_QUERY:
         if config_manager.validation_type == consts.CUSTOM_QUERY:
             config_manager.append_custom_query_type(args.custom_query_type)
 
@@ -255,50 +255,12 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
             )
         )
 
-        # For custom-query column command
-        if (
-            args.command != "generate-table-partitions"
-            and args.custom_query_type == consts.COLUMN_VALIDATION.lower()
-        ):
-            config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-
-        # For custom-query row command
-        if (
-            args.command != "generate-table-partitions"
-            and args.custom_query_type == consts.ROW_VALIDATION.lower()
-        ):
-            # Append Comparison fields
-            if args.comparison_fields is not None:
-                comparison_fields = cli_tools.get_arg_list(
-                    args.comparison_fields, default_value=[]
-                )
-
-                # As per #1190, add rstrip for Teradata string comparison fields
-                if (
-                    config_manager.source_client.name == "teradata"
-                    or config_manager.target_client.name == "teradata"
-                ):
-                    comparison_fields = config_manager.add_rstrip_to_comp_fields(
-                        comparison_fields
-                    )
-
-                config_manager.append_comparison_fields(
-                    config_manager.build_config_comparison_fields(comparison_fields)
-                )
-
-            # Append calculated fields: --hash/--concat
-            config_manager.append_calculated_fields(
-                get_calculated_config(args, config_manager)
-            )
-
-            # Append primary_keys
-            primary_keys = cli_tools.get_arg_list(args.primary_keys)
-            config_manager.append_primary_keys(
-                config_manager.build_column_configs(primary_keys)
-            )
-
-    # Append COLUMN_VALIDATION configs
-    if config_manager.validation_type == consts.COLUMN_VALIDATION:
+    # Append COLUMN_VALIDATION configs, including custom-query column validation
+    if (
+        config_manager.validation_type == consts.COLUMN_VALIDATION
+        or config_manager.validation_type == consts.CUSTOM_QUERY
+        and args.custom_query_type == consts.COLUMN_VALIDATION.lower()
+    ):
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if args.grouped_columns is not None:
             grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
@@ -306,8 +268,12 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
                 config_manager.build_column_configs(grouped_columns)
             )
 
-    # Append ROW_VALIDATION configs
-    if config_manager.validation_type == consts.ROW_VALIDATION:
+    # Append ROW_VALIDATION configs, including custom-query row validation
+    if (
+        config_manager.validation_type == consts.ROW_VALIDATION
+        or config_manager.validation_type == consts.CUSTOM_QUERY
+        and args.custom_query_type == consts.ROW_VALIDATION.lower()
+    ):
         # Append calculated fields: --hash/--concat
         config_manager.append_calculated_fields(
             get_calculated_config(args, config_manager)
@@ -608,7 +574,11 @@ def partition_and_store_config_files(args: Namespace) -> None:
         None
     """
     # Default Validate Type
-    config_managers = build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    if args.tables_list:
+        config_managers = build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    else:
+        setattr(args, "custom_query_type", "row")
+        config_managers = build_config_managers_from_args(args, consts.CUSTOM_QUERY)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_builder.partition_configs()
 

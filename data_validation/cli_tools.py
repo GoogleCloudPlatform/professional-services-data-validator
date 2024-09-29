@@ -688,17 +688,7 @@ def _configure_column_parser(column_parser):
         "-filters",
         help="Filters in the format source_filter:target_filter",
     )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
-    )
+
     optional_arguments.add_argument(
         "--wildcard-include-string-len",
         "-wis",
@@ -903,17 +893,6 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
         "-th",
         type=threshold_float,
         help="Float max threshold for percent difference",
-    )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
     )
 
     # Group required arguments
@@ -1394,8 +1373,8 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         else:
             return get_arg_list(concat_arg)
 
-    # Since `generate-table-partitions` defaults to `validate_cmd=row`,
-    # `validate_cmd` is passed along while calling this method
+    # validate_cmd will be set to 'row`, or 'Custom-query' if invoked by generate-table-partitions depending
+    # on what is being partitioned. Otherwise validate_cmd will be set to None
     if validate_cmd is None:
         validate_cmd = args.validate_cmd.capitalize()
 
@@ -1418,14 +1397,10 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     else:
         result_handler_config = None
 
-    # Get filter_config and threshold. Not supported in case of schema validation
-    filter_config = []
-    threshold = 0.0
-    if config_type != consts.SCHEMA_VALIDATION:
-        if args.filters:
-            filter_config = get_filters(args.filters)
-        if args.threshold:
-            threshold = args.threshold
+    # Get filter_config and threshold. In unsupported cases, i.e. schema validations,
+    # these attributes will not present in args.
+    filter_config = get_filters(args.filters) if getattr(args, "filters", None) else []
+    threshold = getattr(args, "threshold", 0.0)
 
     # Get labels
     if args.labels is None:
@@ -1441,23 +1416,15 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     # Get format: text, csv, json, table. Default is table
     format = args.format if args.format else "table"
 
-    # Get random row arguments. Not supported in case of schema validation,
-    # custom-query validation and generate-table-partitions
-    use_random_rows = None
-    random_row_batch_size = None
-    if (
-        args.command != "generate-table-partitions"
-        and config_type != consts.SCHEMA_VALIDATION
-    ):
-        use_random_rows = getattr(args, "use_random_row", False)
-        random_row_batch_size = getattr(args, "random_row_batch_size", None)
+    # Get random row arguments. In row validations these attributes will be present,
+    # otherwise not present.
+    use_random_rows = getattr(args, "use_random_row", False)
+    random_row_batch_size = getattr(args, "random_row_batch_size", None)
 
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
     query_str = None
-    if config_type == consts.CUSTOM_QUERY or (
-        args.command == "generate-table-partitions" and args.tables_list is None
-    ):
+    if config_type == consts.CUSTOM_QUERY:
         tables_list = get_tables_list(
             None, default_value=[{}], is_filesystem=is_filesystem
         )
