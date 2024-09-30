@@ -518,6 +518,7 @@ def _configure_row_parser(
         "--threshold",
         "-th",
         type=threshold_float,
+        default=0.0,
         help="Float max threshold for percent difference",
     )
     optional_arguments.add_argument(
@@ -529,6 +530,8 @@ def _configure_row_parser(
     optional_arguments.add_argument(
         "--filters",
         "-filters",
+        type=get_filters,
+        default=[],
         help="Filters in the format source_filter:target_filter",
     )
     optional_arguments.add_argument(
@@ -681,11 +684,14 @@ def _configure_column_parser(column_parser):
         "--threshold",
         "-th",
         type=threshold_float,
+        default=0.0,
         help="Float max threshold for percent difference",
     )
     optional_arguments.add_argument(
         "--filters",
         "-filters",
+        type=get_filters,
+        default=[],
         help="Filters in the format source_filter:target_filter",
     )
 
@@ -886,12 +892,15 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     optional_arguments.add_argument(
         "--filters",
         "-filters",
+        type=get_filters,
+        default=[],
         help="Filters in the format source_filter:target_filter",
     )
     optional_arguments.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
+        default=0.0,
         help="Float max threshold for percent difference",
     )
 
@@ -1138,7 +1147,7 @@ def get_filters(filter_value: str) -> List[Dict]:
     filter_config = []
     if result := re.fullmatch(single_filter, filter_value):
         if result.group(0) == "":
-            raise ValueError("Empty string not allowed in filter")
+            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
         filter_dict = {
             "type": "custom",
             "source": result.group(0),
@@ -1146,14 +1155,14 @@ def get_filters(filter_value: str) -> List[Dict]:
         }
     elif result := re.fullmatch(double_filter, filter_value):
         if result.group("source") == "" or result.group("target") == "":
-            raise ValueError("Empty string not allowed in filter")
+            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
         filter_dict = {
             "type": "custom",
             "source": result.group("source"),
             "target": result.group("target"),
         }
     else:
-        raise ValueError("Unable to parse filter arguments.")
+        raise argparse.ArgumentTypeError("Unable to parse filter arguments.")
     filter_config.append(filter_dict)
     return filter_config
 
@@ -1397,9 +1406,8 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     else:
         result_handler_config = None
 
-    # Get filter_config and threshold. In unsupported cases, i.e. schema validations,
-    # these attributes will not present in args.
-    filter_config = get_filters(args.filters) if getattr(args, "filters", None) else []
+    # Set filter_config and threshold. Not supported in case of schema validation
+    filter_config = getattr(args, "filters",[])
     threshold = getattr(args, "threshold", 0.0)
 
     # Get labels
