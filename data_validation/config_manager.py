@@ -595,10 +595,17 @@ class ConfigManager(object):
         field_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
+        source_table_schema = {k: v for k, v in source_table.schema().items()}
+        target_table_schema = {k: v for k, v in target_table.schema().items()}
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for field in fields:
+            cast_type = None
+            if isinstance(source_table_schema[field], dt.Boolean) or isinstance(
+                target_table_schema[field], dt.Boolean
+            ):
+                cast_type = "bool"
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns.get(
                     field.casefold(), field
@@ -607,7 +614,7 @@ class ConfigManager(object):
                     field.casefold(), field
                 ),
                 consts.CONFIG_FIELD_ALIAS: field,
-                consts.CONFIG_CAST: None,
+                consts.CONFIG_CAST: cast_type,
             }
             field_configs.append(column_config)
         return field_configs

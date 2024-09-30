@@ -145,6 +145,15 @@ def _cast(t, op):
         return sa.func.to_char(sa_arg, "TM9")
     elif arg_dtype.is_interval() and typ.is_string():
         return sa.func.to_char(sa_arg)
+    elif arg_dtype.is_string() and typ.is_boolean():
+        return sa.literal_column(
+            (
+                "CASE  "
+                f"WHEN {sa_arg} IN ('0','F') THEN 0 "
+                f"WHEN {sa_arg} IN ('1','T') THEN 1 "
+                "ELSE TO_NUMBER(NULL) END"
+            )
+        )
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)

@@ -285,24 +285,27 @@ def row_validation_test(
     tc="bq-conn",
     hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
     filters="1=1",
+    comp_fields=None,
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion
     1.
     """
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            f"-tc={tc}",
-            f"-tbls={tables}",
-            f"--filters={filters}",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            f"--hash={hash}",
-        ]
-    )
+    cli_arg_list = [
+        "validate",
+        "row",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        f"--filters={filters}",
+        "--primary-keys=id",
+        "--filter-status=fail",
+    ]
+    if comp_fields:
+        cli_arg_list.append(f"--comparison-fields={comp_fields}")
+    else:
+        cli_arg_list.append(f"--hash={hash}")
+    args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0

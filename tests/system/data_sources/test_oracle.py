@@ -726,10 +726,23 @@ def test_row_validation_identifiers():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_bool_to_postgres():
-    """Test row validation on a table with bool data types in the target, Oracle does not have a bool type."""
+def test_row_validation_hash_bool_to_postgres():
+    """Test row validation --hash on a table with bool data types in the target, Oracle does not have a bool type."""
     row_validation_test(
         tables="pso_data_validator.dvt_bool",
         tc="pg-conn",
         hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_bool_to_postgres():
+    """Test row validation -comp-fields on a table with bool data types in the target, Oracle does not have a bool type."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="pg-conn",
+        comp_fields="col_bool_dec,col_bool_int,col_bool_ch1,col_bool_chy",
     )

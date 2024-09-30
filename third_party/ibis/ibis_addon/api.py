@@ -48,6 +48,10 @@ def cast(self, target_type: dt.DataType) -> Value:
         else:
             # Allow a standard Cast to kick in.
             target_type = "string"
+    elif target_type == "bool" and self.type().is_string():
+        # Comparing string value with boolean.
+        op = ops.SimpleCase(self, ("0", "1", "N", "Y"), (0, 1, 0, 1), None)
+        return op.to_expr()
 
     op = ops.Cast(self, to=target_type)
     if same_type(op.to, self.type()) and not op.to.is_timestamp():
