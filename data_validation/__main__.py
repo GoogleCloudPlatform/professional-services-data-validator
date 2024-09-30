@@ -262,7 +262,10 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         and args.custom_query_type == consts.COLUMN_VALIDATION.lower()
     ):
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        if args.grouped_columns is not None:
+        if (
+            config_manager.validation_type == consts.COLUMN_VALIDATION
+            and args.grouped_columns is not None # grouped_columns not supported in custom queries - at least now.
+        ):
             grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
             config_manager.append_query_groups(
                 config_manager.build_column_configs(grouped_columns)
