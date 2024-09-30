@@ -590,6 +590,21 @@ class ConfigManager(object):
         self.append_calculated_fields(calculated_configs)
         return comp_fields_with_aliases
 
+    def _comp_field_cast(
+        self, source_table_schema: dict, target_table_schema: dict, field: str
+    ) -> str:
+        # Need to check with .get below because sometimes field is a computed name
+        # like "concat__all" which is not in the real table.
+        if (
+            source_table_schema.get(field, None)
+            and isinstance(source_table_schema[field], dt.Boolean)
+        ) or (
+            target_table_schema.get(field, None)
+            and isinstance(target_table_schema[field], dt.Boolean)
+        ):
+            return "bool"
+        return None
+
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
@@ -601,11 +616,9 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for field in fields:
-            cast_type = None
-            if isinstance(source_table_schema[field], dt.Boolean) or isinstance(
-                target_table_schema[field], dt.Boolean
-            ):
-                cast_type = "bool"
+            cast_type = self._comp_field_cast(
+                source_table_schema, target_table_schema, field
+            )
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns.get(
                     field.casefold(), field
