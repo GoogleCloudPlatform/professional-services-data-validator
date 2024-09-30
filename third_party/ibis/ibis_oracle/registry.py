@@ -149,8 +149,8 @@ def _cast(t, op):
         return sa.literal_column(
             (
                 "CASE  "
-                f"WHEN {sa_arg} IN ('0','F') THEN 0 "
-                f"WHEN {sa_arg} IN ('1','T') THEN 1 "
+                f"WHEN {sa_arg} IN ('0','N') THEN 0 "
+                f"WHEN {sa_arg} IN ('1','Y') THEN 1 "
                 "ELSE TO_NUMBER(NULL) END"
             )
         )
