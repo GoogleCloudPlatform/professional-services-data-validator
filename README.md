@@ -87,7 +87,12 @@ over all columns ('*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` or `--wildcard-include-timestamp` flags are present.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate column
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -95,7 +100,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Target connection details
                         See: *Connections* section for each data source
   --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
-                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Comma separated list of tables in the form schema.table=target_schema.target_table. Or shorthand schema.* for all tables.
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
   [--grouped-columns or -gc GROUPED_COLUMNS]
@@ -136,6 +141,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate column
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
+
 ```
 
 The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
@@ -166,7 +172,12 @@ Under the hood, row validation uses
 apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML or JSON config file to customize your row validation.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate row
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -224,8 +235,12 @@ The command generates and stores multiple YAML validations each representing a c
 The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
-
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  generate-table-partitions
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -247,7 +262,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         Directory Path to store YAML Config Files
                         GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
-  --partition-num INT, -pn INT 
+  --partition-num INT, -pn INT
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
@@ -255,7 +270,7 @@ data-validation (--verbose or -v) (--log-level or -ll) generate-table-partitions
                         See: *Validation Reports* section
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
-  [--parts-per-file INT], [-ppf INT] 
+  [--parts-per-file INT], [-ppf INT]
                         Number of partitions in a yaml file, default value 1.
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
@@ -280,7 +295,12 @@ types between source and target.
 Note: An exclamation point before a data type (`!string`) signifies the column is non-nullable or required.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate schema
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate schema
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -288,7 +308,7 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
                         Target connection details
                         See: *Connections* section for each data source
   --tables-list or -tbls SOURCE_SCHEMA.SOURCE_TABLE=TARGET_SCHEMA.TARGET_TABLE
-                        Comma separated list of tables in the form schema.table=target_schema.target_table
+                        Comma separated list of tables in the form schema.table=target_schema.target_table. Or shorthand schema.* for all tables.
                         Target schema name and table name are optional.
                         e.g.: 'bigquery-public-data.new_york_citibike.citibike_trips'
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE]
@@ -321,7 +341,12 @@ data-validation (--verbose or -v) (--log-level or -ll) validate schema
 Below is the command syntax for custom query column validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query column
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate custom-query column
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -383,7 +408,12 @@ in the SELECT statement of both source_query.sql and target_query.sql.  See *Pri
 Below is the command syntax for custom query row validations.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate custom-query row
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate custom-query row
   --source-conn or -sc SOURCE_CONN
                         Source connection details
                         See: *Data Source Configurations* section for each data source
@@ -441,7 +471,12 @@ The `validate` command takes a `--dry-run` command line flag that prints source
 and target SQL to stdout as JSON in lieu of performing a validation:
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) validate
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  validate
   [--dry-run or -dr]    Prints source and target SQL to stdout in lieu of performing a validation.
 ```
 
@@ -472,7 +507,12 @@ GCS and local paths.
 You can use the `data-validation configs` command to run and view YAMLs.
 
 ```
-data-validation (--verbose or -v) (--log-level or -ll) configs run
+data-validation
+  [--verbose or -v ]
+                        Verbose logging
+  [--log-level or -ll]
+                        Log Level to be assigned. Supported levels are (DEBUG,INFO,WARNING,ERROR,CRITICAL). Defaults to INFO.
+  configs run
   [--config-file or -c CONFIG_FILE]
                         Path to YAML config file to run. Supports local and GCS paths.
   [--config-dir or -cdir CONFIG_DIR]

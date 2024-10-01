@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sqlalchemy as sa
+from sqlalchemy.dialects.oracle.base import OracleIdentifierPreparer
+from sqlalchemy.dialects.oracle.cx_oracle import OracleDialect_cx_oracle
 import re
 
 import ibis.expr.datatypes as dt
@@ -19,6 +21,49 @@ from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_oracle.compiler import OracleCompiler
 from third_party.ibis.ibis_oracle.datatypes import _get_type
+
+
+def _ora_denormalize_name(self, name):
+    """Oracle specific version of sqlalchemy/engine/default.py.denormalize_name()
+
+    The original function upper cases most identifiers unless they require quoting
+    before use in SQL. This includes when non standard characters are in play.
+
+    This prevents dictionary queries from succeeding. Really, the presence of special
+    characters should be irrelevant to upper/lower case decisions.
+
+    This method uppercases identifiers that include special characters, otherwise it
+    follows the original code path.
+    """
+    if name is None:
+        return None
+
+    if self.identifier_preparer._requires_quotes_illegal_chars(name):
+        name = name.upper()
+    return super(OracleDialect_cx_oracle, self).denormalize_name(name)
+
+
+OracleDialect_cx_oracle.denormalize_name = _ora_denormalize_name
+
+
+class DVTOracleIdentifierPreparer(OracleIdentifierPreparer):
+    def quote_identifier(self, value):
+        """Quote an identifier.
+
+        This method adds extra path of upper casing the identifier if it is being quoted
+        due to special characters. Otherwise we follow the original path.
+
+        This is because all names are normalised to lower case in DVT which is fine because
+        unquoted table name are upper cased automatically by Oracle. If we add quotes due to
+        special characters then we lose the auto uppercase operation. This method forces it.
+        """
+        if self._requires_quotes_illegal_chars(value):
+            return super().quote_identifier(value.upper())
+        else:
+            return super().quote_identifier(value)
+
+
+OracleDialect_cx_oracle.preparer = DVTOracleIdentifierPreparer
 
 
 class Backend(BaseAlchemyBackend):

@@ -62,4 +62,4 @@ class PartitionRowBuilder(object):
 
     def get_count(self) -> int:
         """Return a count of rows of primary keys - they should be all distinct"""
-        return self.query[self.primary_keys].count().execute()
+        return self.query[self.primary_keys].count().force_cast("int64").execute()

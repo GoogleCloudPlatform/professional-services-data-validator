@@ -132,13 +132,13 @@ INSERT INTO udf.dvt_time_Table VALUES (3, '04:01:07-04:00');
 DROP TABLE udf.dvt_char_id;
 CREATE TABLE udf.dvt_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
-,   other_data  VARCHAR(100)
+,   other_data  CHAR(100)
 );
 COMMENT ON TABLE udf.dvt_char_id IS 'Integration test table used to test CHAR pk matching.';
-INSERT INTO udf.dvt_char_id VALUES ('DVT1', 'Row 1');
-INSERT INTO udf.dvt_char_id VALUES ('DVT2', 'Row 2');
-INSERT INTO udf.dvt_char_id VALUES ('DVT3', 'Row 3');
-INSERT INTO udf.dvt_char_id VALUES ('DVT4', 'Row 4');
+INSERT INTO udf.dvt_char_id VALUES ('DVT1', 'Row 1	  ');
+INSERT INTO udf.dvt_char_id VALUES ('DVT2', 'Row 2  	');
+INSERT INTO udf.dvt_char_id VALUES ('DVT3', 'Row 3  ');
+INSERT INTO udf.dvt_char_id VALUES ('DVT4', 'Row 4  	  ');
 INSERT INTO udf.dvt_char_id VALUES ('DVT5', 'Row 5');
 
 DROP TABLE udf.test_generate_partitions;
@@ -632,3 +632,19 @@ CREATE TABLE udf.dvt_many_cols
 );
 COMMENT ON TABLE udf.dvt_many_cols AS 'Integration test table used to test validating many columns.';
 INSERT INTO udf.dvt_many_cols (id) VALUES (1);
+
+DROP TABLE udf."DVT-IDENTIFIER$_#";
+CREATE TABLE udf."DVT-IDENTIFIER$_#"
+(   id            INTEGER NOT NULL PRIMARY KEY
+,   "COL#HASH"    VARCHAR(10)
+,   "COL$DOLLAR"  VARCHAR(10)
+,   "COL-HYPHEN"  VARCHAR(10)
+,   "COL@AT"      VARCHAR(10)
+,   other_data    VARCHAR(100)
+);
+COMMENT ON TABLE udf."DVT-IDENTIFIER$_#" IS 'Integration test table used to test non-standard characters in identifiers.';
+INSERT INTO udf."DVT-IDENTIFIER$_#" VALUES (1,'#','$','-','@','Row 1');
+INSERT INTO udf."DVT-IDENTIFIER$_#" VALUES (2,'#','$','-','@','Row 2');
+INSERT INTO udf."DVT-IDENTIFIER$_#" VALUES (3,'#','$','-','@','Row 3');
+INSERT INTO udf."DVT-IDENTIFIER$_#" VALUES (4,'#','$','-','@','Row 4');
+INSERT INTO udf."DVT-IDENTIFIER$_#" VALUES (5,'#','$','-','@','Row 5');

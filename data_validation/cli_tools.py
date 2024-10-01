@@ -52,12 +52,14 @@ import sys
 import uuid
 import os
 import math
+import re
 from argparse import Namespace
 from typing import Dict, List, Optional
 from yaml import Dumper, Loader, dump, load
 
-from data_validation import clients, consts, state_manager, gcs_helper
+from data_validation import clients, consts, find_tables, state_manager, gcs_helper
 from data_validation.validation_builder import list_to_sublists
+
 
 CONNECTION_SOURCE_FIELDS = {
     "BigQuery": [
@@ -645,7 +647,7 @@ def _configure_column_parser(column_parser):
         "-tbls",
         default=None,
         required=True,
-        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+        help="Comma separated tables list in the form 'schema.table=target_schema.target_table'. Or shorthand schema.* for all tables.",
     )
     _add_common_arguments(optional_arguments, required_arguments)
 
@@ -1064,26 +1066,33 @@ def get_labels(arg_labels):
     return labels
 
 
-def get_filters(filter_value):
-    """Returns parsed JSON from filter file. Backwards compatible for JSON input.
-
-    filter_value (str): Filter argument specified.
+def get_filters(filter_value: str) -> List[Dict]:
+    """Returns filters for source and target from --filters argument.
+    A filter is the condition that is used in a SQL WHERE clause.
+    If only one filter is specified, it applies to both source and target
+    For a doc on regular expression for filters see docs/internal/filters_regex.md
     """
+
+    single_filter = r"([^':]*('[^']*')*)*"
+    double_filter = (
+        r"(?P<source>" + single_filter + r"):(?P<target>" + single_filter + r")"
+    )
     filter_config = []
-    filter_vals = filter_value.split(":")
-    if len(filter_vals) == 1:
+    if result := re.fullmatch(single_filter, filter_value):
+        if result.group(0) == "":
+            raise ValueError("Empty string not allowed in filter")
         filter_dict = {
             "type": "custom",
-            "source": filter_vals[0],
-            "target": filter_vals[0],
+            "source": result.group(0),
+            "target": result.group(0),
         }
-    elif len(filter_vals) == 2:
-        if not filter_vals[1]:
-            raise ValueError("Please provide valid target filter.")
+    elif result := re.fullmatch(double_filter, filter_value):
+        if result.group("source") == "" or result.group("target") == "":
+            raise ValueError("Empty string not allowed in filter")
         filter_dict = {
             "type": "custom",
-            "source": filter_vals[0],
-            "target": filter_vals[1],
+            "source": result.group("source"),
+            "target": result.group("target"),
         }
     else:
         raise ValueError("Unable to parse filter arguments.")
@@ -1151,7 +1160,7 @@ def get_tables_list(arg_tables, default_value=None, is_filesystem=False):
 
     tables_list = []
     tables_mapping = list(csv.reader([arg_tables]))[0]
-    source_schema_required = False if is_filesystem else True
+    source_schema_required = bool(not is_filesystem)
 
     for mapping in tables_mapping:
         tables_map = mapping.split("=")
@@ -1388,6 +1397,10 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         filter_status = None
 
     pre_build_configs_list = []
+    if config_type != consts.CUSTOM_QUERY:
+        tables_list = find_tables.expand_tables_of_asterisk(
+            tables_list, source_client, target_client
+        )
     for table_obj in tables_list:
         pre_build_configs = {
             "config_type": config_type,
