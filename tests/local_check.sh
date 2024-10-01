@@ -18,7 +18,7 @@
 # Step 2: Execute this script only after the virtual env activation
 
 # install/update all necessary libraries
-pip install pytest pytest-cov pyfakefs==4.6.2 freezegun black==22.3.0 flake8 
+pip install pytest pytest-cov pyfakefs==5.6.0 freezegun black==22.3.0 flake8 
 
 # check unit tests and coverage
 echo "Start TEST COVERAGE"

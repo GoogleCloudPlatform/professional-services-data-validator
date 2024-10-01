@@ -65,7 +65,7 @@ def test_schema_validation_core_types():
             "schema",
             "-sc=mock-conn",
             "-tc=mock-conn",
-            "-tbls=dvt_core_types",
+            "-tbls=db2inst1.dvt_core_types",
             "--filter-status=fail",
         ]
     )
@@ -87,15 +87,17 @@ def test_schema_validation_core_types_to_bigquery():
             "schema",
             "-sc=db2-conn",
             "-tc=bq-conn",
-            "-tbls=dvt_core_types=pso_data_validator.dvt_core_types",
+            "-tbls=db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
             "--filter-status=fail",
             "--exclusion-columns=id",
-            # (
-            #     # Integer Oracle NUMBERS go to BigQuery INT64.
-            #     "--allow-list=decimal(2,0):int64,decimal(4,0):int64,decimal(9,0):int64,decimal(18,0):int64,"
-            #     # BigQuery does not have a float32 type.
-            #     "float32:float64"
-            # ),
+            (
+                # SMALLINT, INTEGER is equivalent to BigQuery INT64.
+                "--allow-list=int16:int64,int32:int64,"
+                # BigQuery does not have decimal, float32 types.
+                "decimal:float64,float32:float64,"
+                # Unable to create col_tstz with time zone on our DB2 database therefore test data is adjusted. 
+                "timestamp:timestamp('UTC'),"
+            ),
         ]
     )
     df = run_test_from_cli_args(args)
