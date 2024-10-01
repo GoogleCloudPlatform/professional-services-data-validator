@@ -143,7 +143,7 @@ def test_schema_validation_core_types_to_bigquery():
         tc="bq-conn",
         allow_list=(
             # All Hive integers go to BigQuery INT64.
-            "--allow-list=int8:int64,int16:int64,int32:int64,"
+            "int8:int64,int16:int64,int32:int64,"
             # Hive does not have a time zoned
             "timestamp:timestamp('UTC'),"
             # BigQuery does not have a float32 type.
@@ -277,8 +277,8 @@ def test_row_validation_core_types_to_bigquery():
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
-        filters="--filters=id>0 AND col_int8>0",
-        hash="--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+        filters="id>0 AND col_int8>0",
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
     )
 
 
