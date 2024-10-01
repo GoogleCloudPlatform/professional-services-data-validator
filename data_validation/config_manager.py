@@ -551,6 +551,8 @@ class ConfigManager(object):
         """
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
+        source_table_schema = {k: v for k, v in source_table.schema().items()}
+        target_table_schema = {k: v for k, v in target_table.schema().items()}
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -569,7 +571,11 @@ class ConfigManager(object):
                 casefold_target_columns[field.casefold()]
             ].type()
 
-            if source_ibis_type.is_string() or target_ibis_type.is_string():
+            if (
+                source_ibis_type.is_string() or target_ibis_type.is_string()
+            ) and self._comp_field_cast(
+                source_table_schema, target_table_schema, field
+            ) != "bool":
                 logging.info(
                     f"Adding rtrim() to string comparison field `{field.casefold()}` due to Teradata CHAR padding."
                 )
