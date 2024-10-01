@@ -574,7 +574,10 @@ class ConfigManager(object):
             if (
                 source_ibis_type.is_string() or target_ibis_type.is_string()
             ) and self._comp_field_cast(
-                source_table_schema, target_table_schema, field
+                # Do not add rstrip if the column is a bool hiding in a string.
+                source_table_schema,
+                target_table_schema,
+                field,
             ) != "bool":
                 logging.info(
                     f"Adding rtrim() to string comparison field `{field.casefold()}` due to Teradata CHAR padding."
