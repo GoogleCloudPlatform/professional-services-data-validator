@@ -593,7 +593,7 @@ class ConfigManager(object):
     def _comp_field_cast(
         self, source_table_schema: dict, target_table_schema: dict, field: str
     ) -> str:
-        # Need to check with .get below because sometimes field is a computed name
+        # We check with .get() below because sometimes field is a computed name
         # like "concat__all" which is not in the real table.
         if (
             source_table_schema.get(field, None)
