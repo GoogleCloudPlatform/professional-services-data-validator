@@ -755,7 +755,7 @@ def test_row_validation_hash_bool_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_comp_fields_bool_to_postgres():
+def test_row_validation_comp_fields_bool_to_bigquery():
     """Test row validation -comp-fields on a table with bool data types in the target, Teradata does not have a bool type."""
     row_validation_test(
         tables="udf.dvt_bool=pso_data_validator.dvt_bool",
