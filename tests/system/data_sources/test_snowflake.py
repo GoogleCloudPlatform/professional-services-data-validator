@@ -26,7 +26,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import generate_partitions_test
+from tests.system.data_sources.common_functions import partition_table_test, partition_query_test
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
@@ -108,12 +108,17 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_snowflake_generate_table_partitions():
+def test_generate_partitions(tmp_path):
     """Test generate table partitions on Snowflake"""
-    generate_partitions_test(
+    partition_table_test(
         EXPECTED_PARTITION_FILTER,
         tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
     )
+    # partition_query_test(
+    #     EXPECTED_PARTITION_FILTER,
+    #     tmp_path,
+    #     tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
+    # )
 
 
 @mock.patch(

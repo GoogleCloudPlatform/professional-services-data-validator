@@ -15,6 +15,7 @@
 import json
 import string
 from typing import TYPE_CHECKING
+import pytest
 
 from data_validation import __main__ as main
 from data_validation import consts, data_validation
@@ -277,7 +278,7 @@ def row_validation_test(
     assert len(df) == 0
 
 
-def generate_partitions_test(
+def partition_table_test(
     expected_filter: str,
     pk="course_id,quarter_id,student_id",
     tables="pso_data_validator.test_generate_partitions",
@@ -306,6 +307,55 @@ def generate_partitions_test(
         ]
     )
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_filters = partition_builder._get_partition_key_filters()
+    yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
+
+    assert len(partition_filters) == 1  # only one pair of tables
+    # Number of partitions is as requested - assume table rows > partitions requested
+    assert len(partition_filters[0][0]) == partition_builder.args.partition_num
+    assert partition_filters[0] == expected_filter
+
+
+def partition_query_test(
+    expected_filter: str,
+    tmp_path,
+    pk="course_id,quarter_id,student_id",
+    tables="pso_data_validator.test_generate_partitions",
+    filters="quarter_id != 1111",
+):
+    """Test generate table partitions for custom queries. Usually only the partition_filter is different
+    because of the differences in SQL between the databases. Some databases have different table names,
+    Teradata has a different syntax for inequality and Postgres has different column names/types for primary keys.
+    The unit tests in tests/unit/test_partition_builder.py check if the filters are split into configs and
+    stored in the filesystem correctly.
+    """
+    tables_list = tables.split('=')
+    source_table_name= tables_list[0]
+    target_table_name= tables_list[1] if len(tables_list) == 2 else tables_list[0]
+    target_query = f'select * from {target_table_name}'
+    source_query = f'select * from {source_table_name}'
+    source_query_file = tmp_path / 'source_query.sql'
+    source_query_file.write_text(source_query)
+
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "generate-table-partitions",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            f"-sqf={str(source_query_file)}",
+            f"-tq={target_query}",
+            f"-pk={pk}",
+            "-hash=*",
+            "-cdir=/home/users/yaml",
+            "-pn=9",
+            "-ppf=5",
+            f"-filters={filters}",
+        ]
+    )
+    setattr(args, "custom_query_type", "row")
+    config_managers = main.build_config_managers_from_args(args, consts.CUSTOM_QUERY)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
     yaml_configs_list = partition_builder._add_partition_filters(partition_filters)

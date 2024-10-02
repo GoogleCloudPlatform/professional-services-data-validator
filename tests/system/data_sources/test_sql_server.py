@@ -28,9 +28,10 @@ from tests.system.data_sources.common_functions import (
     null_not_null_assertions,
     row_validation_many_columns_test,
     run_test_from_cli_args,
+    partition_table_test, partition_query_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import generate_partitions_test
+from tests.system.data_sources.common_functions import partition_table_test
 
 
 # Local testing requires the Cloud SQL Proxy.
@@ -238,10 +239,13 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_sqlserver_generate_table_partitions(cloud_sql):
-    """Test generate table partitions on sqlserver"""
-    generate_partitions_test(
+def test_generate_partitions(cloud_sql, tmp_path):
+    """Test generate table partitions first table then custom query on sqlserver"""
+    partition_table_test(
         EXPECTED_PARTITION_FILTER, tables="dbo.test_generate_partitions"
+    )
+    partition_query_test(
+        EXPECTED_PARTITION_FILTER, tmp_path, tables="dbo.test_generate_partitions"
     )
 
 
