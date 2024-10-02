@@ -30,7 +30,10 @@ from tests.system.data_sources.common_functions import (
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
-from tests.system.data_sources.common_functions import partition_table_test, partition_query_test
+from tests.system.data_sources.common_functions import (
+    partition_table_test,
+    partition_query_test,
+)
 
 
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")

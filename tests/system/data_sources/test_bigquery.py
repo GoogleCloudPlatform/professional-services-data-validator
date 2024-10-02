@@ -30,7 +30,8 @@ from data_validation import (
 from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 from tests.system.data_sources.common_functions import (
-    partition_table_test,partition_query_test,
+    partition_table_test,
+    partition_query_test,
     row_validation_many_columns_test,
     run_test_from_cli_args,
 )
@@ -1157,6 +1158,7 @@ def test_generate_partitions(mock_conn, tmp_path):
     """Test generate partitions on BigQuery, first on table, then on custom query"""
     partition_table_test(EXPECTED_PARTITION_FILTER)
     partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",

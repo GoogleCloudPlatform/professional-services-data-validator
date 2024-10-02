@@ -15,7 +15,6 @@
 import json
 import string
 from typing import TYPE_CHECKING
-import pytest
 
 from data_validation import __main__ as main
 from data_validation import consts, data_validation
@@ -309,7 +308,6 @@ def partition_table_test(
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
-    yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
 
     assert len(partition_filters) == 1  # only one pair of tables
     # Number of partitions is as requested - assume table rows > partitions requested
@@ -330,12 +328,12 @@ def partition_query_test(
     The unit tests in tests/unit/test_partition_builder.py check if the filters are split into configs and
     stored in the filesystem correctly.
     """
-    tables_list = tables.split('=')
-    source_table_name= tables_list[0]
-    target_table_name= tables_list[1] if len(tables_list) == 2 else tables_list[0]
-    target_query = f'select * from {target_table_name}'
-    source_query = f'select * from {source_table_name}'
-    source_query_file = tmp_path / 'source_query.sql'
+    tables_list = tables.split("=")
+    source_table_name = tables_list[0]
+    target_table_name = tables_list[1] if len(tables_list) == 2 else tables_list[0]
+    target_query = f"select * from {target_table_name}"
+    source_query = f"select * from {source_table_name}"
+    source_query_file = tmp_path / "source_query.sql"
     source_query_file.write_text(source_query)
 
     parser = cli_tools.configure_arg_parser()
@@ -358,7 +356,6 @@ def partition_query_test(
     config_managers = main.build_config_managers_from_args(args, consts.CUSTOM_QUERY)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
-    yaml_configs_list = partition_builder._add_partition_filters(partition_filters)
 
     assert len(partition_filters) == 1  # only one pair of tables
     # Number of partitions is as requested - assume table rows > partitions requested

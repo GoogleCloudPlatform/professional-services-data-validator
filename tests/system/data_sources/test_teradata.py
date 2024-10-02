@@ -24,7 +24,8 @@ from tests.system.data_sources.common_functions import (
     null_not_null_assertions,
     row_validation_many_columns_test,
     run_test_from_cli_args,
-    partition_table_test,partition_query_test,
+    partition_table_test,
+    partition_query_test,
     row_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -419,6 +420,7 @@ def test_generate_partitions(tmp_path):
         pk="course_id,quarter_id,recd_timestamp,registration_date,grade",
         filters="course_id LIKE 'ALG%'",
     )
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",

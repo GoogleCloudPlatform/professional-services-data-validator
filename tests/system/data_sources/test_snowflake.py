@@ -26,7 +26,10 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import partition_table_test, partition_query_test
+from tests.system.data_sources.common_functions import (
+    partition_table_test,
+    partition_query_test,
+)
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
@@ -103,6 +106,31 @@ EXPECTED_PARTITION_FILTER = [
     ],
 ]
 
+QUERY_PARTITION_FILTER = [
+    [
+        ' "quarter_id" <> 1111 AND ( "course_id" < \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" < 2 OR "quarter_id" = 2 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" > 2 OR "quarter_id" = 2 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" < 3 OR "quarter_id" = 3 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" > 3 OR "quarter_id" = 3 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" < 1 OR "quarter_id" = 1 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" > 1 OR "quarter_id" = 1 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" < 2 OR "quarter_id" = 2 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" > 2 OR "quarter_id" = 2 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" < 3 OR "quarter_id" = 3 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" > 3 OR "quarter_id" = 3 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" < 1 OR "quarter_id" = 1 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" > 1 OR "quarter_id" = 1 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" < 2 OR "quarter_id" = 2 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" > 2 OR "quarter_id" = 2 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" < 3 OR "quarter_id" = 3 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" > 3 OR "quarter_id" = 3 AND "student_id" >= 1234 ) )',
+    ],
+    [
+        ' "quarter_id" <> 1111 AND ( "course_id" < \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" < 2 OR "quarter_id" = 2 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" > 2 OR "quarter_id" = 2 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" < 3 OR "quarter_id" = 3 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'ALG001\' OR "course_id" = \'ALG001\' AND ( "quarter_id" > 3 OR "quarter_id" = 3 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" < 1 OR "quarter_id" = 1 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" > 1 OR "quarter_id" = 1 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" < 2 OR "quarter_id" = 2 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" > 2 OR "quarter_id" = 2 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" < 3 OR "quarter_id" = 3 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'GEO001\' OR "course_id" = \'GEO001\' AND ( "quarter_id" > 3 OR "quarter_id" = 3 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" < 1 OR "quarter_id" = 1 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" > 1 OR "quarter_id" = 1 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" < 2 OR "quarter_id" = 2 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" > 2 OR "quarter_id" = 2 AND "student_id" >= 1234 ) ) AND ( "course_id" < \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" < 3 OR "quarter_id" = 3 AND "student_id" < 1234 ) )',
+        ' "quarter_id" <> 1111 AND ( "course_id" > \'TRI001\' OR "course_id" = \'TRI001\' AND ( "quarter_id" > 3 OR "quarter_id" = 3 AND "student_id" >= 1234 ) )',
+    ],
+]
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
@@ -114,11 +142,12 @@ def test_generate_partitions(tmp_path):
         EXPECTED_PARTITION_FILTER,
         tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
     )
-    # partition_query_test(
-    #     EXPECTED_PARTITION_FILTER,
-    #     tmp_path,
-    #     tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
-    # gi)
+    partition_query_test(
+        QUERY_PARTITION_FILTER,
+        tmp_path,
+        tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
+        filters='"quarter_id" <> 1111',
+    )
 
 
 @mock.patch(
