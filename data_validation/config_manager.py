@@ -555,6 +555,8 @@ class ConfigManager(object):
         """
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
+        source_table_schema = {k: v for k, v in source_table.schema().items()}
+        target_table_schema = {k: v for k, v in target_table.schema().items()}
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -573,7 +575,14 @@ class ConfigManager(object):
                 casefold_target_columns[field.casefold()]
             ].type()
 
-            if source_ibis_type.is_string() or target_ibis_type.is_string():
+            if (
+                source_ibis_type.is_string() or target_ibis_type.is_string()
+            ) and self._comp_field_cast(
+                # Do not add rstrip if the column is a bool hiding in a string.
+                source_table_schema,
+                target_table_schema,
+                field,
+            ) != "bool":
                 logging.info(
                     f"Adding rtrim() to string comparison field `{field.casefold()}` due to Teradata CHAR padding."
                 )
@@ -594,15 +603,35 @@ class ConfigManager(object):
         self.append_calculated_fields(calculated_configs)
         return comp_fields_with_aliases
 
+    def _comp_field_cast(
+        self, source_table_schema: dict, target_table_schema: dict, field: str
+    ) -> str:
+        # We check with .get() below because sometimes field is a computed name
+        # like "concat__all" which is not in the real table.
+        if (
+            source_table_schema.get(field, None)
+            and isinstance(source_table_schema[field], dt.Boolean)
+        ) or (
+            target_table_schema.get(field, None)
+            and isinstance(target_table_schema[field], dt.Boolean)
+        ):
+            return "bool"
+        return None
+
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
+        source_table_schema = {k: v for k, v in source_table.schema().items()}
+        target_table_schema = {k: v for k, v in target_table.schema().items()}
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for field in fields:
+            cast_type = self._comp_field_cast(
+                source_table_schema, target_table_schema, field
+            )
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns.get(
                     field.casefold(), field
@@ -611,7 +640,7 @@ class ConfigManager(object):
                     field.casefold(), field
                 ),
                 consts.CONFIG_FIELD_ALIAS: field,
-                consts.CONFIG_CAST: None,
+                consts.CONFIG_CAST: cast_type,
             }
             field_configs.append(column_config)
         return field_configs
@@ -809,9 +838,15 @@ class ConfigManager(object):
         """Return list of aggregate objects of given agg_type."""
 
         def require_pre_agg_calc_field(
-            column_type: str, agg_type: str, cast_to_bigint: bool
+            column_type: str,
+            target_column_type: str,
+            agg_type: str,
+            cast_to_bigint: bool,
         ) -> bool:
-            if column_type in ["string", "!string"]:
+            if column_type in ["string", "!string"] and target_column_type in [
+                "string",
+                "!string",
+            ]:
                 return True
             elif column_type in ["binary", "!binary"]:
                 if agg_type == "count":
@@ -881,6 +916,10 @@ class ConfigManager(object):
                 casefold_source_columns[column]
             ].type()
             column_type = str(source_column_ibis_type).split("(")[0]
+            target_column_ibis_type = target_table[
+                casefold_target_columns[column]
+            ].type()
+            target_column_type = str(target_column_ibis_type).split("(")[0]
 
             if column not in allowlist_columns:
                 continue
@@ -889,18 +928,19 @@ class ConfigManager(object):
                     f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
-            elif supported_types and column_type not in supported_types:
+            elif supported_types and (
+                column_type not in supported_types
+                or target_column_type not in supported_types
+            ):
                 if self.verbose:
                     logging.info(
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
                     )
                 continue
 
-            target_column_ibis_type = target_table[
-                casefold_target_columns[column]
-            ].type()
-
-            if require_pre_agg_calc_field(column_type, agg_type, cast_to_bigint):
+            if require_pre_agg_calc_field(
+                column_type, target_column_type, agg_type, cast_to_bigint
+            ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
                     casefold_target_columns[column],
@@ -946,6 +986,8 @@ class ConfigManager(object):
 
         if calc_type == consts.CONFIG_CUSTOM and custom_params:
             calculated_config.update(custom_params)
+        elif calc_type == consts.CONFIG_CAST and custom_params:
+            calculated_config[consts.CONFIG_DEFAULT_CAST] = custom_params
 
         return calculated_config
 
@@ -1010,6 +1052,11 @@ class ConfigManager(object):
                     ],
                 }
             }
+            col_config.update(custom_params)
+        elif isinstance(source_table_schema[source_column], dt.Boolean) or isinstance(
+            target_table_schema[target_column], dt.Boolean
+        ):
+            custom_params = {"calc_params": consts.CONFIG_CAST_BOOL_STRING}
             col_config.update(custom_params)
 
         return col_config
