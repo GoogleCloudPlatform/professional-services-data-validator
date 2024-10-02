@@ -118,7 +118,7 @@ def test_generate_partitions(tmp_path):
     #     EXPECTED_PARTITION_FILTER,
     #     tmp_path,
     #     tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS",
-    # )
+    # gi)
 
 
 @mock.patch(
