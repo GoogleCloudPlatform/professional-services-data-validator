@@ -22,7 +22,6 @@ from data_validation import (
     data_validation,
     consts,
     find_tables,
-    __main__ as main,
 )
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
@@ -35,6 +34,7 @@ from tests.system.data_sources.common_functions import (
     row_validation_many_columns_test,
     run_test_from_cli_args,
     generate_partitions_test,
+    schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -559,24 +559,7 @@ def test_schema_validation_pg_types():
     This used to use the dvt_core_types table but that is covered by subsequent BigQuery
     testing therefore this test can cover off an extended list of data types.
     """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_pg_types",
-            "--filter-status=fail",
-        ]
-    )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    schema_validation_test(tables="pso_data_validator.dvt_pg_types", tc="mock-conn")
 
 
 @mock.patch(
@@ -584,31 +567,16 @@ def test_schema_validation_pg_types():
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=pg-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--exclusion-columns=id",
-            "--filter-status=fail",
-            (
-                # PostgreSQL integers go to BigQuery INT64.
-                "--allow-list=int16:int64,int32:int64,"
-                # BigQuery does not have a float32 type.
-                "float32:float64"
-            ),
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        allow_list=(
+            # PostgreSQL integers go to BigQuery INT64.
+            "int16:int64,int32:int64,"
+            # BigQuery does not have a float32 type.
+            "float32:float64"
+        ),
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -629,6 +597,15 @@ def test_schema_validation_not_null_vs_nullable():
     )
     df = run_test_from_cli_args(args)
     null_not_null_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_bool():
+    """PostgreSQL to PostgreSQL dvt_bool schema validation"""
+    schema_validation_test(tables="pso_data_validator.dvt_bool", tc="mock-conn")
 
 
 @mock.patch(
@@ -903,20 +880,10 @@ def test_custom_query_row_validation_many_columns():
 )
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt-identifier$_#",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(

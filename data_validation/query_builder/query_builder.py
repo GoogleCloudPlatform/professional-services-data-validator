@@ -294,6 +294,11 @@ class CalculatedField(object):
         self.cast = cast
         self.kwargs = kwargs
 
+    def __repr__(self):
+        return (
+            f"CalculatedField(fields={self.fields}, expr={self.expr}, cast={self.cast})"
+        )
+
     @staticmethod
     def concat(config, fields):
         if config.get("default_concat_separator") is None:

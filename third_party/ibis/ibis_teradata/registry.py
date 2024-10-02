@@ -53,6 +53,35 @@ def teradata_cast_string_to_binary(compiled_arg, from_, to):
     return "TO_BYTES({}, 'base16')".format(compiled_arg)
 
 
+@teradata_cast.register(str, dt.String, dt.Boolean)
+def teradata_cast_string_to_bool(compiled_arg, from_, to):
+    return (
+        "CASE  "
+        f"WHEN {compiled_arg} IN ('0','N') THEN 0 "
+        f"WHEN {compiled_arg} IN ('1','Y') THEN 1 "
+        "ELSE TO_NUMBER(NULL) END"
+    )
+
+
+def _teradata_cast_number_to_bool(compiled_arg, from_, to):
+    return (
+        "CASE  "
+        f"WHEN {compiled_arg} IN (0) THEN 0 "
+        f"WHEN {compiled_arg} IN (1) THEN 1 "
+        "ELSE TO_NUMBER(NULL) END"
+    )
+
+
+@teradata_cast.register(str, dt.Decimal, dt.Boolean)
+def teradata_cast_decimal_to_bool(compiled_arg, from_, to):
+    return _teradata_cast_number_to_bool(compiled_arg, from_, to)
+
+
+@teradata_cast.register(str, dt.Integer, dt.Boolean)
+def teradata_cast_int_to_bool(compiled_arg, from_, to):
+    return _teradata_cast_number_to_bool(compiled_arg, from_, to)
+
+
 @teradata_cast.register(str, dt.Decimal, dt.String)
 def teradata_cast_decimal_to_string(compiled_arg, from_, to):
     """Specialize cast from decimal to string.

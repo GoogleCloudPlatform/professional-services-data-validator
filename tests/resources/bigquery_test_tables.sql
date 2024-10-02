@@ -591,3 +591,14 @@ INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (2,'#','$','-','@','
 INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (3,'#','$','-','@','Row 3');
 INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (4,'#','$','-','@','Row 4');
 INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (5,'#','$','-','@','Row 5');
+
+DROP TABLE `pso_data_validator`.`dvt_bool`;
+CREATE TABLE `pso_data_validator`.`dvt_bool`
+(   id           INT64 NOT NULL
+,   col_bool_dec BOOLEAN
+,   col_bool_int BOOLEAN
+,   col_bool_ch1 BOOLEAN
+,   col_bool_chy BOOLEAN
+) OPTIONS (description='Integration test table used to test boolean data type, especially in non-boolean columns.');
+INSERT INTO `pso_data_validator`.`dvt_bool` VALUES (1,true,true,true,true);
+INSERT INTO `pso_data_validator`.`dvt_bool` VALUES (2,false,false,false,false);
