@@ -140,6 +140,31 @@ EXPECTED_PARTITION_FILTER = [
     ],
 ]
 
+QUERY_PARTITION_FILTER = [
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) )",
+    ],
+    [
+        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
+        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) )",
+    ],
+]
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
@@ -148,7 +173,7 @@ EXPECTED_PARTITION_FILTER = [
 def test_generate_partitions(tmp_path):
     """Test generate table partitions first on table, then custom query on Oracle"""
     partition_table_test(EXPECTED_PARTITION_FILTER)
-    partition_query_test(EXPECTED_PARTITION_FILTER)
+    partition_query_test(QUERY_PARTITION_FILTER, tmp_path)
 
 
 @mock.patch(
