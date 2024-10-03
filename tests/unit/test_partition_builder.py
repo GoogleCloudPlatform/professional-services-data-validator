@@ -48,8 +48,10 @@ TEST_CONN = "{'source_type':'Example'}"
 PARTITION_NUM = 9
 PARTS_PER_FILE = 5
 PARTITIONS_DIR = "test_partitions_dir"
-SOURCE_QUERY = 'select * from `bigquery-public-data.new_york_citibike.citibike_stations`'
-TARGET_QUERY_FILE = 'target_query.sql'
+SOURCE_QUERY = (
+    "select * from `bigquery-public-data.new_york_citibike.citibike_stations`"
+)
+TARGET_QUERY_FILE = "target_query.sql"
 
 TABLE_PART_ARGS = [
     "generate-table-partitions",
@@ -620,7 +622,7 @@ def test_class_object_creation(module_under_test):
 
     args = parser.parse_args(QUERY_PART_ARGS)
     builder = module_under_test.PartitionBuilder(config_managers, args)
-    assert builder.args.primary_keys == 'region_id,station_id'
+    assert builder.args.primary_keys == "region_id,station_id"
     assert builder.args.source_query == SOURCE_QUERY
     assert builder.args.target_query_file == TARGET_QUERY_FILE
 
@@ -653,13 +655,14 @@ def test_add_partition_filters_to_config(module_under_test):
     assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
     assert yaml_configs_list == expected_yaml_configs_list
 
+
 def test_store_yaml_partitions(module_under_test, tmp_path):
     """Store all the Partition YAMLs for a table to specified local directory"""
 
     # Create test partitions directory to store results
     folder_path = tmp_path / PARTITIONS_DIR
     folder_path.mkdir()
-    TABLE_PART_ARGS[TABLE_PART_ARGS.index('-cdir')+1]=str(folder_path)
+    TABLE_PART_ARGS[TABLE_PART_ARGS.index("-cdir") + 1] = str(folder_path)
 
     # Generate dummy YAML configs list
     config_manager = _generate_config_manager("test_table")
@@ -682,6 +685,7 @@ def test_store_yaml_partitions(module_under_test, tmp_path):
     assert "0000.yaml" in partition_dir_contents
     assert "0001.yaml" in partition_dir_contents
 
+
 def test_create_partition_query_yaml(module_under_test):
     """Add partition filters to ConfigManager object, build YAML config list
     and assert that the folder name, number of files and number of validations are what we would expect.
@@ -701,7 +705,7 @@ def test_create_partition_query_yaml(module_under_test):
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     yaml_configs_list = builder._add_partition_filters(master_filter_list)
 
-    assert yaml_configs_list[0]['target_folder_name'].startswith('custom.')
+    assert yaml_configs_list[0]["target_folder_name"].startswith("custom.")
     assert len(yaml_configs_list[0]["yaml_files"]) == 2
     # 5 validations in the first file
     assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
