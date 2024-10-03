@@ -464,7 +464,7 @@ def test_get_filters(test_input, expected):
 )
 def test_get_filters_err(test_input):
     """Test get filters function returns error."""
-    with pytest.raises(ValueError):
+    with pytest.raises(argparse.ArgumentTypeError):
         cli_tools.get_filters(test_input)
 
 
