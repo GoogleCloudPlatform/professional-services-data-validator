@@ -264,7 +264,8 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
         if (
             config_manager.validation_type == consts.COLUMN_VALIDATION
-            and args.grouped_columns is not None # grouped_columns not supported in custom queries - at least now.
+            and args.grouped_columns
+            is not None  # grouped_columns not supported in custom queries - at least now.
         ):
             grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
             config_manager.append_query_groups(

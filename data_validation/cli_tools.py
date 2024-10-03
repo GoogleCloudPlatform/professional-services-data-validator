@@ -1407,7 +1407,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         result_handler_config = None
 
     # Set filter_config and threshold. Not supported in case of schema validation
-    filter_config = getattr(args, "filters",[])
+    filter_config = getattr(args, "filters", [])
     threshold = getattr(args, "threshold", 0.0)
 
     # Get labels
