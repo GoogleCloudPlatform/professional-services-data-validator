@@ -23,7 +23,7 @@ import functools
 import json
 import logging
 import ibis
-import ibis.expr.datatypes
+import ibis.expr.datatypes as dt
 
 from data_validation import consts
 
@@ -115,11 +115,20 @@ def generate_report(
     return result_df
 
 
-def _calculate_difference(field_differences, datatype, validation, is_value_comparison):
+def _calculate_difference(
+    field_differences,
+    datatype: dt.DataType,
+    target_type: dt.DataType,
+    validation,
+    is_value_comparison,
+):
     pct_threshold = ibis.literal(validation.threshold)
     if datatype.is_timestamp() or datatype.is_date():
         source_value = field_differences["differences_source_value"].epoch_seconds()
         target_value = field_differences["differences_target_value"].epoch_seconds()
+    elif datatype.is_boolean() or (target_type and target_type.is_boolean()):
+        source_value = field_differences["differences_source_value"].cast("boolean")
+        target_value = field_differences["differences_target_value"].cast("boolean")
     elif datatype.is_decimal() or datatype.is_float64():
         source_value = (
             field_differences["differences_source_value"]
@@ -212,6 +221,7 @@ def _calculate_differences(
     difference calculation would fail if done after that step.
     """
     schema = source.schema()
+    target_schema = target.schema()
 
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
@@ -225,24 +235,28 @@ def _calculate_differences(
     for field, field_type in schema.items():
         if field not in validations:
             continue
-        else:
-            validation = validations[field]
-            field_differences = differences_joined.projection(
-                [
-                    source[field].name("differences_source_value"),
-                    target[field].name("differences_target_value"),
-                ]
-                + [source[join_field] for join_field in join_on_fields]
-            )
-            differences_pivots.append(
-                field_differences[
-                    (ibis.literal(field).name("validation_name"),)
-                    + join_on_fields
-                    + _calculate_difference(
-                        field_differences, field_type, validation, is_value_comparison
-                    )
-                ]
-            )
+        target_type = target_schema.get(field, None)
+        validation = validations[field]
+        field_differences = differences_joined.projection(
+            [
+                source[field].name("differences_source_value"),
+                target[field].name("differences_target_value"),
+            ]
+            + [source[join_field] for join_field in join_on_fields]
+        )
+        differences_pivots.append(
+            field_differences[
+                (ibis.literal(field).name("validation_name"),)
+                + join_on_fields
+                + _calculate_difference(
+                    field_differences,
+                    field_type,
+                    target_type,
+                    validation,
+                    is_value_comparison,
+                )
+            ]
+        )
     differences_pivot = functools.reduce(
         lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots
     )
