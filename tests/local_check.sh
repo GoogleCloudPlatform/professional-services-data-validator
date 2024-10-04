@@ -18,7 +18,7 @@
 # Step 2: Execute this script only after the virtual env activation
 
 # install/update all necessary libraries
-pip install pytest pytest-cov pyfakefs==5.6.0 freezegun black==22.3.0 flake8 
+pip install pytest pytest-cov pyfakefs==5.6.0 freezegun black==22.3.0 flake8
 
 # check unit tests and coverage
 echo "Start TEST COVERAGE"
@@ -34,8 +34,3 @@ echo "Finish CODE STYLE (FLAKE8)"
 echo "Start CODE FORMATTING (BLACK)"
 black data_validation samples tests third_party noxfile.py
 echo "Finish CODE FORMATTING (BLACK)"
-
-# execute all previous checks in a virtual env the same way that is run by our build tool
-echo "Start ALL CHECKS IN VENV (NOX)"
-python3 -m nox --envdir ~/dvt/envs/ -s unit_small blacken lint
-echo "Finish ALL CHECKS IN VENV (NOX)"

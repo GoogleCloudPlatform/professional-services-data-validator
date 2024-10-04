@@ -678,10 +678,15 @@ resultset that breaks down the count of rows per calendar date.
 Row level validations can involve either a hash/checksum, concat, or comparison fields.
 A hash validation (`--hash '*'`) will first sanitize the data with the following
 operations on all or selected columns: CAST to string, IFNULL replace with a default
-replacement string, RSTRIP, and UPPER. Then, it will CONCAT() the results
-and run a SHA256() hash and compare the source and target results. Since each row will
-be returned in the result set, it is recommended to utilize the `--use-random-row` feature
-to validate a subset of the table.
+replacement string and RSTRIP. Then, it will CONCAT() the results
+and run a SHA256() hash and compare the source and target results.
+
+When there are data type mismatches for columns, for example dates compared to timestamps and
+booleans compared with numeric columns, you may see other expressions in SQL statements which
+ensure that consistent values are used to build comparison values.
+
+Since each row will be returned in the result set if is recommended recommended to validate a
+subset of the table. The `--filters` and `--use-random-row` options can be used for this purpose.
 
 Please note that SHA256 is not a supported function on Teradata systems. If you wish to perform
 this comparison on Teradata you will need to [deploy a UDF to perform the conversion](https://github.com/akuroda/teradata-udf-sha2/blob/master/src/sha256.c).

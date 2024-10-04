@@ -681,3 +681,15 @@ INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (3,'#','$','-','@','Ro
 INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (4,'#','$','-','@','Row 4');
 INSERT INTO pso_data_validator."DVT-IDENTIFIER$_#" VALUES (5,'#','$','-','@','Row 5');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_bool;
+CREATE TABLE pso_data_validator.dvt_bool
+(   id           NUMBER(5) NOT NULL PRIMARY KEY
+,   col_bool_dec NUMBER(1)
+,   col_bool_int NUMBER(1)
+,   col_bool_ch1 CHAR(1)
+,   col_bool_chy CHAR(1));
+COMMENT ON TABLE pso_data_validator.dvt_bool IS 'Integration test table used to test boolean data type, especially in non-boolean columns.';
+INSERT INTO pso_data_validator.dvt_bool VALUES (1,1,1,'1','Y');
+INSERT INTO pso_data_validator.dvt_bool VALUES (2,0,0,'0','N');
+COMMIT;
