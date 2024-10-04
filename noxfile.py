@@ -292,14 +292,13 @@ def integration_snowflake(session):
         "pytest", "tests/system/data_sources/test_snowflake.py", *session.posargs
     )
 
+
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    _setup_session_requirements(
-        session, extra_packages=["ibm-db-sa"]
-    )
+    _setup_session_requirements(session, extra_packages=["ibm-db-sa"])
 
     expected_env_vars = [
         "PROJECT_ID",
@@ -310,9 +309,7 @@ def integration_db2(session):
         if not os.environ.get(env_var, ""):
             raise Exception("Expected Env Var: %s" % env_var)
 
-    session.run(
-        "pytest", "tests/system/data_sources/test_db2.py", *session.posargs
-    )
+    session.run("pytest", "tests/system/data_sources/test_db2.py", *session.posargs)
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")

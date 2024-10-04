@@ -15,21 +15,12 @@
 import os
 from unittest import mock
 
-import pytest
-
-from data_validation import cli_tools, data_validation, consts, find_tables
+from data_validation import cli_tools
 from tests.system.data_sources.common_functions import (
-    binary_key_assertions,
     column_validation_test,
-    column_validation_test_config_managers,
-    find_tables_assertions,
-    id_type_test_assertions,
-    null_not_null_assertions,
-    row_validation_many_columns_test,
     run_test_from_cli_args,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import generate_partitions_test
 
 
 DB2_HOST = os.getenv("DB2_HOST", "localhost")
@@ -95,7 +86,7 @@ def test_schema_validation_core_types_to_bigquery():
                 "--allow-list=int16:int64,int32:int64,"
                 # BigQuery does not have decimal, float32 types.
                 "decimal:float64,float32:float64,"
-                # Unable to create col_tstz with time zone on our DB2 database therefore test data is adjusted. 
+                # Unable to create col_tstz with time zone on our DB2 database therefore test data is adjusted.
                 "timestamp:timestamp('UTC'),"
             ),
         ]
@@ -103,6 +94,7 @@ def test_schema_validation_core_types_to_bigquery():
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
     assert len(df) == 0
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
@@ -119,8 +111,9 @@ def test_column_validation_core_types():
         min_cols=cols,
         max_cols=cols,
         filters="id>0 AND col_int8>0",
-        #grouped_columns="col_varchar_30", 
+        # grouped_columns="col_varchar_30",
     )
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
