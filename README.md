@@ -273,7 +273,7 @@ data-validation
                         Directory Path to store YAML Config Files
                         GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
-                        If invoked with -tbls parameter, the validations are stored in a directory named <schema>.<table>, otherwise the directory is named `custom.<random_prefix>`
+                        If invoked with -tbls parameter, the validations are stored in a directory named <schema>.<table>, otherwise the directory is named `custom.<random_string>`
   --partition-num INT, -pn INT
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
