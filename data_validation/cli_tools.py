@@ -1424,8 +1424,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     # Get format: text, csv, json, table. Default is table
     format = args.format if args.format else "table"
 
-    # Get random row arguments. In row validations these attributes will be present,
-    # otherwise not present.
+    # Get random row arguments. Only in row validations these attributes can be present.
     use_random_rows = getattr(args, "use_random_row", False)
     random_row_batch_size = getattr(args, "random_row_batch_size", None)
 
