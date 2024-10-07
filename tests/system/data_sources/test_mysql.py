@@ -117,7 +117,7 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_generate_partitions(tmp_path):
-    """Test generate partitions first table, then query on mysql"""
+    """Test generate partitions on MySQL, first on table, then on custom query"""
     partition_table_test(EXPECTED_PARTITION_FILTER)
     partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
 
