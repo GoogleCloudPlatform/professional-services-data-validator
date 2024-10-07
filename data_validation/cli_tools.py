@@ -278,7 +278,7 @@ def _configure_partition_parser(subparsers):
         type=_check_positive,
     )
     # User can provide tables or custom queries, but not both
-    # However, Argprase does not support adding an argument_group to an argument_group or adding a
+    # However, Argparse does not support adding an argument_group to an argument_group or adding a
     # mutually_exclusive_group or argument_group to a mutually_exclusive_group since version 3.11.
     # We are only ensuring leaf level mutual exclusivity here and will need to check higher level
     # mutual exclusivity in the code - i.e. a) when --tables-list is present, there can be no custom
