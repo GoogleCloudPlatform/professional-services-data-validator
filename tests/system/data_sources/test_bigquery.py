@@ -17,6 +17,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -1155,7 +1156,7 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
-def test_generate_partitions(mock_conn, tmp_path):
+def test_generate_partitions(mock_conn, tmp_path: pathlib.Path):
     """Test generate partitions on BigQuery, first on table, then on custom query"""
     partition_table_test(EXPECTED_PARTITION_FILTER)
     partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)

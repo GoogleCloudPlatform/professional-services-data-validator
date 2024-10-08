@@ -14,6 +14,7 @@
 
 import os
 import pytest
+import pathlib
 from unittest import mock
 
 from data_validation import __main__ as main
@@ -116,7 +117,7 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions(tmp_path):
+def test_generate_partitions(tmp_path: pathlib.Path):
     """Test generate partitions first table, then query on mysql"""
     partition_table_test(EXPECTED_PARTITION_FILTER)
     partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)

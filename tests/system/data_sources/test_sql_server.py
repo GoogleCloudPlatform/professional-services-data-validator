@@ -16,6 +16,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
@@ -238,7 +239,7 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions(cloud_sql, tmp_path):
+def test_generate_partitions(cloud_sql, tmp_path: pathlib.Path):
     """Test generate table partitions first table then custom query on sqlserver"""
     partition_table_test(
         EXPECTED_PARTITION_FILTER, tables="dbo.test_generate_partitions"

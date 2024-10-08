@@ -16,6 +16,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import (
     cli_tools,
@@ -520,7 +521,7 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions(cloud_sql, tmp_path):
+def test_generate_partitions(cloud_sql, tmp_path: pathlib.Path):
     """Test generate partitions, first on table, then custom query on Postgres"""
     partition_table_test(
         EXPECTED_PARTITION_FILTER,

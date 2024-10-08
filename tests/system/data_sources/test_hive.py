@@ -16,6 +16,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
@@ -131,7 +132,7 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions(tmp_path):
+def test_generate_partitions(tmp_path: pathlib.Path):
     """Test generate table partitions on Hive"""
     partition_table_test(EXPECTED_PARTITION_FILTER)
     partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)

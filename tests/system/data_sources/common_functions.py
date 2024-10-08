@@ -15,6 +15,7 @@
 import json
 import string
 from typing import TYPE_CHECKING
+import pathlib
 
 from data_validation import __main__ as main
 from data_validation import consts, data_validation
@@ -351,7 +352,7 @@ def partition_table_test(
 
 def partition_query_test(
     expected_filter: str,
-    tmp_path,
+    tmp_path: pathlib.Path,
     pk="course_id,quarter_id,student_id",
     tables="pso_data_validator.test_generate_partitions",
     filters="quarter_id != 1111",
