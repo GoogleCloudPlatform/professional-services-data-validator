@@ -384,10 +384,10 @@ class ValidationBuilder(object):
             "source_query": self.config_manager.source_query,
         }
 
-        if self.config_manager.source_table:
-            table = self.config_manager.get_source_ibis_table()
-        else:
+        if self.validation_type == consts.CUSTOM_QUERY:
             table = self.config_manager.get_source_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_source_ibis_table()
         query = self.source_builder.compile(self.validation_type, table)
         if self.verbose:
             logging.info(source_config)
