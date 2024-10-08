@@ -17,6 +17,7 @@ import os
 from typing import List
 
 from google.cloud import storage
+from google.cloud.storage.retry import DEFAULT_RETRY
 from data_validation import client_info
 
 
@@ -61,7 +62,16 @@ def _read_gcs_file(file_path: str, download_as_text: bool = False):
 def _write_gcs_file(file_path: str, data: str):
     gcs_bucket = get_gcs_bucket(file_path)
     blob = gcs_bucket.blob(_get_gcs_file_path(file_path))
-    blob.upload_from_string(data)
+
+    # Customize retry with a deadline of 500 seconds (default=120 seconds).
+    modified_retry = DEFAULT_RETRY.with_deadline(500.0)
+    # Customize retry with an initial wait time of 1.5 (default=1.0), wait time multiplier per iteration of 1.2 (default=2.0), maximum wait time of 45.0 (default=60.0).
+    # TODO(issue-1292): parameterize deadline, initial, multiplier, maximum values so that end users can modify the values to get optimal performance.
+    modified_retry = modified_retry.with_delay(
+        initial=1.5, multiplier=1.2, maximum=45.0
+    )
+
+    blob.upload_from_string(data, retry=modified_retry)
 
 
 def read_file(file_path: str, download_as_text: bool = False):
