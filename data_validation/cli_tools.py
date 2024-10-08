@@ -278,7 +278,7 @@ def _configure_partition_parser(subparsers):
         type=_check_positive,
     )
     # User can provide tables or custom queries, but not both
-    # However, Argprase does not support adding an argument_group to an argument_group or adding a
+    # However, Argparse does not support adding an argument_group to an argument_group or adding a
     # mutually_exclusive_group or argument_group to a mutually_exclusive_group since version 3.11.
     # We are only ensuring leaf level mutual exclusivity here and will need to check higher level
     # mutual exclusivity in the code - i.e. a) when --tables-list is present, there can be no custom
@@ -1424,8 +1424,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     # Get format: text, csv, json, table. Default is table
     format = args.format if args.format else "table"
 
-    # Get random row arguments. In row validations these attributes will be present,
-    # otherwise not present.
+    # Get random row arguments. Only in row validations these attributes can be present.
     use_random_rows = getattr(args, "use_random_row", False)
     random_row_batch_size = getattr(args, "random_row_batch_size", None)
 

@@ -133,8 +133,7 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_generate_partitions(tmp_path: pathlib.Path):
-    """Test generate table partitions on Hive"""
-    partition_table_test(EXPECTED_PARTITION_FILTER)
+    """Test generate partitions on Hive, first on table, then on custom query"""
     partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
 
 
