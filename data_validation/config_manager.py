@@ -389,10 +389,8 @@ class ConfigManager(object):
 
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
-        n: Int the depth of subquery requested"""
-        if (
-            self.validation_type == consts.CUSTOM_QUERY
-        ):  # either custom query or partition custom query
+        depth: Int the depth of subquery requested"""
+        if self.validation_type == consts.CUSTOM_QUERY:
             table = self.get_source_ibis_table_from_query()
         else:
             table = self.get_source_ibis_table()
@@ -422,7 +420,7 @@ class ConfigManager(object):
     def get_target_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from target
         n: Int the depth of subquery requested"""
-        if self.target_table is None:  # either custom query or partition custom query
+        if self.validation_type == consts.CUSTOM_QUERY:
             table = self.get_target_ibis_table_from_query()
         else:
             table = self.get_target_ibis_table()

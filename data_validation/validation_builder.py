@@ -404,11 +404,10 @@ class ValidationBuilder(object):
             "table_name": self.config_manager.target_table,
             "target_query": self.config_manager.target_query,
         }
-
-        if self.config_manager.target_table:
-            table = self.config_manager.get_target_ibis_table()
-        else:
+        if self.validation_type == consts.CUSTOM_QUERY:
             table = self.config_manager.get_target_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_target_ibis_table()
 
         query = self.target_builder.compile(self.validation_type, table)
         if self.verbose:
