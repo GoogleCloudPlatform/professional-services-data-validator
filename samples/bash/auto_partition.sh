@@ -18,33 +18,62 @@
 # Assumptions:
 # - Require to auto partition a row --hash validation.
 # - The parallel validation will run on the current host (where this script is executing).
+# - All local CPU resources are for this process to use.
+
+function show_usage {
+  echo 'Usage: $0 -t <table-name> -c <row-count-in-table> -p <primary-key-columns-csv>'
+}
 
 # Constant based on internal testing.
 # Should be reliable because the size of a hash is constant.
 MB_PER_MILLION_ROWS=1500
 
-# TODO These will become command line parameters.
-# TABLE_NAME="dvt_test.tab_vol_20m"
-# TABLE_ROW_COUNT=20000000
-TABLE_NAME="dvt_test.tab_vol_1m"
-TABLE_ROW_COUNT=1000000
-# Eventually this will be automated in DVT.
-PRIMARY_KEYS="id"
+OPTIND=1
+
+# Initialize our own variables:
+TABLE_NAME=""
+TABLE_ROW_COUNT=0
+PRIMARY_KEYS=""
+
+while getopts "ht:c:p:" OPT; do
+  echo $OPT $OPTARG
+  case "$OPT" in
+    h)
+      show_usage
+      exit 0
+      ;;
+    t)
+      TABLE_NAME=$OPTARG
+      ;;
+    c)
+      TABLE_ROW_COUNT=$OPTARG
+      ;;
+    p)
+      PRIMARY_KEYS=$OPTARG
+      ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+if [[ -z "${TABLE_NAME}" || -z "${TABLE_ROW_COUNT}" || -z "${PRIMARY_KEYS}" ]];then
+  show_usage
+  exit 0
+fi
 
 # Available RAM on the VM
 AVAILABLE_MB=$(free -m|grep "Mem:"|awk '{print $NF}')
 VCPU=$(nproc)
 
-# TODO convert logic below to Python snippet.
-MB_PER_VCPU=$(echo "${AVAILABLE_MB}|${VCPU}"|awk -F"|" '{print $1/$2}')
-ROWS_PER_PARTITION=$(echo "${MB_PER_VCPU}|${MB_PER_MILLION_ROWS}"|awk -F"|" '{printf("%d\n",($1/$2)*1000000)}')
+ROWS_PER_PARTITION=$(python3 -c "mb_per_vcpu=${AVAILABLE_MB}/${VCPU};print(round(mb_per_vcpu/${MB_PER_MILLION_ROWS}*1000000))")
 
-# TODO round DVT_PARTITIONS up to multiple of VCPU for a balanced parallelism.
 DVT_PARTITIONS=$(python3 -c "import math; print(${VCPU} * round(math.ceil(${TABLE_ROW_COUNT}/${ROWS_PER_PARTITION}/${VCPU})))")
-# TODO status checking.
+if [[ $? != 0 ]];then
+  echo "Error caclulating DVT_PARTITIONS"
+  exit 1
+fi
 
 # This is the number of loop iterations required to process all partitions.
-# TODO Once we round DVT_PARTITIONS up correctly this will be a whole number, for now +1.
 PARALLEL_PASSES=$(python3 -c "import math; print(math.ceil(${DVT_PARTITIONS}/${VCPU}))")
 
 echo "Splitting ${TABLE_NAME}"
@@ -55,13 +84,18 @@ echo "Parallel passes: ${PARALLEL_PASSES}"
 YAML_DIR=/tmp/auto_partition
 mkdir -p ${YAML_DIR}
 
-data-validation generate-table-partitions -sc=ora23 -tc=pg \
+CMD="data-validation generate-table-partitions -sc=ora23 -tc=pg \
   -tbls=${TABLE_NAME} \
   --primary-keys=${PRIMARY_KEYS} --hash='*' \
   -cdir=${YAML_DIR} \
   --bq-result-handler=db-black-belts-playground-01.neiljohnson_dvt_test.results \
-  --partition-num=${DVT_PARTITIONS}
-# TODO status checking.
+  --partition-num=${DVT_PARTITIONS}"
+${CMD}
+if [[ $? != 0 ]];then
+  echo "Error generating partitions with command:"
+  echo "${CMD}"
+  exit 1
+fi
 
 YAML_TABLE_DIR="${YAML_DIR}/${TABLE_NAME}"
 ls -l ${YAML_TABLE_DIR}
