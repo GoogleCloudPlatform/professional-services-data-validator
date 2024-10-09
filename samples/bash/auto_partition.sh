@@ -18,7 +18,8 @@
 # Assumptions:
 # - Require to auto partition a row --hash validation.
 # - The parallel validation will run on the current host (where this script is executing).
-# - All local CPU resources are for this process to use.
+# - All local CPU resources are for this process to use in full.
+# - All available RAM on the host is for this process to use in full.
 
 function show_usage {
   echo 'Usage: $0 -t <table-name> -c <row-count-in-table> -p <primary-key-columns-csv>'
@@ -36,7 +37,6 @@ TABLE_ROW_COUNT=0
 PRIMARY_KEYS=""
 
 while getopts "ht:c:p:" OPT; do
-  echo $OPT $OPTARG
   case "$OPT" in
     h)
       show_usage
@@ -61,7 +61,7 @@ if [[ -z "${TABLE_NAME}" || -z "${TABLE_ROW_COUNT}" || -z "${PRIMARY_KEYS}" ]];t
   exit 0
 fi
 
-# Available RAM on the VM
+# Available RAM on the VM.
 AVAILABLE_MB=$(free -m|grep "Mem:"|awk '{print $NF}')
 VCPU=$(nproc)
 
@@ -86,7 +86,7 @@ mkdir -p ${YAML_DIR}
 
 CMD="data-validation generate-table-partitions -sc=ora23 -tc=pg \
   -tbls=${TABLE_NAME} \
-  --primary-keys=${PRIMARY_KEYS} --hash='*' \
+  --primary-keys=${PRIMARY_KEYS} --hash=* \
   -cdir=${YAML_DIR} \
   --bq-result-handler=db-black-belts-playground-01.neiljohnson_dvt_test.results \
   --partition-num=${DVT_PARTITIONS}"
