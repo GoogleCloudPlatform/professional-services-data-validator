@@ -16,6 +16,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import (
     cli_tools,
@@ -33,7 +34,8 @@ from tests.system.data_sources.common_functions import (
     null_not_null_assertions,
     row_validation_many_columns_test,
     run_test_from_cli_args,
-    generate_partitions_test,
+    partition_table_test,
+    partition_query_test,
     schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -519,10 +521,16 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_postgres_generate_table_partitions(cloud_sql):
-    """Test generate table partitions on Postgres"""
-    generate_partitions_test(
+def test_generate_partitions(cloud_sql, tmp_path: pathlib.Path):
+    """Test generate partitions, first on table, then custom query on Postgres"""
+    partition_table_test(
         EXPECTED_PARTITION_FILTER,
+        tables="public.test_generate_partitions",
+        pk="course_id,quarter_id,approved",
+    )
+    partition_query_test(
+        EXPECTED_PARTITION_FILTER,
+        tmp_path,
         tables="public.test_generate_partitions",
         pk="course_id,quarter_id,approved",
     )

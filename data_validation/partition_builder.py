@@ -139,6 +139,7 @@ class PartitionBuilder:
                 config_manager.source_client,
                 config_manager.source_schema,
                 config_manager.source_table,
+                config_manager.source_query,
                 validation_builder.source_builder,
             )
             source_table = source_partition_row_builder.query
@@ -147,6 +148,7 @@ class PartitionBuilder:
                 config_manager.target_client,
                 config_manager.target_schema,
                 config_manager.target_table,
+                config_manager.target_query,
                 validation_builder.target_builder,
             )
             target_table = target_partition_row_builder.query

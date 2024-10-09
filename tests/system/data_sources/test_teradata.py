@@ -16,6 +16,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
@@ -24,7 +25,8 @@ from tests.system.data_sources.common_functions import (
     null_not_null_assertions,
     row_validation_many_columns_test,
     run_test_from_cli_args,
-    generate_partitions_test,
+    partition_table_test,
+    partition_query_test,
     row_validation_test,
     schema_validation_test,
 )
@@ -384,10 +386,17 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_teradata_generate_table_partitions():
-    """Test generate table partitions on Teradata"""
-    generate_partitions_test(
+def test_generate_partitions(tmp_path: pathlib.Path):
+    """Test generate partitions, first on table, then custom query on Teradata"""
+    partition_table_test(
         EXPECTED_PARTITION_FILTER,
+        tables="udf.test_generate_partitions",
+        pk="course_id,quarter_id,recd_timestamp,registration_date,grade",
+        filters="course_id LIKE 'ALG%'",
+    )
+    partition_query_test(
+        EXPECTED_PARTITION_FILTER,
+        tmp_path,
         tables="udf.test_generate_partitions",
         pk="course_id,quarter_id,recd_timestamp,registration_date,grade",
         filters="course_id LIKE 'ALG%'",

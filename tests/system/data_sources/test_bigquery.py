@@ -17,6 +17,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -30,7 +31,8 @@ from data_validation import (
 from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 from tests.system.data_sources.common_functions import (
-    generate_partitions_test,
+    partition_table_test,
+    partition_query_test,
     row_validation_many_columns_test,
     run_test_from_cli_args,
     schema_validation_test,
@@ -1154,9 +1156,10 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
-def test_bigquery_generate_table_partitions(mock_conn):
-    """Test generate table partitions on BigQuery"""
-    generate_partitions_test(EXPECTED_PARTITION_FILTER)
+def test_generate_partitions(mock_conn, tmp_path: pathlib.Path):
+    """Test generate partitions on BigQuery, first on table, then on custom query"""
+    partition_table_test(EXPECTED_PARTITION_FILTER)
+    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
 
 
 @mock.patch(
