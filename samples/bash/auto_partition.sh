@@ -100,8 +100,7 @@ CMD="data-validation generate-table-partitions -sc=${SRC} -tc=${TRG} \
   -tbls=${TABLE_NAME} \
   --primary-keys=${PRIMARY_KEYS} --hash=* \
   -cdir=${YAML_DIR} \
-  --partition-num=${DVT_PARTITIONS}" \
-  ${BQRH}
+  --partition-num=${DVT_PARTITIONS}" ${BQRH}
 ${CMD}
 if [[ $? != 0 ]];then
   echo "Error generating partitions with command:"
