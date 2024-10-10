@@ -226,13 +226,13 @@ data-validation
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
-#### Generate Table Partitions for Large Table Row Validations
+#### Generate Partitions for Large Row Validations
 
-When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating table partitions in order to perform row validations on large tables to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
+When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating partitions in order to perform row validations on large dataset (table or custom-query) to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
-The command generates and stores multiple YAML validations each representing a chunk of the large table using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in one YAML file. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+The command generates and stores multiple YAML validations each representing a chunk of the large dataset using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in YAML files. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
-The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. A parameter used in earlier versions, ```partition-key``` is no longer supported.
+The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. You can specify tables that are being validated or the source and target custom query. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
 ```
 data-validation
@@ -251,6 +251,17 @@ data-validation
                         Comma separated list of tables in the form schema.table=target_schema.target_table
                         Target schema name and table name are optional.
                         i.e 'bigquery-public-data.new_york_citibike.citibike_trips'
+                        Either --tables-list or --source-query (or file) and --target-query (or file) must be provided
+  --source-query SOURCE_QUERY, -sq SOURCE_QUERY
+                        Source sql query
+                        Either --tables-list or --source-query (or file) and --target-query (or file) must be provided
+  --source-query-file  SOURCE_QUERY_FILE, -sqf SOURCE_QUERY_FILE
+                        File containing the source sql command. Supports GCS and local paths.
+  --target-query TARGET_QUERY, -tq TARGET_QUERY
+                        Target sql query
+                        Either --tables-list or --source-query (or file) and --target-query (or file) must be provided
+  --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
+                        File containing the target sql command. Supports GCS and local paths.
   --primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS
                         Comma separated list of primary key columns 'col_a,col_b'.  See *Primary Keys* section
   --comparison-fields or -comp-fields FIELDS
@@ -262,6 +273,7 @@ data-validation
                         Directory Path to store YAML Config Files
                         GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
+                        If invoked with -tbls parameter, the validations are stored in a directory named <schema>.<table>, otherwise the directory is named `custom.<random_string>`
   --partition-num INT, -pn INT
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
@@ -540,10 +552,10 @@ View the complete YAML file for a Grouped Column validation on the
 
 ### Scaling DVT
 
-You can scale DVT for large table validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/internal/distributed_jobs.md) for a detailed overview.
+You can scale DVT for large validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/internal/distributed_jobs.md) for a detailed overview.
 
 
-We recommend first generating table partitions with the `generate-table-partitions` command for your large tables. Then, use Cloud Run or GKE to distribute validating each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started.
+We recommend first generating partitions with the `generate-table-partitions` command for your large datasets (tables or queries). Then, use Cloud Run or GKE to distribute the validation of each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started.
 
 When running DVT in a distributed fashion, both the `--kube-completions` and `--config-dir` flags are required. The `--kube-completions` flag specifies that the validation is being run in indexed completion mode in Kubernetes or as multiple independent tasks in Cloud Run. If the `-kc` option is used and you are not running in indexed mode, you will receive a warning and the container will process all the validations sequentially. If the `-kc` option is used and a config directory is not provided (i.e. a `--config-file` is provided instead), a warning is issued.
 

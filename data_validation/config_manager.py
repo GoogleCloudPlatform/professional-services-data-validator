@@ -14,6 +14,8 @@
 
 import copy
 import logging
+import string
+import random
 from typing import TYPE_CHECKING, Optional, Union, List, Dict
 
 import google.oauth2.service_account
@@ -285,10 +287,12 @@ class ConfigManager(object):
     @property
     def full_source_table(self):
         """Return string value of target table."""
-        if self.source_schema:
+        if self.source_table and self.source_schema:
             return self.source_schema + "." + self.source_table
-        else:
+        elif self.source_table:
             return self.source_table
+        else:
+            return f"custom.{''.join(random.choice(string.ascii_lowercase) for _ in range(5))}"
 
     @property
     def labels(self):
@@ -385,7 +389,7 @@ class ConfigManager(object):
 
     def get_source_ibis_calculated_table(self, depth=None):
         """Return mutated IbisTable from source
-        n: Int the depth of subquery requested"""
+        depth: Int the depth of subquery requested"""
         if self.validation_type == consts.CUSTOM_QUERY:
             table = self.get_source_ibis_table_from_query()
         else:

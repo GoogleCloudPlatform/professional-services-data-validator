@@ -16,6 +16,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
@@ -28,7 +29,10 @@ from tests.system.data_sources.common_functions import (
     schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import generate_partitions_test
+from tests.system.data_sources.common_functions import (
+    partition_table_test,
+    partition_query_test,
+)
 
 HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
 HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
@@ -128,9 +132,10 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_hive_generate_table_partitions():
-    """Test generate table partitions on Hive"""
-    generate_partitions_test(EXPECTED_PARTITION_FILTER)
+def test_generate_partitions(tmp_path: pathlib.Path):
+    """Test generate partitions on Hive, first on table, then on custom query"""
+    partition_table_test(EXPECTED_PARTITION_FILTER)
+    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
 
 
 @mock.patch(

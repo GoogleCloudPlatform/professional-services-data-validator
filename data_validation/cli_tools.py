@@ -171,11 +171,45 @@ CONNECTION_SOURCE_FIELDS = {
 }
 
 
+def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: Namespace):
+    # This is where we make additional checks if the arguments provided are what we expect
+    # For example, only one of -tbls and custom query options can be provided
+    if hasattr(parsed_args, "tables_list") and hasattr(
+        parsed_args, "source_query"
+    ):  # New Format
+        if (
+            parsed_args.tables_list
+        ):  # Tables_list is not None - so source and target queries all must be None
+            if (
+                parsed_args.source_query_file
+                or parsed_args.source_query
+                or parsed_args.target_query_file
+                or parsed_args.target_query
+            ):
+                parser.error(
+                    f"{parsed_args.command}: when --tables-list/-tbls is specified, --source-query-file/-sqf, --source-query/-sq, --target-query-file/-tqf and --target-query/-tq must not be specified"
+                )
+            else:
+                return
+        elif (parsed_args.source_query_file or parsed_args.source_query) and (
+            parsed_args.target_query_file or parsed_args.target_query
+        ):
+            return
+        else:
+            parser.error(
+                f"{parsed_args.command}: Must specify both source (--source-query-file/-sqf or --source-query/-sq) and target (--target-query-file/-tqf or --target-query/-tq) - when --tables-list/-tbls is not specified"
+            )
+    else:
+        return  # old format - only one of them is present
+
+
 def get_parsed_args() -> Namespace:
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
     args = ["--help"] if len(sys.argv) == 1 else None
-    return parser.parse_args(args)
+    parsed_args = parser.parse_args(args)
+    _check_custom_query_args(parser, parsed_args)
+    return parsed_args
 
 
 def configure_arg_parser():
@@ -225,6 +259,7 @@ def _configure_partition_parser(subparsers):
         default=1,
         help="Number of partitions to be validated in a single yaml file.",
     )
+
     required_arguments.add_argument(
         "--config-dir",
         "-cdir",
@@ -241,6 +276,46 @@ def _configure_partition_parser(subparsers):
         required=True,
         help="Number of partitions into which the table should be split",
         type=_check_positive,
+    )
+    # User can provide tables or custom queries, but not both
+    # However, Argparse does not support adding an argument_group to an argument_group or adding a
+    # mutually_exclusive_group or argument_group to a mutually_exclusive_group since version 3.11.
+    # We are only ensuring leaf level mutual exclusivity here and will need to check higher level
+    # mutual exclusivity in the code - i.e. a) when --tables-list is present, there can be no custom
+    # query parameters and b) when custom query parameters are specified, both source and target must be
+    # specified.
+    optional_arguments.add_argument(
+        "--tables-list",
+        "-tbls",
+        help=(
+            "Comma separated tables list in the form "
+            "'schema.table=target_schema.target_table'"
+        ),
+    )
+
+    source_mutually_exclusive = optional_arguments.add_mutually_exclusive_group()
+    source_mutually_exclusive.add_argument(
+        "--source-query-file",
+        "-sqf",
+        help="File containing the source sql query",
+    )
+    source_mutually_exclusive.add_argument(
+        "--source-query",
+        "-sq",
+        help="Source sql query",
+    )
+
+    # Group for mutually exclusive target query arguments. Either must be supplied
+    target_mutually_exclusive = optional_arguments.add_mutually_exclusive_group()
+    target_mutually_exclusive.add_argument(
+        "--target-query-file",
+        "-tqf",
+        help="File containing the target sql query",
+    )
+    target_mutually_exclusive.add_argument(
+        "--target-query",
+        "-tq",
+        help="Target sql query",
     )
 
 
@@ -443,6 +518,7 @@ def _configure_row_parser(
         "--threshold",
         "-th",
         type=threshold_float,
+        default=0.0,
         help="Float max threshold for percent difference",
     )
     optional_arguments.add_argument(
@@ -454,6 +530,8 @@ def _configure_row_parser(
     optional_arguments.add_argument(
         "--filters",
         "-filters",
+        type=get_filters,
+        default=[],
         help="Filters in the format source_filter:target_filter",
     )
     optional_arguments.add_argument(
@@ -496,9 +574,10 @@ def _configure_row_parser(
             "-rbs",
             help="Row batch size used for random row filters (default 10,000).",
         )
-
-    # Group required arguments
-    if not is_custom_query:
+        # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
+        # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
+        # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
+        # a required argument for validate row, validate column and validate schema.
         required_arguments.add_argument(
             "--tables-list",
             "-tbls",
@@ -506,6 +585,8 @@ def _configure_row_parser(
             required=True,
             help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
         )
+
+    # Group required arguments
     required_arguments.add_argument(
         "--primary-keys",
         "-pk",
@@ -603,24 +684,17 @@ def _configure_column_parser(column_parser):
         "--threshold",
         "-th",
         type=threshold_float,
+        default=0.0,
         help="Float max threshold for percent difference",
     )
     optional_arguments.add_argument(
         "--filters",
         "-filters",
+        type=get_filters,
+        default=[],
         help="Filters in the format source_filter:target_filter",
     )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
-    )
+
     optional_arguments.add_argument(
         "--wildcard-include-string-len",
         "-wis",
@@ -818,24 +892,16 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     optional_arguments.add_argument(
         "--filters",
         "-filters",
+        type=get_filters,
+        default=[],
         help="Filters in the format source_filter:target_filter",
     )
     optional_arguments.add_argument(
         "--threshold",
         "-th",
         type=threshold_float,
+        default=0.0,
         help="Float max threshold for percent difference",
-    )
-    optional_arguments.add_argument(
-        "--use-random-row",
-        "-rr",
-        action="store_true",
-        help="Finds a set of random rows of the first primary key supplied.",
-    )
-    optional_arguments.add_argument(
-        "--random-row-batch-size",
-        "-rbs",
-        help="Row batch size used for random row filters (default 10,000).",
     )
 
     # Group required arguments
@@ -910,6 +976,7 @@ def _add_common_arguments(
             "-cj",
             help="Store the validation config in the JSON File Path specified to be used for application use cases",
         )
+
     optional_arguments.add_argument(
         "--format",
         "-fmt",
@@ -1080,7 +1147,7 @@ def get_filters(filter_value: str) -> List[Dict]:
     filter_config = []
     if result := re.fullmatch(single_filter, filter_value):
         if result.group(0) == "":
-            raise ValueError("Empty string not allowed in filter")
+            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
         filter_dict = {
             "type": "custom",
             "source": result.group(0),
@@ -1088,14 +1155,14 @@ def get_filters(filter_value: str) -> List[Dict]:
         }
     elif result := re.fullmatch(double_filter, filter_value):
         if result.group("source") == "" or result.group("target") == "":
-            raise ValueError("Empty string not allowed in filter")
+            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
         filter_dict = {
             "type": "custom",
             "source": result.group("source"),
             "target": result.group("target"),
         }
     else:
-        raise ValueError("Unable to parse filter arguments.")
+        raise argparse.ArgumentTypeError("Unable to parse filter arguments.")
     filter_config.append(filter_dict)
     return filter_config
 
@@ -1315,8 +1382,8 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
         else:
             return get_arg_list(concat_arg)
 
-    # Since `generate-table-partitions` defaults to `validate_cmd=row`,
-    # `validate_cmd` is passed along while calling this method
+    # validate_cmd will be set to 'row`, or 'Custom-query' if invoked by generate-table-partitions depending
+    # on what is being partitioned. Otherwise validate_cmd will be set to None
     if validate_cmd is None:
         validate_cmd = args.validate_cmd.capitalize()
 
@@ -1339,14 +1406,9 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     else:
         result_handler_config = None
 
-    # Get filter_config and threshold. Not supported in case of schema validation
-    filter_config = []
-    threshold = 0.0
-    if config_type != consts.SCHEMA_VALIDATION:
-        if args.filters:
-            filter_config = get_filters(args.filters)
-        if args.threshold:
-            threshold = args.threshold
+    # Set filter_config and threshold. Not supported in case of schema validation
+    filter_config = getattr(args, "filters", [])
+    threshold = getattr(args, "threshold", 0.0)
 
     # Get labels
     if args.labels is None:
@@ -1362,16 +1424,9 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     # Get format: text, csv, json, table. Default is table
     format = args.format if args.format else "table"
 
-    # Get random row arguments. Not supported in case of schema validation,
-    # custom-query validation and generate-table-partitions
-    use_random_rows = None
-    random_row_batch_size = None
-    if (
-        args.command != "generate-table-partitions"
-        and config_type != consts.SCHEMA_VALIDATION
-    ):
-        use_random_rows = getattr(args, "use_random_row", False)
-        random_row_batch_size = getattr(args, "random_row_batch_size", None)
+    # Get random row arguments. Only in row validations these attributes can be present.
+    use_random_rows = getattr(args, "use_random_row", False)
+    random_row_batch_size = getattr(args, "random_row_batch_size", None)
 
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
