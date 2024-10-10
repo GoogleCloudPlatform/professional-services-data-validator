@@ -29,10 +29,10 @@ Parallel passes: 1
 10/09/2024 10:57:53 AM-INFO: Writing table partition configs to directory: /tmp/auto_partition
 10/09/2024 10:57:53 AM-INFO: Success! Table partition configs written to directory: /tmp/auto_partition
 total 16
--rw-r--r-- 1 neiljohnson_google_com neiljohnson_google_com 2164 Oct  9 10:57 0000.yaml
--rw-r--r-- 1 neiljohnson_google_com neiljohnson_google_com 2198 Oct  9 10:57 0001.yaml
--rw-r--r-- 1 neiljohnson_google_com neiljohnson_google_com 2198 Oct  9 10:57 0002.yaml
--rw-r--r-- 1 neiljohnson_google_com neiljohnson_google_com 2166 Oct  9 10:57 0003.yaml
+-rw-r--r-- 1 nj 2164 Oct  9 10:57 0000.yaml
+-rw-r--r-- 1 nj 2198 Oct  9 10:57 0001.yaml
+-rw-r--r-- 1 nj 2198 Oct  9 10:57 0002.yaml
+-rw-r--r-- 1 nj 2166 Oct  9 10:57 0003.yaml
 Pass: 1
 ============
 Submitting partition: 0
