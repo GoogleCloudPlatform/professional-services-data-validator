@@ -38,6 +38,7 @@ BLACK_PATHS = (
     "tests",
     "third_party",
     "noxfile.py",
+    "setup.py",
 )
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
 UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
@@ -106,6 +107,7 @@ def lint(session):
     session.run("flake8", "data_validation")
     session.run("flake8", "tests")
     session.run("black", "--check", *BLACK_PATHS)
+    session.run("python", "setup.py", "check", "--strict")
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
