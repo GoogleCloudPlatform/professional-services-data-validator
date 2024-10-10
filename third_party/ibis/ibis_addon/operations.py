@@ -248,6 +248,11 @@ def strftime_impala(t, op):
     return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
 
 
+def strftime_db2(translator, op):
+    """Date, Datetime, Timestamp formatting specific to DB2."""
+    # TODO(issue-1296): "ibis.expr.operations.temporal.Strftime object at 0x7a37871a1a90>"
+
+
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -670,6 +675,8 @@ if Db2ExprTranslator:
     Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
     Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    # TODO(issue-1296): "ibis.expr.operations.temporal.Strftime object at 0x7a37871a1a90>"
+    #Db2ExprTranslator._registry[Strftime] = strftime_db2
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
 SpannerExprTranslator._registry[HashBytes] = format_hashbytes_bigquery

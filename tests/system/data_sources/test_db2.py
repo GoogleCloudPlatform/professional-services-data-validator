@@ -19,6 +19,8 @@ from data_validation import cli_tools
 from tests.system.data_sources.common_functions import (
     column_validation_test,
     run_test_from_cli_args,
+    null_not_null_assertions,
+    row_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -100,6 +102,26 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_not_null_vs_nullable():
+    """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=db2-conn",
+            "-tc=bq-conn",
+            "-tbls=db2inst1.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    null_not_null_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_core_types():
     """DB2 to DB2 dvt_core_types column validation"""
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
@@ -111,7 +133,8 @@ def test_column_validation_core_types():
         min_cols=cols,
         max_cols=cols,
         filters="id>0 AND col_int8>0",
-        # grouped_columns="col_varchar_30",
+        # TODO When issue-1295 is complete add --grouped_columns below.
+        #grouped_columns="col_varchar_30",
     )
 
 
@@ -129,4 +152,32 @@ def test_column_validation_core_types_to_bigquery():
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+    )
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types():
+    """DB2 to DB2 dvt_core_types row validation"""
+    row_validation_test(
+        tables="db2inst1.dvt_core_types",
+        tc="mock-conn",
+        # TODO: When issue-1296 is complete change it to * (all columns). 
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
+        filters="id>0 AND col_int8>0",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    """DB2 to BigQuery dvt_core_types row validation"""
+    row_validation_test(
+        tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        # TODO: When issue-1296 is complete change it to * (all columns). 
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
     )
