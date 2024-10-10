@@ -100,7 +100,8 @@ CMD="data-validation generate-table-partitions -sc=${SRC} -tc=${TRG} \
   -tbls=${TABLE_NAME} \
   --primary-keys=${PRIMARY_KEYS} --hash=* \
   -cdir=${YAML_DIR} \
-  --partition-num=${DVT_PARTITIONS}" ${BQRH}
+  --partition-num=${DVT_PARTITIONS} \
+  ${BQRH}"
 ${CMD}
 if [[ $? != 0 ]];then
   echo "Error generating partitions with command:"
@@ -116,7 +117,7 @@ JOB_COUNT=0
 for i in $(seq 1 1 ${PARALLEL_PASSES});do
     echo "Pass: ${i}"
     echo "============"
-    for j in $(seq 0 1 $(expr ${VCPU} - 1));do
+    for j in $(seq 0 1 $(expr ${PERMITTED_THREADS} - 1));do
         echo "Submitting partition: ${JOB_COUNT}"
         JOB_COMPLETION_INDEX=${JOB_COUNT} data-validation configs run -kc -cdir ${YAML_TABLE_DIR} &
         JOB_COUNT=$(expr ${JOB_COUNT} + 1)
