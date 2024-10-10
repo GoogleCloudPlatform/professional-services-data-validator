@@ -29,14 +29,20 @@ function show_usage {
 # Should be reliable because the size of a hash is constant.
 MB_PER_MILLION_ROWS=1500
 
+# Connection names
+SRC="ora23"
+TRG="pg"
+BQRH="--bq-result-handler=db-black-belts-playground-01.neiljohnson_dvt_test.results"
+
 OPTIND=1
 
 # Initialize our own variables:
 TABLE_NAME=""
 TABLE_ROW_COUNT=0
 PRIMARY_KEYS=""
+DVTS_PER_VCPU=1
 
-while getopts "ht:c:p:" OPT; do
+while getopts "ht:c:p:d:" OPT; do
   case "$OPT" in
     h)
       show_usage
@@ -50,6 +56,9 @@ while getopts "ht:c:p:" OPT; do
       ;;
     p)
       PRIMARY_KEYS=$OPTARG
+      ;;
+    d)
+      DVTS_PER_VCPU=$OPTARG
       ;;
   esac
 done
@@ -65,31 +74,34 @@ fi
 AVAILABLE_MB=$(free -m|grep "Mem:"|awk '{print $NF}')
 VCPU=$(nproc)
 
-ROWS_PER_PARTITION=$(python3 -c "mb_per_vcpu=${AVAILABLE_MB}/${VCPU};print(round(mb_per_vcpu/${MB_PER_MILLION_ROWS}*1000000))")
+# How many DVT processes can be executed concurrently.
+PERMITTED_THREADS=$(python3 -c "print(${VCPU}*${DVTS_PER_VCPU})")
 
-DVT_PARTITIONS=$(python3 -c "import math; print(${VCPU} * round(math.ceil(${TABLE_ROW_COUNT}/${ROWS_PER_PARTITION}/${VCPU})))")
+ROWS_PER_PARTITION=$(python3 -c "mb_per_vcpu=${AVAILABLE_MB}/${PERMITTED_THREADS};print(round(mb_per_vcpu/${MB_PER_MILLION_ROWS}*1000000))")
+
+DVT_PARTITIONS=$(python3 -c "import math; print(${PERMITTED_THREADS} * round(math.ceil(${TABLE_ROW_COUNT}/${ROWS_PER_PARTITION}/${PERMITTED_THREADS})))")
 if [[ $? != 0 ]];then
-  echo "Error caclulating DVT_PARTITIONS"
+  echo "Error calculating DVT_PARTITIONS"
   exit 1
 fi
 
 # This is the number of loop iterations required to process all partitions.
-PARALLEL_PASSES=$(python3 -c "import math; print(math.ceil(${DVT_PARTITIONS}/${VCPU}))")
+PARALLEL_PASSES=$(python3 -c "import math; print(math.ceil(${DVT_PARTITIONS}/${PERMITTED_THREADS}))")
 
 echo "Splitting ${TABLE_NAME}"
 echo "Partitions: ${DVT_PARTITIONS}"
-echo "Parallelism: ${VCPU}"
+echo "Parallelism: ${PERMITTED_THREADS}"
 echo "Parallel passes: ${PARALLEL_PASSES}"
 
 YAML_DIR=/tmp/auto_partition
 mkdir -p ${YAML_DIR}
 
-CMD="data-validation generate-table-partitions -sc=ora23 -tc=pg \
+CMD="data-validation generate-table-partitions -sc=${SRC} -tc=${TRG} \
   -tbls=${TABLE_NAME} \
   --primary-keys=${PRIMARY_KEYS} --hash=* \
   -cdir=${YAML_DIR} \
-  --bq-result-handler=db-black-belts-playground-01.neiljohnson_dvt_test.results \
-  --partition-num=${DVT_PARTITIONS}"
+  --partition-num=${DVT_PARTITIONS}" \
+  ${BQRH}
 ${CMD}
 if [[ $? != 0 ]];then
   echo "Error generating partitions with command:"
