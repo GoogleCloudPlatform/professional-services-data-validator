@@ -342,6 +342,19 @@ def test_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_comp_fields_core_types():
+    """Oracle to Oracle dvt_core_types row validation with --comp-fields"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
     # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
@@ -734,22 +747,12 @@ def test_row_validation_identifiers():
     pytest.skip(
         "Skipping test_row_validation_identifiers because concat_all expression does not enquote identifier names, issue-1271."
     )
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt-identifier$_#",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
+        hash="*",
+        filters="id>0 AND col_int8>0",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
