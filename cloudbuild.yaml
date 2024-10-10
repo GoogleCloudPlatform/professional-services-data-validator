@@ -114,7 +114,7 @@ steps:
   # - 'PROJECT_ID=pso-kokoro-resources'
   # secretEnv: ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD']
 - id: integration_db2
-  name: 'gcr.io/pso-kokoro-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_db2'
