@@ -308,9 +308,9 @@ def integration_secrets(session):
 
     test_path = "tests/system/test_secret_manager.py"
     session.run("pytest", test_path, *session.posargs)
+
+
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
-
-
 def integration_filesystem(session):
     """Run Filesystem integration tests.
     Ensure Filesystem validation is running as expected.

@@ -128,7 +128,7 @@ def get_pandas_client(table_name, file_path, file_type):
     elif file_type == "orc":
         df = pandas.read_orc(file_path)
     elif file_type == "parquet":
-        df = pandas.read_parquet(file_path)                
+        df = pandas.read_parquet(file_path)
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 

@@ -12,38 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from unittest import mock
 
-import pytest
 
 from data_validation import (
-    cli_tools,
     data_validation,
     consts,
-    find_tables,
-    __main__ as main,
 )
-from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
-    CloudSQLResourceManager,
-)
-from tests.system.data_sources.common_functions import (
-    binary_key_assertions,
-    find_tables_assertions,
-    id_type_test_assertions,
-    null_not_null_assertions,
-    row_validation_many_columns_test,
-    run_test_from_cli_args,
-    generate_partitions_test,
-)
-from tests.system.data_sources.test_bigquery import BQ_CONN
 
 CONN = {
-    "source_type": "FileSystem", 
-    "table_name": "entries", 
-    "file_path": "gs://pso-kokoro-resources/file_connection/parquet/entries.parquet", 
+    "source_type": "FileSystem",
+    "table_name": "entries",
+    "file_path": "gs://pso-kokoro-resources/file_connection/parquet/entries.parquet",
     "file_type": "parquet",
 }
+
 
 def test_filesystem_count():
     """Test count validation on Filesystem"""
@@ -87,17 +70,15 @@ def test_filesystem_count():
     assert df["source_agg_value"].equals(df["target_agg_value"])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
+
 def mock_get_connection_config(*args):
-    if args[1] == "bq-conn":
-        return BQ_CONN
-    else:
-        return CONN
+    return CONN
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-
 def test_schema_validation():
     """Test schema validation on Postgres instance"""
     config_count_valid = {
