@@ -117,5 +117,3 @@ def test_schema_validation():
 
     for validation in df.to_dict(orient="records"):
         assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
-
-
