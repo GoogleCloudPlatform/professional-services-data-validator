@@ -315,9 +315,7 @@ def integration_filesystem(session):
     """Run Filesystem integration tests.
     Ensure Filesystem validation is running as expected.
     """
-    _setup_session_requirements(
-        session, extra_packages=["gcsfs"]
-    )
+    _setup_session_requirements(session, extra_packages=["gcsfs"])
 
     test_path = "tests/system/data_sources/test_filesystem.py"
     env_vars = {"PROJECT_ID": os.environ.get("PROJECT_ID", "pso-kokoro-resources")}
