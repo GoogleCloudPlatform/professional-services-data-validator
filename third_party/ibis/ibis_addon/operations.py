@@ -409,10 +409,14 @@ def sa_cast_hive(t, op):
         # Binary from string cast is a "from hex" conversion for DVT.
         return f"unhex({arg_formatted})"
 
-    # Follow the original Ibis code path.
     # Cannot use sa_fixed_cast() because of ImpalaExprTranslator ancestry.
     sql_type = base_type_to_sql_string(typ)
-    return "CAST({} AS {})".format(arg_formatted, sql_type)
+    cast_expr = "CAST({} AS {})".format(arg_formatted, sql_type)
+
+    if arg_dtype.is_boolean() and typ.is_string():
+        return f"LOWER({cast_expr})"
+    else:
+        return cast_expr
 
 
 def sa_cast_postgres(t, op):

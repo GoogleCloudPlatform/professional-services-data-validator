@@ -24,6 +24,7 @@ class PartitionRowBuilder(object):
         data_client: ibis.backends.base.BaseBackend,
         schema_name: str,
         table_name: str,
+        custom_query: str,
         query_builder: QueryBuilder,
     ) -> None:
         """Build a PartitionRowBuilder object which is ready to build a partition row filter query.
@@ -37,7 +38,7 @@ class PartitionRowBuilder(object):
         """
         self.primary_keys = primary_keys
         self.query = self._compile_query(
-            data_client, schema_name, table_name, query_builder
+            data_client, schema_name, table_name, custom_query, query_builder
         )
 
     def _compile_query(
@@ -45,6 +46,7 @@ class PartitionRowBuilder(object):
         data_client: ibis.backends.base.BaseBackend,
         schema_name: str,
         table_name: str,
+        custom_query: str,
         query_builder: QueryBuilder,
     ) -> ibis.Expr:
         """Return an Ibis query object
@@ -53,9 +55,13 @@ class PartitionRowBuilder(object):
             data_client (BaseBackend): The Backend used to query random rows.
             schema_name (String): The name of the schema for the given table.
             table_name (String): The name of the table to query.
+            custom_query (String) : Custom query provided instead of a table
             query_builder (QueryBuilder): QueryBuilder object.
         """
-        table = clients.get_ibis_table(data_client, schema_name, table_name)
+        if table_name:
+            table = clients.get_ibis_table(data_client, schema_name, table_name)
+        else:
+            table = clients.get_ibis_query(data_client, custom_query)
         compiled_filters = query_builder.compile_filter_fields(table)
         filtered_table = table.filter(compiled_filters) if compiled_filters else table
         return filtered_table

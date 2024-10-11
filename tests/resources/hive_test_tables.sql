@@ -496,3 +496,14 @@ CREATE TABLE pso_data_validator.dvt_many_cols
 , col_399 decimal(1)
 ) COMMENT 'Integration test table used to test validating many columns.';
 INSERT INTO pso_data_validator.dvt_many_cols (id) values (1);
+
+DROP TABLE pso_data_validator.dvt_bool;
+CREATE TABLE pso_data_validator.dvt_bool
+(   id           int NOT NULL
+,   col_bool_dec boolean
+,   col_bool_int boolean
+,   col_bool_ch1 boolean
+,   col_bool_chy boolean
+) COMMENT 'Integration test table used to test boolean data type, especially in non-boolean columns.';
+INSERT INTO pso_data_validator.dvt_bool VALUES (1,true,true,true,true);
+INSERT INTO pso_data_validator.dvt_bool VALUES (2,false,false,false,false);

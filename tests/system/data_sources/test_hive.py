@@ -16,6 +16,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
@@ -23,10 +24,15 @@ from tests.system.data_sources.common_functions import (
     id_type_test_assertions,
     null_not_null_assertions,
     row_validation_many_columns_test,
+    row_validation_test,
     run_test_from_cli_args,
+    schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import generate_partitions_test
+from tests.system.data_sources.common_functions import (
+    partition_table_test,
+    partition_query_test,
+)
 
 HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
 HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
@@ -89,20 +95,10 @@ def test_schema_validation_core_types():
     pytest.skip(
         "Skipping test_schema_validation_core_types in favour of test_schema_validation_core_types_to_bigquery (due to elapsed time)."
     )
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 # Expected result from partitioning table on 3 keys
@@ -136,9 +132,10 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_hive_generate_table_partitions():
-    """Test generate table partitions on Hive"""
-    generate_partitions_test(EXPECTED_PARTITION_FILTER)
+def test_generate_partitions(tmp_path: pathlib.Path):
+    """Test generate partitions on Hive, first on table, then on custom query"""
+    partition_table_test(EXPECTED_PARTITION_FILTER)
+    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
 
 
 @mock.patch(
@@ -146,29 +143,18 @@ def test_hive_generate_table_partitions():
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=hive-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--exclusion-columns=id",
-            (
-                # All Hive integers go to BigQuery INT64.
-                "--allow-list=int8:int64,int16:int64,int32:int64,"
-                # Hive does not have a time zoned
-                "timestamp:timestamp('UTC'),"
-                # BigQuery does not have a float32 type.
-                "float32:float64"
-            ),
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        allow_list=(
+            # All Hive integers go to BigQuery INT64.
+            "int8:int64,int16:int64,int32:int64,"
+            # Hive does not have a time zoned
+            "timestamp:timestamp('UTC'),"
+            # BigQuery does not have a float32 type.
+            "float32:float64"
+        ),
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -196,6 +182,15 @@ def test_schema_validation_not_null_vs_nullable():
     )
     df = run_test_from_cli_args(args)
     null_not_null_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_bool():
+    """Hive to Hive dvt_bool schema validation"""
+    schema_validation_test(tables="pso_data_validator.dvt_bool", tc="mock-conn")
 
 
 @mock.patch(
@@ -271,22 +266,11 @@ def test_row_validation_core_types():
     pytest.skip(
         "Skipping test_row_validation_core_types in favour of test_row_validation_core_types_to_bigquery (due to elapsed time)."
     )
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        hash="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -294,24 +278,13 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
     # col_float64 is excluded below because there is no way to control the format when casting to string.
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=hive-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        filters="id>0 AND col_int8>0",
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -425,4 +398,17 @@ def test_custom_query_row_validation_many_columns():
     row_validation_many_columns_test(
         validation_type="custom-query",
         target_conn="bq-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_hash_bool_to_bigquery():
+    """Test row validation on a table with bool data types."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="bq-conn",
+        hash="*",
     )

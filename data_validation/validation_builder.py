@@ -388,7 +388,6 @@ class ValidationBuilder(object):
             table = self.config_manager.get_source_ibis_table_from_query()
         else:
             table = self.config_manager.get_source_ibis_table()
-
         query = self.source_builder.compile(self.validation_type, table)
         if self.verbose:
             logging.info(source_config)
@@ -405,7 +404,6 @@ class ValidationBuilder(object):
             "table_name": self.config_manager.target_table,
             "target_query": self.config_manager.target_query,
         }
-
         if self.validation_type == consts.CUSTOM_QUERY:
             table = self.config_manager.get_target_ibis_table_from_query()
         else:

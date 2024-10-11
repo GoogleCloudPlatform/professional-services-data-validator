@@ -17,6 +17,7 @@ import os
 from unittest import mock
 
 import pytest
+import pathlib
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -30,9 +31,11 @@ from data_validation import (
 from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 from tests.system.data_sources.common_functions import (
-    generate_partitions_test,
+    partition_table_test,
+    partition_query_test,
     row_validation_many_columns_test,
     run_test_from_cli_args,
+    schema_validation_test,
 )
 
 
@@ -1153,9 +1156,10 @@ EXPECTED_PARTITION_FILTER = [
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
-def test_bigquery_generate_table_partitions(mock_conn):
-    """Test generate table partitions on BigQuery"""
-    generate_partitions_test(EXPECTED_PARTITION_FILTER)
+def test_generate_partitions(mock_conn, tmp_path: pathlib.Path):
+    """Test generate partitions on BigQuery, first on table, then on custom query"""
+    partition_table_test(EXPECTED_PARTITION_FILTER)
+    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
 
 
 @mock.patch(
@@ -1192,24 +1196,19 @@ def test_bigquery_dry_run(mock_conn, capsys):
     return_value=BQ_CONN,
 )
 def test_schema_validation_core_types(mock_conn):
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
     )
-    config_managers = main.build_config_managers_from_args(args)
-    assert len(config_managers) == 1
-    config_manager = config_managers[0]
-    validator = data_validation.DataValidation(config_manager.config, verbose=False)
-    df = validator.execute()
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_schema_validation_bool(mock_conn):
+    """BigQuery to BigQuery dvt_bool schema validation"""
+    schema_validation_test(tables="pso_data_validator.dvt_bool", tc="mock-conn")
 
 
 @mock.patch(
@@ -1352,20 +1351,10 @@ def test_custom_query_row_validation_many_columns(mock_conn):
 )
 def test_schema_validation_identifiers(mock_conn):
     """Test schema validation on a table with special characters in table and column names."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt-identifier___",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="pso_data_validator.dvt-identifier___",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(

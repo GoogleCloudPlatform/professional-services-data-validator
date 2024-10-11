@@ -18,6 +18,8 @@ import parsy
 
 from ibis.expr.types.generic import Value
 
+from data_validation import consts
+
 
 def cast(self, target_type: dt.DataType) -> Value:
     """Override ibis.expr.api's cast method.
@@ -32,9 +34,26 @@ def cast(self, target_type: dt.DataType) -> Value:
             or str(from_type).lstrip("!") == str(to_type).lstrip("!")
         )
 
-    # validate
-    op = ops.Cast(self, to=target_type)
+    if target_type == consts.CONFIG_CAST_BOOL_STRING:
+        if self.type().is_numeric():
+            # Comparing numeric value with boolean.
+            op = ops.SimpleCase(self, (0, 1), ("false", "true"), None)
+            return op.to_expr()
+        elif self.type().is_string():
+            # Comparing string value with boolean.
+            op = ops.SimpleCase(
+                self, ("0", "1", "N", "Y"), ("false", "true", "false", "true"), None
+            )
+            return op.to_expr()
+        else:
+            # Allow a standard Cast to kick in.
+            target_type = "string"
+    elif target_type == "bool" and self.type().is_string():
+        # Comparing string value with boolean.
+        op = ops.SimpleCase(self, ("0", "1", "N", "Y"), (0, 1, 0, 1), None)
+        return op.to_expr()
 
+    op = ops.Cast(self, to=target_type)
     if same_type(op.to, self.type()) and not op.to.is_timestamp():
         # noop case if passed type is the same
         return self
