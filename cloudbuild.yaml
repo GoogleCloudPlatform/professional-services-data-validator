@@ -113,6 +113,13 @@ steps:
   - 'NOX_SESSION=integration_snowflake'
   - 'PROJECT_ID=pso-kokoro-resources'
   secretEnv: ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD']
+- id: integration_filesystem
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_filesystem'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  waitFor: ['-']
 
 availableSecrets:
   secretManager:
