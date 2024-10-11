@@ -134,7 +134,7 @@ def test_column_validation_core_types():
         max_cols=cols,
         filters="id>0 AND col_int8>0",
         # TODO When issue-1295 is complete add --grouped_columns below.
-        #grouped_columns="col_varchar_30",
+        # grouped_columns="col_varchar_30",
     )
 
 
@@ -154,6 +154,7 @@ def test_column_validation_core_types_to_bigquery():
         max_cols=cols,
     )
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -163,7 +164,7 @@ def test_row_validation_core_types():
     row_validation_test(
         tables="db2inst1.dvt_core_types",
         tc="mock-conn",
-        # TODO: When issue-1296 is complete change it to * (all columns). 
+        # TODO: When issue-1296 is complete change it to * (all columns).
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
         filters="id>0 AND col_int8>0",
     )
@@ -178,6 +179,6 @@ def test_row_validation_core_types_to_bigquery():
     row_validation_test(
         tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
         tc="bq-conn",
-        # TODO: When issue-1296 is complete change it to * (all columns). 
+        # TODO: When issue-1296 is complete change it to * (all columns).
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
     )
