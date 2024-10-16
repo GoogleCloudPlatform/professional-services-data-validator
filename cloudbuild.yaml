@@ -29,90 +29,90 @@ steps:
   env:
   - 'NOX_SESSION=unit'
   waitFor: ['-']
-# - id: proxy-install
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/install_cloud_proxy.sh']
-#   waitFor: ["-"]
-# - id: integration_mysql
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_mysql'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mysql=tcp:3306'
-#   waitFor: ['-']
-#   secretEnv: ['MYSQL_PASSWORD']
-# - id: integration_postgres
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_postgres'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
-#   secretEnv: ['POSTGRES_PASSWORD']
-#   waitFor: ['proxy-install']
-# - id: integration_sql_server
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_sql_server'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017=tcp:1433'
-#   secretEnv: ['SQL_SERVER_PASSWORD']
-#   waitFor: ['proxy-install']
-# - id: integration_bigquery
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_bigquery'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   waitFor: ['-']
-# - id: integration_spanner
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_spanner'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   waitFor: ['-']
-# - id: integration_teradata
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_teradata'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   - 'TERADATA_HOST=10.128.15.235'
-#   secretEnv: ['TERADATA_PASSWORD']
-# - id: integration_state
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_state'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   waitFor: ['-']
-# - id: integration_oracle
-#   name: 'gcr.io/pso-kokoro-resources/python-multi-oracle-21client'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_oracle'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   - 'ORACLE_HOST=10.128.15.246'
-#   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
-#   secretEnv: ['ORACLE_PASSWORD', 'POSTGRES_PASSWORD']
-#   waitFor: ['proxy-install']
-# - id: integration_hive
-#   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-#   args: ['bash', './ci/build.sh']
-#   env:
-#   - 'NOX_SESSION=integration_hive'
-#   - 'PROJECT_ID=pso-kokoro-resources'
-#   - 'HIVE_HOST=10.128.15.219'
-# - id: integration_snowflake
-  # name: 'gcr.io/cloud-devrel-public-resources/python-multi'
-  # args: ['bash', './ci/build.sh']
-  # env:
-  # - 'NOX_SESSION=integration_snowflake'
-  # - 'PROJECT_ID=pso-kokoro-resources'
-  # secretEnv: ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD']
+- id: proxy-install
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/install_cloud_proxy.sh']
+  waitFor: ["-"]
+- id: integration_mysql
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_mysql'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mysql=tcp:3306'
+  waitFor: ['-']
+  secretEnv: ['MYSQL_PASSWORD']
+- id: integration_postgres
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_postgres'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
+  secretEnv: ['POSTGRES_PASSWORD']
+  waitFor: ['proxy-install']
+- id: integration_sql_server
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_sql_server'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-mssql2017=tcp:1433'
+  secretEnv: ['SQL_SERVER_PASSWORD']
+  waitFor: ['proxy-install']
+- id: integration_bigquery
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_bigquery'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  waitFor: ['-']
+- id: integration_spanner
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_spanner'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  waitFor: ['-']
+- id: integration_teradata
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_teradata'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'TERADATA_HOST=10.128.15.235'
+  secretEnv: ['TERADATA_PASSWORD']
+- id: integration_state
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_state'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  waitFor: ['-']
+- id: integration_oracle
+  name: 'gcr.io/pso-kokoro-resources/python-multi-oracle-21client'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_oracle'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'ORACLE_HOST=10.128.15.246'
+  - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres12=tcp:5432'
+  secretEnv: ['ORACLE_PASSWORD', 'POSTGRES_PASSWORD']
+  waitFor: ['proxy-install']
+- id: integration_hive
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_hive'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'HIVE_HOST=10.128.15.219'
+- id: integration_snowflake
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_snowflake'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  secretEnv: ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD']
 - id: integration_db2
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
@@ -124,21 +124,21 @@ steps:
 
 availableSecrets:
   secretManager:
-  # - versionName: projects/$PROJECT_ID/secrets/mysql_password/versions/latest
-  #   env: 'MYSQL_PASSWORD'
-  # - versionName: projects/$PROJECT_ID/secrets/postgres_password/versions/latest
-  #   env: 'POSTGRES_PASSWORD'
-  # - versionName: projects/$PROJECT_ID/secrets/sql_server_password/versions/latest
-  #   env: 'SQL_SERVER_PASSWORD'
-  # - versionName: projects/$PROJECT_ID/secrets/teradata_password/versions/latest
-  #   env: 'TERADATA_PASSWORD'
-  # - versionName: projects/$PROJECT_ID/secrets/oracle_password/versions/latest
-  #   env: 'ORACLE_PASSWORD'
-  # - versionName: projects/$PROJECT_ID/secrets/snowflake_account/versions/latest
-  #   env: 'SNOWFLAKE_ACCOUNT'
-  # - versionName: projects/$PROJECT_ID/secrets/snowflake_user/versions/latest
-  #   env: 'SNOWFLAKE_USER'
-  # - versionName: projects/$PROJECT_ID/secrets/snowflake_password/versions/latest
-  #   env: 'SNOWFLAKE_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/mysql_password/versions/latest
+    env: 'MYSQL_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/postgres_password/versions/latest
+    env: 'POSTGRES_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/sql_server_password/versions/latest
+    env: 'SQL_SERVER_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/teradata_password/versions/latest
+    env: 'TERADATA_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/oracle_password/versions/latest
+    env: 'ORACLE_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/snowflake_account/versions/latest
+    env: 'SNOWFLAKE_ACCOUNT'
+  - versionName: projects/$PROJECT_ID/secrets/snowflake_user/versions/latest
+    env: 'SNOWFLAKE_USER'
+  - versionName: projects/$PROJECT_ID/secrets/snowflake_password/versions/latest
+    env: 'SNOWFLAKE_PASSWORD'
   - versionName: projects/$PROJECT_ID/secrets/db2_password/versions/latest
     env: 'DB2_PASSWORD'

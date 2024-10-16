@@ -14,10 +14,6 @@
 
 connect to testdb
 
--- === TO DO: References === REMOVE LATER
--- * https://www.ibm.com/docs/en/db2/11.5?topic=elements-data-types
--- * https://docs.oracle.com/cd/E15846_01/doc.21/e15286/oracle_db2_compared.htm#RPTID131
-
 -- Core data types test table, to be kept in sync with same table in other SQL engines
 DROP TABLE db2inst1.dvt_core_types;
 CREATE TABLE db2inst1.dvt_core_types
