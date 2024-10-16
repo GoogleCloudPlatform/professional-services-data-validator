@@ -295,6 +295,7 @@ def _reduce_tokens(tokens, arg):
 
 
 def _strftime(arg, pattern):
+    # TODO(issue-1296): third_party/ibis/ibis_db2/registry.py:298 - AttributeError: 'Strftime' object has no attribute 'value'
     tokens, _ = _scanner.scan(pattern.value)
     reduced = _reduce_tokens(tokens, arg)
     result = functools.reduce(sa.sql.ColumnElement.concat, reduced)

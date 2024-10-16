@@ -144,8 +144,8 @@ def test_row_validation_core_types():
     row_validation_test(
         tables="db2inst1.dvt_core_types",
         tc="mock-conn",
-        # TODO: When issue-1296 is complete change it to * (all columns), because col_date,col_datetime,col_tstz are excluded for now.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
+        # OBS: Only passing this column because SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
+        hash="col_string",
         filters="id>0 AND col_int8>0",
     )
 
@@ -159,8 +159,9 @@ def test_row_validation_core_types_to_bigquery():
     row_validation_test(
         tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
         tc="bq-conn",
-        # TODO: When issue-1296 is complete change it to * (all columns), because col_date,col_datetime,col_tstz are excluded for now.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string",
+        # OBS: Only passing this column because SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
+        # TODO: When issue-1296 is complete change to col_date,col_datetime,col_tstz instead
+        hash="col_string",
     )
 
 
