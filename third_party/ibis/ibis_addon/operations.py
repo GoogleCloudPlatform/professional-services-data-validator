@@ -248,6 +248,12 @@ def strftime_impala(t, op):
     return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
 
 
+def strftime_db2(translator, op):
+    """Date, Datetime, Timestamp formatting specific to DB2."""
+    # TODO(issue-1296): third_party/ibis/ibis_db2/registry.py:298 - AttributeError: 'Strftime' object has no attribute 'value'
+    pass
+
+
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -313,9 +319,10 @@ def sa_format_hashbytes_mysql(translator, op):
 
 def sa_format_hashbytes_db2(translator, op):
     compiled_arg = translator.translate(op.arg)
-    hashfunc = sa.func.hash(compiled_arg, sa.sql.literal_column("2"))
-    hex = sa.func.hex(hashfunc)
-    return sa.func.lower(hex)
+    hash_func = sa.func.hash(compiled_arg, sa.sql.literal_column("2"))
+    # OBS: SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
+    hex_func = sa.func.hex(hash_func)
+    return sa.func.lower(hex_func)
 
 
 def sa_format_hashbytes_redshift(translator, op):
@@ -670,6 +677,7 @@ if Db2ExprTranslator:
     Db2ExprTranslator._registry[HashBytes] = sa_format_hashbytes_db2
     Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    Db2ExprTranslator._registry[Strftime] = strftime_db2
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
 SpannerExprTranslator._registry[HashBytes] = format_hashbytes_bigquery

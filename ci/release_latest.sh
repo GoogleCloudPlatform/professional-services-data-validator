@@ -16,9 +16,9 @@ python3 -m venv rel_venv
 source rel_venv/bin/activate
 
 pip install setuptools wheel
-python register sdist bdist_wheel
+python setup.py register sdist bdist_wheel
 
-export PACKAGE_VERSION=$(grep 'version = ' pyproject.toml | awk '{print $3;}' | sed 's/[^0-9.]*//g')
+export PACKAGE_VERSION=$(grep 'version = ' setup.py | awk '{print $3;}' | sed 's/"//g')
 export GCS_DIRECTORY=gs://professional-services-data-validator/releases/${PACKAGE_VERSION}/
 pip install ./dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl
 
