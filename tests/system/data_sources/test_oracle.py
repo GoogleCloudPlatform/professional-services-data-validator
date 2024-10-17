@@ -660,7 +660,7 @@ def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
     column_validation_test(
         tc="mock-conn",
-        tables="db2inst1.dvt-identifier$_#",
+        tables="pso_data_validator.dvt-identifier$_#",
         count_cols="*",
         filters="COL#HASH IS NOT NULL",
     )
