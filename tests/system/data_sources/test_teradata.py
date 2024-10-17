@@ -29,6 +29,8 @@ from tests.system.data_sources.common_functions import (
     partition_query_test,
     row_validation_test,
     schema_validation_test,
+    column_validation_test,
+    custom_query_validation_test
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -217,6 +219,7 @@ def mock_get_connection_config(*args):
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types():
+    """Teradata to Teradata dvt_core_types schema validation"""
     schema_validation_test(
         tables="udf.dvt_core_types",
         tc="mock-conn",
@@ -228,6 +231,7 @@ def test_schema_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types_to_bigquery():
+    """Teradata to BigQuery dvt_core_types schema validation"""
     schema_validation_test(
         tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
         tc="bq-conn",
@@ -263,25 +267,16 @@ def test_schema_validation_not_null_vs_nullable():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--filter-status=fail",
-            "--grouped-columns=col_varchar_30",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
-        ]
+    """Teradata to Teradata dvt_core_types column validation"""
+    column_validation_test(
+        tc="mock-conn",
+        tables="udf.dvt_core_types",
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -289,23 +284,16 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_core_types=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2,col_datetime",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2,col_datetime",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_dec_20,col_dec_38,col_dec_10_2,col_datetime",
-        ]
+    """Teradata to BigQuery dvt_core_types column validation"""
+    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
+    column_validation_test(
+        tc="bq-conn",
+        tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
+        # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -313,22 +301,13 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_column_validation_time_table_to_bigquery():
-    # Unlike other temporal types, count is the only column validation supported for time
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_time_table=pso_data_validator.dvt_time_table",
-            "--filter-status=fail",
-            "--count=col_time",
-        ]
+    """Teradata to BigQuery dvt_time_table column validation."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="udf.dvt_time_table=pso_data_validator.dvt_time_table",
+        # Unlike other temporal types, count is the only column validation supported for time
+        count_cols="col_time"
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -336,7 +315,7 @@ def test_column_validation_time_table_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_time_table():
-    """Validate time table against BQ"""
+    """Teradata to BigQuery dvt_time_table row validation."""
     row_validation_test(
         tables="udf.dvt_time_table=pso_data_validator.dvt_time_table", hash="*"
     )
@@ -588,23 +567,11 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_custom_query_column_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types custom-query validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "column",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "--source-query=select * from udf.dvt_core_types",
-            "--target-query=select * from pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--count=*",
-        ]
+    custom_query_validation_test(
+        tc="bq-conn",
+        source_query="select * from udf.dvt_core_types",
+        count_cols="*"
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -613,24 +580,12 @@ def test_custom_query_column_validation_core_types_to_bigquery():
 )
 def test_custom_query_row_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types custom-query row validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "row",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "--source-query=select id,col_int64,COL_VARCHAR_30,col_date from udf.dvt_core_types",
-            "--target-query=select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--comparison-fields=col_int64,col_varchar_30,col_date",
-        ]
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from udf.dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        comp_fields="col_int64,col_varchar_30,col_date"
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -639,24 +594,12 @@ def test_custom_query_row_validation_core_types_to_bigquery():
 )
 def test_custom_query_row_hash_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types custom-query row validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "row",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "--source-query=select id,col_int64,COL_VARCHAR_30,col_date from udf.dvt_core_types",
-            "--target-query=select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=col_int64,col_varchar_30,col_date",
-        ]
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from udf.dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        hash="col_int64,col_varchar_30,col_date"
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -703,23 +646,12 @@ def test_schema_validation_identifiers():
 def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
     pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
-    # TODO need to use new common function once available.
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.dvt-identifier$_#",
-            "--filters=COL#HASH IS NOT NULL",
-            "--filter-status=fail",
-            "--count=*",
-        ]
+    column_validation_test(
+        tc="mock-conn",
+        tables="udf.dvt-identifier$_#",
+        count_cols="*",
+        filters="COL#HASH IS NOT NULL",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -729,22 +661,11 @@ def test_column_validation_identifiers():
 def test_row_validation_identifiers():
     """Test row validation on a table with special characters in table and column names."""
     pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=udf.dvt-identifier$_#",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    row_validation_test(
+        tables="udf.dvt-identifier$_#",
+        tc="mock-conn",
+        hash="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
