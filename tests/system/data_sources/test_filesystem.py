@@ -20,7 +20,46 @@ from data_validation import (
     consts,
 )
 
-CONN = {
+from tests.system.data_sources.common_functions import (
+    schema_validation_test,
+)
+
+
+def mock_get_connection_config(*args):
+    if args[1] in ("parquet-conn", "mock-conn"):
+        return PARQUET_CONN
+    elif args[1] == "csv-conn":
+        return CSV_CONN
+    elif args[1] == "json-conn":
+        return JSON_CONN
+    elif args[1] == "orc-conn":
+        return ORC_CONN
+    else:
+        return PARQUET_CONN
+
+
+CSV_CONN = {
+    "source_type": "FileSystem",
+    "table_name": "entries",
+    "file_path": "gs://pso-kokoro-resources/file_connection/csv/entries.csv",
+    "file_type": "csv",
+}
+
+JSON_CONN = {
+    "source_type": "FileSystem",
+    "table_name": "entries",
+    "file_path": "gs://pso-kokoro-resources/file_connection/json/entries.json",
+    "file_type": "json",
+}
+
+ORC_CONN = {
+    "source_type": "FileSystem",
+    "table_name": "entries",
+    "file_path": "gs://pso-kokoro-resources/file_connection/orc/entries.orc",
+    "file_type": "orc",
+}
+
+PARQUET_CONN = {
     "source_type": "FileSystem",
     "table_name": "entries",
     "file_path": "gs://pso-kokoro-resources/file_connection/parquet/entries.parquet",
@@ -28,11 +67,10 @@ CONN = {
 }
 
 
-def test_filesystem_count():
-    """Test count validation on Filesystem"""
+def format_config_count(s_conn, t_conn):
     config_count_valid = {
-        consts.CONFIG_SOURCE_CONN: CONN,
-        consts.CONFIG_TARGET_CONN: CONN,
+        consts.CONFIG_SOURCE_CONN: s_conn,
+        consts.CONFIG_TARGET_CONN: t_conn,
         # Validation Type
         consts.CONFIG_TYPE: "Column",
         # Configuration Required Depending on Validator Type
@@ -60,7 +98,12 @@ def test_filesystem_count():
         consts.CONFIG_FORMAT: "table",
         consts.CONFIG_FILTER_STATUS: None,
     }
+    return config_count_valid
 
+
+def test_filesystem_count_parquet():
+
+    config_count_valid = format_config_count(PARQUET_CONN, PARQUET_CONN)
     data_validator = data_validation.DataValidation(
         config_count_valid,
         verbose=False,
@@ -71,30 +114,84 @@ def test_filesystem_count():
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
-def mock_get_connection_config(*args):
-    return CONN
+def test_filesystem_count_json():
 
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_schema_validation():
-    """Test schema validation on Postgres instance"""
-    config_count_valid = {
-        consts.CONFIG_SOURCE_CONN: CONN,
-        consts.CONFIG_TARGET_CONN: CONN,
-        consts.CONFIG_TYPE: "Schema",
-        consts.CONFIG_TABLE_NAME: "entries",
-        consts.CONFIG_FORMAT: "table",
-        consts.CONFIG_FILTER_STATUS: None,
-    }
-
+    config_count_valid = format_config_count(JSON_CONN, JSON_CONN)
     data_validator = data_validation.DataValidation(
         config_count_valid,
         verbose=False,
     )
     df = data_validator.execute()
 
-    for validation in df.to_dict(orient="records"):
-        assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
+    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
+
+
+def test_filesystem_count_orc():
+
+    config_count_valid = format_config_count(ORC_CONN, ORC_CONN)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
+    df = data_validator.execute()
+
+    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
+
+
+def test_filesystem_count_csv():
+
+    config_count_valid = format_config_count(CSV_CONN, CSV_CONN)
+    data_validator = data_validation.DataValidation(
+        config_count_valid,
+        verbose=False,
+    )
+    df = data_validator.execute()
+
+    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_parquet():
+    """Test schema validation parquet file.
+    This used to use the entries table.
+    """
+    schema_validation_test(tables="entries", tc="PARQUET_CONN")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_csv():
+    """Test schema validation parquet file.
+    This used to use the entries table.
+    """
+    schema_validation_test(tables="entries", tc="CSV_CONN")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_orc():
+    """Test schema validation parquet file.
+    This used to use the entries table.
+    """
+    schema_validation_test(tables="entries", tc="ORC_CONN")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_json():
+    """Test schema validation parquet file.
+    This used to use the entries table.
+    """
+    schema_validation_test(tables="entries", tc="JSON_CONN")
