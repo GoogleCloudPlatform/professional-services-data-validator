@@ -39,7 +39,7 @@ from tests.system.data_sources.common_functions import (
     schema_validation_test,
     row_validation_test,
     column_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -650,7 +650,6 @@ def test_column_validation_pg_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz"
@@ -679,7 +678,7 @@ def test_row_validation_pg_types():
         tables="pso_data_validator.dvt_pg_types",
         tc="mock-conn",
         filters="id>0 AND col_int8>0",
-        hash="*"
+        hash="*",
     )
 
 
@@ -783,10 +782,7 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_custom_query_validation_core_types():
     """PostgreSQL to PostgreSQL dvt_core_types custom-query validation"""
-    custom_query_validation_test(
-        tc="mock-conn",
-        count_cols="*"
-    )
+    custom_query_validation_test(tc="mock-conn", count_cols="*")
 
 
 @mock.patch(

@@ -34,11 +34,10 @@ from tests.system.data_sources.common_functions import (
     partition_table_test,
     partition_query_test,
     row_validation_many_columns_test,
-    run_test_from_cli_args,
     schema_validation_test,
     column_validation_test,
     row_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 
 
@@ -1228,7 +1227,7 @@ def test_column_validation_core_types(mock_conn):
         grouped_columns="col_varchar_30",
         sum_cols=cols,
         min_cols=cols,
-        max_cols=cols
+        max_cols=cols,
     )
 
 
@@ -1251,10 +1250,7 @@ def test_row_validation_core_types(mock_conn):
 )
 def test_custom_query_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types custom-query validation"""
-    custom_query_validation_test(
-        tc="mock-conn",
-        count_cols="*"
-    )
+    custom_query_validation_test(tc="mock-conn", count_cols="*")
 
 
 @mock.patch(

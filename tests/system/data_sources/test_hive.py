@@ -207,7 +207,6 @@ def test_column_validation_core_types():
     pytest.skip(
         "Skipping test_column_validation_core_types in favour of test_column_validation_core_types_to_bigquery (due to elapsed time)."
     )
-    parser = cli_tools.configure_arg_parser()
     # Hive tests are really slow so I've excluded --min below assuming that --max is
     # effectively the same test when comparing an engine back to itself.
     column_validation_test(
@@ -222,16 +221,12 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
     # Hive tests are really slow so I've excluded --min below assuming that --max is effectively the same test.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz"
     column_validation_test(
-        tc="bq-conn",
-        filters="id>0 AND col_int8>0",
-        sum_cols=cols,
-        max_cols=cols
+        tc="bq-conn", filters="id>0 AND col_int8>0", sum_cols=cols, max_cols=cols
     )
 
 
@@ -327,10 +322,7 @@ def test_row_validation_pangrams_to_bigquery():
 def test_custom_query_validation_core_types_to_bigquery():
     """Hive to BigQuery dvt_core_types custom-query validation
     Using BigQuery target because Hive queries are really slow."""
-    custom_query_validation_test(
-        tc="bq-conn",
-        count_cols="*"
-    )
+    custom_query_validation_test(tc="bq-conn", count_cols="*")
 
 
 @mock.patch(

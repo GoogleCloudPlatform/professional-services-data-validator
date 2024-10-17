@@ -27,7 +27,7 @@ from tests.system.data_sources.common_functions import (
     schema_validation_test,
     column_validation_test,
     row_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -292,7 +292,7 @@ def test_row_validation_core_types_to_bigquery():
     row_validation_test(
         tc="bq-conn",
         # TODO Change --hash to include col_date and col_datetime when issue-1061 is complete.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_string,col_tstz"
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_string,col_tstz",
     )
 
 
@@ -333,7 +333,7 @@ def test_custom_query_validation_core_types():
         tc="mock-conn",
         source_query="select * from dvt_core_types",
         target_query="select * from dvt_core_types",
-        count_cols="*"
+        count_cols="*",
     )
 
 

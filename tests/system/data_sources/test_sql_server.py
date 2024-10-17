@@ -34,7 +34,7 @@ from tests.system.data_sources.common_functions import (
     schema_validation_test,
     column_validation_test,
     row_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -319,6 +319,7 @@ def test_column_validation_core_types():
         grouped_columns="col_varchar_30",
     )
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -441,10 +442,7 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_custom_query_column_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types custom-query column validation"""
-    custom_query_validation_test(
-        tc="bq-conn",
-        count_cols="*"
-    )
+    custom_query_validation_test(tc="bq-conn", count_cols="*")
 
 
 @mock.patch(
@@ -457,7 +455,7 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         validation_type="row",
         source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-        comp_fields="col_int64,col_varchar_30,col_date"
+        comp_fields="col_int64,col_varchar_30,col_date",
     )
 
 
@@ -471,7 +469,7 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
         validation_type="row",
         source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-        hash="col_int64,col_varchar_30,col_date"
+        hash="col_int64,col_varchar_30,col_date",
     )
 
 

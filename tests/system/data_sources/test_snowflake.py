@@ -28,7 +28,7 @@ from tests.system.data_sources.common_functions import (
     schema_validation_test,
     column_validation_test,
     row_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.common_functions import (
@@ -162,8 +162,7 @@ def test_generate_partitions(tmp_path: pathlib.Path):
 def test_schema_validation_core_types():
     """Snowflake to Snowflake dvt_core_types schema validation"""
     schema_validation_test(
-        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
-        tc="mock-conn"
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES", tc="mock-conn"
     )
 
 
@@ -174,9 +173,9 @@ def test_schema_validation_core_types():
 def test_schema_validation_specific_types():
     """Snowflake to Snowflake test_specific_data_types schema validation"""
     schema_validation_test(
-        tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_SPECIFIC_DATA_TYPES",
-        tc="mock-conn"
+        tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_SPECIFIC_DATA_TYPES", tc="mock-conn"
     )
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
@@ -375,7 +374,7 @@ def test_custom_query_validation_core_types():
         # TODO Change to 'select *' when issue-916 is complete (support for col_tstz)
         source_query="select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
         target_query="select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
-        count_cols="*"
+        count_cols="*",
     )
 
 

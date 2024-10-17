@@ -30,7 +30,7 @@ from tests.system.data_sources.common_functions import (
     row_validation_test,
     schema_validation_test,
     column_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -306,7 +306,7 @@ def test_column_validation_time_table_to_bigquery():
         tc="bq-conn",
         tables="udf.dvt_time_table=pso_data_validator.dvt_time_table",
         # Unlike other temporal types, count is the only column validation supported for time
-        count_cols="col_time"
+        count_cols="col_time",
     )
 
 
@@ -568,9 +568,7 @@ def test_row_validation_pangrams_to_bigquery():
 def test_custom_query_column_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types custom-query validation"""
     custom_query_validation_test(
-        tc="bq-conn",
-        source_query="select * from udf.dvt_core_types",
-        count_cols="*"
+        tc="bq-conn", source_query="select * from udf.dvt_core_types", count_cols="*"
     )
 
 
@@ -584,7 +582,7 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         validation_type="row",
         source_query="select id,col_int64,COL_VARCHAR_30,col_date from udf.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-        comp_fields="col_int64,col_varchar_30,col_date"
+        comp_fields="col_int64,col_varchar_30,col_date",
     )
 
 
@@ -598,7 +596,7 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
         validation_type="row",
         source_query="select id,col_int64,COL_VARCHAR_30,col_date from udf.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-        hash="col_int64,col_varchar_30,col_date"
+        hash="col_int64,col_varchar_30,col_date",
     )
 
 

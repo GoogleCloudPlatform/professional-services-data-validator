@@ -28,7 +28,7 @@ from tests.system.data_sources.common_functions import (
     schema_validation_test,
     row_validation_test,
     column_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.common_functions import (
@@ -222,7 +222,7 @@ def test_column_validation_core_types():
         grouped_columns="col_varchar_30",
         sum_cols="*",
         min_cols="*",
-        max_cols="*"
+        max_cols="*",
     )
 
 
@@ -241,7 +241,7 @@ def test_column_validation_core_types_to_bigquery():
         grouped_columns="col_varchar_30",
         sum_cols=cols,
         min_cols=cols,
-        max_cols=cols
+        max_cols=cols,
     )
 
 
@@ -267,7 +267,7 @@ def test_row_validation_core_types_to_bigquery():
     row_validation_test(
         tc="bq-conn",
         # TODO Change --hash string below to include col_float32,col_float64 when issue-841 is complete.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
     )
 
 
@@ -365,10 +365,7 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_custom_query_validation_core_types():
     """MySQL to MySQL dvt_core_types custom-query validation"""
-    custom_query_validation_test(
-        tc="mock-conn",
-        count_cols="*"
-    )
+    custom_query_validation_test(tc="mock-conn", count_cols="*")
 
 
 @mock.patch(

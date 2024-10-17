@@ -288,7 +288,7 @@ def row_validation_test(
     primary_keys="id",
     comp_fields=None,
     use_randow_row=False,
-    random_row_batch_size=None
+    random_row_batch_size=None,
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
@@ -307,9 +307,9 @@ def row_validation_test(
     else:
         cli_arg_list.append(f"--hash={hash}")
     if use_randow_row:
-        cli_arg_list.append(f"--use-random-row")
+        cli_arg_list.append("--use-random-row")
     if random_row_batch_size:
-        cli_arg_list.append(f"--random-row-batch-size={random_row_batch_size}")   
+        cli_arg_list.append(f"--random-row-batch-size={random_row_batch_size}")
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
@@ -415,7 +415,7 @@ def custom_query_validation_test(
     grouped_columns=None,
     comp_fields=None,
     hash="*",
-    assert_df_not_empty=False
+    assert_df_not_empty=False,
 ):
     """Generic custom-query validation test.
 
@@ -464,4 +464,3 @@ def custom_query_validation_test(
     else:
         # With filter on failures the data frame should be empty
         assert len(df) == 0
-        

@@ -22,7 +22,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
     null_not_null_assertions,
     row_validation_test,
-    custom_query_validation_test
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -174,8 +174,7 @@ def test_row_validation_core_types_to_bigquery():
 def test_custom_query_column_validation_core_types_to_bigquery():
     """DB2 to BigQuery dvt_core_types custom-query column validation"""
     custom_query_validation_test(
-        source_query="select * from db2inst1.dvt_core_types",
-        count_cols="*"
+        source_query="select * from db2inst1.dvt_core_types", count_cols="*"
     )
 
 
@@ -189,5 +188,5 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         validation_type="row",
         source_query="select id,col_int64,col_varchar_30 from db2inst1.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
-        comp_fields="col_int64,col_varchar_30"
+        comp_fields="col_int64,col_varchar_30",
     )
