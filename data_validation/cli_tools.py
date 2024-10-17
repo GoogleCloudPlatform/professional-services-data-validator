@@ -129,7 +129,7 @@ CONNECTION_SOURCE_FIELDS = {
     "FileSystem": [
         ["table_name", "Table name to use as reference for file data"],
         ["file_path", "The local, s3, or GCS file path to the data"],
-        ["file_type", "The file type of the file. 'csv' or 'json'"],
+        ["file_type", "The file type of the file. 'csv', 'orc', 'parquet' or 'json'"],
     ],
     "Impala": [
         ["host", "Desired Impala host"],
