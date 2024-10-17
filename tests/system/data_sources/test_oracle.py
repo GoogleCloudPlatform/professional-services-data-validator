@@ -317,7 +317,6 @@ def test_column_validation_oracle_to_postgres():
 def test_row_validation_core_types():
     """Oracle to Oracle dvt_core_types row validation"""
     row_validation_test(
-        tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
         hash="*",
         filters="id>0 AND col_int8>0",
@@ -332,7 +331,6 @@ def test_row_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types row validation"""
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     row_validation_test(
-        tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
     )

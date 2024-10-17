@@ -281,7 +281,7 @@ def column_validation_test_config_managers(
 
 
 def row_validation_test(
-    tables="pso_data_validator.test_generate_partitions",
+    tables="pso_data_validator.dvt_core_types",
     tc="bq-conn",
     hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
     filters="1=1",

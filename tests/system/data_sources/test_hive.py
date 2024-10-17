@@ -267,7 +267,6 @@ def test_row_validation_core_types():
         "Skipping test_row_validation_core_types in favour of test_row_validation_core_types_to_bigquery (due to elapsed time)."
     )
     row_validation_test(
-        tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
         hash="*",
     )
@@ -280,7 +279,6 @@ def test_row_validation_core_types():
 def test_row_validation_core_types_to_bigquery():
     # col_float64 is excluded below because there is no way to control the format when casting to string.
     row_validation_test(
-        tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         filters="id>0 AND col_int8>0",
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
