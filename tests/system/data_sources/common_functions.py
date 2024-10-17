@@ -287,9 +287,7 @@ def row_validation_test(
     filters="1=1",
     comp_fields=None,
 ):
-    """Generic row validation test. All row validation tests expect an empty dataframe as the assertion
-    1.
-    """
+    """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
         "validate",
@@ -395,3 +393,52 @@ def partition_query_test(
     # Number of partitions is as requested - assume table rows > partitions requested
     assert len(partition_filters[0][0]) == partition_builder.args.partition_num
     assert partition_filters[0] == expected_filter
+
+
+def custom_query_validation_test(
+    validation_type="column",
+    tc="bq-conn",
+    source_query="select * from pso_data_validator.dvt_core_types",
+    target_query="select * from pso_data_validator.dvt_core_types",
+    filters=None,
+    count_cols=None,
+    comp_fields=None,
+):
+    """Generic custom-query validation test.
+
+    All tests expect an empty dataframe as the assertion.
+    """
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "validate",
+        "custom-query",
+        f"{validation_type}",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"--source-query={source_query}",
+        f"--target-query={target_query}",
+        "--filter-status=fail",
+    ]
+    if filters:
+        cli_arg_list.append(f"--filters={filters}")
+    # Column validation parameters
+    if count_cols:
+        cli_arg_list.append(f"--count={count_cols}")
+    # if sum_cols:
+    #     cli_arg_list.append(f"--sum={sum_cols}")
+    # if min_cols:
+    #     cli_arg_list.append(f"--min={min_cols}")
+    # if max_cols:
+    #     cli_arg_list.append(f"--max={max_cols}")
+    # if grouped_columns:
+    #     cli_arg_list.append(f"--grouped-columns={grouped_columns}")
+    # Row validation parameters
+    if validation_type == "row":
+        cli_arg_list.append("--primary-keys=id")
+    if comp_fields:
+        cli_arg_list.append(f"--comparison-fields={comp_fields}")
+
+    args = parser.parse_args(cli_arg_list)
+    df = run_test_from_cli_args(args)
+    # With filter on failures the data frame should be empty
+    assert len(df) == 0
