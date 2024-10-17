@@ -267,6 +267,7 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
+    """Oracle to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
