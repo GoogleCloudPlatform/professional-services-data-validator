@@ -409,7 +409,13 @@ def custom_query_validation_test(
     target_query="select * from pso_data_validator.dvt_core_types",
     filters=None,
     count_cols=None,
+    min_cols=None,
+    max_cols=None,
+    sum_cols=None,
+    grouped_columns=None,
     comp_fields=None,
+    hash="*",
+    assert_df_not_empty=False
 ):
     """Generic custom-query validation test.
 
@@ -428,24 +434,34 @@ def custom_query_validation_test(
     ]
     if filters:
         cli_arg_list.append(f"--filters={filters}")
+
     # Column validation parameters
     if count_cols:
         cli_arg_list.append(f"--count={count_cols}")
-    # if sum_cols:
-    #     cli_arg_list.append(f"--sum={sum_cols}")
-    # if min_cols:
-    #     cli_arg_list.append(f"--min={min_cols}")
-    # if max_cols:
-    #     cli_arg_list.append(f"--max={max_cols}")
-    # if grouped_columns:
-    #     cli_arg_list.append(f"--grouped-columns={grouped_columns}")
+    if sum_cols:
+        cli_arg_list.append(f"--sum={sum_cols}")
+    if min_cols:
+        cli_arg_list.append(f"--min={min_cols}")
+    if max_cols:
+        cli_arg_list.append(f"--max={max_cols}")
+    if grouped_columns:
+        cli_arg_list.append(f"--grouped-columns={grouped_columns}")
+
     # Row validation parameters
     if validation_type == "row":
         cli_arg_list.append("--primary-keys=id")
-    if comp_fields:
-        cli_arg_list.append(f"--comparison-fields={comp_fields}")
+
+        if comp_fields:
+            cli_arg_list.append(f"--comparison-fields={comp_fields}")
+        else:
+            cli_arg_list.append(f"--hash={hash}")
 
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    if assert_df_not_empty:
+        # With filter on failures the data frame should be populated
+        assert len(df) > 0
+    else:
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0
+        
