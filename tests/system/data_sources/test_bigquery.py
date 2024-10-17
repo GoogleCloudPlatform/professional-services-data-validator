@@ -498,8 +498,6 @@ def test_cli_store_yaml_then_run_gcs():
     )
     main.run_validations(run_config_args, config_managers)
 
-    # _remove_bq_conn()
-
 
 def test_cli_store_yaml_then_run_local():
     """Test storing and retrieving validation YAML locally."""
@@ -527,7 +525,6 @@ def test_cli_store_yaml_then_run_local():
     main.run_validations(run_config_args, config_managers)
 
     os.remove(yaml_file_path)
-    # _remove_bq_conn()
 
 
 @mock.patch(
@@ -1226,7 +1223,7 @@ def test_column_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types column validation"""
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
     column_validation_test(
-        tc="bq-conn",
+        tc="mock-conn",
         filters="id>0 AND col_int8>0",
         grouped_columns="col_varchar_30",
         sum_cols=cols,
@@ -1242,7 +1239,7 @@ def test_column_validation_core_types(mock_conn):
 def test_row_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types row validation"""
     row_validation_test(
-        tc="bq-conn",
+        tc="mock-conn",
         hash="*",
         filters="id>0 AND col_int8>0",
     )
@@ -1255,7 +1252,7 @@ def test_row_validation_core_types(mock_conn):
 def test_custom_query_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types custom-query validation"""
     custom_query_validation_test(
-        tc="bq-conn",
+        tc="mock-conn",
         count_cols="*"
     )
 
@@ -1328,7 +1325,7 @@ def test_column_validation_identifiers(mock_conn):
     """Test column validation on a table with special characters in table and column names."""
     pytest.skip("Skipping test_column_validation_identifiers because of issue-1271")
     column_validation_test(
-        tc="bq-conn",
+        tc="mock-conn",
         tables="pso_data_validator.dvt-identifier___",
         filters="'col#hash' IS NOT NULL",
         count_cols="*",
@@ -1344,6 +1341,6 @@ def test_row_validation_identifiers(mock_conn):
     pytest.skip("Skipping test_row_validation_identifiers because of issue-1271")
     row_validation_test(
         tables="pso_data_validator.dvt-identifier___",
-        tc="bq-conn",
+        tc="mock-conn",
         hash="*",
     )

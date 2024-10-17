@@ -285,7 +285,10 @@ def row_validation_test(
     tc="bq-conn",
     hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
     filters="1=1",
+    primary_keys="id",
     comp_fields=None,
+    use_randow_row=False,
+    random_row_batch_size=None
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
@@ -296,13 +299,17 @@ def row_validation_test(
         f"-tc={tc}",
         f"-tbls={tables}",
         f"--filters={filters}",
-        "--primary-keys=id",
+        f"--primary-keys={primary_keys}",
         "--filter-status=fail",
     ]
     if comp_fields:
         cli_arg_list.append(f"--comparison-fields={comp_fields}")
     else:
         cli_arg_list.append(f"--hash={hash}")
+    if use_randow_row:
+        cli_arg_list.append(f"--use-random-row")
+    if random_row_batch_size:
+        cli_arg_list.append(f"--random-row-batch-size={random_row_batch_size}")   
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty

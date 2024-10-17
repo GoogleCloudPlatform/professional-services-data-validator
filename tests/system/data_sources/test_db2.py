@@ -70,7 +70,7 @@ def test_schema_validation_core_types_to_bigquery():
         tc="bq-conn",
         allow_list=(
             # SMALLINT, INTEGER is equivalent to BigQuery INT64.
-            "--allow-list=int16:int64,int32:int64,"
+            "int16:int64,int32:int64,"
             # BigQuery does not have decimal, float32 types.
             "decimal:float64,float32:float64,"
             # Unable to create col_tstz with time zone on our DB2 database therefore test data is adjusted.
