@@ -1256,7 +1256,6 @@ def test_custom_query_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types custom-query validation"""
     custom_query_validation_test(
         tc="bq-conn",
-        source_query="select * from db2inst1.dvt_core_types",
         count_cols="*"
     )
 

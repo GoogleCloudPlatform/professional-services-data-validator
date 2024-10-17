@@ -27,6 +27,8 @@ from tests.system.data_sources.common_functions import (
     row_validation_test,
     run_test_from_cli_args,
     schema_validation_test,
+    custom_query_validation_test,
+    column_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.common_functions import (
@@ -144,7 +146,6 @@ def test_generate_partitions(tmp_path: pathlib.Path):
 )
 def test_schema_validation_core_types_to_bigquery():
     schema_validation_test(
-        tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         allow_list=(
             # All Hive integers go to BigQuery INT64.
@@ -209,21 +210,11 @@ def test_column_validation_core_types():
     parser = cli_tools.configure_arg_parser()
     # Hive tests are really slow so I've excluded --min below assuming that --max is
     # effectively the same test when comparing an engine back to itself.
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--sum=*",
-            "--max=*",
-        ]
+    column_validation_test(
+        tc="mock-conn",
+        sum_cols="*",
+        max_cols="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -235,22 +226,13 @@ def test_column_validation_core_types_to_bigquery():
     # Hive tests are really slow so I've excluded --min below assuming that --max is effectively the same test.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=hive-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz",
-        ]
+    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz"
+    column_validation_test(
+        tc="bq-conn",
+        filters="id>0 AND col_int8>0",
+        sum_cols=cols,
+        max_cols=cols
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -345,23 +327,10 @@ def test_row_validation_pangrams_to_bigquery():
 def test_custom_query_validation_core_types_to_bigquery():
     """Hive to BigQuery dvt_core_types custom-query validation
     Using BigQuery target because Hive queries are really slow."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "column",
-            "-sc=mock-conn",
-            "-tc=bq-conn",
-            "--source-query=select * from pso_data_validator.dvt_core_types",
-            "--target-query=select * from pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--count=*",
-        ]
+    custom_query_validation_test(
+        tc="bq-conn",
+        count_cols="*"
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
