@@ -27,7 +27,7 @@ as nox or pytest.
 
 - Review and merge PR from `release-please`. If anything needs adjusting,
   update the files in the PR. Check that it:
-    - Updates version string in `pyproject.toml`.
+    - Updates version string in `setup.py`.
     - Includes all expected changes in `CHANGELOG.md`.
 
 ## Build & Publish a test package

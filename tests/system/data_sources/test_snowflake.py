@@ -25,6 +25,10 @@ from tests.system.data_sources.common_functions import (
     null_not_null_assertions,
     row_validation_many_columns_test,
     run_test_from_cli_args,
+    schema_validation_test,
+    column_validation_test,
+    row_validation_test,
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.common_functions import (
@@ -157,20 +161,9 @@ def test_generate_partitions(tmp_path: pathlib.Path):
 )
 def test_schema_validation_core_types():
     """Snowflake to Snowflake dvt_core_types schema validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES", tc="mock-conn"
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -179,20 +172,9 @@ def test_schema_validation_core_types():
 )
 def test_schema_validation_specific_types():
     """Snowflake to Snowflake test_specific_data_types schema validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.TEST_SPECIFIC_DATA_TYPES",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.TEST_SPECIFIC_DATA_TYPES", tc="mock-conn"
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -201,23 +183,14 @@ def test_schema_validation_specific_types():
 )
 def test_schema_validation_core_types_to_bigquery():
     """Snowflake to BigQuery dvt_core_types schema validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=snowflake-conn",
-            "-tc=bq-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--exclusion-columns=id",
+    schema_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        allow_list=(
             # Integer Snowflake NUMBERs to to BigQuery INT64.
-            "--allow-list=decimal(38,0):int64,",
-        ]
+            "decimal(38,0):int64"
+        ),
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -245,26 +218,18 @@ def test_schema_validation_not_null_vs_nullable():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types():
-    parser = cli_tools.configure_arg_parser()
+    """Snowflake to Snowflake dvt_core_types column validation"""
     # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
-            "--filters=id>0 AND col_int8>0",
-            "--filter-status=fail",
-            "--grouped-columns=col_varchar_30",
-            "--sum=COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",
-            "--min=COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",
-            "--max=COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",
-        ]
+    cols = "COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME"
+    column_validation_test(
+        tc="mock-conn",
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -272,24 +237,16 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
+    """Snowflake to BigQuery dvt_core_types column validation"""
     # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=snowflake-conn",
-            "-tc=bq-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--sum=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
-            "--min=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
-            "--max=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
-        ]
+    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
+    column_validation_test(
+        tc="bq-conn",
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -297,24 +254,14 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types():
-    parser = cli_tools.configure_arg_parser()
-    # TODO Change --hash to '*' when issue-916 is complete (support for col_tstz)
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
-            "--filters=id>0 AND col_int8>0",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",
-        ]
+    """Snowflake to Snowflake dvt_core_types row validation"""
+    row_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
+        tc="mock-conn",
+        filters="id>0 AND col_int8>0",
+        # TODO Change --hash to '*' when issue-916 is complete (support for col_tstz)
+        hash="COL_INT8,COL_INT16,COL_INT32,COL_INT64,COL_DEC_20,COL_DEC_38,COL_DEC_10_2,COL_FLOAT32,COL_FLOAT64,COL_VARCHAR_30,COL_CHAR_2,COL_STRING,COL_DATE,COL_DATETIME",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -322,23 +269,13 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
-    # TODO Change --hash to '*' when issue-916 is complete (support for col_tstz)
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=snowflake-conn",
-            "-tc=bq-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
-        ]
+    """Snowflake to BigQuery dvt_core_types row validation"""
+    row_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        # TODO Change --hash to '*' when issue-916 is complete (support for col_tstz)
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -432,24 +369,13 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_custom_query_validation_core_types():
     """Snowflake to Snowflake dvt_core_types custom-query validation"""
-    parser = cli_tools.configure_arg_parser()
-    # TODO Change to 'select *' when issue-916 is complete (support for col_tstz)
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "--source-query=select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
-            "--target-query=select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
-            "--filter-status=fail",
-            "--count=*",
-        ]
+    custom_query_validation_test(
+        tc="mock-conn",
+        # TODO Change to 'select *' when issue-916 is complete (support for col_tstz)
+        source_query="select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
+        target_query="select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
+        count_cols="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -487,20 +413,10 @@ def test_custom_query_row_validation_many_columns():
 )
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT-IDENTIFIER$_#",
-            "--filter-status=fail",
-        ]
+    schema_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT-IDENTIFIER$_#",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -509,23 +425,12 @@ def test_schema_validation_identifiers():
 )
 def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
-    # TODO need to use new common function once available.
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT-IDENTIFIER$_#",
-            '--filters="COL#HASH" IS NOT NULL',
-            "--filter-status=fail",
-            "--count=*",
-        ]
+    column_validation_test(
+        tc="mock-conn",
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT-IDENTIFIER$_#",
+        count_cols="*",
+        filters="'COL#HASH' IS NOT NULL",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -534,19 +439,8 @@ def test_column_validation_identifiers():
 )
 def test_row_validation_identifiers():
     """Test row validation on a table with special characters in table and column names."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=PSO_DATA_VALIDATOR.PUBLIC.DVT-IDENTIFIER$_#",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    row_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT-IDENTIFIER$_#",
+        tc="mock-conn",
+        hash="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
