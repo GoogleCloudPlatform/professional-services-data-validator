@@ -326,12 +326,14 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types column validation"""
+    # Excluded col_float32 because BigQuery does not have a float32 type.
+    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
-        sum_cols="*",
-        min_cols="*",
-        max_cols="*",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
     )
 
 
@@ -539,7 +541,7 @@ def test_column_validation_identifiers():
         tc="mock-conn",
         tables="pso_data_validator.dvt-identifier$_#",
         count_cols="*",
-        filters="'col#hash' IS NOT NULL'",
+        filters="'col#hash' IS NOT NULL",
     )
 
 
