@@ -158,7 +158,7 @@ def test_filesystem_count_csv():
     new=mock_get_connection_config,
 )
 def test_schema_validation_parquet():
-    """Test schema validation parquet file.
+    """Test schema validation Parquet file.
     This used to use the entries table.
     """
     schema_validation_test(tables="entries", tc="PARQUET_CONN")
