@@ -165,7 +165,7 @@ def test_schema_validation_parquet():
     new=mock_get_connection_config,
 )
 def test_schema_validation_csv():
-    """Test schema validation parquet file.
+    """Test schema validation CSV file.
     This used to use the entries table.
     """
     schema_validation_test(tables="entries", tc="CSV_CONN")
