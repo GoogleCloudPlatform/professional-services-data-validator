@@ -138,7 +138,6 @@ def test_filesystem_count_orc():
 
 
 def test_filesystem_count_csv():
-
     config_count_valid = format_config_count(CSV_CONN, CSV_CONN)
     data_validator = data_validation.DataValidation(
         config_count_valid,
