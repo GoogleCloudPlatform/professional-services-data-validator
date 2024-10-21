@@ -128,7 +128,6 @@ def test_filesystem_count_json():
 
 
 def test_filesystem_count_orc():
-
     config_count_valid = format_config_count(ORC_CONN, ORC_CONN)
     data_validator = data_validation.DataValidation(
         config_count_valid,
