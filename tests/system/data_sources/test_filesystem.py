@@ -180,7 +180,7 @@ def test_schema_validation_csv():
     new=mock_get_connection_config,
 )
 def test_schema_validation_orc():
-    """Test schema validation parquet file.
+    """Test schema validation ORC file.
     This used to use the entries table.
     """
     schema_validation_test(tables="entries", tc="ORC_CONN")
