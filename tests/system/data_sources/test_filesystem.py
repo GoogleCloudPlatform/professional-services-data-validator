@@ -102,7 +102,6 @@ def format_config_count(s_conn, t_conn):
 
 
 def test_filesystem_count_parquet():
-
     config_count_valid = format_config_count(PARQUET_CONN, PARQUET_CONN)
     data_validator = data_validation.DataValidation(
         config_count_valid,
