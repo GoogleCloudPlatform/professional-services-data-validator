@@ -187,7 +187,7 @@ def test_schema_validation_orc():
     new=mock_get_connection_config,
 )
 def test_schema_validation_json():
-    """Test schema validation parquet file.
+    """Test schema validation JSON file.
     This used to use the entries table.
     """
     schema_validation_test(tables="entries", tc="JSON_CONN")
