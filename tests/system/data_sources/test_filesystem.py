@@ -73,7 +73,7 @@ def format_config_count(s_conn, t_conn):
         consts.CONFIG_TARGET_CONN: t_conn,
         # Validation Type
         consts.CONFIG_TYPE: "Column",
-        # Configuration Required Depending on Validator Type
+        # Configuration Required Depending on Validation Type
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_AGGREGATES: [
             {
