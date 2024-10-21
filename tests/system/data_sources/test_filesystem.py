@@ -114,7 +114,6 @@ def test_filesystem_count_parquet():
 
 
 def test_filesystem_count_json():
-
     config_count_valid = format_config_count(JSON_CONN, JSON_CONN)
     data_validator = data_validation.DataValidation(
         config_count_valid,
