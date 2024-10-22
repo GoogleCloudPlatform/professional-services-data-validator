@@ -38,7 +38,6 @@ from tests.system.data_sources.common_functions import (
     partition_query_test,
     row_validation_test,
     schema_validation_test,
-    row_validation_test,
     column_validation_test,
     custom_query_validation_test,
 )
