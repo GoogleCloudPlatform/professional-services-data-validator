@@ -119,12 +119,16 @@ def get_pandas_client(table_name, file_path, file_type):
 
     table_name (str): Table name to use as reference for file data
     file_path (str): The local, s3, or GCS file path to the data
-    file_type (str): The file type of the file (csv or json)
+    file_type (str): The file type of the file (csv, json, orc or parquet)
     """
     if file_type == "csv":
         df = pandas.read_csv(file_path)
     elif file_type == "json":
         df = pandas.read_json(file_path)
+    elif file_type == "orc":
+        df = pandas.read_orc(file_path)
+    elif file_type == "parquet":
+        df = pandas.read_parquet(file_path)
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
