@@ -50,8 +50,8 @@ def _get_type(col: _FieldDescription) -> dt.DataType:
         raise NotImplementedError(f"Oracle type {typename} is not supported")
 
     if typename == cx_Oracle.DB_TYPE_NUMBER:
-        if col[4] == 0 and col[5] == -127:
-            # This will occur if type is NUMBER with no precision/scale
+        if col[5] == -127:
+            # This will occur if type is NUMBER with no precision/scale or if type is FLOAT.
             typ = partial(typ)
         else:
             typ = partial(typ, precision=col[4], scale=col[5])
