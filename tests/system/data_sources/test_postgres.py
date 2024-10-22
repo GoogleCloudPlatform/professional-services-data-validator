@@ -36,6 +36,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
     partition_table_test,
     partition_query_test,
+    row_validation_test,
     schema_validation_test,
     row_validation_test,
     column_validation_test,
@@ -677,8 +678,21 @@ def test_row_validation_pg_types():
     row_validation_test(
         tables="pso_data_validator.dvt_pg_types",
         tc="mock-conn",
-        filters="id>0 AND col_int8>0",
         hash="*",
+        filters="id>0 AND col_int8>0",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_pg_types():
+    """PostgreSQL to PostgreSQL dvt_core_types row validation with --comp-fields"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_pg_types",
+        tc="mock-conn",
+        comp_fields="*",
     )
 
 
