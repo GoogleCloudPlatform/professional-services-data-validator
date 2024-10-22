@@ -36,6 +36,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
     partition_table_test,
     partition_query_test,
+    row_validation_test,
     schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
@@ -690,23 +691,25 @@ def test_row_validation_pg_types():
     This used to use the dvt_core_types table but that is covered by subsequent BigQuery
     testing therefore this test can cover off an extended list of data types.
     """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_pg_types",
-            "--filters=id>0 AND col_int8>0",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    row_validation_test(
+        tables="pso_data_validator.dvt_pg_types",
+        tc="mock-conn",
+        hash="*",
+        filters="id>0 AND col_int8>0",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_pg_types():
+    """PostgreSQL to PostgreSQL dvt_core_types row validation with --comp-fields"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_pg_types",
+        tc="mock-conn",
+        comp_fields="*",
+    )
 
 
 @mock.patch(
