@@ -182,11 +182,10 @@ def schema_validation_test(
         f"-tbls={tables}",
         f"--exclusion-columns={exclusion_columns}",
         "--filter-status=fail",
+        f"--allow-list={allow_list}" if allow_list else None,
+        f"--allow-list-file={allow_list_file}" if allow_list_file else None,
     ]
-    if allow_list:
-        cli_arg_list.append(f"--allow-list={allow_list}")
-    if allow_list_file:
-        cli_arg_list.append(f"--allow-list-file={allow_list_file}")
+    cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
@@ -211,20 +210,14 @@ def column_validation_test_args(
         f"-tc={tc}",
         f"-tbls={tables}",
         "--filter-status=fail",
+        f"--count={count_cols}" if count_cols else None,
+        f"--sum={sum_cols}" if sum_cols else None,
+        f"--min={min_cols}" if min_cols else None,
+        f"--max={max_cols}" if max_cols else None,
+        f"--filters={filters}" if filters else None,
+        f"--grouped-columns={grouped_columns}" if grouped_columns else None,
     ]
-    if count_cols:
-        cli_arg_list.append(f"--count={count_cols}")
-    if sum_cols:
-        cli_arg_list.append(f"--sum={sum_cols}")
-    if min_cols:
-        cli_arg_list.append(f"--min={min_cols}")
-    if max_cols:
-        cli_arg_list.append(f"--max={max_cols}")
-    if filters:
-        cli_arg_list.append(f"--filters={filters}")
-    if grouped_columns:
-        cli_arg_list.append(f"--grouped-columns={grouped_columns}")
-
+    cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
 
 
@@ -301,15 +294,15 @@ def row_validation_test(
         f"--filters={filters}",
         f"--primary-keys={primary_keys}",
         "--filter-status=fail",
+        f"--comparison-fields={comp_fields}" if comp_fields else f"--hash={hash}",
+        "--use-random-row" if use_randow_row else None,
+        (
+            f"--random-row-batch-size={random_row_batch_size}"
+            if random_row_batch_size
+            else None
+        ),
     ]
-    if comp_fields:
-        cli_arg_list.append(f"--comparison-fields={comp_fields}")
-    else:
-        cli_arg_list.append(f"--hash={hash}")
-    if use_randow_row:
-        cli_arg_list.append("--use-random-row")
-    if random_row_batch_size:
-        cli_arg_list.append(f"--random-row-batch-size={random_row_batch_size}")
+    cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
@@ -431,21 +424,15 @@ def custom_query_validation_test(
         f"--source-query={source_query}",
         f"--target-query={target_query}",
         "--filter-status=fail",
+        f"--filters={filters}" if filters else None,
+        # Column validation parameters
+        f"--count={count_cols}" if count_cols else None,
+        f"--sum={sum_cols}" if sum_cols else None,
+        f"--min={min_cols}" if min_cols else None,
+        f"--max={max_cols}" if max_cols else None,
+        f"--grouped-columns={grouped_columns}" if grouped_columns else None,
     ]
-    if filters:
-        cli_arg_list.append(f"--filters={filters}")
-
-    # Column validation parameters
-    if count_cols:
-        cli_arg_list.append(f"--count={count_cols}")
-    if sum_cols:
-        cli_arg_list.append(f"--sum={sum_cols}")
-    if min_cols:
-        cli_arg_list.append(f"--min={min_cols}")
-    if max_cols:
-        cli_arg_list.append(f"--max={max_cols}")
-    if grouped_columns:
-        cli_arg_list.append(f"--grouped-columns={grouped_columns}")
+    cli_arg_list = [_ for _ in cli_arg_list if _]
 
     # Row validation parameters
     if validation_type == "row":
