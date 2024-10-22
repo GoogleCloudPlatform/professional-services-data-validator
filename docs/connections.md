@@ -45,7 +45,7 @@ The data validation tool supports the following connection types.
 * [Postgres](#postgres)
 * [MySQL](#mysql)
 * [Redshift](#redshift)
-* [FileSystem](#filesystem-csv-or-json-only)
+* [FileSystem](#filesystem-csv-parquet-orc-json-only)
 * [Impala](#Impala)
 * [Hive](#Hive)
 * [DB2](#DB2)
@@ -242,7 +242,7 @@ data-validation connections add
     --database DATABASE                                 Redshift database
 ```
 
-## FileSystem (CSV or JSON only)
+## FileSystem (CSV, ORC, PARQUET or JSON only)
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
