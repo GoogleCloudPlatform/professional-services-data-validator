@@ -602,6 +602,7 @@ def test_custom_query_row_validation_oracle_to_postgres():
     )
     custom_query_validation_test(
         validation_type="row",
+        tc="pg-conn",
         source_query=f"select {hash_cols} from pso_data_validator.dvt_ora2pg_types",
         target_query=f"select {hash_cols} from pso_data_validator.dvt_ora2pg_types",
         hash="*",

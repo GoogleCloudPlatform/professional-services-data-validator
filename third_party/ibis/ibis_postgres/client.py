@@ -99,7 +99,13 @@ def _get_type(typestr: str) -> dt.DataType:
     else:
         typestr_wo_length = typestr_wob
     typ = _type_mapping.get(typestr_wo_length)
-    if typ is not None:
+    # Added != "numeric" below for issue:
+    #   https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1302
+    # We do not want to map all numerics to decimal(None, None), we want "numeric" to be
+    # passed to the _parse_numeric() function.
+    # An alternative was to remove "numeric" from _type_mapping but that would be yet more monkey
+    # patching, at least this function is already patched.
+    if typ is not None and typestr_wo_length != "numeric":
         return dt.Array(typ) if is_array else typ
     return _parse_numeric(typestr)
 
