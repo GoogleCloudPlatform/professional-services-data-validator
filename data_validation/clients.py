@@ -93,7 +93,9 @@ except Exception:
 def get_bigquery_client(project_id, dataset_id="", credentials=None):
     info = client_info.get_http_client_info()
     job_config = bigquery.QueryJobConfig(
-        connection_properties=[bigquery.ConnectionProperty("time_zone", "UTC")]
+        connection_properties=[
+            bigquery.ConnectionProperty(key="time_zone", value="Etc/UTC")
+        ]
     )
     google_client = bigquery.Client(
         project=project_id,
