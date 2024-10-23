@@ -30,6 +30,7 @@ from tests.system.data_sources.common_functions import (
     row_validation_test,
     run_test_from_cli_args,
     schema_validation_test,
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
@@ -266,6 +267,7 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
+    """Oracle to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
@@ -317,7 +319,6 @@ def test_column_validation_oracle_to_postgres():
 def test_row_validation_core_types():
     """Oracle to Oracle dvt_core_types row validation"""
     row_validation_test(
-        tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
         hash="*",
         filters="id>0 AND col_int8>0",
@@ -332,7 +333,6 @@ def test_row_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types row validation"""
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     row_validation_test(
-        tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
     )
@@ -516,23 +516,7 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_custom_query_column_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types custom-query column validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "column",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "--source-query=select * from pso_data_validator.dvt_core_types",
-            "--target-query=select * from pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--count=*",
-        ]
-    )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    custom_query_validation_test(tc="bq-conn", count_cols="*")
 
 
 @mock.patch(
@@ -541,24 +525,12 @@ def test_custom_query_column_validation_core_types_to_bigquery():
 )
 def test_custom_query_row_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types custom-query row comparison-fields validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "row",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "--source-query=select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
-            "--target-query=select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--comparison-fields=col_int64,col_varchar_30,col_date",
-        ]
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        comp_fields="col_int64,col_varchar_30,col_date",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -567,24 +539,12 @@ def test_custom_query_row_validation_core_types_to_bigquery():
 )
 def test_custom_query_row_hash_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types custom-query row hash validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "row",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "--source-query=select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
-            "--target-query=select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=col_int64,col_varchar_30,col_date",
-        ]
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        hash="col_int64,col_varchar_30,col_date",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -598,26 +558,15 @@ def test_custom_query_invalid_long_decimal():
     See: https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/900
     This is the regression test.
     """
-    parser = cli_tools.configure_arg_parser()
     # Notice the two numeric values balow have a different final digit, we expect a failure status.
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "column",
-            "-sc=mock-conn",
-            "-tc=bq-conn",
-            "--source-query=select to_number(1234567890123456789012345) as dec_25 from dual",
-            "--target-query=select cast('1234567890123456789012340' as numeric) as dec_25",
-            "--filter-status=fail",
-            "--min=dec_25",
-            "--max=dec_25",
-            "--sum=dec_25",
-        ]
+    custom_query_validation_test(
+        source_query="select to_number(1234567890123456789012345) as dec_25 from dual",
+        target_query="select cast('1234567890123456789012340' as numeric) as dec_25",
+        min_cols="dec_25",
+        max_cols="dec_25",
+        sum_cols="dec_25",
+        assert_df_not_empty=True,
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be populated
-    assert len(df) > 0
 
 
 @mock.patch(
@@ -770,23 +719,12 @@ def test_schema_validation_identifiers():
 )
 def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
-    # TODO need to use new common function once available.
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt-identifier$_#",
-            "--filters=COL#HASH IS NOT NULL",
-            "--filter-status=fail",
-            "--count=*",
-        ]
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt-identifier$_#",
+        count_cols="*",
+        filters="COL#HASH IS NOT NULL",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(

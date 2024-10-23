@@ -38,6 +38,7 @@ BLACK_PATHS = (
     "tests",
     "third_party",
     "noxfile.py",
+    "setup.py",
 )
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
 UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
@@ -106,6 +107,7 @@ def lint(session):
     session.run("flake8", "data_validation")
     session.run("flake8", "tests")
     session.run("black", "--check", *BLACK_PATHS)
+    session.run("python", "setup.py", "check", "--strict")
 
 
 @nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
@@ -291,6 +293,25 @@ def integration_snowflake(session):
     session.run(
         "pytest", "tests/system/data_sources/test_snowflake.py", *session.posargs
     )
+
+
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+def integration_db2(session):
+    """Run DB2 integration tests.
+    Ensure DB2 validation is running as expected.
+    """
+    _setup_session_requirements(session, extra_packages=["ibm-db-sa"])
+
+    expected_env_vars = [
+        "PROJECT_ID",
+        "DB2_HOST",
+        "DB2_PASSWORD",
+    ]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run("pytest", "tests/system/data_sources/test_db2.py", *session.posargs)
 
 
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")

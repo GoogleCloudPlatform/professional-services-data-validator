@@ -24,6 +24,10 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     row_validation_many_columns_test,
     run_test_from_cli_args,
+    schema_validation_test,
+    column_validation_test,
+    row_validation_test,
+    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -226,20 +230,11 @@ def test_cli_find_tables():
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-        ]
+    """Spanner to Spanner dvt_core_types schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -247,25 +242,16 @@ def test_schema_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--filter-status=fail",
-            "--grouped-columns=col_varchar_30",
-            "--sum=*",
-            "--min=*",
-            "--max=*",
-        ]
+    """Spanner to Spanner dvt_core_types column validation"""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types",
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -273,24 +259,15 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "column",
-            "-sc=mock-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filter-status=fail",
-            "--grouped-columns=col_varchar_30",
-            "--sum=*",
-            "--min=*",
-            "--max=*",
-        ]
+    """Spanner to BigQuery dvt_core_types column validation"""
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_core_types",
+        grouped_columns="col_varchar_30",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -298,23 +275,12 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--filters=id>0 AND col_int8>0",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=*",
-        ]
+    """Spanner to Spanner dvt_core_types row validation"""
+    row_validation_test(
+        tc="mock-conn",
+        hash="*",
+        filters="id>0 AND col_int8>0",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -322,23 +288,12 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    # TODO Change --hash to include col_date and col_datetime when issue-1061 is complete.
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=mock-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_core_types",
-            "--primary-keys=id",
-            "--filter-status=fail",
-            "--hash=col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_string,col_tstz",
-        ]
+    """Spanner to BigQuery dvt_core_types column validation"""
+    row_validation_test(
+        tc="bq-conn",
+        # TODO Change --hash to include col_date and col_datetime when issue-1061 is complete.
+        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_string,col_tstz",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
@@ -374,23 +329,12 @@ def test_row_validation_binary_pk_to_bigquery():
 )
 def test_custom_query_validation_core_types():
     """Spanner to Spanner dvt_core_types custom-query validation"""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "column",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            "--source-query=select * from dvt_core_types",
-            "--target-query=select * from dvt_core_types",
-            "--filter-status=fail",
-            "--count=*",
-        ]
+    custom_query_validation_test(
+        tc="mock-conn",
+        source_query="select * from dvt_core_types",
+        target_query="select * from dvt_core_types",
+        count_cols="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
 
 
 @mock.patch(
