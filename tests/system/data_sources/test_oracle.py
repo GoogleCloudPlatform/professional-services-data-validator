@@ -600,24 +600,12 @@ def test_custom_query_row_validation_oracle_to_postgres():
             )
         ]
     )
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "custom-query",
-            "row",
-            "-sc=mock-conn",
-            "-tc=pg-conn",
-            f"--source-query=select {hash_cols} from pso_data_validator.dvt_ora2pg_types",
-            f"--target-query=select {hash_cols} from pso_data_validator.dvt_ora2pg_types",
-            "--primary-keys=id",
-            "--hash=*",
-            "--filter-status=fail",
-        ]
+    custom_query_validation_test(
+        validation_type="row",
+        source_query=f"select {hash_cols} from pso_data_validator.dvt_ora2pg_types",
+        target_query=f"select {hash_cols} from pso_data_validator.dvt_ora2pg_types",
+        hash="*",
     )
-    df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be populated
-    assert len(df) > 0
 
 
 @mock.patch(
