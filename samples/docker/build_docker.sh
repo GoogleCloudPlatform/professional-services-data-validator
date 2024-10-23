@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-export PACKAGE_VERSION=$(grep 'version = ' ../../pyproject.toml | awk '{print $3;}' | sed 's/[^0-9.]*//g')
+export PACKAGE_VERSION=$(grep 'version = ' ../../setup.py | awk '{print $3;}' | sed 's/"//g')
 
 python3 -m venv rel_venv
 source rel_venv/bin/activate
@@ -22,7 +22,7 @@ pip install --upgrade pip
 
 pip install setuptools wheel
 cd ../../
-python register sdist bdist_wheel
+python setup.py register sdist bdist_wheel
 
 cd samples/docker
 cp ../../dist/google_pso_data_validator-${PACKAGE_VERSION}-py2.py3-none-any.whl .

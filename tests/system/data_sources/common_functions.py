@@ -182,11 +182,10 @@ def schema_validation_test(
         f"-tbls={tables}",
         f"--exclusion-columns={exclusion_columns}",
         "--filter-status=fail",
+        f"--allow-list={allow_list}" if allow_list else None,
+        f"--allow-list-file={allow_list_file}" if allow_list_file else None,
     ]
-    if allow_list:
-        cli_arg_list.append(f"--allow-list={allow_list}")
-    if allow_list_file:
-        cli_arg_list.append(f"--allow-list-file={allow_list_file}")
+    cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
@@ -211,20 +210,14 @@ def column_validation_test_args(
         f"-tc={tc}",
         f"-tbls={tables}",
         "--filter-status=fail",
+        f"--count={count_cols}" if count_cols else None,
+        f"--sum={sum_cols}" if sum_cols else None,
+        f"--min={min_cols}" if min_cols else None,
+        f"--max={max_cols}" if max_cols else None,
+        f"--filters={filters}" if filters else None,
+        f"--grouped-columns={grouped_columns}" if grouped_columns else None,
     ]
-    if count_cols:
-        cli_arg_list.append(f"--count={count_cols}")
-    if sum_cols:
-        cli_arg_list.append(f"--sum={sum_cols}")
-    if min_cols:
-        cli_arg_list.append(f"--min={min_cols}")
-    if max_cols:
-        cli_arg_list.append(f"--max={max_cols}")
-    if filters:
-        cli_arg_list.append(f"--filters={filters}")
-    if grouped_columns:
-        cli_arg_list.append(f"--grouped-columns={grouped_columns}")
-
+    cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
 
 
@@ -281,16 +274,16 @@ def column_validation_test_config_managers(
 
 
 def row_validation_test(
-    # pk="id",
-    tables="pso_data_validator.test_generate_partitions",
+    tables="pso_data_validator.dvt_core_types",
     tc="bq-conn",
     hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
     filters="1=1",
+    primary_keys="id",
     comp_fields=None,
+    use_randow_row=False,
+    random_row_batch_size=None,
 ):
-    """Generic row validation test. All row validation tests expect an empty dataframe as the assertion
-    1.
-    """
+    """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
         "validate",
@@ -299,13 +292,17 @@ def row_validation_test(
         f"-tc={tc}",
         f"-tbls={tables}",
         f"--filters={filters}",
-        "--primary-keys=id",
+        f"--primary-keys={primary_keys}",
         "--filter-status=fail",
+        f"--comparison-fields={comp_fields}" if comp_fields else f"--hash={hash}",
+        "--use-random-row" if use_randow_row else None,
+        (
+            f"--random-row-batch-size={random_row_batch_size}"
+            if random_row_batch_size
+            else None
+        ),
     ]
-    if comp_fields:
-        cli_arg_list.append(f"--comparison-fields={comp_fields}")
-    else:
-        cli_arg_list.append(f"--hash={hash}")
+    cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     # With filter on failures the data frame should be empty
@@ -396,3 +393,61 @@ def partition_query_test(
     # Number of partitions is as requested - assume table rows > partitions requested
     assert len(partition_filters[0][0]) == partition_builder.args.partition_num
     assert partition_filters[0] == expected_filter
+
+
+def custom_query_validation_test(
+    validation_type="column",
+    tc="bq-conn",
+    source_query="select * from pso_data_validator.dvt_core_types",
+    target_query="select * from pso_data_validator.dvt_core_types",
+    filters=None,
+    count_cols=None,
+    min_cols=None,
+    max_cols=None,
+    sum_cols=None,
+    grouped_columns=None,
+    comp_fields=None,
+    hash="*",
+    assert_df_not_empty=False,
+):
+    """Generic custom-query validation test.
+
+    All tests expect an empty dataframe as the assertion.
+    """
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "validate",
+        "custom-query",
+        f"{validation_type}",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"--source-query={source_query}",
+        f"--target-query={target_query}",
+        "--filter-status=fail",
+        f"--filters={filters}" if filters else None,
+        # Column validation parameters
+        f"--count={count_cols}" if count_cols else None,
+        f"--sum={sum_cols}" if sum_cols else None,
+        f"--min={min_cols}" if min_cols else None,
+        f"--max={max_cols}" if max_cols else None,
+        f"--grouped-columns={grouped_columns}" if grouped_columns else None,
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+
+    # Row validation parameters
+    if validation_type == "row":
+        cli_arg_list.append("--primary-keys=id")
+
+        if comp_fields:
+            cli_arg_list.append(f"--comparison-fields={comp_fields}")
+        else:
+            cli_arg_list.append(f"--hash={hash}")
+
+    args = parser.parse_args(cli_arg_list)
+    df = run_test_from_cli_args(args)
+    if assert_df_not_empty:
+        # With filter on failures the data frame should be populated
+        assert len(df) > 0
+    else:
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0
