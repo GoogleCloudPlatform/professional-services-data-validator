@@ -2,6 +2,23 @@
 
 ## Untagged
 
+## [6.3.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.2.0...v6.3.0) (2024-10-24)
+
+
+### Features
+
+* Add support for -comp-fields=*, which also adds support for --exclude-columns ([#1291](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1291)) ([f181377](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f181377028599c0b7ec15d736c200ae399da86df))
+* Added ORC and PARQUET support among source tests ([#1298](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1298)) ([e102d1e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e102d1eb27010daf6c8087d3dd615dffdf597e25))
+* Partition Custom Queries ([#1289](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1289)) ([7e947d5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7e947d52967ff0acea641df066b9b47af7a6ecb4))
+* Support row validation of boolean columns ([#1284](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1284)) ([c1de5f3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c1de5f3caf8bb3f6b1fe4a5018de519b4441ec18))
+
+
+### Bug Fixes
+
+* Add proper handling for GCPSecretManager exceptions ([#1285](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1285)) ([8028836](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/802883642ef6429dcf7f4aec199ee294077176bb))
+* Combiner did not take boolean datatypes into account ([#1290](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1290)) ([84824db](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/84824dbd166111c9d511af11d01061ca7f356692))
+* Correctly cater for Oracle FLOAT in custom-query validations ([#1304](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1304)) ([fbe9d23](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/fbe9d233b6ed2f7d073817ec4a17b10f1d077594))
+
 ## [6.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.1.0...v6.2.0) (2024-09-27)
 
 
