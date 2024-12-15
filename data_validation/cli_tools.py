@@ -69,6 +69,10 @@ CONNECTION_SOURCE_FIELDS = {
             "api_endpoint",
             '(Optional) GCP BigQuery API endpoint (e.g. "https://mybq.p.googleapis.com")',
         ],
+        [
+            "storage_api_endpoint",
+            '(Optional) GCP BigQuery Storage API endpoint (e.g. "https://mybqstorage.p.googleapis.com")',
+        ],
     ],
     "Teradata": [
         ["host", "Desired Teradata host"],
@@ -1207,6 +1211,9 @@ def get_result_handler(rc_value: str, sa_file=None) -> dict:
             consts.PROJECT_ID: conn_from_file["project_id"],
             consts.TABLE_ID: config[1],
             consts.API_ENDPOINT: conn_from_file.get("api_endpoint", None),
+            consts.STORAGE_API_ENDPOINT: conn_from_file.get(
+                "storage_api_endpoint", None
+            ),
         }
     else:
         # We received project_name.bq_results_table

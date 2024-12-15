@@ -110,12 +110,33 @@ def get_google_bigquery_client(
     )
 
 
+def _get_google_bqstorage_client(credentials=None, api_endpoint: str = None):
+    options = None
+    if api_endpoint:
+        options = client_options.ClientOptions(api_endpoint=api_endpoint)
+    from google.cloud import bigquery_storage_v1 as bigquery_storage
+
+    return bigquery_storage.BigQueryReadClient(
+        credentials=credentials,
+        client_options=options,
+    )
+
+
 def get_bigquery_client(
-    project_id: str, dataset_id: str = "", credentials=None, api_endpoint: str = None
+    project_id: str,
+    dataset_id: str = "",
+    credentials=None,
+    api_endpoint: str = None,
+    storage_api_endpoint: str = None,
 ):
     google_client = get_google_bigquery_client(
         project_id, credentials=credentials, api_endpoint=api_endpoint
     )
+    bqstorage_client = None
+    if storage_api_endpoint:
+        bqstorage_client = _get_google_bqstorage_client(
+            credentials=credentials, api_endpoint=storage_api_endpoint
+        )
 
     ibis_client = ibis.bigquery.connect(
         project_id=project_id,
@@ -126,6 +147,23 @@ def get_bigquery_client(
     # Override the BigQuery client object to ensure the correct user agent is
     # included and any api_endpoint is used.
     ibis_client.client = google_client
+    if bqstorage_client:
+        # Define a replica of backends/bigquery/__init__.py->fetch_from_cursor()
+        # injecting our own BigQuery Storage API client.
+        def _dvt_fetch_from_cursor(self, cursor, schema):
+            method = lambda result: result.to_arrow(
+                progress_bar_type=None,
+                bqstorage_client=bqstorage_client,
+                create_bqstorage_client=False,
+            )
+            arrow_t = self._cursor_to_arrow(cursor, method=method)
+            df = arrow_t.to_pandas(timestamp_as_object=True)
+            return schema.apply_to(df)
+
+        # Override Ibis fetch_from_cursor() method with our custom _dvt_fetch_from_cursor() method.
+        # This is Ibis v5 specific, v6 and upwards let us define a storage api client.
+        ibis_client.fetch_from_cursor = _dvt_fetch_from_cursor
+
     return ibis_client
 
 
@@ -288,10 +326,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config[
-                "credentials"
-            ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                key_path
+            decrypted_connection_config["credentials"] = (
+                google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
+                )
             )
 
     if source_type not in CLIENT_LOOKUP:
