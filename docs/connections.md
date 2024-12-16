@@ -307,10 +307,10 @@ Please note that for Group By validations, the following property must be set in
  ```
  pip install ibis-framework[impala]
  ```
- Only Hive >=0.11 is supported due to [impyla](https://github.com/cloudera/impyla)'s dependency on HiveServer2.
 
- Hive connections are based on the Ibis Impala connection which uses [impyla](https://github.com/cloudera/impyla).
- Only Hive >=0.11 is supported due to impyla's dependency on HiveServer2.
+ Hive connections are based on the Ibis Impala connection which uses [impyla](https://github.com/cloudera/impyla). Only Hive >= 0.11 is supported due to impyla's dependency on HiveServer2.
+
+ When Kerberos needs to be used, it is necessary to set `--auth-mechanism` to `GSSAPI`.
 
  ```
 data-validation connections add
@@ -323,13 +323,15 @@ data-validation connections add
     [--auth-mechanism AUTH_MECH]                        Auth mechanism, defaults to "PLAIN"
     [--user USER]                                       Hive user
     [--password PASSWORD]                               Hive password
-    [--use-ssl USE_SSL]                                 Use SSL (True, False)
+    [--kerberos-service-name KERBEROS_SERVICE_NAME]     Desired Kerberos service name ('impala' if not provided)
+    [--use-ssl USE_SSL]                                 If connecting to HiveServer2, defaults to False
     [--timeout TIMEOUT]                                 Timeout, defaults to 45
-    [--ca-cert CA_CERT]                                 CA Cert
+    [--ca-cert CA_CERT]                                 Local path to 3rd party CA certificate
     [--pool-size POOL_SIZE]                             Hive pool size, default to 8
-    [--hdfs-client CLIENT]                              HDFS client
-    [--use-http-transport TRANSPORT]                    HTTP Transport (True, False)
-    [--http-path PATH]                                  HTTP Path
+    [--hdfs-client CLIENT]                              An existing HDFS client
+    [--use-http-transport TRANSPORT]                    If HTTP proxy is provided, defaults to False
+    [--http-path PATH]                                  URL path of HTTP proxy
+
 ```
 
 
