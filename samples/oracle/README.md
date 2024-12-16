@@ -10,9 +10,9 @@ ERROR at line 1:
 ORA-00902: invalid datatype
 ```
 
-There is an alternative which is to use the Oracle provided DBMS_CRYPTO package (https://docs.oracle.com/en/database/oracle/oracle-database/19/arpls/DBMS_CRYPTO.html#GUID-4B200807-A740-4A2E-8828-AC0CFF6127D5).
+There is an alternative which is to use the Oracle provided [DBMS_CRYPTO package](https://docs.oracle.com/en/database/oracle/oracle-database/19/arpls/DBMS_CRYPTO.html#GUID-4B200807-A740-4A2E-8828-AC0CFF6127D5). Unfortunately that package is not created by default and, even if it has been created, is not granted to all users. Therefore it is not feasible to natively integrate this hash function with DVT. 
 
-Unfortunately that package is not created by default and, even if it has been created, is not granted to all users. Therefore it is not feasible to integrate this hash function with DVT. Instead this sample code documents how one might hash validate Oracle BLOB data using DVT Customer Query validations (https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/docs-document-sample-code-for-oracle-blob#custom-query-row-validations).
+Regardless, this README documents how one might perform row hash validations for Oracle BLOB data using [DVT Custom Query feature](https://github.com/GoogleCloudPlatform/professional-services-data-validator?tab=readme-ov-file#custom-query-row-validations).
 
 
 ## Oracle setup
