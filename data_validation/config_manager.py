@@ -748,11 +748,32 @@ class ConfigManager(object):
         return calculated_config
 
     def append_pre_agg_calc_field(
-        self, source_column, target_column, agg_type, column_type, column_position
+        self,
+        source_column: str,
+        target_column: str,
+        agg_type: str,
+        column_type: str,
+        target_column_type: str,
+        column_position: int,
     ) -> dict:
-        """Append calculated field for length(string | binary) or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
+        """Append calculated field for length() or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
         depth, cast_type = 0, None
-        if column_type in ["string", "!string"]:
+        if any(_ in ["json", "!json"] for _ in [column_type, target_column_type]):
+            # JSON data which needs casting to string before we apply a length function.
+            pre_calculated_config = self.build_and_append_pre_agg_calc_config(
+                source_column,
+                target_column,
+                "cast",
+                column_position,
+                "string",
+                depth,
+            )
+            source_column = target_column = pre_calculated_config[
+                consts.CONFIG_FIELD_ALIAS
+            ]
+            depth = 1
+            calc_func = "length"
+        elif column_type in ["string", "!string"]:
             calc_func = "length"
 
         elif column_type in ["binary", "!binary"]:
@@ -763,14 +784,12 @@ class ConfigManager(object):
                 self.source_client.name == "bigquery"
                 or self.target_client.name == "bigquery"
             ):
-                calc_func = "cast"
-                cast_type = "timestamp"
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
                     source_column,
                     target_column,
-                    calc_func,
+                    "cast",
                     column_position,
-                    cast_type,
+                    "timestamp",
                     depth,
                 )
                 source_column = target_column = pre_calculated_config[
@@ -852,14 +871,17 @@ class ConfigManager(object):
             agg_type: str,
             cast_to_bigint: bool,
         ) -> bool:
-            if column_type in ["string", "!string"] and target_column_type in [
-                "string",
-                "!string",
-            ]:
+            if all(
+                _ in ["string", "!string", "json", "!json"]
+                for _ in [column_type, target_column_type]
+            ):
+                # These data types are aggregated using their lengths.
                 return True
             elif column_type in ["binary", "!binary"]:
                 if agg_type == "count":
                     # Oracle BLOB is invalid for use with SQL COUNT function.
+                    # The expression below returns True if client is Oracle which
+                    # has the effect of triggering use of byte_length transformation.
                     return bool(
                         self.source_client.name == "oracle"
                         or self.target_client.name == "oracle"
@@ -955,6 +977,7 @@ class ConfigManager(object):
                     casefold_target_columns[column],
                     agg_type,
                     column_type,
+                    target_column_type,
                     column_position,
                 )
             else:
