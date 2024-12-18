@@ -586,12 +586,12 @@ class ConfigManager(object):
 
             if (
                 source_ibis_type.is_string() or target_ibis_type.is_string()
-            ) and self._comp_field_cast(
-                # Do not add rstrip if the column is a bool hiding in a string.
+            ) and not self._comp_field_cast(
+                # Do not add rstrip if the column is a bool or UUID hiding in a string.
                 source_table_schema,
                 target_table_schema,
                 field,
-            ) != "bool":
+            ):
                 logging.info(
                     f"Adding rtrim() to string comparison field `{field.casefold()}` due to Teradata CHAR padding."
                 )
@@ -615,17 +615,48 @@ class ConfigManager(object):
     def _comp_field_cast(
         self, source_table_schema: dict, target_table_schema: dict, field: str
     ) -> str:
-        # We check with .get() below because sometimes field is a computed name
+        # We check below if the field exists because sometimes it is a computed name
         # like "concat__all" which is not in the real table.
-        if (
-            source_table_schema.get(field, None)
-            and isinstance(source_table_schema[field], dt.Boolean)
-        ) or (
-            target_table_schema.get(field, None)
-            and isinstance(target_table_schema[field], dt.Boolean)
-        ):
+        source_type = (
+            source_table_schema[field] if field in source_table_schema else None
+        )
+        target_type = (
+            target_table_schema[field] if field in target_table_schema else None
+        )
+        if self._is_bool(source_type, target_type):
             return "bool"
+        elif self._is_uuid(source_type, target_type):
+            return consts.CONFIG_CAST_UUID_STRING
         return None
+
+    def _is_bool(
+        self, source_type: Union[str, dt.DataType], target_type: Union[str, dt.DataType]
+    ) -> bool:
+        """Returns whether column is BOOLEAN based on either source or target data type.
+
+        We do this because some engines don't have a BOOLEAN type, therefore BOOLEAN on one side
+        means both sides need to be BOOLEAN aware."""
+        if isinstance(source_type, str):
+            return any(_ in ["bool", "!bool"] for _ in [source_type, target_type])
+        else:
+            return bool(
+                isinstance(source_type, dt.Boolean)
+                or isinstance(target_type, dt.Boolean)
+            )
+
+    def _is_uuid(
+        self, source_type: Union[str, dt.DataType], target_type: Union[str, dt.DataType]
+    ) -> bool:
+        """Returns whether column is UUID based on either source or target data type.
+
+        We do this because some engines don't have a UUID type, therefore UUID on one side
+        means both sides are UUID. i.e. we use any() not all()."""
+        if isinstance(source_type, str):
+            return any(_ in ["uuid", "!uuid"] for _ in [source_type, target_type])
+        else:
+            return bool(
+                isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
+            )
 
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
@@ -674,12 +705,8 @@ class ConfigManager(object):
             target_ibis_type = target_table[
                 casefold_target_columns[column.casefold()]
             ].type()
-            cast_type = (
-                "string"
-                if self._key_column_needs_casting_to_string(
-                    source_ibis_type, target_ibis_type
-                )
-                else None
+            cast_type = self._key_column_needs_casting_to_string(
+                source_ibis_type, target_ibis_type
             )
 
             column_config = {
@@ -719,8 +746,8 @@ class ConfigManager(object):
         target_column,
         calc_func,
         column_position,
-        cast_type=None,
-        depth=0,
+        cast_type: str = None,
+        depth: int = 0,
     ):
         """Create calculated field config used as a pre-aggregation step. Appends to calculated fields if does not already exist and returns created config."""
         calculated_config = {
@@ -733,7 +760,7 @@ class ConfigManager(object):
             consts.CONFIG_DEPTH: depth,
         }
 
-        if calc_func == "cast" and cast_type is not None:
+        if calc_func == consts.CONFIG_CAST and cast_type is not None:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
             calculated_config[consts.CONFIG_FIELD_ALIAS] = self._prefix_calc_col_name(
                 source_column, f"{calc_func}_{cast_type}", column_position
@@ -763,10 +790,10 @@ class ConfigManager(object):
             pre_calculated_config = self.build_and_append_pre_agg_calc_config(
                 source_column,
                 target_column,
-                "cast",
+                consts.CONFIG_CAST,
                 column_position,
-                "string",
-                depth,
+                cast_type="string",
+                depth=depth,
             )
             source_column = target_column = pre_calculated_config[
                 consts.CONFIG_FIELD_ALIAS
@@ -775,6 +802,10 @@ class ConfigManager(object):
             calc_func = "length"
         elif column_type in ["string", "!string"]:
             calc_func = "length"
+
+        elif self._is_uuid(column_type, target_column_type):
+            calc_func = consts.CONFIG_CAST
+            cast_type = consts.CONFIG_CAST_UUID_STRING
 
         elif column_type in ["binary", "!binary"]:
             calc_func = "byte_length"
@@ -787,10 +818,10 @@ class ConfigManager(object):
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
                     source_column,
                     target_column,
-                    "cast",
+                    consts.CONFIG_CAST,
                     column_position,
-                    "timestamp",
-                    depth,
+                    cast_type="timestamp",
+                    depth=depth,
                 )
                 source_column = target_column = pre_calculated_config[
                     consts.CONFIG_FIELD_ALIAS
@@ -800,14 +831,19 @@ class ConfigManager(object):
             calc_func = "epoch_seconds"
 
         elif column_type == "int32" or column_type == "!int32":
-            calc_func = "cast"
+            calc_func = consts.CONFIG_CAST
             cast_type = "int64"
 
         else:
             raise ValueError(f"Unsupported column type: {column_type}")
 
         calculated_config = self.build_and_append_pre_agg_calc_config(
-            source_column, target_column, calc_func, column_position, cast_type, depth
+            source_column,
+            target_column,
+            calc_func,
+            column_position,
+            cast_type=cast_type,
+            depth=depth,
         )
 
         aggregate_config = {
@@ -851,14 +887,29 @@ class ConfigManager(object):
         self,
         source_column_ibis_type: dt.DataType,
         target_column_ibis_type: dt.DataType,
-    ) -> bool:
-        return bool(
+    ) -> str:
+        """Return a string cast if the datatype combination requires it, otherwise None."""
+        if self._is_uuid(source_column_ibis_type, target_column_ibis_type):
+            # This needs to come before binary check because Oracle
+            # stores UUIDs (GUID) in binary columns.
+            return consts.CONFIG_CAST_UUID_STRING
+        elif (
             self._decimal_column_too_big_for_pandas(
                 source_column_ibis_type, target_column_ibis_type
             )
             or isinstance(source_column_ibis_type, dt.Binary)
             or isinstance(target_column_ibis_type, dt.Binary)
-        )
+        ):
+            return "string"
+        else:
+            return None
+
+    def _type_is_supported_for_agg_validation(
+        self, source_type: str, target_type: str, supported_types: list
+    ) -> bool:
+        if self._is_uuid(source_type, target_type):
+            return bool("uuid" in supported_types)
+        return bool(source_type in supported_types and target_type in supported_types)
 
     def build_config_column_aggregates(
         self, agg_type, arg_value, exclude_cols, supported_types, cast_to_bigint=False
@@ -876,6 +927,8 @@ class ConfigManager(object):
                 for _ in [column_type, target_column_type]
             ):
                 # These data types are aggregated using their lengths.
+                return True
+            elif self._is_uuid(column_type, target_column_type):
                 return True
             elif column_type in ["binary", "!binary"]:
                 if agg_type == "count":
@@ -959,9 +1012,8 @@ class ConfigManager(object):
                     f"Skipping {agg_type} on {column} as column is not present in target table"
                 )
                 continue
-            elif supported_types and (
-                column_type not in supported_types
-                or target_column_type not in supported_types
+            elif supported_types and not self._type_is_supported_for_agg_validation(
+                column_type, target_column_type, supported_types
             ):
                 if self.verbose:
                     logging.info(
@@ -1089,6 +1141,11 @@ class ConfigManager(object):
             target_table_schema[target_column], dt.Boolean
         ):
             custom_params = {"calc_params": consts.CONFIG_CAST_BOOL_STRING}
+            col_config.update(custom_params)
+        elif self._is_uuid(
+            source_table_schema[source_column], target_table_schema[target_column]
+        ):
+            custom_params = {"calc_params": consts.CONFIG_CAST_UUID_STRING}
             col_config.update(custom_params)
 
         return col_config
