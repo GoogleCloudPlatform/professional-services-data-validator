@@ -133,6 +133,7 @@ def get_bigquery_client(
         project_id, credentials=credentials, api_endpoint=api_endpoint
     )
     bqstorage_client = None
+    # storage_api_endpoint = "bigquerystorage.googleapis.com"
     if storage_api_endpoint:
         bqstorage_client = _get_google_bqstorage_client(
             credentials=credentials, api_endpoint=storage_api_endpoint
@@ -162,7 +163,12 @@ def get_bigquery_client(
 
         # Override Ibis fetch_from_cursor() method with our custom _dvt_fetch_from_cursor() method.
         # This is Ibis v5 specific, v6 and upwards let us define a storage api client.
-        ibis_client.fetch_from_cursor = _dvt_fetch_from_cursor
+        import types
+
+        ibis_client.fetch_from_cursor = types.MethodType(
+            _dvt_fetch_from_cursor, ibis_client
+        )
+        # ibis_client.fetch_from_cursor = _dvt_fetch_from_cursor
 
     return ibis_client
 
