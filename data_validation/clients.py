@@ -233,14 +233,19 @@ def list_schemas(client):
         return [None]
 
 
-def list_tables(client, schema_name):
+def list_tables(client, schema_name, tables_only=True):
     """Return a list of tables in the DB schema."""
-    if client.name in ["db2", "mssql", "redshift", "snowflake"]:
-        return client.list_tables()
-    return client.list_tables(database=schema_name)
+    fn = (
+        client.dvt_list_tables
+        if tables_only and client.name != "pandas"
+        else client.list_tables
+    )
+    if client.name in ["db2", "mssql", "redshift", "snowflake", "pandas"]:
+        return fn()
+    return fn(database=schema_name)
 
 
-def get_all_tables(client, allowed_schemas=None):
+def get_all_tables(client, allowed_schemas=None, tables_only=True):
     """Return a list of tuples with database and table names.
 
     client (IbisClient): Client to use for tables
@@ -252,7 +257,7 @@ def get_all_tables(client, allowed_schemas=None):
         if allowed_schemas and schema_name not in allowed_schemas:
             continue
         try:
-            tables = list_tables(client, schema_name)
+            tables = list_tables(client, schema_name, tables_only=tables_only)
         except Exception as e:
             logging.warning(f"List Tables Error: {schema_name} -> {e}")
             continue

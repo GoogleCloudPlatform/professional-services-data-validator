@@ -55,6 +55,10 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
 ,'1970-01-03','1970-01-03 00:00:03'
 ,cast('1970-01-03 00:00:03 -03:00' as datetimeoffset(3)));
 
+CREATE VIEW pso_data_validator.dvt_core_types_vw AS
+SELECT * FROM pso_data_validator.dvt_core_types;
+
+
 DROP TABLE pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null
 (   col_nn             datetime2(0) NOT NULL

@@ -18,12 +18,12 @@ from unittest import mock
 import pytest
 import pathlib
 
-from data_validation import cli_tools, data_validation, consts, find_tables
+from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     column_validation_test,
     column_validation_test_config_managers,
-    find_tables_assertions,
+    find_tables_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -36,6 +36,7 @@ from tests.system.data_sources.common_functions import (
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.test_postgres import CONN as PG_CONN
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
     partition_table_test,
     partition_query_test,
 )
@@ -218,6 +219,18 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_view_core_types_vw():
+    """Oracle to Oracle view dvt_core_types_vw schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types_vw",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_not_null_vs_nullable():
     """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
     parser = cli_tools.configure_arg_parser()
@@ -253,7 +266,7 @@ def test_schema_validation_oracle_to_postgres():
 )
 def test_column_validation_core_types():
     """Oracle to Oracle dvt_core_types column validation"""
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types",
@@ -274,7 +287,9 @@ def test_column_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
@@ -320,6 +335,25 @@ def test_column_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_view_core_types_vw():
+    """Oracle to Oracle view dvt_core_types_vw column validation"""
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types_vw",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Oracle to Oracle dvt_core_types row validation"""
     row_validation_test(
@@ -349,10 +383,14 @@ def test_row_validation_core_types_auto_pks():
 def test_row_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types row validation"""
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
-    row_validation_test(
-        tc="bq-conn",
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_float64")
+        ]
     )
+    row_validation_test(tc="bq-conn", hash=cols)
 
 
 @mock.patch(
@@ -636,17 +674,16 @@ def test_custom_query_row_validation_oracle_to_postgres():
 )
 def test_find_tables():
     """Oracle to BigQuery test of find-tables command."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "find-tables",
-            "-sc=mock-conn",
-            "-tc=bq-conn",
-            "--allowed-schemas=pso_data_validator",
-        ]
-    )
-    output = find_tables.find_tables_using_string_matching(args)
-    find_tables_assertions(output)
+    find_tables_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_views_and_tables():
+    """Oracle to BigQuery test of find-tables command."""
+    find_tables_test(include_views=True)
 
 
 @mock.patch(

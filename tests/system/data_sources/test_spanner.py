@@ -224,6 +224,12 @@ def test_cli_find_tables():
         "target_schema_name": "pso_data_validator",
         "target_table_name": "students_pointer",
     } in tables
+    assert {
+        "schema_name": "pso_data_validator",
+        "table_name": "dvt_core_types_vw",
+        "target_schema_name": "pso_data_validator",
+        "target_table_name": "dvt_core_types_vw",
+    } not in tables
 
 
 @mock.patch(

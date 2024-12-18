@@ -354,16 +354,23 @@ def _configure_deploy(subparsers):
 def _configure_find_tables(subparsers):
     """Configure arguments for text search table matching."""
     find_tables_parser = subparsers.add_parser(
-        "find-tables", help="Build tables list using approx string matching"
+        "find-tables", help="Build tables list using approx string matching."
     )
     find_tables_parser.add_argument(
-        "--source-conn", "-sc", help="Source connection name"
+        "--source-conn", "-sc", help="Source connection name."
     )
     find_tables_parser.add_argument(
-        "--target-conn", "-tc", help="Target connection name"
+        "--target-conn", "-tc", help="Target connection name."
     )
     find_tables_parser.add_argument(
         "--allowed-schemas", "-as", help="List of source schemas to match."
+    )
+    find_tables_parser.add_argument(
+        "--include-views",
+        "-iv",
+        default=False,
+        action="store_true",
+        help="Include views in results.",
     )
     find_tables_parser.add_argument(
         "--score-cutoff",

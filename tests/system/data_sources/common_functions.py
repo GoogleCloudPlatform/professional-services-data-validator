@@ -18,16 +18,39 @@ from typing import TYPE_CHECKING
 import pathlib
 
 from data_validation import __main__ as main
-from data_validation import consts, data_validation, raw_query
-
 from data_validation import (
     cli_tools,
+    consts,
+    data_validation,
+    find_tables,
+    raw_query,
 )
+
 from data_validation.partition_builder import PartitionBuilder
 
 if TYPE_CHECKING:
     from argparse import Namespace
     from pandas import DataFrame
+
+
+DVT_CORE_TYPES_COLUMNS = [
+    "id",
+    "col_int8",
+    "col_int16",
+    "col_int32",
+    "col_int64",
+    "col_dec_20",
+    "col_dec_38",
+    "col_dec_10_2",
+    "col_float32",
+    "col_float64",
+    "col_varchar_30",
+    "col_char_2",
+    "col_string",
+    "col_date",
+    "col_datetime",
+    "col_tstz",
+]
 
 
 def id_type_test_assertions(df, expected_rows=5):
@@ -147,7 +170,13 @@ def row_validation_many_columns_test(
         assert len(df) == 0
 
 
-def find_tables_assertions(command_output: str):
+def find_tables_assertions(
+    command_output: str,
+    expected_source_schema: str = "pso_data_validator",
+    expected_target_schema: str = "pso_data_validator",
+    include_views: bool = False,
+    check_for_view: bool = True,
+):
     assert isinstance(command_output, str)
     assert command_output
     output_dict = json.loads(command_output)
@@ -155,11 +184,57 @@ def find_tables_assertions(command_output: str):
     assert isinstance(output_dict, list)
     assert isinstance(output_dict[0], dict)
     assert len(output_dict) > 1
-    assert all(_["schema_name"] == "pso_data_validator" for _ in output_dict)
-    assert all(_["target_schema_name"] == "pso_data_validator" for _ in output_dict)
+    assert all(_["schema_name"] == expected_source_schema for _ in output_dict)
+    assert all(_["target_schema_name"] == expected_target_schema for _ in output_dict)
     # Assert that a couple of known tables are in the map.
     assert "dvt_core_types" in [_["table_name"] for _ in output_dict]
     assert "dvt_core_types" in [_["target_table_name"] for _ in output_dict]
+    if check_for_view:
+        source_names = [_["table_name"] for _ in output_dict]
+        target_names = [_["target_table_name"] for _ in output_dict]
+        if include_views:
+            # Assert that known view is IN the map.
+            assert (
+                "dvt_core_types_vw" in source_names
+            ), f"dvt_core_types_vw should be in command source output: {source_names}"
+            assert (
+                "dvt_core_types_vw" in target_names
+            ), f"dvt_core_types_vw should be in command target output: {target_names}"
+        else:
+            # Assert that known view is NOT IN the map.
+            assert (
+                "dvt_core_types_vw" not in source_names
+            ), f"dvt_core_types_vw should NOT be in command source output: {source_names}"
+            assert (
+                "dvt_core_types_vw" not in target_names
+            ), f"dvt_core_types_vw should NOT be in command target output: {target_names}"
+
+
+def find_tables_test(
+    tc: str = "bq-conn",
+    allowed_schema: str = "pso_data_validator",
+    include_views: bool = False,
+    check_for_view: bool = True,
+):
+    """Generic find-tables test"""
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "find-tables",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"--allowed-schemas={allowed_schema}",
+        "--include-views" if include_views else None,
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    output = find_tables.find_tables_using_string_matching(args)
+    find_tables_assertions(
+        output,
+        include_views=include_views,
+        check_for_view=check_for_view,
+        expected_source_schema=allowed_schema,
+        expected_target_schema=allowed_schema,
+    )
 
 
 def schema_validation_test(

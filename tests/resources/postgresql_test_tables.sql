@@ -51,6 +51,9 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
  ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 -03:00');
 
+CREATE VIEW pso_data_validator.dvt_core_types_vw AS
+SELECT * FROM pso_data_validator.dvt_core_types;
+
 DROP TABLE IF EXISTS pso_data_validator.dvt_ora2pg_types;
 CREATE TABLE pso_data_validator.dvt_ora2pg_types
 (   id              int NOT NULL PRIMARY KEY

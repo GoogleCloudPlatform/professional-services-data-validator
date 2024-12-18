@@ -235,12 +235,18 @@ def _list_primary_key_columns(self, database: str, table: str) -> list:
     return None
 
 
+def _dvt_list_tables(self, like=None, database=None):
+    """dvt_list_tables is a pass through on Hadoop due to "show tables" behaviour."""
+    return self.list_tables(like=like, database=database)
+
+
 udf.parse_type = parse_type
 ibis.backends.impala._chunks_to_pandas_array = _chunks_to_pandas_array
 ImpalaBackend.get_schema = get_schema
 ImpalaBackend._get_schema_using_query = _get_schema_using_query
 ImpalaBackend.do_connect = do_connect
 ImpalaBackend.list_primary_key_columns = _list_primary_key_columns
+ImpalaBackend.dvt_list_tables = _dvt_list_tables
 
 
 def impala_connect(

@@ -52,6 +52,10 @@ INSERT INTO udf.dvt_core_types VALUES
 ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
 ,CAST('1970-01-03 00:00:03.000-03:00' AS TIMESTAMP(3) WITH TIME ZONE));
 
+CREATE VIEW udf.dvt_core_types_vw AS
+SELECT * FROM udf.dvt_core_types;
+
+
 DROP TABLE udf.dvt_null_not_null;
 CREATE TABLE udf.dvt_null_not_null
 (   col_nn             TIMESTAMP(0) NOT NULL

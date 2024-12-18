@@ -254,6 +254,14 @@ def test_find_tables_config():
     assert allowed_schemas[0] == "my_schema"
 
 
+def test_find_tables_incl_views():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_FIND_TABLES_ARGS)
+    assert not args.include_views
+    args = parser.parse_args(CLI_FIND_TABLES_ARGS + ["--include-views"])
+    assert args.include_views
+
+
 @pytest.mark.parametrize(
     "test_input,expected",
     [

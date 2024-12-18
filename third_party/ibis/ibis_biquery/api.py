@@ -7,4 +7,9 @@ def _list_primary_key_columns(self, database: str, table: str) -> list:
     return None
 
 
+def _dvt_list_tables(self, like=None, database=None):
+    return self.list_tables(like=like, database=database)
+
+
 BigQueryBackend.list_primary_key_columns = _list_primary_key_columns
+BigQueryBackend.dvt_list_tables = _dvt_list_tables

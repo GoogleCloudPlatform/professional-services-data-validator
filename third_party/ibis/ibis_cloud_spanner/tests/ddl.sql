@@ -72,6 +72,15 @@ CREATE TABLE dvt_core_types (
 ,   col_tstz        TIMESTAMP
 ) PRIMARY KEY (id);
 
+CREATE VIEW dvt_core_types_vw
+SQL SECURITY DEFINER
+AS
+SELECT t.id,t.col_int8,t.col_int16,t.col_int32,t.col_int64
+,t.col_dec_20,t.col_dec_38,t.col_dec_10_2,t.col_float32
+,t.col_float64,t.col_varchar_30,t.col_char_2,t.col_string
+,t.col_date,t.col_datetime,t.col_tstz
+FROM dvt_core_types AS t;
+
 --Integration test table used to test both binary pk matching and binary hash/concat comparisons.
 CREATE TABLE dvt_binary
 (   binary_id       BYTES(MAX) NOT NULL

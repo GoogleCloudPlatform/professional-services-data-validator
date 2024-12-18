@@ -49,6 +49,9 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,'Hello DVT','C ','Hello DVT'
  ,'1970-01-03','1970-01-03 00:00:03','1970-01-03 03:00:03');
 
+CREATE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
+SELECT * FROM `pso_data_validator`.`dvt_core_types`;
+
 
 DROP TABLE `pso_data_validator`.`dvt_null_not_null`;
 CREATE TABLE `pso_data_validator`.`dvt_null_not_null`

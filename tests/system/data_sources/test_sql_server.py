@@ -21,10 +21,10 @@ import pathlib
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
-from data_validation import cli_tools, data_validation, consts, find_tables
+from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
-    find_tables_assertions,
+    find_tables_test,
     id_type_test_assertions,
     null_not_null_assertions,
     row_validation_many_columns_test,
@@ -495,17 +495,7 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
 def test_find_tables():
     """SQL Server to BigQuery test of find-tables command."""
     pytest.skip("Skipping test_find_tables until issue 1198 has been resolved.")
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "find-tables",
-            "-sc=mock-conn",
-            "-tc=bq-conn",
-            "--allowed-schemas=pso_data_validator",
-        ]
-    )
-    output = find_tables.find_tables_using_string_matching(args)
-    find_tables_assertions(output)
+    find_tables_test()
 
 
 @mock.patch(

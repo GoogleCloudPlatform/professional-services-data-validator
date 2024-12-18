@@ -68,6 +68,9 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
 ,to_timestamp_tz('1970-01-03 00:00:03 -03:00','YYYY-MM-DD HH24:MI:SS TZH:TZM'));
 COMMIT;
 
+CREATE VIEW pso_data_validator.dvt_core_types_vw AS
+SELECT * FROM pso_data_validator.dvt_core_types;
+
 DROP TABLE pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null
 (   col_nn             TIMESTAMP(0) NOT NULL
