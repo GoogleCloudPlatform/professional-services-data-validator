@@ -569,3 +569,29 @@ def test_row_validation_identifiers():
         tc="mock-conn",
         hash="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_uuid_to_bigquery():
+    """Test column validation with UUID column and primary key to BigQuery"""
+    column_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        count_cols="*",
+        sum_cols="*",
+        min_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_hash_to_bigquery():
+    """Test row validation with UUID column and primary key to BigQuery"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        hash="*",
+    )

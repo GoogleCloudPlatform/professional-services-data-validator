@@ -105,6 +105,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_blob        BLOB
 ,   col_clob        CLOB
 ,   col_nclob       NCLOB
+,   col_uuid        RAW(16)
 ,   col_json        CLOB
 ,   col_jsonb       CLOB
 );
@@ -127,6 +128,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT'),'DVT A','DVT A'
+,HEXTORAW('187BDC3B218443B28EC23AC791C5B0F1')
 ,'{"dvt": 123, "status": "abc"}','{"dvt": 123, "status": "abc"}'
 );
 INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
@@ -141,6 +143,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT DVT'),'DVT B','DVT B'
+,HEXTORAW('287BDC3B218443B28EC23AC791C5B0F1')
 ,'{"dvt": 234, "status": "def"}','{"dvt": 234, "status": "def"}'
 );
 INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
@@ -155,6 +158,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT DVT DVT'),'DVT C','DVT C'
+,HEXTORAW('387BDC3B218443B28EC23AC791C5B0F1')
 ,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}'
 );
 COMMIT;
@@ -701,4 +705,16 @@ CREATE TABLE pso_data_validator.dvt_bool
 COMMENT ON TABLE pso_data_validator.dvt_bool IS 'Integration test table used to test boolean data type, especially in non-boolean columns.';
 INSERT INTO pso_data_validator.dvt_bool VALUES (1,1,1,'1','Y');
 INSERT INTO pso_data_validator.dvt_bool VALUES (2,0,0,'0','N');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_uuid_id;
+CREATE TABLE pso_data_validator.dvt_uuid_id
+(   id        RAW(16) NOT NULL PRIMARY KEY
+,   col_uuid  RAW(16)
+,   col_data  VARCHAR2(10));
+COMMENT ON TABLE pso_data_validator.dvt_uuid_id IS 'Integration test table used to test RAW data type as UUID as a primary key.';
+INSERT INTO pso_data_validator.dvt_uuid_id VALUES
+(HEXTORAW('387BDC3B218443B28EC23AC791C5B0F1'),HEXTORAW('387BDC3B218443B28EC23AC791C5B0F1'),'A');
+INSERT INTO pso_data_validator.dvt_uuid_id VALUES
+(HEXTORAW('397BDC3B218443B28EC23AC791C5B0F1'),HEXTORAW('397BDC3B218443B28EC23AC791C5B0F1'),'B');
 COMMIT;

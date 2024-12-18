@@ -544,3 +544,13 @@ INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (2,'#','$','-','@','Ro
 INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (3,'#','$','-','@','Row 3');
 INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (4,'#','$','-','@','Row 4');
 INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (5,'#','$','-','@','Row 5');
+
+DROP TABLE pso_data_validator.dvt_uuid_id;
+CREATE TABLE pso_data_validator.dvt_uuid_id
+(   id        uniqueidentifier NOT NULL PRIMARY KEY
+,   col_uuid  uniqueidentifier
+,   col_data  varchar(10));
+INSERT INTO pso_data_validator.dvt_uuid_id VALUES
+('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','A');
+INSERT INTO pso_data_validator.dvt_uuid_id VALUES
+('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','B');

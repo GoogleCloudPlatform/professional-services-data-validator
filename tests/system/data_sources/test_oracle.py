@@ -100,6 +100,7 @@ ORA2PG_COLUMNS = [
     "col_blob",
     "col_clob",
     "col_nclob",
+    "col_uuid",
     "col_json",
     "col_jsonb",
 ]
@@ -776,6 +777,62 @@ def test_row_validation_comp_fields_bool_to_postgres():
         tables="pso_data_validator.dvt_bool",
         tc="pg-conn",
         comp_fields="col_bool_dec,col_bool_int,col_bool_ch1,col_bool_chy",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_uuid_oracle_to_postgres():
+    """Test column validation with UUID columns to PostgreSQL"""
+    column_validation_test(
+        tc="pg-conn",
+        tables="pso_data_validator.dvt_uuid_id",
+        count_cols="*",
+        sum_cols="*",
+        min_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_hash_oracle_to_postgres():
+    """Test row validation with UUID column and primary key to PostgreSQL"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        tc="pg-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_comp_oracle_to_postgres():
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        tc="pg-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_rr_oracle_to_postgres():
+    pytest.skip(
+        "Skipping test_row_validation_uuid_rr_oracle_to_postgres until we support random-rows on UUIDs: issue-1366."
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        tc="pg-conn",
+        hash="*",
+        use_randow_row=True,
     )
 
 
