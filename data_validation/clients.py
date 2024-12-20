@@ -26,6 +26,9 @@ import pandas
 
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
+
+# TODO Rename this directory!
+from third_party.ibis.ibis_biquery.api import bigquery_connect
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
@@ -133,44 +136,18 @@ def get_bigquery_client(
         project_id, credentials=credentials, api_endpoint=api_endpoint
     )
     bqstorage_client = None
-    # storage_api_endpoint = "bigquerystorage.googleapis.com"
     if storage_api_endpoint:
         bqstorage_client = _get_google_bqstorage_client(
             credentials=credentials, api_endpoint=storage_api_endpoint
         )
 
-    ibis_client = ibis.bigquery.connect(
+    return bigquery_connect(
         project_id=project_id,
         dataset_id=dataset_id,
         credentials=credentials,
+        bigquery_client=google_client,
+        bqstorage_client=bqstorage_client,
     )
-
-    # Override the BigQuery client object to ensure the correct user agent is
-    # included and any api_endpoint is used.
-    ibis_client.client = google_client
-    if bqstorage_client:
-        # Define a replica of backends/bigquery/__init__.py->fetch_from_cursor()
-        # injecting our own BigQuery Storage API client.
-        def _dvt_fetch_from_cursor(self, cursor, schema):
-            method = lambda result: result.to_arrow(
-                progress_bar_type=None,
-                bqstorage_client=bqstorage_client,
-                create_bqstorage_client=False,
-            )
-            arrow_t = self._cursor_to_arrow(cursor, method=method)
-            df = arrow_t.to_pandas(timestamp_as_object=True)
-            return schema.apply_to(df)
-
-        # Override Ibis fetch_from_cursor() method with our custom _dvt_fetch_from_cursor() method.
-        # This is Ibis v5 specific, v6 and upwards let us define a storage api client.
-        import types
-
-        ibis_client.fetch_from_cursor = types.MethodType(
-            _dvt_fetch_from_cursor, ibis_client
-        )
-        # ibis_client.fetch_from_cursor = _dvt_fetch_from_cursor
-
-    return ibis_client
 
 
 def get_pandas_client(table_name, file_path, file_type):

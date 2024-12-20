@@ -1,10 +1,35 @@
-from ibis.backends.bigquery import Backend as BigQueryBackend
+# Copyright 2024 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 
-def _list_primary_key_columns(self, database: str, table: str) -> list:
-    """Return a list of primary key column names."""
-    # TODO: Related to issue-1253, it's not clear if this is possible, we should revisit if it becomes a requirement.
-    return None
+from third_party.ibis.ibis_biquery import Backend as BigQueryBackend
 
 
-BigQueryBackend.list_primary_key_columns = _list_primary_key_columns
+def bigquery_connect(
+    project_id: str | None = None,
+    dataset_id: str = "",
+    credentials=None,
+    bigquery_client=None,
+    bqstorage_client=None,
+):
+    """Create a BigQuery Backend for use with Ibis."""
+    backend = BigQueryBackend()
+    backend.do_connect(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        credentials=credentials,
+        bigquery_client=bigquery_client,
+        bqstorage_client=bqstorage_client,
+    )
+    return backend
