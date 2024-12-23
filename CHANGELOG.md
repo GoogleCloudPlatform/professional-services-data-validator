@@ -2,6 +2,34 @@
 
 ## Untagged
 
+## [7.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.4.0...v7.0.0) (2024-12-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* Exclude views from output of find tables ([#1355](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1355))
+
+### Features
+
+* Add UUID support ([#1367](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1367)) ([4646757](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/46467576a752be799c0d0b401dad769015d32190))
+* Auto populate -pks when not provided by user ([#1324](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1324)) ([6119c18](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6119c180e54ff383032d46d3222285ed640aa05b))
+* Exclude views from output of find tables ([#1355](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1355)) ([eafdc93](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/eafdc93ab1053c3d772585a044eab50483154141))
+* Prevent column validation exceptions caused by Oracle CLOB JSON columns ([#1365](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1365)) ([b20b4dd](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b20b4dd5aa8aa8157ed5a24a33e9be193a65a62b))
+* Support customer defined api endpoint for BigQuery and Spanner ([#1340](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1340)) ([c88e752](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c88e752cb7380b5a533f7e083ea350d7cd79bf87))
+
+
+### Bug Fixes
+
+* 1261 pg custom query without creating view ([#1353](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1353)) ([f25fe80](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f25fe8021ca431d2dfbdff56de688cdab90c09a8))
+* catch InvalidArg when checking maybe_secret ([#1332](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1332)) ([2924202](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/292420241b3670807520708378b8d079c5b9163c))
+* Fix issue where long rows were being truncated in raw query command ([#1362](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1362)) ([97cfdbd](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/97cfdbd53da3d8f941f00793d7095767b61fd3a1))
+
+
+### Documentation
+
+* Refine connection secret support section ([#1358](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1358)) ([78c79ef](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/78c79ef7fad14db9140a145bde9689eabd480731))
+* Update `docs/connections.md` and `samples/oracle/README.md` ([#1373](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1373)) ([62d0718](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/62d0718654885a1f34cf0a9eecec469f73f6f40a))
+
 ## [6.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.3.0...v6.4.0) (2024-11-12)
 
 

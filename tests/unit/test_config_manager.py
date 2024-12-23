@@ -634,3 +634,22 @@ def test_build_comp_fields(module_under_test):
         True,
     )
     assert comparison_fields == {"b": "b", "d": "d"}
+
+
+@pytest.mark.parametrize(
+    ("source_type,target_type,expected_result"),
+    (
+        ("uuid", "x", True),
+        ("x", "uuid", True),
+        ("!uuid", "x", True),
+        ("x", "y", False),
+    ),
+)
+def test_config_manager_is_uuid(
+    module_under_test, source_type, target_type, expected_result
+):
+    config_manager = module_under_test.ConfigManager(
+        copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    assert config_manager._is_uuid(source_type, target_type) == expected_result

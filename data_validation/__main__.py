@@ -92,6 +92,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         "!int64",
         "!decimal",
     ]
+    uuid_types = ["uuid", "!uuid"]
 
     if args.wildcard_include_string_len:
         supported_data_types.extend(["string", "!string"])
@@ -130,7 +131,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
             "min",
             col_args,
             args.exclude_columns,
-            supported_data_types,
+            supported_data_types + uuid_types,
             cast_to_bigint=cast_to_bigint,
         )
     if args.max:
@@ -139,7 +140,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
             "max",
             col_args,
             args.exclude_columns,
-            supported_data_types,
+            supported_data_types + uuid_types,
             cast_to_bigint=cast_to_bigint,
         )
     if args.bit_xor:

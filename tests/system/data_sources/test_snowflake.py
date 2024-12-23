@@ -21,6 +21,7 @@ import pathlib
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    find_tables_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -391,6 +392,16 @@ def test_custom_query_validation_core_types():
         target_query="select col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime from PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES",
         count_cols="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Snowflake to Snowflake test of find-tables command."""
+    pytest.skip("Skipping test_find_tables until issue 1198 has been resolved.")
+    find_tables_test(tc="mock-conn", allowed_schema="PSO_DATA_VALIDATOR.PUBLIC")
 
 
 @mock.patch(

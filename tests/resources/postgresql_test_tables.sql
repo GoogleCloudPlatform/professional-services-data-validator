@@ -51,6 +51,9 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:03'
  ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 -03:00');
 
+CREATE VIEW pso_data_validator.dvt_core_types_vw AS
+SELECT * FROM pso_data_validator.dvt_core_types;
+
 DROP TABLE IF EXISTS pso_data_validator.dvt_ora2pg_types;
 CREATE TABLE pso_data_validator.dvt_ora2pg_types
 (   id              int NOT NULL PRIMARY KEY
@@ -79,6 +82,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_blob        bytea
 ,   col_clob        text
 ,   col_nclob       text
+,   col_uuid        uuid
 ,   col_json        json
 ,   col_jsonb       jsonb
 );
@@ -97,6 +101,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
 ,CAST('DVT' AS BYTEA),CAST('DVT' AS BYTEA)
 ,CAST('DVT' AS BYTEA),'DVT A','DVT A'
+,uuid('187bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 123, "status": "abc"}','{"dvt": 123, "status": "abc"}')
 ,(2,2222,123456789,123456789012345678,1234567890123456789012345
 ,123.12,123.11
@@ -109,6 +114,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
 ,CAST('DVT' AS BYTEA),CAST('DVT DVT' AS BYTEA)
 ,CAST('DVT DVT' AS BYTEA),'DVT B','DVT B'
+,uuid('287bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 234, "status": "def"}','{"dvt": 234, "status": "def"}')
 ,(3,3333,123456789,123456789012345678,1234567890123456789012345
 ,123.123,123.11
@@ -121,6 +127,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
 ,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA)
 ,CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
+,uuid('387bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}'
 );
 
@@ -752,3 +759,13 @@ CREATE TABLE pso_data_validator.dvt_bool
 COMMENT ON TABLE pso_data_validator.dvt_bool IS 'Integration test table used to test boolean data type, especially in non-boolean columns.';
 INSERT INTO pso_data_validator.dvt_bool VALUES (1,true,true,true,true);
 INSERT INTO pso_data_validator.dvt_bool VALUES (2,false,false,false,false);
+
+DROP TABLE pso_data_validator.dvt_uuid_id;
+CREATE TABLE pso_data_validator.dvt_uuid_id
+(   id        uuid NOT NULL PRIMARY KEY
+,   col_uuid  uuid
+,   col_data  varchar(10));
+COMMENT ON TABLE pso_data_validator.dvt_uuid_id IS 'Integration test table used to test UUID data type as a primary key.';
+INSERT INTO pso_data_validator.dvt_uuid_id VALUES
+(uuid('387bdc3b218443b28ec23ac791c5b0f1'),uuid('387bdc3b218443b28ec23ac791c5b0f1'),'A'),
+(uuid('397bdc3b218443b28ec23ac791c5b0f1'),uuid('397bdc3b218443b28ec23ac791c5b0f1'),'B');

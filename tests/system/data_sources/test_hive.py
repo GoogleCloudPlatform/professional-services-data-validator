@@ -21,6 +21,7 @@ import pathlib
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    find_tables_test,
     id_type_test_assertions,
     null_not_null_assertions,
     row_validation_many_columns_test,
@@ -371,3 +372,13 @@ def test_row_validation_hash_bool_to_bigquery():
         tc="bq-conn",
         hash="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Hive to BigQuery test of find-tables command."""
+    # check_for_view=False because there is no practical way to exclude views on Hive.
+    find_tables_test(check_for_view=False)

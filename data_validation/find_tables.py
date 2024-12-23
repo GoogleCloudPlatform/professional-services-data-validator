@@ -60,10 +60,14 @@ def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8) 
     return table_configs
 
 
-def _get_table_map(client: "ibis.backends.base.BaseBackend", allowed_schemas=None):
+def _get_table_map(
+    client: "ibis.backends.base.BaseBackend", allowed_schemas=None, include_views=False
+):
     """Return dict with searchable keys for table matching."""
     table_map = {}
-    table_objs = clients.get_all_tables(client, allowed_schemas=allowed_schemas)
+    table_objs = clients.get_all_tables(
+        client, allowed_schemas=allowed_schemas, tables_only=(not include_views)
+    )
 
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
@@ -79,11 +83,14 @@ def get_mapped_table_configs(
     source_client: "ibis.backends.base.BaseBackend",
     target_client: "ibis.backends.base.BaseBackend",
     allowed_schemas: list = None,
+    include_views: bool = False,
     score_cutoff: int = 1,
 ) -> list:
     """Get table list from each client and match them together into a single list of dicts."""
-    source_table_map = _get_table_map(source_client, allowed_schemas=allowed_schemas)
-    target_table_map = _get_table_map(target_client)
+    source_table_map = _get_table_map(
+        source_client, allowed_schemas=allowed_schemas, include_views=include_views
+    )
+    target_table_map = _get_table_map(target_client, include_views=include_views)
     return _compare_match_tables(
         source_table_map, target_table_map, score_cutoff=score_cutoff
     )
@@ -102,6 +109,7 @@ def find_tables_using_string_matching(args) -> str:
         source_client,
         target_client,
         allowed_schemas=allowed_schemas,
+        include_views=args.include_views,
         score_cutoff=score_cutoff,
     )
     return json.dumps(table_configs)
@@ -141,6 +149,7 @@ def expand_tables_of_asterisk(
                 source_client,
                 target_client,
                 allowed_schemas=[mapping[consts.CONFIG_SCHEMA_NAME]],
+                include_views=False,
             )
             new_list.extend(expanded_tables)
         else:

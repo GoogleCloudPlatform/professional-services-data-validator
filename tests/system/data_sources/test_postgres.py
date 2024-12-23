@@ -22,14 +22,14 @@ from data_validation import (
     cli_tools,
     data_validation,
     consts,
-    find_tables,
 )
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
     binary_key_assertions,
-    find_tables_assertions,
+    find_tables_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -595,6 +595,18 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_view_core_types_vw():
+    """PostgreSQL to PostgreSQL view dvt_core_types_vw schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types_vw",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_not_null_vs_nullable():
     """Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly."""
     parser = cli_tools.configure_arg_parser()
@@ -653,13 +665,41 @@ def test_column_validation_pg_types():
 def test_column_validation_core_types_to_bigquery():
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz"
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_char_2")
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_view_core_types_vw():
+    """PostgreSQL to PostgreSQL view dvt_core_types_vw column validation"""
+    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_char_2")]
+    )
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types_vw",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
     )
 
 
@@ -819,17 +859,16 @@ def test_custom_query_validation_core_types():
 )
 def test_find_tables():
     """PostgreSQL to BigQuery test of find-tables command."""
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "find-tables",
-            "-sc=mock-conn",
-            "-tc=bq-conn",
-            "--allowed-schemas=pso_data_validator",
-        ]
-    )
-    output = find_tables.find_tables_using_string_matching(args)
-    find_tables_assertions(output)
+    find_tables_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_views_and_tables():
+    """PostgreSQL to BigQuery test of find-tables command."""
+    find_tables_test(include_views=True)
 
 
 @mock.patch(
