@@ -64,6 +64,8 @@ CLI_ADD_BQ_CONNECTION_ARGS = [
     "example-project",
     "--api-endpoint",
     "https://mybq.p.googleapis.com",
+    "--storage-api-endpoint",
+    "https://mybqs.p.googleapis.com",
 ]
 
 CLI_ADD_ORACLE_STD_CONNECTION_ARGS = [
@@ -463,6 +465,7 @@ def test_get_result_handler_by_conn_file(fs):
         consts.PROJECT_ID: args.project_id,
         consts.TABLE_ID: "dataset.table",
         consts.API_ENDPOINT: args.api_endpoint,
+        consts.STORAGE_API_ENDPOINT: args.storage_api_endpoint,
     }
 
     # Plus check standard format still works.

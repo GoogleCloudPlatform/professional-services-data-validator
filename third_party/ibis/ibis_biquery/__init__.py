@@ -108,12 +108,15 @@ class Backend(BigQueryBackend):
     ):
         """Copy of Ibis v5 BigQuery _cursor_to_arrow() except can use custom DVT storage client"""
         if method is None:
-            method = lambda result: result.to_arrow(
-                progress_bar_type=None,
-                # Include DVT specific storage client.
-                bqstorage_client=self.storage_client,
-                create_bqstorage_client=bool(not self.storage_client),
-            )
+
+            def method(result, storage_client=self.storage_client):
+                return result.to_arrow(
+                    progress_bar_type=None,
+                    # Include DVT specific storage client.
+                    bqstorage_client=storage_client,
+                    create_bqstorage_client=bool(not self.storage_client),
+                )
+
         query = cursor.query
         query_result = query.result(page_size=chunk_size)
         # workaround potentially not having the ability to create read sessions

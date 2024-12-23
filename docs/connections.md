@@ -102,6 +102,8 @@ data-validation connections add
     [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
     [--api-endpoint ENDPOINT_URI]                       BigQuery API endpoint (e.g.
                                                         "https://mybq.p.googleapis.com)
+    [--storage-api-endpoint STORAGE_API_ENDPOINT]       BigQuery Storage API endpoint (e.g.
+                                                        "https://mybqstorage.p.googleapis.com)
 ```
 
 ### User/Service account needs following BigQuery permissions to run DVT:
