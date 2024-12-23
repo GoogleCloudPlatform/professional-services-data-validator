@@ -104,7 +104,7 @@ class Backend(BigQueryBackend):
         cursor,
         *,
         method=None,
-        chunk_size: int | None = None,
+        chunk_size: int = None,
     ):
         """Copy of Ibis v5 BigQuery _cursor_to_arrow() except can use custom DVT storage client"""
         if method is None:
