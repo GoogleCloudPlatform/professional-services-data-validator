@@ -36,14 +36,14 @@ class Backend(BigQueryBackend):
 
     def do_connect(
         self,
-        project_id: str | None = None,
+        project_id: str = None,
         dataset_id: str = "",
-        credentials: google.auth.credentials.Credentials | None = None,
-        application_name: str | None = None,
+        credentials: google.auth.credentials.Credentials = None,
+        application_name: str = None,
         auth_local_webserver: bool = True,
         auth_external_data: bool = False,
         auth_cache: str = "default",
-        partition_column: str | None = "PARTITIONTIME",
+        partition_column: str = "PARTITIONTIME",
         # Custom DVT arguments:
         bigquery_client=None,
         bqstorage_client=None,
