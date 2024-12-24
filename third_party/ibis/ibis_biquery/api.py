@@ -17,7 +17,7 @@ from third_party.ibis.ibis_biquery import Backend as BigQueryBackend
 
 
 def bigquery_connect(
-    project_id: str | None = None,
+    project_id: str = None,
     dataset_id: str = "",
     credentials=None,
     bigquery_client=None,
@@ -33,9 +33,3 @@ def bigquery_connect(
         bqstorage_client=bqstorage_client,
     )
     return backend
-
-def _dvt_list_tables(self, like=None, database=None):
-    return self.list_tables(like=like, database=database)
-
-
-BigQueryBackend.dvt_list_tables = _dvt_list_tables
