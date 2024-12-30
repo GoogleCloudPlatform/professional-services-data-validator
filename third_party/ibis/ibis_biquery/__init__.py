@@ -29,7 +29,6 @@ from ibis.backends.bigquery import (
 
 
 class Backend(BigQueryBackend):
-
     def __init__(self):
         super().__init__()
         self.storage_client = None
