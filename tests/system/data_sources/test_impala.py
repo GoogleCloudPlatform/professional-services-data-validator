@@ -138,3 +138,88 @@ def test_column_validation_core_types():
         filters="id>0 AND col_int8>0",
         grouped_columns="col_varchar_30",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_core_types_to_bigquery():
+    """Impala to BigQuery dvt_core_types column validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
+    )
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_core_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_view_core_types_vw():
+    """Impala to Impala view dvt_core_types_vw column validation"""
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types_vw",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types():
+    """Impala to Impala dvt_core_types row validation"""
+    row_validation_test(
+        tc="mock-conn",
+        hash="*",
+        filters="id>0 AND col_int8>0",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    """Impala to BigQuery dvt_core_types row validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    # col_float64 is excluded below because there is no way to control the format
+    # when casting to string.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_float64")
+        ]
+    )
+    row_validation_test(tc="bq-conn", hash=cols)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_core_types():
+    """Impala to Impala dvt_core_types row validation with --comp-fields"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        comp_fields="*",
+    )
