@@ -151,7 +151,7 @@ def test_schema_validation_core_types_to_bigquery():
         allow_list=(
             # All Hive integers go to BigQuery INT64.
             "int8:int64,int16:int64,int32:int64,"
-            # Hive does not have a time zoned
+            # Hive does not have a time zoned timestamp.
             "timestamp:timestamp('UTC'),"
             # BigQuery does not have a float32 type.
             "float32:float64"
@@ -167,7 +167,7 @@ def test_schema_validation_not_null_vs_nullable():
     """
     Disabled this test because we don't currently pull nullable from Hive.
       https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/934
-    Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly.
+    Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly.
     """
     pytest.skip(
         "Skipping test_schema_validation_not_null_vs_nullable because we don't currently pull nullable from Hive."
