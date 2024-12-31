@@ -44,6 +44,7 @@ from tests.system.data_sources.common_functions import (
 IMPALA_HOST = os.getenv("IMPALA_HOST", "localhost")
 IMPALA_PORT = os.getenv("IMPALA_PORT", "21050")
 IMPALA_DATABASE = os.getenv("IMPALA_DATABASE", "default")
+IMPALA_AUTH_MECH = os.getenv("IMPALA_AUTH_MECH", "NOSASL")
 
 
 CONN = {
@@ -51,6 +52,7 @@ CONN = {
     "host": IMPALA_HOST,
     "port": IMPALA_PORT,
     "database": IMPALA_DATABASE,
+    "auth_mechanism": IMPALA_AUTH_MECH,
 }
 
 
