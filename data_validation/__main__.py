@@ -646,6 +646,8 @@ def run_connections(args):
         data_client = clients.get_data_client(conn)
         cli_tools.store_connection(args.connection_name, conn)
         try:
+            # TODO When we upgrade Ibis beyond 5.x this try/except may become redundant.
+            # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1376
             if hasattr(data_client, "close"):
                 data_client.close()
         except Exception as exc:
