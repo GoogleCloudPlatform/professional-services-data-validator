@@ -177,7 +177,7 @@ def test_row_validation_core_types():
     """Impala to Impala dvt_core_types row validation"""
     row_validation_test(
         tc="mock-conn",
-        hash="*",
+        concat="*",
         filters="id>0 AND col_int8>0",
     )
 
@@ -192,11 +192,12 @@ def test_row_validation_core_types_to_bigquery():
     # float32/64 are lossy and cannot be compared.
     # col_float64 is excluded below because there is no way to control the format
     # when casting to string.
+    # TODO Change cols to include col_dec_10_2 when issue-1379 is complete.
     cols = ",".join(
         [
             _
             for _ in DVT_CORE_TYPES_COLUMNS
-            if _ not in ("id", "col_float32", "col_float64")
+            if _ not in ("id", "col_float32", "col_float64", "col_dec_10_2")
         ]
     )
     # Impala does not have sha2() until Impala v4.1.
