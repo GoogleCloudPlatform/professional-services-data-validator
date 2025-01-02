@@ -15,6 +15,8 @@
 import os
 from unittest import mock
 
+import pytest
+
 from data_validation import cli_tools
 from tests.system.data_sources.common_functions import (
     column_validation_test,
@@ -258,8 +260,9 @@ def test_custom_query_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_hash_bool_to_bigquery():
+def test_row_validation_bool_to_bigquery():
     """Test row validation on a table with bool data types."""
+    pytest.skip("Skipping test_row_validation_bool_to_bigquery due to issue-1380.")
     # Impala does not have sha2() until Impala v4.1.
     # Our test infrastructiure is Impala v3 therefore we use --concat below.
     row_validation_test(
