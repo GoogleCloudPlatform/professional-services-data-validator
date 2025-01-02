@@ -346,3 +346,18 @@ def integration_filesystem(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", test_path, env=env_vars, *session.posargs)
+
+
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+def integration_impala(session):
+    """Run Impala integration tests.
+    Ensure Impala validation is running as expected.
+    """
+    _setup_session_requirements(session)
+
+    expected_env_vars = ["PROJECT_ID", "IMPALA_HOST"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run("pytest", "tests/system/data_sources/test_impala.py", *session.posargs)
