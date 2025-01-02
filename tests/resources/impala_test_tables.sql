@@ -90,3 +90,24 @@ CREATE TABLE `pso_data_validator`.`dvt_bool`
 ) COMMENT 'Integration test table used to test boolean data type, especially in non-boolean columns.';
 INSERT INTO `pso_data_validator`.`dvt_bool` VALUES
 (1,true,true,true,true),(2,false,false,false,false);
+
+DROP TABLE IF EXISTS `pso_data_validator`.`test_generate_partitions`;
+CREATE TABLE `pso_data_validator`.`test_generate_partitions` (
+    course_id string
+,   quarter_id int
+,   student_id int
+,   grade float)
+STORED AS PARQUET
+TBLPROPERTIES ('comment'='Table for testing generate table partitions, consists of 32 rows with a composite primary key');
+
+INSERT INTO `pso_data_validator`.`test_generate_partitions`
+(course_id, quarter_id, student_id, grade) VALUES
+('ALG001',1,1234,2.1),('ALG001',1,5678,3.5),('ALG001',1,9012,2.3)
+,('ALG001',2,1234,3.5),('ALG001',2,5678,2.6),('ALG001',2,9012,3.5)
+,('ALG001',3,1234,2.7),('ALG001',3,5678,3.5),('ALG001',3,9012,2.8)
+,('GEO001',1,1234,2.1),('GEO001',1,5678,3.5),('GEO001',1,9012,2.3)
+,('GEO001',2,1234,3.5),('GEO001',2,5678,2.6),('GEO001',2,9012,3.5)
+,('GEO001',3,1234,2.7),('GEO001',3,5678,3.5),('GEO001',3,9012,2.8)
+,('TRI001',1,1234,2.1),('TRI001',1,5678,3.5),('TRI001',1,9012,2.3)
+,('TRI001',2,1234,3.5),('TRI001',2,5678,2.6),('TRI001',2,9012,3.5)
+,('TRI001',3,1234,2.7),('TRI001',3,5678,3.5),('TRI001',3,9012,2.8);
