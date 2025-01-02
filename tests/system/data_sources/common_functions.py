@@ -359,11 +359,18 @@ def row_validation_test(
     filters="1=1",
     primary_keys="id",
     comp_fields=None,
+    concat=None,
     use_randow_row=False,
     random_row_batch_size=None,
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
+    if comp_fields:
+        col_option = f"--comparison-fields={comp_fields}"
+    elif concat:
+        col_option = f"--concat={concat}"
+    else:
+        col_option = f"--hash={hash}"
     cli_arg_list = [
         "validate",
         "row",
@@ -372,8 +379,8 @@ def row_validation_test(
         f"-tbls={tables}",
         f"--filters={filters}",
         f"--primary-keys={primary_keys}" if primary_keys else None,
+        col_option,
         "--filter-status=fail",
-        f"--comparison-fields={comp_fields}" if comp_fields else f"--hash={hash}",
         "--use-random-row" if use_randow_row else None,
         (
             f"--random-row-batch-size={random_row_batch_size}"

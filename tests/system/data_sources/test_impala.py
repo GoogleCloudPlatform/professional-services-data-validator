@@ -199,7 +199,9 @@ def test_row_validation_core_types_to_bigquery():
             if _ not in ("id", "col_float32", "col_float64")
         ]
     )
-    row_validation_test(tc="bq-conn", hash=cols)
+    # Impala does not have sha2() until Impala v4.1.
+    # Our test infrastructiure is Impala v3 therefore we use --concat below.
+    row_validation_test(tc="bq-conn", concat=cols)
 
 
 @mock.patch(
@@ -224,6 +226,8 @@ def test_row_validation_pangrams_to_bigquery():
     This is testing comparisons across a wider set of characters than standard test data.
     """
     parser = cli_tools.configure_arg_parser()
+    # Impala does not have sha2() until Impala v4.1.
+    # Our test infrastructiure is Impala v3 therefore we use --concat below.
     args = parser.parse_args(
         [
             "validate",
@@ -232,7 +236,7 @@ def test_row_validation_pangrams_to_bigquery():
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_pangrams",
             "--primary-keys=id",
-            "--hash=*",
+            "--concat=*",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -255,10 +259,12 @@ def test_custom_query_validation_core_types_to_bigquery():
 )
 def test_row_validation_hash_bool_to_bigquery():
     """Test row validation on a table with bool data types."""
+    # Impala does not have sha2() until Impala v4.1.
+    # Our test infrastructiure is Impala v3 therefore we use --concat below.
     row_validation_test(
         tables="pso_data_validator.dvt_bool",
         tc="bq-conn",
-        hash="*",
+        concat="*",
     )
 
 
