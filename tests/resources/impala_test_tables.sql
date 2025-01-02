@@ -53,6 +53,33 @@ INSERT INTO `pso_data_validator`.`dvt_core_types` VALUES
 CREATE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
 SELECT * FROM `pso_data_validator`.`dvt_core_types`;
 
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_pangrams`;
+CREATE TABLE `pso_data_validator`.`dvt_pangrams`
+(   id          int
+,   lang        varchar(100)
+,   words       varchar(1000)
+,   words_en    varchar(1000)
+)
+STORED AS PARQUET
+TBLPROPERTIES ('comment'='Integration test table used to test unicode characters.');
+-- Text taken from Wikipedia, we cannot guarantee translations :-)
+INSERT INTO `pso_data_validator`.`dvt_pangrams` VALUES
+(1,cast('Hebrew' as varchar(100)),
+ cast('שפן אכל קצת גזר בטעם חסה, ודי' as varchar(1000)),
+ cast('A bunny ate some lettuce-flavored carrots, and he had enough' as varchar(1000))),
+(2,cast('Polish' as varchar(100)),
+ cast('Pchnąć w tę łódź jeża lub ośm skrzyń fig' as varchar(1000)),
+ cast('Push a hedgehog or eight crates of figs in this boat' as varchar(1000))),
+(3,cast('Russian' as varchar(100)),
+ cast('Съешь ещё этих мягких французских булок, да выпей же чаю' as varchar(1000)),
+ cast('Eat more of these soft French loaves and drink a tea' as varchar(1000))),
+(4,cast('Swedish' as varchar(100)),
+ cast('Schweiz för lyxfjäder på qvist bakom ugn' as varchar(1000)),
+ cast('Switzerland brings luxury feather on branch behind oven' as varchar(1000))),
+(5,cast('Turkish' as varchar(100)),
+ cast('Pijamalı hasta yağız şoföre çabucak güvendi' as varchar(1000)),
+ cast('The sick person in pyjamas quickly trusted the swarthy driver' as varchar(1000)));
+
 DROP TABLE IF EXISTS `pso_data_validator`.`dvt_bool`;
 CREATE TABLE `pso_data_validator`.`dvt_bool`
 (   id           int

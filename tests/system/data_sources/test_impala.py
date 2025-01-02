@@ -15,19 +15,12 @@
 import os
 from unittest import mock
 
-import pytest
-import pathlib
-
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools
 from tests.system.data_sources.common_functions import (
-    binary_key_assertions,
     column_validation_test,
-    column_validation_test_config_managers,
     find_tables_test,
     id_type_test_assertions,
-    null_not_null_assertions,
     raw_query_test,
-    row_validation_many_columns_test,
     row_validation_test,
     run_test_from_cli_args,
     schema_validation_test,
@@ -220,3 +213,69 @@ def test_row_validation_comp_fields_core_types():
         tc="mock-conn",
         comp_fields="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_to_bigquery():
+    """Impala to BigQuery dvt_pangrams row validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=ora-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_pangrams",
+            "--primary-keys=id",
+            "--hash=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_validation_core_types_to_bigquery():
+    """Impala to BigQuery dvt_core_types custom-query validation
+    Using BigQuery target because Hive queries are really slow."""
+    custom_query_validation_test(tc="bq-conn", count_cols="*")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_hash_bool_to_bigquery():
+    """Test row validation on a table with bool data types."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="bq-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Impala to BigQuery test of find-tables command."""
+    # check_for_view=False because there is no practical way to exclude views on Impala.
+    find_tables_test(check_for_view=False)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_raw_query_dvt_row_types(capsys):
+    """Test data-validation query command."""
+    raw_query_test(capsys)
