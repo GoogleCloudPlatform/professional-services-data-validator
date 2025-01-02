@@ -228,7 +228,7 @@ def test_row_validation_pangrams_to_bigquery():
         [
             "validate",
             "row",
-            "-sc=ora-conn",
+            "-sc=mock-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_pangrams",
             "--primary-keys=id",
