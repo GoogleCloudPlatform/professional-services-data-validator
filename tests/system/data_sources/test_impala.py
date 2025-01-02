@@ -121,14 +121,6 @@ def test_schema_validation_bool():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types():
-    # """
-    # Disabled this test in favour of test_column_validation_core_types_to_bigquery().
-    # The Hive integration tests are too slow and timing out but I believe
-    # test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
-    # """
-    # pytest.skip(
-    #    "Skipping test_column_validation_core_types in favour of test_column_validation_core_types_to_bigquery (due to elapsed time)."
-    # )
     column_validation_test(
         tc="mock-conn",
         count_cols="*",
@@ -148,8 +140,13 @@ def test_column_validation_core_types_to_bigquery():
     """Impala to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
+    # TODO Change cols to include col_char_2 when issue-842 is complete.
     cols = ",".join(
-        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_char_2")
+        ]
     )
     column_validation_test(
         tc="bq-conn",
