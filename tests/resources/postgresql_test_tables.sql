@@ -211,6 +211,7 @@ CREATE TABLE pso_data_validator.dvt_pg_types
 --,   col_bitv        bit varying(3)
 ,   col_uuid        uuid
 ,   col_oid         oid
+,   col_xml         xml
 );
 COMMENT ON TABLE pso_data_validator.dvt_pg_types IS 'PostgreSQL data types integration test table';
 
@@ -223,7 +224,7 @@ INSERT INTO pso_data_validator.dvt_pg_types
 ,col_date,col_ts,col_tstz,col_time,col_timetz
 ,col_binary,col_bool
 --,col_bit,col_bitv
-,col_uuid,col_oid)
+,col_uuid,col_oid,col_xml)
 VALUES
 (1111,123456789,123456789012345678,12345678901234567890.12345,123.12
 --,123.12
@@ -234,7 +235,8 @@ VALUES
 ,TIME'00:00:01.123456',TIME WITH TIME ZONE'00:00:01.123456 +00:00'
 ,CAST('DVT' AS BYTEA),CAST(0 AS BOOLEAN)
 --,B'101', B'101'
-,gen_random_uuid(),1)
+,gen_random_uuid(),1
+,'<?xml version="1.0"?><Test><Name>Test 1</Name><Command>test1.sh</Command></Test>')
 ,(2222,223456789,223456789012345678,22345678901234567890.12345,223.12
 --,223.12
 ,223456.1,22345678.1
@@ -244,7 +246,9 @@ VALUES
 ,TIME'00:00:02.123456',TIME WITH TIME ZONE'00:00:02.123456 +00:00'
 ,CAST('DVT' AS BYTEA),CAST(0 AS BOOLEAN)
 --,B'011', B'110'
-,gen_random_uuid(),2);
+,gen_random_uuid(),2
+,'<?xml version="1.0"?><Test><Name>Test 2</Name><Command>test2.sh</Command></Test>'
+);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
