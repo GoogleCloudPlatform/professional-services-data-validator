@@ -335,6 +335,23 @@ def test_column_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_group_by_timestamp_oracle_to_postgres():
+    """Test that --grouped-columns on Oracle TIMESTAMP works when cast to DATE.
+
+    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element which should be removed.
+    """
+    column_validation_test(
+        tc="pg-conn",
+        tables="pso_data_validator.dvt_ora2pg_types",
+        count_cols="id,col_ts",
+        grouped_columns="col_ts",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_view_core_types_vw():
     """Oracle to Oracle view dvt_core_types_vw column validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
