@@ -335,23 +335,6 @@ def test_column_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_group_by_timestamp_oracle_to_postgres():
-    """Test that --grouped-columns on Oracle TIMESTAMP works when cast to DATE.
-
-    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element which should be removed.
-    """
-    column_validation_test(
-        tc="pg-conn",
-        tables="pso_data_validator.dvt_ora2pg_types",
-        count_cols="id,col_ts",
-        grouped_columns="col_ts",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_column_validation_view_core_types_vw():
     """Oracle to Oracle view dvt_core_types_vw column validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
@@ -887,6 +870,23 @@ def test_row_validation_uuid_rr_oracle_to_postgres():
         tc="pg-conn",
         hash="*",
         use_randow_row=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly.
+
+    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
+    which should be removed in SQL otherwise groups will not match Pandas.
+    """
+    column_validation_test(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        count_cols="id",
+        grouped_columns="col_datetime",
     )
 
 
