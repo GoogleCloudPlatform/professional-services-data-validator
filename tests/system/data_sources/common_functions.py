@@ -272,14 +272,15 @@ def schema_validation_test(
 
 
 def column_validation_test_args(
-    tables="pso_data_validator.dvt_core_types",
-    tc="bq-conn",
-    count_cols=None,
-    sum_cols=None,
-    min_cols=None,
-    max_cols=None,
-    filters=None,
-    grouped_columns=None,
+    tables: str = "pso_data_validator.dvt_core_types",
+    tc: str = "bq-conn",
+    count_cols: str = None,
+    sum_cols: str = None,
+    min_cols: str = None,
+    max_cols: str = None,
+    filters: str = None,
+    grouped_columns: str = None,
+    filter_status: str = "fail",
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -288,7 +289,7 @@ def column_validation_test_args(
         "-sc=mock-conn",
         f"-tc={tc}",
         f"-tbls={tables}",
-        "--filter-status=fail",
+        f"--filter-status={filter_status}" if filter_status else None,
         f"--count={count_cols}" if count_cols else None,
         f"--sum={sum_cols}" if sum_cols else None,
         f"--min={min_cols}" if min_cols else None,
