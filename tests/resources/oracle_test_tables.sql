@@ -728,13 +728,12 @@ CREATE TABLE pso_data_validator.dvt_group_by_timestamp
 ,   group_id     NUMBER(1)
 ,   col_date     DATE
 ,   col_datetime TIMESTAMP(0)
-,   other_data   NUMBER(9)
 );
 COMMENT ON TABLE pso_data_validator.dvt_group_by_timestamp IS 'Integration test table used to test Timestamp grouping.';
-INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (1,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 12:00:00',1);
-INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (2,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 13:00:00',1);
-INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (3,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 14:00:00',1);
-INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (4,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 12:00:00',1);
-INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00',1);
-INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00',1);
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (1,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 12:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (2,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 13:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (3,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 14:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (4,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 12:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
 COMMIT;
