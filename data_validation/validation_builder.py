@@ -24,6 +24,17 @@ from data_validation.query_builder.query_builder import (
     GroupedField,
     QueryBuilder,
 )
+import ibis.backends.base
+from ibis.backends.bigquery import Backend as BigQueryBackend
+from ibis.backends.postgres import Backend as PostgresBackend
+from ibis.backends.mysql import Backend as MySQLBackend
+from ibis.backends.snowflake import Backend as SnowflakeBackend
+from ibis.backends.impala import Backend as ImpalaBackend
+from third_party.ibis.ibis_teradata import Backend as TeradataBackend
+from third_party.ibis.ibis_cloud_spanner import Backend as SpannerBackend
+from third_party.ibis.ibis_oracle import Backend as OracleBackend
+from third_party.ibis.ibis_mssql import Backend as MsSqlBackend
+from third_party.ibis.ibis_db2 import Backend as DB2Backend
 
 
 def list_to_sublists(id_list: list, max_size: int) -> list:
@@ -86,6 +97,64 @@ class ValidationBuilder(object):
 
         else:
             return FilterField.isin(column_name, in_list)
+
+    @staticmethod
+    def _is_fixed_length_char(
+        client: ibis.backends.base.BaseBackend, table_name_qual: str, column_name: str
+    ) -> bool:
+        """Returns true if the string column provided is a fixed length char column.
+        Since some databases automatically pad fixed length chars when storing them and returning the value, these
+        will need to be trimmed before comparison. Some databases - e.g. BQ do not support
+        fixed length character strings
+        """
+        # table_name can be fully qualified i.e. includes the schema name as well
+        if len(my_values := table_name_qual.split(".")) == 2:
+            schema_name = my_values[0]
+            table_name = my_values[1]
+        else:
+            table_name = table_name_qual
+        match client:
+            # The following backends don't pad blanks - either don't support fixed char or
+            # trim spaces before using.
+            case BigQueryBackend() | SpannerBackend() | SnowflakeBackend() | MySQLBackend():
+                return False
+            case TeradataBackend():
+                column_type = client.sql(
+                    f"""select ColumnName, ColumnType from dbc.columns
+                        where DatabaseName = '{schema_name}' and TableName='{table_name}'
+                            and ColumnName='{column_name}'"""
+                ).execute()
+                return column_type.iloc[0]["ColumnType"].startswith("CF")
+            case OracleBackend():  # only support same schema for now
+                column_type = client.sql(
+                    f"""select COLUMN_NAME, DATA_TYPE from user_tab_columns
+                        where TABLE_NAME='{table_name.upper()}'
+                        and COLUMN_NAME='{column_name.upper()}'"""
+                ).execute()
+                return column_type.iloc[0]["DATA_TYPE"] == "CHAR"
+            case PostgresBackend():
+                column_type = client.sql(
+                    f"""SELECT column_name, data_type FROM information_schema.columns
+                            WHERE table_schema='{schema_name}' and table_name='{table_name}'
+                            and column_name='{column_name}'"""
+                ).execute()
+                return column_type.iloc[0]["data_type"] == "character"
+            case MsSqlBackend():
+                column_type = client.sql(
+                    f"""select COLUMN_NAME, DATA_TYPE from INFORMATION_SCHEMA.COLUMNS
+                        where TABLE_NAME='{table_name}'
+                        and COLUMN_NAME='{column_name}'"""
+                ).execute()
+                return column_type.iloc[0]["DATA_TYPE"] == "char"
+            case DB2Backend():
+                column_type = client.sql(
+                    f"""select COLNAME, TYPENAME from SYSCAT.COLUMNS
+                        where TABSCHEMA = '{schema_name.upper()}' and TABNAME='{table_name.upper()}'
+                        and COLNAME='{column_name.upper()}'"""
+                ).execute()
+                return column_type.iloc[0]["TYPENAME"] == "CHARACTER"
+            case _:
+                return False
 
     def clone(self):
         cloned_builder = ValidationBuilder(self.config_manager)
@@ -263,14 +332,32 @@ class ValidationBuilder(object):
         # grab calc field metadata
         alias = primary_key.get(consts.CONFIG_FIELD_ALIAS)
         cast = primary_key.get(consts.CONFIG_CAST)
-        trim = self.config_manager.trim_string_pks()
-        # check if valid calc field and return correct object
+        config_manager = self.config_manager
+        trim = False
+        if config_manager.source_table:  # Not a custom query
+            table = config_manager.get_source_ibis_table()
+            if (
+                table[source_field_name].type().is_string()
+            ):  # Fixed length char fields need to be trimmed
+                trim = self._is_fixed_length_char(
+                    config_manager.source_client, table.get_name(), source_field_name
+                )
         source_field = ComparisonField(
             field_name=source_field_name, alias=alias, cast=cast, trim=trim
         )
+        trim = False
+        if config_manager.target_table:  # Not a custom query
+            table = config_manager.get_target_ibis_table()
+            if (
+                table[target_field_name].type().is_string()
+            ):  # Fixed length char fields need to be trimmed
+                trim = self._is_fixed_length_char(
+                    config_manager.target_client, table.get_name(), target_field_name
+                )
         target_field = ComparisonField(
             field_name=target_field_name, alias=alias, cast=cast, trim=trim
         )
+        # check if valid calc field and return correct object
         self.source_builder.add_comparison_field(source_field)
         self.target_builder.add_comparison_field(target_field)
         self.primary_keys[alias] = primary_key
