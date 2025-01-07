@@ -22,6 +22,7 @@ from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     column_validation_test,
+    column_validation_test_args,
     column_validation_test_config_managers,
     find_tables_test,
     id_type_test_assertions,
@@ -871,6 +872,30 @@ def test_row_validation_uuid_rr_oracle_to_postgres():
         hash="*",
         use_randow_row=True,
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly.
+
+    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
+    which should be removed in SQL otherwise groups will not match Pandas.
+    """
+    args = column_validation_test_args(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        grouped_columns="col_datetime",
+        filter_status=None,
+    )
+    df = run_test_from_cli_args(args)
+    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
+    assert len(df) == 3
+    # All groups should be a successful validation.
+    assert all(
+        _ == "success" for _ in df["validation_status"]
+    ), "Not all records are marked as success"
 
 
 @mock.patch(

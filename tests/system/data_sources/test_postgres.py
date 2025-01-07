@@ -29,18 +29,19 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     binary_key_assertions,
+    column_validation_test,
+    column_validation_test_args,
+    custom_query_validation_test,
     find_tables_test,
     id_type_test_assertions,
     null_not_null_assertions,
-    raw_query_test,
-    row_validation_many_columns_test,
-    run_test_from_cli_args,
     partition_table_test,
     partition_query_test,
+    raw_query_test,
     row_validation_test,
+    row_validation_many_columns_test,
+    run_test_from_cli_args,
     schema_validation_test,
-    column_validation_test,
-    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -919,6 +920,26 @@ def test_column_validation_identifiers():
         count_cols="*",
         filters="'col#hash' IS NOT NULL",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly"""
+    args = column_validation_test_args(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        grouped_columns="col_datetime",
+        filter_status=None,
+    )
+    df = run_test_from_cli_args(args)
+    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
+    assert len(df) == 3
+    # All groups should be a successful validation.
+    assert all(
+        _ == "success" for _ in df["validation_status"]
+    ), "Not all records are marked as success"
 
 
 @mock.patch(

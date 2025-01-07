@@ -154,6 +154,10 @@ def _cast(t, op):
                 "ELSE TO_NUMBER(NULL) END"
             )
         )
+    elif (arg_dtype.is_timestamp() or arg_dtype.is_date()) and typ.is_date():
+        # If we are casting to Date then simulate what all other engines
+        # understand to be a Date, which is without the time element.
+        return sa.func.cast(sa.func.TRUNC(sa_arg), sa.types.Date)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)

@@ -773,3 +773,19 @@ COMMENT ON TABLE pso_data_validator.dvt_uuid_id IS 'Integration test table used 
 INSERT INTO pso_data_validator.dvt_uuid_id VALUES
 (uuid('387bdc3b218443b28ec23ac791c5b0f1'),uuid('387bdc3b218443b28ec23ac791c5b0f1'),'A'),
 (uuid('397bdc3b218443b28ec23ac791c5b0f1'),uuid('397bdc3b218443b28ec23ac791c5b0f1'),'B');
+
+DROP TABLE pso_data_validator.dvt_group_by_timestamp;
+CREATE TABLE pso_data_validator.dvt_group_by_timestamp
+(   id           int NOT NULL PRIMARY KEY
+,   group_id     int
+,   col_date     date
+,   col_datetime timestamp(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_group_by_timestamp IS 'Integration test table used to test Timestamp grouping.';
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES
+(1,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 12:00:00'),
+(2,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 13:00:00'),
+(3,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 14:00:00'),
+(4,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 12:00:00'),
+(5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00'),
+(6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');

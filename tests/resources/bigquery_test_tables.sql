@@ -616,3 +616,18 @@ CREATE TABLE `pso_data_validator`.`dvt_uuid_id`
 INSERT INTO `pso_data_validator`.`dvt_uuid_id` VALUES
 ('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','A'),
 ('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','B');
+
+DROP TABLE `pso_data_validator`.`dvt_group_by_timestamp`;
+CREATE TABLE `pso_data_validator`.`dvt_group_by_timestamp`
+(   id           INT64 NOT NULL
+,   group_id     INT64
+,   col_date     DATE
+,   col_datetime DATETIME
+) OPTIONS (description='Integration test table used to test Timestamp grouping.');
+INSERT INTO `pso_data_validator`.`dvt_group_by_timestamp` VALUES
+(1,1,DATE'2021-01-01',DATETIME'2021-01-01 12:00:00'),
+(2,1,DATE'2021-01-01',DATETIME'2021-01-01 13:00:00'),
+(3,1,DATE'2021-01-01',DATETIME'2021-01-01 14:00:00'),
+(4,2,DATE'2022-02-02',DATETIME'2022-02-02 12:00:00'),
+(5,2,DATE'2022-02-02',DATETIME'2022-02-02 13:00:00'),
+(6,3,DATE'2023-03-03',DATETIME'2023-03-03 12:00:00');

@@ -721,3 +721,19 @@ INSERT INTO pso_data_validator.dvt_uuid_id VALUES
 INSERT INTO pso_data_validator.dvt_uuid_id VALUES
 (HEXTORAW('397BDC3B218443B28EC23AC791C5B0F1'),HEXTORAW('397BDC3B218443B28EC23AC791C5B0F1'),'B');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_group_by_timestamp;
+CREATE TABLE pso_data_validator.dvt_group_by_timestamp
+(   id           NUMBER(9) NOT NULL PRIMARY KEY
+,   group_id     NUMBER(1)
+,   col_date     DATE
+,   col_datetime TIMESTAMP(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_group_by_timestamp IS 'Integration test table used to test Timestamp grouping.';
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (1,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 12:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (2,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 13:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (3,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 14:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (4,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 12:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
+COMMIT;
