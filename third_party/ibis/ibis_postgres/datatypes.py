@@ -13,10 +13,24 @@
 # limitations under the License.
 
 import ibis.expr.datatypes as dt
+from sqlalchemy.sql import sqltypes
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql.base import PGDialect
+from sqlalchemy.dialects.postgresql.base import PGDialect, ischema_names
+
+
+class XML(sqltypes.TypeEngine):
+    __visit_name__ = "XML"
+
+
+ischema_names["xml"] = XML
 
 
 @dt.dtype.register(PGDialect, postgresql.OID)
 def sa_pg_oid(_, sa_type, nullable=True):
     return dt.int32(nullable=nullable)
+
+
+# Matching Ibis v9.2 behaviour and mapping PostgreSQL xml type to unknown.
+@dt.dtype.register(PGDialect, XML)
+def sa_pg_xml(_, sa_type, nullable=True):
+    return dt.Unknown(nullable=nullable)
