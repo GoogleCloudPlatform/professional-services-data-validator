@@ -32,5 +32,5 @@ def sa_pg_oid(_, sa_type, nullable=True):
 
 # Matching Ibis v9.2 behaviour and mapping PostgreSQL xml type to unknown.
 @dt.dtype.register(PGDialect, XML)
-def sa_postgres_xml(_, satype, nullable=True):
+def sa_pg_xml(_, sa_type, nullable=True):
     return dt.Unknown(nullable=nullable)
