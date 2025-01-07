@@ -643,16 +643,8 @@ def run_connections(args):
     elif args.connect_cmd == "add":
         conn = cli_tools.get_connection_config_from_args(args)
         # Test getting a client to validate connection details
-        data_client = clients.get_data_client(conn)
-        cli_tools.store_connection(args.connection_name, conn)
-        try:
-            # TODO When we upgrade Ibis beyond 5.x this try/except may become redundant.
-            # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1376
-            if hasattr(data_client, "close"):
-                data_client.close()
-        except Exception as exc:
-            # No need to reraise, we can silently fail if exiting throws up an issue.
-            logging.warning("Exception closing connection: %s", str(exc))
+        with clients.get_data_client_ctx(conn) as _:
+            cli_tools.store_connection(args.connection_name, conn)
     else:
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 
