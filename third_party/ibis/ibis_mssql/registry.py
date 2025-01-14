@@ -75,7 +75,8 @@ def strftime(translator, op):
     return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
 
 
-def sa_epoch_time(translator, op):
+def sa_epoch_seconds(translator, op):
+    """Override for standard ExtractEpochSeconds but catering for larger second values."""
     arg = translator.translate(op.arg)
     return sa.cast(
         sa.func.datediff_big(sa.text("s"), "1970-01-01 00:00:00", arg), sa.BIGINT

@@ -22,6 +22,7 @@ def sa_format_hashbytes(translator, op):
     return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
 
 
-def sa_epoch_time(translator, op):
+def sa_epoch_seconds(translator, op):
+    """Override for standard ExtractEpochSeconds but catering for larger second values."""
     arg = translator.translate(op.arg)
     return sa.cast(sa.extract("epoch", arg), sa.BIGINT)
