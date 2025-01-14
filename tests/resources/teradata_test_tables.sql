@@ -675,4 +675,6 @@ CREATE TABLE udf.dvt_tricky_dates (
 , col_ts_high   TIMESTAMP(0));
 INSERT INTO udf.dvt_tricky_dates VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,TIMESTAMP'1000-01-01 00:00:00+00:00',TIMESTAMP'1970-01-01 00:00:00+00:00',TIMESTAMP'9999-12-31 23:59:59+00:00');
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00');
+-- col_ts_high value above forced to UTC based on article below, but we still get wrong answer from the test:
+--   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138

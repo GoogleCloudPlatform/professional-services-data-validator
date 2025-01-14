@@ -632,6 +632,7 @@ INSERT INTO `pso_data_validator`.`dvt_group_by_timestamp` VALUES
 (5,2,DATE'2022-02-02',DATETIME'2022-02-02 13:00:00'),
 (6,3,DATE'2023-03-03',DATETIME'2023-03-03 12:00:00');
 
+DROP TABLE `pso_data_validator`.`dvt_tricky_dates`;
 CREATE TABLE `pso_data_validator`.`dvt_tricky_dates` (
   id            INT64 NOT NULL
 , col_dt_low    DATE
