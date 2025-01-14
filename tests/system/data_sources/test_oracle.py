@@ -354,7 +354,7 @@ def test_column_validation_large_decimals_to_bigquery():
 )
 def test_column_validation_large_decimals_to_bigquery_mismatch():
     """Oracle to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch."""
-    cols = "col_dec_17_fail,col_dec_18_1_fail"
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
     df = column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
@@ -362,7 +362,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         sum_cols=cols,
         expected_rows=2,
     )
-    assert "sum__col_dec_17_fail" in df["validation_name"].values
+    # The columns below have mismatching data and should be in the Dataframe.
+    assert "sum__col_dec_18_fail" in df["validation_name"].values
     assert "sum__col_dec_18_1_fail" in df["validation_name"].values
 
 
