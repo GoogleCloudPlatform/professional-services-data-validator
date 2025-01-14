@@ -704,7 +704,11 @@ def test_column_validation_large_decimals_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_column_validation_large_decimals_to_bigquery_mismatch():
-    """PostgreSQL to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch."""
+    """PostgreSQL to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
     cols = "col_dec_18_fail,col_dec_18_1_fail"
     df = column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
