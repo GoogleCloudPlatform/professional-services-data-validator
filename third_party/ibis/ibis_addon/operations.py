@@ -617,9 +617,9 @@ PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[ExtractEpochSeconds] = (
-    postgres_registry.sa_epoch_seconds
-)
+PostgreSQLExprTranslator._registry[
+    ExtractEpochSeconds
+] = postgres_registry.sa_epoch_seconds
 
 MsSqlExprTranslator._registry[HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
