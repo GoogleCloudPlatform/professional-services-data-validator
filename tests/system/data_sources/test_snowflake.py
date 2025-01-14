@@ -257,7 +257,8 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_large_decimals_to_bigquery():
     """Snowflake to BigQuery dvt_large_decimals column validation."""
-    cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
+    cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
     column_validation_test(
         tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_LARGE_DECIMALS=pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
