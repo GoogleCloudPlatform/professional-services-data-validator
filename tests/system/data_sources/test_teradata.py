@@ -328,6 +328,46 @@ def test_column_validation_time_table_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_large_decimals_to_bigquery():
+    """Teradata to BigQuery dvt_large_decimals column validation."""
+    # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
+    cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
+    column_validation_test(
+        tables="udf.dvt_large_decimals=pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """Teradata to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="udf.dvt_large_decimals=pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    # The columns below have mismatching data and should be in the Dataframe.
+    assert "sum__col_dec_18_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_view_core_types_vw():
     """Teradata to Teradata view dvt_core_types_vw column validation"""
     column_validation_test(
