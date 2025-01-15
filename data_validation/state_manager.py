@@ -59,6 +59,15 @@ class StateManager(object):
         connection_path = self._get_connection_path(name)
         gcs_helper.write_file(connection_path, json.dumps(config))
 
+    def delete_connection(self, name: str):
+        """Delete an existing connection file by its connection name.
+
+        Args:
+            name (String): The name of the connection.
+        """
+        connection_path = self._get_connection_path(name)
+        gcs_helper.delete_file(connection_path)
+
     def get_connection_config(self, name: str) -> Dict[str, str]:
         """Get a connection configuration from the expected file.
 

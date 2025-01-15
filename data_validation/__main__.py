@@ -640,6 +640,8 @@ def run_connections(args):
     """Run commands related to connection management."""
     if args.connect_cmd == "list":
         cli_tools.list_connections()
+    elif args.connect_cmd == "delete":
+        cli_tools.delete_connection(args.connection_name)
     elif args.connect_cmd == "add":
         conn = cli_tools.get_connection_config_from_args(args)
         # Test getting a client to validate connection details

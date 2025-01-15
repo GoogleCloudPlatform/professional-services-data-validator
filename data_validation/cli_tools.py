@@ -468,6 +468,13 @@ def _configure_connection_parser(subparsers):
     )
     _configure_database_specific_parsers(add_parser)
 
+    delete_parser = connect_subparsers.add_parser(
+        "delete", help="Delete an existing connection"
+    )
+    delete_parser.add_argument(
+        "--connection-name", "-c", required=True, help="Name of connection to delete"
+    )
+
 
 def _configure_database_specific_parsers(parser):
     """Configure a separate subparser for each supported DB."""
@@ -1083,6 +1090,12 @@ def store_connection(connection_name, conn):
     """Store the connection config under the given name."""
     mgr = state_manager.StateManager()
     mgr.create_connection(connection_name, conn)
+
+
+def delete_connection(connection_name):
+    """Delete the connection config under the given name."""
+    mgr = state_manager.StateManager()
+    mgr.delete_connection(connection_name)
 
 
 def list_connections():
