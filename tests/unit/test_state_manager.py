@@ -21,21 +21,23 @@ TEST_CONN = {
 }
 
 
-def test_create_and_get_connection_config(capsys, fs):
+def test_create_get_list_delete_connection_config(capsys, fs):
     manager = state_manager.StateManager()
-    manager.create_connection(TEST_CONN_NAME, TEST_CONN)
 
+    # 1. create and get
+    manager.create_connection(TEST_CONN_NAME, TEST_CONN)
     config = manager.get_connection_config(TEST_CONN_NAME)
     assert config == TEST_CONN
 
-
-def test_create_and_list_connection(capsys, fs):
-    manager = state_manager.StateManager()
-    manager.create_connection(TEST_CONN_NAME, TEST_CONN)
-
+    # 2. list
     connections = manager.list_connections()
     assert connections == [TEST_CONN_NAME]
 
+    # 3. delete
+    manager.delete_connection(TEST_CONN_NAME)
+
+    connections = manager.list_connections()
+    assert connections == [] # make sure connection is deleted
 
 def test_create_unknown_filepath(capsys, fs):
     # Unknown file paths will be created by the state manager

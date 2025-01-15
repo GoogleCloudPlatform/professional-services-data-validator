@@ -14,11 +14,11 @@
 
 import argparse
 import logging
-import pytest
 from unittest import mock
 
-from data_validation import cli_tools, consts, gcs_helper
+import pytest
 
+from data_validation import cli_tools, consts, gcs_helper
 
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
@@ -77,6 +77,22 @@ CLI_ADD_ORACLE_STD_CONNECTION_ARGS = [
     "--port=1521",
     "--user=u",
     "--database=d",
+]
+
+CLI_DELETE_CONNECTION_ARGS = [
+    "connections",
+    "delete",
+    "--connection-name",
+    "test", # must be same name as defined in CLI_ADD_CONNECTION_ARGS
+]
+
+CLI_DELETE_CONNECTION_BAD_ARGS = [
+    "connections",
+    "delete",
+    "--connection-name",
+    "connection-to-delete",
+    "--bad-name",
+    "test",
 ]
 
 CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
@@ -159,27 +175,50 @@ def test_get_connection_config_from_args():
     assert conn["project_id"] == "example-project"
 
 
-def test_create_and_list_connections(caplog, fs):
+def test_create_list_delete_connections(caplog, fs):
     caplog.set_level(logging.INFO)
-    # Create Connection
+
+    # 1: Create Connection
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
-    conn = cli_tools.get_connection_config_from_args(args)
-    cli_tools.store_connection(args.connection_name, conn)
+    add_args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
 
-    assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
+    conn = cli_tools.get_connection_config_from_args(add_args)
+    cli_tools.store_connection(add_args.connection_name, conn)
 
+    assert any(
+        gcs_helper.WRITE_SUCCESS_STRING in record.msg and add_args.connection_name in record.msg
+        for record in caplog.records
+    ), f"Expected write log with connection name `{add_args.connection_name}`"
+
+    # 2. List Connection
     cli_tools.list_connections()
-    assert "Connection Name: test : BigQuery" in caplog.records[1].msg
+    assert any(
+        f"Connection Name: {add_args.connection_name} : {conn['source_type']}" in record.msg
+        for record in caplog.records
+    ), f"Expected list log with connection name `{add_args.connection_name}` and source type `{conn['source_type']}`"
 
-    conn_from_file = cli_tools.get_connection("test")
+    conn_from_file = cli_tools.get_connection(add_args.connection_name)
     assert not conn_from_file.get("api_endpoint", None)
+
+    # 3. Delete Connection
+    delete_args = parser.parse_args(CLI_DELETE_CONNECTION_ARGS)
+    cli_tools.delete_connection(delete_args.connection_name)
+    assert any(
+        gcs_helper.DELETE_SUCCESS_STRING in record.msg and delete_args.connection_name in record.msg
+        for record in caplog.records
+    ), f"Expected delete log with connection name `{delete_args.connection_name}`"
 
 
 def test_bad_add_connection():
     with pytest.raises(SystemExit):
         parser = cli_tools.configure_arg_parser()
         _ = parser.parse_args(CLI_ADD_CONNECTION_BAD_ARGS)
+
+
+def test_bad_delete_connection():
+    with pytest.raises(SystemExit):
+        parser = cli_tools.configure_arg_parser()
+        _ = parser.parse_args(CLI_DELETE_CONNECTION_BAD_ARGS)
 
 
 def test_create_bq_connection(caplog, fs):

@@ -154,6 +154,13 @@ CONNECTION_ADD_ARGS = {
     "connection_name": "dummy-bq-connection",
     "api_endpoint": None,
 }
+CONNECTION_DELETE_ARGS = {
+   "verbose": False,
+    "log_level": "INFO",
+    "command": "connections",
+    "connect_cmd": "delete",
+    "connection_name": "dummy-bq-connection"
+}
 BROKEN_CONNECTION_CONFIG_INCORRECT_COMMAND = {
     "verbose": False,
     "log_level": "INFO",
@@ -454,6 +461,16 @@ def test_successful_connection_list_with_mocked_list_connections(mock_args, mock
     return_value=argparse.Namespace(**CONNECTION_ADD_ARGS),
 )
 def test_successful_connection_add_with_mocked_list_connections(mock_args, mock_run):
+    main.main()
+
+
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONNECTION_DELETE_ARGS),
+)
+@mock.patch("data_validation.cli_tools.delete_connection")
+def test_successful_connection_delete_with_mocked_delete_connection(mock_args, mock_run, mock_client):
     main.main()
 
 
