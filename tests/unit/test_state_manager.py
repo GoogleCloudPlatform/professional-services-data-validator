@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from data_validation import state_manager
+import yaml
 
 TEST_CONN_NAME = "example"
 TEST_CONN = {
@@ -38,6 +39,29 @@ def test_create_get_list_delete_connection_config(capsys, fs):
 
     connections = manager.list_connections()
     assert connections == [] # make sure connection is deleted
+
+
+def test_describe_connection(fs):
+    """Test that describe_connection returns correct info in both JSON and YAML."""
+    manager = state_manager.StateManager()
+
+    # 1. Create a connection
+    manager.create_connection(TEST_CONN_NAME, TEST_CONN)
+
+    # 2. Describe in JSON format
+    json_desc = manager.describe_connection(TEST_CONN_NAME, "json")
+    # Should return the raw dict
+    assert json_desc == TEST_CONN, (
+        "describe_connection in JSON format should return the connection dict"
+    )
+
+    # 3. Describe in YAML format
+    yaml_desc = manager.describe_connection(TEST_CONN_NAME, "yaml")
+    parsed_yaml = yaml.safe_load(yaml_desc)
+    assert parsed_yaml == TEST_CONN, (
+        "describe_connection in YAML format should match the original connection data"
+    )
+
 
 def test_create_unknown_filepath(capsys, fs):
     # Unknown file paths will be created by the state manager

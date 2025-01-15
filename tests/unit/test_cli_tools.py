@@ -14,6 +14,7 @@
 
 import argparse
 import logging
+import yaml
 from unittest import mock
 
 import pytest
@@ -197,7 +198,14 @@ def test_connections_comands(caplog, fs):
     conn_from_file = cli_tools.get_connection(add_args.connection_name)
     assert not conn_from_file.get("api_endpoint", None)
 
-    # 4. Delete Connection
+    # 4. Describe Connection
+    yaml_str = cli_tools.describe_connection(add_args.connection_name, output_format="yaml")
+    parsed = yaml.safe_load(yaml_str)
+    assert isinstance(parsed, dict)
+    assert parsed.get("source_type") == conn_from_file['source_type']
+    assert parsed.get("project_id") == conn_from_file['project_id']
+
+    # 5. Delete Connection
     delete_args = parser.parse_args(CLI_DELETE_CONNECTION_ARGS)
     cli_tools.delete_connection(delete_args.connection_name)
     assert any(
