@@ -1104,7 +1104,9 @@ def list_connections():
     connections = mgr.list_connections()
     for conn_name in connections:
         source_type = mgr.get_connection_config(conn_name).get("source_type")
-        logging.info(f"Connection Name: {conn_name} : {source_type}")
+        print(f"Connection Name: {conn_name}")
+        print(f"Source Type:     {source_type}\n")
+    return connections
 
 
 def get_connection(connection_name):
