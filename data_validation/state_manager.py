@@ -19,6 +19,7 @@ and validation files.
 
 import enum
 import json
+import yaml
 import os
 from typing import Dict, List
 
@@ -80,6 +81,18 @@ class StateManager(object):
         conn_str = gcs_helper.read_file(connection_path)
 
         return json.loads(conn_str)
+
+    def describe_connection(self, connection_name: str, output_format: str):
+        """Describe an existing connection by returning connection details in yaml format.
+
+        Args:
+            args (): The name of the connection.
+        """
+        conn_data = self.get_connection_config(connection_name)
+        if output_format == "json":
+            return conn_data
+        elif output_format == "yaml":
+            return yaml.dump(conn_data, default_flow_style=False, sort_keys=False)
 
     def list_connections(self) -> List[str]:
         """Returns a list of the connection names that exist."""

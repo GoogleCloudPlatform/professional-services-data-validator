@@ -474,6 +474,19 @@ def _configure_connection_parser(subparsers):
     delete_parser.add_argument(
         "--connection-name", "-c", required=True, help="Name of connection to delete"
     )
+    describe_parser = connect_subparsers.add_parser(
+        "describe", help="Describe an existing connection"
+    )
+    describe_parser.add_argument(
+        "--connection-name", "-c", required=True, help="Name of connection to describe"
+    )
+    describe_parser.add_argument(
+        "--format", "-f",
+        dest="output_format",
+        choices=["json", "yaml"],
+        default="yaml",
+        help="Output format for the configuration (default: yaml)",
+    )
 
 
 def _configure_database_specific_parsers(parser):
@@ -1107,6 +1120,14 @@ def list_connections():
         print(f"Connection Name: {conn_name}")
         print(f"Source Type:     {source_type}\n")
     return connections
+
+
+def describe_connection(connection_name, output_format):
+    """Return yaml connection details for a specific connection"""
+    mgr = state_manager.StateManager()
+    connection_details = mgr.describe_connection(connection_name, output_format)
+    print(connection_details)
+    return connection_details
 
 
 def get_connection(connection_name):
