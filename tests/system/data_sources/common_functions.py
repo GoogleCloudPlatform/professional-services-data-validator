@@ -310,10 +310,11 @@ def column_validation_test(
     max_cols=None,
     filters=None,
     grouped_columns=None,
+    expected_rows=0,
 ):
     """Generic column validation test.
 
-    All tests expect an empty dataframe as the assertion.
+    Standard test expects an empty dataframe as the assertion but has override.
     """
     args = column_validation_test_args(
         tables=tables,
@@ -326,8 +327,8 @@ def column_validation_test(
         grouped_columns=grouped_columns,
     )
     df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    assert len(df) == expected_rows
+    return df
 
 
 def column_validation_test_config_managers(
