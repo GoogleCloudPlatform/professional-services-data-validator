@@ -63,6 +63,12 @@ data-validation connections list
 data-validation connections add -h
 ```
 
+## Delete an existing connection
+
+```sh
+data-validation connections delete CONN_NAME
+```
+
 The data validation tool supports the following connection types.
 
 * [Raw](#raw)
