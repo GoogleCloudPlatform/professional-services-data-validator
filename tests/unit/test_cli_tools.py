@@ -175,13 +175,12 @@ def test_get_connection_config_from_args():
     assert conn["project_id"] == "example-project"
 
 
-def test_create_list_delete_connections(caplog, fs):
+def test_connections_comands(caplog, fs):
     caplog.set_level(logging.INFO)
 
-    # 1: Create Connection
+    # 1. Store Connection
     parser = cli_tools.configure_arg_parser()
     add_args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
-
     conn = cli_tools.get_connection_config_from_args(add_args)
     cli_tools.store_connection(add_args.connection_name, conn)
 
@@ -191,16 +190,14 @@ def test_create_list_delete_connections(caplog, fs):
     ), f"Expected write log with connection name `{add_args.connection_name}`"
 
     # 2. List Connection
-    cli_tools.list_connections()
-    assert any(
-        f"Connection Name: {add_args.connection_name} : {conn['source_type']}" in record.msg
-        for record in caplog.records
-    ), f"Expected list log with connection name `{add_args.connection_name}` and source type `{conn['source_type']}`"
+    connections = cli_tools.list_connections()
+    assert add_args.connection_name in connections
 
+    # 3. Get Connection
     conn_from_file = cli_tools.get_connection(add_args.connection_name)
     assert not conn_from_file.get("api_endpoint", None)
 
-    # 3. Delete Connection
+    # 4. Delete Connection
     delete_args = parser.parse_args(CLI_DELETE_CONNECTION_ARGS)
     cli_tools.delete_connection(delete_args.connection_name)
     assert any(
@@ -231,8 +228,8 @@ def test_create_bq_connection(caplog, fs):
 
     assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
 
-    cli_tools.list_connections()
-    assert "Connection Name: test_with_endpoint : BigQuery" in caplog.records[1].msg
+    bq_conn = cli_tools.get_connection(args.connection_name)
+    assert bq_conn['source_type'] == "BigQuery"
 
     conn_from_file = cli_tools.get_connection("test_with_endpoint")
     assert conn_from_file["api_endpoint"] == "https://mybq.p.googleapis.com"
