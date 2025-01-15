@@ -84,7 +84,7 @@ CLI_DELETE_CONNECTION_ARGS = [
     "connections",
     "delete",
     "--connection-name",
-    "test", # must be same name as defined in CLI_ADD_CONNECTION_ARGS
+    "test",  # must be same name as defined in CLI_ADD_CONNECTION_ARGS
 ]
 
 CLI_DELETE_CONNECTION_BAD_ARGS = [
@@ -186,7 +186,8 @@ def test_connections_comands(caplog, fs):
     cli_tools.store_connection(add_args.connection_name, conn)
 
     assert any(
-        gcs_helper.WRITE_SUCCESS_STRING in record.msg and add_args.connection_name in record.msg
+        gcs_helper.WRITE_SUCCESS_STRING in record.msg
+        and add_args.connection_name in record.msg
         for record in caplog.records
     ), f"Expected write log with connection name `{add_args.connection_name}`"
 
@@ -199,17 +200,20 @@ def test_connections_comands(caplog, fs):
     assert not conn_from_file.get("api_endpoint", None)
 
     # 4. Describe Connection
-    yaml_str = cli_tools.describe_connection(add_args.connection_name, output_format="yaml")
+    yaml_str = cli_tools.describe_connection(
+        add_args.connection_name, output_format="yaml"
+    )
     parsed = yaml.safe_load(yaml_str)
     assert isinstance(parsed, dict)
-    assert parsed.get("source_type") == conn_from_file['source_type']
-    assert parsed.get("project_id") == conn_from_file['project_id']
+    assert parsed.get("source_type") == conn_from_file["source_type"]
+    assert parsed.get("project_id") == conn_from_file["project_id"]
 
     # 5. Delete Connection
     delete_args = parser.parse_args(CLI_DELETE_CONNECTION_ARGS)
     cli_tools.delete_connection(delete_args.connection_name)
     assert any(
-        gcs_helper.DELETE_SUCCESS_STRING in record.msg and delete_args.connection_name in record.msg
+        gcs_helper.DELETE_SUCCESS_STRING in record.msg
+        and delete_args.connection_name in record.msg
         for record in caplog.records
     ), f"Expected delete log with connection name `{delete_args.connection_name}`"
 
@@ -237,7 +241,7 @@ def test_create_bq_connection(caplog, fs):
     assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     bq_conn = cli_tools.get_connection(args.connection_name)
-    assert bq_conn['source_type'] == "BigQuery"
+    assert bq_conn["source_type"] == "BigQuery"
 
     conn_from_file = cli_tools.get_connection("test_with_endpoint")
     assert conn_from_file["api_endpoint"] == "https://mybq.p.googleapis.com"

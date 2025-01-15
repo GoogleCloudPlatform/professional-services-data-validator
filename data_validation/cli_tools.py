@@ -481,7 +481,8 @@ def _configure_connection_parser(subparsers):
         "--connection-name", "-c", required=True, help="Name of connection to describe"
     )
     describe_parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         dest="output_format",
         choices=["json", "yaml"],
         default="yaml",
