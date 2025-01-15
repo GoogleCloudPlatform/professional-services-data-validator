@@ -66,7 +66,13 @@ data-validation connections add -h
 ## Delete an existing connection
 
 ```sh
-data-validation connections delete CONN_NAME
+data-validation connections delete -c CONN_NAME
+```
+
+## Describe an existing connection
+
+```sh
+data-validation connections describe -c CONN_NAME
 ```
 
 The data validation tool supports the following connection types.
