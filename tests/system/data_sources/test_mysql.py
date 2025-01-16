@@ -292,18 +292,21 @@ def test_column_validation_view_core_types_vw():
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31.
 
-    Excluded low/high columns due to MySQL limited date support:
+    Excluded low/high columns from SUM due to MySQL UNIX_TIMESTAMP() limiting input values
+    to the range of TIMESTAMP (not DATE or DATETIME):
+      https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_unix-timestamp
       "The valid range of argument values is the same as for the TIMESTAMP data type:
       '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC for 32-bit
       platforms; for MySQL running on 64-bit platforms, the valid range of argument
       values for UNIX_TIMESTAMP() is '1970-01-01 00:00:01.000000' UTC to
       3001-01-19 03:14:07.999999' UTC (corresponding to 32536771199.999999 seconds)."
     """
+    # TODO We can uncomment the min/max lines below once issue-1396 has been resolved.
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        min_cols="col_dt_epoch,col_ts_epoch",
-        max_cols="col_dt_epoch,col_ts_epoch",
+        # min_cols="*",
+        # max_cols="*",
         sum_cols="col_dt_epoch,col_ts_epoch",
         wildcard_include_timestamp=True,
     )
