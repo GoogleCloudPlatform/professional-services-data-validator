@@ -985,6 +985,22 @@ def test_column_validation_group_by_timestamp():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_high_epoch_seconds():
+    """Test column validation on a table with an extreme result from sum(epoch seconds)."""
+    df = column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_high_epoch_seconds=pso_data_validator.dvt_high_epoch_seconds2",
+        sum_cols="col_datetime,col_datetime_fail",
+        # We expect a single failure from col_datetime_fail which has an intentional data error.
+        expected_rows=1,
+    )
+    assert "sum__epoch_seconds__col_datetime_fail" in df["validation_name"].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_identifiers():
     """Test row validation on a table with special characters in table and column names."""
     row_validation_test(
