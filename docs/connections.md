@@ -365,3 +365,8 @@ data-validation connections add
     --database DATABASE/SCHEMA                          Snowflake database and schema, separated by a `/`
     [--connect-args CONNECT_ARGS]                       Additional connection args, default {}
 ```
+
+To connect to Snowflake using key-pair authentication you will need to use the `--connect-args` options. Example content from a connection file is included below for reference:
+```
+{"source_type": "Snowflake", "secret_manager_type": null, "secret_manager_project_id": null, "user": "dvtuserp8", "password": "", "account": "my-account", "database": "my_dvt_database", "connect_args": {"private_key_file": "/some/path/snowflake/rsa_key.p8", "private_key_file_pwd": "my-passphrase"}}
+```
