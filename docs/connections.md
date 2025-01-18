@@ -57,12 +57,6 @@ data-validation connections add \
 data-validation connections list
 ```
 
-## List supporting connection types
-
-```sh
-data-validation connections add -h
-```
-
 ## Delete an existing connection
 
 ```sh
@@ -73,6 +67,12 @@ data-validation connections delete -c CONN_NAME
 
 ```sh
 data-validation connections describe -c CONN_NAME
+```
+
+## List supported connection types
+
+```sh
+data-validation connections add -h
 ```
 
 The data validation tool supports the following connection types.
@@ -95,7 +95,7 @@ The data validation tool supports the following connection types.
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
-```sh
+```
 data-validation connections add -c CONN_NAME <connection type> -h
 ```
 
@@ -103,7 +103,7 @@ Below are the connection parameters for each database.
 
 ## Raw
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -116,7 +116,7 @@ The raw JSON can also be found in the connection config file. For example,
 
 ## Google BigQuery
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -141,7 +141,7 @@ data-validation connections add
 
 ## Google Spanner
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -163,7 +163,7 @@ data-validation connections add
 Please note that Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -182,7 +182,7 @@ data-validation connections add
 Please note the Oracle package is not installed by default. You will need to follow [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
 Then `pip install cx_Oracle`.
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -218,7 +218,7 @@ data-validation connections add \
 MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
 For connection query parameter options, see <https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections>.
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -234,7 +234,7 @@ data-validation connections add
 
 ## Postgres
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -264,7 +264,7 @@ data-validation connections add --connection-name pg_tls_ca Postgres \
 
 Please note AlloyDB supports same connection config as Postgres.
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -278,7 +278,7 @@ data-validation connections add
 
 ## MySQL
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -292,7 +292,7 @@ data-validation connections add
 
 ## Redshift
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -306,7 +306,7 @@ data-validation connections add
 
 ## FileSystem (CSV, ORC, PARQUET or JSON only)
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -318,7 +318,7 @@ data-validation connections add
 
 ## Impala
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -354,7 +354,7 @@ Please note that for Group By validations, the following property must be set in
 
  When Kerberos needs to be used, it is necessary to set `--auth-mechanism` to `GSSAPI`.
 
- ```sh
+ ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -380,7 +380,7 @@ data-validation connections add
 
 DB2 requires the `ibm_db_sa` package. We currently support only IBM DB2 LUW - Universal Database for Linux/Unix/Windows versions 9.7 onwards.
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
@@ -399,7 +399,7 @@ data-validation connections add
 Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
 For details on connection parameters, see the [Ibis Snowflake connection parameters](https://ibis-project.org/backends/snowflake/#connection-parameters).
 
-```sh
+```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
