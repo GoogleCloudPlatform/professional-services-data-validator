@@ -19,8 +19,9 @@ and validation files.
 
 import enum
 import json
+import yaml
 import os
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from data_validation import consts, gcs_helper
 
@@ -59,6 +60,15 @@ class StateManager(object):
         connection_path = self._get_connection_path(name)
         gcs_helper.write_file(connection_path, json.dumps(config))
 
+    def delete_connection(self, name: str):
+        """Delete an existing connection file by its connection name.
+
+        Args:
+            name (String): The name of the connection.
+        """
+        connection_path = self._get_connection_path(name)
+        gcs_helper.delete_file(connection_path)
+
     def get_connection_config(self, name: str) -> Dict[str, str]:
         """Get a connection configuration from the expected file.
 
@@ -71,6 +81,20 @@ class StateManager(object):
         conn_str = gcs_helper.read_file(connection_path)
 
         return json.loads(conn_str)
+
+    def describe_connection(
+        self, connection_name: str, output_format: str
+    ) -> Union[dict, str]:
+        """Describe an existing connection by returning connection details in yaml format.
+
+        Args:
+            args (): The name of the connection.
+        """
+        conn_data = self.get_connection_config(connection_name)
+        if output_format == "json":
+            return conn_data
+        elif output_format == "yaml":
+            return yaml.dump(conn_data, default_flow_style=False, sort_keys=False)
 
     def list_connections(self) -> List[str]:
         """Returns a list of the connection names that exist."""

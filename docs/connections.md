@@ -1,4 +1,5 @@
 # Data Validation Connections
+
 You will need to create connections before running any validations with the data validation tool. The tool allows users to
 create these connections using the CLI.
 
@@ -12,12 +13,14 @@ To do so simply add the GCS path to the environment i.e
 `export PSO_DV_CONN_HOME=gs://my-bucket/my/connections/path/`
 
 ## Using GCP Secret Manager
+
 DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing and referencing secrets in your connection configuration.
 
 If the secret-manager flags are present, any of the remaining connection flags can reference secret names instead of the secret itself.
 
 Example 1: A BigQuery connection referencing a secret with name "dvt-project-secret" stored in project `my-project`:
-```
+
+```sh
 data-validation connections add \
     --secret-manager-type GCP \
     --secret-manager-project-id my-project \
@@ -26,7 +29,8 @@ data-validation connections add \
 ```
 
 Example 2: A PostgreSQL connection referencing a mixture of secrets (for `--host` and `--password`) stored in project `my-project` and simple string tokens:
-```
+
+```sh
 data-validation connections add \
     --secret-manager-type GCP \
     --secret-manager-project-id my-project \
@@ -38,7 +42,8 @@ data-validation connections add \
 ```
 
 Example 3: An entire Oracle URL stored as a secret with name "dvt-url-secret" stored in project `my-project`:
-```
+
+```sh
 data-validation connections add \
     --secret-manager-type GCP \
     --secret-manager-project-id my-project \
@@ -47,13 +52,29 @@ data-validation connections add \
 ```
 
 ## List existing connections
-```
+
+```sh
 data-validation connections list
 ```
-## List supporting connection types
+
+## Delete an existing connection
+
+```sh
+data-validation connections delete -c CONN_NAME
 ```
+
+## Describe an existing connection
+
+```sh
+data-validation connections describe -c CONN_NAME
+```
+
+## List supported connection types
+
+```sh
 data-validation connections add -h
 ```
+
 The data validation tool supports the following connection types.
 
 * [Raw](#raw)
@@ -65,13 +86,12 @@ The data validation tool supports the following connection types.
 * [Postgres](#postgres)
 * [MySQL](#mysql)
 * [Redshift](#redshift)
-* [FileSystem](#filesystem-csv-parquet-orc-json-only)
-* [Impala](#Impala)
-* [Hive](#Hive)
-* [DB2](#DB2)
-* [AlloyDB](#AlloyDB)
+* [FileSystem](#filesystem-csv-orc-parquet-or-json-only)
+* [Impala](#impala)
+* [Hive](#hive)
+* [DB2](#db2)
+* [AlloyDB](#alloydb)
 * [Snowflake](#snowflake)
-
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
@@ -82,6 +102,7 @@ data-validation connections add -c CONN_NAME <connection type> -h
 Below are the connection parameters for each database.
 
 ## Raw
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -89,10 +110,12 @@ data-validation connections add
     --connection-name CONN_NAME Raw                     Connection name
     --json JSON                                         Raw JSON for connection
 ```
+
 The raw JSON can also be found in the connection config file. For example,
 `'{"source_type": "BigQuery", "project_id": "my-project-id"}'`
 
 ## Google BigQuery
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -104,18 +127,20 @@ data-validation connections add
                                                         "https://mybq.p.googleapis.com)
 ```
 
-### User/Service account needs following BigQuery permissions to run DVT:
+### User/Service account needs following BigQuery permissions to run DVT
+
 * bigquery.jobs.create (BigQuery JobUser role)
 * bigquery.readsessions.create (BigQuery Read Session User)
 * bigquery.tables.get (BigQuery Data Viewer)
 * bigquery.tables.getData (BigQuery Data Viewer)
 
-### If you plan to store validation results in BigQuery:
+### If you plan to store validation results in BigQuery
+
 * bigquery.tables.update (BigQuery Data Editor)
 * bigquery.tables.updateData (BigQuery Data Editor)
 
-
 ## Google Spanner
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -129,10 +154,12 @@ data-validation connections add
                                                         "https://mycs.p.googleapis.com)
 ```
 
-###  User/Service account needs following Spanner role to run DVT:
+### User/Service account needs following Spanner role to run DVT
+
 * roles/spanner.databaseReader
 
 ## Teradata
+
 Please note that Teradata is not-native to this package and must be installed
 via `pip install teradatasql` if you have a license.
 
@@ -151,8 +178,10 @@ data-validation connections add
 ```
 
 ## Oracle
+
 Please note the Oracle package is not installed by default. You will need to follow [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
 Then `pip install cx_Oracle`.
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -166,16 +195,17 @@ data-validation connections add
     [--url URL]                                         SQLAlchemy connection URL
 ```
 
-### Oracle User permissions to run DVT:
+### Oracle User permissions to run DVT
+
 * CREATE SESSION
 * READ or SELECT on any tables to be validated
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
-### Using an Oracle wallet:
+### Using an Oracle wallet
 
 After creating an Oracle wallet and supporting configuration you can add the connection using the `--url` option, remembering to set `TNS_ADMIN` correctly before doing so. For example:
 
-```
+```sh
 export TNS_ADMIN=/opt/dvt/dvt_tns_admin
 
 data-validation connections add \
@@ -184,8 +214,9 @@ data-validation connections add \
 ```
 
 ## MSSQL Server
+
 MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
-For connection query parameter options, see https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections.
+For connection query parameter options, see <https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections>.
 
 ```
 data-validation connections add
@@ -202,6 +233,7 @@ data-validation connections add
 ```
 
 ## Postgres
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -213,10 +245,12 @@ data-validation connections add
     --password PASSWORD                                 Postgres password
     --database DATABASE                                 Postgres database
 ```
+
 DVT uses psycopg2, a Python PostgreSQL adapter which supports a large number of connection parameters including those to connect via TLS, [the complete list is here](https://www.postgresql.org/docs/current/libpq-envars.html). The parameters provided to DVT via the `connections add` command take precedence over the environment variables.
 
 ### Example TLS connection
-```
+
+```sh
 export PGSSLCERT="/path/to/certs/client-cert.pem" \
 export PGSSLKEY=/path/to/certs/client-key.pem \
 export PGSSLROOTCERT=/path/to/certs/server-ca.pem \
@@ -227,7 +261,9 @@ data-validation connections add --connection-name pg_tls_ca Postgres \
 ```
 
 ## AlloyDB
+
 Please note AlloyDB supports same connection config as Postgres.
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -241,6 +277,7 @@ data-validation connections add
 ```
 
 ## MySQL
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -254,6 +291,7 @@ data-validation connections add
 ```
 
 ## Redshift
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -267,6 +305,7 @@ data-validation connections add
 ```
 
 ## FileSystem (CSV, ORC, PARQUET or JSON only)
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -278,6 +317,7 @@ data-validation connections add
 ```
 
 ## Impala
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -299,12 +339,14 @@ data-validation connections add
 ```
 
 ## Hive
+
 Please note that for Group By validations, the following property must be set in Hive:
 
 `set hive:hive.groupby.orderby.position.alias=true`
 
  If you are running Hive on Dataproc, you will also need to install the following:
- ```
+
+ ```sh
  pip install ibis-framework[impala]
  ```
 
@@ -334,9 +376,10 @@ data-validation connections add
 
 ```
 
-
 ## DB2
+
 DB2 requires the `ibm_db_sa` package. We currently support only IBM DB2 LUW - Universal Database for Linux/Unix/Windows versions 9.7 onwards.
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
@@ -352,8 +395,10 @@ data-validation connections add
 ```
 
 ## Snowflake
+
 Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
 For details on connection parameters, see the [Ibis Snowflake connection parameters](https://ibis-project.org/backends/snowflake/#connection-parameters).
+
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
