@@ -55,7 +55,9 @@ CLI_ADD_CONNECTION_ARGS = [
 
 EXPECTED_CONNECTION_NAME = "test"
 
-CLI_EXPECTED_CONNECTION_FILE_PATH = f"~/.config/google-pso-data-validator/{EXPECTED_CONNECTION_NAME}.connection.json"
+CLI_EXPECTED_CONNECTION_FILE_PATH = (
+    f"~/.config/google-pso-data-validator/{EXPECTED_CONNECTION_NAME}.connection.json"
+)
 
 CLI_EXPECTED_CONNECTION = {
     "source_type": "BigQuery",
@@ -217,7 +219,9 @@ def test_store_connection(caplog):
 
 def test_list_connections(mocked_connection_file):
     connections = cli_tools.list_connections()
-    assert EXPECTED_CONNECTION_NAME in connections, f"Expected '{EXPECTED_CONNECTION_NAME}' connection to be in the list!"
+    assert (
+        EXPECTED_CONNECTION_NAME in connections
+    ), f"Expected '{EXPECTED_CONNECTION_NAME}' connection to be in the list!"
 
 
 def test_get_connection(mocked_connection_file):

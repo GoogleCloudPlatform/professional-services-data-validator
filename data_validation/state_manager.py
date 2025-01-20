@@ -82,7 +82,9 @@ class StateManager(object):
 
         return json.loads(conn_str)
 
-    def describe_connection(self, connection_name: str, output_format: str) -> Union[dict, str]:
+    def describe_connection(
+        self, connection_name: str, output_format: str
+    ) -> Union[dict, str]:
         """Describe an existing connection by returning connection details in yaml format.
 
         Args:
