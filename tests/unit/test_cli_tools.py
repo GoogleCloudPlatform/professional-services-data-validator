@@ -13,12 +13,15 @@
 # limitations under the License.
 
 import argparse
+import json
 import logging
-import pytest
+import os
+import yaml
 from unittest import mock
 
-from data_validation import cli_tools, consts, gcs_helper
+import pytest
 
+from data_validation import cli_tools, consts, gcs_helper
 
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
@@ -36,6 +39,10 @@ CLI_ARGS = {
     "verbose": True,
 }
 
+# NOTE: The following constants depend on each other:
+# CLI_ADD_CONNECTION_ARGS, EXPECTED_CONNECTION_NAME, CLI_EXPECTED_CONNECTION_FILE_PATH, and CLI_EXPECTED_CONNECTION
+# If you change the any of those constant values, please update all others that rely on it.
+
 CLI_ADD_CONNECTION_ARGS = [
     "connections",
     "add",
@@ -45,6 +52,19 @@ CLI_ADD_CONNECTION_ARGS = [
     "--project-id",
     "example-project",
 ]
+
+EXPECTED_CONNECTION_NAME = "test"
+
+CLI_EXPECTED_CONNECTION_FILE_PATH = (
+    f"~/.config/google-pso-data-validator/{EXPECTED_CONNECTION_NAME}.connection.json"
+)
+
+CLI_EXPECTED_CONNECTION = {
+    "source_type": "BigQuery",
+    "secret_manager_type": None,
+    "secret_manager_project_id": None,
+    "project_id": "example-project",
+}
 
 CLI_ADD_CONNECTION_BAD_ARGS = [
     "connections",
@@ -77,6 +97,22 @@ CLI_ADD_ORACLE_STD_CONNECTION_ARGS = [
     "--port=1521",
     "--user=u",
     "--database=d",
+]
+
+CLI_DELETE_CONNECTION_ARGS = [
+    "connections",
+    "delete",
+    "--connection-name",
+    "test",  # must be same name as defined in CLI_ADD_CONNECTION_ARGS
+]
+
+CLI_DELETE_CONNECTION_BAD_ARGS = [
+    "connections",
+    "delete",
+    "--connection-name",
+    "connection-to-delete",
+    "--bad-name",
+    "test",
 ]
 
 CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
@@ -127,6 +163,14 @@ CLI_FIND_TABLES_ARGS = [
 ]
 
 
+@pytest.fixture
+def mocked_connection_file(fs):
+    expanded_path = os.path.expanduser(CLI_EXPECTED_CONNECTION_FILE_PATH)
+    fs.makedirs(os.path.dirname(expanded_path), exist_ok=True)
+    fs.create_file(expanded_path, contents=json.dumps(CLI_EXPECTED_CONNECTION))
+    return fs
+
+
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CLI_ARGS),
@@ -159,27 +203,65 @@ def test_get_connection_config_from_args():
     assert conn["project_id"] == "example-project"
 
 
-def test_create_and_list_connections(caplog, fs):
+def test_store_connection(caplog):
     caplog.set_level(logging.INFO)
-    # Create Connection
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
-    conn = cli_tools.get_connection_config_from_args(args)
-    cli_tools.store_connection(args.connection_name, conn)
+    add_args = parser.parse_args(CLI_ADD_CONNECTION_ARGS)
+    conn = cli_tools.get_connection_config_from_args(add_args)
+    cli_tools.store_connection(add_args.connection_name, conn)
 
-    assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
+    assert any(
+        gcs_helper.WRITE_SUCCESS_STRING in record.msg
+        and add_args.connection_name in record.msg
+        for record in caplog.records
+    ), f"Expected write log with connection name `{add_args.connection_name}`"
 
-    cli_tools.list_connections()
-    assert "Connection Name: test : BigQuery" in caplog.records[1].msg
 
-    conn_from_file = cli_tools.get_connection("test")
+def test_list_connections(mocked_connection_file):
+    connections = cli_tools.list_connections()
+    assert (
+        EXPECTED_CONNECTION_NAME in connections
+    ), f"Expected '{EXPECTED_CONNECTION_NAME}' connection to be in the list!"
+
+
+def test_get_connection(mocked_connection_file):
+    conn_from_file = cli_tools.get_connection(EXPECTED_CONNECTION_NAME)
+    assert conn_from_file == CLI_EXPECTED_CONNECTION
+    # Test BigQuery connection type creates default None value for `api_endpoint`
     assert not conn_from_file.get("api_endpoint", None)
+
+
+def test_describe_connection(mocked_connection_file):
+    yaml_conn_str = cli_tools.describe_connection(
+        EXPECTED_CONNECTION_NAME, output_format="yaml"
+    )
+    json_conn_str = cli_tools.describe_connection(
+        EXPECTED_CONNECTION_NAME, output_format="json"
+    )
+    assert json_conn_str == CLI_EXPECTED_CONNECTION
+    assert yaml.safe_load(yaml_conn_str) == json_conn_str
+
+
+def test_delete_connection(mocked_connection_file, caplog):
+    caplog.set_level(logging.INFO)
+    cli_tools.delete_connection(EXPECTED_CONNECTION_NAME)
+    assert any(
+        gcs_helper.DELETE_SUCCESS_STRING in record.msg
+        and EXPECTED_CONNECTION_NAME in record.msg
+        for record in caplog.records
+    ), f"Expected delete log with connection name `{EXPECTED_CONNECTION_NAME}`"
 
 
 def test_bad_add_connection():
     with pytest.raises(SystemExit):
         parser = cli_tools.configure_arg_parser()
         _ = parser.parse_args(CLI_ADD_CONNECTION_BAD_ARGS)
+
+
+def test_bad_delete_connection():
+    with pytest.raises(SystemExit):
+        parser = cli_tools.configure_arg_parser()
+        _ = parser.parse_args(CLI_DELETE_CONNECTION_BAD_ARGS)
 
 
 def test_create_bq_connection(caplog, fs):
@@ -192,8 +274,8 @@ def test_create_bq_connection(caplog, fs):
 
     assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
 
-    cli_tools.list_connections()
-    assert "Connection Name: test_with_endpoint : BigQuery" in caplog.records[1].msg
+    bq_conn = cli_tools.get_connection(args.connection_name)
+    assert bq_conn["source_type"] == "BigQuery"
 
     conn_from_file = cli_tools.get_connection("test_with_endpoint")
     assert conn_from_file["api_endpoint"] == "https://mybq.p.googleapis.com"
