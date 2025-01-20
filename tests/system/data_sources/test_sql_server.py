@@ -35,6 +35,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     row_validation_test,
     custom_query_validation_test,
+    raw_query_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -624,3 +625,12 @@ def test_row_validation_uuid_hash_to_bigquery():
         tables="pso_data_validator.dvt_uuid_id",
         hash="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_raw_query_dvt_row_types(capsys):
+    """Test data-validation query command."""
+    raw_query_test(capsys)

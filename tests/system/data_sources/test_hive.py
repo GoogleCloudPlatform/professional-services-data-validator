@@ -30,6 +30,7 @@ from tests.system.data_sources.common_functions import (
     schema_validation_test,
     custom_query_validation_test,
     column_validation_test,
+    raw_query_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.common_functions import (
@@ -382,3 +383,12 @@ def test_find_tables():
     """Hive to BigQuery test of find-tables command."""
     # check_for_view=False because there is no practical way to exclude views on Hive.
     find_tables_test(check_for_view=False)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_raw_query_dvt_row_types(capsys):
+    """Test data-validation query command."""
+    raw_query_test(capsys)
