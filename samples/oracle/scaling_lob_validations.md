@@ -85,6 +85,7 @@ NETWORK=net
 PSO_DV_CONN_HOME=gs://${BUCKET}/conn
 YAML_DIR="gs://${BUCKET}/col_blob/config/custom.caudu"
 JOB_NAME="dvt-$(date +'%Y%m%d%H%M%S')"
+
 gcloud run jobs create ${JOB_NAME} \
   --project ${PROJECT} --region ${LOCATION} --network=${NETWORK} \
   --image ${LOCATION}-docker.pkg.dev/${PROJECT}/${REPO}/dvt:640 \
