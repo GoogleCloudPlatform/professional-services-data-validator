@@ -99,9 +99,7 @@ target_agg_value   | dfb1bcf4eae00791a2cb06899495f46a3fb9e08467eb81499b5122a0917
 validation_status  | success
 ```
 
-# Data Validation of Oracle CLOB
-
-The method above can also be used on CLOB columns with only a small change to
+The DVT command above can also be used on CLOB columns with only a small change to
 the PostgreSQL `--target-query`, for example:
 ```sh
 data-validation validate custom-query row \
