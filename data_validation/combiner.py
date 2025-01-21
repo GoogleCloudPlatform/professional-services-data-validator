@@ -124,8 +124,12 @@ def _calculate_difference(
 ):
     pct_threshold = ibis.literal(validation.threshold)
     if datatype.is_timestamp() or datatype.is_date():
-        source_value = field_differences["differences_source_value"].epoch_seconds()
-        target_value = field_differences["differences_target_value"].epoch_seconds()
+        source_value = (
+            field_differences["differences_source_value"].epoch_seconds().cast("int64")
+        )
+        target_value = (
+            field_differences["differences_target_value"].epoch_seconds().cast("int64")
+        )
     elif datatype.is_boolean() or (target_type and target_type.is_boolean()):
         source_value = field_differences["differences_source_value"].cast("boolean")
         target_value = field_differences["differences_target_value"].cast("boolean")
