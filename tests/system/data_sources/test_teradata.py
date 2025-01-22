@@ -394,12 +394,11 @@ def test_column_validation_tricky_dates_to_bigquery():
     #   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
     """
     cols = "col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch"
-    # TODO We can uncomment the min/max lines below once issue-1396 has been resolved.
     column_validation_test(
         tc="bq-conn",
         tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
-        # min_cols=cols,
-        # max_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
         sum_cols=cols,
         wildcard_include_timestamp=True,
     )

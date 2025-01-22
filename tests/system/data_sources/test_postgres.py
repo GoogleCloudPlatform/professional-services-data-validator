@@ -987,12 +987,11 @@ def test_column_validation_group_by_timestamp():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # TODO We can uncomment the min/max lines below once issue-1396 has been resolved.
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        # min_cols="*",
-        # max_cols="*",
+        min_cols="*",
+        max_cols="*",
         sum_cols="*",
         wildcard_include_timestamp=True,
     )
