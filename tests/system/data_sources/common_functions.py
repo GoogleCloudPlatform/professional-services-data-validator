@@ -281,6 +281,7 @@ def column_validation_test_args(
     filters: str = None,
     grouped_columns: str = None,
     filter_status: str = "fail",
+    wildcard_include_timestamp: bool = False,
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -296,6 +297,7 @@ def column_validation_test_args(
         f"--max={max_cols}" if max_cols else None,
         f"--filters={filters}" if filters else None,
         f"--grouped-columns={grouped_columns}" if grouped_columns else None,
+        "--wildcard-include-timestamp" if wildcard_include_timestamp else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
@@ -310,6 +312,7 @@ def column_validation_test(
     max_cols=None,
     filters=None,
     grouped_columns=None,
+    wildcard_include_timestamp: bool = False,
     expected_rows=0,
 ):
     """Generic column validation test.
@@ -325,6 +328,7 @@ def column_validation_test(
         max_cols=max_cols,
         filters=filters,
         grouped_columns=grouped_columns,
+        wildcard_include_timestamp=wildcard_include_timestamp,
     )
     df = run_test_from_cli_args(args)
     assert len(df) == expected_rows
