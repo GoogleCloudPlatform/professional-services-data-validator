@@ -72,7 +72,8 @@ from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
 # Do not remove these lines, they trigger patching of Ibis code.
 import third_party.ibis.ibis_biquery.api  # noqa
 import third_party.ibis.ibis_mysql.compiler  # noqa
-from third_party.ibis.ibis_mssql.registry import mssql_table_column
+from third_party.ibis.ibis_mssql import registry as mssql_registry
+from third_party.ibis.ibis_postgres import registry as postgres_registry
 import third_party.ibis.ibis_postgres.client  # noqa
 
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
@@ -212,32 +213,6 @@ def strftime_mysql(translator, op):
     return sa.func.date_format(arg_formatted, fmt_string)
 
 
-def strftime_mssql(translator, op):
-    """Use MS SQL CONVERT() in place of STRFTIME().
-
-    This is pretty restrictive due to the limited styles offered by SQL Server,
-    we've just covered off the generic formats used when casting date based columns
-    to string in order to complete row data comparison."""
-    arg, pattern = map(translator.translate, op.args)
-    supported_convert_styles = {
-        "%Y-%m-%d": 23,  # ISO8601
-        "%Y-%m-%d %H:%M:%S": 20,  # ODBC canonical
-        "%Y-%m-%d %H:%M:%S.%f": 21,  # ODBC canonical (with milliseconds)
-    }
-    try:
-        convert_style = supported_convert_styles[pattern.value]
-    except KeyError:
-        raise NotImplementedError(
-            f"strftime format {pattern.value} not supported for SQL Server."
-        )
-    arg_type = op.args[0].output_dtype
-    if (
-        hasattr(arg_type, "timezone") and arg_type.timezone
-    ):  # our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
-        arg = sa.cast(arg, sa.types.DateTime)
-    return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
-
-
 def strftime_impala(t, op):
     import sqlglot as sg
 
@@ -296,16 +271,6 @@ def sa_format_raw_sql(translator, op):
     return sa.text(raw_sql.args[0])
 
 
-def sa_format_hashbytes_mssql(translator, op):
-    arg = translator.translate(op.arg)
-    cast_arg = sa.func.convert(sa.sql.literal_column("VARCHAR(MAX)"), arg)
-    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), cast_arg)
-    hash_to_string = sa.func.convert(
-        sa.sql.literal_column("CHAR(64)"), hash_func, sa.sql.literal_column("2")
-    )
-    return sa.func.lower(hash_to_string)
-
-
 def sa_format_hashbytes_oracle(translator, op):
     arg = translator.translate(op.arg)
     convert = sa.func.convert(arg, sa.sql.literal_column("'UTF8'"))
@@ -332,13 +297,6 @@ def sa_format_hashbytes_redshift(translator, op):
     return sa.sql.literal_column(f"sha2({arg}, 256)")
 
 
-def sa_format_hashbytes_postgres(translator, op):
-    arg = translator.translate(op.arg)
-    convert = sa.func.convert_to(arg, sa.sql.literal_column("'UTF8'"))
-    hash_func = sa.func.sha256(convert)
-    return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
-
-
 def sa_format_hashbytes_snowflake(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.sha2(arg)
@@ -358,11 +316,6 @@ def sa_format_to_char(translator, op):
 def sa_format_binary_length(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.length(arg)
-
-
-def sa_format_binary_length_mssql(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.func.datalength(arg)
 
 
 def sa_format_binary_length_oracle(translator, op):
@@ -659,21 +612,25 @@ if OracleExprTranslator:
     OracleExprTranslator._registry[ToChar] = sa_format_to_char
     OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
 
-PostgreSQLExprTranslator._registry[HashBytes] = sa_format_hashbytes_postgres
+PostgreSQLExprTranslator._registry[HashBytes] = postgres_registry.sa_format_hashbytes
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[Cast] = sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
+PostgreSQLExprTranslator._registry[
+    ExtractEpochSeconds
+] = postgres_registry.sa_epoch_seconds
 
-MsSqlExprTranslator._registry[HashBytes] = sa_format_hashbytes_mssql
+MsSqlExprTranslator._registry[HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[IfNull] = sa_fixed_arity(sa.func.isnull, 2)
 MsSqlExprTranslator._registry[StringJoin] = _sa_string_join
 MsSqlExprTranslator._registry[RandomScalar] = sa_format_new_id
-MsSqlExprTranslator._registry[Strftime] = strftime_mssql
+MsSqlExprTranslator._registry[Strftime] = mssql_registry.strftime
 MsSqlExprTranslator._registry[Cast] = sa_cast_mssql
-MsSqlExprTranslator._registry[BinaryLength] = sa_format_binary_length_mssql
-MsSqlExprTranslator._registry[TableColumn] = mssql_table_column
+MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
+MsSqlExprTranslator._registry[TableColumn] = mssql_registry.sa_table_column
+MsSqlExprTranslator._registry[ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
 
 MySQLExprTranslator._registry[Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql

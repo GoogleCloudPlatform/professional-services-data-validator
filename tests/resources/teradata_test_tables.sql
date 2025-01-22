@@ -680,3 +680,18 @@ CREATE TABLE udf.dvt_bool
 COMMENT ON TABLE udf.dvt_bool AS 'Integration test table used to test boolean data type, especially in non-boolean columns.';
 INSERT INTO udf.dvt_bool VALUES (1,1,1,'1','Y');
 INSERT INTO udf.dvt_bool VALUES (2,0,0,'0','N');
+
+DROP TABLE udf.dvt_tricky_dates;
+CREATE TABLE udf.dvt_tricky_dates (
+  id            NUMBER(5) NOT NULL PRIMARY KEY
+, col_dt_low    DATE
+, col_dt_epoch  DATE
+, col_dt_high   DATE
+, col_ts_low    TIMESTAMP(0)
+, col_ts_epoch  TIMESTAMP(0)
+, col_ts_high   TIMESTAMP(0));
+INSERT INTO udf.dvt_tricky_dates VALUES
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00');
+-- col_ts_high value above forced to UTC based on article below, but we still get wrong answer from the test:
+--   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138

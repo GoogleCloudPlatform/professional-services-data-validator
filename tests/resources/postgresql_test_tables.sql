@@ -804,3 +804,16 @@ INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES
 (4,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 12:00:00'),
 (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00'),
 (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
+
+DROP TABLE pso_data_validator.dvt_tricky_dates;
+CREATE TABLE pso_data_validator.dvt_tricky_dates (
+  id            integer NOT NULL PRIMARY KEY
+, col_dt_low    date
+, col_dt_epoch  date
+, col_dt_high   date
+, col_ts_low    timestamp(0)
+, col_ts_epoch  timestamp(0)
+, col_ts_high   timestamp(0));
+INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
