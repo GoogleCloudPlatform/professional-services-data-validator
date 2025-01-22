@@ -646,3 +646,16 @@ INSERT INTO `pso_data_validator`.`dvt_group_by_timestamp` VALUES
 (4,2,DATE'2022-02-02',DATETIME'2022-02-02 12:00:00'),
 (5,2,DATE'2022-02-02',DATETIME'2022-02-02 13:00:00'),
 (6,3,DATE'2023-03-03',DATETIME'2023-03-03 12:00:00');
+
+DROP TABLE `pso_data_validator`.`dvt_tricky_dates`;
+CREATE TABLE `pso_data_validator`.`dvt_tricky_dates` (
+  id            INT64 NOT NULL
+, col_dt_low    DATE
+, col_dt_epoch  DATE
+, col_dt_high   DATE
+, col_ts_low    DATETIME
+, col_ts_epoch  DATETIME
+, col_ts_high   DATETIME);
+INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
+,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59');

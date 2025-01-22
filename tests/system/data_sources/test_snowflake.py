@@ -255,6 +255,23 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    # TODO We can uncomment the min/max lines below once issue-1396 has been resolved.
+    column_validation_test(
+        tc="bq-conn",
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_TRICKY_DATES=pso_data_validator.dvt_tricky_dates",
+        # min_cols="*",
+        # max_cols="*",
+        sum_cols="*",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_large_decimals_to_bigquery():
     """Snowflake to BigQuery dvt_large_decimals column validation."""
     # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
@@ -433,6 +450,19 @@ def test_row_validation_pangrams_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    row_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_TRICKY_DATES=pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash="*",
+    )
 
 
 @mock.patch(

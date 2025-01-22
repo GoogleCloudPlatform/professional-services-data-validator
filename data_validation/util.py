@@ -20,5 +20,5 @@ def timed_call(log_txt, fn, *args, **kwargs):
     t0 = time.time()
     result = fn(*args, **kwargs)
     elapsed = time.time() - t0
-    logging.debug(f"{log_txt} elapsed: {round(elapsed,2)}s")
+    logging.debug(f"{log_txt} elapsed: {round(elapsed, 2)}s")
     return result

@@ -805,6 +805,7 @@ INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES
 (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00'),
 (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
 
+<<<<<<< HEAD
 DROP TABLE pso_data_validator.dvt_high_epoch_seconds;
 CREATE TABLE pso_data_validator.dvt_high_epoch_seconds
 ( id                bigint NOT NULL PRIMARY KEY
@@ -835,3 +836,17 @@ WHERE id > 0;
 -- Ensure record 0 has a mismatch of data in col_datetime_fail
 INSERT INTO pso_data_validator.dvt_high_epoch_seconds2
 VALUES (0,'1900-01-01 00:00:59'::timestamp,'1900-01-01 00:00:57'::timestamp);
+
+DROP TABLE pso_data_validator.dvt_tricky_dates;
+CREATE TABLE pso_data_validator.dvt_tricky_dates (
+  id            integer NOT NULL PRIMARY KEY
+, col_dt_low    date
+, col_dt_epoch  date
+, col_dt_high   date
+, col_ts_low    timestamp(0)
+, col_ts_epoch  timestamp(0)
+, col_ts_high   timestamp(0));
+INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+

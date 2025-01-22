@@ -575,3 +575,16 @@ INSERT INTO pso_data_validator.dvt_uuid_id VALUES
 ('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','A');
 INSERT INTO pso_data_validator.dvt_uuid_id VALUES
 ('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','B');
+
+DROP TABLE pso_data_validator.dvt_tricky_dates;
+CREATE TABLE pso_data_validator.dvt_tricky_dates (
+  id            integer NOT NULL PRIMARY KEY
+, col_dt_low    date
+, col_dt_epoch  date
+, col_dt_high   date
+, col_ts_low    datetime2
+, col_ts_epoch  datetime2
+, col_ts_high   datetime2);
+INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
+(1,'1000-01-01','1970-01-01','9999-12-31'
+,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59');

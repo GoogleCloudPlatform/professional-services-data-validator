@@ -21,6 +21,7 @@ from data_validation import client_info
 
 
 WRITE_SUCCESS_STRING = "Success! Config output written to"
+DELETE_SUCCESS_STRING = "Successfully deleted"
 
 
 def _is_gcs_path(file_path: str) -> bool:
@@ -67,6 +68,13 @@ def _write_gcs_file(file_path: str, data: str):
     blob.upload_from_string(data)
 
 
+def _delete_gcs_file(file_path: str):
+    """Delete a file stored in GCS."""
+    gcs_bucket = get_gcs_bucket(file_path)
+    blob = gcs_bucket.blob(_get_gcs_file_path(file_path))
+    blob.delete()
+
+
 def read_file(file_path: str, download_as_text: bool = False):
     if _is_gcs_path(file_path):
         return _read_gcs_file(file_path, download_as_text)
@@ -85,6 +93,20 @@ def write_file(file_path: str, data: str, include_log: bool = True):
 
     if include_log:
         logging.info(f"{WRITE_SUCCESS_STRING} {file_path}")
+
+
+def delete_file(file_path: str, include_log: bool = True):
+    """Delete a file from GCS or local filesystem, depending on the path."""
+    if _is_gcs_path(file_path):
+        _delete_gcs_file(file_path)
+    else:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        else:
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+    if include_log:
+        logging.info(f"{DELETE_SUCCESS_STRING}: {file_path}")
 
 
 def list_gcs_directory(directory_path: str) -> List[str]:

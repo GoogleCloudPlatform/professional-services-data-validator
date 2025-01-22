@@ -386,6 +386,29 @@ def test_column_validation_view_core_types_vw():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_tricky_dates_to_bigquery():
+    """
+    Test with date values that are at the extremes, e.g. 9999-12-31.
+
+    # Excluded col_ts_high below because I'm unable to correctly insert desired literal.
+    #   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
+    """
+    cols = "col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch"
+    # TODO We can uncomment the min/max lines below once issue-1396 has been resolved.
+    column_validation_test(
+        tc="bq-conn",
+        tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
+        # min_cols=cols,
+        # max_cols=cols,
+        sum_cols=cols,
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_time_table():
     """Teradata to BigQuery dvt_time_table row validation."""
     row_validation_test(
@@ -760,6 +783,24 @@ def test_row_validation_identifiers():
         tables="udf.dvt-identifier$_#",
         tc="mock-conn",
         hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """
+    Test with date values that are at the extremes, e.g. 9999-12-31.
+
+    Excluded col_ts_high below because I'm unable to correctly insert desired literal.
+      https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
+    """
+    row_validation_test(
+        tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash="col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch",
     )
 
 
