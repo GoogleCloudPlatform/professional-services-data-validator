@@ -23,6 +23,7 @@ Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
 import datetime
+import dateutil
 
 import google.cloud.bigquery as bq
 import ibis
@@ -541,19 +542,18 @@ def _bigquery_field_to_ibis_dtype(field):
     return ibis_type
 
 
-def string_to_epoch(ts: str):
-    "Function to convert string timestamp to epoch seconds"
-    from dateutil.parser import isoparse
-    from dateutil.tz import UTC
-    from datetime import datetime, timezone
-
+def string_to_epoch(ts: str) -> int:
+    """Function to convert string timestamp to epoch seconds"""
     try:
-        parsed_ts = isoparse(ts).astimezone(UTC)
-        return (parsed_ts - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()
-    except ValueError:
+        parsed_ts = dateutil.parser.isoparse(ts).astimezone(dateutil.tz.UTC)
+        return (
+            parsed_ts - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+        ).total_seconds()
+    except (ValueError, OSError):
         # Support DATE '0001-01-01' which throws error when converted to UTC
-        parsed_ts = isoparse(ts)
-        return (parsed_ts - datetime(1970, 1, 1)).total_seconds()
+        # Catching OSError above because all dates prior to 1970 fail in astimezone on Windows.
+        parsed_ts = dateutil.parser.isoparse(ts)
+        return (parsed_ts - datetime.datetime(1970, 1, 1)).total_seconds()
 
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
