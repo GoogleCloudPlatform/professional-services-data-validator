@@ -827,6 +827,7 @@ VALUES (0,'1900-01-01 00:00:59'::timestamp,'1900-01-01 00:00:59'::timestamp);
 --          val         | length
 -- ---------------------+--------
 --  3093527978590011259 |     19
+-- The value above is captured in constant SUM_EPOCH_COL_DATETIME so please modify that when changing data.
 
 DROP TABLE pso_data_validator.dvt_high_epoch_seconds2;
 CREATE TABLE pso_data_validator.dvt_high_epoch_seconds2

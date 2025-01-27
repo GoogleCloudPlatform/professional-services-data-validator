@@ -87,6 +87,8 @@ PG2PG_COLUMNS = [
     "col_oid",
 ]
 
+SUM_EPOCH_COL_DATETIME = 3093527978590011259
+
 
 @pytest.fixture
 def cloud_sql(request):
@@ -991,10 +993,26 @@ def test_column_validation_high_epoch_seconds():
         tc="mock-conn",
         tables="pso_data_validator.dvt_high_epoch_seconds=pso_data_validator.dvt_high_epoch_seconds2",
         sum_cols="col_datetime,col_datetime_fail",
-        # We expect a single failure from col_datetime_fail which has an intentional data error.
-        expected_rows=1,
+        filter_status=None,
+        # We expect two rows:
+        #   success for simple count
+        #   success for col_datetime
+        #   failure for col_datetime_fail (which has an intentional data error)
+        expected_rows=3,
     )
-    assert "sum__epoch_seconds__col_datetime_fail" in df["validation_name"].values
+    status_dict = dict(zip(df["validation_name"], df["validation_status"]))
+    value_dict = dict(zip(df["validation_name"], df["source_agg_value"]))
+    assert (
+        status_dict["sum__epoch_seconds__col_datetime"]
+        == consts.VALIDATION_STATUS_SUCCESS
+    ), 'sum__epoch_seconds__col_datetime should have status "success"'
+    assert (
+        status_dict["sum__epoch_seconds__col_datetime_fail"]
+        == consts.VALIDATION_STATUS_FAIL
+    ), 'sum__epoch_seconds__col_datetime_fail should have status "fail"'
+    assert (
+        value_dict["sum__epoch_seconds__col_datetime"] == SUM_EPOCH_COL_DATETIME
+    ), f"sum__epoch_seconds__col_datetime != SUM_EPOCH_COL_DATETIME ({SUM_EPOCH_COL_DATETIME})"
 
 
 @mock.patch(
