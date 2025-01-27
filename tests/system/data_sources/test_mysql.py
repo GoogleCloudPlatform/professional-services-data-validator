@@ -301,12 +301,11 @@ def test_column_validation_tricky_dates_to_bigquery():
       values for UNIX_TIMESTAMP() is '1970-01-01 00:00:01.000000' UTC to
       3001-01-19 03:14:07.999999' UTC (corresponding to 32536771199.999999 seconds)."
     """
-    # TODO We can uncomment the min/max lines below once issue-1396 has been resolved.
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        # min_cols="*",
-        # max_cols="*",
+        min_cols="*",
+        max_cols="*",
         sum_cols="col_dt_epoch,col_ts_epoch",
         wildcard_include_timestamp=True,
     )
