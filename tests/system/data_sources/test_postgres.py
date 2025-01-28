@@ -87,7 +87,7 @@ PG2PG_COLUMNS = [
     "col_oid",
 ]
 
-SUM_EPOCH_COL_DATETIME = 3093527978590011259
+SUM_EPOCH_COL_DATETIME = "3093527978590011259"
 
 
 @pytest.fixture
@@ -1011,7 +1011,7 @@ def test_column_validation_high_epoch_seconds():
         == consts.VALIDATION_STATUS_FAIL
     ), 'sum__epoch_seconds__col_datetime_fail should have status "fail"'
     assert (
-        value_dict["sum__epoch_seconds__col_datetime"] == SUM_EPOCH_COL_DATETIME
+        str(value_dict["sum__epoch_seconds__col_datetime"]) == SUM_EPOCH_COL_DATETIME
     ), f"sum__epoch_seconds__col_datetime != SUM_EPOCH_COL_DATETIME ({SUM_EPOCH_COL_DATETIME})"
 
 
