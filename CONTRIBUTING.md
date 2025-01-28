@@ -53,7 +53,7 @@ See [our script](tests/local_check.sh) for using nox to run tests step by step.
 
 You can also run pytest directly:
 ```python
-pip install pytest pytest-cov pyfakefs==5.6.0
+pip install pytest pytest-cov pyfakefs==4.6.2 freezegun
 pytest tests/unit
 ```
 
