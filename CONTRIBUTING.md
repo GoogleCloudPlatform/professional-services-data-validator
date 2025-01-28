@@ -58,7 +58,7 @@ pytest tests/unit
 ```
 
 To lint your code, run:
-```
+```bash
 pip install black==22.3.0 flake8
 black $BLACK_PATHS # Find this variable in our noxfile
 flake8 data_validation tests
