@@ -95,6 +95,7 @@ AGGREGATE_CONFIG_C = {
     consts.CONFIG_TARGET_COLUMN: "length__c",
     consts.CONFIG_FIELD_ALIAS: "min__length__c",
     consts.CONFIG_TYPE: "min",
+    consts.CONFIG_CAST: None,
 }
 
 AGGREGATE_CONFIG_D = {
