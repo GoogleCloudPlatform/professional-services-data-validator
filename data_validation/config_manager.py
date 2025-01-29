@@ -861,8 +861,10 @@ class ConfigManager(object):
                 column_position,
             ),
             consts.CONFIG_TYPE: agg_type,
-            consts.CONFIG_CAST: final_cast_type,
         }
+        if final_cast_type:
+            # Adding to dict this way to avoid adding a lot of empty cast attributes.
+            aggregate_config[consts.CONFIG_CAST] = final_cast_type
 
         return aggregate_config
 
