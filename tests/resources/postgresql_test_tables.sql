@@ -805,7 +805,7 @@ INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES
 (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00'),
 (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
 
-DROP TABLE pso_data_validator.dvt_high_epoch_seconds;
+DROP TABLE IF EXISTS pso_data_validator.dvt_high_epoch_seconds;
 CREATE TABLE pso_data_validator.dvt_high_epoch_seconds
 ( id                bigint NOT NULL PRIMARY KEY
 , col_datetime      timestamp(0)
