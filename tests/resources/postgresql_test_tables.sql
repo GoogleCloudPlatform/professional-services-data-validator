@@ -837,7 +837,7 @@ WHERE id > 0;
 INSERT INTO pso_data_validator.dvt_high_epoch_seconds2
 VALUES (0,'1900-01-01 00:00:59'::timestamp,'1900-01-01 00:00:57'::timestamp);
 
-DROP TABLE pso_data_validator.dvt_tricky_dates;
+DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_dates;
 CREATE TABLE pso_data_validator.dvt_tricky_dates (
   id            integer NOT NULL PRIMARY KEY
 , col_dt_low    date
