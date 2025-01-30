@@ -628,10 +628,25 @@ def test_get_result_handler_by_conn_file(fs):
         ),
     ],
 )
-def test_get_filters_simple(test_input, expected):
+def test_get_filters_simple(test_input: str, expected: list):
     """Test get filters."""
     res = cli_tools.get_filters(test_input)
     assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        (""),
+        ("  "),
+        (":"),
+        (" : "),
+    ],
+)
+def test_get_filters_fail(test_input: str):
+    """Test get filters."""
+    with pytest.raises(argparse.ArgumentTypeError):
+        _ = cli_tools.get_filters(test_input)
 
 
 @pytest.mark.parametrize(
