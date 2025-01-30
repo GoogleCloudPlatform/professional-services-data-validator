@@ -24,10 +24,15 @@ import json
 import logging
 import ibis
 import ibis.expr.datatypes as dt
-import ibis.expr.types as types
 
-from data_validation import consts, metadata
-from pandas import DataFrame
+from typing import TYPE_CHECKING
+from data_validation import consts
+
+if TYPE_CHECKING:
+    import ibis.expr.types.relations as relations
+    from pandas import DataFrame
+    from data_validation.metadata import RunMetadata
+
 
 DEFAULT_SOURCE = "source"
 DEFAULT_TARGET = "target"
@@ -35,7 +40,7 @@ DEFAULT_TARGET = "target"
 
 def generate_report(
     client,
-    run_metadata,
+    run_metadata: "RunMetadata",
     source,
     target,
     join_on_fields=(),
@@ -46,8 +51,7 @@ def generate_report(
 
     Args:
         client (ibis.client.Client): Ibis client used to combine results.
-        run_metadata (data_validation.metadata.RunMetadata):
-            Metadata about the run and validations.
+        run_metadata: Metadata about the run and validations.
         source (ibis.QUERY): Ibis query / table object.
         target (ibis.QUERY): Ibis query / table object.
         join_on_fields (Sequence[str]):
@@ -95,7 +99,9 @@ def generate_report(
         con.tables.source, con.tables.target, con.tables.differences, join_on_fields
     )
 
-    documented = _add_metadata(joined, run_metadata, source_df, target_df, differences_df)
+    documented = _add_metadata(
+        joined, run_metadata, source_df, target_df, differences_df
+    )
 
     if verbose:
         logging.debug("-- ** Combiner Query ** --")
@@ -394,7 +400,13 @@ def _join_pivots(source, target, differences, join_on_fields):
     return joined
 
 
-def _add_metadata(joined: types.relations.Table, run_metadata: metadata.RunMetadata, source_df: DataFrame, target_df : DataFrame, differences_df: DataFrame):
+def _add_metadata(
+    joined: "relations.Table",
+    run_metadata: "RunMetadata",
+    source_df: "DataFrame",
+    target_df: "DataFrame",
+    differences_df: "DataFrame",
+):
     # TODO: Add source and target queries to metadata
     run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
@@ -406,18 +418,22 @@ def _add_metadata(joined: types.relations.Table, run_metadata: metadata.RunMetad
         ibis.literal(run_metadata.start_time).name("start_time"),
         ibis.literal(run_metadata.end_time).name("end_time"),
         # problem: current always prints table names for the amount of rows, but it saves on BQ, what is already something
-        ibis.literal(str({
-            "source_table_name": source_df.table_name, # how to get exact row?
-            "source_table_total_rows": source_df.shape[0],
-            "source_table_rows_successfully_validated": 111,
-            "source_table_rows_present_not_successful": 222,
-            "source_table_rows_not_present_in_other": 333,
-            "target_table_name": target_df.table_name,
-            "target_table_total_rows": target_df.shape[0],
-            "target_table_rows_successfully_validated": 444,
-            "target_table_rows_present_not_successful": 555, # dont know yet how to get the totals
-            "target_table_rows_not_present_in_other": 666,
-        })).name("configuration_json"),
+        ibis.literal(
+            str(
+                {
+                    "source_table_name": source_df.table_name,  # how to get exact row?
+                    "source_table_total_rows": source_df.shape[0],
+                    "source_table_rows_successfully_validated": 111,
+                    "source_table_rows_present_not_successful": 222,
+                    "source_table_rows_not_present_in_other": 333,
+                    "target_table_name": target_df.table_name,
+                    "target_table_total_rows": target_df.shape[0],
+                    "target_table_rows_successfully_validated": 444,
+                    "target_table_rows_present_not_successful": 555,  # dont know yet how to get the totals
+                    "target_table_rows_not_present_in_other": 666,
+                }
+            )
+        ).name("configuration_json"),
     ]
 
     return joined

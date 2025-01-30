@@ -82,4 +82,4 @@ class RowValidationSummary(object):
     target_table_total_rows: int
     target_table_rows_successfully_validated: int
     target_table_rows_present_not_successful: int
-    target_table_rows_not_present_in_other: int    
+    target_table_rows_not_present_in_other: int
