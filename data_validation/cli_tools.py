@@ -52,7 +52,6 @@ import sys
 import uuid
 import os
 import math
-import re
 from argparse import Namespace
 from typing import Dict, List, Optional
 from yaml import Dumper, Loader, dump, load
