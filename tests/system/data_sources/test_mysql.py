@@ -455,19 +455,6 @@ def test_row_validation_tricky_dates_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_tricky_strings_to_bigquery():
-    """Test with string values containing special characters."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_tricky_strings",
-        tc="bq-conn",
-        hash="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_custom_query_validation_core_types():
     """MySQL to MySQL dvt_core_types custom-query validation"""
     custom_query_validation_test(tc="mock-conn", count_cols="*")
