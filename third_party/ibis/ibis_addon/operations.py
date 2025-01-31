@@ -628,7 +628,8 @@ MsSqlExprTranslator._registry[ops.Cast] = sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
 MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
 MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
-MsSqlExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+# TODO Uncomment the line below when working on issue-1419.
+# MsSqlExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
 MySQLExprTranslator._registry[ops.Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
