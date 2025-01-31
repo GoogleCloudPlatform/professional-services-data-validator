@@ -635,7 +635,6 @@ MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MySQLExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_mysql
 MySQLExprTranslator._registry[ops.Strftime] = strftime_mysql
 MySQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-MySQLExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
 RedShiftExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_redshift
 RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
