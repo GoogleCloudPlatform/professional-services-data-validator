@@ -894,4 +894,246 @@ def test_get_parsed_args_config_file(mock_args):
     args = cli_tools.get_parsed_args()
     assert args.config_file == "new_config.yaml"
 
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, validate_cmd="row", hash="col_a,col_b"),
+)
+def test_get_parsed_args_validate_row_hash(mock_args):
+    """Test arg parser values with validate row command and hash option."""
+    args = cli_tools.get_parsed_args()
+    assert args.hash == "col_a,col_b"
 
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, validate_cmd="schema", schema="my_schema"),
+)
+def test_get_parsed_args_validate_schema(mock_args):
+    """Test arg parser values with validate schema command and schema option."""
+    args = cli_tools.get_parsed_args()
+    assert args.schema == "my_schema"
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(command="beta", beta_cmd="new-feature", new_option="value"),
+)
+def test_get_parsed_args_beta_new_feature(mock_args):
+    """Test arg parser values with beta command and new-feature subcommand."""
+    args = cli_tools.get_parsed_args()
+    assert args.beta_cmd == "new-feature"
+    assert args.new_option == "value"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(command="generate-table-partitions", partition_num=10),
+)
+def test_get_parsed_args_generate_table_partitions(mock_args):
+    """Test arg parser values with generate-table-partitions command."""
+    args = cli_tools.get_parsed_args()
+    assert args.partition_num == 10
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(command="query", query="SELECT * FROM my_table"),
+)
+def test_get_parsed_args_query(mock_args):
+    """Test arg parser values with query command."""
+    args = cli_tools.get_parsed_args()
+    assert args.query == "SELECT * FROM my_table"
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_oracle",
+        source_type="Oracle",
+        user="my_user",
+        password="my_password",
+        host="my_host",
+        port="1521",
+        database="my_database",
+    ),
+)
+def test_get_parsed_args_add_oracle_connection(mock_args):
+    """Test arg parser values with connections add command for Oracle."""
+    args = cli_tools.get_parsed_args()
+    assert args.user == "my_user"
+    assert args.password == "my_password"
+    assert args.host == "my_host"
+    assert args.port == "1521"
+    assert args.database == "my_database"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_mysql",
+        source_type="MySQL",
+        host="localhost",
+        port="3306",
+        user="root",
+        password="password",
+    ),
+)
+def test_get_parsed_args_add_mysql_connection(mock_args):
+    """Test arg parser values with connections add command for MySQL."""
+    args = cli_tools.get_parsed_args()
+    assert args.host == "localhost"
+    assert args.port == "3306"
+    assert args.user == "root"
+    assert args.password == "password"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_postgresql",
+        source_type="PostgreSQL",
+        host="localhost",
+        port="5432",
+        user="postgres",
+        password="password",
+    ),
+)
+def test_get_parsed_args_add_postgresql_connection(mock_args):
+    """Test arg parser values with connections add command for PostgreSQL."""
+    args = cli_tools.get_parsed_args()
+    assert args.host == "localhost"
+    assert args.port == "5432"
+    assert args.user == "postgres"
+    assert args.password == "password"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_sqlserver",
+        source_type="SQL Server",
+        host="localhost",
+        port="1433",
+        user="sa",
+        password="password",
+    ),
+)
+def test_get_parsed_args_add_sqlserver_connection(mock_args):
+    """Test arg parser values with connections add command for SQL Server."""
+    args = cli_tools.get_parsed_args()
+    assert args.host == "localhost"
+    assert args.port == "1433"
+    assert args.user == "sa"
+    assert args.password == "password"
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_sqlite",
+        source_type="SQLite",
+        database="my_database.db",
+    ),
+)
+def test_get_parsed_args_add_sqlite_connection(mock_args):
+    """Test arg parser values with connections add command for SQLite."""
+    args = cli_tools.get_parsed_args()
+    assert args.database == "my_database.db"
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_mariadb",
+        source_type="MariaDB",
+        host="localhost",
+        port="3306",
+        user="root",
+        password="password",
+    ),
+)
+def test_get_parsed_args_add_mariadb_connection(mock_args):
+    """Test arg parser values with connections add command for MariaDB."""
+    args = cli_tools.get_parsed_args()
+    assert args.host == "localhost"
+    assert args.port == "3306"
+    assert args.user == "root"
+    assert args.password == "password"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_db2",
+        source_type="DB2",
+        host="localhost",
+        port="50000",
+        user="db2inst1",
+        password="password",
+        database="sample",
+    ),
+)
+def test_get_parsed_args_add_db2_connection(mock_args):
+    """Test arg parser values with connections add command for DB2."""
+    args = cli_tools.get_parsed_args()
+    assert args.host == "localhost"
+    assert args.port == "50000"
+    assert args.user == "db2inst1"
+    assert args.password == "password"
+    assert args.database == "sample"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_mongodb",
+        source_type="MongoDB",
+        host="localhost",
+        port="27017",
+        user="admin",
+        password="password",
+        database="testdb",
+    ),
+)
+def test_get_parsed_args_add_mongodb_connection(mock_args):
+    """Test arg parser values with connections add command for MongoDB."""
+    args = cli_tools.get_parsed_args()
+    assert args.host == "localhost"
+    assert args.port == "27017"
+    assert args.user == "admin"
+    assert args.password == "password"
+    assert args.database == "testdb"
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(
+        command="connections",
+        connect_cmd="add",
+        connection_name="test_cassandra",
+        source_type="Cassandra",
+        host="localhost",
+        port="9042",
+        user="cassandra",
+        password="password",
+        keyspace="testkeyspace",
+    ),
+)
+def test_get_parsed_args_add_cassandra_connection(mock_args):
+    """Test arg parser values with connections add command for Cassandra."""
+    args = cli_tools.get_parsed_args()
+    assert args.host == "localhost"
+    assert args.port == "9042"
+    assert args.user == "cassandra"
+    assert args.password == "password"
+    assert args.keyspace == "testkeyspace"
