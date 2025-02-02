@@ -833,3 +833,65 @@ def test_arg_parser_generate_table_partitions_help(capsys):
         _ = parser.parse_args(["generate-table-partitions", "--help"])
     captured = capsys.readouterr()
     assert "--partition-num" in captured.out
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, source_conn='{"source_type":"NewSource"}'),
+)
+def test_get_parsed_args_source_conn(mock_args):
+    """Test arg parser values with validate command and source_conn option."""
+    args = cli_tools.get_parsed_args()
+    assert args.source_conn == '{"source_type":"NewSource"}'
+
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, target_conn='{"source_type":"NewTarget"}'),
+)
+def test_get_parsed_args_target_conn(mock_args):
+    """Test arg parser values with validate command and target_conn option."""
+    args = cli_tools.get_parsed_args()
+    assert args.target_conn == '{"source_type":"NewTarget"}'
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, tables_list="new_schema.new_table"),
+)
+def test_get_parsed_args_tables_list(mock_args):
+    """Test arg parser values with validate command and tables_list option."""
+    args = cli_tools.get_parsed_args()
+    assert args.tables_list == "new_schema.new_table"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, sum="new_col_a,new_col_b"),
+)
+def test_get_parsed_args_sum(mock_args):
+    """Test arg parser values with validate command and sum option."""
+    args = cli_tools.get_parsed_args()
+    assert args.sum == "new_col_a,new_col_b"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, count="new_col_a,new_col_b"),
+)
+def test_get_parsed_args_count(mock_args):
+    """Test arg parser values with validate command and count option."""
+    args = cli_tools.get_parsed_args()
+    assert args.count == "new_col_a,new_col_b"
+
+
+@patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CLI_ARGS, config_file="new_config.yaml"),
+)
+def test_get_parsed_args_config_file(mock_args):
+    """Test arg parser values with validate command and config_file option."""
+    args = cli_tools.get_parsed_args()
+    assert args.config_file == "new_config.yaml"
+
+
