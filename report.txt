@@ -1,0 +1,86 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.16, pytest-8.3.4, pluggy-1.5.0
+rootdir: /home/dynamo/professional-services-data-validator
+collected 97 items
+
+tests/unit/test_cli_tools.py ....EEEE..E..E............................. [ 44%]
+......E...............................................                   [100%]
+
+==================================== ERRORS ====================================
+___________________ ERROR at setup of test_list_connections ____________________
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 221
+  def test_list_connections(mocked_connection_file):
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 167
+  @pytest.fixture
+  def mocked_connection_file(fs):
+E       fixture 'fs' not found
+>       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, mock_args, mocked_connection_file, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py:167
+____________________ ERROR at setup of test_get_connection _____________________
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 228
+  def test_get_connection(mocked_connection_file):
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 167
+  @pytest.fixture
+  def mocked_connection_file(fs):
+E       fixture 'fs' not found
+>       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, mock_args, mocked_connection_file, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py:167
+__________________ ERROR at setup of test_describe_connection __________________
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 235
+  def test_describe_connection(mocked_connection_file):
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 167
+  @pytest.fixture
+  def mocked_connection_file(fs):
+E       fixture 'fs' not found
+>       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, mock_args, mocked_connection_file, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py:167
+___________________ ERROR at setup of test_delete_connection ___________________
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 246
+  def test_delete_connection(mocked_connection_file, caplog):
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 167
+  @pytest.fixture
+  def mocked_connection_file(fs):
+E       fixture 'fs' not found
+>       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, mock_args, mocked_connection_file, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py:167
+_________________ ERROR at setup of test_create_bq_connection __________________
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 268
+  def test_create_bq_connection(caplog, fs):
+E       fixture 'fs' not found
+>       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, mock_args, mocked_connection_file, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py:268
+__________ ERROR at setup of test_create_and_list_and_get_validations __________
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 317
+  def test_create_and_list_and_get_validations(caplog, fs):
+E       fixture 'fs' not found
+>       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, mock_args, mocked_connection_file, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py:317
+____________ ERROR at setup of test_get_result_handler_by_conn_file ____________
+file /home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py, line 542
+  def test_get_result_handler_by_conn_file(fs):
+E       fixture 'fs' not found
+>       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, mock_args, mocked_connection_file, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/dynamo/professional-services-data-validator/tests/unit/test_cli_tools.py:542
+=========================== short test summary info ============================
+ERROR tests/unit/test_cli_tools.py::test_list_connections
+ERROR tests/unit/test_cli_tools.py::test_get_connection
+ERROR tests/unit/test_cli_tools.py::test_describe_connection
+ERROR tests/unit/test_cli_tools.py::test_delete_connection
+ERROR tests/unit/test_cli_tools.py::test_create_bq_connection
+ERROR tests/unit/test_cli_tools.py::test_create_and_list_and_get_validations
+ERROR tests/unit/test_cli_tools.py::test_get_result_handler_by_conn_file
+========================= 90 passed, 7 errors in 1.78s =========================
