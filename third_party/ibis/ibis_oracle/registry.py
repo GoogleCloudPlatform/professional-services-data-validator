@@ -441,7 +441,8 @@ def _extract_epoch(t, op):
         sa.sql.literal_column("DATE '1970-01-01'"),
     ).self_group()
     mult = sa.cast(
-        operator.mul(sub, sa.sql.literal_column("86400")), sa.dialects.oracle.NUMBER
+        operator.mul(sub, sa.sql.literal_column("86400")),
+        sa.dialects.oracle.NUMBER(38, 0),
     )
     return mult
 

@@ -313,6 +313,7 @@ def column_validation_test(
     filters=None,
     grouped_columns=None,
     wildcard_include_timestamp: bool = False,
+    filter_status: str = "fail",
     expected_rows=0,
 ):
     """Generic column validation test.
@@ -329,6 +330,7 @@ def column_validation_test(
         filters=filters,
         grouped_columns=grouped_columns,
         wildcard_include_timestamp=wildcard_include_timestamp,
+        filter_status=filter_status,
     )
     df = run_test_from_cli_args(args)
     assert len(df) == expected_rows
