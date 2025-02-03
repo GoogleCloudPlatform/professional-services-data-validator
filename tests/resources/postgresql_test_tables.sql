@@ -805,7 +805,39 @@ INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES
 (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00'),
 (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
 
-DROP TABLE pso_data_validator.dvt_tricky_dates;
+DROP TABLE IF EXISTS pso_data_validator.dvt_high_epoch_seconds;
+CREATE TABLE pso_data_validator.dvt_high_epoch_seconds
+( id                bigint NOT NULL PRIMARY KEY
+, col_datetime      timestamp(0)
+, col_datetime_fail timestamp(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_high_epoch_seconds IS 'Integration test table used to test high result of --sum of epoch seconds.';
+-- Insert rows to generate a high output from SUM(epochseconds).
+INSERT INTO pso_data_validator.dvt_high_epoch_seconds
+SELECT n
+,      '99999-12-31 23:59:59'::timestamp
+,      '99999-12-31 23:59:59'::timestamp
+FROM   generate_series(1,1000000) AS n;
+-- Insert a single row to ensure SUM value has non-zero digits to the right of the number.
+INSERT INTO pso_data_validator.dvt_high_epoch_seconds
+VALUES (0,'1900-01-01 00:00:59'::timestamp,'1900-01-01 00:00:59'::timestamp);
+
+-- This gives us a result that overflows bigint:
+-- select val,length(val::text) from (select sum(cast(extract(epoch from col_datetime) as bigint)) val from pso_data_validator.dvt_high_epoch_seconds) v;
+--          val         | length
+-- ---------------------+--------
+--  3093527978590011259 |     19
+-- The value above is hardcoded in constant SUM_EPOCH_COL_DATETIME defined on tests/system/data_sources/test_postgres.py so please modify that when changing data.
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_high_epoch_seconds2;
+CREATE TABLE pso_data_validator.dvt_high_epoch_seconds2
+AS SELECT * FROM pso_data_validator.dvt_high_epoch_seconds
+WHERE id > 0;
+-- Ensure record 0 has a mismatch of data in col_datetime_fail
+INSERT INTO pso_data_validator.dvt_high_epoch_seconds2
+VALUES (0,'1900-01-01 00:00:59'::timestamp,'1900-01-01 00:00:57'::timestamp);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_dates;
 CREATE TABLE pso_data_validator.dvt_tricky_dates (
   id            integer NOT NULL PRIMARY KEY
 , col_dt_low    date
@@ -817,3 +849,4 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+
