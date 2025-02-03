@@ -22,6 +22,8 @@ TABLE_DF = pandas.DataFrame([{"column": "value"}])
 CLIENT = ibis.pandas.connect({"table": TABLE_DF})
 WHERE_FILTER = "id > 100"
 
+SECONDS_IN_A_DAY = 60 * 60 * 24
+
 
 @pytest.fixture
 def module_under_test():
@@ -45,3 +47,37 @@ def test_format_raw_sql_expr(module_under_test):
     raw_sql = operations.format_raw_sql(ibis_table.column, raw_sql_column_expr)
 
     assert raw_sql == WHERE_FILTER
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (
+            "1970-01-01",
+            0,
+        ),
+        (
+            "1970-01-01 00:00:01",
+            1,
+        ),
+        (
+            "1970-01-02",
+            SECONDS_IN_A_DAY,
+        ),
+        (
+            "1970-02-01 00:00:01",
+            (SECONDS_IN_A_DAY * 31) + 1,
+        ),
+        (
+            "1969-12-31",
+            -SECONDS_IN_A_DAY,
+        ),
+        (
+            "1969-12-31 23:59:00",
+            -60,
+        ),
+    ],
+)
+def test_string_to_epoch(module_under_test, test_input: str, expected: int):
+    result = module_under_test.string_to_epoch(test_input)
+    assert result == expected

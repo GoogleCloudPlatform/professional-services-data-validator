@@ -2,6 +2,19 @@
 
 ## Untagged
 
+## [7.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.0.0...v7.1.0) (2025-01-08)
+
+
+### Features
+
+* Prevent exceptions due to PostgreSQL xml data type ([#1384](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1384)) ([3828c4a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3828c4af55f70c73f44b5a723f02fb4fc1cb0178))
+
+
+### Bug Fixes
+
+* Cast of Oracle Timestamp to Date removes the time component ([#1387](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1387)) ([35dad08](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/35dad082e047566fb5c846c46d0822918d86634a))
+* Explicitly close connection after adding a connection ([#1381](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1381)) ([13b481c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/13b481cc82e42d884d380ccd4fe7eb83ab285069))
+
 ## [7.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v6.4.0...v7.0.0) (2024-12-18)
 
 

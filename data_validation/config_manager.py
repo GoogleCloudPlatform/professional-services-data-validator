@@ -784,7 +784,9 @@ class ConfigManager(object):
         column_position: int,
     ) -> dict:
         """Append calculated field for length() or epoch_seconds(timestamp) for preprocessing before column validation aggregation."""
-        depth, cast_type = 0, None
+        depth = 0
+        cast_type = None
+        final_cast_type = None
         if any(_ in ["json", "!json"] for _ in [column_type, target_column_type]):
             # JSON data which needs casting to string before we apply a length function.
             pre_calculated_config = self.build_and_append_pre_agg_calc_config(
@@ -829,6 +831,10 @@ class ConfigManager(object):
                 depth = 1
 
             calc_func = "epoch_seconds"
+            if agg_type == consts.CONFIG_TYPE_SUM:
+                # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
+                # See issue 1391 for details.
+                final_cast_type = "string"
 
         elif column_type == "int32" or column_type == "!int32":
             calc_func = consts.CONFIG_CAST
@@ -856,6 +862,9 @@ class ConfigManager(object):
             ),
             consts.CONFIG_TYPE: agg_type,
         }
+        if final_cast_type:
+            # Adding to dict this way to avoid adding a lot of empty cast attributes.
+            aggregate_config[consts.CONFIG_CAST] = final_cast_type
 
         return aggregate_config
 
@@ -863,22 +872,28 @@ class ConfigManager(object):
         self,
         source_column_ibis_type: dt.DataType,
         target_column_ibis_type: dt.DataType,
+        margin: int = 0,
     ) -> bool:
-        """Identifies Decimal columns that will cause problems in a Pandas Dataframe, i.e.
-        is of greater precision than a 64bit int/real can hold."""
+        """Identifies Decimal columns that will cause problems in a Pandas Dataframe.
+
+        i.e. are of greater precision than a 64bit int/real can hold.
+
+        margin: Allows us to lower the precision threshold. This is helpful when summing column
+                values that are okay by themselves but cumulativaly could overflow a 64bit value.
+        """
         return bool(
             (
                 isinstance(source_column_ibis_type, dt.Decimal)
                 and (
                     source_column_ibis_type.precision is None
-                    or source_column_ibis_type.precision > 18
+                    or source_column_ibis_type.precision > (18 - margin)
                 )
             )
             and (
                 isinstance(target_column_ibis_type, dt.Decimal)
                 and (
                     target_column_ibis_type.precision is None
-                    or target_column_ibis_type.precision > 18
+                    or target_column_ibis_type.precision > (18 - margin)
                 )
             )
         )
@@ -1042,7 +1057,9 @@ class ConfigManager(object):
                     consts.CONFIG_TYPE: agg_type,
                 }
                 if self._decimal_column_too_big_for_pandas(
-                    source_column_ibis_type, target_column_ibis_type
+                    source_column_ibis_type,
+                    target_column_ibis_type,
+                    margin=(2 if agg_type == consts.CONFIG_TYPE_SUM else 0),
                 ):
                     aggregate_config[consts.CONFIG_CAST] = "string"
 

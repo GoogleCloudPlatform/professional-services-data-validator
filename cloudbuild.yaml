@@ -132,6 +132,14 @@ steps:
   - 'NOX_SESSION=integration_filesystem'
   - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
+- id: integration_impala
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_impala'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'IMPALA_HOST=10.128.0.118'
+  waitFor: ['-']
 
 availableSecrets:
   secretManager:

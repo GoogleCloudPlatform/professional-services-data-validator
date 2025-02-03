@@ -312,10 +312,10 @@ def _extract_epoch(translator, op):
     # Since the change to table_column, column is already at UTC we don't need to set the time zone here
     extract_arg = f"CAST({arg} AS TIMESTAMP)" if op.arg.output_dtype.is_date() else arg
     return (
-        f"(CAST ({arg} AS DATE) - DATE '1970-01-01') * 86400 + "
-        f"(EXTRACT(HOUR FROM {extract_arg} ) * 3600) + "
+        f"CAST((CAST ({arg} AS DATE) - DATE '1970-01-01') AS BIGINT) * 86400 + "
+        f"CAST((EXTRACT(HOUR FROM {extract_arg} ) * 3600) + "
         f"(EXTRACT(MINUTE FROM {extract_arg} ) * 60) + "
-        f"(EXTRACT(SECOND FROM {extract_arg}))"
+        f"(EXTRACT(SECOND FROM {extract_arg})) AS BIGINT)"
     )
 
 

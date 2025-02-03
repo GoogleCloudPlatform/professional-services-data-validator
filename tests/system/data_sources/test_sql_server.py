@@ -35,6 +35,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     row_validation_test,
     custom_query_validation_test,
+    raw_query_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -341,6 +342,61 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols="*",
+        max_cols="*",
+        sum_cols="*",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery():
+    """SQL Server to BigQuery dvt_large_decimals column validation."""
+    # TODO When issue-1079 is complete add col_dec_38_30 to --hash string below.
+    cols = "col_dec_18,col_dec_38,col_dec_38_9"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """SQL Server to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    assert "sum__col_dec_18_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """SQL Server to SQL Server dvt_core_types row validation"""
     row_validation_test(
@@ -449,6 +505,19 @@ def test_row_validation_pangrams_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash="*",
+    )
 
 
 @mock.patch(
@@ -585,3 +654,12 @@ def test_row_validation_uuid_hash_to_bigquery():
         tables="pso_data_validator.dvt_uuid_id",
         hash="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_raw_query_dvt_row_types(capsys):
+    """Test data-validation query command."""
+    raw_query_test(capsys)

@@ -640,11 +640,15 @@ def run_connections(args):
     """Run commands related to connection management."""
     if args.connect_cmd == "list":
         cli_tools.list_connections()
+    elif args.connect_cmd == "delete":
+        cli_tools.delete_connection(args.connection_name)
+    elif args.connect_cmd == "describe":
+        cli_tools.describe_connection(args.connection_name, args.output_format)
     elif args.connect_cmd == "add":
         conn = cli_tools.get_connection_config_from_args(args)
         # Test getting a client to validate connection details
-        _ = clients.get_data_client(conn)
-        cli_tools.store_connection(args.connection_name, conn)
+        with clients.get_data_client_ctx(conn) as _:
+            cli_tools.store_connection(args.connection_name, conn)
     else:
         raise ValueError(f"Connections Argument '{args.connect_cmd}' is not supported")
 

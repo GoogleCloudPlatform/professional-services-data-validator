@@ -13,97 +13,43 @@
 # limitations under the License.
 
 import os
+import pathlib
 from unittest import mock
 
 import pytest
-import pathlib
 
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools
 from tests.system.data_sources.common_functions import (
-    binary_key_assertions,
+    column_validation_test,
     find_tables_test,
     id_type_test_assertions,
-    null_not_null_assertions,
-    row_validation_many_columns_test,
+    raw_query_test,
     row_validation_test,
     run_test_from_cli_args,
     schema_validation_test,
     custom_query_validation_test,
-    column_validation_test,
-    raw_query_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
     partition_table_test,
     partition_query_test,
 )
 
-HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
-HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
+
+IMPALA_HOST = os.getenv("IMPALA_HOST", "localhost")
+IMPALA_PORT = os.getenv("IMPALA_PORT", "21050")
+IMPALA_DATABASE = os.getenv("IMPALA_DATABASE", "default")
+IMPALA_AUTH_MECH = os.getenv("IMPALA_AUTH_MECH", "NOSASL")
 
 
 CONN = {
     "source_type": "Impala",
-    "host": HIVE_HOST,
-    "port": 10000,
-    "database": HIVE_DATABASE,
+    "host": IMPALA_HOST,
+    "port": IMPALA_PORT,
+    "database": IMPALA_DATABASE,
+    "auth_mechanism": IMPALA_AUTH_MECH,
 }
-
-
-HIVE_CONFIG = {
-    # Specific Connection Config
-    consts.CONFIG_SOURCE_CONN: CONN,
-    consts.CONFIG_TARGET_CONN: CONN,
-    # Validation Type
-    consts.CONFIG_TYPE: "Column",
-    # Configuration Required Depending on Validator Type
-    consts.CONFIG_SCHEMA_NAME: "default",
-    consts.CONFIG_TABLE_NAME: "hive_data",
-    consts.CONFIG_AGGREGATES: [
-        {
-            consts.CONFIG_TYPE: "count",
-            consts.CONFIG_SOURCE_COLUMN: "title",
-            consts.CONFIG_TARGET_COLUMN: "title",
-            consts.CONFIG_FIELD_ALIAS: "count",
-        },
-    ],
-    consts.CONFIG_FORMAT: "table",
-    consts.CONFIG_FILTER_STATUS: None,
-}
-
-
-def test_count_validator():
-    validator = data_validation.DataValidation(HIVE_CONFIG, verbose=True)
-    df = validator.execute()
-    assert int(df["source_agg_value"][0]) > 0
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
-
-
-def mock_get_connection_config(*args):
-    if args[1] in ("hive-conn", "mock-conn"):
-        return CONN
-    elif args[1] == "bq-conn":
-        return BQ_CONN
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_schema_validation_core_types():
-    """
-    Disabled this test in favour of test_schema_validation_core_types_to_bigquery().
-    The Hive integration tests are too slow and timing out but I believe
-    test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
-    """
-    pytest.skip(
-        "Skipping test_schema_validation_core_types in favour of test_schema_validation_core_types_to_bigquery (due to elapsed time)."
-    )
-    schema_validation_test(
-        tables="pso_data_validator.dvt_core_types",
-        tc="mock-conn",
-    )
-
 
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
@@ -132,14 +78,23 @@ EXPECTED_PARTITION_FILTER = [
 ]
 
 
+def mock_get_connection_config(*args):
+    if args[1] in ("impala-conn", "mock-conn"):
+        return CONN
+    elif args[1] == "bq-conn":
+        return BQ_CONN
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions(tmp_path: pathlib.Path):
-    """Test generate partitions on Hive, first on table, then on custom query"""
-    partition_table_test(EXPECTED_PARTITION_FILTER)
-    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
+def test_schema_validation_core_types():
+    """Impala to Impala dvt_core_types schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+    )
 
 
 @mock.patch(
@@ -147,10 +102,12 @@ def test_generate_partitions(tmp_path: pathlib.Path):
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types_to_bigquery():
+    """Impala to BigQuery dvt_core_types schema validation"""
     schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         allow_list=(
-            # All Hive integers go to BigQuery INT64.
+            # Impala integers go to BigQuery INT64.
             "int8:int64,int16:int64,int32:int64,"
             # Hive does not have a time zoned timestamp.
             "timestamp:timestamp('UTC'),"
@@ -164,27 +121,12 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_not_null_vs_nullable():
-    """
-    Disabled this test because we don't currently pull nullable from Hive.
-      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/934
-    Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly.
-    """
-    pytest.skip(
-        "Skipping test_schema_validation_not_null_vs_nullable because we don't currently pull nullable from Hive."
+def test_schema_validation_view_core_types_vw():
+    """Impala to Impala view dvt_core_types_vw schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types_vw",
+        tc="mock-conn",
     )
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "schema",
-            "-sc=hive-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
-        ]
-    )
-    df = run_test_from_cli_args(args)
-    null_not_null_assertions(df)
 
 
 @mock.patch(
@@ -192,7 +134,7 @@ def test_schema_validation_not_null_vs_nullable():
     new=mock_get_connection_config,
 )
 def test_schema_validation_bool():
-    """Hive to Hive dvt_bool schema validation"""
+    """Impala to Impala dvt_bool schema validation"""
     schema_validation_test(tables="pso_data_validator.dvt_bool", tc="mock-conn")
 
 
@@ -200,21 +142,25 @@ def test_schema_validation_bool():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_generate_partitions(tmp_path: pathlib.Path):
+    """Test generate partitions on Impala, first on table, then on custom query"""
+    partition_table_test(EXPECTED_PARTITION_FILTER)
+    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_core_types():
-    """
-    Disabled this test in favour of test_column_validation_core_types_to_bigquery().
-    The Hive integration tests are too slow and timing out but I believe
-    test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
-    """
-    pytest.skip(
-        "Skipping test_column_validation_core_types in favour of test_column_validation_core_types_to_bigquery (due to elapsed time)."
-    )
-    # Hive tests are really slow so I've excluded --min below assuming that --max is
-    # effectively the same test when comparing an engine back to itself.
     column_validation_test(
         tc="mock-conn",
+        count_cols="*",
         sum_cols="*",
+        min_cols="*",
         max_cols="*",
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
     )
 
 
@@ -223,12 +169,42 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    # Hive tests are really slow so I've excluded --min below assuming that --max is effectively the same test.
-    # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz"
+    """Impala to BigQuery dvt_core_types column validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    # TODO Change cols to include col_char_2 when issue-842 is complete.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_char_2")
+        ]
+    )
     column_validation_test(
-        tc="bq-conn", filters="id>0 AND col_int8>0", sum_cols=cols, max_cols=cols
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_core_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_view_core_types_vw():
+    """Impala to Impala view dvt_core_types_vw column validation"""
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types_vw",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
     )
 
 
@@ -237,17 +213,11 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types():
-    """
-    Disabled this test in favour of test_row_validation_core_types_to_bigquery().
-    The Hive integration tests are too slow and timing out but I believe
-    test_column_validation_core_types_to_bigquery() will cover off most of what this test does.
-    """
-    pytest.skip(
-        "Skipping test_row_validation_core_types in favour of test_row_validation_core_types_to_bigquery (due to elapsed time)."
-    )
+    """Impala to Impala dvt_core_types row validation"""
     row_validation_test(
         tc="mock-conn",
-        hash="*",
+        concat="*",
+        filters="id>0 AND col_int8>0",
     )
 
 
@@ -256,41 +226,35 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    # col_float64 is excluded below because there is no way to control the format when casting to string.
-    row_validation_test(
-        tc="bq-conn",
-        filters="id>0 AND col_int8>0",
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz",
+    """Impala to BigQuery dvt_core_types row validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    # col_float64 is excluded below because there is no way to control the format
+    # when casting to string.
+    # TODO Change cols to include col_dec_10_2 when issue-1379 is complete.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_float64", "col_dec_10_2")
+        ]
     )
+    # Impala does not have sha2() until Impala v4.1.
+    # Our test infrastructiure is Impala v3 therefore we use --concat below.
+    row_validation_test(tc="bq-conn", concat=cols)
 
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_binary_pk_to_bigquery():
-    """Hive to BigQuery dvt_binary row validation.
-    This is testing binary primary key join columns.
-    Includes random row filter test.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=hive-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_binary",
-            "--primary-keys=binary_id",
-            "--hash=int_id,other_data",
-            # We have a bug in our test Hive instance that returns
-            # zero rows on binary IN lists with >1 element.
-            # "--use-random-row",
-            # "--random-row-batch-size=5",
-        ]
+def test_row_validation_comp_fields_core_types():
+    """Impala to Impala dvt_core_types row validation with --comp-fields"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        comp_fields="*",
     )
-    df = run_test_from_cli_args(args)
-    binary_key_assertions(df)
 
 
 @mock.patch(
@@ -298,19 +262,21 @@ def test_row_validation_binary_pk_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_pangrams_to_bigquery():
-    """Hive to BigQuery dvt_pangrams row validation.
+    """Impala to BigQuery dvt_pangrams row validation.
     This is testing comparisons across a wider set of characters than standard test data.
     """
     parser = cli_tools.configure_arg_parser()
+    # Impala does not have sha2() until Impala v4.1.
+    # Our test infrastructiure is Impala v3 therefore we use --concat below.
     args = parser.parse_args(
         [
             "validate",
             "row",
-            "-sc=hive-conn",
+            "-sc=mock-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_pangrams",
             "--primary-keys=id",
-            "--hash=*",
+            "--concat=*",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -322,7 +288,7 @@ def test_row_validation_pangrams_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_validation_core_types_to_bigquery():
-    """Hive to BigQuery dvt_core_types custom-query validation
+    """Impala to BigQuery dvt_core_types custom-query validation
     Using BigQuery target because Hive queries are really slow."""
     custom_query_validation_test(tc="bq-conn", count_cols="*")
 
@@ -331,47 +297,15 @@ def test_custom_query_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_many_columns():
-    """Hive dvt_many_cols row validation.
-    Using BigQuery target because Hive queries are really slow.
-    When executed individually this test passes but when executed during a full
-    integration test run I get:
-      impala.error.HiveServer2Error: java.lang.NullPointerException
-    This must be down to minimal resources for our small Hive instance, disabling for now.
-    """
-    pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
-    # TODO Enable this test once we have access to a less flakey Hive cluster.
-    row_validation_many_columns_test(target_conn="bq-conn")
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_custom_query_row_validation_many_columns():
-    """Hive dvt_many_cols custom-query row validation.
-    Using BigQuery target because Hive queries are really slow.
-    I can't get this test to complete on our test infrastructure due to:
-      java.lang.OutOfMemoryError: Java heap space
-    """
-    pytest.skip("Skipping test_row_validation_many_columns due to resource issues.")
-    # TODO Enable this test once we have access to a less flakey Hive cluster.
-    row_validation_many_columns_test(
-        validation_type="custom-query",
-        target_conn="bq-conn",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_hash_bool_to_bigquery():
+def test_row_validation_bool_to_bigquery():
     """Test row validation on a table with bool data types."""
+    pytest.skip("Skipping test_row_validation_bool_to_bigquery due to issue-1380.")
+    # Impala does not have sha2() until Impala v4.1.
+    # Our test infrastructiure is Impala v3 therefore we use --concat below.
     row_validation_test(
         tables="pso_data_validator.dvt_bool",
         tc="bq-conn",
-        hash="*",
+        concat="*",
     )
 
 
@@ -380,8 +314,8 @@ def test_row_validation_hash_bool_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_find_tables():
-    """Hive to BigQuery test of find-tables command."""
-    # check_for_view=False because there is no practical way to exclude views on Hive.
+    """Impala to BigQuery test of find-tables command."""
+    # check_for_view=False because there is no practical way to exclude views on Impala.
     find_tables_test(check_for_view=False)
 
 
