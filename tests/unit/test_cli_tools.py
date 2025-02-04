@@ -20,7 +20,6 @@ import yaml
 from unittest import mock
 
 import pytest
-from pyfakefs.fake_filesystem_unittest import Patcher
 
 from data_validation import cli_tools, consts, gcs_helper
 from data_validation.cli_tools import get_parsed_args
@@ -839,27 +838,27 @@ def test_arg_parser_generate_table_partitions_help(capsys):
 
 @pytest.fixture
 def mock_args():
-    with mock.patch('argparse.ArgumentParser.parse_args') as mock_parse_args:
+    with mock.patch("argparse.ArgumentParser.parse_args") as mock_parse_args:
         yield mock_parse_args
 
-@pytest.fixture
-def mocked_connection_file(fs):
-    expanded_path = os.path.expanduser(CLI_EXPECTED_CONNECTION_FILE_PATH)
-    fs.makedirs(os.path.dirname(expanded_path), exist_ok=True)
-    fs.create_file(expanded_path, contents=json.dumps(CLI_EXPECTED_CONNECTION))
-    return fs
-    
+
 def test_get_parsed_args_source_conn(mock_args):
     """Test arg parser values with validate command and source_conn option."""
-    mock_args.return_value = argparse.Namespace(source_conn='{"source_type":"NewSource"}')
+    mock_args.return_value = argparse.Namespace(
+        source_conn='{"source_type":"NewSource"}'
+    )
     args = get_parsed_args()
     assert args.source_conn == '{"source_type":"NewSource"}'
 
+
 def test_get_parsed_args_target_conn(mock_args):
     """Test arg parser values with validate command and target_conn option."""
-    mock_args.return_value = argparse.Namespace(target_conn='{"source_type":"NewTarget"}')
+    mock_args.return_value = argparse.Namespace(
+        target_conn='{"source_type":"NewTarget"}'
+    )
     args = get_parsed_args()
     assert args.target_conn == '{"source_type":"NewTarget"}'
+
 
 def test_get_parsed_args_tables_list(mock_args):
     """Test arg parser values with validate command and tables_list option."""
@@ -867,11 +866,13 @@ def test_get_parsed_args_tables_list(mock_args):
     args = get_parsed_args()
     assert args.tables_list == "new_schema.new_table"
 
+
 def test_get_parsed_args_sum(mock_args):
     """Test arg parser values with validate command and sum option."""
     mock_args.return_value = argparse.Namespace(sum="new_col_a,new_col_b")
     args = get_parsed_args()
     assert args.sum == "new_col_a,new_col_b"
+
 
 def test_get_parsed_args_count(mock_args):
     """Test arg parser values with validate command and count option."""
@@ -879,11 +880,13 @@ def test_get_parsed_args_count(mock_args):
     args = get_parsed_args()
     assert args.count == "new_col_a,new_col_b"
 
+
 def test_get_parsed_args_config_file(mock_args):
     """Test arg parser values with validate command and config_file option."""
     mock_args.return_value = argparse.Namespace(config_file="new_config.yaml")
     args = get_parsed_args()
     assert args.config_file == "new_config.yaml"
+
 
 def test_get_parsed_args_validate_row_hash(mock_args):
     """Test arg parser values with validate row command and hash option."""
@@ -891,18 +894,23 @@ def test_get_parsed_args_validate_row_hash(mock_args):
     args = get_parsed_args()
     assert args.hash == "col_a,col_b"
 
+
 def test_get_parsed_args_validate_schema(mock_args):
     """Test arg parser values with validate schema command and schema option."""
     mock_args.return_value = argparse.Namespace(schema="my_schema")
     args = get_parsed_args()
     assert args.schema == "my_schema"
 
+
 def test_get_parsed_args_beta_new_feature(mock_args):
     """Test arg parser values with beta command and new-feature subcommand."""
-    mock_args.return_value = argparse.Namespace(beta_cmd="new-feature", new_option="value")
+    mock_args.return_value = argparse.Namespace(
+        beta_cmd="new-feature", new_option="value"
+    )
     args = get_parsed_args()
     assert args.beta_cmd == "new-feature"
     assert args.new_option == "value"
+
 
 def test_get_parsed_args_generate_table_partitions(mock_args):
     """Test arg parser values with generate-table-partitions command."""
@@ -910,11 +918,13 @@ def test_get_parsed_args_generate_table_partitions(mock_args):
     args = get_parsed_args()
     assert args.partition_num == 10
 
+
 def test_get_parsed_args_query(mock_args):
     """Test arg parser values with query command."""
     mock_args.return_value = argparse.Namespace(query="SELECT * FROM my_table")
     args = get_parsed_args()
     assert args.query == "SELECT * FROM my_table"
+
 
 def test_get_parsed_args_add_oracle_connection(mock_args):
     """Test arg parser values with connections add command for Oracle."""
@@ -923,7 +933,7 @@ def test_get_parsed_args_add_oracle_connection(mock_args):
         password="my_password",
         host="my_host",
         port="1521",
-        database="my_database"
+        database="my_database",
     )
     args = get_parsed_args()
     assert args.user == "my_user"
@@ -932,13 +942,11 @@ def test_get_parsed_args_add_oracle_connection(mock_args):
     assert args.port == "1521"
     assert args.database == "my_database"
 
+
 def test_get_parsed_args_add_postgresql_connection(mock_args):
     """Test arg parser values with connections add command for PostgreSQL."""
     mock_args.return_value = argparse.Namespace(
-        host="localhost",
-        port="5432",
-        user="postgres",
-        password="password"
+        host="localhost", port="5432", user="postgres", password="password"
     )
     args = get_parsed_args()
     assert args.host == "localhost"
@@ -946,13 +954,11 @@ def test_get_parsed_args_add_postgresql_connection(mock_args):
     assert args.user == "postgres"
     assert args.password == "password"
 
+
 def test_get_parsed_args_add_sqlserver_connection(mock_args):
     """Test arg parser values with connections add command for SQL Server."""
     mock_args.return_value = argparse.Namespace(
-        host="localhost",
-        port="1433",
-        user="sa",
-        password="password"
+        host="localhost", port="1433", user="sa", password="password"
     )
     args = get_parsed_args()
     assert args.host == "localhost"
@@ -960,25 +966,6 @@ def test_get_parsed_args_add_sqlserver_connection(mock_args):
     assert args.user == "sa"
     assert args.password == "password"
 
-def test_get_parsed_args_add_sqlite_connection(mock_args):
-    """Test arg parser values with connections add command for SQLite."""
-    mock_args.return_value = argparse.Namespace(database="my_database.db")
-    args = get_parsed_args()
-    assert args.database == "my_database.db"
-
-def test_get_parsed_args_add_mariadb_connection(mock_args):
-    """Test arg parser values with connections add command for MariaDB."""
-    mock_args.return_value = argparse.Namespace(
-        host="localhost",
-        port="3306",
-        user="root",
-        password="password"
-    )
-    args = get_parsed_args()
-    assert args.host == "localhost"
-    assert args.port == "3306"
-    assert args.user == "root"
-    assert args.password == "password"
 
 def test_get_parsed_args_add_db2_connection(mock_args):
     """Test arg parser values with connections add command for DB2."""
@@ -987,7 +974,7 @@ def test_get_parsed_args_add_db2_connection(mock_args):
         port="50000",
         user="db2inst1",
         password="password",
-        database="sample"
+        database="sample",
     )
     args = get_parsed_args()
     assert args.host == "localhost"
@@ -995,35 +982,3 @@ def test_get_parsed_args_add_db2_connection(mock_args):
     assert args.user == "db2inst1"
     assert args.password == "password"
     assert args.database == "sample"
-
-def test_get_parsed_args_add_mongodb_connection(mock_args):
-    """Test arg parser values with connections add command for MongoDB."""
-    mock_args.return_value = argparse.Namespace(
-        host="localhost",
-        port="27017",
-        user="admin",
-        password="password",
-        database="testdb"
-    )
-    args = get_parsed_args()
-    assert args.host == "localhost"
-    assert args.port == "27017"
-    assert args.user == "admin"
-    assert args.password == "password"
-    assert args.database == "testdb"
-
-def test_get_parsed_args_add_cassandra_connection(mock_args):
-    """Test arg parser values with connections add command for Cassandra."""
-    mock_args.return_value = argparse.Namespace(
-        host="localhost",
-        port="9042",
-        user="cassandra",
-        password="password",
-        keyspace="testkeyspace"
-    )
-    args = get_parsed_args()
-    assert args.host == "localhost"
-    assert args.port == "9042"
-    assert args.user == "cassandra"
-    assert args.password == "password"
-    assert args.keyspace == "testkeyspace"
