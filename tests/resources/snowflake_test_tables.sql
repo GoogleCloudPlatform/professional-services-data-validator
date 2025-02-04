@@ -627,6 +627,21 @@ CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_TRICKY_DATES (
 , col_ts_low    TIMESTAMP(0)
 , col_ts_epoch  TIMESTAMP(0)
 , col_ts_high   TIMESTAMP(0));
+COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC.dvt_tricky_dates IS 'Integration test table used to test potentially difficult Timestamps.';
 INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.DVT_TRICKY_DATES VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+
+DROP TABLE IF EXISTS PSO_DATA_VALIDATOR.PUBLIC.dvt_tricky_strings;
+CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.dvt_tricky_strings (
+  id           NUMBER(5) NOT NULL PRIMARY KEY
+, col_string   VARCHAR(20)
+, col_comment  VARCHAR(40));
+COMMENT ON TABLE PSO_DATA_VALIDATOR.PUBLIC.dvt_tricky_strings IS 'Integration test table used to test potentially difficult Strings.';
+INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.dvt_tricky_strings
+SELECT 1,'str'||CHR(10)||'str','Contains: new line' UNION ALL
+SELECT 2,'str'||CHR(10),'Trailing: new line' UNION ALL
+SELECT 3,'str'||CHR(13)||'str','Contains: carriage return' UNION ALL
+SELECT 4,'str'||CHR(13),'Trailing: carriage return' UNION ALL
+SELECT 5,'str'||CHR(9)||'str','Contains: tab' UNION ALL
+SELECT 6,'str'||CHR(9),'Trailing: tab';

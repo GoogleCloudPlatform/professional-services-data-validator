@@ -60,3 +60,86 @@ def test_timed_call_fn_cwargs(module_under_test, caplog):
 
     assert fn_cwargs(3) == module_under_test.timed_call("cwargs fn", fn_cwargs, c1=3)
     assert any(_ for _ in caplog.messages if "cwargs fn" in _)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected,sep",
+    [
+        # Test with default separator of space.
+        (
+            "abc",
+            [
+                "abc",
+            ],
+            None,
+        ),
+        (
+            "a b c",
+            [
+                "a",
+                "b",
+                "c",
+            ],
+            None,
+        ),
+        (
+            "a 'b c'",
+            [
+                "a",
+                "'b c'",
+            ],
+            None,
+        ),
+        # Test with separator of ":" which matches --filters separator.
+        (
+            "col1 = 1:col2 = 1",
+            [
+                "col1 = 1",
+                "col2 = 1",
+            ],
+            ":",
+        ),
+        (
+            "col1 = ':'",
+            [
+                "col1 = ':'",
+            ],
+            ":",
+        ),
+        (
+            "col1 = ':':col2 = ''':'''",
+            [
+                "col1 = ':'",
+                "col2 = ''':'''",
+            ],
+            ":",
+        ),
+        (
+            "col_ts >= to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') "
+            "and col_ts < to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+            [
+                "col_ts >= to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') "
+                "and col_ts < to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+            ],
+            ":",
+        ),
+        (
+            "col_ts1 between to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') and to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')"
+            ":"
+            "col_ts2 between to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') and to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+            [
+                "col_ts1 between to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') and to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+                "col_ts2 between to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') and to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+            ],
+            ":",
+        ),
+    ],
+)
+def test_split_not_in_quotes(
+    module_under_test, test_input: str, expected: tuple, sep: str
+):
+    if sep:
+        result = module_under_test.split_not_in_quotes(test_input, sep=sep)
+    else:
+        result = module_under_test.split_not_in_quotes(test_input)
+    assert result == expected

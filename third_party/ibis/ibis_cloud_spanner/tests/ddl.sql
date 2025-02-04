@@ -490,3 +490,9 @@ CREATE TABLE dvt_many_cols
 , col_398 INT64
 , col_399 INT64
 ) PRIMARY KEY (id);
+
+CREATE TABLE dvt_tricky_strings (
+  id           INT64
+, col_string   STRING(20)
+, col_comment  STRING(40)
+) PRIMARY KEY (id);

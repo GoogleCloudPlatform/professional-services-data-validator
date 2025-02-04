@@ -52,12 +52,18 @@ import sys
 import uuid
 import os
 import math
-import re
 from argparse import Namespace
 from typing import Dict, List, Optional
 from yaml import Dumper, Loader, dump, load
 
-from data_validation import clients, consts, find_tables, state_manager, gcs_helper
+from data_validation import (
+    clients,
+    consts,
+    find_tables,
+    state_manager,
+    gcs_helper,
+    util,
+)
 from data_validation.validation_builder import list_to_sublists
 
 
@@ -1202,31 +1208,29 @@ def get_filters(filter_value: str) -> List[Dict]:
     If only one filter is specified, it applies to both source and target
     For a doc on regular expression for filters see docs/internal/filters_regex.md
     """
-
-    single_filter = r"([^':]*('[^']*')*)*"
-    double_filter = (
-        r"(?P<source>" + single_filter + r"):(?P<target>" + single_filter + r")"
-    )
-    filter_config = []
-    if result := re.fullmatch(single_filter, filter_value):
-        if result.group(0) == "":
-            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
-        filter_dict = {
-            "type": "custom",
-            "source": result.group(0),
-            "target": result.group(0),
-        }
-    elif result := re.fullmatch(double_filter, filter_value):
-        if result.group("source") == "" or result.group("target") == "":
-            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
-        filter_dict = {
-            "type": "custom",
-            "source": result.group("source"),
-            "target": result.group("target"),
-        }
-    else:
+    filters = util.split_not_in_quotes(filter_value, ":")
+    if len(filters) not in (1, 2):
         raise argparse.ArgumentTypeError("Unable to parse filter arguments.")
-    filter_config.append(filter_dict)
+    filters = [_.strip() for _ in filters]
+    if len(filters) == 1:
+        if not filters[0]:
+            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
+        filter_dict = {
+            "type": "custom",
+            "source": filters[0],
+            "target": filters[0],
+        }
+    elif len(filters) == 2:
+        if not filters[0] or not filters[1]:
+            raise argparse.ArgumentTypeError("Empty string not allowed in filter")
+        filter_dict = {
+            "type": "custom",
+            "source": filters[0],
+            "target": filters[1],
+        }
+    filter_config = [
+        filter_dict,
+    ]
     return filter_config
 
 
