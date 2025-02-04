@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import re
 import time
 
 
@@ -22,3 +23,24 @@ def timed_call(log_txt, fn, *args, **kwargs):
     elapsed = time.time() - t0
     logging.debug(f"{log_txt} elapsed: {round(elapsed, 2)}s")
     return result
+
+
+def split_not_in_quotes(
+    to_split: str, sep: str = " ", exclude_empty_tokens: bool = False
+) -> list:
+    """Split a string by a separator but only when the separator is not inside quotes.
+    re pattern taken from this comment:
+        https://stackoverflow.com/a/2787979/10979853
+    The commenter's words should the link ever go stale:
+        Each time it finds a semicolon, the lookahead scans the entire remaining string,
+        making sure there's an even number of single-quotes and an even number of double-quotes.
+        (Single-quotes inside double-quoted fields, or vice-versa, are ignored.) If the
+        lookahead succeeds, the semicolon is a delimiter.
+    The pattern doesn't cope with whitespace as sep, back to back spaces are multiple seps, therefore
+    we have exclude_empty_tokens parameter.
+    """
+    pattern = r"""%(sep)s(?=(?:[^'"]|'[^']*'|"[^"]*")*$)""" % {"sep": sep}
+    if exclude_empty_tokens:
+        return [t for t in re.split(pattern, to_split) if t]
+    else:
+        return re.split(pattern, to_split)

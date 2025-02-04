@@ -846,7 +846,19 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 , col_ts_low    timestamp(0)
 , col_ts_epoch  timestamp(0)
 , col_ts_high   timestamp(0));
+COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table used to test potentially difficult Timestamps.';
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_strings;
+CREATE TABLE pso_data_validator.dvt_tricky_strings (
+  id           integer NOT NULL PRIMARY KEY
+, col_string   varchar(20)
+, col_comment  varchar(40));
+COMMENT ON TABLE pso_data_validator.dvt_tricky_strings IS 'Integration test table used to test potentially difficult Strings.';
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES
+(1,E'str\nstr','Contains: new line'), (2,E'str\n','Trailing: new line'),
+(3,E'str\rstr','Contains: carriage return'), (4,E'str\r','Trailing: carriage return'),
+(5,E'str\tstr','Contains: tab'), (6,E'str\t','Trailing: tab');
 

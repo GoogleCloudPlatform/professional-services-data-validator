@@ -655,7 +655,18 @@ CREATE TABLE `pso_data_validator`.`dvt_tricky_dates` (
 , col_dt_high   DATE
 , col_ts_low    DATETIME
 , col_ts_epoch  DATETIME
-, col_ts_high   DATETIME);
+, col_ts_high   DATETIME
+) OPTIONS (description='Integration test table used to test potentially difficult Timestamps.');
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59');
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_strings` (
+  id           INT64
+, col_string   STRING
+, col_comment  STRING
+) OPTIONS (description='Integration test table used to test potentially difficult Strings.');
+INSERT INTO `pso_data_validator`.`dvt_tricky_strings` VALUES
+(1,'str\nstr','Contains: new line'), (2,'str\n','Trailing: new line'),
+(3,'str\rstr','Contains: carriage return'), (4,'str\r','Trailing: carriage return'),
+(5,'str\tstr','Contains: tab'), (6,'str\t','Trailing: tab');
