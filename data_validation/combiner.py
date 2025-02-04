@@ -91,7 +91,7 @@ def generate_report(
     )
     target_df = client.execute(target_pivot)
 
-    # TODO(issue1277) - think on how diff_df can be used by the result handlers
+    # TODO(issue1277) - think on how these DFs can be used by the result handlers
     con = ibis.pandas.connect(
         {"source": source_df, "differences": differences_df, "target": target_df}
     )
