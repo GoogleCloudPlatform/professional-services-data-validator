@@ -50,6 +50,15 @@ dependencies = [
 extras_require = {
     "apache-airflow": "1.10.11",
     "pyspark": "3.0.0",
+    "develop": [
+        "black==22.3.0",
+        "flake8",
+        "freezegun",
+        "pyfakefs==4.6.2",
+        "pytest",
+        "pytest-cov",
+        "pytest-timeout",
+    ],
 }
 
 packages = [
