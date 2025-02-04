@@ -20,14 +20,14 @@ from data_validation import clients, state_manager
 def run_raw_query_against_connection(args) -> list:
     """Return results of raw query for ad hoc usage."""
     mgr = state_manager.StateManager()
-    client = clients.get_data_client(mgr.get_connection_config(args.conn))
-    cursor = client.raw_sql(args.query)
-    res = cursor.fetchall()
-    try:
-        cursor.close()
-    except Exception:
-        pass
-    return res
+    with clients.get_data_client_ctx(mgr.get_connection_config(args.conn)) as client:
+        cursor = client.raw_sql(args.query)
+        res = cursor.fetchall()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        return res
 
 
 def print_raw_query_output(query_output: list):

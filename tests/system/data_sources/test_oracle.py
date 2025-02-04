@@ -22,6 +22,7 @@ from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     column_validation_test,
+    column_validation_test_args,
     column_validation_test_config_managers,
     find_tables_test,
     id_type_test_assertions,
@@ -335,6 +336,45 @@ def test_column_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_large_decimals_to_bigquery():
+    """Oracle to BigQuery dvt_large_decimals column validation."""
+    cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """Oracle to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    # The columns below have mismatching data and should be in the Dataframe.
+    assert "sum__col_dec_18_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_view_core_types_vw():
     """Oracle to Oracle view dvt_core_types_vw column validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
@@ -347,6 +387,23 @@ def test_column_validation_view_core_types_vw():
         max_cols=cols,
         filters="id>0 AND col_int8>0",
         grouped_columns="col_varchar_30",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    # TODO We can uncomment the sum line below once issue-1391 has been resolved.
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols="*",
+        max_cols="*",
+        # sum_cols="*",
+        wildcard_include_timestamp=True,
     )
 
 
@@ -871,6 +928,43 @@ def test_row_validation_uuid_rr_oracle_to_postgres():
         hash="*",
         use_randow_row=True,
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly.
+
+    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
+    which should be removed in SQL otherwise groups will not match Pandas.
+    """
+    args = column_validation_test_args(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        grouped_columns="col_datetime",
+        filter_status=None,
+    )
+    df = run_test_from_cli_args(args)
+    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
+    assert len(df) == 3
+    # All groups should be a successful validation.
+    assert all(
+        _ == "success" for _ in df["validation_status"]
+    ), "Not all records are marked as success"
 
 
 @mock.patch(

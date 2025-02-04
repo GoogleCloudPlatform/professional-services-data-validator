@@ -211,6 +211,7 @@ CREATE TABLE pso_data_validator.dvt_pg_types
 --,   col_bitv        bit varying(3)
 ,   col_uuid        uuid
 ,   col_oid         oid
+,   col_xml         xml
 );
 COMMENT ON TABLE pso_data_validator.dvt_pg_types IS 'PostgreSQL data types integration test table';
 
@@ -223,7 +224,7 @@ INSERT INTO pso_data_validator.dvt_pg_types
 ,col_date,col_ts,col_tstz,col_time,col_timetz
 ,col_binary,col_bool
 --,col_bit,col_bitv
-,col_uuid,col_oid)
+,col_uuid,col_oid,col_xml)
 VALUES
 (1111,123456789,123456789012345678,12345678901234567890.12345,123.12
 --,123.12
@@ -234,7 +235,8 @@ VALUES
 ,TIME'00:00:01.123456',TIME WITH TIME ZONE'00:00:01.123456 +00:00'
 ,CAST('DVT' AS BYTEA),CAST(0 AS BOOLEAN)
 --,B'101', B'101'
-,gen_random_uuid(),1)
+,gen_random_uuid(),1
+,'<?xml version="1.0"?><Test><Name>Test 1</Name><Command>test1.sh</Command></Test>')
 ,(2222,223456789,223456789012345678,22345678901234567890.12345,223.12
 --,223.12
 ,223456.1,22345678.1
@@ -244,38 +246,55 @@ VALUES
 ,TIME'00:00:02.123456',TIME WITH TIME ZONE'00:00:02.123456 +00:00'
 ,CAST('DVT' AS BYTEA),CAST(0 AS BOOLEAN)
 --,B'011', B'110'
-,gen_random_uuid(),2);
+,gen_random_uuid(),2
+,'<?xml version="1.0"?><Test><Name>Test 2</Name><Command>test2.sh</Command></Test>'
+);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
-(   id              DECIMAL(38) NOT NULL PRIMARY KEY
-,   col_data        VARCHAR(10)
-,   col_dec_18      DECIMAL(18)
-,   col_dec_38      DECIMAL(38)
-,   col_dec_38_9    DECIMAL(38,9)
-,   col_dec_38_30   DECIMAL(38,30)
+(   id                DECIMAL(38) NOT NULL PRIMARY KEY
+,   col_data          VARCHAR(10)
+,   col_dec_18        DECIMAL(18)
+,   col_dec_38        DECIMAL(38)
+,   col_dec_38_9      DECIMAL(38,9)
+,   col_dec_38_30     DECIMAL(38,30)
+-- Columns with mismatched data for intentional fail status.
+,   col_dec_18_fail   DECIMAL(18)
+,   col_dec_18_1_fail DECIMAL(18,1)
 );
 COMMENT ON TABLE pso_data_validator.dvt_large_decimals IS 'Large decimals integration test table';
 
 INSERT INTO pso_data_validator.dvt_large_decimals VALUES
-(123456789012345678901234567890
-,'Row 1'
-,123456789012345678
+(123456789012345678901234567890,'Row 1'
+,987654321012345678
 ,12345678901234567890123456789012345678
 ,12345678901234567890123456789.123456789
-,12345678.123456789012345678901234567890)
-,(223456789012345678901234567890
-,'Row 2'
-,223456789012345678
-,22345678901234567890123456789012345678
-,22345678901234567890123456789.123456789
-,22345678.123456789012345678901234567890)
-,(323456789012345678901234567890
-,'Row 3'
-,323456789012345678
-,32345678901234567890123456789012345678
-,32345678901234567890123456789.123456789
-,32345678.123456789012345678901234567890);
+,12345678.123456789012345678901234567890
+,987654321012345678,12345678901234567.1),
+(223456789012345678901234567890,'Row 2'
+,987654321012345678
+,12345678901234567890123456789012345678
+,12345678901234567890123456789.123456789
+,12345678.123456789012345678901234567890
+,987654321012345678,12345678901234567.1),
+(323456789012345678901234567890,'Row 3'
+,987654321012345678
+,12345678901234567890123456789012345678
+,12345678901234567890123456789.123456789
+,12345678.123456789012345678901234567890
+,987654321012345678,12345678901234567.1),
+(423456789012345678901234567890,'Row 4'
+,987654321012345678
+,12345678901234567890123456789012345678
+,12345678901234567890123456789.123456789
+,12345678.123456789012345678901234567890
+,987654321012345678,12345678901234567.1),
+(523456789012345678901234567890,'Row 5'
+,987654321012345678
+,12345678901234567890123456789012345678
+,12345678901234567890123456789.123456789
+,12345678.123456789012345678901234567890
+,987654321012345678,12345678901234567.1);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_binary;
 CREATE TABLE pso_data_validator.dvt_binary
@@ -769,3 +788,65 @@ COMMENT ON TABLE pso_data_validator.dvt_uuid_id IS 'Integration test table used 
 INSERT INTO pso_data_validator.dvt_uuid_id VALUES
 (uuid('387bdc3b218443b28ec23ac791c5b0f1'),uuid('387bdc3b218443b28ec23ac791c5b0f1'),'A'),
 (uuid('397bdc3b218443b28ec23ac791c5b0f1'),uuid('397bdc3b218443b28ec23ac791c5b0f1'),'B');
+
+DROP TABLE pso_data_validator.dvt_group_by_timestamp;
+CREATE TABLE pso_data_validator.dvt_group_by_timestamp
+(   id           int NOT NULL PRIMARY KEY
+,   group_id     int
+,   col_date     date
+,   col_datetime timestamp(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_group_by_timestamp IS 'Integration test table used to test Timestamp grouping.';
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES
+(1,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 12:00:00'),
+(2,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 13:00:00'),
+(3,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 14:00:00'),
+(4,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 12:00:00'),
+(5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00'),
+(6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_high_epoch_seconds;
+CREATE TABLE pso_data_validator.dvt_high_epoch_seconds
+( id                bigint NOT NULL PRIMARY KEY
+, col_datetime      timestamp(0)
+, col_datetime_fail timestamp(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_high_epoch_seconds IS 'Integration test table used to test high result of --sum of epoch seconds.';
+-- Insert rows to generate a high output from SUM(epochseconds).
+INSERT INTO pso_data_validator.dvt_high_epoch_seconds
+SELECT n
+,      '99999-12-31 23:59:59'::timestamp
+,      '99999-12-31 23:59:59'::timestamp
+FROM   generate_series(1,1000000) AS n;
+-- Insert a single row to ensure SUM value has non-zero digits to the right of the number.
+INSERT INTO pso_data_validator.dvt_high_epoch_seconds
+VALUES (0,'1900-01-01 00:00:59'::timestamp,'1900-01-01 00:00:59'::timestamp);
+
+-- This gives us a result that overflows bigint:
+-- select val,length(val::text) from (select sum(cast(extract(epoch from col_datetime) as bigint)) val from pso_data_validator.dvt_high_epoch_seconds) v;
+--          val         | length
+-- ---------------------+--------
+--  3093527978590011259 |     19
+-- The value above is hardcoded in constant SUM_EPOCH_COL_DATETIME defined on tests/system/data_sources/test_postgres.py so please modify that when changing data.
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_high_epoch_seconds2;
+CREATE TABLE pso_data_validator.dvt_high_epoch_seconds2
+AS SELECT * FROM pso_data_validator.dvt_high_epoch_seconds
+WHERE id > 0;
+-- Ensure record 0 has a mismatch of data in col_datetime_fail
+INSERT INTO pso_data_validator.dvt_high_epoch_seconds2
+VALUES (0,'1900-01-01 00:00:59'::timestamp,'1900-01-01 00:00:57'::timestamp);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_dates;
+CREATE TABLE pso_data_validator.dvt_tricky_dates (
+  id            integer NOT NULL PRIMARY KEY
+, col_dt_low    date
+, col_dt_epoch  date
+, col_dt_high   date
+, col_ts_low    timestamp(0)
+, col_ts_epoch  timestamp(0)
+, col_ts_high   timestamp(0));
+INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+

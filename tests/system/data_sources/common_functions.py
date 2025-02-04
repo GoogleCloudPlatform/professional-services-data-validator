@@ -272,14 +272,16 @@ def schema_validation_test(
 
 
 def column_validation_test_args(
-    tables="pso_data_validator.dvt_core_types",
-    tc="bq-conn",
-    count_cols=None,
-    sum_cols=None,
-    min_cols=None,
-    max_cols=None,
-    filters=None,
-    grouped_columns=None,
+    tables: str = "pso_data_validator.dvt_core_types",
+    tc: str = "bq-conn",
+    count_cols: str = None,
+    sum_cols: str = None,
+    min_cols: str = None,
+    max_cols: str = None,
+    filters: str = None,
+    grouped_columns: str = None,
+    filter_status: str = "fail",
+    wildcard_include_timestamp: bool = False,
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -288,13 +290,14 @@ def column_validation_test_args(
         "-sc=mock-conn",
         f"-tc={tc}",
         f"-tbls={tables}",
-        "--filter-status=fail",
+        f"--filter-status={filter_status}" if filter_status else None,
         f"--count={count_cols}" if count_cols else None,
         f"--sum={sum_cols}" if sum_cols else None,
         f"--min={min_cols}" if min_cols else None,
         f"--max={max_cols}" if max_cols else None,
         f"--filters={filters}" if filters else None,
         f"--grouped-columns={grouped_columns}" if grouped_columns else None,
+        "--wildcard-include-timestamp" if wildcard_include_timestamp else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
@@ -309,10 +312,13 @@ def column_validation_test(
     max_cols=None,
     filters=None,
     grouped_columns=None,
+    wildcard_include_timestamp: bool = False,
+    filter_status: str = "fail",
+    expected_rows=0,
 ):
     """Generic column validation test.
 
-    All tests expect an empty dataframe as the assertion.
+    Standard test expects an empty dataframe as the assertion but has override.
     """
     args = column_validation_test_args(
         tables=tables,
@@ -323,10 +329,12 @@ def column_validation_test(
         max_cols=max_cols,
         filters=filters,
         grouped_columns=grouped_columns,
+        wildcard_include_timestamp=wildcard_include_timestamp,
+        filter_status=filter_status,
     )
     df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    assert len(df) == expected_rows
+    return df
 
 
 def column_validation_test_config_managers(
@@ -359,11 +367,18 @@ def row_validation_test(
     filters="1=1",
     primary_keys="id",
     comp_fields=None,
+    concat=None,
     use_randow_row=False,
     random_row_batch_size=None,
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
+    if comp_fields:
+        col_option = f"--comparison-fields={comp_fields}"
+    elif concat:
+        col_option = f"--concat={concat}"
+    else:
+        col_option = f"--hash={hash}"
     cli_arg_list = [
         "validate",
         "row",
@@ -372,8 +387,8 @@ def row_validation_test(
         f"-tbls={tables}",
         f"--filters={filters}",
         f"--primary-keys={primary_keys}" if primary_keys else None,
+        col_option,
         "--filter-status=fail",
-        f"--comparison-fields={comp_fields}" if comp_fields else f"--hash={hash}",
         "--use-random-row" if use_randow_row else None,
         (
             f"--random-row-batch-size={random_row_batch_size}"

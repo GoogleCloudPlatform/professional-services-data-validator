@@ -29,18 +29,19 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     binary_key_assertions,
+    column_validation_test,
+    column_validation_test_args,
+    custom_query_validation_test,
     find_tables_test,
     id_type_test_assertions,
     null_not_null_assertions,
-    raw_query_test,
-    row_validation_many_columns_test,
-    run_test_from_cli_args,
     partition_table_test,
     partition_query_test,
+    raw_query_test,
     row_validation_test,
+    row_validation_many_columns_test,
+    run_test_from_cli_args,
     schema_validation_test,
-    column_validation_test,
-    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -85,6 +86,8 @@ PG2PG_COLUMNS = [
     "col_uuid",
     "col_oid",
 ]
+
+SUM_EPOCH_COL_DATETIME = "3093527978590011259"
 
 
 @pytest.fixture
@@ -685,6 +688,45 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_large_decimals_to_bigquery():
+    """PostgreSQL to BigQuery dvt_large_decimals column validation."""
+    # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
+    cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """PostgreSQL to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    assert "sum__col_dec_18_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_view_core_types_vw():
     """PostgreSQL to PostgreSQL view dvt_core_types_vw column validation"""
     # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
@@ -925,11 +967,92 @@ def test_column_validation_identifiers():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly"""
+    args = column_validation_test_args(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        grouped_columns="col_datetime",
+        filter_status=None,
+    )
+    df = run_test_from_cli_args(args)
+    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
+    assert len(df) == 3
+    # All groups should be a successful validation.
+    assert all(
+        _ == "success" for _ in df["validation_status"]
+    ), "Not all records are marked as success"
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_high_epoch_seconds():
+    """Test column validation on a table with an extreme result from sum(epoch seconds)."""
+    df = column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_high_epoch_seconds=pso_data_validator.dvt_high_epoch_seconds2",
+        sum_cols="col_datetime,col_datetime_fail",
+        filter_status=None,
+        # We expect two rows:
+        #   success for simple count
+        #   success for col_datetime
+        #   failure for col_datetime_fail (which has an intentional data error)
+        expected_rows=3,
+    )
+    status_dict = dict(zip(df["validation_name"], df["validation_status"]))
+    value_dict = dict(zip(df["validation_name"], df["source_agg_value"]))
+    assert (
+        status_dict["sum__epoch_seconds__col_datetime"]
+        == consts.VALIDATION_STATUS_SUCCESS
+    ), 'sum__epoch_seconds__col_datetime should have status "success"'
+    assert (
+        status_dict["sum__epoch_seconds__col_datetime_fail"]
+        == consts.VALIDATION_STATUS_FAIL
+    ), 'sum__epoch_seconds__col_datetime_fail should have status "fail"'
+    assert (
+        str(value_dict["sum__epoch_seconds__col_datetime"]) == SUM_EPOCH_COL_DATETIME
+    ), f"sum__epoch_seconds__col_datetime != SUM_EPOCH_COL_DATETIME ({SUM_EPOCH_COL_DATETIME})"
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols="*",
+        max_cols="*",
+        sum_cols="*",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_identifiers():
     """Test row validation on a table with special characters in table and column names."""
     row_validation_test(
         tables="pso_data_validator.dvt-identifier$_#",
         tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
         hash="*",
     )
 

@@ -20,7 +20,7 @@ from ibis.backends.base.sql.alchemy import (
 from ibis.backends.base.sql.alchemy.registry import get_col
 
 
-def mssql_table_column(t, op):
+def sa_table_column(t, op):
     ctx = t.context
     table = op.table
 
@@ -47,3 +47,52 @@ def mssql_table_column(t, op):
         return sa.select(subq.c[out_expr.name])
 
     return out_expr
+
+
+def strftime(translator, op):
+    """Use MS SQL CONVERT() in place of STRFTIME().
+
+    This is pretty restrictive due to the limited styles offered by SQL Server,
+    we've just covered off the generic formats used when casting date based columns
+    to string in order to complete row data comparison."""
+    arg, pattern = map(translator.translate, op.args)
+    supported_convert_styles = {
+        "%Y-%m-%d": 23,  # ISO8601
+        "%Y-%m-%d %H:%M:%S": 20,  # ODBC canonical
+        "%Y-%m-%d %H:%M:%S.%f": 21,  # ODBC canonical (with milliseconds)
+    }
+    try:
+        convert_style = supported_convert_styles[pattern.value]
+    except KeyError:
+        raise NotImplementedError(
+            f"strftime format {pattern.value} not supported for SQL Server."
+        )
+    arg_type = op.args[0].output_dtype
+    if (
+        hasattr(arg_type, "timezone") and arg_type.timezone
+    ):  # our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
+        arg = sa.cast(arg, sa.types.DateTime)
+    return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
+
+
+def sa_epoch_seconds(translator, op):
+    """Override for standard ExtractEpochSeconds but catering for larger second values."""
+    arg = translator.translate(op.arg)
+    return sa.cast(
+        sa.func.datediff_big(sa.text("s"), "1970-01-01 00:00:00", arg), sa.BIGINT
+    )
+
+
+def sa_format_binary_length(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.datalength(arg)
+
+
+def sa_format_hashbytes(translator, op):
+    arg = translator.translate(op.arg)
+    cast_arg = sa.func.convert(sa.sql.literal_column("VARCHAR(MAX)"), arg)
+    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), cast_arg)
+    hash_to_string = sa.func.convert(
+        sa.sql.literal_column("CHAR(64)"), hash_func, sa.sql.literal_column("2")
+    )
+    return sa.func.lower(hash_to_string)

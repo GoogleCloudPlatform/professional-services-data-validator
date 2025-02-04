@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from contextlib import contextmanager
 import copy
 import logging
 from typing import TYPE_CHECKING
@@ -315,6 +316,24 @@ def get_data_client(connection_config):
         raise exceptions.DataClientConnectionFailure(msg)
 
     return data_client
+
+
+@contextmanager
+def get_data_client_ctx(*args, **kwargs):
+    """Provide get_data_client() via a context manager."""
+    client = None
+    try:
+        client = get_data_client(*args, **kwargs)
+        yield client
+    finally:
+        # TODO When we upgrade Ibis beyond 5.x this try/except may become redundant.
+        # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1376
+        if hasattr(client, "close"):
+            try:
+                client.close()
+            except Exception as exc:
+                # No need to reraise, we can silently fail if exiting throws up an issue.
+                logging.warning("Exception closing connection: %s", str(exc))
 
 
 def get_max_column_length(client):
