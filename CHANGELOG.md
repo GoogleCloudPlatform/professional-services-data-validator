@@ -2,6 +2,30 @@
 
 ## Untagged
 
+## [7.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.1.0...v7.2.0) (2025-02-04)
+
+
+### Features
+
+* add connections cli commands ([#1398](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1398)) ([949d6c5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/949d6c57d9c6df376be7c539aa209b7c16252804))
+* Add margin to Decimal precision when deciding to SUM output to string ([#1395](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1395)) ([f231b3d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f231b3d1ea174a3c33dcc493be2950b36dcfa759))
+* Cater for ExtractEpochSeconds overflowing integer ([#1397](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1397)) ([c175146](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c1751462effee9d7e5bf8a8a5098770ce96cb1f3))
+
+
+### Bug Fixes
+
+* Cast epoch_seconds to int64 in combiner ([#1407](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1407)) ([e76a123](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e76a123f53275285fd004fcefc11efad0bd64e05))
+* Cast sum of epoch_seconds to string to avoid int64 overflow ([#1412](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1412)) ([7814906](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/781490658875f6dab128f11c1a1af325561788fc))
+* Change get_filters to not hang due to long filter strings ([#1418](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1418)) ([a752cf5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a752cf5ac0b0c8bf330b0470d3c818b4942b1232))
+* Row validations fail for values with trailing newline ([#1415](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1415)) ([a169f63](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a169f635855f736b291a9163429d4c10743c6e12))
+* Workaround for dates &lt; 1970 on Windows ([#1392](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1392)) ([4ff5d3a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4ff5d3a359f824d91e2c26dc1f88a22cdeeb9103))
+
+
+### Documentation
+
+* Add sample of horizontally scaled Oracle BLOB validation ([#1404](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1404)) ([de6dad0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/de6dad02407c093c107a0bcedee7b6900e91e86e))
+* Add Snowflake key-pair example ([#1402](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1402)) ([94f8e03](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/94f8e0324d11e51a6483cb6d446acd939340e664))
+
 ## [7.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.0.0...v7.1.0) (2025-01-08)
 
 
