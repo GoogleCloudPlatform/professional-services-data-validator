@@ -695,3 +695,16 @@ INSERT INTO udf.dvt_tricky_dates VALUES
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00');
 -- col_ts_high value above forced to UTC based on article below, but we still get wrong answer from the test:
 --   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
+
+DROP TABLE udf.dvt_tricky_strings;
+CREATE TABLE udf.dvt_tricky_strings (
+  id           INTEGER NOT NULL PRIMARY KEY
+, col_string   VARCHAR(20)
+, col_comment  VARCHAR(40));
+COMMENT ON TABLE udf.dvt_tricky_strings IS 'Integration test table used to test potentially difficult Strings.';
+INSERT INTO udf.dvt_tricky_strings VALUES (1,'str'||CHR(10)||'str','Contains: new line');
+INSERT INTO udf.dvt_tricky_strings VALUES (2,'str'||CHR(10),'Trailing: new line');
+INSERT INTO udf.dvt_tricky_strings VALUES (3,'str'||CHR(13)||'str','Contains: carriage return');
+INSERT INTO udf.dvt_tricky_strings VALUES (4,'str'||CHR(13),'Trailing: carriage return');
+INSERT INTO udf.dvt_tricky_strings VALUES (5,'str'||CHR(9)||'str','Contains: tab');
+INSERT INTO udf.dvt_tricky_strings VALUES (6,'str'||CHR(9),'Trailing: tab');

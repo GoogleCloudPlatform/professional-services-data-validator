@@ -807,6 +807,19 @@ def test_row_validation_tricky_dates_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_tricky_strings_to_bigquery():
+    """Test with string values containing special characters."""
+    row_validation_test(
+        tables="udf.dvt_tricky_strings=pso_data_validator.dvt_tricky_strings",
+        tc="bq-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_hash_bool_to_bigquery():
     """Test row validation on a table with bool data types in the target, Teradata does not have a bool type."""
     row_validation_test(

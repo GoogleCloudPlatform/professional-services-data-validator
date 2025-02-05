@@ -588,3 +588,15 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 (1,'1000-01-01','1970-01-01','9999-12-31'
 ,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_strings;
+CREATE TABLE pso_data_validator.dvt_tricky_strings (
+  id           integer NOT NULL PRIMARY KEY
+, col_string   varchar(20)
+, col_comment  varchar(40));
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (1,'str'+CHAR(10)+'str','Contains: new line');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (2,'str'+CHAR(10),'Trailing: new line');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (3,'str'+CHAR(13)+'str','Contains: carriage return');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (4,'str'+CHAR(13),'Trailing: carriage return');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (5,'str'+CHAR(9)+'str','Contains: tab');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (6,'str'+CHAR(9),'Trailing: tab');

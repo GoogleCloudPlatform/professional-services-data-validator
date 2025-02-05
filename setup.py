@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "7.1.0"
+version = "7.2.0"
 release_status = "Development Status :: 4 - Beta"
 
 with open("README.md", "r") as fh:
@@ -50,6 +50,15 @@ dependencies = [
 extras_require = {
     "apache-airflow": "1.10.11",
     "pyspark": "3.0.0",
+    "develop": [
+        "black==22.3.0",
+        "flake8",
+        "freezegun",
+        "pyfakefs==4.6.2",
+        "pytest",
+        "pytest-cov",
+        "pytest-timeout",
+    ],
 }
 
 packages = [
