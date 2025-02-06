@@ -124,9 +124,9 @@ def generate_report(
             first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
         )
 
-    get_summary(source_df, target_df, joined.to_pandas())
+    # TODO(issue1277): maybe return by the method in a tuple -> (result_df, summary_dict)
+    get_summary(joined.to_pandas())
 
-    # TODO(issue1277): maybe add summary to be returned in a tuple -> (result_df, summary_dict)
     return result_df
 
 
@@ -427,14 +427,12 @@ def _add_metadata(joined: "relations.Table", run_metadata: "RunMetadata"):
     return joined
 
 
-def get_summary(source_df: "DataFrame", target_df: "DataFrame", joined_df: "DataFrame"):
+def get_summary(joined_df: "DataFrame"):
     # breakpoint() # TODO: remove later
     success_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_SUCCESS
     fail_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_FAIL
     print(
         {
-            "source_table_total_rows": source_df.shape[0],
-            "target_table_total_rows": target_df.shape[0],
             "total_rows_validated": joined_df.shape[0],
             "total_rows_success_validation_status": len(joined_df[success_condition]),
             "total_rows_fail_validation_status": len(joined_df[fail_condition]),
