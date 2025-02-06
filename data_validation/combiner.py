@@ -124,7 +124,7 @@ def generate_report(
         )
 
     # TODO(issue1277): maybe return in a tuple -> (result_df, summary_dict)
-    get_summary(joined.to_pandas())
+    get_summary(joined.to_pandas(), source_df, target_df)
 
     return result_df
 
@@ -426,14 +426,43 @@ def _add_metadata(joined: "relations.Table", run_metadata: "RunMetadata"):
     return joined
 
 
-def get_summary(joined_df: "DataFrame"):
+def get_summary(joined_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"):
     # breakpoint() # TODO: remove later
-    success_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_SUCCESS
-    fail_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_FAIL
-    print(
-        {
-            "total_rows_validated": joined_df.shape[0],
-            "total_rows_success_validation_status": len(joined_df[success_condition]),
-            "total_rows_fail_validation_status": len(joined_df[fail_condition]),
-        }
-    )
+    if joined_df.loc[0, "validation_type"] == consts.ROW_VALIDATION:
+
+        success_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_SUCCESS
+        fail_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_FAIL
+        rows_present_in_source_not_in_target = (
+            joined_df["source_agg_value"].notnull()
+            & joined_df["target_agg_value"].isnull()
+        )
+        rows_present_in_target_not_in_source = (
+            joined_df["source_agg_value"].isnull()
+            & joined_df["target_agg_value"].notnull()
+        )
+        rows_present_in_both_source_and_target = (
+            joined_df["source_agg_value"].notnull()
+            & joined_df["target_agg_value"].notnull()
+        )
+
+        logging.info(
+            {
+                "total_source_rows": source_df.shape[0],
+                # PS: this and above aren't the real raw totals from the tables, only the number of rows that were selected/read from thems
+                "total_target_rows": target_df.shape[0],
+                "total_rows_validated": joined_df.shape[0],
+                "total_rows_success_validation_status": len(
+                    joined_df[success_condition]
+                ),
+                "total_rows_fail_validation_status": len(joined_df[fail_condition]),
+                "failed_rows_present_in_source_not_in_target": len(
+                    joined_df[fail_condition & rows_present_in_source_not_in_target]
+                ),
+                "failed_rows_present_in_target_not_in_source": len(
+                    joined_df[fail_condition & rows_present_in_target_not_in_source]
+                ),
+                "failed_rows_present_in_both_source_and_target": len(
+                    joined_df[fail_condition & rows_present_in_both_source_and_target]
+                ),
+            }
+        )
