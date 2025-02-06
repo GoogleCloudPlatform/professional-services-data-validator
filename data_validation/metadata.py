@@ -69,17 +69,3 @@ class RunMetadata(object):
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
     end_time: typing.Optional[datetime.datetime] = None
-
-
-@dataclasses.dataclass
-class RowValidationSummary(object):
-    source_table_name: str
-    source_table_total_rows: int
-    source_table_rows_successfully_validated: int
-    source_table_rows_present_not_successful: int
-    source_table_rows_not_present_in_other: int
-    target_table_name: str
-    target_table_total_rows: int
-    target_table_rows_successfully_validated: int
-    target_table_rows_present_not_successful: int
-    target_table_rows_not_present_in_other: int

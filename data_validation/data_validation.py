@@ -119,8 +119,6 @@ class DataValidation(object):
                 self.validation_builder, process_in_memory=True
             )
 
-        # TODO(issue1277): possible place to calculate/call summary
-
         # Call Result Handler to Manage Results
         return self.result_handler.execute(result_df)
 

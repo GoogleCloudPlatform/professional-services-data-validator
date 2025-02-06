@@ -97,7 +97,6 @@ def generate_report(
     )
     target_df = client.execute(target_pivot)
 
-    # TODO(issue1277) - think on how these DFs can be used by the result handlers
     con = ibis.pandas.connect(
         {"source": source_df, "differences": differences_df, "target": target_df}
     )
@@ -124,7 +123,7 @@ def generate_report(
             first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
         )
 
-    # TODO(issue1277): maybe return by the method in a tuple -> (result_df, summary_dict)
+    # TODO(issue1277): maybe return in a tuple -> (result_df, summary_dict)
     get_summary(joined.to_pandas())
 
     return result_df
