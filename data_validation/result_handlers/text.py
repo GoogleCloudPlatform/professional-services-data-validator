@@ -22,7 +22,6 @@ from the validation run.
 Output validation report to text-based log
 """
 from typing import TYPE_CHECKING
-from pprint import pprint
 
 from data_validation import consts
 
@@ -52,35 +51,6 @@ def get_formatted(
         )
 
 
-# TODO(issue1277): new method to calculate the summary stats
-def get_summary(result_df: "DataFrame") -> str:
-    """Expose summary calculation logic so it can be used in BigQuery handler."""
-
-    #     ['validation_name', 'validation_type', 'aggregation_type',\n"
-    #  "       'source_table_name', 'source_column_name', 'source_agg_value',\n"
-    #  "       'target_table_name', 'target_column_name', 'target_agg_value',\n"
-    #  "       'group_by_columns', 'primary_keys', 'num_random_rows', 'difference',\n"
-    #  "       'pct_difference', 'pct_threshold', 'validation_status', 'run_id',\n"
-    #  "       'labels', 'start_time', 'end_time']
-
-    pprint(f"COLS: {result_df.columns}")
-    pprint(
-        f"DATA: {result_df[['primary_keys', 'num_random_rows', 'difference', 'pct_difference', 'pct_threshold']]}"
-    )
-
-    # "source_table_name": source_df.table_name,
-    # "source_table_total_rows": source_df.shape[0],
-    # "source_table_rows_successfully_validated": 111,
-    # "source_table_rows_present_not_successful": 222,
-    # "source_table_rows_not_present_in_other": 333,
-    # "target_table_name": target_df.table_name,
-    # "target_table_total_rows": target_df.shape[0],
-    # "target_table_rows_successfully_validated": 444,
-    # "target_table_rows_present_not_successful": 555,  # dont know yet how to get the totals
-    # "target_table_rows_not_present_in_other": 666,
-    pass
-
-
 class TextResultHandler(object):
     def __init__(
         self, format, status_list=None, cols_filter_list=consts.COLUMN_FILTER_LIST
@@ -101,8 +71,6 @@ class TextResultHandler(object):
             result_df = filter_validation_status(self.status_list, result_df)
 
         print(self._get_formatted(result_df))
-        # TODO(issue1277): remove later
-        get_summary(result_df)
 
         if self.format not in consts.FORMAT_TYPES:
             error_msg = (

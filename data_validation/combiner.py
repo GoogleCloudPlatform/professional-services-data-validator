@@ -27,8 +27,14 @@ import ibis.expr.datatypes as dt
 
 from typing import TYPE_CHECKING
 from data_validation import consts
+from data_validation.consts import (
+    VALIDATION_STATUS,
+    VALIDATION_STATUS_FAIL,
+    VALIDATION_STATUS_SUCCESS,
+)
 
 if TYPE_CHECKING:
+    from pandas import DataFrame
     import ibis.expr.types.relations as relations
     from data_validation.metadata import RunMetadata
 
@@ -118,6 +124,9 @@ def generate_report(
             first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
         )
 
+    get_summary(source_df, target_df, joined.to_pandas())
+
+    # TODO(issue1277): maybe add summary to be returned in a tuple -> (result_df, summary_dict)
     return result_df
 
 
@@ -221,7 +230,7 @@ def _calculate_difference(
 
 
 def _calculate_differences(
-    source, target, join_on_fields, validations, is_value_comparison
+    source, target, join_on_fields: tuple, validations, is_value_comparison
 ):
     """Calculate differences between source and target fields.
 
@@ -273,7 +282,7 @@ def _calculate_differences(
     return differences_pivot
 
 
-def _pivot_result(result, join_on_fields, validations, result_type):
+def _pivot_result(result, join_on_fields: tuple, validations, result_type):
     all_fields = frozenset(result.schema().names)
     validation_fields = (
         all_fields - frozenset(join_on_fields)
@@ -339,7 +348,12 @@ def _as_json(expr):
     )
 
 
-def _join_pivots(source, target, differences, join_on_fields):
+def _join_pivots(
+    source: "DataFrame",
+    target: "DataFrame",
+    differences: "DataFrame",
+    join_on_fields: tuple,
+):
     if join_on_fields:
         join_values = []
         for field in join_on_fields:
@@ -411,3 +425,18 @@ def _add_metadata(joined: "relations.Table", run_metadata: "RunMetadata"):
     ]
 
     return joined
+
+
+def get_summary(source_df: "DataFrame", target_df: "DataFrame", joined_df: "DataFrame"):
+    # breakpoint() # TODO: remove later
+    success_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_SUCCESS
+    fail_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_FAIL
+    print(
+        {
+            "source_table_total_rows": source_df.shape[0],
+            "target_table_total_rows": target_df.shape[0],
+            "total_rows_validated": joined_df.shape[0],
+            "total_rows_success_validation_status": len(joined_df[success_condition]),
+            "total_rows_fail_validation_status": len(joined_df[fail_condition]),
+        }
+    )
