@@ -34,8 +34,8 @@ from data_validation.consts import (
 
 if TYPE_CHECKING:
     from pandas import DataFrame
-    import ibis.expr.types.relations as relations
-    from data_validation.metadata import RunMetadata
+    import ibis.expr.types.relations.table as IbisTable
+    from data_validation.metadata import RunMetadata, ValidationMetadata
 
 
 DEFAULT_SOURCE = "source"
@@ -45,8 +45,8 @@ DEFAULT_TARGET = "target"
 def generate_report(
     client,
     run_metadata: "RunMetadata",
-    source,
-    target,
+    source: "IbisTable",
+    target: "IbisTable",
     join_on_fields=(),
     is_value_comparison=False,
     verbose=False,
@@ -128,11 +128,11 @@ def generate_report(
 
 
 def _calculate_difference(
-    field_differences,
+    field_differences: "IbisTable",
     datatype: dt.DataType,
     target_type: dt.DataType,
-    validation,
-    is_value_comparison,
+    validation: "ValidationMetadata",
+    is_value_comparison: bool,
 ):
     pct_threshold = ibis.literal(validation.threshold)
     if datatype.is_timestamp() or datatype.is_date():
@@ -227,7 +227,11 @@ def _calculate_difference(
 
 
 def _calculate_differences(
-    source, target, join_on_fields: tuple, validations, is_value_comparison
+    source: "IbisTable",
+    target: "IbisTable",
+    join_on_fields: tuple,
+    validations: "dict[ValidationMetadata]",
+    is_value_comparison: bool,
 ):
     """Calculate differences between source and target fields.
 
@@ -279,7 +283,12 @@ def _calculate_differences(
     return differences_pivot
 
 
-def _pivot_result(result, join_on_fields: tuple, validations, result_type):
+def _pivot_result(
+    result: "IbisTable",
+    join_on_fields: tuple,
+    validations: "dict[ValidationMetadata]",
+    result_type: str,
+):
     all_fields = frozenset(result.schema().names)
     validation_fields = (
         all_fields - frozenset(join_on_fields)
@@ -346,9 +355,9 @@ def _as_json(expr):
 
 
 def _join_pivots(
-    source: "DataFrame",
-    target: "DataFrame",
-    differences: "DataFrame",
+    source: "IbisTable",
+    target: "IbisTable",
+    differences: "IbisTable",
     join_on_fields: tuple,
 ):
     if join_on_fields:
@@ -409,7 +418,7 @@ def _join_pivots(
     return joined
 
 
-def _add_metadata(joined: "relations.Table", run_metadata: "RunMetadata"):
+def _add_metadata(joined: "IbisTable", run_metadata: "RunMetadata"):
     # TODO: Add source and target queries to metadata
     run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
