@@ -23,6 +23,6 @@ For example, if your pull requests resolves issues 1000 and 2000 write:
 - [ ] I have followed the [`CONTRIBUTING` Guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md).
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have successfully run the E2E tests, and have included the outcomes in the PR comments
-- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] I have added unit and integration tests relevant to my change as needed
 - [ ] New and existing unit tests pass locally with my changes (suggestion: use the `tests/local_check.sh` script)
 - [ ] I have updated any relevant documentation to reflect my changes
