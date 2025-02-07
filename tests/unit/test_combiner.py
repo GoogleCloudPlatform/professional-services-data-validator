@@ -17,9 +17,15 @@ import ibis.backends.pandas
 import pandas
 import pandas.testing
 import pytest
+import logging
 
 from freezegun import freeze_time
 from data_validation import metadata, consts
+from data_validation.consts import (
+    VALIDATION_STATUS,
+    VALIDATION_STATUS_FAIL,
+    VALIDATION_STATUS_SUCCESS,
+)
 
 _NAN = float("nan")
 
@@ -959,3 +965,41 @@ def test_generate_report_with_nan_agg_value(
         .reindex(sorted(expected.columns), axis=1)
     )
     pandas.testing.assert_frame_equal(report, expected)
+
+
+@pytest.mark.parametrize(
+    ("joined_df", "source_df", "target_df", "expected"),
+    (
+        (
+            pandas.DataFrame({
+                "validation_type": [consts.ROW_VALIDATION] * 4,
+                VALIDATION_STATUS: [VALIDATION_STATUS_SUCCESS, VALIDATION_STATUS_SUCCESS, VALIDATION_STATUS_FAIL, VALIDATION_STATUS_FAIL],
+                "group_by_columns": [{"id": "1"}, {"id": "2"}, {"id": "3"}, None],
+                "source_agg_value": [10, 20, 30, None],
+                "target_agg_value": [10, 20, 60, None],
+            }),
+            pandas.DataFrame({"id":[1,2,3,4], "value":[10,20,30,40]}),
+            pandas.DataFrame({"id":[1,2,3,8], "value":[10,20,60,80]}),
+            {
+                "total_source_rows": 4,
+                "total_target_rows": 4,
+                "total_rows_validated": 4,
+                "total_rows_success_validation_status": 2,
+                "total_rows_fail_validation_status": 2,
+                "failed_rows_present_in_source_not_in_target": 0,
+                "failed_rows_present_in_target_not_in_source": 0,
+                # id 3 present in both source and target but value is different
+                "failed_rows_present_in_both_source_and_target": 1, 
+            },
+        ),
+    ),
+)
+def test_get_summary_with_non_zero_values_for_all_stats(
+    module_under_test, caplog, joined_df, source_df, target_df, expected
+):
+    caplog.set_level(logging.INFO)
+    module_under_test.get_summary(joined_df, source_df, target_df)
+
+    logged = caplog.records[0]  # assuming only one log message
+    assert logged.levelname == "INFO"
+    assert logged.message == str(expected)
