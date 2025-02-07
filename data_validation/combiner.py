@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING
 from data_validation import consts
 from data_validation.consts import (
     VALIDATION_STATUS,
-    VALIDATION_STATUS_FAIL,
     VALIDATION_STATUS_SUCCESS,
 )
 
@@ -123,7 +122,6 @@ def generate_report(
             first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
         )
 
-    # TODO(issue1277): maybe return in a tuple -> (result_df, summary_dict)
     get_summary(joined.to_pandas(), source_df, target_df)
 
     return result_df
@@ -427,11 +425,12 @@ def _add_metadata(joined: "relations.Table", run_metadata: "RunMetadata"):
 
 
 def get_summary(joined_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"):
-    # breakpoint() # TODO: remove later
+    """Logs a summary report/stats of row validation results."""
     if joined_df.loc[0, "validation_type"] == consts.ROW_VALIDATION:
 
         success_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_SUCCESS
-        fail_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_FAIL
+        fail_condition = joined_df[VALIDATION_STATUS] != VALIDATION_STATUS_SUCCESS
+
         rows_present_in_source_not_in_target = (
             joined_df["source_agg_value"].notnull()
             & joined_df["target_agg_value"].isnull()
@@ -448,7 +447,6 @@ def get_summary(joined_df: "DataFrame", source_df: "DataFrame", target_df: "Data
         logging.info(
             {
                 "total_source_rows": source_df.shape[0],
-                # PS: this and above aren't the real raw totals from the tables, only the number of rows that were selected/read from thems
                 "total_target_rows": target_df.shape[0],
                 "total_rows_validated": joined_df.shape[0],
                 "total_rows_success_validation_status": len(

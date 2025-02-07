@@ -971,25 +971,37 @@ def test_generate_report_with_nan_agg_value(
     ("joined_df", "source_df", "target_df", "expected"),
     (
         (
-            pandas.DataFrame({
-                "validation_type": [consts.ROW_VALIDATION] * 4,
-                VALIDATION_STATUS: [VALIDATION_STATUS_SUCCESS, VALIDATION_STATUS_SUCCESS, VALIDATION_STATUS_FAIL, VALIDATION_STATUS_FAIL],
-                "group_by_columns": [{"id": "1"}, {"id": "2"}, {"id": "3"}, None],
-                "source_agg_value": [10, 20, 30, None],
-                "target_agg_value": [10, 20, 60, None],
-            }),
-            pandas.DataFrame({"id":[1,2,3,4], "value":[10,20,30,40]}),
-            pandas.DataFrame({"id":[1,2,3,8], "value":[10,20,60,80]}),
+            pandas.DataFrame(
+                {
+                    "validation_type": [consts.ROW_VALIDATION] * 5,
+                    VALIDATION_STATUS: [VALIDATION_STATUS_SUCCESS] * 2
+                    + [VALIDATION_STATUS_FAIL] * 3,
+                    "group_by_columns": [
+                        {"id": "1"},
+                        {"id": "2"},
+                        {"id": "3"},
+                        {"id": "4"},
+                        {"id": "8"},
+                    ],
+                    "source_agg_value": [10, 20, 30, 40, None],
+                    "target_agg_value": [10, 20, 60, None, 80],
+                }
+            ),
+            pandas.DataFrame({"id": [1, 2, 3, 4], "value": [10, 20, 30, 40]}),
+            pandas.DataFrame({"id": [1, 2, 3, 8], "value": [10, 20, 60, 80]}),
             {
                 "total_source_rows": 4,
                 "total_target_rows": 4,
-                "total_rows_validated": 4,
+                "total_rows_validated": 5,
                 "total_rows_success_validation_status": 2,
-                "total_rows_fail_validation_status": 2,
-                "failed_rows_present_in_source_not_in_target": 0,
-                "failed_rows_present_in_target_not_in_source": 0,
+                # id 3, 4, 8 got failed validation status
+                "total_rows_fail_validation_status": 3,
+                # id 4 present only in source
+                "failed_rows_present_in_source_not_in_target": 1,
+                # id 8 present only in target
+                "failed_rows_present_in_target_not_in_source": 1,
                 # id 3 present in both source and target but value is different
-                "failed_rows_present_in_both_source_and_target": 1, 
+                "failed_rows_present_in_both_source_and_target": 1,
             },
         ),
     ),
