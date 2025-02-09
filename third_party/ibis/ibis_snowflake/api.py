@@ -22,6 +22,7 @@ import snowflake.sqlalchemy
 
 logging.getLogger("snowflake.connector").setLevel(logging.WARNING)
 
+from data_validation.util import dvt_config_string_to_dict
 import third_party.ibis.ibis_snowflake.datatypes
 
 
@@ -30,8 +31,10 @@ def snowflake_connect(
     password: str,
     account: str,
     database: str,
-    connect_args: Mapping[str, Any] = None,
+    connect_args: str = None,
 ):
+    if connect_args:
+        connect_args = dvt_config_string_to_dict(connect_args)
     return ibis.snowflake.connect(
         user=user,
         password=password,
