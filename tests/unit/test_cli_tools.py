@@ -564,14 +564,17 @@ def test_get_result_handler_by_conn_file(fs):
     }
 
 
+@pytest.mark.timeout(10)
 @pytest.mark.parametrize(
     "test_input,expected",
     [
-        (
-            "id < 5:row_id <5",
-            [{"type": "custom", "source": "id < 5", "target": "row_id <5"}],
-        ),
+        # Simple filters.
         ("id < 5", [{"type": "custom", "source": "id < 5", "target": "id < 5"}]),
+        ("id > 5", [{"type": "custom", "source": "id > 5", "target": "id > 5"}]),
+        (
+            "id = 'abc'",
+            [{"type": "custom", "source": "id = 'abc'", "target": "id = 'abc'"}],
+        ),
         (
             "name != 'John'",
             [
@@ -582,6 +585,7 @@ def test_get_result_handler_by_conn_file(fs):
                 }
             ],
         ),
+        # With an escaped single quote.
         (
             "name != 'St. John''s'",
             [
@@ -592,20 +596,99 @@ def test_get_result_handler_by_conn_file(fs):
                 }
             ],
         ),
+        # Filter pairs.
         (
-            "mod_timestamp >= '2024-04-01 16:00:00 UTC':mod_timestamp >= '2020-04-01 16:00:00 UTC'",
+            "id < 5:row_id <5",
+            [{"type": "custom", "source": "id < 5", "target": "row_id <5"}],
+        ),
+        (
+            "id = 'abc':row_id='abc'",
+            [{"type": "custom", "source": "id = 'abc'", "target": "row_id='abc'"}],
+        ),
+        # Really long filters.
+        (
+            "id12345678901234567890 = 'abcdefghijklmnopqrstuvwxyz'",
             [
                 {
                     "type": "custom",
-                    "source": "mod_timestamp >= '2024-04-01 16:00:00 UTC'",
-                    "target": "mod_timestamp >= '2020-04-01 16:00:00 UTC'",
+                    "source": "id12345678901234567890 = 'abcdefghijklmnopqrstuvwxyz'",
+                    "target": "id12345678901234567890 = 'abcdefghijklmnopqrstuvwxyz'",
+                }
+            ],
+        ),
+        (
+            "id12345678901234567890=12345678901234567890:row_id12345678901234567890=12345678901234567890",
+            [
+                {
+                    "type": "custom",
+                    "source": "id12345678901234567890=12345678901234567890",
+                    "target": "row_id12345678901234567890=12345678901234567890",
                 }
             ],
         ),
     ],
 )
-def test_get_filters(test_input, expected):
+def test_get_filters_simple(test_input: str, expected: list):
     """Test get filters."""
+    res = cli_tools.get_filters(test_input)
+    assert res == expected
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        (""),
+        ("  "),
+        (":"),
+        (" : "),
+    ],
+)
+def test_get_filters_fail(test_input: str):
+    """Test get filters."""
+    with pytest.raises(argparse.ArgumentTypeError):
+        _ = cli_tools.get_filters(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        # Timestamp related characters.
+        (
+            "col_ts >= '2024-04-01 16:00:00 UTC'",
+            [
+                {
+                    "type": "custom",
+                    "source": "col_ts >= '2024-04-01 16:00:00 UTC'",
+                    "target": "col_ts >= '2024-04-01 16:00:00 UTC'",
+                }
+            ],
+        ),
+        # Timestamp related characters with a filter pair colon.
+        (
+            "col_ts >= '2024-04-01 16:00:00 UTC':col_ts >= '2020-04-01 16.00.00 +00:00'",
+            [
+                {
+                    "type": "custom",
+                    "source": "col_ts >= '2024-04-01 16:00:00 UTC'",
+                    "target": "col_ts >= '2020-04-01 16.00.00 +00:00'",
+                }
+            ],
+        ),
+        # Timestamp with greater-than, less-than and parentheses.
+        (
+            "col_ts >= to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') and col_ts < to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+            [
+                {
+                    "type": "custom",
+                    "source": "col_ts >= to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') and col_ts < to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+                    "target": "col_ts >= to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS') and col_ts < to_timestamp('2024-04-01 16:00:00','YYYY-MM-DD HH24:MI:SS')",
+                }
+            ],
+        ),
+    ],
+)
+def test_get_filters_datetimes(test_input, expected):
+    """Test get filters with timestamps."""
     res = cli_tools.get_filters(test_input)
     assert res == expected
 
