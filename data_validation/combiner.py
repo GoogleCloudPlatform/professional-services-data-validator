@@ -27,10 +27,6 @@ import ibis.expr.datatypes as dt
 
 from typing import TYPE_CHECKING
 from data_validation import consts
-from data_validation.consts import (
-    VALIDATION_STATUS,
-    VALIDATION_STATUS_SUCCESS,
-)
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -122,7 +118,7 @@ def generate_report(
             first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
         )
 
-    get_summary(joined.to_pandas(), source_df, target_df)
+    _get_summary(joined.to_pandas(), source_df, target_df)
 
     return result_df
 
@@ -433,12 +429,18 @@ def _add_metadata(joined: "IbisTable", run_metadata: "RunMetadata"):
     return joined
 
 
-def get_summary(joined_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"):
+def _get_summary(
+    joined_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"
+):
     """Logs a summary report/stats of row validation results."""
     if joined_df.loc[0, "validation_type"] == consts.ROW_VALIDATION:
 
-        success_condition = joined_df[VALIDATION_STATUS] == VALIDATION_STATUS_SUCCESS
-        fail_condition = joined_df[VALIDATION_STATUS] != VALIDATION_STATUS_SUCCESS
+        success_condition = (
+            joined_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+        )
+        fail_condition = (
+            joined_df[consts.VALIDATION_STATUS] != consts.VALIDATION_STATUS_SUCCESS
+        )
 
         rows_present_in_source_not_in_target = (
             joined_df["source_agg_value"].notnull()

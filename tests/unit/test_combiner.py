@@ -21,11 +21,6 @@ import logging
 
 from freezegun import freeze_time
 from data_validation import metadata, consts
-from data_validation.consts import (
-    VALIDATION_STATUS,
-    VALIDATION_STATUS_FAIL,
-    VALIDATION_STATUS_SUCCESS,
-)
 
 _NAN = float("nan")
 
@@ -974,8 +969,8 @@ def test_generate_report_with_nan_agg_value(
             pandas.DataFrame(
                 {
                     "validation_type": [consts.ROW_VALIDATION] * 5,
-                    VALIDATION_STATUS: [VALIDATION_STATUS_SUCCESS] * 2
-                    + [VALIDATION_STATUS_FAIL] * 3,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
+                    + [consts.VALIDATION_STATUS_FAIL] * 3,
                     "group_by_columns": [
                         {"id": "1"},
                         {"id": "2"},
@@ -1010,7 +1005,7 @@ def test_get_summary_with_non_zero_values_for_all_stats(
     module_under_test, caplog, joined_df, source_df, target_df, expected
 ):
     caplog.set_level(logging.INFO)
-    module_under_test.get_summary(joined_df, source_df, target_df)
+    module_under_test._get_summary(joined_df, source_df, target_df)
 
     logged = caplog.records[0]  # assuming only one log message
     assert logged.levelname == "INFO"
