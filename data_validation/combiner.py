@@ -433,24 +433,22 @@ def _get_summary(
     joined_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"
 ):
     """Logs a summary report/stats of row validation results."""
-    if joined_df.loc[0, "validation_type"] == consts.ROW_VALIDATION:
-
+    if joined_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION:
+        # Vectorized calculations for all counts
         success_condition = (
             joined_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
         )
-        fail_condition = (
-            joined_df[consts.VALIDATION_STATUS] != consts.VALIDATION_STATUS_SUCCESS
-        )
+        fail_condition = ~success_condition  # Invert success for fail condition
 
-        rows_present_in_source_not_in_target = (
+        source_not_in_target = (
             joined_df["source_agg_value"].notnull()
             & joined_df["target_agg_value"].isnull()
         )
-        rows_present_in_target_not_in_source = (
+        target_not_in_source = (
             joined_df["source_agg_value"].isnull()
             & joined_df["target_agg_value"].notnull()
         )
-        rows_present_in_both_source_and_target = (
+        present_in_both_tables = (
             joined_df["source_agg_value"].notnull()
             & joined_df["target_agg_value"].notnull()
         )
@@ -460,18 +458,17 @@ def _get_summary(
                 "total_source_rows": source_df.shape[0],
                 "total_target_rows": target_df.shape[0],
                 "total_rows_validated": joined_df.shape[0],
-                "total_rows_success_validation_status": len(
-                    joined_df[success_condition]
-                ),
-                "total_rows_fail_validation_status": len(joined_df[fail_condition]),
-                "failed_rows_present_in_source_not_in_target": len(
-                    joined_df[fail_condition & rows_present_in_source_not_in_target]
-                ),
-                "failed_rows_present_in_target_not_in_source": len(
-                    joined_df[fail_condition & rows_present_in_target_not_in_source]
-                ),
-                "failed_rows_present_in_both_source_and_target": len(
-                    joined_df[fail_condition & rows_present_in_both_source_and_target]
-                ),
+                # Using .sum() on boolean Series for much faster counting
+                "total_rows_success_validation_status": success_condition.sum(),
+                "total_rows_fail_validation_status": fail_condition.sum(),
+                "failed_rows_present_in_source_not_in_target": (
+                    fail_condition & source_not_in_target
+                ).sum(),
+                "failed_rows_present_in_target_not_in_source": (
+                    fail_condition & target_not_in_source
+                ).sum(),
+                "failed_rows_present_in_both_source_and_target": (
+                    fail_condition & present_in_both_tables
+                ).sum(),
             }
         )
