@@ -963,11 +963,24 @@ def test_generate_report_with_nan_agg_value(
 
 
 @pytest.mark.parametrize(
-    ("joined_df", "source_df", "target_df", "expected"),
+    ("result_df", "source_df", "target_df", "expected"),
     (
         (
             pandas.DataFrame(
                 {
+                    "run_id": ["test-run"] * 5,
+                    "start_time": [
+                        datetime.datetime(
+                            2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 5,
+                    "end_time": [
+                        datetime.datetime(
+                            2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                        )
+                    ]
+                    * 5,
                     "validation_type": [consts.ROW_VALIDATION] * 5,
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
                     + [consts.VALIDATION_STATUS_FAIL] * 3,
@@ -985,11 +998,14 @@ def test_generate_report_with_nan_agg_value(
             pandas.DataFrame({"id": [1, 2, 3, 4], "value": [10, 20, 30, 40]}),
             pandas.DataFrame({"id": [1, 2, 3, 8], "value": [10, 20, 60, 80]}),
             {
+                "validation_run_id": "test-run",
+                "validation_start_time": "2025-02-12 07:30:10 UTC",
+                "validation_end_time": "2025-02-12 07:32:15 UTC",
                 "total_source_rows": 4,
                 "total_target_rows": 4,
                 "total_rows_validated": 5,
                 "total_rows_success_validation_status": 2,
-                # id 3, 4, 8 got failed validation status
+                # ids 3, 4, 8 got failed validation status
                 "total_rows_fail_validation_status": 3,
                 # id 4 present only in source
                 "failed_rows_present_in_source_not_in_target": 1,
@@ -1002,10 +1018,10 @@ def test_generate_report_with_nan_agg_value(
     ),
 )
 def test_get_summary_with_non_zero_values_for_all_stats(
-    module_under_test, caplog, joined_df, source_df, target_df, expected
+    module_under_test, caplog, result_df, source_df, target_df, expected
 ):
     caplog.set_level(logging.INFO)
-    module_under_test._get_summary(joined_df, source_df, target_df)
+    module_under_test._get_summary(result_df, source_df, target_df)
 
     logged = caplog.records[0]  # assuming only one log message
     assert logged.levelname == "INFO"

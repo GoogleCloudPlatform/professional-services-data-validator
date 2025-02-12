@@ -118,7 +118,7 @@ def generate_report(
             first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
         )
 
-    _get_summary(joined.to_pandas(), source_df, target_df)
+    _get_summary(result_df, source_df, target_df)
 
     return result_df
 
@@ -430,34 +430,41 @@ def _add_metadata(joined: "IbisTable", run_metadata: "RunMetadata"):
 
 
 def _get_summary(
-    joined_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"
+    result_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"
 ):
     """Logs a summary report/stats of row validation results."""
-    if joined_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION:
+    if result_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION:
         # Vectorized calculations for all counts
         success_condition = (
-            joined_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+            result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
         )
         fail_condition = ~success_condition  # Invert success for fail condition
 
         source_not_in_target = (
-            joined_df["source_agg_value"].notnull()
-            & joined_df["target_agg_value"].isnull()
+            result_df["source_agg_value"].notnull()
+            & result_df["target_agg_value"].isnull()
         )
         target_not_in_source = (
-            joined_df["source_agg_value"].isnull()
-            & joined_df["target_agg_value"].notnull()
+            result_df["source_agg_value"].isnull()
+            & result_df["target_agg_value"].notnull()
         )
         present_in_both_tables = (
-            joined_df["source_agg_value"].notnull()
-            & joined_df["target_agg_value"].notnull()
+            result_df["source_agg_value"].notnull()
+            & result_df["target_agg_value"].notnull()
         )
 
         logging.info(
             {
+                "validation_run_id": result_df.loc[0, "run_id"],
+                "validation_start_time": result_df.loc[0, "start_time"].strftime(
+                    "%Y-%m-%d %H:%M:%S %Z"
+                ),
+                "validation_end_time": result_df.loc[0, "end_time"].strftime(
+                    "%Y-%m-%d %H:%M:%S %Z"
+                ),
                 "total_source_rows": source_df.shape[0],
                 "total_target_rows": target_df.shape[0],
-                "total_rows_validated": joined_df.shape[0],
+                "total_rows_validated": result_df.shape[0],
                 # Using .sum() on boolean Series for much faster counting
                 "total_rows_success_validation_status": success_condition.sum(),
                 "total_rows_fail_validation_status": fail_condition.sum(),
