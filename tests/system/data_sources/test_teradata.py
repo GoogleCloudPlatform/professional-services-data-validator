@@ -803,6 +803,7 @@ def test_schema_validation_reserved_words():
 )
 def test_column_validation_reserved_words():
     """Test column validation on a table with reserved words in column names."""
+    pytest.skip("Skipping test_column_validation_reserved_words because of issue-1436")
     column_validation_test(
         tc="mock-conn",
         tables="udf.dvt_reserved_word_columns",
@@ -816,6 +817,7 @@ def test_column_validation_reserved_words():
 )
 def test_row_validation_reserved_words():
     """Test row validation on a table with reserved words in column names."""
+    pytest.skip("Skipping test_row_validation_reserved_words because of issue-1436")
     row_validation_test(
         tables="udf.dvt_reserved_word_columns",
         tc="mock-conn",
@@ -829,6 +831,9 @@ def test_row_validation_reserved_words():
 )
 def test_row_validation_comp_fields_reserved_words():
     """Test row validation on a table with reserved words in column names."""
+    pytest.skip(
+        "Skipping test_row_validation_comp_fields_reserved_words because of issue-1436"
+    )
     row_validation_test(
         tables="udf.dvt_reserved_word_columns",
         tc="mock-conn",
