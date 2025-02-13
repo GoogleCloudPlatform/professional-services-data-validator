@@ -862,3 +862,18 @@ INSERT INTO pso_data_validator.dvt_tricky_strings VALUES
 (3,E'str\rstr','Contains: carriage return'), (4,E'str\r','Trailing: carriage return'),
 (5,E'str\tstr','Contains: tab'), (6,E'str\t','Trailing: tab');
 
+DROP TABLE IF EXISTS pso_data_validator.dvt_reserved_word_columns;
+CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
+  id         integer NOT NULL PRIMARY KEY
+-- SQL tokens
+, "SELECT"   varchar(10)
+, "COLUMN"   varchar(10)
+, "FROM"     varchar(10)
+, "WHERE"    varchar(10)
+-- Data types
+, "DATE"     varchar(10)
+, "NUMBER"   varchar(10)
+, "STRING"   varchar(10)
+);
+COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
+INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
