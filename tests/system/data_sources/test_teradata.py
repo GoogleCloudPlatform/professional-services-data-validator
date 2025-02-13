@@ -792,7 +792,7 @@ def test_row_validation_identifiers():
 def test_schema_validation_reserved_words():
     """Test schema validation on a table with reserved words in column names."""
     schema_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
+        tables="udf.dvt_reserved_word_columns",
         tc="mock-conn",
     )
 
@@ -805,7 +805,7 @@ def test_column_validation_reserved_words():
     """Test column validation on a table with reserved words in column names."""
     column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt_reserved_word_columns",
+        tables="udf.dvt_reserved_word_columns",
         count_cols="*",
     )
 
@@ -817,7 +817,7 @@ def test_column_validation_reserved_words():
 def test_row_validation_reserved_words():
     """Test row validation on a table with reserved words in column names."""
     row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
+        tables="udf.dvt_reserved_word_columns",
         tc="mock-conn",
         hash="*",
     )
@@ -830,7 +830,7 @@ def test_row_validation_reserved_words():
 def test_row_validation_comp_fields_reserved_words():
     """Test row validation on a table with reserved words in column names."""
     row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
+        tables="udf.dvt_reserved_word_columns",
         tc="mock-conn",
         comp_fields="*",
     )
