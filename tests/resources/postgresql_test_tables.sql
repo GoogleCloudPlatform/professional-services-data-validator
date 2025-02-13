@@ -866,14 +866,14 @@ DROP TABLE IF EXISTS pso_data_validator.dvt_reserved_word_columns;
 CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
   id         integer NOT NULL PRIMARY KEY
 -- SQL tokens
-, "SELECT"   varchar(10)
-, "COLUMN"   varchar(10)
-, "FROM"     varchar(10)
-, "WHERE"    varchar(10)
+, "select"   varchar(10)
+, "column"   varchar(10)
+, "from"     varchar(10)
+, "where"    varchar(10)
 -- Data types
-, "DATE"     varchar(10)
-, "NUMBER"   varchar(10)
-, "STRING"   varchar(10)
+, "date"     varchar(10)
+, "number"   varchar(10)
+, "string"   varchar(10)
 );
 COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
