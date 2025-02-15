@@ -143,3 +143,18 @@ def test_split_not_in_quotes(
     else:
         result = module_under_test.split_not_in_quotes(test_input)
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        ("", None),
+        (None, None),
+        ({"a": 123}, {"a": 123}),
+        ('{"a": 123}', {"a": 123}),
+        ("{'a': 123}", {"a": 123}),
+    ],
+)
+def test_dvt_config_string_to_dict(module_under_test, test_input: str, expected):
+    result = module_under_test.dvt_config_string_to_dict(test_input)
+    assert result == expected
