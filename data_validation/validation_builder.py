@@ -29,7 +29,6 @@ from ibis.backends.bigquery import Backend as BigQueryBackend
 from ibis.backends.postgres import Backend as PostgresBackend
 from ibis.backends.mysql import Backend as MySQLBackend
 from ibis.backends.snowflake import Backend as SnowflakeBackend
-from ibis.backends.impala import Backend as ImpalaBackend
 from third_party.ibis.ibis_teradata import Backend as TeradataBackend
 from third_party.ibis.ibis_cloud_spanner import Backend as SpannerBackend
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
@@ -100,19 +99,16 @@ class ValidationBuilder(object):
 
     @staticmethod
     def _is_fixed_length_char(
-        client: ibis.backends.base.BaseBackend, table_name_qual: str, column_name: str
+        client: ibis.backends.base.BaseBackend,
+        schema_name: str,
+        table_name: str,
+        column_name: str,
     ) -> bool:
         """Returns true if the string column provided is a fixed length char column.
         Since some databases automatically pad fixed length chars when storing them and returning the value, these
         will need to be trimmed before comparison. Some databases - e.g. BQ do not support
         fixed length character strings
         """
-        # table_name can be fully qualified i.e. includes the schema name as well
-        if len(my_values := table_name_qual.split(".")) == 2:
-            schema_name = my_values[0]
-            table_name = my_values[1]
-        else:
-            table_name = table_name_qual
         match client:
             # The following backends don't pad blanks - either don't support fixed char or
             # trim spaces before using.
@@ -127,16 +123,17 @@ class ValidationBuilder(object):
                 return column_type.iloc[0]["ColumnType"].startswith("CF")
             case OracleBackend():  # only support same schema for now
                 column_type = client.sql(
-                    f"""select COLUMN_NAME, DATA_TYPE from user_tab_columns
-                        where TABLE_NAME='{table_name.upper()}'
+                    f"""select COLUMN_NAME, DATA_TYPE from all_tab_columns
+                        where OWNER = '{schema_name.upper()}' and TABLE_NAME='{table_name.upper()}'
                         and COLUMN_NAME='{column_name.upper()}'"""
                 ).execute()
-                return column_type.iloc[0]["DATA_TYPE"] == "CHAR"
+                return column_type.iloc[0]["DATA_TYPE"] in ["CHAR", "NCHAR"]
             case PostgresBackend():
                 column_type = client.sql(
                     f"""SELECT column_name, data_type FROM information_schema.columns
                             WHERE table_schema='{schema_name}' and table_name='{table_name}'
-                            and column_name='{column_name}'"""
+                            and column_name='{column_name}'""",
+                    schema={"column_name": "str", "data_type": "str"},
                 ).execute()
                 return column_type.iloc[0]["data_type"] == "character"
             case MsSqlBackend():
@@ -340,7 +337,10 @@ class ValidationBuilder(object):
                 table[source_field_name].type().is_string()
             ):  # Fixed length char fields need to be trimmed
                 trim = self._is_fixed_length_char(
-                    config_manager.source_client, table.get_name(), source_field_name
+                    config_manager.source_client,
+                    config_manager.source_schema,
+                    config_manager.source_table,
+                    source_field_name,
                 )
         source_field = ComparisonField(
             field_name=source_field_name, alias=alias, cast=cast, trim=trim
@@ -352,7 +352,10 @@ class ValidationBuilder(object):
                 table[target_field_name].type().is_string()
             ):  # Fixed length char fields need to be trimmed
                 trim = self._is_fixed_length_char(
-                    config_manager.target_client, table.get_name(), target_field_name
+                    config_manager.target_client,
+                    config_manager.target_schema,
+                    config_manager.target_table,
+                    target_field_name,
                 )
         target_field = ComparisonField(
             field_name=target_field_name, alias=alias, cast=cast, trim=trim

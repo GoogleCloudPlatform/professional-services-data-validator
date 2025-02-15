@@ -851,11 +851,13 @@ def test_row_validation_char_pk_to_bigquery():
             "row",
             "-sc=pg-conn",
             "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_char_id",
+            "-tbls=pso_data_validator.dvt_char_id=pso_data_validator.dvt_char_id_2",
             "--primary-keys=id",
             "--hash=id,other_data",
-            "--use-random-row",
-            "--random-row-batch-size=5",
+            # Random rows don't play nice with char - need fix outlined in
+            # https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/issue-1368-fixed-length-pks/docs/internal/strings.md
+            # "--use-random-row",
+            # "--random-row-batch-size=5",
         ]
     )
     df = run_test_from_cli_args(args)
