@@ -611,7 +611,7 @@ def test_row_validation_char_pk_to_bigquery():
             "row",
             "-sc=td-conn",
             "-tc=bq-conn",
-            "-tbls=udf.dvt_char_id=pso_data_validator.dvt_char_id",
+            "-tbls=udf.dvt_char_id=pso_data_validator.dvt_char_id_2",
             "--primary-keys=id",
             "--hash=id,other_data",
             # We need to trim padded string PKs due to a Teradata client "quirk".
