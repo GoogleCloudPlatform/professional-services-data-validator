@@ -59,8 +59,8 @@ def test_generate_report_with_different_columns(module_under_test):
     target = pandas.DataFrame({"count": [2]})
     pandas_client = ibis.pandas.connect(
         {
-            module_under_test.DEFAULT_SOURCE: source,
-            module_under_test.DEFAULT_TARGET: target,
+            consts.RESULT_TYPE_SOURCE: source,
+            consts.RESULT_TYPE_TARGET: target,
         }
     )
     with pytest.raises(
@@ -70,8 +70,8 @@ def test_generate_report_with_different_columns(module_under_test):
             pandas_client,
             # Schema validation occurs before run_metadata is needed.
             None,
-            source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
-            target=pandas_client.table(module_under_test.DEFAULT_TARGET),
+            source=pandas_client.table(consts.RESULT_TYPE_SOURCE),
+            target=pandas_client.table(consts.RESULT_TYPE_TARGET),
         )
 
 
@@ -80,8 +80,8 @@ def test_generate_report_with_too_many_rows(module_under_test):
     target = pandas.DataFrame({"count": [2, 2]})
     pandas_client = ibis.pandas.connect(
         {
-            module_under_test.DEFAULT_SOURCE: source,
-            module_under_test.DEFAULT_TARGET: target,
+            consts.RESULT_TYPE_SOURCE: source,
+            consts.RESULT_TYPE_TARGET: target,
         }
     )
 
@@ -89,8 +89,8 @@ def test_generate_report_with_too_many_rows(module_under_test):
         pandas_client,
         # Validation occurs before run_metadata is needed.
         EXAMPLE_RUN_METADATA,
-        source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
-        target=pandas_client.table(module_under_test.DEFAULT_TARGET),
+        source=pandas_client.table(consts.RESULT_TYPE_SOURCE),
+        target=pandas_client.table(consts.RESULT_TYPE_TARGET),
     )
 
     # TODO: how do we want to handle this going forward?
