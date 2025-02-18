@@ -382,7 +382,7 @@ def _join_pivots(
         + [
             source[consts.VALIDATION_TYPE],
             source[consts.AGGREGATION_TYPE],
-            source[consts.TABLE_NAME],
+            source[consts.CONFIG_TABLE_NAME],
             source["column_name"],
             source[consts.CONFIG_PRIMARY_KEYS],
             source["num_random_rows"],
