@@ -55,16 +55,14 @@ INSERT INTO `pso_data_validator`.`dvt_core_types` VALUES
 CREATE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
 SELECT * FROM `pso_data_validator`.`dvt_core_types`;
 
-DROP TABLE `pso_data_validator`.`dvt_null_not_null`;
-CREATE TABLE `pso_data_validator`.`dvt_null_not_null`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_null_not_null`
 (   col_nn             DATETIME NOT NULL
 ,   col_nullable       DATETIME
 ,   col_src_nn_trg_n   DATETIME
 ,   col_src_n_trg_nn   DATETIME NOT NULL
 ) OPTIONS (description='Nullable integration test table, BigQuery is assumed to be a DVT target (not source)');
 
-DROP TABLE `pso_data_validator`.`dvt_large_decimals`;
-CREATE TABLE `pso_data_validator`.`dvt_large_decimals`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_large_decimals`
 (   id                BIGNUMERIC(38) NOT NULL
 ,   col_data          STRING(10)
 ,   col_dec_18        INT64
@@ -108,8 +106,7 @@ INSERT INTO `pso_data_validator`.`dvt_large_decimals` VALUES
 ,BIGNUMERIC '12345678.123456789012345678901234567890'
 ,987654321012345670,12345678901234567.0);
 
-DROP TABLE `pso_data_validator`.`dvt_binary`;
-CREATE TABLE `pso_data_validator`.`dvt_binary`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_binary`
 (   binary_id       BYTES(16) NOT NULL
 ,   int_id          INT64 NOT NULL
 ,   other_data      STRING(100)
@@ -121,8 +118,7 @@ INSERT INTO `pso_data_validator`.`dvt_binary` VALUES
 (CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
 (CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
 
-DROP TABLE `pso_data_validator`.`dvt_string_id`;
-CREATE TABLE `pso_data_validator`.`dvt_string_id`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_string_id`
 (   id          STRING(15) NOT NULL
 ,   other_data  STRING(100)
 ) OPTIONS (description='Integration test table used to test string pk matching.');
@@ -133,9 +129,8 @@ INSERT INTO `pso_data_validator`.`dvt_string_id` VALUES
 ('DVT-key-4', 'Row 4'),
 ('DVT-key-5', 'Row 5');
 
-DROP TABLE `pso_data_validator`.`dvt_char_id`;
 -- BigQuery does not have a specific padded CHAR data type.
-CREATE TABLE `pso_data_validator`.`dvt_char_id`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_char_id`
 (   id          STRING(6) NOT NULL
 ,   other_data  STRING(100)
 ) OPTIONS (description='Integration test table used to test CHAR pk matching.');
@@ -146,8 +141,7 @@ INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
 ('DVT4  ', 'Row 4  	  '),
 ('DVT5  ', 'Row 5');
 
-DROP TABLE `pso_data_validator`.`dvt_time_table`;
-CREATE TABLE `pso_data_validator`.`dvt_time_table`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_time_table`
 (   id          INTEGER NOT NULL
 ,   col_time  TIME
 ) OPTIONS (description='Integration test table used to test Time data type');
@@ -156,8 +150,7 @@ INSERT INTO `pso_data_validator`.`dvt_time_table` VALUES
 (2, '04:02:00'),
 (3, '08:01:07');
 
-DROP TABLE `pso_data_validator`.`dvt_latin`;
-CREATE TABLE `pso_data_validator`.`dvt_latin`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_latin`
 (   id          INT64
 ,   words       STRING
 ) OPTIONS (description='Integration test table used to test latin characters.');
@@ -169,8 +162,7 @@ INSERT INTO `pso_data_validator`.`dvt_latin` (id, words) VALUES
 (4, 'SAINT-RENÉ'),
 (5, 'SAINTE-ANE-DE-LA-PÉ');
 
-DROP TABLE `pso_data_validator`.`dvt_pangrams`;
-CREATE TABLE `pso_data_validator`.`dvt_pangrams`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_pangrams`
 (   id          INT64
 ,   lang        STRING(100)
 ,   words       STRING(1000)
@@ -189,8 +181,7 @@ INSERT INTO `pso_data_validator`.`dvt_pangrams` VALUES
 (5,'Turkish', 'Pijamalı hasta yağız şoföre çabucak güvendi',
  'The sick person in pyjamas quickly trusted the swarthy driver');
 
-DROP TABLE `pso_data_validator`.`dvt_many_cols`;
-CREATE TABLE `pso_data_validator`.`dvt_many_cols`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_many_cols`
 ( id INT64
 , col_001 STRING
 , col_002 STRING
@@ -595,8 +586,7 @@ CREATE TABLE `pso_data_validator`.`dvt_many_cols`
 INSERT INTO `pso_data_validator`.`dvt_many_cols` (id) VALUES (1);
 
 -- Name should contain $ and # but this is not supported in BigQuery: `pso_data_validator`.`dvt-identifier$_#`;
-DROP TABLE `pso_data_validator`.`dvt-identifier___`;
-CREATE TABLE `pso_data_validator`.`dvt-identifier___`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt-identifier___`
 (   id            INT64 NOT NULL
 ,   `col#hash`    STRING
 ,   `col_dollar`  STRING -- Name should contain $ but this is not supported in BigQuery
@@ -610,8 +600,7 @@ INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (3,'#','$','-','@','
 INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (4,'#','$','-','@','Row 4');
 INSERT INTO `pso_data_validator`.`dvt-identifier___` VALUES (5,'#','$','-','@','Row 5');
 
-DROP TABLE `pso_data_validator`.`dvt_bool`;
-CREATE TABLE `pso_data_validator`.`dvt_bool`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_bool`
 (   id           INT64 NOT NULL
 ,   col_bool_dec BOOLEAN
 ,   col_bool_int BOOLEAN
@@ -622,8 +611,7 @@ INSERT INTO `pso_data_validator`.`dvt_bool` VALUES (1,true,true,true,true);
 INSERT INTO `pso_data_validator`.`dvt_bool` VALUES (2,false,false,false,false);
 
 -- BigQuery stores UUIDs in STRING data type according to its utility function called GENERATE_UUID().
-DROP TABLE `pso_data_validator`.`dvt_uuid_id`;
-CREATE TABLE `pso_data_validator`.`dvt_uuid_id`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_uuid_id`
 (   id        STRING NOT NULL
 ,   col_uuid  STRING
 ,   col_data  STRING
@@ -632,8 +620,7 @@ INSERT INTO `pso_data_validator`.`dvt_uuid_id` VALUES
 ('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','A'),
 ('397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','397bdc3b-2184-43b2-8ec2-3ac791c5b0f1','B');
 
-DROP TABLE `pso_data_validator`.`dvt_group_by_timestamp`;
-CREATE TABLE `pso_data_validator`.`dvt_group_by_timestamp`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_group_by_timestamp`
 (   id           INT64 NOT NULL
 ,   group_id     INT64
 ,   col_date     DATE
@@ -647,8 +634,7 @@ INSERT INTO `pso_data_validator`.`dvt_group_by_timestamp` VALUES
 (5,2,DATE'2022-02-02',DATETIME'2022-02-02 13:00:00'),
 (6,3,DATE'2023-03-03',DATETIME'2023-03-03 12:00:00');
 
-DROP TABLE `pso_data_validator`.`dvt_tricky_dates`;
-CREATE TABLE `pso_data_validator`.`dvt_tricky_dates` (
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_dates` (
   id            INT64 NOT NULL
 , col_dt_low    DATE
 , col_dt_epoch  DATE
@@ -670,3 +656,17 @@ INSERT INTO `pso_data_validator`.`dvt_tricky_strings` VALUES
 (1,'str\nstr','Contains: new line'), (2,'str\n','Trailing: new line'),
 (3,'str\rstr','Contains: carriage return'), (4,'str\r','Trailing: carriage return'),
 (5,'str\tstr','Contains: tab'), (6,'str\t','Trailing: tab');
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
+  id         INT64
+-- SQL tokens
+, `SELECT`   STRING
+, `COLUMN`   STRING
+, `FROM`     STRING
+, `WHERE`    STRING
+-- Data types
+, `DATE`     STRING
+, `NUMBER`   STRING
+, `STRING`   STRING
+) OPTIONS (description='Integration test table used to test potentially difficult column names.');
+INSERT INTO `pso_data_validator`.`dvt_reserved_word_columns` (id) VALUES (1);
