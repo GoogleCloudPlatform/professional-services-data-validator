@@ -56,6 +56,8 @@ CONFIG_CASE_INSENSITIVE_MATCH = "case_insensitive_match"
 CONFIG_ROW_CONCAT = "concat"
 CONFIG_ROW_HASH = "hash"
 CONFIG_RUN_ID = "run_id"
+CONFIG_START_TIME = "start_time"
+CONFIG_END_TIME = "end_time"
 CONFIG_SOURCE_COLUMN = "source_column"
 CONFIG_TARGET_COLUMN = "target_column"
 CONFIG_THRESHOLD = "threshold"
@@ -142,11 +144,20 @@ TARGET_AGG_VALUE = "target_agg_value"
 VALIDATION_STATUS = "validation_status"
 VALIDATION_STATUS_SUCCESS = "success"
 VALIDATION_STATUS_FAIL = "fail"
-# TODO: update if we start to support other statuses
 VALIDATION_STATUSES = [
     VALIDATION_STATUS_SUCCESS,
     VALIDATION_STATUS_FAIL,
 ]
+
+# Summary stats of Row Validation results
+TOTAL_SOURCE_ROWS = "total_source_rows"
+TOTAL_TARGET_ROWS = "total_target_rows"
+TOTAL_ROWS_VALIDATED = "total_rows_validated"
+TOTAL_ROWS_SUCCESS = "total_rows_success_validation_status"
+TOTAL_ROWS_FAIL = "total_rows_fail_validation_status"
+FAILED_SOURCE_NOT_IN_TARGET = "failed_rows_present_in_source_not_in_target"
+FAILED_TARGET_NOT_IN_SOURCE = "failed_rows_present_in_target_not_in_source"
+FAILED_PRESENT_IN_BOTH_TABLES = "failed_rows_present_in_both_source_and_target"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
@@ -160,25 +171,25 @@ FORMAT_TYPES = ["csv", "json", "table", "text"]
 
 # Text Result Handler column filter list
 COLUMN_FILTER_LIST = [
-    "aggregation_type",
-    "end_time",
-    "labels",
+    AGGREGATION_TYPE,
+    CONFIG_END_TIME,
+    CONFIG_LABELS,
     "pct_threshold",
-    "start_time",
-    "target_table_name",
-    "target_column_name",
+    CONFIG_START_TIME,
+    TARGET_TABLE_NAME,
+    TARGET_COLUMN_NAME,
     "difference",
-    "primary_keys",
-    "group_by_columns",
+    CONFIG_PRIMARY_KEYS,
+    GROUP_BY_COLUMNS,
     "num_random_rows",
 ]
 SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
-    "start_time",
-    "end_time",
-    "aggregation_type",
+    CONFIG_START_TIME,
+    CONFIG_END_TIME,
+    AGGREGATION_TYPE,
     "difference",
-    "primary_keys",
-    "group_by_columns",
+    CONFIG_PRIMARY_KEYS,
+    GROUP_BY_COLUMNS,
     "num_random_rows",
     "pct_threshold",
 ]

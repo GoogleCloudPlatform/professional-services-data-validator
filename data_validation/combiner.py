@@ -34,10 +34,6 @@ if TYPE_CHECKING:
     from data_validation.metadata import RunMetadata, ValidationMetadata
 
 
-DEFAULT_SOURCE = "source"
-DEFAULT_TARGET = "target"
-
-
 def generate_report(
     client,
     run_metadata: "RunMetadata",
@@ -75,7 +71,7 @@ def generate_report(
     if source_names != target_names:
         raise ValueError(
             "Expected source and target to have same schema, got "
-            f"source: {source_names} target: {target_names}"
+            f"{consts.RESULT_TYPE_SOURCE}: {source_names}; {consts.RESULT_TYPE_TARGET}: {target_names}"
         )
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
@@ -93,7 +89,11 @@ def generate_report(
     target_df = client.execute(target_pivot)
 
     con = ibis.pandas.connect(
-        {"source": source_df, "differences": differences_df, "target": target_df}
+        {
+            consts.RESULT_TYPE_SOURCE: source_df,
+            "differences": differences_df,
+            consts.RESULT_TYPE_TARGET: target_df,
+        }
     )
     joined = _join_pivots(
         con.tables.source, con.tables.target, con.tables.differences, join_on_fields
@@ -218,7 +218,7 @@ def _calculate_difference(
         difference.name("difference"),
         pct_difference.name("pct_difference"),
         pct_threshold.name("pct_threshold"),
-        validation_status.name("validation_status"),
+        validation_status.name(consts.VALIDATION_STATUS),
     )
 
 
@@ -302,19 +302,21 @@ def _pivot_result(
                     ibis.literal("{")
                     + ibis.literal(", ").join(validation.primary_keys)
                     + ibis.literal("}")
-                ).name("primary_keys")
+                ).name(consts.CONFIG_PRIMARY_KEYS)
             else:
-                primary_keys = ibis.literal(None).cast("string").name("primary_keys")
+                primary_keys = (
+                    ibis.literal(None).cast("string").name(consts.CONFIG_PRIMARY_KEYS)
+                )
 
             pivots.append(
                 result.projection(
                     (
                         ibis.literal(field).name("validation_name"),
                         ibis.literal(validation.validation_type).name(
-                            "validation_type"
+                            consts.VALIDATION_TYPE
                         ),
                         ibis.literal(validation.aggregation_type).name(
-                            "aggregation_type"
+                            consts.AGGREGATION_TYPE
                         ),
                         ibis.literal(validation.get_table_name(result_type)).name(
                             "table_name"
@@ -368,48 +370,50 @@ def _join_pivots(
 
         group_by_columns = (
             ibis.literal("{") + ibis.literal(", ").join(join_values) + ibis.literal("}")
-        ).name("group_by_columns")
+        ).name(consts.GROUP_BY_COLUMNS)
     else:
-        group_by_columns = ibis.literal(None).cast("string").name("group_by_columns")
+        group_by_columns = (
+            ibis.literal(None).cast("string").name(consts.GROUP_BY_COLUMNS)
+        )
 
     join_keys = ("validation_name",) + join_on_fields
     source_difference = source.join(differences, join_keys, how="outer")[
         [source[field] for field in join_keys]
         + [
-            source["validation_type"],
-            source["aggregation_type"],
-            source["table_name"],
+            source[consts.VALIDATION_TYPE],
+            source[consts.AGGREGATION_TYPE],
+            source[consts.TABLE_NAME],
             source["column_name"],
-            source["primary_keys"],
+            source[consts.CONFIG_PRIMARY_KEYS],
             source["num_random_rows"],
             source["agg_value"],
             differences["difference"],
             differences["pct_difference"],
             differences["pct_threshold"],
-            differences["validation_status"],
+            differences[consts.VALIDATION_STATUS],
         ]
     ]
     joined = source_difference.join(target, join_keys, how="outer")[
         source_difference["validation_name"],
-        source_difference["validation_type"]
-        .fillna(target["validation_type"])
-        .name("validation_type"),
-        source_difference["aggregation_type"]
-        .fillna(target["aggregation_type"])
-        .name("aggregation_type"),
-        source_difference["table_name"].name("source_table_name"),
-        source_difference["column_name"].name("source_column_name"),
-        source_difference["agg_value"].name("source_agg_value"),
-        target["table_name"].name("target_table_name"),
-        target["column_name"].name("target_column_name"),
-        target["agg_value"].name("target_agg_value"),
+        source_difference[consts.VALIDATION_TYPE]
+        .fillna(target[consts.VALIDATION_TYPE])
+        .name(consts.VALIDATION_TYPE),
+        source_difference[consts.AGGREGATION_TYPE]
+        .fillna(target[consts.AGGREGATION_TYPE])
+        .name(consts.AGGREGATION_TYPE),
+        source_difference["table_name"].name(consts.SOURCE_TABLE_NAME),
+        source_difference["column_name"].name(consts.SOURCE_COLUMN_NAME),
+        source_difference["agg_value"].name(consts.SOURCE_AGG_VALUE),
+        target["table_name"].name(consts.TARGET_TABLE_NAME),
+        target["column_name"].name(consts.TARGET_COLUMN_NAME),
+        target["agg_value"].name(consts.TARGET_AGG_VALUE),
         group_by_columns,
-        source_difference["primary_keys"],
+        source_difference[consts.CONFIG_PRIMARY_KEYS],
         source_difference["num_random_rows"],
         source_difference["difference"],
         source_difference["pct_difference"],
         source_difference["pct_threshold"],
-        source_difference["validation_status"],
+        source_difference[consts.VALIDATION_STATUS],
     ]
     return joined
 
@@ -420,10 +424,10 @@ def _add_metadata(joined: "IbisTable", run_metadata: "RunMetadata"):
 
     joined = joined[
         joined,
-        ibis.literal(run_metadata.run_id).name("run_id"),
-        ibis.literal(run_metadata.labels).name("labels"),
-        ibis.literal(run_metadata.start_time).name("start_time"),
-        ibis.literal(run_metadata.end_time).name("end_time"),
+        ibis.literal(run_metadata.run_id).name(consts.CONFIG_RUN_ID),
+        ibis.literal(run_metadata.labels).name(consts.CONFIG_LABELS),
+        ibis.literal(run_metadata.start_time).name(consts.CONFIG_START_TIME),
+        ibis.literal(run_metadata.end_time).name(consts.CONFIG_END_TIME),
     ]
 
     return joined
@@ -441,40 +445,40 @@ def _get_summary(
         fail_condition = ~success_condition  # Invert success for fail condition
 
         source_not_in_target = (
-            result_df["source_agg_value"].notnull()
-            & result_df["target_agg_value"].isnull()
+            result_df[consts.SOURCE_AGG_VALUE].notnull()
+            & result_df[consts.TARGET_AGG_VALUE].isnull()
         )
         target_not_in_source = (
-            result_df["source_agg_value"].isnull()
-            & result_df["target_agg_value"].notnull()
+            result_df[consts.SOURCE_AGG_VALUE].isnull()
+            & result_df[consts.TARGET_AGG_VALUE].notnull()
         )
         present_in_both_tables = (
-            result_df["source_agg_value"].notnull()
-            & result_df["target_agg_value"].notnull()
+            result_df[consts.SOURCE_AGG_VALUE].notnull()
+            & result_df[consts.TARGET_AGG_VALUE].notnull()
         )
 
         logging.info(
             {
-                "validation_run_id": result_df.loc[0, "run_id"],
-                "validation_start_time": result_df.loc[0, "start_time"].strftime(
-                    "%Y-%m-%d %H:%M:%S %Z"
-                ),
-                "validation_end_time": result_df.loc[0, "end_time"].strftime(
-                    "%Y-%m-%d %H:%M:%S %Z"
-                ),
-                "total_source_rows": source_df.shape[0],
-                "total_target_rows": target_df.shape[0],
-                "total_rows_validated": result_df.shape[0],
+                consts.CONFIG_RUN_ID: result_df.loc[0, consts.CONFIG_RUN_ID],
+                consts.CONFIG_START_TIME: result_df.loc[
+                    0, consts.CONFIG_START_TIME
+                ].strftime("%Y-%m-%d %H:%M:%S %Z"),
+                consts.CONFIG_END_TIME: result_df.loc[
+                    0, consts.CONFIG_END_TIME
+                ].strftime("%Y-%m-%d %H:%M:%S %Z"),
+                consts.TOTAL_SOURCE_ROWS: source_df.shape[0],
+                consts.TOTAL_TARGET_ROWS: target_df.shape[0],
+                consts.TOTAL_ROWS_VALIDATED: result_df.shape[0],
                 # Using .sum() on boolean Series for much faster counting
-                "total_rows_success_validation_status": success_condition.sum(),
-                "total_rows_fail_validation_status": fail_condition.sum(),
-                "failed_rows_present_in_source_not_in_target": (
+                consts.TOTAL_ROWS_SUCCESS: success_condition.sum(),
+                consts.TOTAL_ROWS_FAIL: fail_condition.sum(),
+                consts.FAILED_SOURCE_NOT_IN_TARGET: (
                     fail_condition & source_not_in_target
                 ).sum(),
-                "failed_rows_present_in_target_not_in_source": (
+                consts.FAILED_TARGET_NOT_IN_SOURCE: (
                     fail_condition & target_not_in_source
                 ).sum(),
-                "failed_rows_present_in_both_source_and_target": (
+                consts.FAILED_PRESENT_IN_BOTH_TABLES: (
                     fail_condition & present_in_both_tables
                 ).sum(),
             }

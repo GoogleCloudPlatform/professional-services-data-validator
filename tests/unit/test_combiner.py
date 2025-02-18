@@ -968,51 +968,51 @@ def test_generate_report_with_nan_agg_value(
         (
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"] * 5,
-                    "start_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"] * 5,
+                    consts.CONFIG_START_TIME: [
                         datetime.datetime(
                             2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
                         )
                     ]
                     * 5,
-                    "end_time": [
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
                         )
                     ]
                     * 5,
-                    "validation_type": [consts.ROW_VALIDATION] * 5,
+                    consts.VALIDATION_TYPE: [consts.ROW_VALIDATION] * 5,
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
                     + [consts.VALIDATION_STATUS_FAIL] * 3,
-                    "group_by_columns": [
+                    consts.GROUP_BY_COLUMNS: [
                         {"id": "1"},
                         {"id": "2"},
                         {"id": "3"},
                         {"id": "4"},
                         {"id": "8"},
                     ],
-                    "source_agg_value": [10, 20, 30, 40, None],
-                    "target_agg_value": [10, 20, 60, None, 80],
+                    consts.SOURCE_AGG_VALUE: [10, 20, 30, 40, None],
+                    consts.TARGET_AGG_VALUE: [10, 20, 60, None, 80],
                 }
             ),
             pandas.DataFrame({"id": [1, 2, 3, 4], "value": [10, 20, 30, 40]}),
             pandas.DataFrame({"id": [1, 2, 3, 8], "value": [10, 20, 60, 80]}),
             {
-                "validation_run_id": "test-run",
-                "validation_start_time": "2025-02-12 07:30:10 UTC",
-                "validation_end_time": "2025-02-12 07:32:15 UTC",
-                "total_source_rows": 4,
-                "total_target_rows": 4,
-                "total_rows_validated": 5,
-                "total_rows_success_validation_status": 2,
+                consts.CONFIG_RUN_ID: "test-run",
+                consts.CONFIG_START_TIME: "2025-02-12 07:30:10 UTC",
+                consts.CONFIG_END_TIME: "2025-02-12 07:32:15 UTC",
+                consts.TOTAL_SOURCE_ROWS: 4,
+                consts.TOTAL_TARGET_ROWS: 4,
+                consts.TOTAL_ROWS_VALIDATED: 5,
+                consts.TOTAL_ROWS_SUCCESS: 2,
                 # ids 3, 4, 8 got failed validation status
-                "total_rows_fail_validation_status": 3,
+                consts.TOTAL_ROWS_FAIL: 3,
                 # id 4 present only in source
-                "failed_rows_present_in_source_not_in_target": 1,
+                consts.FAILED_SOURCE_NOT_IN_TARGET: 1,
                 # id 8 present only in target
-                "failed_rows_present_in_target_not_in_source": 1,
+                consts.FAILED_TARGET_NOT_IN_SOURCE: 1,
                 # id 3 present in both source and target but value is different
-                "failed_rows_present_in_both_source_and_target": 1,
+                consts.FAILED_PRESENT_IN_BOTH_TABLES: 1,
             },
         ),
     ),
