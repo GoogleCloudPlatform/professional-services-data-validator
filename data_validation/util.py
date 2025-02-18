@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 import re
 import time
+
+from data_validation import exceptions
 
 
 def timed_call(log_txt, fn, *args, **kwargs):
@@ -44,3 +47,18 @@ def split_not_in_quotes(
         return [t for t in re.split(pattern, to_split) if t]
     else:
         return re.split(pattern, to_split)
+
+
+def dvt_config_string_to_dict(config_string: str) -> dict:
+    """Convert JSON in a string to a dict."""
+    if not config_string:
+        return None
+    if isinstance(config_string, dict):
+        return config_string
+    try:
+        param_dict = json.loads(config_string.replace("'", '"'))
+        return param_dict
+    except json.JSONDecodeError as exc:
+        raise exceptions.ValidationException(
+            f"Invalid JSON format in connection parameter dictionary string: {config_string}"
+        ) from exc

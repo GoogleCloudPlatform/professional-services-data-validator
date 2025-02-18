@@ -574,6 +574,57 @@ def test_row_validation_identifiers():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_RESERVED_WORD_COLUMNS",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_RESERVED_WORD_COLUMNS",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_RESERVED_WORD_COLUMNS",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_RESERVED_WORD_COLUMNS",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES")

@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sqlalchemy as sa
-from sqlalchemy.dialects.oracle.base import OracleIdentifierPreparer
+from sqlalchemy.dialects.oracle.base import (
+    OracleIdentifierPreparer,
+    RESERVED_WORDS as ORACLE_RESERVED_WORDS,
+)
 from sqlalchemy.dialects.oracle.cx_oracle import OracleDialect_cx_oracle
 import re
 
@@ -21,6 +24,13 @@ from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_oracle.compiler import OracleCompiler
 from third_party.ibis.ibis_oracle.datatypes import _get_type
+
+
+EXTRA_RESERVED_WORDS = set(
+    [
+        "COLUMN",
+    ]
+)
 
 
 def _ora_denormalize_name(self, name):
@@ -47,6 +57,11 @@ OracleDialect_cx_oracle.denormalize_name = _ora_denormalize_name
 
 
 class DVTOracleIdentifierPreparer(OracleIdentifierPreparer):
+
+    reserved_words = {
+        x.lower() for x in ORACLE_RESERVED_WORDS.union(EXTRA_RESERVED_WORDS)
+    }
+
     def quote_identifier(self, value):
         """Quote an identifier.
 
