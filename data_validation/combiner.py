@@ -99,7 +99,7 @@ def generate_report(
         con.tables.source, con.tables.target, con.tables.differences, join_on_fields
     )
 
-    documented = _add_metadata(joined, run_metadata)
+    documented, run_metadata = _add_metadata(joined, run_metadata)
 
     if verbose:
         logging.debug("-- ** Combiner Query ** --")
@@ -118,7 +118,7 @@ def generate_report(
             first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
         )
 
-    _get_summary(result_df, source_df, target_df)
+    _get_summary(run_metadata, result_df, source_df, target_df)
 
     return result_df
 
@@ -430,11 +430,14 @@ def _add_metadata(joined: "IbisTable", run_metadata: "RunMetadata"):
         ibis.literal(run_metadata.end_time).name(consts.CONFIG_END_TIME),
     ]
 
-    return joined
+    return (joined, run_metadata)
 
 
 def _get_summary(
-    result_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"
+    run_metadata: "RunMetadata",
+    result_df: "DataFrame",
+    source_df: "DataFrame",
+    target_df: "DataFrame",
 ):
     """Logs a summary report/stats of row validation results."""
     try:
@@ -460,13 +463,13 @@ def _get_summary(
 
             logging.info(
                 {
-                    consts.CONFIG_RUN_ID: result_df.loc[0, consts.CONFIG_RUN_ID],
-                    consts.CONFIG_START_TIME: result_df.loc[
-                        0, consts.CONFIG_START_TIME
-                    ].strftime("%Y-%m-%d %H:%M:%S %Z"),
-                    consts.CONFIG_END_TIME: result_df.loc[
-                        0, consts.CONFIG_END_TIME
-                    ].strftime("%Y-%m-%d %H:%M:%S %Z"),
+                    consts.CONFIG_RUN_ID: run_metadata.run_id,
+                    consts.CONFIG_START_TIME: run_metadata.start_time.strftime(
+                        "%Y-%m-%d %H:%M:%S %Z"
+                    ),
+                    consts.CONFIG_END_TIME: run_metadata.end_time.strftime(
+                        "%Y-%m-%d %H:%M:%S %Z"
+                    ),
                     consts.TOTAL_SOURCE_ROWS: source_df.shape[0],
                     consts.TOTAL_TARGET_ROWS: target_df.shape[0],
                     consts.TOTAL_ROWS_VALIDATED: result_df.shape[0],

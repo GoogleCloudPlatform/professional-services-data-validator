@@ -963,24 +963,20 @@ def test_generate_report_with_nan_agg_value(
 
 
 @pytest.mark.parametrize(
-    ("result_df", "source_df", "target_df", "expected"),
+    ("run_metadata", "result_df", "source_df", "target_df", "expected"),
     (
         (
+            metadata.RunMetadata(
+                run_id="test-run",
+                start_time=datetime.datetime(
+                    2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
             pandas.DataFrame(
                 {
-                    consts.CONFIG_RUN_ID: ["test-run"] * 5,
-                    consts.CONFIG_START_TIME: [
-                        datetime.datetime(
-                            2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
-                        )
-                    ]
-                    * 5,
-                    consts.CONFIG_END_TIME: [
-                        datetime.datetime(
-                            2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
-                        )
-                    ]
-                    * 5,
                     consts.VALIDATION_TYPE: [consts.ROW_VALIDATION] * 5,
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
                     + [consts.VALIDATION_STATUS_FAIL] * 3,
@@ -1018,10 +1014,10 @@ def test_generate_report_with_nan_agg_value(
     ),
 )
 def test_get_summary_with_non_zero_values_for_all_stats(
-    module_under_test, caplog, result_df, source_df, target_df, expected
+    module_under_test, caplog, run_metadata, result_df, source_df, target_df, expected
 ):
     caplog.set_level(logging.INFO)
-    module_under_test._get_summary(result_df, source_df, target_df)
+    module_under_test._get_summary(run_metadata, result_df, source_df, target_df)
 
     logged = caplog.records[0]  # assuming only one log message
     assert logged.levelname == "INFO"
