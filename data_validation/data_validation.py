@@ -353,7 +353,10 @@ class DataValidation(object):
                 target_df = futures[1].result()
 
             pandas_client = ibis.pandas.connect(
-                {consts.RESULT_TYPE_SOURCE: source_df, consts.RESULT_TYPE_TARGET: target_df}
+                {
+                    consts.RESULT_TYPE_SOURCE: source_df,
+                    consts.RESULT_TYPE_TARGET: target_df,
+                }
             )
 
             try:
