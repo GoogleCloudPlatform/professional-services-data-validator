@@ -437,49 +437,55 @@ def _get_summary(
     result_df: "DataFrame", source_df: "DataFrame", target_df: "DataFrame"
 ):
     """Logs a summary report/stats of row validation results."""
-    if result_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION:
-        # Vectorized calculations for all counts
-        success_condition = (
-            result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
-        )
-        fail_condition = ~success_condition  # Invert success for fail condition
+    try:
+        if result_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION:
+            # Vectorized calculations for all counts
+            success_condition = (
+                result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+            )
+            fail_condition = ~success_condition  # Invert success for fail condition
 
-        source_not_in_target = (
-            result_df[consts.SOURCE_AGG_VALUE].notnull()
-            & result_df[consts.TARGET_AGG_VALUE].isnull()
-        )
-        target_not_in_source = (
-            result_df[consts.SOURCE_AGG_VALUE].isnull()
-            & result_df[consts.TARGET_AGG_VALUE].notnull()
-        )
-        present_in_both_tables = (
-            result_df[consts.SOURCE_AGG_VALUE].notnull()
-            & result_df[consts.TARGET_AGG_VALUE].notnull()
-        )
+            source_not_in_target = (
+                result_df[consts.SOURCE_AGG_VALUE].notnull()
+                & result_df[consts.TARGET_AGG_VALUE].isnull()
+            )
+            target_not_in_source = (
+                result_df[consts.SOURCE_AGG_VALUE].isnull()
+                & result_df[consts.TARGET_AGG_VALUE].notnull()
+            )
+            present_in_both_tables = (
+                result_df[consts.SOURCE_AGG_VALUE].notnull()
+                & result_df[consts.TARGET_AGG_VALUE].notnull()
+            )
 
-        logging.info(
-            {
-                consts.CONFIG_RUN_ID: result_df.loc[0, consts.CONFIG_RUN_ID],
-                consts.CONFIG_START_TIME: result_df.loc[
-                    0, consts.CONFIG_START_TIME
-                ].strftime("%Y-%m-%d %H:%M:%S %Z"),
-                consts.CONFIG_END_TIME: result_df.loc[
-                    0, consts.CONFIG_END_TIME
-                ].strftime("%Y-%m-%d %H:%M:%S %Z"),
-                consts.TOTAL_SOURCE_ROWS: source_df.shape[0],
-                consts.TOTAL_TARGET_ROWS: target_df.shape[0],
-                consts.TOTAL_ROWS_VALIDATED: result_df.shape[0],
-                # Using .sum() on boolean Series for much faster counting
-                consts.TOTAL_ROWS_SUCCESS: success_condition.sum(),
-                consts.TOTAL_ROWS_FAIL: fail_condition.sum(),
-                consts.FAILED_SOURCE_NOT_IN_TARGET: (
-                    fail_condition & source_not_in_target
-                ).sum(),
-                consts.FAILED_TARGET_NOT_IN_SOURCE: (
-                    fail_condition & target_not_in_source
-                ).sum(),
-                consts.FAILED_PRESENT_IN_BOTH_TABLES: (
-                    fail_condition & present_in_both_tables
-                ).sum(),
-            }
+            logging.info(
+                {
+                    consts.CONFIG_RUN_ID: result_df.loc[0, consts.CONFIG_RUN_ID],
+                    consts.CONFIG_START_TIME: result_df.loc[
+                        0, consts.CONFIG_START_TIME
+                    ].strftime("%Y-%m-%d %H:%M:%S %Z"),
+                    consts.CONFIG_END_TIME: result_df.loc[
+                        0, consts.CONFIG_END_TIME
+                    ].strftime("%Y-%m-%d %H:%M:%S %Z"),
+                    consts.TOTAL_SOURCE_ROWS: source_df.shape[0],
+                    consts.TOTAL_TARGET_ROWS: target_df.shape[0],
+                    consts.TOTAL_ROWS_VALIDATED: result_df.shape[0],
+                    # Using .sum() on boolean Series for much faster counting
+                    consts.TOTAL_ROWS_SUCCESS: success_condition.sum(),
+                    consts.TOTAL_ROWS_FAIL: fail_condition.sum(),
+                    consts.FAILED_SOURCE_NOT_IN_TARGET: (
+                        fail_condition & source_not_in_target
+                    ).sum(),
+                    consts.FAILED_TARGET_NOT_IN_SOURCE: (
+                        fail_condition & target_not_in_source
+                    ).sum(),
+                    consts.FAILED_PRESENT_IN_BOTH_TABLES: (
+                        fail_condition & present_in_both_tables
+                    ).sum(),
+                }
+            )
+    except Exception as e:
+        logging.warning(
+            f"Error while generating summary report of row validation results: {e}",
+            exc_info=True,
         )
