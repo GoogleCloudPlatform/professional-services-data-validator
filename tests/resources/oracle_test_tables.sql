@@ -783,3 +783,20 @@ INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (4,'str'||CHR(13),'Trai
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (5,'str'||CHR(9)||'str','Contains: tab');
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (6,'str'||CHR(9),'Trailing: tab');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_reserved_word_columns;
+CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
+  id         NUMBER(5) NOT NULL PRIMARY KEY
+-- SQL tokens
+, "SELECT"   VARCHAR2(10)
+, "COLUMN"   VARCHAR2(10)
+, "FROM"     VARCHAR2(10)
+, "WHERE"    VARCHAR2(10)
+-- Data types
+, "DATE"     VARCHAR2(10)
+, "NUMBER"   VARCHAR2(10)
+, "STRING"   VARCHAR2(10)
+);
+COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
+INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
+COMMIT;

@@ -708,3 +708,19 @@ INSERT INTO udf.dvt_tricky_strings VALUES (3,'str'||CHR(13)||'str','Contains: ca
 INSERT INTO udf.dvt_tricky_strings VALUES (4,'str'||CHR(13),'Trailing: carriage return');
 INSERT INTO udf.dvt_tricky_strings VALUES (5,'str'||CHR(9)||'str','Contains: tab');
 INSERT INTO udf.dvt_tricky_strings VALUES (6,'str'||CHR(9),'Trailing: tab');
+
+DROP TABLE udf.dvt_reserved_word_columns;
+CREATE TABLE udf.dvt_reserved_word_columns (
+  id         INTEGER NOT NULL PRIMARY KEY
+-- SQL tokens
+, "SELECT"   VARCHAR(10)
+, "COLUMN"   VARCHAR(10)
+, "FROM"     VARCHAR(10)
+, "WHERE"    VARCHAR(10)
+-- Data types
+, "DATE"     VARCHAR(10)
+, "NUMBER"   VARCHAR(10)
+, "STRING"   VARCHAR(10)
+);
+COMMENT ON TABLE udf.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
+INSERT INTO udf.dvt_reserved_word_columns (id) VALUES (1);
