@@ -113,7 +113,7 @@ class BigQueryResultHandler(object):
         else:
             logging.info(f'{BQRH_WRITE_MESSAGE}, run id: {result_df.iloc[0]["run_id"]}')
 
-        # Handler also logs results after saving to BigQuery.
+        # Handler can also output results after saving to BigQuery.
         logger = logging.getLogger()
         if logger.isEnabledFor(logging.DEBUG):
             # Checking log level to avoid evaluating a large Dataframe that will never be logged.
