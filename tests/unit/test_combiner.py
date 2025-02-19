@@ -54,6 +54,14 @@ def module_under_test():
     return combiner
 
 
+def pandas_df(cols: int, rows: int):
+    data = {"count": [1]}
+    for i in range(cols):
+        col_name = f"count__col{i+1}"
+        data[col_name] = range(rows)
+    return pandas.DataFrame(data)
+
+
 def test_generate_report_with_different_columns(module_under_test):
     source = pandas.DataFrame({"count": [1], "sum": [3]})
     target = pandas.DataFrame({"count": [2]})
@@ -95,6 +103,50 @@ def test_generate_report_with_too_many_rows(module_under_test):
 
     # TODO: how do we want to handle this going forward?
     assert len(report) == 16
+
+
+@freeze_time("1998-09-04 07:31:42")
+@pytest.mark.parametrize(
+    ("input_df"),
+    (pandas_df(146, 1),),
+)
+def test_generate_report_with_many_columns(module_under_test, input_df):
+    validations = {
+        _: metadata.ValidationMetadata(
+            source_table_name="test_source",
+            source_table_schema="source_dataset",
+            source_column_name=None if _ == "count" else _,
+            target_table_name="test_target",
+            target_table_schema="target_dataset",
+            target_column_name=None if _ == "count" else _,
+            validation_type="Column",
+            aggregation_type="count",
+            primary_keys=[],
+            num_random_rows=None,
+            threshold=0.0,
+        )
+        for _ in input_df.columns
+    }
+    run_metadata = metadata.RunMetadata(
+        validations=validations,
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+    pandas_client = ibis.pandas.connect(
+        {
+            consts.RESULT_TYPE_SOURCE: input_df,
+            consts.RESULT_TYPE_TARGET: input_df,
+        }
+    )
+
+    _ = module_under_test.generate_report(
+        pandas_client,
+        run_metadata,
+        source=pandas_client.table(consts.RESULT_TYPE_SOURCE),
+        target=pandas_client.table(consts.RESULT_TYPE_TARGET),
+    )
 
 
 @freeze_time("1998-09-04 07:31:42")
