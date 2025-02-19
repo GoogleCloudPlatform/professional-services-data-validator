@@ -789,6 +789,62 @@ def test_row_validation_identifiers():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="udf.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    pytest.skip("Skipping test_column_validation_reserved_words because of issue-1436")
+    column_validation_test(
+        tc="mock-conn",
+        tables="udf.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    pytest.skip("Skipping test_row_validation_reserved_words because of issue-1436")
+    row_validation_test(
+        tables="udf.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    pytest.skip(
+        "Skipping test_row_validation_comp_fields_reserved_words because of issue-1436"
+    )
+    row_validation_test(
+        tables="udf.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_tricky_dates_to_bigquery():
     """
     Test with date values that are at the extremes, e.g. 9999-12-31.
@@ -800,6 +856,19 @@ def test_row_validation_tricky_dates_to_bigquery():
         tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
         hash="col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_strings_to_bigquery():
+    """Test with string values containing special characters."""
+    row_validation_test(
+        tables="udf.dvt_tricky_strings=pso_data_validator.dvt_tricky_strings",
+        tc="bq-conn",
+        hash="*",
     )
 
 

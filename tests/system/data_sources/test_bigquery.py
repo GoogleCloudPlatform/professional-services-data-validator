@@ -1369,6 +1369,57 @@ def test_row_validation_identifiers(mock_conn):
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
+def test_schema_validation_reserved_words(mock_conn):
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_column_validation_reserved_words(mock_conn):
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_row_validation_reserved_words(mock_conn):
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_row_validation_comp_fields_reserved_words(mock_conn):
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
 def test_bq_result_handler(mock_conn, bigquery_client, bigquery_dataset_id, caplog):
     """Test BigQuery result handler using dvt_core_types schema validation."""
     table_id = f"{bigquery_dataset_id}.test_bq_result_handler"

@@ -48,7 +48,9 @@ UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
 def _setup_session_requirements(session, extra_packages=[]):
     """Install requirements for nox tests."""
 
-    session.install("--upgrade", "pip", "pytest", "pytest-cov", "wheel")
+    session.install(
+        "--upgrade", "pip", "pytest", "pytest-cov", "pytest-timeout", "wheel"
+    )
     session.install("--no-cache-dir", "-e", ".")
 
     if extra_packages:

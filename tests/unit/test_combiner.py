@@ -17,6 +17,7 @@ import ibis.backends.pandas
 import pandas
 import pandas.testing
 import pytest
+import logging
 
 from freezegun import freeze_time
 from data_validation import metadata, consts
@@ -58,8 +59,8 @@ def test_generate_report_with_different_columns(module_under_test):
     target = pandas.DataFrame({"count": [2]})
     pandas_client = ibis.pandas.connect(
         {
-            module_under_test.DEFAULT_SOURCE: source,
-            module_under_test.DEFAULT_TARGET: target,
+            consts.RESULT_TYPE_SOURCE: source,
+            consts.RESULT_TYPE_TARGET: target,
         }
     )
     with pytest.raises(
@@ -69,8 +70,8 @@ def test_generate_report_with_different_columns(module_under_test):
             pandas_client,
             # Schema validation occurs before run_metadata is needed.
             None,
-            source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
-            target=pandas_client.table(module_under_test.DEFAULT_TARGET),
+            source=pandas_client.table(consts.RESULT_TYPE_SOURCE),
+            target=pandas_client.table(consts.RESULT_TYPE_TARGET),
         )
 
 
@@ -79,8 +80,8 @@ def test_generate_report_with_too_many_rows(module_under_test):
     target = pandas.DataFrame({"count": [2, 2]})
     pandas_client = ibis.pandas.connect(
         {
-            module_under_test.DEFAULT_SOURCE: source,
-            module_under_test.DEFAULT_TARGET: target,
+            consts.RESULT_TYPE_SOURCE: source,
+            consts.RESULT_TYPE_TARGET: target,
         }
     )
 
@@ -88,8 +89,8 @@ def test_generate_report_with_too_many_rows(module_under_test):
         pandas_client,
         # Validation occurs before run_metadata is needed.
         EXAMPLE_RUN_METADATA,
-        source=pandas_client.table(module_under_test.DEFAULT_SOURCE),
-        target=pandas_client.table(module_under_test.DEFAULT_TARGET),
+        source=pandas_client.table(consts.RESULT_TYPE_SOURCE),
+        target=pandas_client.table(consts.RESULT_TYPE_TARGET),
     )
 
     # TODO: how do we want to handle this going forward?
@@ -959,3 +960,65 @@ def test_generate_report_with_nan_agg_value(
         .reindex(sorted(expected.columns), axis=1)
     )
     pandas.testing.assert_frame_equal(report, expected)
+
+
+@pytest.mark.parametrize(
+    ("run_metadata", "result_df", "source_df", "target_df", "expected"),
+    (
+        (
+            metadata.RunMetadata(
+                run_id="test-run",
+                start_time=datetime.datetime(
+                    2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_TYPE: [consts.ROW_VALIDATION] * 5,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
+                    + [consts.VALIDATION_STATUS_FAIL] * 3,
+                    consts.GROUP_BY_COLUMNS: [
+                        {"id": "1"},
+                        {"id": "2"},
+                        {"id": "3"},
+                        {"id": "4"},
+                        {"id": "8"},
+                    ],
+                    consts.SOURCE_AGG_VALUE: [10, 20, 30, 40, None],
+                    consts.TARGET_AGG_VALUE: [10, 20, 60, None, 80],
+                }
+            ),
+            pandas.DataFrame({"id": [1, 2, 3, 4], "value": [10, 20, 30, 40]}),
+            pandas.DataFrame({"id": [1, 2, 3, 8], "value": [10, 20, 60, 80]}),
+            {
+                consts.CONFIG_RUN_ID: "test-run",
+                consts.CONFIG_START_TIME: "2025-02-12 07:30:10 UTC",
+                consts.CONFIG_END_TIME: "2025-02-12 07:32:15 UTC",
+                consts.TOTAL_SOURCE_ROWS: 4,
+                consts.TOTAL_TARGET_ROWS: 4,
+                consts.TOTAL_ROWS_VALIDATED: 5,
+                consts.TOTAL_ROWS_SUCCESS: 2,
+                # ids 3, 4, 8 got failed validation status
+                consts.TOTAL_ROWS_FAIL: 3,
+                # id 4 present only in source
+                consts.FAILED_SOURCE_NOT_IN_TARGET: 1,
+                # id 8 present only in target
+                consts.FAILED_TARGET_NOT_IN_SOURCE: 1,
+                # id 3 present in both source and target but value is different
+                consts.FAILED_PRESENT_IN_BOTH_TABLES: 1,
+            },
+        ),
+    ),
+)
+def test_get_summary_with_non_zero_values_for_all_stats(
+    module_under_test, caplog, run_metadata, result_df, source_df, target_df, expected
+):
+    caplog.set_level(logging.INFO)
+    module_under_test._get_summary(run_metadata, result_df, source_df, target_df)
+
+    logged = caplog.records[0]  # assuming only one log message
+    assert logged.levelname == "INFO"
+    assert logged.message == str(expected)

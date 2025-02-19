@@ -14,6 +14,8 @@
 from third_party.ibis.ibis_teradata import Backend as TeradataBackend
 import teradatasql  # NOQA fail early if the package is missing
 
+from data_validation.util import dvt_config_string_to_dict
+
 
 def teradata_connect(
     host: str = "localhost",
@@ -25,6 +27,9 @@ def teradata_connect(
     json_params: str = None,
 ):
     backend = TeradataBackend()
+    if json_params:
+        json_params = dvt_config_string_to_dict(json_params)
+
     backend.do_connect(
         host=host,
         user_name=user_name,

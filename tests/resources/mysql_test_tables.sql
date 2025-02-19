@@ -554,7 +554,7 @@ CREATE TABLE `pso_data_validator`.`dvt_many_cols`
 ) COMMENT 'Integration test table used to test validating many columns.';
 INSERT INTO `pso_data_validator`.`dvt_many_cols` (id) values (1);
 
-DROP TABLE `pso_data_validator`.`dvt_tricky_dates`;
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_tricky_dates`;
 CREATE TABLE `pso_data_validator`.`dvt_tricky_dates` (
   id            integer NOT NULL PRIMARY KEY
 , col_dt_low    date
@@ -562,8 +562,24 @@ CREATE TABLE `pso_data_validator`.`dvt_tricky_dates` (
 , col_dt_high   date
 , col_ts_low    datetime(0)
 , col_ts_epoch  datetime(0)
-, col_ts_high   datetime(0));
+, col_ts_high   datetime(0)
+) COMMENT='Integration test table used to test potentially difficult Timestamps.';
 SET time_zone = '+00:00';
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
 (1,'1000-01-01','1970-01-01','9999-12-31'
 ,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59');
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_reserved_word_columns`;
+CREATE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
+  id         integer NOT NULL PRIMARY KEY
+-- SQL tokens
+, `select`   varchar(10)
+, `column`   varchar(10)
+, `from`     varchar(10)
+, `where`    varchar(10)
+-- Data types
+, `date`     varchar(10)
+, `number`   varchar(10)
+, `string`   varchar(10)
+) COMMENT='Integration test table used to test potentially difficult column names.';
+INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);

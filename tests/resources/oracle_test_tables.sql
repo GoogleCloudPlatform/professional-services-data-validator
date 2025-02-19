@@ -764,7 +764,39 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 , col_ts_low    TIMESTAMP(0)
 , col_ts_epoch  TIMESTAMP(0)
 , col_ts_high   TIMESTAMP(0));
+COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table used to test potentially difficult Timestamps.';
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_tricky_strings;
+CREATE TABLE pso_data_validator.dvt_tricky_strings (
+  id           NUMBER(5) NOT NULL PRIMARY KEY
+, col_string   VARCHAR2(20)
+, col_comment  VARCHAR2(40));
+COMMENT ON TABLE pso_data_validator.dvt_tricky_strings IS 'Integration test table used to test potentially difficult Strings.';
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (1,'str'||CHR(10)||'str','Contains: new line');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (2,'str'||CHR(10),'Trailing: new line');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (3,'str'||CHR(13)||'str','Contains: carriage return');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (4,'str'||CHR(13),'Trailing: carriage return');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (5,'str'||CHR(9)||'str','Contains: tab');
+INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (6,'str'||CHR(9),'Trailing: tab');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_reserved_word_columns;
+CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
+  id         NUMBER(5) NOT NULL PRIMARY KEY
+-- SQL tokens
+, "SELECT"   VARCHAR2(10)
+, "COLUMN"   VARCHAR2(10)
+, "FROM"     VARCHAR2(10)
+, "WHERE"    VARCHAR2(10)
+-- Data types
+, "DATE"     VARCHAR2(10)
+, "NUMBER"   VARCHAR2(10)
+, "STRING"   VARCHAR2(10)
+);
+COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
+INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
 COMMIT;

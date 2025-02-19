@@ -114,3 +114,10 @@ VALUES
 (CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
 
 INSERT INTO dvt_many_cols (id) VALUES (1);
+
+INSERT INTO dvt_tricky_strings
+(id,col_string,col_comment)
+VALUES
+(1,'str\nstr','Contains: new line'), (2,'str\n','Trailing: new line'),
+(3,'str\rstr','Contains: carriage return'), (4,'str\r','Trailing: carriage return'),
+(5,'str\tstr','Contains: tab'), (6,'str\t','Trailing: tab');
