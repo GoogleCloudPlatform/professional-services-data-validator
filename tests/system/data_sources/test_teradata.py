@@ -588,6 +588,7 @@ def test_row_validation_char_pk_to_bigquery():
     """Test padded char primary key join columns"""
     id_column_row_validation_test(
         "udf.dvt_char_id=pso_data_validator.dvt_char_id",
+        use_randow_row=False,
         # We need to trim padded string PKs due to a Teradata client "quirk".
         trim_string_pks=True,
     )
