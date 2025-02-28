@@ -74,5 +74,4 @@ def test_print_raw_query_output_strings(
 ):
     module_under_test.print_raw_query_output(test_input)
     captured = capsys.readouterr()
-    # breakpoint()
     assert expected_output in captured.out
