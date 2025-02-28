@@ -37,8 +37,42 @@ def module_under_test():
         # Therefore resorted to testing via an integration test.
     ],
 )
-def test_print_raw_query_output(module_under_test, capsys, test_input: list):
+def test_print_raw_query_output_long_input(module_under_test, capsys, test_input: list):
     module_under_test.print_raw_query_output(test_input)
     captured = capsys.readouterr()
     assert test_input[1] in captured.out
     assert "characters truncated" not in captured.out
+
+
+@pytest.mark.parametrize(
+    "test_input,expected_output",
+    [
+        ([0, 12345678], "0, 12345678"),
+        ([1, 12345.678], "1, 12345.678"),
+        ([1, -12345678], "1, -12345678"),
+        ([1, 0.001], "1, 0.001"),
+    ],
+)
+def test_print_raw_query_output_numbers(
+    module_under_test, capsys, test_input: list, expected_output: str
+):
+    module_under_test.print_raw_query_output(test_input)
+    captured = capsys.readouterr()
+    assert expected_output in captured.out
+
+
+@pytest.mark.parametrize(
+    "test_input,expected_output",
+    [
+        (["a", "some-string"], "'a', 'some-string'"),
+        (["a", "string-with-'single'-quote"], "'a', 'string-with-'single'-quote'"),
+        (["a", 'string-with-"double"-quote'], "'a', 'string-with-\"double\"-quote'"),
+    ],
+)
+def test_print_raw_query_output_strings(
+    module_under_test, capsys, test_input: list, expected_output: str
+):
+    module_under_test.print_raw_query_output(test_input)
+    captured = capsys.readouterr()
+    # breakpoint()
+    assert expected_output in captured.out

@@ -37,11 +37,13 @@ def print_raw_query_output(query_output: list):
         query_output (list): A set of rows from a SQLAlchemy query.
     """
 
-    def row_to_str(row) -> str:
+    def row_to_tuple(row) -> tuple:
         """This prevents SQLAlchemy string truncation inside Row() objects by first converting them to a tuple."""
         if isinstance(row, Row):
-            return str(tuple(row))
+            return tuple(row)
+        elif isinstance(row, list):
+            return tuple(row)
         else:
-            return str(row)
+            return row
 
-    print([row_to_str(_) for _ in query_output or []])
+    print([row_to_tuple(_) for _ in query_output or []])
