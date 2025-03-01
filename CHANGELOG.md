@@ -2,6 +2,20 @@
 
 ## Untagged
 
+## [7.3.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.2.0...v7.3.0) (2025-02-19)
+
+
+### Features
+
+* Print summary information after row validation ([#1417](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1417)) ([edb0b4b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/edb0b4b71e845e1972638714be44069b9415862d))
+
+
+### Bug Fixes
+
+* Add PermissionDenied to ignorable exceptions in maybe_secret() ([#1441](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1441)) ([c5883e6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c5883e60afa53d2c3aee37393b6af7aa40df6aca))
+* Convert Snowflake connect_args to a dict before passing to Ibis ([#1431](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1431)) ([38858f7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/38858f73e9c431722dc3c5efad5c137b48b14184))
+* Prevent exception for COLUMN keyword in Oracle ([#1437](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1437)) ([55e14c4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/55e14c41a5dd8f41cb974c44715c224eb6012be8))
+
 ## [7.2.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.1.0...v7.2.0) (2025-02-04)
 
 

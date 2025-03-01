@@ -570,7 +570,6 @@ def run_validations(args, config_managers):
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
     """
-    # TODO(issue/31): Add parallel execution logic
     for config_manager in config_managers:
         run_validation(config_manager, dry_run=args.dry_run, verbose=args.verbose)
 

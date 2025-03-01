@@ -353,7 +353,10 @@ class DataValidation(object):
                 target_df = futures[1].result()
 
             pandas_client = ibis.pandas.connect(
-                {combiner.DEFAULT_SOURCE: source_df, combiner.DEFAULT_TARGET: target_df}
+                {
+                    consts.RESULT_TYPE_SOURCE: source_df,
+                    consts.RESULT_TYPE_TARGET: target_df,
+                }
             )
 
             try:
@@ -362,8 +365,8 @@ class DataValidation(object):
                     combiner.generate_report,
                     pandas_client,
                     self.run_metadata,
-                    pandas_client.table(combiner.DEFAULT_SOURCE),
-                    pandas_client.table(combiner.DEFAULT_TARGET),
+                    pandas_client.table(consts.RESULT_TYPE_SOURCE),
+                    pandas_client.table(consts.RESULT_TYPE_TARGET),
                     join_on_fields=join_on_fields,
                     is_value_comparison=is_value_comparison,
                     verbose=self.verbose,
