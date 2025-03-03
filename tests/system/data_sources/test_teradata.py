@@ -25,6 +25,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     custom_query_validation_test,
     find_tables_test,
+    id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     partition_table_test,
@@ -573,26 +574,10 @@ def test_row_validation_binary_pk_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_string_pk_to_bigquery():
-    """Teradata to BigQuery dvt_string_id row validation.
-    This is testing string primary key join columns.
-    Includes random row filter test.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_string_id=pso_data_validator.dvt_string_id",
-            "--primary-keys=id",
-            "--hash=id,other_data",
-            "--use-random-row",
-            "--random-row-batch-size=5",
-        ]
+    """Test string primary key join columns"""
+    id_column_row_validation_test(
+        "udf.dvt_string_id=pso_data_validator.dvt_string_id",
     )
-    df = run_test_from_cli_args(args)
-    id_type_test_assertions(df)
 
 
 @mock.patch(
@@ -600,26 +585,26 @@ def test_row_validation_string_pk_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_char_pk_to_bigquery():
-    """Teradata to BigQuery dvt_char_id row validation.
-    This is testing CHAR primary key join columns.
-    Includes random row filter test.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=td-conn",
-            "-tc=bq-conn",
-            "-tbls=udf.dvt_char_id=pso_data_validator.dvt_char_id",
-            "--primary-keys=id",
-            "--hash=id,other_data",
-            # We need to trim padded string PKs due to a Teradata client "quirk".
-            "--trim-string-pks",
-        ]
+    """Test padded char primary key join columns"""
+    id_column_row_validation_test(
+        "udf.dvt_char_id=pso_data_validator.dvt_char_id",
+        use_randow_row=False,
+        # We need to trim padded string PKs due to a Teradata client "quirk".
+        trim_string_pks=True,
     )
-    df = run_test_from_cli_args(args)
-    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "udf.dvt_datetime_id=pso_data_validator.dvt_datetime_id",
+        use_randow_row=False,
+    )
 
 
 @mock.patch(

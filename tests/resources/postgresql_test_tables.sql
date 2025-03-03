@@ -311,7 +311,7 @@ INSERT INTO pso_data_validator.dvt_binary VALUES
 (CAST('DVT-key-4' AS bytea), 4, 'Row 4'),
 (CAST('DVT-key-5' AS bytea), 5, 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_char_id;
+DROP TABLE IF EXISTS pso_data_validator.dvt_char_id;
 CREATE TABLE pso_data_validator.dvt_char_id
 (   id          char(6) NOT NULL PRIMARY KEY
 ,   other_data  varchar(100)
@@ -324,7 +324,17 @@ INSERT INTO pso_data_validator.dvt_char_id VALUES
 ('DVT4', 'Row 4'),
 ('DVT5', 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_pangrams;
+DROP TABLE IF EXISTS pso_data_validator.dvt_datetime_id;
+CREATE TABLE pso_data_validator.dvt_datetime_id
+(   id          timestamp NOT NULL PRIMARY KEY
+,   other_data  varchar(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_datetime_id IS 'Integration test table used to test datetime pk matching.';
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES
+(timestamp'2020-01-01 12:00:00', 'Row 1'), (timestamp'2020-02-01 12:00:00', 'Row 2'), (timestamp'2020-03-01 12:00:00', 'Row 3'),
+(timestamp'2020-04-01 12:00:00', 'Row 4'), (timestamp'2020-05-01 12:00:00', 'Row 5');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_pangrams;
 CREATE TABLE pso_data_validator.dvt_pangrams
 (   id          int
 ,   lang        varchar(100)
