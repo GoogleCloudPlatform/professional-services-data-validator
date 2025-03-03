@@ -76,7 +76,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_ts          timestamp(6)
 ,   col_tstz        timestamp(6) with time zone
 ,   col_tsltz       timestamp(6) with time zone
-,   col_interval_ds INTERVAL DAY TO SECOND (3)
+,   col_interval_ds interval day to second (3)
 ,   col_raw         bytea
 ,   col_long_raw    bytea
 ,   col_blob        bytea
