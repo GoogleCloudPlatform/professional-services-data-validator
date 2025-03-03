@@ -31,9 +31,10 @@ Guidelines](https://opensource.google/conduct/).
 
 Clone repo locally and install via pip:
 
-```
+```bash
 git clone git@github.com:GoogleCloudPlatform/professional-services-data-validator.git
 cd professional-services-data-validator/
+
 python -m venv env
 source env/bin/activate
 python -m pip install --upgrade pip
@@ -52,17 +53,15 @@ See [our script](tests/local_check.sh) for using nox to run tests step by step.
 
 You can also run pytest directly:
 ```python
-pip install pyfakefs==4.6.2
+pip install pytest pytest-cov pyfakefs==4.6.2 freezegun
 pytest tests/unit
 ```
 
 To lint your code, run:
-```
-pip install black==22.3.0
-pip install flake8
+```bash
+pip install black==22.3.0 flake8
 black $BLACK_PATHS # Find this variable in our noxfile
-flake8 data_validation
-flake8 tests
+flake8 data_validation tests
 ```
 The above is similar to our [noxfile lint test](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/noxfile.py).
 
