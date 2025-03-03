@@ -459,7 +459,7 @@ class ConfigManager(object):
                 cols_filter_list = consts.COLUMN_FILTER_LIST
             # handler that display results either to output or in a file
             return TextResultHandler(
-                self._config.get(consts.CONFIG_FORMAT, "table"),
+                self._config.get(consts.CONFIG_FORMAT, consts.FORMAT_TYPE_TABLE),
                 self.filter_status,
                 cols_filter_list,
             )
@@ -486,7 +486,9 @@ class ConfigManager(object):
                 table_id=table_id,
                 credentials=credentials,
                 api_endpoint=api_endpoint,
-                text_format=self._config.get(consts.CONFIG_FORMAT, "table"),
+                text_format=self._config.get(
+                    consts.CONFIG_FORMAT, consts.FORMAT_TYPE_TABLE
+                ),
             )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")

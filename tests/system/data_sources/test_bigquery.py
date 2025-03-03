@@ -96,7 +96,7 @@ CONFIG_COUNT_VALID = {
             consts.CONFIG_FIELD_ALIAS: "std_tripduration",
         },
     ],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -131,7 +131,7 @@ CONFIG_GROUPED_COUNT_VALID = {
             consts.CONFIG_CAST: "date",
         },
     ],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -145,7 +145,7 @@ CONFIG_TIMESTAMP_AGGS = {
     consts.CONFIG_TARGET_TABLE_NAME: "bikeshare_trips",
     consts.CONFIG_LABELS: [],
     consts.CONFIG_THRESHOLD: 0.0,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_FILTERS: [],
@@ -240,7 +240,7 @@ CONFIG_NUMERIC_AGG_VALID = {
         },
     ],
     consts.CONFIG_GROUPED_COLUMNS: [],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -394,7 +394,7 @@ TEST_JSON_VALIDATION_CONFIG = {
     consts.CONFIG_TARGET_TABLE_NAME: "dvt_core_types",
     consts.CONFIG_LABELS: [],
     consts.CONFIG_THRESHOLD: 0.0,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_RESULT_HANDLER: None,
     consts.CONFIG_RUN_ID: None,
     consts.CONFIG_FILTERS: [],
@@ -997,7 +997,7 @@ def test_bigquery_row():
                 "cast": None,
             }
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     }
 
     data_validator = data_validation.DataValidation(
@@ -1021,7 +1021,7 @@ def test_custom_query():
         "target_table_name": None,
         "labels": [],
         "threshold": 0.0,
-        "format": "table",
+        "format": consts.FORMAT_TYPE_TABLE,
         "result_handler": None,
         "filters": [],
         "use_random_rows": False,

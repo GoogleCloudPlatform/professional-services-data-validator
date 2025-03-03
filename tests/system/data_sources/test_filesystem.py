@@ -95,7 +95,7 @@ def format_config_count(s_conn, t_conn):
                 consts.CONFIG_FIELD_ALIAS: "sum_entryid",
             },
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
     return config_count_valid
