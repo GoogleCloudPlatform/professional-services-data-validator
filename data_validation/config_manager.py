@@ -883,7 +883,7 @@ class ConfigManager(object):
         """
         return bool(
             (
-                isinstance(source_column_ibis_type, dt.Int64)
+                (isinstance(source_column_ibis_type, dt.Int64) and margin > 0)
                 or (
                     isinstance(source_column_ibis_type, dt.Decimal)
                     and (
@@ -893,7 +893,7 @@ class ConfigManager(object):
                 )
             )
             and (
-                isinstance(target_column_ibis_type, dt.Int64)
+                (isinstance(target_column_ibis_type, dt.Int64) and margin > 0)
                 or (
                     isinstance(target_column_ibis_type, dt.Decimal)
                     and (
