@@ -874,7 +874,7 @@ class ConfigManager(object):
         target_column_ibis_type: dt.DataType,
         margin: int = 0,
     ) -> bool:
-        """Identifies Decimal columns that will cause problems in a Pandas Dataframe.
+        """Identifies numeric columns that will cause problems in a Pandas Dataframe.
 
         i.e. are of greater precision than a 64bit int/real can hold.
 
@@ -883,17 +883,23 @@ class ConfigManager(object):
         """
         return bool(
             (
-                isinstance(source_column_ibis_type, dt.Decimal)
-                and (
-                    source_column_ibis_type.precision is None
-                    or source_column_ibis_type.precision > (18 - margin)
+                isinstance(source_column_ibis_type, dt.Int64)
+                or (
+                    isinstance(source_column_ibis_type, dt.Decimal)
+                    and (
+                        source_column_ibis_type.precision is None
+                        or source_column_ibis_type.precision > (18 - margin)
+                    )
                 )
             )
             and (
-                isinstance(target_column_ibis_type, dt.Decimal)
-                and (
-                    target_column_ibis_type.precision is None
-                    or target_column_ibis_type.precision > (18 - margin)
+                isinstance(target_column_ibis_type, dt.Int64)
+                or (
+                    isinstance(target_column_ibis_type, dt.Decimal)
+                    and (
+                        target_column_ibis_type.precision is None
+                        or target_column_ibis_type.precision > (18 - margin)
+                    )
                 )
             )
         )
