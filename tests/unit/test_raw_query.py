@@ -74,11 +74,14 @@ def test_print_raw_query_output_numbers(
 @pytest.mark.parametrize(
     "test_input,expected_output",
     [
-        ([("a", "some-string")], "('a', 'some-string')"),
-        ([("a", "string-with-'single'-quote")], "('a', 'string-with-'single'-quote')"),
+        ([("a", "some-string")], "[('a', 'some-string')]"),
+        (
+            [("a", "string-with-'single'-quote")],
+            """[('a', "string-with-'single'-quote")]""",
+        ),
         (
             [("a", 'string-with-"double"-quote')],
-            "('a', 'string-with-\"double\"-quote')",
+            """[('a', 'string-with-"double"-quote')]""",
         ),
     ],
 )
@@ -87,7 +90,7 @@ def test_print_raw_query_output_strings(
 ):
     module_under_test.print_raw_query_output(test_input)
     captured = capsys.readouterr()
-    assert expected_output in captured.out
+    assert expected_output == captured.out.strip()
 
 
 @pytest.mark.parametrize(
