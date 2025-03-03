@@ -258,6 +258,19 @@ INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT4', 'Row 4');
 INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT5', 'Row 5');
 COMMIT;
 
+DROP TABLE pso_data_validator.dvt_datetime_id;
+CREATE TABLE pso_data_validator.dvt_datetime_id
+(   id          DATE NOT NULL PRIMARY KEY
+,   other_data  VARCHAR2(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_datetime_id IS 'Integration test table used to test datetime pk matching.';
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 12:00:00', 'Row 1');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-02-01 12:00:00', 'Row 2');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-03-01 12:00:00', 'Row 3');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-04-01 12:00:00', 'Row 4');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-05-01 12:00:00', 'Row 5');
+COMMIT;
+
 DROP TABLE pso_data_validator.dvt_pangrams;
 CREATE TABLE pso_data_validator.dvt_pangrams
 (   id          NUMBER(5)

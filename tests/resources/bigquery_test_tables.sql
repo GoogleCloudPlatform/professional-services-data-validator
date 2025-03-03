@@ -141,6 +141,14 @@ INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
 ('DVT4  ', 'Row 4  	  '),
 ('DVT5  ', 'Row 5');
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_datetime_id`
+(   id          DATETIME
+,   other_data  STRING
+) OPTIONS (description='Integration test table used to test datetime pk matching.');
+INSERT INTO `pso_data_validator`.`dvt_datetime_id` VALUES
+(DATETIME'2020-01-01 12:00:00', 'Row 1'), (DATETIME'2020-02-01 12:00:00', 'Row 2'), (DATETIME'2020-03-01 12:00:00', 'Row 3'),
+(DATETIME'2020-04-01 12:00:00', 'Row 4'), (DATETIME'2020-05-01 12:00:00', 'Row 5');
+
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_time_table`
 (   id          INTEGER NOT NULL
 ,   col_time  TIME

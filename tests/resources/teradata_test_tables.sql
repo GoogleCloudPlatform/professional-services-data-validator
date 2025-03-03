@@ -162,6 +162,18 @@ INSERT INTO udf.dvt_char_id VALUES ('DVT3', 'Row 3  ');
 INSERT INTO udf.dvt_char_id VALUES ('DVT4', 'Row 4  	  ');
 INSERT INTO udf.dvt_char_id VALUES ('DVT5', 'Row 5');
 
+DROP TABLE udf.dvt_datetime_id;
+CREATE TABLE udf.dvt_datetime_id
+(   id          TIMESTAMP NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE udf.dvt_datetime_id IS 'Integration test table used to test datetime pk matching.';
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 12:00:00', 'Row 1');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-02-01 12:00:00', 'Row 2');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-03-01 12:00:00', 'Row 3');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-04-01 12:00:00', 'Row 4');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-05-01 12:00:00', 'Row 5');
+
 DROP TABLE udf.test_generate_partitions;
 CREATE TABLE udf.test_generate_partitions(
     course_id VARCHAR(12),
