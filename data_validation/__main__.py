@@ -694,7 +694,7 @@ def main():
         print(find_tables_using_string_matching(args))
     elif args.command == "query":
         raw_query.print_raw_query_output(
-            raw_query.run_raw_query_against_connection(args), format=args.format
+            raw_query.run_raw_query_against_connection(args), format=args.output_format
         )
     elif args.command == "validate":
         validate(args)

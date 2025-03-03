@@ -593,6 +593,8 @@ data-validation query
           The connection name to be queried
   --query or -q QUERY
           The raw query to run against the supplied connection
+  [--format or -f {minimal,python}]
+          Format for query output (default: python)
 ```
 
 ### Building Matched Table Lists
