@@ -274,7 +274,8 @@ CONN_VER=$(data-validation query \
   --conn my-pg-conn \
   --format=minimal \
   --query "SELECT version()")
-  echo ${CONN_VER}
+
+echo ${CONN_VER}
 ````
 
 #### Sample YAML Config (Grouped Column validation)
