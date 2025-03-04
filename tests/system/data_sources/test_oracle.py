@@ -309,18 +309,34 @@ def test_column_validation_oracle_to_postgres():
     count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
     # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
     # TODO Change sum_cols to include col_num_18 when issue-1007 is complete.
+    # TODO Change min_cols below to include col_interval_ds when issue-1214 is complete.
+    # TODO Change min_cols below to include col_json/col_jsonb when issue-1338 is complete.
     sum_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
-            if _ not in ("col_char_2", "col_nchar_2", "col_num_18", "col_long_raw")
+            if _
+            not in (
+                "col_char_2",
+                "col_nchar_2",
+                "col_num_18",
+                "col_long_raw",
+            )
         ]
     )
     min_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
-            if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
+            if _
+            not in (
+                "col_char_2",
+                "col_nchar_2",
+                "col_long_raw",
+                "col_interval_ds",
+                "col_json",
+                "col_jsonb",
+            )
         ]
     )
     column_validation_test(
@@ -471,7 +487,8 @@ def test_row_validation_comp_fields_core_types():
 def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
-    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob/col_json/col_jsonb when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
