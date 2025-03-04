@@ -26,7 +26,7 @@ def sa_epoch_seconds(translator, op):
     """Override for standard ExtractEpochSeconds but catering for larger second values.
 
     This expression also truncates fractional seconds from the incoming datetime.
-    This matches behaviour or other SQL engines' epoch seconds expressions."""
+    This matches behaviour on other SQL engines' epoch seconds expressions."""
     arg = translator.translate(op.arg)
     return sa.cast(
         sa.extract("epoch", sa.func.date_trunc(sa.sql.literal_column("'second'"), arg)),
