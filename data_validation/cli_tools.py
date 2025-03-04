@@ -52,8 +52,7 @@ import sys
 import uuid
 import os
 import math
-from argparse import Namespace
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TYPE_CHECKING
 from yaml import Dumper, Loader, dump, load
 
 from data_validation import (
@@ -65,6 +64,9 @@ from data_validation import (
     util,
 )
 from data_validation.validation_builder import list_to_sublists
+
+if TYPE_CHECKING:
+    from argparse import Namespace
 
 
 CONNECTION_SOURCE_FIELDS = {
@@ -191,7 +193,7 @@ VALIDATE_SCHEMA_HELP_TEXT = "Run a schema validation"
 VALIDATE_CUSTOM_QUERY_HELP_TEXT = "Run a custom query validation"
 
 
-def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: Namespace):
+def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: "Namespace"):
     # This is where we make additional checks if the arguments provided are what we expect
     # For example, only one of -tbls and custom query options can be provided
     if hasattr(parsed_args, "tables_list") and hasattr(
@@ -223,7 +225,7 @@ def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: Names
         return  # old format - only one of them is present
 
 
-def get_parsed_args() -> Namespace:
+def get_parsed_args() -> "Namespace":
     """Return ArgParser with configured CLI arguments."""
     parser = configure_arg_parser()
     args = ["--help"] if len(sys.argv) == 1 else None
@@ -393,6 +395,14 @@ def _configure_raw_query(subparsers):
     )
     query_parser.add_argument("--conn", "-c", help="Connection name to query")
     query_parser.add_argument("--query", "-q", help="Raw query to execute")
+    query_parser.add_argument(
+        "--format",
+        "-f",
+        dest="output_format",
+        choices=consts.RAW_QUERY_FORMAT_TYPES,
+        default=consts.FORMAT_TYPE_PYTHON,
+        help=f"Format for query output (default: {consts.FORMAT_TYPE_PYTHON})",
+    )
 
 
 def _configure_validation_config_parser(subparsers):
@@ -1027,7 +1037,7 @@ def _add_common_arguments(
     optional_arguments.add_argument(
         "--format",
         "-fmt",
-        default="table",
+        default=consts.FORMAT_TYPE_TABLE,
         help="Set the format for printing command output, Supported formats are (text, csv, json, table). Defaults "
         "to table",
     )
@@ -1443,7 +1453,7 @@ def _concat_column_count_configs(
     return return_list
 
 
-def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
+def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
     """Return a dict of configurations to build ConfigManager object"""
 
     def cols_from_arg(concat_arg: str, client, table_obj: dict, query_str: str) -> list:
@@ -1503,7 +1513,7 @@ def get_pre_build_configs(args: Namespace, validate_cmd: str) -> List[Dict]:
     target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
     # Get format: text, csv, json, table. Default is table
-    format = args.format if args.format else "table"
+    format = args.format if args.format else consts.FORMAT_TYPE_TABLE
 
     # Get random row arguments. Only in row validations these attributes can be present.
     # Bad coding here, but keeping it so as not to introduce a breaking change. See

@@ -16,9 +16,9 @@ import json
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from yaml import Dumper, dump
-from argparse import Namespace
 from typing import List
 from data_validation import (
     cli_tools,
@@ -33,6 +33,9 @@ from data_validation.config_manager import ConfigManager
 from data_validation.data_validation import DataValidation
 from data_validation.find_tables import find_tables_using_string_matching
 from data_validation.partition_builder import PartitionBuilder
+
+if TYPE_CHECKING:
+    from argparse import Namespace
 
 # by default yaml dumps lists as pointers. This disables that feature
 Dumper.ignore_aliases = lambda *args: True
@@ -246,7 +249,7 @@ def _get_comparison_config(
     return config_manager.build_config_comparison_fields(comparison_fields)
 
 
-def build_config_from_args(args: Namespace, config_manager: ConfigManager):
+def build_config_from_args(args: "Namespace", config_manager: ConfigManager):
     """This function is used to append build configs to the config manager for all validation commands and generate-table-partitions.
     Instead of having two separate commands, e.g. validate row and validate custom-query row, generate-table-partitions
     uses implicit choice of table or custom-query. A user can specify either tables or source/target query/file,
@@ -337,7 +340,7 @@ def build_config_from_args(args: Namespace, config_manager: ConfigManager):
 
 
 def build_config_managers_from_args(
-    args: Namespace, validate_cmd: str = None
+    args: "Namespace", validate_cmd: str = None
 ) -> List[ConfigManager]:
     """Return a list of config managers ready to execute."""
 
@@ -596,7 +599,7 @@ def store_json_config_file(args, config_managers):
     cli_tools.store_validation(config_file_path, json_config)
 
 
-def partition_and_store_config_files(args: Namespace) -> None:
+def partition_and_store_config_files(args: "Namespace") -> None:
     """Build multiple YAML Config files using user specified partition logic
 
     Args:
@@ -691,7 +694,7 @@ def main():
         print(find_tables_using_string_matching(args))
     elif args.command == "query":
         raw_query.print_raw_query_output(
-            raw_query.run_raw_query_against_connection(args)
+            raw_query.run_raw_query_against_connection(args), format=args.output_format
         )
     elif args.command == "validate":
         validate(args)

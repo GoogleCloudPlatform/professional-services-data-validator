@@ -75,7 +75,7 @@ ORACLE_CONFIG = {
             consts.CONFIG_FIELD_ALIAS: "count",
         },
     ],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -315,13 +315,7 @@ def test_column_validation_oracle_to_postgres():
         [
             _
             for _ in ORA2PG_COLUMNS
-            if _
-            not in (
-                "col_char_2",
-                "col_nchar_2",
-                "col_num_18",
-                "col_long_raw",
-            )
+            if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
         ]
     )
     min_cols = ",".join(
