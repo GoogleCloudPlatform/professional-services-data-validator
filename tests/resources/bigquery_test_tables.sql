@@ -146,6 +146,31 @@ INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
 ('DVT4  ', 'Row 4  	  '),
 ('DVT5  ', 'Row 5');
 
+# BigQuery does not have a fixed char data type and blanks at the end of strings are not removed by the database.
+# Other databases have a fixed char data type and these tables are to allow the comparison of those columns with BQ and each other
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_varchar_id`
+(   id          STRING(15) NOT NULL
+,   other_data  STRING(100)
+) OPTIONS (description='Integration test table used to test variable length string, trailing blanks are significant');
+INSERT INTO `pso_data_validator`.`dvt_varchar_id` VALUES
+('DVT-key-1', 'Row 1'),
+('DVT-key-2', 'Row 2'),
+('DVT-key-3', 'Row 3'),
+('DVT-key-4 ', 'Row 4'),
+('DVT-key-5', 'Row 5');
+
+-- BigQuery does not have a specific padded CHAR data type.
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_fixed_char_id`
+(   id          STRING(6) NOT NULL
+,   other_data  STRING(100)
+) OPTIONS (description='Integration test table used to test fixed char primary key - trailing blanks are not significant');
+INSERT INTO `pso_data_validator`.`dvt_fixed_char_id` VALUES
+('DVT1', 'Row 1	  '),
+('DVT2', 'Row 2  	'),
+('DVT3', 'Row 3  '),
+('DVT4', 'Row 4  	  '),
+('DVT5', 'Row 5');
+
 DROP TABLE `pso_data_validator`.`dvt_time_table`;
 CREATE TABLE `pso_data_validator`.`dvt_time_table`
 (   id          INTEGER NOT NULL

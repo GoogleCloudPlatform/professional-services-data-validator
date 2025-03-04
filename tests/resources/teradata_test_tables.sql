@@ -162,6 +162,42 @@ INSERT INTO udf.dvt_char_id VALUES ('DVT3', 'Row 3  ');
 INSERT INTO udf.dvt_char_id VALUES ('DVT4', 'Row 4  	  ');
 INSERT INTO udf.dvt_char_id VALUES ('DVT5', 'Row 5');
 
+DROP TABLE udf.dvt_fixed_char_id;
+CREATE TABLE udf.dvt_fixed_char_id
+(   id          CHAR(6) NOT NULL PRIMARY KEY
+,   other_data  CHAR(100)
+);
+COMMENT ON TABLE udf.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching';
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
+
+DROP TABLE udf.dvt_varchar_id;
+CREATE TABLE udf.dvt_varchar_id
+(   id          VARCHAR(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE udf.dvt_varchar_id IS 'Integration test table used to test varchar pk matching.';
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-4 ', 'Row 4');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-5', 'Row 5');
+
+DROP TABLE udf.dvt_datetime_id;
+CREATE TABLE udf.dvt_datetime_id
+(   id          TIMESTAMP NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE udf.dvt_datetime_id IS 'Integration test table used to test datetime pk matching.';
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 12:00:00', 'Row 1');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-02-01 12:00:00', 'Row 2');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-03-01 12:00:00', 'Row 3');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-04-01 12:00:00', 'Row 4');
+INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-05-01 12:00:00', 'Row 5');
+
 DROP TABLE udf.test_generate_partitions;
 CREATE TABLE udf.test_generate_partitions(
     course_id VARCHAR(12),
