@@ -523,13 +523,22 @@ def test_row_validation_oracle_to_postgres():
 )
 def test_row_validation_comp_fields_oracle_to_postgres():
     # TODO Change cols below to include col_num_38 when issue-1454 is complete.
+    # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
-            if _ not in ("col_long_raw", "col_float32", "col_float64", "col_num_38")
+            if _
+            not in (
+                "col_long_raw",
+                "col_float32",
+                "col_float64",
+                "col_num_38",
+                "col_json",
+                "col_jsonb",
+            )
         ]
     )
     row_validation_test(
