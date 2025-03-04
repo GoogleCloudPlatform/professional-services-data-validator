@@ -60,9 +60,7 @@ def print_raw_query_output(query_output: list, format: str = consts.FORMAT_TYPE_
 
     def row_to_tuple(row) -> tuple:
         """This prevents SQLAlchemy string truncation inside Row() objects by first converting them to a tuple."""
-        if isinstance(row, Row):
-            return tuple(row)
-        elif isinstance(row, list):
+        if isinstance(row, (Row, list)):
             return tuple(row)
         else:
             return row
