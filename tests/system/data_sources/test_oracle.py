@@ -308,7 +308,6 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_oracle_to_postgres():
     count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
     # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
-    # TODO Change sum_cols to include col_num_18 when issue-1007 is complete.
     # TODO Change min_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change min_cols below to include col_json/col_jsonb when issue-1338 is complete.
     sum_cols = ",".join(
