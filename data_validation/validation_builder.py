@@ -333,6 +333,7 @@ class ValidationBuilder(object):
         trim = False
         if config_manager.source_table:  # Not a custom query
             table = config_manager.get_source_ibis_table()
+            breakpoint()
             if (
                 table[source_field_name].type().is_string()
             ):  # Fixed length char fields need to be trimmed

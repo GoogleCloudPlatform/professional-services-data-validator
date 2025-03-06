@@ -411,7 +411,6 @@ TEST_JSON_VALIDATION_CONFIG = {
     ],
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
     consts.CONFIG_TARGET_CONN: BQ_CONN,
-    consts.CONFIG_TRIM_STRING_PKS: False,
     consts.CONFIG_CASE_INSENSITIVE_MATCH: False,
     consts.CONFIG_ROW_CONCAT: None,
     consts.CONFIG_ROW_HASH: None,

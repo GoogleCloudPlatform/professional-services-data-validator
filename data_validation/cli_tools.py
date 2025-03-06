@@ -190,6 +190,11 @@ VALIDATE_ROW_HELP_TEXT = "Run a row validation"
 VALIDATE_SCHEMA_HELP_TEXT = "Run a schema validation"
 VALIDATE_CUSTOM_QUERY_HELP_TEXT = "Run a custom query validation"
 
+class deprecate_action(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        super().__init__(option_strings, dest, nargs=0, **kwargs)
+    def __call__(self, parser, namespace, values, option_string=None):
+        logging.warning(f"Argument {option_string} is deprecated and may be removed in a future release")
 
 def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: Namespace):
     # This is where we make additional checks if the arguments provided are what we expect
@@ -592,11 +597,9 @@ def _configure_row_parser(
     optional_arguments.add_argument(
         "--trim-string-pks",
         "-tsp",
-        action="store_true",
-        help=(
-            "Trims string based primary key values, intended for use when one engine uses "
-            "padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n))."
-        ),
+        action=deprecate_action,
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
     )
     optional_arguments.add_argument(
         "--case-insensitive-match",

@@ -167,7 +167,7 @@ CREATE TABLE udf.dvt_fixed_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
 ,   other_data  CHAR(100)
 );
-COMMENT ON TABLE udf.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching';
+COMMENT ON TABLE udf.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant';
 INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
 INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
 INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
@@ -179,7 +179,7 @@ CREATE TABLE udf.dvt_varchar_id
 (   id          VARCHAR(15) NOT NULL PRIMARY KEY
 ,   other_data  VARCHAR(100)
 );
-COMMENT ON TABLE udf.dvt_varchar_id IS 'Integration test table used to test varchar pk matching.';
+COMMENT ON TABLE udf.dvt_varchar_id IS 'Integration test table used to test varchar pk matching. Trailing blanks are significant';
 INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-1', 'Row 1');
 INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-2', 'Row 2');
 INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-3', 'Row 3');
