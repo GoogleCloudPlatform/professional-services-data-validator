@@ -308,6 +308,8 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_oracle_to_postgres():
     count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
     # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
+    # TODO Change min_cols below to include col_interval_ds when issue-1214 is complete.
+    # TODO Change min_cols below to include col_json/col_jsonb when issue-1338 is complete.
     sum_cols = ",".join(
         [
             _
@@ -319,7 +321,15 @@ def test_column_validation_oracle_to_postgres():
         [
             _
             for _ in ORA2PG_COLUMNS
-            if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
+            if _
+            not in (
+                "col_char_2",
+                "col_nchar_2",
+                "col_long_raw",
+                "col_interval_ds",
+                "col_json",
+                "col_jsonb",
+            )
         ]
     )
     column_validation_test(
@@ -447,7 +457,12 @@ def test_row_validation_core_types_to_bigquery():
             if _ not in ("id", "col_float32", "col_float64")
         ]
     )
-    row_validation_test(tc="bq-conn", hash=cols)
+    row_validation_test(
+        tc="bq-conn",
+        hash=cols,
+        use_randow_row=True,
+        random_row_batch_size=5,
+    )
 
 
 @mock.patch(
@@ -468,12 +483,12 @@ def test_row_validation_comp_fields_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_oracle_to_postgres():
-    # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
-    # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
-    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob/col_json/col_jsonb when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
+    # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
         [
             _
@@ -483,11 +498,9 @@ def test_row_validation_oracle_to_postgres():
                 "col_blob",
                 "col_clob",
                 "col_nclob",
-                "col_raw",
                 "col_long_raw",
                 "col_float32",
                 "col_float64",
-                "col_tstz",
                 "col_nvarchar_30",
                 "col_nchar_2",
                 "col_interval_ds",
@@ -507,15 +520,49 @@ def test_row_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_comp_fields_oracle_to_postgres():
+    # TODO Change cols below to include col_num_38 when issue-1454 is complete.
+    # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
+    # Excluded col_long_raw because LONG types are not supported.
+    cols = ",".join(
+        [
+            _
+            for _ in ORA2PG_COLUMNS
+            if _
+            not in (
+                "col_long_raw",
+                "col_float32",
+                "col_float64",
+                "col_num_38",
+                "col_json",
+                "col_jsonb",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_ora2pg_types",
+        tc="pg-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_large_decimals_to_bigquery():
     """Oracle to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
     This is testing large decimals for the primary key join column plus the hash columns.
     """
+    # TODO Uncomment randow row args below when working on issue-1455.
     row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
+        # use_randow_row=True,
+        # random_row_batch_size=5,
     )
 
 
@@ -669,12 +716,12 @@ def test_custom_query_invalid_long_decimal():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_validation_oracle_to_postgres():
-    # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
-    # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
-    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob/col_json/col_jsonb when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
+    # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
         [
             _
@@ -684,11 +731,9 @@ def test_custom_query_row_validation_oracle_to_postgres():
                 "col_blob",
                 "col_clob",
                 "col_nclob",
-                "col_raw",
                 "col_long_raw",
                 "col_float32",
                 "col_float64",
-                "col_tstz",
                 "col_nvarchar_30",
                 "col_nchar_2",
                 "col_interval_ds",
