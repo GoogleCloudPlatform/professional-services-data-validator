@@ -721,6 +721,7 @@ def test_custom_query_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
+    # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
         [
             _
