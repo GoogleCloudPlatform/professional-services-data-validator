@@ -34,6 +34,11 @@ if TYPE_CHECKING:
     from data_validation.metadata import RunMetadata, ValidationMetadata
 
 
+COMBINER_GET_SUMMARY_EXC_TEXT = (
+    "Error while generating summary report of row validation results"
+)
+
+
 def generate_report(
     client,
     run_metadata: "RunMetadata",
@@ -492,6 +497,6 @@ def _get_summary(
             )
     except Exception as e:
         logging.warning(
-            f"Error while generating summary report of row validation results: {e}",
+            f"{COMBINER_GET_SUMMARY_EXC_TEXT}: {e}",
             exc_info=True,
         )

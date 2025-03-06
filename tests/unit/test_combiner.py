@@ -1022,3 +1022,45 @@ def test_get_summary_with_non_zero_values_for_all_stats(
     logged = caplog.records[0]  # assuming only one log message
     assert logged.levelname == "INFO"
     assert logged.message == str(expected)
+    assert all(
+        module_under_test.COMBINER_GET_SUMMARY_EXC_TEXT not in _.message
+        for _ in caplog.records
+    )
+
+
+@pytest.mark.parametrize(
+    ("run_metadata", "result_df", "source_df", "target_df"),
+    (
+        (
+            metadata.RunMetadata(
+                run_id="test-run",
+                start_time=datetime.datetime(
+                    2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_TYPE: [],
+                    consts.VALIDATION_STATUS: [],
+                    consts.GROUP_BY_COLUMNS: [],
+                    consts.SOURCE_AGG_VALUE: [],
+                    consts.TARGET_AGG_VALUE: [],
+                }
+            ),
+            pandas.DataFrame({"id": [], "value": []}),
+            pandas.DataFrame({"id": [], "value": []}),
+        ),
+    ),
+)
+def test_get_summary_with_empty_inputs(
+    module_under_test, caplog, run_metadata, result_df, source_df, target_df
+):
+    caplog.set_level(logging.INFO)
+    module_under_test._get_summary(run_metadata, result_df, source_df, target_df)
+    assert all(
+        module_under_test.COMBINER_GET_SUMMARY_EXC_TEXT not in _.message
+        for _ in caplog.records
+    )
