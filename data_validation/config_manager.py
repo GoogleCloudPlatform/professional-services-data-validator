@@ -459,7 +459,7 @@ class ConfigManager(object):
                 cols_filter_list = consts.COLUMN_FILTER_LIST
             # handler that display results either to output or in a file
             return TextResultHandler(
-                self._config.get(consts.CONFIG_FORMAT, "table"),
+                self._config.get(consts.CONFIG_FORMAT, consts.FORMAT_TYPE_TABLE),
                 self.filter_status,
                 cols_filter_list,
             )
@@ -486,7 +486,9 @@ class ConfigManager(object):
                 table_id=table_id,
                 credentials=credentials,
                 api_endpoint=api_endpoint,
-                text_format=self._config.get(consts.CONFIG_FORMAT, "table"),
+                text_format=self._config.get(
+                    consts.CONFIG_FORMAT, consts.FORMAT_TYPE_TABLE
+                ),
             )
         else:
             raise ValueError(f"Unknown ResultHandler Class: {result_type}")
@@ -874,7 +876,7 @@ class ConfigManager(object):
         target_column_ibis_type: dt.DataType,
         margin: int = 0,
     ) -> bool:
-        """Identifies Decimal columns that will cause problems in a Pandas Dataframe.
+        """Identifies numeric columns that will cause problems in a Pandas Dataframe.
 
         i.e. are of greater precision than a 64bit int/real can hold.
 
@@ -883,17 +885,23 @@ class ConfigManager(object):
         """
         return bool(
             (
-                isinstance(source_column_ibis_type, dt.Decimal)
-                and (
-                    source_column_ibis_type.precision is None
-                    or source_column_ibis_type.precision > (18 - margin)
+                (isinstance(source_column_ibis_type, dt.Int64) and margin > 0)
+                or (
+                    isinstance(source_column_ibis_type, dt.Decimal)
+                    and (
+                        source_column_ibis_type.precision is None
+                        or source_column_ibis_type.precision > (18 - margin)
+                    )
                 )
             )
             and (
-                isinstance(target_column_ibis_type, dt.Decimal)
-                and (
-                    target_column_ibis_type.precision is None
-                    or target_column_ibis_type.precision > (18 - margin)
+                (isinstance(target_column_ibis_type, dt.Int64) and margin > 0)
+                or (
+                    isinstance(target_column_ibis_type, dt.Decimal)
+                    and (
+                        target_column_ibis_type.precision is None
+                        or target_column_ibis_type.precision > (18 - margin)
+                    )
                 )
             )
         )

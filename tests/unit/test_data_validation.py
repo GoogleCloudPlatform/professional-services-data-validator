@@ -73,7 +73,7 @@ SAMPLE_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 0.0,
     consts.CONFIG_RESULT_HANDLER: None,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -105,7 +105,7 @@ SAMPLE_THRESHOLD_CONFIG = {
     ],
     consts.CONFIG_THRESHOLD: 150.0,
     consts.CONFIG_RESULT_HANDLER: None,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -147,7 +147,7 @@ SAMPLE_GC_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -195,7 +195,7 @@ SAMPLE_MULTI_GC_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -291,7 +291,7 @@ SAMPLE_GC_CALC_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -368,7 +368,7 @@ SAMPLE_JSON_ROW_CONFIG = {
         },
     ],
     consts.CONFIG_RESULT_HANDLER: None,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 

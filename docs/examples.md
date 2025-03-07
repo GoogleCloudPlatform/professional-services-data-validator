@@ -2,7 +2,7 @@
 This page describes some basic use cases of the tool.
 
 **PLEASE NOTE:** In below commands, my_bq_conn refers to the connection name for your BigQuery project. We are validating BigQuery tables that are
-available in BigQuery public datasets. These examples validate a table against itself for example purposes.  
+available in BigQuery public datasets. These examples validate a table against itself for example purposes.
 
 Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *' as the default aggregation.
 
@@ -30,17 +30,17 @@ data-validation validate column \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   -c citibike.yaml
 ````
-Above command creates a YAML file named citibike.yaml that can be used to run validations in the future. 
+Above command creates a YAML file named citibike.yaml that can be used to run validations in the future.
 
-**Please note:** When the config-file (-c) option is provided, only the YAML file gets created. The validation doesn’t execute. 
- 
- 
+**Please note:** When the config-file (-c) option is provided, only the YAML file gets created. The validation doesn’t execute.
+
+
 #### Run validations from a configuration file
 ````shell script
 data-validation configs run \
   -c citibike.yaml
 ````
-Above command executes validations stored in a config file named citibike.yaml. 
+Above command executes validations stored in a config file named citibike.yaml.
 
 #### Generate partitions and save as multiple configuration files
 ````shell script
@@ -55,7 +55,7 @@ data-validation generate-table-partitions \
   --partition-num 200
 ````
 Above command creates multiple partitions based on the primary key. Number of generated configuration files is decided by `--partition-num`
- 
+
 #### Run COUNT validations for all columns
 ````shell script
 data-validation validate column \
@@ -84,7 +84,7 @@ data-validation validate row \
   --hash '*'
 ````
 #### Run a row hash validation with a **NUMERIC** primary key
-For Oracle and Postgres connections, numeric primary keys may not match between source and target data types due to precision or scale discrepancies. You may need to cast the primary key to a string for a valid match, which can be done by updating ````cast: null```` to ````cast: string```` in yaml file. 
+For Oracle and Postgres connections, numeric primary keys may not match between source and target data types due to precision or scale discrepancies. You may need to cast the primary key to a string for a valid match, which can be done by updating ````cast: null```` to ````cast: string```` in yaml file.
   ````yaml
     primary_keys:
       - cast: string
@@ -94,7 +94,7 @@ For Oracle and Postgres connections, numeric primary keys may not match between 
   ````
 
 
-#### Run a row hash validation for all rows but filter only the failed records 
+#### Run a row hash validation for all rows but filter only the failed records
 ````shell script
 data-validation validate row \
   -sc my_bq_conn \
@@ -119,7 +119,7 @@ data-validation validate row \
 
 #### Store results in a BigQuery table
 ````shell script
-data-validation validate column \ 
+data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
@@ -261,11 +261,21 @@ data-validation validate column \
   --count $COLUMN
 ````
 
-#### Run custom SQL 
+#### Run custom SQL
 ````shell script
-data-validation query
-  --conn connection-name The named connection to be queried.
-  --query, -q The Raw query to run against the supplied connection
+data-validation query \
+  --conn my-pg-conn \
+  --query "SELECT version()"
+````
+
+Or to get minimal output for use with other APIs:
+````shell script
+CONN_VER=$(data-validation query \
+  --conn my-pg-conn \
+  --format=minimal \
+  --query "SELECT version()")
+
+echo ${CONN_VER}
 ````
 
 #### Sample YAML Config (Grouped Column validation)
@@ -405,7 +415,7 @@ data-validation validate custom-query column \
   -tc my_bq_conn
 ````
 
-#### Run a custom query validation with sum aggregation 
+#### Run a custom query validation with sum aggregation
 ````shell script
 data-validation validate custom-query column \
   --source-query-file source_query.sql \
@@ -415,7 +425,7 @@ data-validation validate custom-query column \
   --sum num_bikes_available
 ````
 
-#### Run a custom query validation with max aggregation 
+#### Run a custom query validation with max aggregation
 ````shell script
 data-validation validate custom-query column \
   --source-query-file source_query.sql \

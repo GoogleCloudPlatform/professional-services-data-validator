@@ -102,7 +102,7 @@ def count_config():
                 consts.CONFIG_FIELD_ALIAS: "min_int_col",
             },
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -140,7 +140,7 @@ def grouped_config():
                 consts.CONFIG_CAST: "date",
             },
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
