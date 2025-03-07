@@ -27,7 +27,6 @@ import ibis.expr.datatypes as dt
 
 from typing import TYPE_CHECKING
 from data_validation import consts
-from data_validation.util import datetime_to_iso_format
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -447,63 +446,58 @@ def _get_summary(
 ):
     """Logs a summary report/stats of row validation results."""
     try:
-        if not result_df.empty:
-            if (result_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION) or (
-                # Check for custom-query row validation which always should have primary keys (not null)
-                result_df.loc[0, consts.VALIDATION_TYPE] == consts.CUSTOM_QUERY
-                and result_df.loc[0, consts.CONFIG_PRIMARY_KEYS]
-            ):
-                # Vectorized calculations for all counts.
-                success_condition = (
-                    result_df[consts.VALIDATION_STATUS]
-                    == consts.VALIDATION_STATUS_SUCCESS
-                )
-                fail_condition = (
-                    ~success_condition
-                )  # Invert success for fail condition.
+        if result_df.empty:
+            return
 
-                source_not_in_target = (
-                    result_df[consts.SOURCE_AGG_VALUE].notnull()
-                    & result_df[consts.TARGET_AGG_VALUE].isnull()
-                )
-                target_not_in_source = (
-                    result_df[consts.SOURCE_AGG_VALUE].isnull()
-                    & result_df[consts.TARGET_AGG_VALUE].notnull()
-                )
-                present_in_both_tables = (
-                    result_df[consts.SOURCE_AGG_VALUE].notnull()
-                    & result_df[consts.TARGET_AGG_VALUE].notnull()
-                )
+        if (result_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION) or (
+            # Check for custom-query row validation which always should have primary keys (not null)
+            result_df.loc[0, consts.VALIDATION_TYPE] == consts.CUSTOM_QUERY
+            and result_df.loc[0, consts.CONFIG_PRIMARY_KEYS]
+        ):
+            # Vectorized calculations for all counts.
+            success_condition = (
+                result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
+            )
+            fail_condition = ~success_condition  # Invert success for fail condition.
 
-                logging.info(
-                    json.dumps(
-                        {
-                            consts.CONFIG_RUN_ID: run_metadata.run_id,
-                            consts.CONFIG_START_TIME: datetime_to_iso_format(
-                                run_metadata.start_time
-                            ),
-                            consts.CONFIG_END_TIME: datetime_to_iso_format(
-                                run_metadata.end_time
-                            ),
-                            # Explict converting numpy's int64 values to int for JSON serializability
-                            consts.TOTAL_SOURCE_ROWS: int(source_df.shape[0]),
-                            consts.TOTAL_TARGET_ROWS: int(target_df.shape[0]),
-                            consts.TOTAL_ROWS_VALIDATED: int(result_df.shape[0]),
-                            # Using .sum() on boolean Series for much faster counting
-                            consts.TOTAL_ROWS_SUCCESS: int(success_condition.sum()),
-                            consts.TOTAL_ROWS_FAIL: int(fail_condition.sum()),
-                            consts.FAILED_SOURCE_NOT_IN_TARGET: int(
-                                (fail_condition & source_not_in_target).sum()
-                            ),
-                            consts.FAILED_TARGET_NOT_IN_SOURCE: int(
-                                (fail_condition & target_not_in_source).sum()
-                            ),
-                            consts.FAILED_PRESENT_IN_BOTH_TABLES: int(
-                                (fail_condition & present_in_both_tables).sum()
-                            ),
-                        }
-                    )
+            source_not_in_target = (
+                result_df[consts.SOURCE_AGG_VALUE].notnull()
+                & result_df[consts.TARGET_AGG_VALUE].isnull()
+            )
+            target_not_in_source = (
+                result_df[consts.SOURCE_AGG_VALUE].isnull()
+                & result_df[consts.TARGET_AGG_VALUE].notnull()
+            )
+            present_in_both_tables = (
+                result_df[consts.SOURCE_AGG_VALUE].notnull()
+                & result_df[consts.TARGET_AGG_VALUE].notnull()
+            )
+
+            logging.info(
+                json.dumps(
+                    {
+                        consts.CONFIG_RUN_ID: run_metadata.run_id,
+                        consts.CONFIG_START_TIME: run_metadata.start_time.isoformat(),
+                        consts.CONFIG_END_TIME: run_metadata.end_time.isoformat(),
+                        # Explicit conversion of numpy's int64 values to int for JSON serializability
+                        consts.TOTAL_SOURCE_ROWS: int(source_df.shape[0]),
+                        consts.TOTAL_TARGET_ROWS: int(target_df.shape[0]),
+                        consts.TOTAL_ROWS_VALIDATED: int(result_df.shape[0]),
+                        # Using .sum() on boolean Series for much faster counting
+                        consts.TOTAL_ROWS_SUCCESS: int(success_condition.sum()),
+                        consts.TOTAL_ROWS_FAIL: int(fail_condition.sum()),
+                        consts.FAILED_SOURCE_NOT_IN_TARGET: int(
+                            (fail_condition & source_not_in_target).sum()
+                        ),
+                        consts.FAILED_TARGET_NOT_IN_SOURCE: int(
+                            (fail_condition & target_not_in_source).sum()
+                        ),
+                        consts.FAILED_PRESENT_IN_BOTH_TABLES: int(
+                            (fail_condition & present_in_both_tables).sum()
+                        ),
+                    }
                 )
+            )
     except Exception as e:
         logging.warning(
             f"{COMBINER_GET_SUMMARY_EXC_TEXT}: {e}",
