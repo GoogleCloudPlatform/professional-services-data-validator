@@ -169,7 +169,7 @@ TEST_VALIDATION_CONFIG = {
             "target_table_name": "citibike_trips",
             "labels": [],
             "threshold": 0.0,
-            "format": "table",
+            "format": consts.FORMAT_TYPE_TABLE,
             "filters": [],
             "aggregates": [
                 {

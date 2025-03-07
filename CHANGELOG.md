@@ -2,6 +2,19 @@
 
 ## Untagged
 
+## [7.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.3.0...v7.4.0) (2025-03-04)
+
+
+### Features
+
+* Add --format option to raw query command ([#1450](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1450)) ([241f018](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/241f018cbccbbe847fbfa1ab5a5397ea59df3121))
+
+
+### Bug Fixes
+
+* Include Int64 in data types to cast to string during sum column validation ([#1452](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1452)) ([98439ff](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/98439ff515984a9b274bb2a856222adb8f809b51))
+* PostgreSQL epoch_seconds expression now matches Oracle/BigQuery/SQL Server/etc ([#1458](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1458)) ([bf7cb64](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bf7cb64a1a114a1fa8d5cf65dbd4f8f4b63955e5))
+
 ## [7.3.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.2.0...v7.3.0) (2025-02-19)
 
 

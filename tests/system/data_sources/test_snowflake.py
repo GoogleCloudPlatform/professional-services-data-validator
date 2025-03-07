@@ -69,7 +69,7 @@ SNOWFLAKE_CONFIG = {
             consts.CONFIG_FIELD_ALIAS: "count",
         },
     ],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 

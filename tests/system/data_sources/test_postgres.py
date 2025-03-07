@@ -148,7 +148,7 @@ def test_postgres_count(cloud_sql):
                 consts.CONFIG_FIELD_ALIAS: "sum_entryid",
             },
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -476,7 +476,7 @@ def test_postgres_row(cloud_sql):
                 "cast": None,
             }
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
         consts.CONFIG_RANDOM_ROW_BATCH_SIZE: "5",
         consts.CONFIG_USE_RANDOM_ROWS: True,
@@ -552,7 +552,7 @@ def test_schema_validation(cloud_sql):
         consts.CONFIG_TYPE: "Schema",
         consts.CONFIG_SCHEMA_NAME: "public",
         consts.CONFIG_TABLE_NAME: "entries",
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 

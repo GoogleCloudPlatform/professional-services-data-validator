@@ -69,7 +69,7 @@ TERADATA_COLUMN_CONFIG = {
             consts.CONFIG_FIELD_ALIAS: "count",
         },
     ],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
     consts.CONFIG_FILTERS: [
         {
@@ -94,7 +94,7 @@ TERADATA_ROW_CONFIG = {
     consts.CONFIG_TARGET_SCHEMA_NAME: "Sys_Calendar",
     consts.CONFIG_TARGET_TABLE_NAME: "CALENDAR",
     consts.CONFIG_THRESHOLD: 0.0,
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
     consts.CONFIG_FILTERS: [],
     consts.CONFIG_USE_RANDOM_ROWS: False,

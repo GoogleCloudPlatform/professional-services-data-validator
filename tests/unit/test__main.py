@@ -219,6 +219,7 @@ QUERY_CONFIG = {
     "command": "query",
     "conn": "dummy-bq-connection",
     "query": "SELECT 1 AS TEST",
+    "output_format": consts.FORMAT_TYPE_PYTHON,
 }
 
 

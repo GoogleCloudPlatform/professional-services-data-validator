@@ -34,6 +34,11 @@ if TYPE_CHECKING:
     from data_validation.metadata import RunMetadata, ValidationMetadata
 
 
+COMBINER_GET_SUMMARY_EXC_TEXT = (
+    "Error while generating summary report of row validation results"
+)
+
+
 def generate_report(
     client,
     run_metadata: "RunMetadata",
@@ -441,12 +446,15 @@ def _get_summary(
 ):
     """Logs a summary report/stats of row validation results."""
     try:
-        if result_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION:
-            # Vectorized calculations for all counts
+        if (
+            not result_df.empty
+            and result_df.loc[0, consts.VALIDATION_TYPE] == consts.ROW_VALIDATION
+        ):
+            # Vectorized calculations for all counts.
             success_condition = (
                 result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
             )
-            fail_condition = ~success_condition  # Invert success for fail condition
+            fail_condition = ~success_condition  # Invert success for fail condition.
 
             source_not_in_target = (
                 result_df[consts.SOURCE_AGG_VALUE].notnull()
@@ -489,6 +497,6 @@ def _get_summary(
             )
     except Exception as e:
         logging.warning(
-            f"Error while generating summary report of row validation results: {e}",
+            f"{COMBINER_GET_SUMMARY_EXC_TEXT}: {e}",
             exc_info=True,
         )

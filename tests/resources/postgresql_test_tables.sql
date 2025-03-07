@@ -76,7 +76,7 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_ts          timestamp(6)
 ,   col_tstz        timestamp(6) with time zone
 ,   col_tsltz       timestamp(6) with time zone
-,   col_interval_ds INTERVAL DAY TO SECOND (3)
+,   col_interval_ds interval day to second (3)
 ,   col_raw         bytea
 ,   col_long_raw    bytea
 ,   col_blob        bytea
@@ -121,9 +121,9 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 --,123400,0.003
 ,123.123,123456.1,12345678.1
 ,'Hello DVT','C ','Hello DVT','C '
-,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
-,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
-,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.123456 -03:00'
+,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.654321'
+,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.654321 -03:00'
+,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.654321 -03:00'
 ,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
 ,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA)
 ,CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
