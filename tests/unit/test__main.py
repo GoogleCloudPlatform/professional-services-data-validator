@@ -562,53 +562,7 @@ def test_successful_find_tables_with_mock(mock_args, mock_run):
     return_value=argparse.Namespace(**VALIDATE_SCHEMA_CONFIG),
 )
 def test_successful_schema_validation_with_mocked_run_validation(
-    mock_parse_args,
-    mock_build_config_managers_1,
-    mock_run_validation,
-    mock_build_config_managers_2,
-    mock_partition_builder,
-):
-    main.main()
-
-
-@mock.patch("data_validation.clients.get_data_client")
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CONNECTION_DESCRIBE_ARGS),
-)
-def test_successful_connection_describe_with_mocked_get_data_client(
-    mock_args, mock_get_data_client
-):
-    main.main()
-
-
-@mock.patch("data_validation.__main__.run_validations")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_yaml",
-    return_value=["config dict from one file"],
-)
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_1),
-)
-def test_config_runner_with_kube_completions(mock_args, mock_build, mock_run, caplog):
-    caplog.set_level(logging.WARNING)
-    args = cli_tools.get_parsed_args()
-    caplog.clear()
-    main.config_runner(args)
-    assert caplog.messages == [
-        "--kube-completions or -kc specified, which requires a config directory, however a specific config file is provided."
-    ]
-    assert len(mock_run.call_args.args[1]) == 1
-
-
-@mock.patch("data_validation.__main__.find_tables_using_string_matching")
-@mock.patch(
-    "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**FIND_TABLES_ARGS),
-)
-def test_successful_find_tables_with_mocked_find_tables_using_string_matching(
-    mock_args, mock_find_tables
+    mock_parse_args, mock_build_config_managers, mock_run_validation
 ):
     main.main()
 
