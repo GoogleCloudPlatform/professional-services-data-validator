@@ -16,7 +16,7 @@
 
 import logging
 
-from data_validation import clients
+from data_validation import clients, consts
 from data_validation.result_handlers import text as text_handler
 
 
@@ -39,7 +39,7 @@ class BigQueryResultHandler(object):
         bigquery_client,
         status_list: list = None,
         table_id: str = "pso_data_validator.results",
-        text_format: str = "table",
+        text_format: str = consts.FORMAT_TYPE_TABLE,
     ):
         self._bigquery_client = bigquery_client
         self._table_id = table_id
@@ -53,7 +53,7 @@ class BigQueryResultHandler(object):
         table_id: str = "pso_data_validator.results",
         credentials=None,
         api_endpoint: str = None,
-        text_format: str = "table",
+        text_format: str = consts.FORMAT_TYPE_TABLE,
     ):
         """Return BigQueryResultHandler instance for given project.
 

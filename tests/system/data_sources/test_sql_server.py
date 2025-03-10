@@ -25,6 +25,7 @@ from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_test,
+    id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     row_validation_many_columns_test,
@@ -98,7 +99,7 @@ def test_sql_server_count(cloud_sql):
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -173,7 +174,7 @@ def test_sql_server_row(cloud_sql):
                 "cast": None,
             }
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
         consts.CONFIG_RANDOM_ROW_BATCH_SIZE: "5",
         consts.CONFIG_USE_RANDOM_ROWS: True,
@@ -195,7 +196,7 @@ def test_schema_validation():
         consts.CONFIG_TYPE: "Schema",
         consts.CONFIG_SCHEMA_NAME: "dbo",
         consts.CONFIG_TABLE_NAME: "entries",
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -476,6 +477,19 @@ def test_row_validation_binary_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_randow_row=False,
+    )
 
 
 @mock.patch(

@@ -155,9 +155,9 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 --,123400,0.003
 ,123.123,123456.1,12345678.1
 ,'Hello DVT','C ','Hello DVT','C '
-,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.123456'
-,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
-,to_timestamp_tz('1970-01-03 00:00:03.123456 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,DATE'1970-01-03',TIMESTAMP'1970-01-03 00:00:01.654321'
+,to_timestamp_tz('1970-01-03 00:00:03.654321 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
+,to_timestamp_tz('1970-01-03 00:00:03.654321 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 ,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
 ,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT DVT')
 ,UTL_RAW.CAST_TO_RAW('DVT DVT DVT'),'DVT C','DVT C'
@@ -256,6 +256,19 @@ INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT2', 'Row 2');
 INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT3', 'Row 3');
 INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT4', 'Row 4');
 INSERT INTO pso_data_validator.dvt_char_id VALUES ('DVT5', 'Row 5');
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_datetime_id;
+CREATE TABLE pso_data_validator.dvt_datetime_id
+(   id          DATE NOT NULL PRIMARY KEY
+,   other_data  VARCHAR2(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_datetime_id IS 'Integration test table used to test datetime pk matching.';
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 12:00:00', 'Row 1');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-02-01 12:00:00', 'Row 2');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-03-01 12:00:00', 'Row 3');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-04-01 12:00:00', 'Row 4');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-05-01 12:00:00', 'Row 5');
 COMMIT;
 
 DROP TABLE pso_data_validator.dvt_pangrams;

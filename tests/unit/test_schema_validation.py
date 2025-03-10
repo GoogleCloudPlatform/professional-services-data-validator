@@ -62,7 +62,7 @@ SAMPLE_SCHEMA_CONFIG = {
         ("label_1_name", "label_1_value"),
         ("label_2_name", "label_2_value"),
     ],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
 }
 
 STRING_CONSTANT = "constant"

@@ -33,6 +33,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test_args,
     custom_query_validation_test,
     find_tables_test,
+    id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     partition_table_test,
@@ -147,7 +148,7 @@ def test_postgres_count(cloud_sql):
                 consts.CONFIG_FIELD_ALIAS: "sum_entryid",
             },
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -475,7 +476,7 @@ def test_postgres_row(cloud_sql):
                 "cast": None,
             }
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
         consts.CONFIG_RANDOM_ROW_BATCH_SIZE: "5",
         consts.CONFIG_USE_RANDOM_ROWS: True,
@@ -551,7 +552,7 @@ def test_schema_validation(cloud_sql):
         consts.CONFIG_TYPE: "Schema",
         consts.CONFIG_SCHEMA_NAME: "public",
         consts.CONFIG_TABLE_NAME: "entries",
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -840,26 +841,23 @@ def test_row_validation_binary_pk_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_char_pk_to_bigquery():
-    """PostgreSQL to BigQuery dvt_char_id row validation.
-    This is testing CHAR primary key join columns.
-    Includes random row filter test.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=pg-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_char_id",
-            "--primary-keys=id",
-            "--hash=id,other_data",
-            "--use-random-row",
-            "--random-row-batch-size=5",
-        ]
+    """Test padded char primary key join columns"""
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_char_id",
     )
-    df = run_test_from_cli_args(args)
-    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_randow_row=False,
+    )
 
 
 @mock.patch(
