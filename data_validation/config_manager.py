@@ -16,7 +16,7 @@ import copy
 import logging
 import string
 import random
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Union, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Union, Tuple
 
 import google.oauth2.service_account
 import ibis.expr.datatypes as dt
