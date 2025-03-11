@@ -429,6 +429,7 @@ class ConfigManager(object):
             self._source_ibis_table = clients.get_ibis_table(
                 self.source_client, self.source_schema, self.source_table
             )
+        return self._source_ibis_table
 
     def get_source_ibis_table_from_query(self):
         """Return IbisTable from source."""
