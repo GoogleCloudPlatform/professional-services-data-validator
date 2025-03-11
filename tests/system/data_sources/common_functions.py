@@ -403,6 +403,38 @@ def row_validation_test(
     assert len(df) == 0
 
 
+def id_column_row_validation_test(
+    tables: str,
+    tc: str = "bq-conn",
+    hash: str = "id,other_data",
+    comp_fields: str = None,
+    use_randow_row: bool = True,
+    trim_string_pks: bool = False,
+):
+    """Specific row validation test for primary key data type tests"""
+    parser = cli_tools.configure_arg_parser()
+    if comp_fields:
+        col_option = f"--comparison-fields={comp_fields}"
+    else:
+        col_option = f"--hash={hash}"
+    cli_arg_list = [
+        "validate",
+        "row",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        "--primary-keys=id",
+        col_option,
+        "--use-random-row" if use_randow_row else None,
+        "--random-row-batch-size=5" if use_randow_row else None,
+        "--trim-string-pks" if trim_string_pks else None,
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
 def partition_table_test(
     expected_filter: str,
     pk="course_id,quarter_id,student_id",

@@ -122,11 +122,17 @@ CREATE TABLE `pso_data_validator`.`dvt_char_id`
 ,   other_data  varchar(100)
 ) COMMENT 'Integration test table used to test CHAR pk matching.';
 INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
-('DVT1', 'Row 1'),
-('DVT2', 'Row 2'),
-('DVT3', 'Row 3'),
-('DVT4', 'Row 4'),
-('DVT5', 'Row 5');
+('DVT1', 'Row 1'), ('DVT2', 'Row 2'), ('DVT3', 'Row 3'),
+('DVT4', 'Row 4'), ('DVT5', 'Row 5');
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_datetime_id`;
+CREATE TABLE `pso_data_validator`.`dvt_datetime_id`
+(   id          datetime NOT NULL PRIMARY KEY
+,   other_data  varchar(100)
+) COMMENT 'Integration test table used to test datetime pk matching.';
+INSERT INTO `pso_data_validator`.`dvt_datetime_id` VALUES
+('2020-01-01 12:00:00', 'Row 1'), ('2020-02-01 12:00:00', 'Row 2'), ('2020-03-01 12:00:00', 'Row 3'),
+('2020-04-01 12:00:00', 'Row 4'), ('2020-05-01 12:00:00', 'Row 5');
 
 DROP TABLE IF EXISTS `pso_data_validator`.`dvt_varchar_id`
 CREATE TABLE `pso_data_validator`.`dvt_varchar_id`
@@ -592,3 +598,18 @@ SET time_zone = '+00:00';
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
 (1,'1000-01-01','1970-01-01','9999-12-31'
 ,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59');
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_reserved_word_columns`;
+CREATE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
+  id         integer NOT NULL PRIMARY KEY
+-- SQL tokens
+, `select`   varchar(10)
+, `column`   varchar(10)
+, `from`     varchar(10)
+, `where`    varchar(10)
+-- Data types
+, `date`     varchar(10)
+, `number`   varchar(10)
+, `string`   varchar(10)
+) COMMENT='Integration test table used to test potentially difficult column names.';
+INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);

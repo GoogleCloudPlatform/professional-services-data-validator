@@ -63,7 +63,7 @@ def test_import(module_under_test):
 def test_basic_result_handler(module_under_test):
     """Test basic handler executes"""
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
-    format = "csv"
+    format = consts.FORMAT_TYPE_CSV
     result_handler = module_under_test.TextResultHandler(
         format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
@@ -75,7 +75,7 @@ def test_basic_result_handler(module_under_test):
 def test_basic_result_handler_filtered_results(module_under_test):
     """Test basic handler executes and shows only failed records"""
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
-    format = "table"
+    format = consts.FORMAT_TYPE_TABLE
     result_handler = module_under_test.TextResultHandler(
         format, SAMPLE_CONFIG_FILTER_STATUS, SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
@@ -100,7 +100,7 @@ def test_unsupported_result_format(module_under_test):
 def test_columns_to_print(module_under_test, capsys):
     """Check for trimmed columns in grid print"""
     result_df = DataFrame(SAMPLE_RESULT_DATA, columns=SAMPLE_RESULT_COLUMNS)
-    format = "table"
+    format = consts.FORMAT_TYPE_TABLE
     result_handler = module_under_test.TextResultHandler(
         format, cols_filter_list=SAMPLE_RESULT_COLUMNS_FILTER_LIST
     )
@@ -124,9 +124,9 @@ def test_columns_to_print(module_under_test, capsys):
 @pytest.mark.parametrize(
     "format,module_under_test",
     [
-        ("csv", None),
-        ("json", None),
-        ("text", None),
+        (consts.FORMAT_TYPE_CSV, None),
+        (consts.FORMAT_TYPE_JSON, None),
+        (consts.FORMAT_TYPE_TEXT, None),
         ("fancy_grid", None),
     ],
     indirect=["module_under_test"],
@@ -139,7 +139,7 @@ def test_column_filter_list(format, module_under_test):
     )
     printed_output = result_handler._get_formatted(result_df)
     print("printed_output", printed_output)
-    if format in ("csv", "json"):
+    if format in (consts.FORMAT_TYPE_CSV, consts.FORMAT_TYPE_JSON):
         # CSV and JSON don't filter out columns.
         assert "validation_type" in printed_output
     else:

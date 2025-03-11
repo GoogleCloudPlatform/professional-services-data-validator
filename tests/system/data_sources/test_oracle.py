@@ -25,6 +25,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test_args,
     column_validation_test_config_managers,
     find_tables_test,
+    id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -74,7 +75,7 @@ ORACLE_CONFIG = {
             consts.CONFIG_FIELD_ALIAS: "count",
         },
     ],
-    consts.CONFIG_FORMAT: "table",
+    consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
     consts.CONFIG_FILTER_STATUS: None,
 }
 
@@ -307,19 +308,28 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_oracle_to_postgres():
     count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
     # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
-    # TODO Change sum_cols to include col_num_18 when issue-1007 is complete.
+    # TODO Change min_cols below to include col_interval_ds when issue-1214 is complete.
+    # TODO Change min_cols below to include col_json/col_jsonb when issue-1338 is complete.
     sum_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
-            if _ not in ("col_char_2", "col_nchar_2", "col_num_18", "col_long_raw")
+            if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
         ]
     )
     min_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
-            if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
+            if _
+            not in (
+                "col_char_2",
+                "col_nchar_2",
+                "col_long_raw",
+                "col_interval_ds",
+                "col_json",
+                "col_jsonb",
+            )
         ]
     )
     column_validation_test(
@@ -447,7 +457,12 @@ def test_row_validation_core_types_to_bigquery():
             if _ not in ("id", "col_float32", "col_float64")
         ]
     )
-    row_validation_test(tc="bq-conn", hash=cols)
+    row_validation_test(
+        tc="bq-conn",
+        hash=cols,
+        use_randow_row=True,
+        random_row_batch_size=5,
+    )
 
 
 @mock.patch(
@@ -468,12 +483,12 @@ def test_row_validation_comp_fields_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_oracle_to_postgres():
-    # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
-    # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
-    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob/col_json/col_jsonb when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
+    # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
         [
             _
@@ -483,11 +498,9 @@ def test_row_validation_oracle_to_postgres():
                 "col_blob",
                 "col_clob",
                 "col_nclob",
-                "col_raw",
                 "col_long_raw",
                 "col_float32",
                 "col_float64",
-                "col_tstz",
                 "col_nvarchar_30",
                 "col_nchar_2",
                 "col_interval_ds",
@@ -507,15 +520,49 @@ def test_row_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_comp_fields_oracle_to_postgres():
+    # TODO Change cols below to include col_num_38 when issue-1454 is complete.
+    # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
+    # Excluded col_long_raw because LONG types are not supported.
+    cols = ",".join(
+        [
+            _
+            for _ in ORA2PG_COLUMNS
+            if _
+            not in (
+                "col_long_raw",
+                "col_float32",
+                "col_float64",
+                "col_num_38",
+                "col_json",
+                "col_jsonb",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_ora2pg_types",
+        tc="pg-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_large_decimals_to_bigquery():
     """Oracle to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
     This is testing large decimals for the primary key join column plus the hash columns.
     """
+    # TODO Uncomment randow row args below when working on issue-1455.
     row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
+        # use_randow_row=True,
+        # random_row_batch_size=5,
     )
 
 
@@ -551,26 +598,10 @@ def test_row_validation_binary_pk_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_string_pk_to_bigquery():
-    """Oracle to BigQuery dvt_string_id row validation.
-    This is testing string primary key join columns.
-    Includes random row filter test.
-    """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_string_id",
-            "--primary-keys=id",
-            "--hash=id,other_data",
-            "--use-random-row",
-            "--random-row-batch-size=5",
-        ]
+    """Test string primary key join columns"""
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_string_id",
     )
-    df = run_test_from_cli_args(args)
-    id_type_test_assertions(df)
 
 
 @mock.patch(
@@ -600,6 +631,19 @@ def test_row_validation_char_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_randow_row=False,
+    )
 
 
 @mock.patch(
@@ -690,12 +734,12 @@ def test_custom_query_invalid_long_decimal():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_validation_oracle_to_postgres():
-    # TODO Change hash_cols below to include col_tstz when issue-706 is complete.
-    # TODO col_raw/col_long_raw are blocked by issue-773 (is it even reasonable to expect binary columns to work here?)
     # TODO Change hash_cols below to include col_nvarchar_30,col_nchar_2 when issue-772 is complete.
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
-    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob/col_json/col_jsonb when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
+    # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
+    # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
         [
             _
@@ -705,11 +749,9 @@ def test_custom_query_row_validation_oracle_to_postgres():
                 "col_blob",
                 "col_clob",
                 "col_nclob",
-                "col_raw",
                 "col_long_raw",
                 "col_float32",
                 "col_float64",
-                "col_tstz",
                 "col_nvarchar_30",
                 "col_nchar_2",
                 "col_interval_ds",
@@ -847,6 +889,57 @@ def test_row_validation_identifiers():
         tc="mock-conn",
         hash="*",
         filters="id>0 AND col_int8>0",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
     )
 
 

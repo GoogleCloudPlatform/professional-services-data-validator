@@ -25,6 +25,7 @@ from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_test,
+    id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     row_validation_many_columns_test,
@@ -98,7 +99,7 @@ def test_sql_server_count(cloud_sql):
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -173,7 +174,7 @@ def test_sql_server_row(cloud_sql):
                 "cast": None,
             }
         ],
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
         consts.CONFIG_RANDOM_ROW_BATCH_SIZE: "5",
         consts.CONFIG_USE_RANDOM_ROWS: True,
@@ -195,7 +196,7 @@ def test_schema_validation():
         consts.CONFIG_TYPE: "Schema",
         consts.CONFIG_SCHEMA_NAME: "dbo",
         consts.CONFIG_TABLE_NAME: "entries",
-        consts.CONFIG_FORMAT: "table",
+        consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
     }
 
@@ -482,6 +483,19 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_randow_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_pangrams_to_bigquery():
     """SQL Server to BigQuery dvt_pangrams row validation.
     This is testing comparisons across a wider set of characters than standard test data.
@@ -643,6 +657,57 @@ def test_row_validation_identifiers():
         tables="pso_data_validator.dvt-identifier$_#",
         tc="mock-conn",
         hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
     )
 
 

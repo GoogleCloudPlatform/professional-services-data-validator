@@ -35,15 +35,17 @@ def filter_validation_status(status_list, result_df: "DataFrame"):
 
 
 def get_formatted(
-    result_df: "DataFrame", format: str = "table", cols_filter_list: list = None
+    result_df: "DataFrame",
+    format: str = consts.FORMAT_TYPE_TABLE,
+    cols_filter_list: list = None,
 ) -> str:
     """Expose formatting logic so it can be used in BigQuery handler."""
     cols_filter_list = cols_filter_list or consts.COLUMN_FILTER_LIST
-    if format == "text":
+    if format == consts.FORMAT_TYPE_TEXT:
         return result_df.drop(cols_filter_list, axis=1).to_string(index=False)
-    elif format == "csv":
+    elif format == consts.FORMAT_TYPE_CSV:
         return result_df.to_csv(index=False, lineterminator="\n")
-    elif format == "json":
+    elif format == consts.FORMAT_TYPE_JSON:
         return result_df.to_json(orient="index")
     else:
         return result_df.drop(cols_filter_list, axis=1).to_markdown(

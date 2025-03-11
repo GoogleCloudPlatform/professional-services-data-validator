@@ -132,6 +132,17 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-3' AS binary), 3
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS binary), 4, 'Row 4');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS binary), 5, 'Row 5');
 
+DROP TABLE pso_data_validator.dvt_datetime_id;
+CREATE TABLE pso_data_validator.dvt_datetime_id
+(   id          datetime2(0) NOT NULL PRIMARY KEY
+,   other_data  varchar(100)
+);
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-01-01 12:00:00', 'Row 1');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-02-01 12:00:00', 'Row 2');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-03-01 12:00:00', 'Row 3');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-04-01 12:00:00', 'Row 4');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-05-01 12:00:00', 'Row 5');
+
 DROP TABLE pso_data_validator.dvt_pangrams;
 CREATE TABLE pso_data_validator.dvt_pangrams
 (   id          int NOT NULL PRIMARY KEY
@@ -600,3 +611,18 @@ INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (3,'str'+CHAR(13)+'str'
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (4,'str'+CHAR(13),'Trailing: carriage return');
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (5,'str'+CHAR(9)+'str','Contains: tab');
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (6,'str'+CHAR(9),'Trailing: tab');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_reserved_word_columns;
+CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
+  id         integer NOT NULL PRIMARY KEY
+-- SQL tokens
+, [select]   varchar(10)
+, [column]   varchar(10)
+, [from]     varchar(10)
+, [where]    varchar(10)
+-- Data types
+, [date]     varchar(10)
+, [number]   varchar(10)
+, [string]   varchar(10)
+);
+INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
