@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" A ResultHandler class is supplied to the DataValidation manager class.
+"""A ResultHandler class is supplied to the DataValidation manager class.
 
 The execute function of any result handler is used to process
 the validation results.  It expects to receive the config

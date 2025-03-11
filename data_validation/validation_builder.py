@@ -25,15 +25,6 @@ from data_validation.query_builder.query_builder import (
     QueryBuilder,
 )
 import ibis.backends.base
-from ibis.backends.bigquery import Backend as BigQueryBackend
-from ibis.backends.postgres import Backend as PostgresBackend
-from ibis.backends.mysql import Backend as MySQLBackend
-from ibis.backends.snowflake import Backend as SnowflakeBackend
-from third_party.ibis.ibis_teradata import Backend as TeradataBackend
-from third_party.ibis.ibis_cloud_spanner import Backend as SpannerBackend
-from third_party.ibis.ibis_oracle import Backend as OracleBackend
-from third_party.ibis.ibis_mssql import Backend as MsSqlBackend
-from third_party.ibis.ibis_db2 import Backend as DB2Backend
 
 
 def list_to_sublists(id_list: list, max_size: int) -> list:
@@ -99,9 +90,8 @@ class ValidationBuilder(object):
 
     @staticmethod
     def _is_fixed_length_char(
-        client: ibis.backends.base.BaseBackend,
-        schema_name: str,
-        table_name: str,
+        client: str,
+        raw_column_metadata: dict,
         column_name: str,
     ) -> bool:
         """Returns true if the string column provided is a fixed length char column.
@@ -109,47 +99,27 @@ class ValidationBuilder(object):
         will need to be trimmed before comparison. Some databases - e.g. BQ do not support
         fixed length character strings
         """
+        # If we don't have metadata don't trim.
+        if not raw_column_metadata:
+            return False
         match client:
             # The following backends don't pad blanks - either don't support fixed char or
             # trim spaces before using.
-            case BigQueryBackend() | SpannerBackend() | SnowflakeBackend() | MySQLBackend():
+            case "bigquery" | "spanner" | "snowflake" | "mysql":
                 return False
-            case TeradataBackend():
-                column_type = client.sql(
-                    f"""select ColumnName, ColumnType from dbc.columns
-                        where DatabaseName = '{schema_name}' and TableName='{table_name}'
-                            and ColumnName='{column_name}'"""
-                ).execute()
-                return column_type.iloc[0]["ColumnType"].startswith("CF")
-            case OracleBackend():  # only support same schema for now
-                column_type = client.sql(
-                    f"""select COLUMN_NAME, DATA_TYPE from all_tab_columns
-                        where OWNER = '{schema_name.upper()}' and TABLE_NAME='{table_name.upper()}'
-                        and COLUMN_NAME='{column_name.upper()}'"""
-                ).execute()
-                return column_type.iloc[0]["DATA_TYPE"] in ["CHAR", "NCHAR"]
-            case PostgresBackend():
-                column_type = client.sql(
-                    f"""SELECT column_name, data_type FROM information_schema.columns
-                            WHERE table_schema='{schema_name}' and table_name='{table_name}'
-                            and column_name='{column_name}'""",
-                    schema={"column_name": "str", "data_type": "str"},
-                ).execute()
-                return column_type.iloc[0]["data_type"] == "character"
-            case MsSqlBackend():
-                column_type = client.sql(
-                    f"""select COLUMN_NAME, DATA_TYPE from INFORMATION_SCHEMA.COLUMNS
-                        where TABLE_NAME='{table_name}'
-                        and COLUMN_NAME='{column_name}'"""
-                ).execute()
-                return column_type.iloc[0]["DATA_TYPE"] == "char"
-            case DB2Backend():
-                column_type = client.sql(
-                    f"""select COLNAME, TYPENAME from SYSCAT.COLUMNS
-                        where TABSCHEMA = '{schema_name.upper()}' and TABNAME='{table_name.upper()}'
-                        and COLNAME='{column_name.upper()}'"""
-                ).execute()
-                return column_type.iloc[0]["TYPENAME"] == "CHARACTER"
+            case "teradata":
+                return raw_column_metadata[column_name][0] == "CHAR"
+            case "oracle":
+                return raw_column_metadata[column_name][0] in [
+                    "DB_TYPE_CHAR",
+                    "DB_TYPE_NCHAR",
+                ]
+            case "postgres":
+                return raw_column_metadata[column_name][0] == "character"
+            case "mssql":
+                return raw_column_metadata[column_name][0] == "char"
+            case "db2":
+                return raw_column_metadata[column_name][0] == "CHARACTER"
             case _:
                 return False
 
@@ -333,14 +303,12 @@ class ValidationBuilder(object):
         trim = False
         if config_manager.source_table:  # Not a custom query
             table = config_manager.get_source_ibis_table()
-            breakpoint()
             if (
                 table[source_field_name].type().is_string()
             ):  # Fixed length char fields need to be trimmed
                 trim = self._is_fixed_length_char(
-                    config_manager.source_client,
-                    config_manager.source_schema,
-                    config_manager.source_table,
+                    config_manager.source_client.name,
+                    config_manager._source_raw_data_types,
                     source_field_name,
                 )
         source_field = ComparisonField(
@@ -353,9 +321,8 @@ class ValidationBuilder(object):
                 table[target_field_name].type().is_string()
             ):  # Fixed length char fields need to be trimmed
                 trim = self._is_fixed_length_char(
-                    config_manager.target_client,
-                    config_manager.target_schema,
-                    config_manager.target_table,
+                    config_manager.target_client.name,
+                    config_manager._target_raw_data_types,
                     target_field_name,
                 )
         target_field = ComparisonField(

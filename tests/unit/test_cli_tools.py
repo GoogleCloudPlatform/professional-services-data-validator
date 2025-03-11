@@ -798,7 +798,7 @@ def test_split_table_no_schema():
 
 @pytest.mark.parametrize(
     "test_input",
-    [(["table"])],
+    [["table"]],
 )
 def test_split_table_err(
     test_input,

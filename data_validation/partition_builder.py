@@ -62,7 +62,7 @@ class PartitionBuilder:
         """
         # Create multiple yaml validation blocks corresponding to the filters provided
         yaml_validations = []
-        for (source_filter, target_filter) in zip(source_filters, target_filters):
+        for source_filter, target_filter in zip(source_filters, target_filters):
             filter_dict = {
                 "type": "custom",
                 "source": source_filter,
