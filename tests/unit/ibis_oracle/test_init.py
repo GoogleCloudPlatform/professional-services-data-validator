@@ -41,11 +41,10 @@ DVT_CORE_TYPES_CURS = [
 ]
 
 
-@pytest.fixture
-def module_under_test():
+def get_module_under_test():
     try:
         from third_party.ibis import ibis_oracle
-    except (ModuleNotFoundError, AttributeError):
+    except ModuleNotFoundError:
         # We don't install Oracle client for Github unit tests.
         # These tests will only complete when executed locally.
         ibis_oracle = None
@@ -53,22 +52,27 @@ def module_under_test():
     return ibis_oracle
 
 
+@pytest.fixture
+def module_under_test():
+    return get_module_under_test()
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
 def test_import(module_under_test):
     """Check that importing ibis_oracle does not throw exceptions (aside from ModuleNotFoundError)"""
+    assert module_under_test is not None
 
 
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
 def test_raw_column_metadata_no_args(module_under_test):
-    if module_under_test is None:
-        return
     backend = module_under_test.Backend()
     with pytest.raises(AssertionError):
         _ = list(backend.raw_column_metadata(database=None, table=None, query=None))
 
 
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
 @mock.patch("third_party.ibis.ibis_oracle.Backend.begin")
 def test_raw_column_metadata_core_types(mock_begin, module_under_test):
-    if module_under_test is None:
-        return
     mock_begin().__enter__().exec_driver_sql().cursor.description = DVT_CORE_TYPES_CURS
     backend = module_under_test.Backend()
     raw_types = list(
@@ -82,10 +86,9 @@ def test_raw_column_metadata_core_types(mock_begin, module_under_test):
     assert all(len(_) == 7 for _ in raw_types)
 
 
+@pytest.mark.skipif(not get_module_under_test(), reason="No Oracle driver")
 @mock.patch("third_party.ibis.ibis_oracle.Backend.begin")
 def test_raw_column_metadata_qry(mock_begin, module_under_test):
-    if module_under_test is None:
-        return
     mock_begin().__enter__().exec_driver_sql().cursor.description = DVT_CORE_TYPES_CURS
     backend = module_under_test.Backend()
     raw_types = list(
