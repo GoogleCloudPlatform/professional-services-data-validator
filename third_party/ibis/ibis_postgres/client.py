@@ -170,7 +170,7 @@ def _raw_column_metadata(
 
     assert (database and table) or query, "We should never receive all args=None"
     if database and table:
-        source = f'"{database}"."{table}"'.upper()
+        source = f'"{database}"."{table}"'
     elif query:
         source = f"({query})"
 
