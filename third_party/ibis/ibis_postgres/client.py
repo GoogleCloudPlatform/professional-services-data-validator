@@ -176,7 +176,6 @@ def _raw_column_metadata(
 
     with self.begin() as con:
         cur = con.exec_driver_sql(f"SELECT * FROM {source} t0 LIMIT 0")
-        breakpoint()
         qry_cols = [
             f"('{column.name}'::text,"
             + f"{column.type_code},"
