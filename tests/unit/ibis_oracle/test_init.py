@@ -45,7 +45,7 @@ DVT_CORE_TYPES_CURS = [
 def module_under_test():
     try:
         from third_party.ibis import ibis_oracle
-    except ModuleNotFoundError:
+    except:
         # We don't install Oracle client for Github unit tests.
         # These tests will only complete when executed locally.
         ibis_oracle = None
