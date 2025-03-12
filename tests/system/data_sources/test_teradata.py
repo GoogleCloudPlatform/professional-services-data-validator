@@ -198,22 +198,22 @@ TERADATA_ROW_CONFIG = {
 }
 
 DVT_CORE_TYPES_RAW_DATA_TYPES = [
-    ["id", "BIGINT", None, 8, None, None, False],
-    ["col_int8", "BYTEINT", None, 1, None, None, False],
-    ["col_int16", "SMALLINT", None, 2, None, None, False],
-    ["col_int32", "INTEGER", None, 4, None, None, False],
-    ["col_int64", "BIGINT", None, 8, None, None, False],
-    ["col_dec_20", "NUMBER", None, 18, 20, 0, False],
-    ["col_dec_38", "NUMBER", None, 18, 38, 0, False],
-    ["col_dec_10_2", "NUMBER", None, 18, 10, 2, False],
-    ["col_float32", "FLOAT", None, 8, None, None, False],
-    ["col_float64", "FLOAT", None, 8, None, None, False],
-    ["col_varchar_30", "VARCHAR", None, 60, None, None, False],
-    ["col_char_2", "CHAR", None, 4, None, None, False],
-    ["col_string", "LONG VARCHAR", None, 64000, None, None, False],
-    ["col_date", "DATE", None, 4, None, None, False],
-    ["col_datetime", "TIMESTAMP", None, 23, 0, 3, False],
-    ["col_tstz", "TIMESTAMP WITH TIME ZONE", None, 29, 0, 3, False],
+    ("id", "BIGINT", None, 8, None, None, False),
+    ("col_int8", "BYTEINT", None, 1, None, None, True),
+    ("col_int16", "SMALLINT", None, 2, None, None, True),
+    ("col_int32", "INTEGER", None, 4, None, None, True),
+    ("col_int64", "BIGINT", None, 8, None, None, True),
+    ("col_dec_20", "NUMBER", None, 18, 20, 0, True),
+    ("col_dec_38", "NUMBER", None, 18, 38, 0, True),
+    ("col_dec_10_2", "NUMBER", None, 18, 10, 2, True),
+    ("col_float32", "FLOAT", None, 8, None, None, True),
+    ("col_float64", "FLOAT", None, 8, None, None, True),
+    ("col_varchar_30", "VARCHAR", None, 60, None, None, True),
+    ("col_char_2", "CHAR", None, 4, None, None, True),
+    ("col_string", "LONG VARCHAR", None, 64000, None, None, True),
+    ("col_date", "DATE", None, 4, None, None, True),
+    ("col_datetime", "TIMESTAMP", None, 23, 0, 3, True),
+    ("col_tstz", "TIMESTAMP WITH TIME ZONE", None, 29, 0, 3, True),
 ]
 
 
