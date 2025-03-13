@@ -612,46 +612,32 @@ def test_row_validation_binary_pk_to_bigquery():
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
 
-
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_string_pk_to_bigquery():
-    """Test string primary key join columns"""
+def test_row_validation_fixed_char_pk_to_bigquery():
+    """Oracle to BigQuery dvt_fixed_char_id row validation.
+    This is testing CHAR primary key join columns.
+    Random rows don't play well with fixed char pk columns see https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1471
+    """
     id_column_row_validation_test(
-        "pso_data_validator.dvt_string_id",
+        "pso_data_validator.dvt_fixed_char_id",
+        use_randow_row=False,
     )
 
-
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Oracle to BigQuery dvt_char_id row validation.
+def test_row_validation_varchar_pk_to_bigquery():
+    """Oracle to BigQuery dvt_varchar_id row validation.
     This is testing CHAR primary key join columns.
     Includes random row filter test.
     """
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "validate",
-            "row",
-            "-sc=ora-conn",
-            "-tc=bq-conn",
-            "-tbls=pso_data_validator.dvt_char_id=pso_data_validator.dvt_char_id_2",
-            "--primary-keys=id",
-            "--hash=id,other_data",
-            # Random rows don't play nice with char - need fix outlined in
-            # https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/issue-1368-fixed-length-pks/docs/internal/strings.md
-            # "--use-random-row",
-            # "--random-row-batch-size=5",
-        ]
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_varchar_id",
     )
-    df = run_test_from_cli_args(args)
-    id_type_test_assertions(df)
-
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",

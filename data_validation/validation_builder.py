@@ -24,7 +24,6 @@ from data_validation.query_builder.query_builder import (
     GroupedField,
     QueryBuilder,
 )
-import ibis.backends.base
 
 
 def list_to_sublists(id_list: list, max_size: int) -> list:
@@ -111,8 +110,8 @@ class ValidationBuilder(object):
                 return raw_column_metadata[column_name][0] == "CHAR"
             case "oracle":
                 return raw_column_metadata[column_name][0] in [
-                    "DB_TYPE_CHAR",
-                    "DB_TYPE_NCHAR",
+                    "CHAR",
+                    "NCHAR",
                 ]
             case "postgres":
                 return raw_column_metadata[column_name][0] == "character"
@@ -308,7 +307,7 @@ class ValidationBuilder(object):
             ):  # Fixed length char fields need to be trimmed
                 trim = self._is_fixed_length_char(
                     config_manager.source_client.name,
-                    config_manager._source_raw_data_types,
+                    config_manager.get_source_raw_data_types(),
                     source_field_name,
                 )
         source_field = ComparisonField(
@@ -322,7 +321,7 @@ class ValidationBuilder(object):
             ):  # Fixed length char fields need to be trimmed
                 trim = self._is_fixed_length_char(
                     config_manager.target_client.name,
-                    config_manager._target_raw_data_types,
+                    config_manager.get_target_raw_data_types(),
                     target_field_name,
                 )
         target_field = ComparisonField(

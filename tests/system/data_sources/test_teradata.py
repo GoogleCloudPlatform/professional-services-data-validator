@@ -592,26 +592,28 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_string_pk_to_bigquery():
-    """Test string primary key join columns"""
+def test_row_validation_fixed_char_pk_to_bigquery():
+    """Oracle to BigQuery dvt_fixed_char_id row validation.
+    This is testing CHAR primary key join columns.
+    Random rows don't play well with fixed char pk columns see https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1471
+    """
     id_column_row_validation_test(
-        "udf.dvt_string_id=pso_data_validator.dvt_string_id",
+        "udf.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id",
+        use_randow_row=False,
     )
-
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Test padded char primary key join columns"""
+def test_row_validation_varchar_pk_to_bigquery():
+    """Oracle to BigQuery dvt_varchar_id row validation.
+    This is testing CHAR primary key join columns.
+    Includes random row filter test.
+    """
     id_column_row_validation_test(
-        "udf.dvt_char_id=pso_data_validator.dvt_char_id_2",
-        use_randow_row=False,
-        # We need to trim padded string PKs due to a Teradata client "quirk".
-        trim_string_pks=True,
+        "udf.dvt_varchar_id=pso_data_validator.dvt_varchar_id",
     )
-
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",

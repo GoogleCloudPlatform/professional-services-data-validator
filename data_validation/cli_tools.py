@@ -202,6 +202,7 @@ class deprecate_action(argparse.Action):
             f"Argument {option_string} is deprecated and may be removed in a future release"
         )
 
+
 def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: "Namespace"):
     # This is where we make additional checks if the arguments provided are what we expect
     # For example, only one of -tbls and custom query options can be provided
