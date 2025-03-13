@@ -53,7 +53,7 @@ def generate_report(
     join_on_fields=(),
     is_value_comparison=False,
     verbose=False,
-) -> pandas.DataFrame:
+) -> "DataFrame":
     """Combine results into a report.
 
     This function is a wrapper around _generate_report(). _generate_report() does the main work, this
