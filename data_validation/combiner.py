@@ -132,7 +132,6 @@ def _generate_report(
     """Combine results into a report.
 
     Args:
-        client (ibis.client.Client): Ibis client used to combine results.
         run_metadata: Metadata about the run and validations.
         source_df: Dataframe contains results of source query.
         target_df: Dataframe contains results of target query.
