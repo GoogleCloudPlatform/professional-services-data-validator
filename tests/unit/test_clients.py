@@ -14,6 +14,8 @@
 
 from unittest import mock
 
+import pytest
+
 from google.auth import credentials
 import pandas
 import ibis.backends.pandas
@@ -80,13 +82,11 @@ def test_import_oracle_client():
         assert "No module named 'cx_Oracle'" in str(e)
 
 
-@mock.patch("third_party.ibis.ibis_oracle.Backend.do_connect")
-def test_get_oracle_data_client(mock_do_connect):
-    try:
+def test_get_oracle_data_client():
+    with pytest.raises(
+        exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
+    ):
         clients.get_data_client(ORACLE_CONN_CONFIG)
-    except exceptions.DataClientConnectionFailure as e:
-        # If we cannot get the Oracle client then assert specific test is mentioned in the exception.
-        assert "pip install cx_Oracle" in str(e)
 
 
 def test_get_pandas_data_client():
