@@ -74,17 +74,20 @@ def test_get_bigquery_client_sets_user_agent():
 
 
 def test_import_oracle_client():
-    with pytest.raises(ModuleNotFoundError, match=r"No module named 'cx_Oracle'"):
-        from third_party.ibis.ibis_oracle.api import oracle_connect
+    try:
+        from third_party.ibis.ibis_oracle.api import oracle_connect  # noqa: F401
+    except ModuleNotFoundError as e:
+        # If we cannot import the Oracle api then assert cx_Oracle is mentioned in the exception text.
+        assert "No module named 'cx_Oracle'" in str(e)
 
-        oracle_connect()
 
-
-def test_get_oracle_data_client():
-    with pytest.raises(
-        exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
-    ):
+@mock.patch("third_party.ibis.ibis_oracle.Backend.do_connect")
+def test_get_oracle_data_client(mock_do_connect):
+    try:
         clients.get_data_client(ORACLE_CONN_CONFIG)
+    except exceptions.DataClientConnectionFailure as e:
+        # If we cannot get the Oracle client then assert specific test is mentioned in the exception.
+        assert "pip install cx_Oracle" in str(e)
 
 
 def test_get_pandas_data_client():

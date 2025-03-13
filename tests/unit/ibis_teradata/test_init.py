@@ -58,23 +58,35 @@ DVT_CORE_TYPES_TD_TYPES = [
 ]
 
 
-@pytest.fixture
-def module_under_test():
-    from third_party.ibis import ibis_teradata
+def get_module_under_test():
+    try:
+        from third_party.ibis import ibis_teradata
+    except ModuleNotFoundError:
+        # We don't necessarily have the Teradata client installed.
+        # Tests will be skipped when the client is missing.
+        ibis_teradata = None
 
     return ibis_teradata
 
 
+@pytest.fixture
+def module_under_test():
+    return get_module_under_test()
+
+
+@pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
 def test_import(module_under_test):
     assert module_under_test is not None
 
 
+@pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
 def test_raw_column_metadata_no_args(module_under_test):
     backend = module_under_test.Backend()
     with pytest.raises(AssertionError):
         _ = list(backend.raw_column_metadata(database=None, table=None, query=None))
 
 
+@pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
 @mock.patch("third_party.ibis.ibis_teradata.Backend.raw_sql")
 def test_raw_column_metadata_core_types(mock_raw_sql, module_under_test):
     mock_raw_sql().description = DVT_CORE_TYPES_CURS
@@ -91,6 +103,7 @@ def test_raw_column_metadata_core_types(mock_raw_sql, module_under_test):
     assert all(len(_) == 7 for _ in raw_types)
 
 
+@pytest.mark.skipif(not get_module_under_test(), reason="No Teradata driver")
 @mock.patch("third_party.ibis.ibis_teradata.Backend.raw_sql")
 def test_raw_column_metadata_qry(mock_raw_sql, module_under_test):
     mock_raw_sql().description = DVT_CORE_TYPES_CURS
