@@ -48,8 +48,8 @@ COMBINER_GET_SUMMARY_EXC_TEXT = (
 
 def generate_report(
     run_metadata: "RunMetadata",
-    source_df: pandas.DataFrame,
-    target_df: pandas.DataFrame,
+    source_df: "DataFrame",
+    target_df: "DataFrame",
     join_on_fields=(),
     is_value_comparison=False,
     verbose=False,
