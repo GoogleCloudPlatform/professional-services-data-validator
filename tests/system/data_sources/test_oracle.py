@@ -45,6 +45,7 @@ from tests.system.data_sources.common_functions import (
 
 
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
+ORACLE_PORT = os.getenv("ORACLE_PORT", "1521")
 ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
 ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XEPDB1")
 
@@ -53,7 +54,7 @@ CONN = {
     "host": ORACLE_HOST,
     "user": "SYSTEM",
     "password": ORACLE_PASSWORD,
-    "port": 1521,
+    "port": int(ORACLE_PORT),
     "database": ORACLE_DATABASE,
 }
 
@@ -106,6 +107,25 @@ ORA2PG_COLUMNS = [
     "col_uuid",
     "col_json",
     "col_jsonb",
+]
+
+DVT_CORE_TYPES_RAW_DATA_TYPES = [
+    ("ID", "NUMBER", 9, None, 8, 0, 0),
+    ("COL_INT8", "NUMBER", 3, None, 2, 0, 1),
+    ("COL_INT16", "NUMBER", 5, None, 4, 0, 1),
+    ("COL_INT32", "NUMBER", 10, None, 9, 0, 1),
+    ("COL_INT64", "NUMBER", 19, None, 18, 0, 1),
+    ("COL_DEC_20", "NUMBER", 21, None, 20, 0, 1),
+    ("COL_DEC_38", "NUMBER", 39, None, 38, 0, 1),
+    ("COL_DEC_10_2", "NUMBER", 14, None, 10, 2, 1),
+    ("COL_FLOAT32", "BINARY_FLOAT", 127, None, None, None, 1),
+    ("COL_FLOAT64", "BINARY_DOUBLE", 127, None, None, None, 1),
+    ("COL_VARCHAR_30", "VARCHAR", 30, 30, None, None, 1),
+    ("COL_CHAR_2", "CHAR", 2, 2, None, None, 1),
+    ("COL_STRING", "VARCHAR", 4000, 4000, None, None, 1),
+    ("COL_DATE", "DATE", 23, None, None, None, 1),
+    ("COL_DATETIME", "TIMESTAMP", 23, None, 0, 3, 1),
+    ("COL_TSTZ", "TIMESTAMP_TZ", None, None, 0, 3, 1),
 ]
 
 
@@ -1080,3 +1100,16 @@ def test_raw_query_long_string(capsys):
                  SELECT RPAD('some-long-string',512,'y') c FROM dual""",
         expected_rows=2,
     )
+
+
+def test_raw_column_metadata():
+    """Test that get_raw_data_types custom Backend method returns expected results."""
+    from data_validation import clients
+
+    client = clients.get_data_client(CONN)
+    raw_types = list(
+        client.raw_column_metadata(
+            database="pso_data_validator", table="dvt_core_types"
+        )
+    )
+    assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES

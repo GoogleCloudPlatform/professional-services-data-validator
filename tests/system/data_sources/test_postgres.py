@@ -90,6 +90,25 @@ PG2PG_COLUMNS = [
 
 SUM_EPOCH_COL_DATETIME = "3093527978590011259"
 
+DVT_CORE_TYPES_RAW_DATA_TYPES = [
+    ("id", "integer", None, 4, None, None, None),
+    ("col_int8", "smallint", None, 2, None, None, None),
+    ("col_int16", "smallint", None, 2, None, None, None),
+    ("col_int32", "integer", None, 4, None, None, None),
+    ("col_int64", "bigint", None, 8, None, None, None),
+    ("col_dec_20", "numeric", None, 20, 20, 0, None),
+    ("col_dec_38", "numeric", None, 38, 38, 0, None),
+    ("col_dec_10_2", "numeric", None, 10, 10, 2, None),
+    ("col_float32", "real", None, 4, None, None, None),
+    ("col_float64", "double precision", None, 8, None, None, None),
+    ("col_varchar_30", "character varying", None, 30, None, None, None),
+    ("col_char_2", "character", None, 2, None, None, None),
+    ("col_string", "text", None, -1, None, None, None),
+    ("col_date", "date", None, 4, None, None, None),
+    ("col_datetime", "timestamp without time zone", None, 8, None, None, None),
+    ("col_tstz", "timestamp with time zone", None, 8, None, None, None),
+]
+
 
 @pytest.fixture
 def cloud_sql(request):
@@ -1126,3 +1145,16 @@ def test_row_validation_tricky_strings_to_bigquery():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+def test_raw_column_metadata():
+    """Test that get_raw_data_types custom Backend method returns expected results."""
+    from data_validation import clients
+
+    client = clients.get_data_client(CONN)
+    raw_types = list(
+        client.raw_column_metadata(
+            database="pso_data_validator", table="dvt_core_types"
+        )
+    )
+    assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES

@@ -42,7 +42,7 @@ BLACK_PATHS = (
     "setup.py",
 )
 LINT_PACKAGES = ["flake8", "black==22.3.0"]
-UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun"]
+UNIT_PACKAGES = ["pyfakefs==4.6.2", "freezegun", "teradatasql"]
 
 
 def _setup_session_requirements(session, extra_packages=[]):

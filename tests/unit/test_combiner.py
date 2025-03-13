@@ -18,6 +18,7 @@ import pandas
 import pandas.testing
 import pytest
 import logging
+import json
 
 from freezegun import freeze_time
 from data_validation import metadata, consts
@@ -967,7 +968,7 @@ def test_generate_report_with_nan_agg_value(
     (
         (
             metadata.RunMetadata(
-                run_id="test-run",
+                run_id="test1-run",
                 start_time=datetime.datetime(
                     2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
                 ),
@@ -994,9 +995,9 @@ def test_generate_report_with_nan_agg_value(
             pandas.DataFrame({"id": [1, 2, 3, 4], "value": [10, 20, 30, 40]}),
             pandas.DataFrame({"id": [1, 2, 3, 8], "value": [10, 20, 60, 80]}),
             {
-                consts.CONFIG_RUN_ID: "test-run",
-                consts.CONFIG_START_TIME: "2025-02-12 07:30:10 UTC",
-                consts.CONFIG_END_TIME: "2025-02-12 07:32:15 UTC",
+                consts.CONFIG_RUN_ID: "test1-run",
+                consts.CONFIG_START_TIME: "2025-02-12T07:30:10+00:00",
+                consts.CONFIG_END_TIME: "2025-02-12T07:32:15+00:00",
                 consts.TOTAL_SOURCE_ROWS: 4,
                 consts.TOTAL_TARGET_ROWS: 4,
                 consts.TOTAL_ROWS_VALIDATED: 5,
@@ -1011,9 +1012,48 @@ def test_generate_report_with_nan_agg_value(
                 consts.FAILED_PRESENT_IN_BOTH_TABLES: 1,
             },
         ),
+        (
+            metadata.RunMetadata(
+                run_id="test2-run",
+                start_time=datetime.datetime(
+                    2025, 3, 6, 5, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 3, 6, 5, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_TYPE: [consts.CUSTOM_QUERY] * 2,
+                    consts.CONFIG_PRIMARY_KEYS: ["{id}"] * 2,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2,
+                    consts.GROUP_BY_COLUMNS: [
+                        {"id": "5"},
+                        {"id": "6"},
+                    ],
+                    consts.SOURCE_AGG_VALUE: [50, 60],
+                    consts.TARGET_AGG_VALUE: [50, 60],
+                }
+            ),
+            pandas.DataFrame({"id": [5, 6], "value": [50, 60]}),
+            pandas.DataFrame({"id": [5, 6], "value": [50, 60]}),
+            {
+                consts.CONFIG_RUN_ID: "test2-run",
+                consts.CONFIG_START_TIME: "2025-03-06T05:30:10+00:00",
+                consts.CONFIG_END_TIME: "2025-03-06T05:32:15+00:00",
+                consts.TOTAL_SOURCE_ROWS: 2,
+                consts.TOTAL_TARGET_ROWS: 2,
+                consts.TOTAL_ROWS_VALIDATED: 2,
+                consts.TOTAL_ROWS_SUCCESS: 2,
+                consts.TOTAL_ROWS_FAIL: 0,
+                consts.FAILED_SOURCE_NOT_IN_TARGET: 0,
+                consts.FAILED_TARGET_NOT_IN_SOURCE: 0,
+                consts.FAILED_PRESENT_IN_BOTH_TABLES: 0,
+            },
+        ),
     ),
 )
-def test_get_summary_with_non_zero_values_for_all_stats(
+def test_get_summary_with_values_for_all_stats(
     module_under_test, caplog, run_metadata, result_df, source_df, target_df, expected
 ):
     caplog.set_level(logging.INFO)
@@ -1021,7 +1061,7 @@ def test_get_summary_with_non_zero_values_for_all_stats(
 
     logged = caplog.records[0]  # assuming only one log message
     assert logged.levelname == "INFO"
-    assert logged.message == str(expected)
+    assert logged.message == json.dumps(expected)
     assert all(
         module_under_test.COMBINER_GET_SUMMARY_EXC_TEXT not in _.message
         for _ in caplog.records

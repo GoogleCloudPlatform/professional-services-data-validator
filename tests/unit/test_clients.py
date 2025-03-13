@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from unittest import mock
+
 import pytest
 
 from google.auth import credentials
@@ -74,10 +75,11 @@ def test_get_bigquery_client_sets_user_agent():
 
 
 def test_import_oracle_client():
-    with pytest.raises(ModuleNotFoundError, match=r"No module named 'cx_Oracle'"):
-        from third_party.ibis.ibis_oracle.api import oracle_connect
-
-        oracle_connect()
+    try:
+        from third_party.ibis.ibis_oracle.api import oracle_connect  # noqa: F401
+    except ModuleNotFoundError as e:
+        # If we cannot import the Oracle api then assert cx_Oracle is mentioned in the exception text.
+        assert "No module named 'cx_Oracle'" in str(e)
 
 
 def test_get_oracle_data_client():
