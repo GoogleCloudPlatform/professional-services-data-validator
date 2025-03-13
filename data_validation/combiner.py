@@ -77,13 +77,11 @@ def generate_report(
     join_on_fields = tuple(join_on_fields)
 
     validation_columns = run_metadata.validations.keys()
-    # Explanation of the slice_thresholds list comprehension:
-    # 1. len(validation_columns): Gets the total number of validation columns.
-    # 2. len(...) / COMBINER_COLUMN_SLICE_WIDTH: Divides the total columns by the slice width.
-    # 3. int(...): Converts the result to an integer (rounding down).
-    # 4. int(...) + 1: Adds 1 to ensure all columns are included in the last slice.
-    # 5. range(...): Creates a sequence of numbers from 0 to the calculated number of slices.
-    # 6. _ * COMBINER_COLUMN_SLICE_WIDTH: Multiplies each number by the slice width to get its thresholds.
+    # slice_thresholds is a list of points at which we should break up the Dataframe by column.
+    # e.g. [10, 20, 30] would mean process columns 0-9, 10-19 and 20-the max column.
+    # 1. len(...) / COMBINER_COLUMN_SLICE_WIDTH: Divides total columns by the slice width to get the number of slices.
+    # 2. int(...) + 1: int()+1 is effectively ceil() which is what we want to get the actual whole number of slices
+    # 3. _ * COMBINER_COLUMN_SLICE_WIDTH: Multiplies each number by the slice width to get actual column counts for each slice.
     slice_thresholds = [
         (_ * COMBINER_COLUMN_SLICE_WIDTH)
         for _ in range(int(len(validation_columns) / COMBINER_COLUMN_SLICE_WIDTH) + 1)
