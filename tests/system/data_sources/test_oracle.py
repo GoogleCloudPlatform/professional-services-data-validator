@@ -798,7 +798,7 @@ def test_row_validation_many_columns():
     new=mock_get_connection_config,
 )
 def test_row_validation_comp_fields_many_columns():
-    """Test row validation on a table with reserved words in column names."""
+    """dvt_many_cols row validation using comparison fields"""
     df = row_validation_test(
         tables="pso_data_validator.dvt_many_cols",
         tc="mock-conn",
