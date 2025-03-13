@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from typing import Iterable, Literal, Tuple
+
 import sqlalchemy as sa
 from sqlalchemy.dialects.oracle.base import (
     OracleIdentifierPreparer,
@@ -20,7 +23,6 @@ from sqlalchemy.dialects.oracle.cx_oracle import OracleDialect_cx_oracle
 import re
 
 import ibis.expr.datatypes as dt
-from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_oracle.compiler import OracleCompiler
 from third_party.ibis.ibis_oracle.datatypes import _get_type
@@ -178,3 +180,35 @@ class Backend(BaseAlchemyBackend):
                 list_pk_col_sql, parameters=(database.upper(), table.upper())
             )
             return [_[0] for _ in result.cursor.fetchall()]
+
+    def raw_column_metadata(
+        self, database: str = None, table: str = None, query: str = None
+    ) -> Iterable[Tuple]:
+        """Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
+        This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
+        custom query, and fetching the first row. From the cursor we can detect data types of the row's columns.
+
+        Returns:
+            list: A list of tuples containing the standard 7 DB API fields:
+                  https://peps.python.org/pep-0249/#description
+        """
+
+        def strip_prefix(s: str):
+            if s.startswith("DB_TYPE_"):
+                return s[8:]
+            else:
+                return s
+
+        assert (database and table) or query, "We should never receive all args=None"
+        if database and table:
+            source = f'"{database}"."{table}"'.upper()
+        elif query:
+            source = f"({query})"
+
+        with self.begin() as con:
+            result = con.exec_driver_sql(f"SELECT * FROM {source} t0 WHERE ROWNUM <= 1")
+            cursor = result.cursor
+            yield from (
+                (column[0], strip_prefix(column[1].name), *column[2:])
+                for column in cursor.description
+            )
