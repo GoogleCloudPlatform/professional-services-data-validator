@@ -128,12 +128,12 @@ def generate_report(
 
 def _generate_report(
     run_metadata: "RunMetadata",
-    source_df: pandas.DataFrame,
-    target_df: pandas.DataFrame,
+    source_df: "DataFrame",
+    target_df: "DataFrame",
     join_on_fields=(),
     is_value_comparison=False,
     verbose=False,
-) -> pandas.DataFrame:
+) -> "DataFrame":
     """Combine results into a report.
 
     Args:
