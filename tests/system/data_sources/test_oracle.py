@@ -805,7 +805,7 @@ def test_row_validation_comp_fields_many_columns():
         comp_fields="*",
         filter_status=None,
     )
-    # There should be result per column per row = 399 for this table.
+    # There should be a result per column per row = 399 for this table.
     assert len(df) == 399
 
 
