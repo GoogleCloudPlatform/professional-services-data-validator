@@ -77,6 +77,13 @@ def generate_report(
     join_on_fields = tuple(join_on_fields)
 
     validation_columns = run_metadata.validations.keys()
+    # Explanation of the slice_thresholds list comprehension:
+    # 1. len(validation_columns): Gets the total number of validation columns.
+    # 2. len(...) / COMBINER_COLUMN_SLICE_WIDTH: Divides the total columns by the slice width.
+    # 3. int(...): Converts the result to an integer (rounding down).
+    # 4. int(...) + 1: Adds 1 to ensure all columns are included in the last slice.
+    # 5. range(...): Creates a sequence of numbers from 0 to the calculated number of slices.
+    # 6. _ * COMBINER_COLUMN_SLICE_WIDTH: Multiplies each number by the slice width to get its thresholds.
     slice_thresholds = [
         (_ * COMBINER_COLUMN_SLICE_WIDTH)
         for _ in range(int(len(validation_columns) / COMBINER_COLUMN_SLICE_WIDTH) + 1)
