@@ -176,7 +176,7 @@ def _generate_report(
     con = ibis.pandas.connect(
         {
             consts.RESULT_TYPE_SOURCE: source_pivot_df,
-            "differences": differences_df,
+            consts.RESULT_TYPE_DIFFERENCES: differences_df,
             consts.RESULT_TYPE_TARGET: target_pivot_df,
         }
     )
