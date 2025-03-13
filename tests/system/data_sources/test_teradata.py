@@ -197,6 +197,25 @@ TERADATA_ROW_CONFIG = {
     ],
 }
 
+DVT_CORE_TYPES_RAW_DATA_TYPES = [
+    ("id", "BIGINT", None, 8, None, None, False),
+    ("col_int8", "BYTEINT", None, 1, None, None, True),
+    ("col_int16", "SMALLINT", None, 2, None, None, True),
+    ("col_int32", "INTEGER", None, 4, None, None, True),
+    ("col_int64", "BIGINT", None, 8, None, None, True),
+    ("col_dec_20", "NUMBER", None, 18, 20, 0, True),
+    ("col_dec_38", "NUMBER", None, 18, 38, 0, True),
+    ("col_dec_10_2", "NUMBER", None, 18, 10, 2, True),
+    ("col_float32", "FLOAT", None, 8, None, None, True),
+    ("col_float64", "FLOAT", None, 8, None, None, True),
+    ("col_varchar_30", "VARCHAR", None, 60, None, None, True),
+    ("col_char_2", "CHAR", None, 4, None, None, True),
+    ("col_string", "LONG VARCHAR", None, 64000, None, None, True),
+    ("col_date", "DATE", None, 4, None, None, True),
+    ("col_datetime", "TIMESTAMP", None, 23, 0, 3, True),
+    ("col_tstz", "TIMESTAMP WITH TIME ZONE", None, 29, 0, 3, True),
+]
+
 
 def test_count_validator():
     validator = data_validation.DataValidation(TERADATA_COLUMN_CONFIG, verbose=True)
@@ -890,3 +909,12 @@ def test_row_validation_comp_fields_bool_to_bigquery():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="udf.dvt_core_types")
+
+
+def test_raw_column_metadata():
+    """Test that get_raw_data_types custom Backend method returns expected results."""
+    from data_validation import clients
+
+    client = clients.get_data_client(CONN)
+    raw_types = list(client.raw_column_metadata(database="udf", table="dvt_core_types"))
+    assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES

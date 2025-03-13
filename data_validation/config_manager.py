@@ -16,7 +16,7 @@ import copy
 import logging
 import string
 import random
-from typing import TYPE_CHECKING, Optional, Union, List, Dict
+from typing import TYPE_CHECKING, Dict, List, Optional, Union, Tuple
 
 import google.oauth2.service_account
 import ibis.expr.datatypes as dt
@@ -66,6 +66,9 @@ class ConfigManager(object):
         if self.validation_type not in consts.CONFIG_TYPES:
             raise ValueError(f"Unknown Configuration Type: {self.validation_type}")
         self._comparison_max_col_length = None
+        # For some engines we need to know the actual raw data type rather than the Ibis canonical type.
+        self._source_raw_data_types = None
+        self._target_raw_data_types = None
 
     @property
     def config(self):
@@ -93,6 +96,50 @@ class ConfigManager(object):
                 self._target_conn = self._state_manager.get_connection_config(conn_name)
 
         return self._target_conn
+
+    def get_source_raw_data_types(self) -> Dict[str, Tuple]:
+        """Return raw data type information from source system.
+
+        The raw data type is the source/target engine type, for example it might
+        be "NCLOB" or "char" when the Ibis type simply states "string".
+        The data is cached in state when fetched for the first time.
+        The retuen value is keyed on the casefolded column name and the tuple is
+        the remaining 6 elements of the DB API cursor description specification."""
+        if self._source_raw_data_types is None:
+            if hasattr(self.source_client, "raw_column_metadata"):
+                raw_data_types = self.source_client.raw_column_metadata(
+                    database=self.source_schema,
+                    table=self.source_table,
+                    query=self.source_query,
+                )
+                self._source_raw_data_types = {
+                    _[0].casefold(): _[1:] for _ in raw_data_types
+                }
+            else:
+                self._source_raw_data_types = {}
+        return self._source_raw_data_types
+
+    def get_target_raw_data_types(self) -> Dict[str, Tuple]:
+        """Return raw data type information from target system.
+
+        The raw data type is the source/target engine type, for example it might
+        be "NCLOB" or "char" when the Ibis type simply states "string".
+        The data is cached in state when fetched for the first time.
+        The retuen value is keyed on the casefolded column name and the tuple is
+        the remaining 6 elements of the DB API cursor description specification."""
+        if self._target_raw_data_types is None:
+            if hasattr(self.target_client, "raw_column_metadata"):
+                raw_data_types = self.target_client.raw_column_metadata(
+                    database=self.target_schema,
+                    table=self.target_table,
+                    query=self.target_query,
+                )
+                self._target_raw_data_types = {
+                    _[0].casefold(): _[1:] for _ in raw_data_types
+                }
+            else:
+                self._target_raw_data_types = {}
+        return self._target_raw_data_types
 
     def close_client_connections(self):
         """Attempt to clean up any source/target connections, based on the client types.
