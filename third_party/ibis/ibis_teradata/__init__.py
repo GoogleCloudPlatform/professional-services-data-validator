@@ -131,9 +131,9 @@ class Backend(BaseSQLBackend):
         schema_list = schema_df.to_dict("records")
         schema = {}
         for col_data in schema_list:
-            schema[
-                col_data["Column SQL Name"].rstrip()
-            ] = TeradataTypeTranslator.to_ibis(col_data)
+            schema[col_data["Column SQL Name"].rstrip()] = (
+                TeradataTypeTranslator.to_ibis(col_data)
+            )
 
         return schema
 
@@ -278,7 +278,8 @@ class Backend(BaseSQLBackend):
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
     ) -> Iterable[Tuple]:
-        """Partner method to _get_schema_using_query that retains raw data type information instead of converting
+        """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
+        Partner method to _get_schema_using_query that retains raw data type information instead of converting
         to Ibis types.  This works in the same way as _get_schema_using_query by running a query over the DVT
         source, either schema.table or a custom query, and fetching the first row. From the cursor we can detect
         data types of the row's columns.
@@ -301,6 +302,11 @@ class Backend(BaseSQLBackend):
             (column[0], raw_type, *column[2:])
             for column, raw_type in zip(cur.description, cur.columntypename)
         )
+
+    def is_char_type_padded(self, char_type: str) -> bool:
+        """Define this method if the backend supports character/string types that are padded and returns
+        padded values, which DVT may want to trim"""
+        return char_type == "CHAR"
 
     # Methods we need to implement for BaseSQLBackend
     def create_table(self):

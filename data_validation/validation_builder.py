@@ -88,39 +88,26 @@ class ValidationBuilder(object):
             return FilterField.isin(column_name, in_list)
 
     @staticmethod
-    def _is_fixed_length_char(
+    def _needs_trimming(
         client: str,
         raw_column_metadata: dict,
         column_name: str,
     ) -> bool:
-        """Returns true if the string column provided is a fixed length char column.
-        Since some databases automatically pad fixed length chars when storing them and returning the value, these
-        will need to be trimmed before comparison. Some databases - e.g. BQ do not support
-        fixed length character strings
+        """Returns true if the string column provided needs to be trimmed based on the backend.
+        Some databases automatically pad fixed length chars when storing them and returning the value, these
+        will need to be trimmed before comparison. Some databases - do not support
+        fixed length character strings (BQ, Spanner) or trim them before returning the value (mysql)
         """
-        # If we don't have metadata don't trim.
-        if not raw_column_metadata:
-            return False
-        match client:
-            # The following backends don't pad blanks - either don't support fixed char or
-            # trim spaces before using.
-            case "bigquery" | "spanner" | "snowflake" | "mysql":
-                return False
-            case "teradata":
-                return raw_column_metadata[column_name][0] == "CHAR"
-            case "oracle":
-                return raw_column_metadata[column_name][0] in [
-                    "CHAR",
-                    "NCHAR",
-                ]
-            case "postgres":
-                return raw_column_metadata[column_name][0] == "character"
-            case "mssql":
-                return raw_column_metadata[column_name][0] == "char"
-            case "db2":
-                return raw_column_metadata[column_name][0] == "CHARACTER"
-            case _:
-                return False
+        # Clients only need to implement _is_char_type_padded method if they pad strings
+        return (
+            (
+                client.is_char_type_padded(raw_column_metadata[column_name])
+                if raw_column_metadata.get(column_name)
+                else False
+            )
+            if hasattr(client, "is_char_type_padded") and raw_column_metadata
+            else False
+        )
 
     def clone(self):
         cloned_builder = ValidationBuilder(self.config_manager)
@@ -302,11 +289,9 @@ class ValidationBuilder(object):
         trim = False
         if config_manager.source_table:  # Not a custom query
             table = config_manager.get_source_ibis_table()
-            if (
-                table[source_field_name].type().is_string()
-            ):  # Fixed length char fields need to be trimmed
-                trim = self._is_fixed_length_char(
-                    config_manager.source_client.name,
+            if table[source_field_name].type().is_string():
+                trim = self._needs_trimming(
+                    config_manager.source_client,
                     config_manager.get_source_raw_data_types(),
                     source_field_name,
                 )
@@ -316,11 +301,9 @@ class ValidationBuilder(object):
         trim = False
         if config_manager.target_table:  # Not a custom query
             table = config_manager.get_target_ibis_table()
-            if (
-                table[target_field_name].type().is_string()
-            ):  # Fixed length char fields need to be trimmed
-                trim = self._is_fixed_length_char(
-                    config_manager.target_client.name,
+            if table[target_field_name].type().is_string():
+                trim = self._needs_trimming(
+                    config_manager.target_client,
                     config_manager.get_target_raw_data_types(),
                     target_field_name,
                 )

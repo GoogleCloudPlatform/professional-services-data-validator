@@ -101,3 +101,8 @@ class Backend(BaseAlchemyBackend):
                 list_pk_col_sql, parameters=(database.upper(), table.upper())
             )
             return [_[0] for _ in result.cursor.fetchall()]
+
+    def is_char_type_padded(self, char_type: str) -> bool:
+        """Define this method if the backend supports character/string types that are padded and returns
+        padded values, which DVT may want to trim"""
+        return char_type == "CHARACTER"
