@@ -56,7 +56,7 @@ def generate_report(
 ) -> "DataFrame":
     """Combine results into a report.
 
-    This function is a wrapper around _generate_report(). _generate_report() does the main work, this
+    This function is a wrapper around _generate_report_slice(). _generate_report_slice() does the main work, this
     wrapper simply manages the input columns and stitches the results back together.
     This is because validations of > 140(ish) columns trigger a RecursionError when unioning Ibis subqueries.
     In this method we pass in column slices of the incoming Dataframes and combine the results.
@@ -98,7 +98,7 @@ def generate_report(
             set(join_on_fields) - set(columns_in_vertical_slice)
         )
         # Ensure join_on_fields columns are in the slice.
-        interim_result_df = _generate_report(
+        interim_result_df = _generate_report_slice(
             run_metadata,
             source_df[columns_in_vertical_slice],
             target_df[columns_in_vertical_slice],
@@ -126,7 +126,7 @@ def generate_report(
     return result_df
 
 
-def _generate_report(
+def _generate_report_slice(
     run_metadata: "RunMetadata",
     source_df: "DataFrame",
     target_df: "DataFrame",
