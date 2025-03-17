@@ -102,7 +102,30 @@ class Backend(BaseAlchemyBackend):
             )
             return [_[0] for _ in result.cursor.fetchall()]
 
-    def is_char_type_padded(self, char_type: str) -> bool:
+    def raw_column_metadata(
+        self, database: str = None, table: str = None, query: str = None
+    ) -> Iterable[Tuple]:
+        """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
+        Partner method to _get_schema_using_query that retains raw data type information instead of converting
+        to Ibis types.  This works in the same way as _get_schema_using_query by running a query over the DVT
+        source, either schema.table or a custom query, and fetching the first row. From the cursor we can detect
+        data types of the row's columns.
+
+        In db2, if we knew the table and column name the underlying SQL data type can be obtained by
+        running the following query - select COLNAME, TYPENAME from SYSCAT.COLUMNS
+                                           where TABSCHEMA = '{schema_name.upper()}' and TABNAME='{table_name.upper()}'
+                                           and COLNAME='{column_name.upper()}'
+        This works for tables, but does allow us to find the underlying SQL data type for queries. Cursor.description
+        provides the underlying "compatible" SQL data types, so a fixed char and varchar column will have the same underlying
+        SQL data types.
+
+        Returns:
+            list: A list of tuples containing the standard 7 DB API fields:
+                  https://peps.python.org/pep-0249/#description
+        """
+        return ()
+
+    def is_char_type_padded(self, char_type: Tuple) -> bool:
         """Define this method if the backend supports character/string types that are padded and returns
         padded values, which DVT may want to trim"""
-        return char_type == "CHARACTER"
+        return char_type[0] == "CHARACTER"

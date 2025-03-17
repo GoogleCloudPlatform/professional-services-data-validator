@@ -1022,6 +1022,7 @@ class ConfigManager(object):
                 return True
             return False
 
+        breakpoint()
         aggregate_configs = []
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()

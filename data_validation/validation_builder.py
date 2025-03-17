@@ -14,6 +14,7 @@
 import logging
 from copy import deepcopy
 
+import ibis.backends.base
 from data_validation import consts, metadata
 from data_validation.clients import get_max_in_list_size
 from data_validation.query_builder.query_builder import (
@@ -89,7 +90,7 @@ class ValidationBuilder(object):
 
     @staticmethod
     def _needs_trimming(
-        client: str,
+        client: ibis.backends.base.BaseBackend,
         raw_column_metadata: dict,
         column_name: str,
     ) -> bool:

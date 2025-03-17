@@ -205,10 +205,11 @@ def _raw_column_metadata(
             for column in con.exec_driver_sql(sql)
         )
 
-    def is_char_type_padded(self, char_type: str) -> bool:
-        """Define this method if the backend supports character/string types that are padded and returns
-        padded values, which DVT may want to trim"""
-        return char_type == "character"
+
+def is_char_type_padded(self, char_type: Tuple) -> bool:
+    """Define this method if the backend supports character/string types that are padded and returns
+    padded values, which DVT may want to trim"""
+    return char_type[0] == "character"
 
 
 PostgresBackend._metadata = _metadata
@@ -216,3 +217,4 @@ PostgresBackend.list_databases = list_schemas
 PostgresBackend.do_connect = do_connect
 PostgresBackend.list_primary_key_columns = _list_primary_key_columns
 PostgresBackend.raw_column_metadata = _raw_column_metadata
+PostgresBackend.is_char_type_padded = is_char_type_padded

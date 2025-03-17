@@ -303,10 +303,10 @@ class Backend(BaseSQLBackend):
             for column, raw_type in zip(cur.description, cur.columntypename)
         )
 
-    def is_char_type_padded(self, char_type: str) -> bool:
+    def is_char_type_padded(self, char_type: Tuple) -> bool:
         """Define this method if the backend supports character/string types that are padded and returns
         padded values, which DVT may want to trim"""
-        return char_type == "CHAR"
+        return char_type[0] == "CHAR"
 
     # Methods we need to implement for BaseSQLBackend
     def create_table(self):
