@@ -127,8 +127,8 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
 
     report = module_under_test.generate_report(
         run_metadata,
-        input_df, # mock for source_df
-        input_df, # mock for target_df
+        input_df,  # mock for source_df
+        input_df,  # mock for target_df
     )
     # There are no filters so the resulting Dataframe should have one row per validation.
     assert len(report) == len(validations)
