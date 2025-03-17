@@ -43,8 +43,8 @@ For Hive, MySQl and MS SQL the encoding can be set at the table level, create a 
 
 DVT correctly handles Teradata strings encoded in ISO-8859 (Latin) encoding [PR 1226](https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/1226)
 
-## Handling NCHAR and NVARCHAR data types in MS SQL and Oracle
+## Handling NCHAR and NVARCHAR data types in Microsoft SQL Server and Oracle
 
 Customer has opened an [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1406) that tables with NCHAR and NVARCHAR cannot be validated in Oracle. It is possible a similar issue also exists in SQL Server. By definition, NCHAR and NVARCHAR use Unicode characters and in theory is a superset of the encoding used for CHAR and VARCHAR. In practice, current versions of Oracle and SQL Server use UTF8 encoding for CHAR and VARCHAR by default. Customers upgrading from earlier versions may be using a more limited encoding such as ASCII7 or Latin-1.
 
-Since the character set for NCHAR and NVARCHAR is guaranteed to be a superset of the character set for CHAR and VARCHAR, DVT can convert all string fields to NVARCHAR. Please note comments earlier in this document that fixed length strings for Oracle and SQL Server must be blank trimmed prior to processing. Once converted to variable length character strings in Unicode, DVT can perform the comparison with other character strings represented in UTF-8.
+The character set for NCHAR and NVARCHAR (Unicode) is guaranteed to be a superset of the character set for CHAR and VARCHAR. One approach to validate CHAR and NCHAR strings is to convert both types of strings to NCHAR (or NVARCHAR). These could then be encoded in UTF8 and compared across database backends. Please note comments earlier in this document that fixed length strings for Oracle and SQL Server must be blank trimmed prior to processing. Once converted to variable length character strings in Unicode, DVT can perform the comparison with other character strings represented in UTF-8.
