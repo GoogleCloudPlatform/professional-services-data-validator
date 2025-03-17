@@ -194,6 +194,12 @@ class MockIbisType(object):
     def __init__(self, coltype: str):
         self.coltype = coltype
 
+    def __str__(self):
+        if self.coltype == "!string":
+            return "!string"
+        else:
+            return "int64"
+
     def is_string(self):
         return self.coltype in ["string", "!string"]
 
@@ -347,7 +353,6 @@ def test_build_config_aggregates(module_under_test):
         copy.copy(SAMPLE_CONFIG), MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    breakpoint()
     aggregate_configs = config_manager.build_config_column_aggregates(
         "sum", ["a"], False, []
     )
