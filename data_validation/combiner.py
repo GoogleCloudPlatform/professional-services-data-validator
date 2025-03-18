@@ -97,7 +97,6 @@ def generate_report(
         columns_in_vertical_slice.extend(
             set(join_on_fields) - set(columns_in_vertical_slice)
         )
-        # Ensure join_on_fields columns are in the slice.
         interim_result_df = _generate_report_slice(
             run_metadata,
             source_df[columns_in_vertical_slice],
