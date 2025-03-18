@@ -115,7 +115,7 @@ class Backend(BaseAlchemyBackend):
         running the following query - select COLNAME, TYPENAME from SYSCAT.COLUMNS
                                            where TABSCHEMA = '{schema_name.upper()}' and TABNAME='{table_name.upper()}'
                                            and COLNAME='{column_name.upper()}'
-        This works for tables, but does allow us to find the underlying SQL data type for queries. Cursor.description
+        This works for tables, but does not allow us to find the underlying SQL data type for queries. Cursor.description
         provides the underlying "compatible" SQL data types, so a fixed char and varchar column will have the same underlying
         SQL data types.
 

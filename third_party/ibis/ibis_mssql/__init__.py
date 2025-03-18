@@ -123,7 +123,7 @@ class Backend(BaseAlchemyBackend):
         running the following query - select COLUMN_NAME, DATA_TYPE from INFORMATION_SCHEMA.COLUMNS
                                             where TABLE_NAME='{table_name}'
                                             and COLUMN_NAME='{column_name}'
-        This works for tables, but does allow us to find the underlying SQL data type for queries. For that we need to
+        This works for tables, but does not allow us to find the underlying SQL data type for queries. For that we need to
         wait until this issue is resolved in https://github.com/mkleehammer/pyodbc/issues/167
 
         Returns:

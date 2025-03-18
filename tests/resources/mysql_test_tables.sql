@@ -116,15 +116,6 @@ INSERT INTO pso_data_validator.dvt_binary VALUES
 ('DVT-key-4', 4, 'Row 4'),
 ('DVT-key-5', 5, 'Row 5');
 
-DROP TABLE IF EXISTS `pso_data_validator`.`dvt_char_id`;
-CREATE TABLE `pso_data_validator`.`dvt_char_id`
-(   id          char(6) NOT NULL PRIMARY KEY
-,   other_data  varchar(100)
-) COMMENT 'Integration test table used to test CHAR pk matching.';
-INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
-('DVT1', 'Row 1'), ('DVT2', 'Row 2'), ('DVT3', 'Row 3'),
-('DVT4', 'Row 4'), ('DVT5', 'Row 5');
-
 DROP TABLE IF EXISTS `pso_data_validator`.`dvt_datetime_id`;
 CREATE TABLE `pso_data_validator`.`dvt_datetime_id`
 (   id          datetime NOT NULL PRIMARY KEY

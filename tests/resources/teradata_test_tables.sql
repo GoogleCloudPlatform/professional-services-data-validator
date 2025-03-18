@@ -128,18 +128,6 @@ INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-3','ascii'), 3, 'Row 3');
 INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-4','ascii'), 4, 'Row 4');
 INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-5','ascii'), 5, 'Row 5');
 
-DROP TABLE udf.dvt_string_id;
-CREATE TABLE udf.dvt_string_id
-(   id          VARCHAR(15) NOT NULL PRIMARY KEY
-,   other_data  VARCHAR(100)
-);
-COMMENT ON TABLE udf.dvt_string_id IS 'Integration test table used to test string pk matching.';
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-1', 'Row 1');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-2', 'Row 2');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-3', 'Row 3');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-4', 'Row 4');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-5', 'Row 5');
-
 DROP TABLE udf.dvt_time_table;
 CREATE TABLE udf.dvt_time_table
 (   id          INTEGER NOT NULL PRIMARY KEY
@@ -149,18 +137,6 @@ COMMENT ON TABLE udf.dvt_time_table IS 'Integration test table used to test Time
 INSERT INTO udf.dvt_time_table VALUES (1, '01:01:44+01:00');
 INSERT INTO udf.dvt_time_table VALUES (2, '04:02:00+00:00');
 INSERT INTO udf.dvt_time_Table VALUES (3, '04:01:07-04:00');
-
-DROP TABLE udf.dvt_char_id;
-CREATE TABLE udf.dvt_char_id
-(   id          CHAR(6) NOT NULL PRIMARY KEY
-,   other_data  CHAR(100)
-);
-COMMENT ON TABLE udf.dvt_char_id IS 'Integration test table used to test CHAR pk matching.';
-INSERT INTO udf.dvt_char_id VALUES ('DVT1', 'Row 1	  ');
-INSERT INTO udf.dvt_char_id VALUES ('DVT2', 'Row 2  	');
-INSERT INTO udf.dvt_char_id VALUES ('DVT3', 'Row 3  ');
-INSERT INTO udf.dvt_char_id VALUES ('DVT4', 'Row 4  	  ');
-INSERT INTO udf.dvt_char_id VALUES ('DVT5', 'Row 5');
 
 DROP TABLE udf.dvt_fixed_char_id;
 CREATE TABLE udf.dvt_fixed_char_id
