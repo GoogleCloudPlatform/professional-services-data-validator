@@ -365,6 +365,7 @@ def row_validation_test(
     tc="bq-conn",
     hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
     filters="1=1",
+    filter_status: str = "fail",
     primary_keys="id",
     comp_fields=None,
     concat=None,
@@ -388,7 +389,7 @@ def row_validation_test(
         f"--filters={filters}",
         f"--primary-keys={primary_keys}" if primary_keys else None,
         col_option,
-        "--filter-status=fail",
+        f"--filter-status={filter_status}" if filter_status else None,
         "--use-random-row" if use_randow_row else None,
         (
             f"--random-row-batch-size={random_row_batch_size}"
@@ -399,8 +400,10 @@ def row_validation_test(
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
-    # With filter on failures the data frame should be empty
-    assert len(df) == 0
+    if filter_status == "fail":
+        # With filter on failures the data frame should be empty
+        assert len(df) == 0
+    return df
 
 
 def id_column_row_validation_test(

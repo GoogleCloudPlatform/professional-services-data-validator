@@ -793,11 +793,40 @@ def test_find_views_and_tables():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_many_columns():
+    """dvt_many_cols column validation."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_many_cols",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_many_columns():
-    """Oracle dvt_many_cols row validation.
+    """dvt_many_cols row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
     row_validation_many_columns_test(expected_config_managers=4)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_many_columns():
+    """dvt_many_cols row validation using comparison fields"""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_many_cols",
+        tc="mock-conn",
+        comp_fields="*",
+        filter_status=None,
+    )
+    # There should be a result per column per row = 399 for this table.
+    assert len(df) == 399
 
 
 @mock.patch(
