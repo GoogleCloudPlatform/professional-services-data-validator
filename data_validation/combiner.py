@@ -22,10 +22,12 @@ import datetime
 import functools
 import json
 import logging
+from typing import TYPE_CHECKING
+
 import ibis
 import ibis.expr.datatypes as dt
+import pandas
 
-from typing import TYPE_CHECKING
 from data_validation import consts
 
 if TYPE_CHECKING:
@@ -34,27 +36,109 @@ if TYPE_CHECKING:
     from data_validation.metadata import RunMetadata, ValidationMetadata
 
 
+# At around 140 columns we hit RecursionError when unioning Ibis subqueries.
+# This constant is a threshold at which we slice up the input Dataframes
+# and stitch them back together again after Ibis processing.
+COMBINER_COLUMN_SLICE_WIDTH = 120
+
 COMBINER_GET_SUMMARY_EXC_TEXT = (
     "Error while generating summary report of row validation results"
 )
 
 
 def generate_report(
-    client,
     run_metadata: "RunMetadata",
-    source: "IbisTable",
-    target: "IbisTable",
+    source_df: "DataFrame",
+    target_df: "DataFrame",
     join_on_fields=(),
     is_value_comparison=False,
     verbose=False,
-):
+) -> "DataFrame":
+    """Combine results into a report.
+
+    This function is a wrapper around _generate_report_slice(). _generate_report_slice() does the main work, this
+    wrapper simply manages the input columns and stitches the results back together.
+    This is because validations of > 140(ish) columns trigger a RecursionError when unioning Ibis subqueries.
+    In this method we pass in column slices of the incoming Dataframes and combine the results.
+
+    It is a bit of a hack but I cannot find a way to optimize the Ibis processing. It appears to be
+    inefficient in that we create a subquery for each validation (column) in _calculate_differences() and
+    then union them all. We then do the same on the source/target table expressions to join it all back
+    together again. I (nj1973) spent a singificant amount of time trying to understand/optimize the Ibis
+    processing but fell back on this simpler (less risky) workaround.
+
+    Returns:
+        pandas.DataFrame:
+            A pandas DataFrame with the results of the validation in the same
+            schema as the report table.
+    """
+    _check_schema_names(source_df, target_df)
+
+    join_on_fields = tuple(join_on_fields)
+
+    validation_columns = run_metadata.validations.keys()
+    # slice_thresholds is a list of points at which we should break up the Dataframe by column.
+    # e.g. [10, 20, 30] would mean process columns 0-9, 10-19 and 20-the max column.
+    # 1. len(...) / COMBINER_COLUMN_SLICE_WIDTH: Divides total columns by the slice width to get the number of slices.
+    # 2. int(...) + 1: int()+1 is effectively ceil() which is what we want to get the actual whole number of slices
+    # 3. _ * COMBINER_COLUMN_SLICE_WIDTH: Multiplies each number by the slice width to get actual column counts for each slice.
+    slice_thresholds = [
+        (_ * COMBINER_COLUMN_SLICE_WIDTH)
+        for _ in range(int(len(validation_columns) / COMBINER_COLUMN_SLICE_WIDTH) + 1)
+    ]
+
+    result_df = None
+    # Process the input Dataframes in slices of columns to avoid "RecursionError"s.
+    for slice_start in slice_thresholds:
+        columns_in_vertical_slice = list(validation_columns)[
+            slice_start : slice_start + COMBINER_COLUMN_SLICE_WIDTH
+        ]
+        # Ensure any join columns are included in the column slice.
+        columns_in_vertical_slice.extend(
+            set(join_on_fields) - set(columns_in_vertical_slice)
+        )
+        interim_result_df = _generate_report_slice(
+            run_metadata,
+            source_df[columns_in_vertical_slice],
+            target_df[columns_in_vertical_slice],
+            join_on_fields=join_on_fields,
+            is_value_comparison=is_value_comparison,
+            verbose=verbose,
+        )
+        if result_df is None:
+            result_df = interim_result_df
+        else:
+            result_df = pandas.concat([result_df, interim_result_df])
+
+    # Get the first validation metadata object to fill source and/or target empty table names.
+    first = run_metadata.validations[next(iter(run_metadata.validations))]
+    if first.validation_type != consts.CUSTOM_QUERY:
+        result_df.source_table_name.fillna(
+            first.get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True
+        )
+        result_df.target_table_name.fillna(
+            first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
+        )
+
+    _get_summary(run_metadata, result_df, source_df, target_df)
+
+    return result_df
+
+
+def _generate_report_slice(
+    run_metadata: "RunMetadata",
+    source_df: "DataFrame",
+    target_df: "DataFrame",
+    join_on_fields=(),
+    is_value_comparison=False,
+    verbose=False,
+) -> "DataFrame":
     """Combine results into a report.
 
     Args:
-        client (ibis.client.Client): Ibis client used to combine results.
         run_metadata: Metadata about the run and validations.
-        source (ibis.QUERY): Ibis query / table object.
-        target (ibis.QUERY): Ibis query / table object.
+        source_df: Dataframe contains results of source query.
+        target_df: Dataframe contains results of target query.
         join_on_fields (Sequence[str]):
             A collection of column names to use to join source and target.
             These are the columns that both the source and target queries
@@ -68,16 +152,15 @@ def generate_report(
             A pandas DataFrame with the results of the validation in the same
             schema as the report table.
     """
-    join_on_fields = tuple(join_on_fields)
+    client = ibis.pandas.connect(
+        {
+            consts.RESULT_TYPE_SOURCE: source_df,
+            consts.RESULT_TYPE_TARGET: target_df,
+        }
+    )
+    source = client.table(consts.RESULT_TYPE_SOURCE)
+    target = client.table(consts.RESULT_TYPE_TARGET)
 
-    source_names = source.schema().names
-    target_names = target.schema().names
-
-    if source_names != target_names:
-        raise ValueError(
-            "Expected source and target to have same schema, got "
-            f"{consts.RESULT_TYPE_SOURCE}: {source_names}; {consts.RESULT_TYPE_TARGET}: {target_names}"
-        )
     differences_pivot = _calculate_differences(
         source, target, join_on_fields, run_metadata.validations, is_value_comparison
     )
@@ -86,18 +169,18 @@ def generate_report(
     source_pivot = _pivot_result(
         source, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_SOURCE
     )
-    source_df = client.execute(source_pivot)
+    source_pivot_df = client.execute(source_pivot)
 
     target_pivot = _pivot_result(
         target, join_on_fields, run_metadata.validations, consts.RESULT_TYPE_TARGET
     )
-    target_df = client.execute(target_pivot)
+    target_pivot_df = client.execute(target_pivot)
 
     con = ibis.pandas.connect(
         {
-            consts.RESULT_TYPE_SOURCE: source_df,
-            "differences": differences_df,
-            consts.RESULT_TYPE_TARGET: target_df,
+            consts.RESULT_TYPE_SOURCE: source_pivot_df,
+            consts.RESULT_TYPE_DIFFERENCES: differences_df,
+            consts.RESULT_TYPE_TARGET: target_pivot_df,
         }
     )
     joined = _join_pivots(
@@ -112,19 +195,6 @@ def generate_report(
 
     result_df = client.execute(documented)
     result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
-
-    # get the first validation metadata object to fill source and/or target empty table names
-    first = run_metadata.validations[next(iter(run_metadata.validations))]
-    if first.validation_type != consts.CUSTOM_QUERY:
-        result_df.source_table_name.fillna(
-            first.get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True
-        )
-        result_df.target_table_name.fillna(
-            first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
-        )
-
-    _get_summary(run_metadata, result_df, source_df, target_df)
-
     return result_df
 
 
@@ -282,6 +352,18 @@ def _calculate_differences(
         lambda pivot1, pivot2: pivot1.union(pivot2), differences_pivots
     )
     return differences_pivot
+
+
+def _check_schema_names(source_df, target_df):
+    """Check that the two input Dataframes have matching column names."""
+    source_names = tuple(source_df.columns)
+    target_names = tuple(target_df.columns)
+
+    if source_names != target_names:
+        raise ValueError(
+            "Expected source and target to have same schema, got "
+            f"{consts.RESULT_TYPE_SOURCE}: {source_names}; {consts.RESULT_TYPE_TARGET}: {target_names}"
+        )
 
 
 def _pivot_result(
