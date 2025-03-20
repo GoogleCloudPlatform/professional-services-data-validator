@@ -48,7 +48,7 @@ CLI_ADD_CONNECTION_ARGS = [
     "add",
     "--connection-name",
     "test",
-    "BigQuery",
+    consts.SOURCE_TYPE_BIGQUERY,
     "--project-id",
     "example-project",
 ]
@@ -60,7 +60,7 @@ CLI_EXPECTED_CONNECTION_FILE_PATH = (
 )
 
 CLI_EXPECTED_CONNECTION = {
-    "source_type": "BigQuery",
+    "source_type": consts.SOURCE_TYPE_BIGQUERY,
     "secret_manager_type": None,
     "secret_manager_project_id": None,
     "project_id": "example-project",
@@ -71,7 +71,7 @@ CLI_ADD_CONNECTION_BAD_ARGS = [
     "add",
     "--bad-name",
     "test",
-    "BigQuery",
+    consts.SOURCE_TYPE_BIGQUERY,
 ]
 
 CLI_ADD_BQ_CONNECTION_ARGS = [
@@ -79,7 +79,7 @@ CLI_ADD_BQ_CONNECTION_ARGS = [
     "add",
     "--connection-name",
     "test_with_endpoint",
-    "BigQuery",
+    consts.SOURCE_TYPE_BIGQUERY,
     "--project-id",
     "example-project",
     "--api-endpoint",
@@ -306,7 +306,7 @@ def test_create_bq_connection(caplog, fs):
     assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     bq_conn = cli_tools.get_connection(args.connection_name)
-    assert bq_conn["source_type"] == "BigQuery"
+    assert bq_conn["source_type"] == consts.SOURCE_TYPE_BIGQUERY
 
     conn_from_file = cli_tools.get_connection(args.connection_name)
     assert conn_from_file["api_endpoint"] == "https://mybq.p.googleapis.com"
@@ -589,7 +589,7 @@ def test_get_arg_list(test_input, expected):
         (
             "project.dataset.table",
             {
-                "type": "BigQuery",
+                "type": consts.SOURCE_TYPE_BIGQUERY,
                 consts.PROJECT_ID: "project",
                 consts.TABLE_ID: "dataset.table",
             },
@@ -597,7 +597,7 @@ def test_get_arg_list(test_input, expected):
         (
             "project.data.data.table",
             {
-                "type": "BigQuery",
+                "type": consts.SOURCE_TYPE_BIGQUERY,
                 consts.PROJECT_ID: "project",
                 consts.TABLE_ID: "data.data.table",
             },
@@ -606,7 +606,7 @@ def test_get_arg_list(test_input, expected):
 )
 def test_get_result_handler_by_project(test_input, expected):
     """Test get result handler config dictionary for project.dataset.table format."""
-    res = cli_tools.get_result_handler(test_input)
+    res = cli_tools._get_result_handler(test_input)
     assert res == expected
 
 
@@ -619,18 +619,18 @@ def test_get_result_handler_by_conn_file(fs):
     cli_tools.store_connection(args.connection_name, conn)
 
     # Now check we can use it.
-    res = cli_tools.get_result_handler(f"{args.connection_name}.dataset.table")
+    res = cli_tools._get_result_handler(f"{args.connection_name}.dataset.table")
     assert res == {
-        "type": "BigQuery",
+        consts.CONFIG_TYPE: consts.SOURCE_TYPE_BIGQUERY,
         consts.PROJECT_ID: args.project_id,
         consts.TABLE_ID: "dataset.table",
         consts.API_ENDPOINT: args.api_endpoint,
     }
 
     # Plus check standard format still works.
-    res = cli_tools.get_result_handler("project.dataset.table")
+    res = cli_tools._get_result_handler("project.dataset.table")
     assert res == {
-        "type": "BigQuery",
+        consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
         consts.PROJECT_ID: "project",
         consts.TABLE_ID: "dataset.table",
     }
@@ -798,7 +798,7 @@ def test_split_table_no_schema():
 
 @pytest.mark.parametrize(
     "test_input",
-    [(["table"])],
+    [["table"]],
 )
 def test_split_table_err(
     test_input,

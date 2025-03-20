@@ -47,7 +47,7 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
-BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
+BQ_CONN = {"source_type": consts.SOURCE_TYPE_BIGQUERY, "project_id": PROJECT_ID}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,

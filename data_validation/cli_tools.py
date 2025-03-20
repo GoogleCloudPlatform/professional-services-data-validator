@@ -58,6 +58,7 @@ from yaml import Dumper, Loader, dump, load
 from data_validation import (
     clients,
     consts,
+    exceptions,
     find_tables,
     state_manager,
     gcs_helper,
@@ -70,7 +71,7 @@ if TYPE_CHECKING:
 
 
 CONNECTION_SOURCE_FIELDS = {
-    "BigQuery": [
+    consts.SOURCE_TYPE_BIGQUERY: [
         ["project_id", "GCP Project to use for BigQuery"],
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
@@ -78,7 +79,7 @@ CONNECTION_SOURCE_FIELDS = {
             '(Optional) GCP BigQuery API endpoint (e.g. "https://mybq.p.googleapis.com")',
         ],
     ],
-    "Teradata": [
+    consts.SOURCE_TYPE_TERADATA: [
         ["host", "Desired Teradata host"],
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
@@ -87,7 +88,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["use_no_lock_tables", "Use an access lock for queries (defaults to False)"],
         ["json_params", "(Optional) Additional teradatasql JSON string parameters"],
     ],
-    "Oracle": [
+    consts.SOURCE_TYPE_ORACLE: [
         ["host", "Desired Oracle host"],
         ["port", "Oracle port to connect on"],
         ["user", "User used to connect"],
@@ -95,7 +96,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["database", "Database to connect to"],
         ["url", "Oracle SQLAlchemy connection URL"],
     ],
-    "MSSQL": [
+    consts.SOURCE_TYPE_MSSQL: [
         ["host", "Desired SQL Server host (default localhost)"],
         ["port", "SQL Server port to connect on (default 1433)"],
         ["user", "User used to connect"],
@@ -104,35 +105,35 @@ CONNECTION_SOURCE_FIELDS = {
         ["query", "Connection query parameters"],
         ["url", "SQL Server SQLAlchemy connection URL"],
     ],
-    "MySQL": [
+    consts.SOURCE_TYPE_MYSQL: [
         ["host", "Desired MySQL host (default localhost)"],
         ["port", "MySQL port to connect on (default 3306)"],
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
     ],
-    "Snowflake": [
+    consts.SOURCE_TYPE_SNOWFLAKE: [
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
         ["account", "Snowflake account to connect to"],
         ["database", "Database in snowflake to connect to"],
         ["connect_args", "(Optional) Additional connection arg mapping"],
     ],
-    "Postgres": [
+    consts.SOURCE_TYPE_POSTGRES: [
         ["host", "Desired PostgreSQL host."],
         ["port", "PostgreSQL port to connect on (e.g. 5432)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
         ["database", "Database in PostgreSQL to connect to (default postgres)"],
     ],
-    "Redshift": [
+    consts.SOURCE_TYPE_REDSHIFT: [
         ["host", "Desired Redshift host."],
         ["port", "Redshift port to connect on (e.g. 5439)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
         ["database", "Database in Redshift to connect to"],
     ],
-    "Spanner": [
+    consts.SOURCE_TYPE_SPANNER: [
         ["project_id", "GCP Project to use for Spanner"],
         ["instance_id", "ID of Spanner instance to connect to"],
         ["database_id", "ID of Spanner database (schema) to connect to"],
@@ -142,12 +143,12 @@ CONNECTION_SOURCE_FIELDS = {
             '(Optional) GCP Spanner API endpoint (e.g. "https://mycs.p.googleapis.com")',
         ],
     ],
-    "FileSystem": [
+    consts.SOURCE_TYPE_FILESYSTEM: [
         ["table_name", "Table name to use as reference for file data"],
         ["file_path", "The local, s3, or GCS file path to the data"],
         ["file_type", "The file type of the file. 'csv', 'orc', 'parquet' or 'json'"],
     ],
-    "Impala": [
+    consts.SOURCE_TYPE_IMPALA: [
         ["host", "Desired Impala host"],
         ["port", "Desired Impala port (10000 if not provided)"],
         ["database", "Desired Impala database (default if not provided)"],
@@ -175,7 +176,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["use_http_transport", "Boolean if HTTP proxy is provided (default is False)"],
         ["http_path", "URL path of HTTP proxy"],
     ],
-    "DB2": [
+    consts.SOURCE_TYPE_DB2: [
         ["host", "Desired DB2 host"],
         ["port", "Desired DB2 port (50000 if not provided)"],
         ["user", "Username to connect to"],
@@ -1015,6 +1016,9 @@ def _add_common_arguments(
         "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
     )
     optional_arguments.add_argument(
+        "--result-handler", "-rh", help="Result handler connection details"
+    )
+    optional_arguments.add_argument(
         "--labels", "-l", help="Key value pair labels for validation run"
     )
     optional_arguments.add_argument(
@@ -1244,7 +1248,7 @@ def get_filters(filter_value: str) -> List[Dict]:
     return filter_config
 
 
-def get_result_handler(rc_value: str, sa_file=None) -> dict:
+def _get_result_handler(rc_value: str, sa_file=None) -> dict:
     """Returns dict of result handler config. Backwards compatible for JSON input.
 
     rc_value (str): Result config argument specified.
@@ -1260,18 +1264,35 @@ def get_result_handler(rc_value: str, sa_file=None) -> dict:
     if config[0] in connections:
         # We received connection_name.bq_results_table
         conn_from_file = get_connection(config[0])
-        result_handler = {
-            "type": "BigQuery",
-            consts.PROJECT_ID: conn_from_file["project_id"],
-            consts.TABLE_ID: config[1],
-            consts.API_ENDPOINT: conn_from_file.get("api_endpoint", None),
-        }
+        if conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_BIGQUERY:
+            result_handler = {
+                consts.RH_TYPE: conn_from_file[consts.SOURCE_TYPE],
+                consts.PROJECT_ID: conn_from_file["project_id"],
+                consts.TABLE_ID: config[1],
+                consts.API_ENDPOINT: conn_from_file.get("api_endpoint", None),
+                # consts.RH_CONN: conn_from_file,
+            }
+        elif conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_POSTGRES:
+            # result_handler = {
+            #    k: v for k, v in conn_from_file.items() if k != consts.SOURCE_TYPE
+            # }
+            result_handler = {
+                consts.RH_TYPE: conn_from_file[consts.SOURCE_TYPE],
+                consts.TABLE_ID: config[1],
+                consts.RH_CONN: conn_from_file,
+            }
+        # TODO Add filesytem handler too.
+        else:
+            raise exceptions.ResultHandlerException(
+                f"Unsupported result handler connection type: {conn_from_file[consts.SOURCE_TYPE]}"
+            )
     else:
-        # We received project_name.bq_results_table
+        # We received legacy format "project_name.bq_results_table".
         result_handler = {
-            "type": "BigQuery",
+            consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
             consts.PROJECT_ID: config[0],
             consts.TABLE_ID: config[1],
+            # consts.RH_CONN: {"project_id": config[0]},
         }
 
     if sa_file:
@@ -1491,7 +1512,7 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
 
     # Get result handler config
     if args.bq_result_handler:
-        result_handler_config = get_result_handler(
+        result_handler_config = _get_result_handler(
             args.bq_result_handler, args.service_account
         )
     else:
