@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Literal
+from typing import Iterable, Literal, Tuple
 
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
@@ -156,7 +156,57 @@ def _list_primary_key_columns(self, database: str, table: str) -> list:
         return [_[0] for _ in result.cursor.fetchall()]
 
 
+def _raw_column_metadata(
+    self, database: str = None, table: str = None, query: str = None
+) -> Iterable[Tuple]:
+    """Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
+    This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
+    custom query, and fetching the first row. From the cursor we can detect data types of the row's columns.
+
+    Returns:
+        list: A list of tuples containing the standard 7 DB API fields:
+                https://peps.python.org/pep-0249/#description
+    """
+
+    assert (database and table) or query, "We should never receive all args=None"
+    if database and table:
+        source = f'"{database}"."{table}"'
+    elif query:
+        source = f"({query})"
+
+    with self.begin() as con:
+        cur = con.exec_driver_sql(f"SELECT * FROM {source} t0 LIMIT 0")
+        qry_cols = [
+            f"('{column.name}'::text,"
+            + f"{column.type_code},"
+            + f"{column.display_size if column.display_size else 'NULL'}::int,"
+            + f"{column.internal_size if column.internal_size else 'NULL'}::int,"
+            + f"{column.precision if column.precision else 'NULL'}::int,"
+            + f"{column.scale if column.scale is not None else 'NULL'}::int,"
+            + f"{column.null_ok if column.null_ok else 'NULL'}::int, {idx})"
+            for idx, column in enumerate(cur.cursor.description)
+        ]
+        sql = f"""SELECT name, format_type(t0.type_code, NULL) AS data_type
+                ,    display_size, internal_size, precision, scale, null_ok
+                FROM UNNEST(array[{','.join(qry_cols)}])
+                     AS t0(name text, type_code int, display_size int, internal_size int, precision int, scale int, null_ok int, col_order int)
+                ORDER BY col_order"""
+        yield from (
+            (
+                column.name,
+                column.data_type,
+                column.display_size,
+                column.internal_size,
+                column.precision,
+                column.scale,
+                column.null_ok,
+            )
+            for column in con.exec_driver_sql(sql)
+        )
+
+
 PostgresBackend._metadata = _metadata
 PostgresBackend.list_databases = list_schemas
 PostgresBackend.do_connect = do_connect
 PostgresBackend.list_primary_key_columns = _list_primary_key_columns
+PostgresBackend.raw_column_metadata = _raw_column_metadata
