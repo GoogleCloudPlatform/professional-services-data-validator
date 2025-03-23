@@ -166,6 +166,7 @@ COUNT_STAR = "{count_star}"
 # Validation metadata
 RESULT_TYPE_SOURCE = "source"
 RESULT_TYPE_TARGET = "target"
+RESULT_TYPE_DIFFERENCES = "differences"
 
 FORMAT_TYPE_CSV = "csv"
 FORMAT_TYPE_JSON = "json"
