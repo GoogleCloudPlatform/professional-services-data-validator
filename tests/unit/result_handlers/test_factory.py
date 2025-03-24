@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest import mock
+
 import pytest
 
 from data_validation import consts
@@ -36,7 +38,7 @@ PG_CONFIG = {
         "user": "dvt_u",
         "password": "dvt_p",
         "database": "postgres",
-        "type": consts.SOURCE_TYPE_POSTGRES,
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_POSTGRES,
     },
 }
 
@@ -71,6 +73,10 @@ def test_build_result_handler_bigquery(module_under_test):
     assert handler._status_list == filter_status
 
 
+@mock.patch.dict(
+    "data_validation.clients.CLIENT_LOOKUP",
+    {consts.SOURCE_TYPE_POSTGRES: mock.Mock()},
+)
 def test_build_result_handler_postgres(module_under_test):
     config = PG_CONFIG
     filter_status = ["fail"]

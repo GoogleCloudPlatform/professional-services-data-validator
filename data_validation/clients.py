@@ -300,6 +300,7 @@ def get_data_client(connection_config):
                 )
             )
 
+    breakpoint()
     if source_type not in CLIENT_LOOKUP:
         msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
             source_type=source_type

@@ -37,7 +37,7 @@ def build_result_handler(
             cols_filter_list = consts.SCHEMA_VALIDATION_COLUMN_FILTER_LIST
         else:
             cols_filter_list = consts.COLUMN_FILTER_LIST
-        # handler that display results either to output or in a file
+        # Handler that display results to stdout.
         return TextResultHandler(
             text_format,
             filter_status,
@@ -69,6 +69,7 @@ def build_result_handler(
     elif result_type == consts.SOURCE_TYPE_POSTGRES:
         table_id = result_handler_config[consts.TABLE_ID]
         return PostgresResultHandler.get_handler_for_connection(
+            result_handler_config[consts.RH_CONN],
             filter_status,
             table_id=table_id,
             text_format=text_format,
