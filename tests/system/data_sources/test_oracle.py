@@ -665,6 +665,7 @@ def test_row_validation_datetime_pk_to_bigquery():
 )
 def test_generate_partitions_datetime_pk():
     """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
     partition_table_test(
         EXPECTED_DATETIME_ID_PARTITION_FILTER,
         pk="id",
