@@ -670,7 +670,7 @@ def test_generate_partitions_datetime_pk():
         pk="id",
         tables="pso_data_validator.dvt_datetime_id",
         filters="other_data IS NOT NULL",
-        partition_num=5,
+        partition_num=2,
     )
 
 
