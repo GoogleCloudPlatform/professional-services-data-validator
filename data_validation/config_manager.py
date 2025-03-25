@@ -185,10 +185,6 @@ class ConfigManager(object):
         """Return if the validation should perform a case insensitive match."""
         return self._config.get(consts.CONFIG_CASE_INSENSITIVE_MATCH) or False
 
-    def process_in_memory(self):
-        """Return whether to process in memory or on a remote platform."""
-        return True
-
     @property
     def max_recursive_query_size(self):
         """Return Aggregates from Config"""

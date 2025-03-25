@@ -13,7 +13,6 @@
 # limitations under the License.
 import datetime
 
-import ibis.backends.pandas
 import pandas
 import pandas.testing
 import pytest
@@ -55,47 +54,84 @@ def module_under_test():
     return combiner
 
 
+def pandas_df(cols: int, rows: int):
+    data = {"count": [1]}
+    for i in range(cols):
+        col_name = f"count__col{i+1}"
+        data[col_name] = range(rows)
+    return pandas.DataFrame(data)
+
+
 def test_generate_report_with_different_columns(module_under_test):
     source = pandas.DataFrame({"count": [1], "sum": [3]})
     target = pandas.DataFrame({"count": [2]})
-    pandas_client = ibis.pandas.connect(
-        {
-            consts.RESULT_TYPE_SOURCE: source,
-            consts.RESULT_TYPE_TARGET: target,
-        }
-    )
     with pytest.raises(
         ValueError, match="Expected source and target to have same schema"
     ):
         module_under_test.generate_report(
-            pandas_client,
             # Schema validation occurs before run_metadata is needed.
             None,
-            source=pandas_client.table(consts.RESULT_TYPE_SOURCE),
-            target=pandas_client.table(consts.RESULT_TYPE_TARGET),
+            source,
+            target,
         )
 
 
 def test_generate_report_with_too_many_rows(module_under_test):
     source = pandas.DataFrame({"count": [1, 1]})
     target = pandas.DataFrame({"count": [2, 2]})
-    pandas_client = ibis.pandas.connect(
-        {
-            consts.RESULT_TYPE_SOURCE: source,
-            consts.RESULT_TYPE_TARGET: target,
-        }
-    )
-
     report = module_under_test.generate_report(
-        pandas_client,
         # Validation occurs before run_metadata is needed.
         EXAMPLE_RUN_METADATA,
-        source=pandas_client.table(consts.RESULT_TYPE_SOURCE),
-        target=pandas_client.table(consts.RESULT_TYPE_TARGET),
+        source,
+        target,
     )
 
     # TODO: how do we want to handle this going forward?
     assert len(report) == 16
+
+
+@freeze_time("1998-09-04 07:31:42")
+@pytest.mark.parametrize(
+    ("input_df"),
+    [
+        pandas_df(100, 1),
+        pandas_df(250, 1),
+        pandas_df(500, 1),
+    ],
+)
+def test_generate_report_with_many_columns(module_under_test, input_df):
+    """Test that combiner works for tables with many validations (no RecursionError)."""
+    validations = {
+        _: metadata.ValidationMetadata(
+            source_table_name="test_source",
+            source_table_schema="source_dataset",
+            source_column_name=None if _ == "count" else _,
+            target_table_name="test_target",
+            target_table_schema="target_dataset",
+            target_column_name=None if _ == "count" else _,
+            validation_type="Column",
+            aggregation_type="count",
+            primary_keys=[],
+            num_random_rows=None,
+            threshold=0.0,
+        )
+        for _ in input_df.columns
+    }
+    run_metadata = metadata.RunMetadata(
+        validations=validations,
+        start_time=datetime.datetime(1998, 9, 4, 7, 30, 1),
+        end_time=None,
+        labels=[],
+        run_id="test-run",
+    )
+
+    report = module_under_test.generate_report(
+        run_metadata,
+        input_df,  # mock for source_df
+        input_df,  # mock for target_df
+    )
+    # There are no filters so the resulting Dataframe should have one row per validation.
+    assert len(report) == len(validations)
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -358,14 +394,10 @@ def test_generate_report_with_too_many_rows(module_under_test):
 def test_generate_report_without_group_by(
     module_under_test, source_df, target_df, run_metadata, expected
 ):
-    pandas_client = ibis.pandas.connect(
-        {"test_source": source_df, "test_target": target_df}
-    )
     report = module_under_test.generate_report(
-        pandas_client,
         run_metadata,
-        source=pandas_client.table("test_source"),
-        target=pandas_client.table("test_target"),
+        source_df,
+        target_df,
     )
     # Sort columns by name to order in the comparison.
     # https://stackoverflow.com/a/11067072/101923
@@ -613,15 +645,11 @@ def test_generate_report_with_group_by(
     run_metadata,
     expected,
 ):
-    pandas_client = ibis.pandas.connect(
-        {"test_source": source_df, "test_target": target_df}
-    )
     report = module_under_test.generate_report(
-        pandas_client,
         run_metadata,
+        source_df,
+        target_df,
         join_on_fields=join_on_fields,
-        source=pandas_client.table("test_source"),
-        target=pandas_client.table("test_target"),
     )
     # Sort columns by name to order in the comparison.
     # https://stackoverflow.com/a/11067072/101923
@@ -938,14 +966,10 @@ def test_generate_report_with_group_by(
 def test_generate_report_with_nan_agg_value(
     module_under_test, source_df, target_df, run_metadata, expected
 ):
-    pandas_client = ibis.pandas.connect(
-        {"test_source": source_df, "test_target": target_df}
-    )
     report = module_under_test.generate_report(
-        pandas_client,
         run_metadata,
-        source=pandas_client.table("test_source"),
-        target=pandas_client.table("test_target"),
+        source_df,
+        target_df,
     )
     # Sort columns by name to order in the comparison.
     # https://stackoverflow.com/a/11067072/101923

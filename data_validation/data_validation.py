@@ -115,9 +115,7 @@ class DataValidation(object):
                 "Schema validation", self.schema_validator.execute
             )
         else:
-            result_df = self._execute_validation(
-                self.validation_builder, process_in_memory=True
-            )
+            result_df = self._execute_validation(self.validation_builder)
 
         # Call Result Handler to Manage Results
         return self.result_handler.execute(result_df)
@@ -227,13 +225,10 @@ class DataValidation(object):
         clause recursively until the individual row differences can be
         identified.
         """
-        process_in_memory = self.config_manager.process_in_memory()
         past_results = []
         if len(grouped_fields) > 0:
             validation_builder.add_query_group(grouped_fields[0])
-            result_df = self._execute_validation(
-                validation_builder, process_in_memory=process_in_memory
-            )
+            result_df = self._execute_validation(validation_builder)
 
             for grouped_key in result_df[consts.GROUP_BY_COLUMNS].unique():
                 # Validations are viewed separtely, but queried together.
@@ -267,11 +262,7 @@ class DataValidation(object):
                         )
                     )
         elif self.config_manager.primary_keys and len(grouped_fields) == 0:
-            past_results.append(
-                self._execute_validation(
-                    validation_builder, process_in_memory=process_in_memory
-                )
-            )
+            past_results.append(self._execute_validation(validation_builder))
 
         # elif self.config_manager.primary_keys:
         #     validation_builder.add_config_query_groups(self.config_manager.primary_keys)
@@ -302,7 +293,7 @@ class DataValidation(object):
             }
             validation_builder.add_filter(filter_field)
 
-    def _execute_validation(self, validation_builder, process_in_memory=True):
+    def _execute_validation(self, validation_builder):
         """Execute Against a Supplied Validation Builder"""
 
         self.run_metadata.validations = validation_builder.get_metadata()
@@ -329,67 +320,48 @@ class DataValidation(object):
             )
         )
 
-        if process_in_memory:
-            futures = []
-            with ThreadPoolExecutor() as executor:
-                # Submit the two query network calls concurrently
-                futures.append(
-                    executor.submit(
-                        util.timed_call,
-                        "Source query",
-                        self.config_manager.source_client.execute,
-                        source_query,
-                    )
+        futures = []
+        with ThreadPoolExecutor() as executor:
+            # Submit the two query network calls concurrently
+            futures.append(
+                executor.submit(
+                    util.timed_call,
+                    "Source query",
+                    self.config_manager.source_client.execute,
+                    source_query,
                 )
-                futures.append(
-                    executor.submit(
-                        util.timed_call,
-                        "Target query",
-                        self.config_manager.target_client.execute,
-                        target_query,
-                    )
-                )
-                source_df = futures[0].result()
-                target_df = futures[1].result()
-
-            pandas_client = ibis.pandas.connect(
-                {
-                    consts.RESULT_TYPE_SOURCE: source_df,
-                    consts.RESULT_TYPE_TARGET: target_df,
-                }
             )
-
-            try:
-                result_df = util.timed_call(
-                    "Generate report",
-                    combiner.generate_report,
-                    pandas_client,
-                    self.run_metadata,
-                    pandas_client.table(consts.RESULT_TYPE_SOURCE),
-                    pandas_client.table(consts.RESULT_TYPE_TARGET),
-                    join_on_fields=join_on_fields,
-                    is_value_comparison=is_value_comparison,
-                    verbose=self.verbose,
+            futures.append(
+                executor.submit(
+                    util.timed_call,
+                    "Target query",
+                    self.config_manager.target_client.execute,
+                    target_query,
                 )
-            except Exception as e:
-                if self.verbose:
-                    logging.error("-- ** Logging Source DF ** --")
-                    logging.error(source_df.dtypes)
-                    logging.error(source_df)
-                    logging.error("-- ** Logging Target DF ** --")
-                    logging.error(target_df.dtypes)
-                    logging.error(target_df)
-                raise e
-        else:
-            result_df = combiner.generate_report(
-                self.config_manager.source_client,
+            )
+            source_df = futures[0].result()
+            target_df = futures[1].result()
+
+        try:
+            result_df = util.timed_call(
+                "Generate report",
+                combiner.generate_report,
                 self.run_metadata,
-                source_query,
-                target_query,
+                source_df,
+                target_df,
                 join_on_fields=join_on_fields,
                 is_value_comparison=is_value_comparison,
                 verbose=self.verbose,
             )
+        except Exception as e:
+            if self.verbose:
+                logging.error("-- ** Logging Source DF ** --")
+                logging.error(source_df.dtypes)
+                logging.error(source_df)
+                logging.error("-- ** Logging Target DF ** --")
+                logging.error(target_df.dtypes)
+                logging.error(target_df)
+            raise e
 
         return result_df
 
