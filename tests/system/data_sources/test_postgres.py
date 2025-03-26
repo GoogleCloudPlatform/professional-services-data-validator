@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 from unittest import mock
 
@@ -20,9 +21,11 @@ import pathlib
 
 from data_validation import (
     cli_tools,
-    data_validation,
+    clients,
     consts,
+    data_validation,
 )
+from data_validation.result_handlers.base_backend import RH_WRITE_MESSAGE
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
@@ -38,6 +41,7 @@ from tests.system.data_sources.common_functions import (
     null_not_null_assertions,
     partition_table_test,
     partition_query_test,
+    raw_query_rows,
     raw_query_test,
     row_validation_test,
     row_validation_many_columns_test,
@@ -1182,6 +1186,35 @@ def test_row_validation_tricky_strings_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+@mock.patch(
+    "data_validation.state_manager.StateManager.list_connections",
+    return_value="mock-conn",
+)
+def test_result_handler_postgres(mock_list, caplog):
+    """Test result handler using dvt_core_types schema validation."""
+    table_id = "pso_data_validator_results.results_data"
+    caplog.set_level(logging.INFO)
+    df = schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        filter_status=None,
+        result_handler=f"mock-conn.{table_id}",
+    )
+    assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
+    run_id = df["run_id"][0]
+
+    # Hijacking DVT raw query to query the results the table.
+    rows = raw_query_rows(
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}'", conn="mock-conn"
+    )
+    # Ensure that we added the data to the results table.
+    assert len(df) == rows[0][0]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
@@ -1189,8 +1222,6 @@ def test_raw_query_dvt_row_types(capsys):
 
 def test_raw_column_metadata():
     """Test that get_raw_data_types custom Backend method returns expected results."""
-    from data_validation import clients
-
     client = clients.get_data_client(CONN)
     raw_types = list(
         client.raw_column_metadata(

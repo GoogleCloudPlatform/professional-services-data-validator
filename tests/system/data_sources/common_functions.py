@@ -244,8 +244,8 @@ def schema_validation_test(
     exclusion_columns: str = "id",
     allow_list: str = None,
     allow_list_file: str = None,
-    bq_result_handler: str = None,
-):
+    result_handler: str = None,
+) -> "DataFrame":
     """Generic schema validation test.
 
     All tests expect an empty dataframe as the assertion.
@@ -261,7 +261,7 @@ def schema_validation_test(
         f"--filter-status={filter_status}" if filter_status else None,
         f"--allow-list={allow_list}" if allow_list else None,
         f"--allow-list-file={allow_list_file}" if allow_list_file else None,
-        f"--bq-result-handler={bq_result_handler}" if bq_result_handler else None,
+        f"--result-handler={result_handler}" if result_handler else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
@@ -269,6 +269,7 @@ def schema_validation_test(
     if filter_status == "fail":
         # With filter on failures the data frame should be empty
         assert len(df) == 0
+    return df
 
 
 def column_validation_test_args(
@@ -282,6 +283,7 @@ def column_validation_test_args(
     grouped_columns: str = None,
     filter_status: str = "fail",
     wildcard_include_timestamp: bool = False,
+    result_handler: str = None,
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -298,6 +300,7 @@ def column_validation_test_args(
         f"--filters={filters}" if filters else None,
         f"--grouped-columns={grouped_columns}" if grouped_columns else None,
         "--wildcard-include-timestamp" if wildcard_include_timestamp else None,
+        f"--result-handler={result_handler}" if result_handler else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
@@ -315,6 +318,7 @@ def column_validation_test(
     wildcard_include_timestamp: bool = False,
     filter_status: str = "fail",
     expected_rows=0,
+    result_handler: str = None,
 ):
     """Generic column validation test.
 
@@ -331,6 +335,7 @@ def column_validation_test(
         grouped_columns=grouped_columns,
         wildcard_include_timestamp=wildcard_include_timestamp,
         filter_status=filter_status,
+        result_handler=result_handler,
     )
     df = run_test_from_cli_args(args)
     assert len(df) == expected_rows
@@ -371,6 +376,7 @@ def row_validation_test(
     concat=None,
     use_randow_row=False,
     random_row_batch_size=None,
+    result_handler: str = None,
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
@@ -396,6 +402,7 @@ def row_validation_test(
             if random_row_batch_size
             else None
         ),
+        f"--result-handler={result_handler}" if result_handler else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
@@ -584,6 +591,21 @@ def custom_query_validation_test(
         assert len(df) == 0
 
 
+def raw_query_rows(
+    query: str,
+    conn: str = "mock-conn",
+) -> list:
+    """Raw query test."""
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "query",
+        f"--conn={conn}",
+        f"--query={query}",
+    ]
+    args = parser.parse_args(cli_arg_list)
+    return raw_query.run_raw_query_against_connection(args)
+
+
 def raw_query_test(
     capsys,
     conn: str = "mock-conn",
@@ -592,16 +614,9 @@ def raw_query_test(
     expected_rows: int = 3,
 ):
     """Raw query test."""
-    parser = cli_tools.configure_arg_parser()
     if table:
         query = f"select * from {table}"
-    cli_arg_list = [
-        "query",
-        f"--conn={conn}",
-        f"--query={query}",
-    ]
-    args = parser.parse_args(cli_arg_list)
-    rows = raw_query.run_raw_query_against_connection(args)
+    rows = raw_query_rows(query, conn=conn)
     assert len(rows) == expected_rows
     assert len(rows[0]) > 0
     raw_query.print_raw_query_output(rows)

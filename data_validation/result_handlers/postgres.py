@@ -23,16 +23,14 @@ from data_validation import clients, consts
 from data_validation.result_handlers.base_backend import (
     BaseBackendResultHandler,
     RESULTS_TABLE_SCHEMA,
+    RH_WRITE_MESSAGE,
+    RH_NO_WRITE_MESSAGE,
 )
 
 
 if TYPE_CHECKING:
     from pandas import DataFrame
     from ibis.backends.base import BaseBackend
-
-
-RH_WRITE_MESSAGE = "Results written"
-RH_NO_WRITE_MESSAGE = "No results to write"
 
 
 class PostgresResultHandler(BaseBackendResultHandler):

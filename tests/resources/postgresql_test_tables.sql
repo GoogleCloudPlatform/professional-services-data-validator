@@ -12,6 +12,9 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- Schema for storing results handler data.
+CREATE SCHEMA pso_data_validator_results;
+-- Schema containing ONLY integration test tables.
 CREATE SCHEMA pso_data_validator;
 DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
 CREATE TABLE pso_data_validator.dvt_core_types

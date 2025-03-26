@@ -16,7 +16,7 @@ from unittest import mock
 
 import pytest
 
-from data_validation import consts
+from data_validation import consts, exceptions
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.postgres import PostgresResultHandler
 from data_validation.result_handlers.text import TextResultHandler
@@ -39,6 +39,19 @@ PG_CONFIG = {
         "password": "dvt_p",
         "database": "postgres",
         consts.SOURCE_TYPE: consts.SOURCE_TYPE_POSTGRES,
+    },
+}
+
+IMPALA_CONFIG = {
+    consts.RH_TYPE: consts.SOURCE_TYPE_IMPALA,
+    consts.TABLE_ID: "schema.table",
+    consts.RH_CONN: {
+        "host": "localhost",
+        "port": "1234",
+        "user": "dvt_u",
+        "password": "dvt_p",
+        "database": "default",
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_IMPALA,
     },
 }
 
@@ -87,3 +100,17 @@ def test_build_result_handler_postgres(module_under_test):
     assert isinstance(handler, PostgresResultHandler)
     assert handler._table_id == "schema.table"
     assert handler._status_list == filter_status
+
+
+@mock.patch.dict(
+    "data_validation.clients.CLIENT_LOOKUP",
+    {consts.SOURCE_TYPE_IMPALA: mock.Mock()},
+)
+def test_build_result_handler_unsupported(module_under_test):
+    """Ensure that an unsupported config throws an exception."""
+    config = IMPALA_CONFIG
+    filter_status = ["fail"]
+    with pytest.raises(exceptions.ResultHandlerException):
+        _ = module_under_test.build_result_handler(
+            config, consts.SCHEMA_VALIDATION, filter_status
+        )

@@ -36,7 +36,7 @@ data-validation validate column \
 -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
 --sum tripduration,start_station_name --count tripduration,start_station_name \
--bqrh pso-kokoro-resources.pso_data_validator.results
+-rh pso-kokoro-resources.pso_data_validator.results
 -c ex_yaml.yaml
 
 command:
@@ -1013,10 +1013,15 @@ def _add_common_arguments(
 
     # Optional arguments
     optional_arguments.add_argument(
-        "--bq-result-handler", "-bqrh", help="BigQuery result handler config details"
+        "--bq-result-handler", "-bqrh", help=argparse.SUPPRESS
     )
     optional_arguments.add_argument(
-        "--result-handler", "-rh", help="Result handler connection details"
+        "--result-handler",
+        "-rh",
+        help=(
+            "Result handler connection details. "
+            "CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE."
+        ),
     )
     optional_arguments.add_argument(
         "--labels", "-l", help="Key value pair labels for validation run"
@@ -1258,11 +1263,11 @@ def _get_result_handler(rc_value: str, sa_file=None) -> dict:
     if len(config) != 2:
         raise ValueError(f"Unable to parse result handler config: `{rc_value}`")
 
-    # Check if the first part of the BQRH is a connection name.
+    # Check if the first part of the result handler is a connection name.
     mgr = state_manager.StateManager()
     connections = mgr.list_connections()
     if config[0] in connections:
-        # We received connection_name.bq_results_table
+        # We received connection_name.results_table.
         conn_from_file = get_connection(config[0])
         if conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_BIGQUERY:
             result_handler = {
@@ -1287,7 +1292,7 @@ def _get_result_handler(rc_value: str, sa_file=None) -> dict:
                 f"Unsupported result handler connection type: {conn_from_file[consts.SOURCE_TYPE]}"
             )
     else:
-        # We received legacy format "project_name.bq_results_table".
+        # We received legacy format "bq-project-name.bq_results_table".
         result_handler = {
             consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
             consts.PROJECT_ID: config[0],
@@ -1510,10 +1515,12 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
     else:
         raise ValueError(f"Unknown Validation Type: {validate_cmd}")
 
+    # Cater for legacy -bqrh.
+    args.result_handler = args.result_handler or args.bq_result_handler
     # Get result handler config
-    if args.bq_result_handler:
+    if args.result_handler:
         result_handler_config = _get_result_handler(
-            args.bq_result_handler, args.service_account
+            args.result_handler, args.service_account
         )
     else:
         result_handler_config = None

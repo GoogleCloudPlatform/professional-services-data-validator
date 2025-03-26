@@ -1429,7 +1429,7 @@ def test_bq_result_handler(mock_conn, bigquery_client, bigquery_dataset_id, capl
         tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
         filter_status=None,
-        bq_result_handler=f"{PROJECT_ID}.{table_id}",
+        result_handler=f"{PROJECT_ID}.{table_id}",
     )
     assert any(_ for _ in caplog.records if BQRH_WRITE_MESSAGE in _.msg)
 

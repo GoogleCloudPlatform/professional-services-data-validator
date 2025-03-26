@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from pandas import DataFrame
 
 
+RH_WRITE_MESSAGE = "Results written"
+RH_NO_WRITE_MESSAGE = "No results to write"
+
 RESULTS_TABLE_SCHEMA = ibis.schema(
     {
         "validation_name": "!string",
