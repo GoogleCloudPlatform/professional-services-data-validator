@@ -200,7 +200,7 @@ data-validation
                         from the source or target table if available.  See *Primary Keys* section
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
-  [--result-handler or -rh CONNECTION_NAME.DATASET.TABLE]
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
                         Specify a BigQuery or PostgreSQL connection name as destination for validation results.
                         Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
@@ -284,7 +284,7 @@ data-validation
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                         Comma separated list of primary key columns, when not specified the value will be inferred
                         from the source or target table if available.  See *Primary Keys* section
-  [--result-handler or -rh CONNECTION_NAME.DATASET.TABLE]
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
                         Specify a BigQuery or PostgreSQL connection name as destination for validation results.
                         Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
@@ -333,7 +333,7 @@ data-validation
                         Comma separated list of tables in the form schema.table=target_schema.target_table. Or shorthand schema.* for all tables.
                         Target schema name and table name are optional.
                         e.g.: 'bigquery-public-data.new_york_citibike.citibike_trips'
-  [--result-handler or -rh CONNECTION_NAME.DATASET.TABLE]
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
                         Specify a BigQuery or PostgreSQL connection name as destination for validation results.
                         Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
@@ -396,7 +396,7 @@ data-validation
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
-  [--result-handler or -rh CONNECTION_NAME.DATASET.TABLE]
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
                         Specify a BigQuery or PostgreSQL connection name as destination for validation results.
                         Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
@@ -468,7 +468,7 @@ data-validation
                        Common column between source and target queries for join
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
-  [--result-handler or -rh CONNECTION_NAME.DATASET.TABLE]
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
                         Specify a BigQuery or PostgreSQL connection name as destination for validation results.
                         Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
