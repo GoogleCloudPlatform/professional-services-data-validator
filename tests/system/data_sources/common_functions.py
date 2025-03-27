@@ -443,6 +443,8 @@ def partition_table_test(
     pk="course_id,quarter_id,student_id",
     tables="pso_data_validator.test_generate_partitions",
     filters="quarter_id != 1111",
+    partition_num=9,
+    parts_per_file=5,
 ):
     """Test generate table partitions for a database. Usually only the partition_filter is different
     because of the differences in SQL between the databases. Some databases have different table names,
@@ -452,20 +454,20 @@ def partition_table_test(
     """
 
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            f"-tbls={tables}",
-            f"-pk={pk}",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=9",
-            "-ppf=5",
-            f"-filters={filters}",
-        ]
-    )
+    cli_arg_list = [
+        "generate-table-partitions",
+        "-sc=mock-conn",
+        "-tc=mock-conn",
+        f"-tbls={tables}",
+        f"-pk={pk}",
+        "-hash=*",
+        "-cdir=/home/users/yaml",
+        f"-pn={partition_num}",
+        f"-ppf={parts_per_file}",
+        f"-filters={filters}" if filters else None,
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
