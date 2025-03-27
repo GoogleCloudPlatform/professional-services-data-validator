@@ -106,6 +106,21 @@ def teradata_cast_decimal_to_string(compiled_arg, from_, to):
     return "TO_CHAR({},'TM9')".format(compiled_arg)
 
 
+@teradata_cast.register(str, dt.Int8, dt.String)
+@teradata_cast.register(str, dt.Int16, dt.String)
+@teradata_cast.register(str, dt.Int32, dt.String)
+def teradata_cast_integer_to_string(compiled_arg, from_, to):
+    # INTEGER in a string cannot be longer than 10 characters (+1 for sign).
+    # Included smaller integers here too to minimize overloads.
+    return "CAST({} AS VARCHAR(11))".format(compiled_arg)
+
+
+@teradata_cast.register(str, dt.Int64, dt.String)
+def teradata_cast_bigint_to_string(compiled_arg, from_, to):
+    # BIGINT in a string cannot be longer than 20 characters (+1 for sign).
+    return "CAST({} AS VARCHAR(21))".format(compiled_arg)
+
+
 @teradata_cast.register(str, dt.Time, dt.String)
 def teradata_cast_time_to_string(compiled_arg, from_, to):
     # Time always has a time zone associated with it in Teradata
