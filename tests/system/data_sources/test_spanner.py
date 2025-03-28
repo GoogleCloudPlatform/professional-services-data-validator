@@ -34,6 +34,8 @@ from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
 PROJECT_ID = os.environ["PROJECT_ID"]
+SPANNER_INSTANCE = os.getenv("SPANNER_INSTANCE", "span1")
+SPANNER_DATABASE = os.getenv("SPANNER_DATABASE", "pso_data_validator")
 SPANNER_CONN_NAME = "spanner-integration-test"
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -46,8 +48,8 @@ CLI_FIND_TABLES_ARGS = [
 SPANNER_CONN = {
     "source_type": "Spanner",
     "project_id": PROJECT_ID,
-    "instance_id": "span1",
-    "database_id": "pso_data_validator",
+    "instance_id": SPANNER_INSTANCE,
+    "database_id": SPANNER_DATABASE,
 }
 
 
