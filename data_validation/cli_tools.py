@@ -20,7 +20,7 @@ The Data Validator can be called either using:
 
 ex.
 Step 1) Store Connection to be used in validation
-data-validation connections add -c my_bq_conn BigQuery --project-id pso-kokoro-resources
+data-validation connections add -c my_bq_conn BigQuery --project-id pso-project
 
 Step 2) Run Validation using supplied connections
 data-validation validate column -sc my_bq_conn -tc my_bq_conn \
@@ -36,7 +36,7 @@ data-validation validate column \
 -sc my_bq_conn -tc my_bq_conn \
 -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations \
 --sum tripduration,start_station_name --count tripduration,start_station_name \
--rh pso-kokoro-resources.pso_data_validator.results
+-rh pso-project.pso_data_validator.results \
 -c ex_yaml.yaml
 
 command:

@@ -597,7 +597,7 @@ data-validation validate column \
   -tc bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   -rh bq_conn.dataset.results_table \
-  -sa service-acct@project.iam.gserviceaccount.com
+  -sa 'service-acct@project.iam.gserviceaccount.com'
 ```
 
 BigQuery example by project name:
@@ -607,7 +607,7 @@ data-validation validate column \
   -tc bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   -rh bq-project-id.dataset.results_table \
-  -sa service-acct@project.iam.gserviceaccount.com
+  -sa 'service-acct@project.iam.gserviceaccount.com'
 ```
 
 PostgreSQL example:
@@ -649,7 +649,7 @@ target. The `find-tables` command:
 
 Note that our default value for the `score-cutoff` parameter is 1 and it seeks for identical matches. If no matches occur, reduce this value as deemed necessary. By using smaller numbers such as 0.7, 0.65 etc you can get more matches. For reference, we make use of [this jaro_similarity method](https://jamesturk.github.io/jellyfish/functions/#jaro-similarity) for the string comparison.
 
-```
+```shell
 data-validation find-tables --source-conn source --target-conn target \
     --allowed-schemas pso_data_validator \
     --score-cutoff 1
