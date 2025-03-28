@@ -2,6 +2,21 @@
 
 ## Untagged
 
+## [7.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.4.0...v7.5.0) (2025-03-25)
+
+
+### Features
+
+* Add raw_column_metadata to Oracle, Teradata and PostgreSQL Backend objects ([#1469](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1469)) ([0a96ef9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0a96ef94e4737ef03284ae1949a2f8393d3a66ae))
+* Enhanced row validation summary logging (support for custom-query row, change to JSON compliant log output) ([#1463](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1463)) ([66cff07](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/66cff07d51f607452f56b19c888ad6a749a31de4))
+
+
+### Bug Fixes
+
+* Cater for extreme datetime pk values ([#1475](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1475)) ([450f2db](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/450f2dbdd847249f40eb119510f669c884a035a9))
+* Prevent logging an exception when result_df is empty ([#1461](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1461)) ([e85ba40](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e85ba40fcbc021e41e3644e2d16726f633a3aa72))
+* Prevent RecursionError in combiner by slicing Dataframes by validation count ([#1465](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1465)) ([b76f33e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b76f33ec79042296a131c888ed426be4d87b1a64))
+
 ## [7.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.3.0...v7.4.0) (2025-03-04)
 
 

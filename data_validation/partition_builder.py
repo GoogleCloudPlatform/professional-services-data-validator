@@ -17,6 +17,7 @@ import ibis
 import pandas
 import logging
 import re
+import datetime
 from typing import List, Dict, TYPE_CHECKING
 
 from data_validation import cli_tools, consts
@@ -244,12 +245,13 @@ class PartitionBuilder:
 
             def less_than_value(table, keys, values):
                 key_column = table.__getattr__(keys[0])
-                if key_column.type().is_date():
-                    # Ensure date PKs are treated as date literals as per #1191
-                    value = values[0].date()
-                else:
-                    value = values[0]
-
+                # Due to issue 1474, the type can be datetime.datetime or datetime.date
+                value = (
+                    values[0].date()
+                    if key_column.type().is_date()
+                    and isinstance(values[0], datetime.datetime)
+                    else values[0]
+                )
                 if len(keys) == 1:
                     return key_column < value
                 else:
@@ -260,10 +262,13 @@ class PartitionBuilder:
 
             def geq_value(table, keys, values):
                 key_column = table.__getattr__(keys[0])
-                if key_column.type().is_date():
-                    value = values[0].date()
-                else:
-                    value = values[0]
+                # Due to issue 1474, the type can be datetime.datetime or datetime.date
+                value = (
+                    values[0].date()
+                    if key_column.type().is_date()
+                    and isinstance(values[0], datetime.datetime)
+                    else values[0]
+                )
 
                 if len(keys) == 1:
                     return key_column >= value

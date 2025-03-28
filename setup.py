@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "7.4.0"
+version = "7.5.0"
 release_status = "Development Status :: 4 - Beta"
 
 with open("README.md", "r") as fh:
@@ -54,7 +54,7 @@ extras_require = {
         "black==22.3.0",
         "flake8",
         "freezegun",
-        "pyfakefs==4.6.2",
+        "pyfakefs",
         "pytest",
         "pytest-cov",
         "pytest-timeout",
