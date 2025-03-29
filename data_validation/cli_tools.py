@@ -1275,12 +1275,8 @@ def _get_result_handler(rc_value: str, sa_file=None) -> dict:
                 consts.PROJECT_ID: conn_from_file["project_id"],
                 consts.TABLE_ID: config[1],
                 consts.API_ENDPOINT: conn_from_file.get("api_endpoint", None),
-                # consts.RH_CONN: conn_from_file,
             }
         elif conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_POSTGRES:
-            # result_handler = {
-            #    k: v for k, v in conn_from_file.items() if k != consts.SOURCE_TYPE
-            # }
             result_handler = {
                 consts.RH_TYPE: conn_from_file[consts.SOURCE_TYPE],
                 consts.TABLE_ID: config[1],
@@ -1297,7 +1293,6 @@ def _get_result_handler(rc_value: str, sa_file=None) -> dict:
             consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
             consts.PROJECT_ID: config[0],
             consts.TABLE_ID: config[1],
-            # consts.RH_CONN: {"project_id": config[0]},
         }
 
     if sa_file:
