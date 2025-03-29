@@ -49,7 +49,7 @@ SQL_SERVER_USER = os.getenv("SQL_SERVER_USER", "sqlserver")
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
 PROJECT_ID = os.getenv("PROJECT_ID")
 CONN = {
-    "source_type": "MSSQL",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_MSSQL,
     "host": SQL_SERVER_HOST,
     "user": SQL_SERVER_USER,
     "password": SQL_SERVER_PASSWORD,

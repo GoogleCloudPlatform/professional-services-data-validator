@@ -50,7 +50,7 @@ ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
 ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XEPDB1")
 
 CONN = {
-    "source_type": "Oracle",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
     "host": ORACLE_HOST,
     "user": "SYSTEM",
     "password": ORACLE_PASSWORD,

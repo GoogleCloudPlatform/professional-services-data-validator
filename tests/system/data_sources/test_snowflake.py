@@ -45,7 +45,7 @@ SNOWFLAKE_PASSWORD = os.getenv("SNOWFLAKE_PASSWORD")
 SNOWFLAKE_DATABASE = os.getenv("SNOWFLAKE_DATABASE", "pso_data_validator/public")
 
 CONN = {
-    "source_type": "Snowflake",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_SNOWFLAKE,
     "account": SNOWFLAKE_ACCOUNT,
     "user": SNOWFLAKE_USER,
     "password": SNOWFLAKE_PASSWORD,

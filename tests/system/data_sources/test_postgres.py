@@ -61,7 +61,7 @@ POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE", "guestbook")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 CONN = {
-    "source_type": consts.SOURCE_TYPE_POSTGRES,
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_POSTGRES,
     "host": POSTGRES_HOST,
     "user": "postgres",
     "password": POSTGRES_PASSWORD,

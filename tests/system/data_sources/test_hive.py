@@ -43,7 +43,7 @@ HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
 
 
 CONN = {
-    "source_type": "Impala",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_IMPALA,
     "host": HIVE_HOST,
     "port": 10000,
     "database": HIVE_DATABASE,

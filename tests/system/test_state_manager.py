@@ -14,13 +14,13 @@
 import os
 import pytest
 
-from data_validation import gcs_helper, state_manager
+from data_validation import consts, gcs_helper, state_manager
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 GCS_STATE_PATH = f"gs://{PROJECT_ID}/state/"
 TEST_CONN_NAME = "example"
 TEST_CONN = {
-    "source_type": "BigQuery",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
     "project_id": "my-project",
 }
 

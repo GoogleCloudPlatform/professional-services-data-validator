@@ -44,7 +44,7 @@ from tests.system.data_sources.common_functions import (
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "dvt")
 CONN = {
-    "source_type": "MySQL",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_MYSQL,
     "host": MYSQL_HOST,
     "user": MYSQL_USER,
     "password": os.getenv("MYSQL_PASSWORD"),

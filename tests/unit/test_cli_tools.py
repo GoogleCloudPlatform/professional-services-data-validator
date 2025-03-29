@@ -60,7 +60,7 @@ CLI_EXPECTED_CONNECTION_FILE_PATH = (
 )
 
 CLI_EXPECTED_CONNECTION = {
-    "source_type": consts.SOURCE_TYPE_BIGQUERY,
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
     "secret_manager_type": None,
     "secret_manager_project_id": None,
     "project_id": "example-project",
@@ -306,7 +306,7 @@ def test_create_bq_connection(caplog, fs):
     assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     bq_conn = cli_tools.get_connection(args.connection_name)
-    assert bq_conn["source_type"] == consts.SOURCE_TYPE_BIGQUERY
+    assert bq_conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_BIGQUERY
 
     conn_from_file = cli_tools.get_connection(args.connection_name)
     assert conn_from_file["api_endpoint"] == "https://mybq.p.googleapis.com"
@@ -342,7 +342,7 @@ def test_create_snowflake_connection(caplog, fs):
     assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     conn = cli_tools.get_connection(args.connection_name)
-    assert conn["source_type"] == "Snowflake"
+    assert conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_SNOWFLAKE
     assert conn["user"] == args.user
     assert conn["password"] == args.password
     assert conn["account"] == args.account
@@ -362,7 +362,7 @@ def test_create_teradata_connection(caplog, fs):
     assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
 
     conn = cli_tools.get_connection(args.connection_name)
-    assert conn["source_type"] == "Teradata"
+    assert conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_TERADATA
     assert conn["host"] == args.host
     assert conn["port"] == args.port
     assert conn["user_name"] == args.user_name

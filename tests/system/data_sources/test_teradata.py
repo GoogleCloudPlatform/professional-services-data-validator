@@ -44,7 +44,7 @@ TERADATA_HOST = os.getenv("TERADATA_HOST")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 CONN = {
-    "source_type": "Teradata",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_TERADATA,
     "host": TERADATA_HOST,
     "user_name": TERADATA_USER,
     "password": TERADATA_PASSWORD,

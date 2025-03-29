@@ -18,7 +18,7 @@ from unittest import mock
 
 import pytest
 
-from data_validation import cli_tools
+from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     column_validation_test,
     find_tables_test,
@@ -44,7 +44,7 @@ IMPALA_AUTH_MECH = os.getenv("IMPALA_AUTH_MECH", "NOSASL")
 
 
 CONN = {
-    "source_type": "Impala",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_IMPALA,
     "host": IMPALA_HOST,
     "port": IMPALA_PORT,
     "database": IMPALA_DATABASE,

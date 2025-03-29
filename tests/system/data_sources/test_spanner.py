@@ -44,7 +44,7 @@ CLI_FIND_TABLES_ARGS = [
 ]
 
 SPANNER_CONN = {
-    "source_type": "Spanner",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_SPANNER,
     "project_id": PROJECT_ID,
     "instance_id": "span1",
     "database_id": "pso_data_validator",

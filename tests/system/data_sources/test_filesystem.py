@@ -39,28 +39,28 @@ def mock_get_connection_config(*args):
 
 
 CSV_CONN = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
     "file_path": "gs://pso-kokoro-resources/file_connection/csv/entries.csv",
     "file_type": "csv",
 }
 
 JSON_CONN = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
     "file_path": "gs://pso-kokoro-resources/file_connection/json/entries.json",
     "file_type": "json",
 }
 
 ORC_CONN = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
     "file_path": "gs://pso-kokoro-resources/file_connection/orc/entries.orc",
     "file_type": "orc",
 }
 
 PARQUET_CONN = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
     "file_path": "gs://pso-kokoro-resources/file_connection/parquet/entries.parquet",
     "file_type": "parquet",

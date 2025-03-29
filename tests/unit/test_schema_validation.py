@@ -30,14 +30,14 @@ SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 
 SOURCE_CONN_CONFIG = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "my_table",
     "file_path": SOURCE_TABLE_FILE_PATH,
     "file_type": "json",
 }
 
 TARGET_CONN_CONFIG = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "my_table",
     "file_path": TARGET_TABLE_FILE_PATH,
     "file_type": "json",
