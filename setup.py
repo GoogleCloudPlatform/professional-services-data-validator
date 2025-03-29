@@ -54,7 +54,7 @@ extras_require = {
         "black==22.3.0",
         "flake8",
         "freezegun",
-        "pyfakefs==4.6.2",
+        "pyfakefs",
         "pytest",
         "pytest-cov",
         "pytest-timeout",
