@@ -589,7 +589,7 @@ def test_get_arg_list(test_input, expected):
         (
             "project.dataset.table",
             {
-                "type": consts.SOURCE_TYPE_BIGQUERY,
+                consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
                 consts.PROJECT_ID: "project",
                 consts.TABLE_ID: "dataset.table",
             },
@@ -597,7 +597,7 @@ def test_get_arg_list(test_input, expected):
         (
             "project.data.data.table",
             {
-                "type": consts.SOURCE_TYPE_BIGQUERY,
+                consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
                 consts.PROJECT_ID: "project",
                 consts.TABLE_ID: "data.data.table",
             },
