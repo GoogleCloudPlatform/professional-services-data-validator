@@ -621,7 +621,7 @@ def test_get_result_handler_by_conn_file(fs):
     # Now check we can use it.
     res = cli_tools._get_result_handler(f"{args.connection_name}.dataset.table")
     assert res == {
-        consts.CONFIG_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+        consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
         consts.PROJECT_ID: args.project_id,
         consts.TABLE_ID: "dataset.table",
         consts.API_ENDPOINT: args.api_endpoint,
