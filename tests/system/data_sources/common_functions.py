@@ -595,7 +595,7 @@ def raw_query_rows(
     query: str,
     conn: str = "mock-conn",
 ) -> list:
-    """Raw query test."""
+    """Get rows for a raw query test."""
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
         "query",
