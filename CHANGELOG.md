@@ -2,6 +2,13 @@
 
 ## Untagged
 
+## [7.5.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.0...v7.5.1) (2025-03-31)
+
+
+### Bug Fixes
+
+* Reduced VARCHAR length when casting Teradata integrals to string ([#1481](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1481)) ([726a137](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/726a137846953ef556e09bd5aec7dbc5959d4dc7))
+
 ## [7.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.4.0...v7.5.0) (2025-03-25)
 
 
