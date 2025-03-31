@@ -262,7 +262,7 @@ VALUES (5,'Turkish',
 
 DROP TABLE udf.dvt_many_cols;
 CREATE TABLE udf.dvt_many_cols
-( id NUMBER(5)
+( id NUMBER(5) NOT NULL PRIMARY KEY
 , col_001 VARCHAR(2)
 , col_002 VARCHAR(2)
 , col_003 VARCHAR(2)

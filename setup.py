@@ -26,7 +26,7 @@ with open("README.md", "r") as fh:
 
 dependencies = [
     "Flask>=2.2",  # Some versions of airflow such as 2.9.1 depend on flask<2.3 and >=2.2
-    "fsspec>=2024.9.0",
+    "fsspec!=2025.3.1",  # Version 2025.3.1 was breaking Python 3.8 support.
     "google-api-python-client>=2.144.0",
     "google-cloud-bigquery>=3.25.0",
     "google-cloud-bigquery-storage>=2.26.0",
@@ -54,7 +54,7 @@ extras_require = {
         "black==22.3.0",
         "flake8",
         "freezegun",
-        "pyfakefs==4.6.2",
+        "pyfakefs",
         "pytest",
         "pytest-cov",
         "pytest-timeout",
