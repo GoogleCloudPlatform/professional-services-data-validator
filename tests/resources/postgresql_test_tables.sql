@@ -860,6 +860,7 @@ COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table 
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_strings;
 CREATE TABLE pso_data_validator.dvt_tricky_strings (

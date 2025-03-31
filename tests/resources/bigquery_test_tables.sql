@@ -654,6 +654,8 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_dates` (
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59');
+-- NULL in all columns.
+INSERT INTO `pso_data_validator`.`dvt_tricky_dates` (id) VALUES (2);
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_strings` (
   id           INT64
