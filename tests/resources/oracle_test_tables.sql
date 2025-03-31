@@ -306,7 +306,7 @@ COMMIT;
 
 DROP TABLE pso_data_validator.dvt_many_cols;
 CREATE TABLE pso_data_validator.dvt_many_cols
-( id NUMBER(5)
+( id NUMBER(5) NOT NULL PRIMARY KEY
 , col_001 VARCHAR2(2)
 , col_002 VARCHAR2(2)
 , col_003 VARCHAR2(2)
