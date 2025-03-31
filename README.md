@@ -118,7 +118,7 @@ data-validation
                         Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
   [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
-                        This option has been deprecated and will be removed in a future relase.
+                        This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--wildcard-include-string-len or -wis]
