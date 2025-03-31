@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The Ibis Addons Operations are intended to help facilitate new expressions
+"""The Ibis Addons Operations are intended to help facilitate new expressions
 when required before they can be pushed upstream to Ibis.
 
 Raw SQL Filters:
@@ -24,6 +24,7 @@ non-textual languages.
 """
 import datetime
 import dateutil
+import numpy as np
 import string
 
 import google.cloud.bigquery as bq
@@ -92,6 +93,11 @@ try:
     from ibis.backends.snowflake import SnowflakeExprTranslator
 except Exception:
     SnowflakeExprTranslator = None
+
+
+# Cast of datetime64 NaT to int64 and then in seconds results in the value below.
+# We need to use this value in the datetime.date simulation of the datetime64 behaviour.
+NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
 
 
 class BinaryLength(ops.Value):
@@ -534,6 +540,10 @@ def _bigquery_field_to_ibis_dtype(field):
 def string_to_epoch(ts: str) -> int:
     """Function to convert string timestamp to epoch seconds"""
     try:
+        if pd.isna(ts):
+            # Casting datetime64 to int64 uses the minimum possible int64 when it
+            # encounters NaT. Simulating the same here for when auto cast fails.
+            return NAT_INT64_MIN_IN_SECONDS
         parsed_ts = dateutil.parser.isoparse(ts).astimezone(dateutil.tz.UTC)
         return (
             parsed_ts - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
@@ -547,12 +557,11 @@ def string_to_epoch(ts: str) -> int:
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
 def execute_epoch_seconds_new(op, data, **kwargs):
-    import numpy as np
-
     convert = getattr(data, "view", data.astype)
     try:
         series = convert(np.int64)
-        return (series // 1_000_000_000).astype(np.int32)
+        # We need int64 below because NaT overflows int32.
+        return (series // 1_000_000_000).astype(np.int64)
     except TypeError:
         # Catch 'TypeError' for large timestamps beyond max datetime64[ns] as per Issue #1053
         # Cast to string instead to work around datetime64[ns] limitation

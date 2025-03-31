@@ -437,7 +437,9 @@ def test_column_validation_view_core_types_vw():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # TODO Add col_dt_low and col_ts_low to sum_cols once issue-1487 has been resolved.
+    # We cannot test sum(col_dt_low) and sum(col_ts_low) on Oracle because there are days
+    # missing from October 1582 in the Gregorian calendar which are not reflected in BigQuery
+    # or PostgreSQL calendars. This gap is discussed on Wikipedia page for 1582.
     sum_cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
     column_validation_test(
         tc="bq-conn",
