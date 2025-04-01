@@ -144,8 +144,9 @@ TABLE_ID = "table_id"
 GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
 API_ENDPOINT = "api_endpoint"
 
-# BigQuery Output Table Fields
+# Result Handler Output Table Fields
 VALIDATION_TYPE = "validation_type"
+VALIDATION_NAME = "validation_name"
 AGGREGATION_TYPE = "aggregation_type"
 GROUP_BY_COLUMNS = "group_by_columns"
 

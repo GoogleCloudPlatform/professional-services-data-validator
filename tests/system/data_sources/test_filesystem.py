@@ -109,7 +109,7 @@ def test_filesystem_count_parquet():
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert df["source_agg_value"].equals(df[consts.TARGET_AGG_VALUE])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
@@ -121,7 +121,7 @@ def test_filesystem_count_json():
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert df["source_agg_value"].equals(df[consts.TARGET_AGG_VALUE])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
@@ -133,7 +133,7 @@ def test_filesystem_count_orc():
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert df["source_agg_value"].equals(df[consts.TARGET_AGG_VALUE])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
@@ -145,7 +145,7 @@ def test_filesystem_count_csv():
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert df["source_agg_value"].equals(df[consts.TARGET_AGG_VALUE])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 

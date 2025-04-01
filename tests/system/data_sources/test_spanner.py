@@ -158,17 +158,19 @@ def test_count_validator(count_config):
     validator = data_validation.DataValidation(count_config, verbose=True)
     df = validator.execute()
 
-    count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
-    count_string_value = df[df["validation_name"] == "count_string_col"][
+    count_value = df[df[consts.VALIDATION_NAME] == "count"]["source_agg_value"].values[
+        0
+    ]
+    count_string_value = df[df[consts.VALIDATION_NAME] == "count_string_col"][
         "source_agg_value"
     ].values[0]
-    avg_float_value = df[df["validation_name"] == "avg_float_col"][
+    avg_float_value = df[df[consts.VALIDATION_NAME] == "avg_float_col"][
         "source_agg_value"
     ].values[0]
-    max_timestamp_value = df[df["validation_name"] == "max_timestamp_col"][
+    max_timestamp_value = df[df[consts.VALIDATION_NAME] == "max_timestamp_col"][
         "source_agg_value"
     ].values[0]
-    min_int_value = df[df["validation_name"] == "min_int_col"][
+    min_int_value = df[df[consts.VALIDATION_NAME] == "min_int_col"][
         "source_agg_value"
     ].values[0]
 
@@ -185,17 +187,17 @@ def test_count_validator(count_config):
 def test_grouped_count_validator(grouped_config):
     validator = data_validation.DataValidation(grouped_config, verbose=True)
     df = validator.execute()
-    rows = list(df[df["validation_name"] == "count"].iterrows())
+    rows = list(df[df[consts.VALIDATION_NAME] == "count"].iterrows())
 
     # Check that all partitions are unique.
-    partitions = frozenset(df["group_by_columns"])
+    partitions = frozenset(df[consts.GROUP_BY_COLUMNS])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
-    assert df["source_agg_value"].sum() == df["target_agg_value"].sum()
+    assert df["source_agg_value"].sum() == df[consts.TARGET_AGG_VALUE].sum()
 
     for _, row in rows:
         assert float(row["source_agg_value"]) > 0
-        assert row["source_agg_value"] == row["target_agg_value"]
+        assert row["source_agg_value"] == row[consts.TARGET_AGG_VALUE]
 
 
 @mock.patch(

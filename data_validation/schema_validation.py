@@ -72,11 +72,11 @@ class SchemaValidation(object):
         df = pandas.DataFrame(
             results,
             columns=[
-                "source_column_name",
-                "target_column_name",
-                "source_agg_value",
-                "target_agg_value",
-                "validation_status",
+                consts.SOURCE_COLUMN_NAME,
+                consts.TARGET_COLUMN_NAME,
+                consts.SOURCE_AGG_VALUE,
+                consts.TARGET_AGG_VALUE,
+                consts.VALIDATION_STATUS,
             ],
         )
 
@@ -84,8 +84,8 @@ class SchemaValidation(object):
         self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
         df.insert(loc=0, column="run_id", value=self.run_metadata.run_id)
-        df.insert(loc=1, column="validation_name", value="Schema")
-        df.insert(loc=2, column="validation_type", value="Schema")
+        df.insert(loc=1, column=consts.VALIDATION_NAME, value="Schema")
+        df.insert(loc=2, column=consts.VALIDATION_TYPE, value="Schema")
 
         df.insert(
             loc=3,
@@ -97,20 +97,20 @@ class SchemaValidation(object):
 
         df.insert(
             loc=6,
-            column="source_table_name",
+            column=consts.SOURCE_TABLE_NAME,
             value=self.config_manager.full_source_table,
         )
         df.insert(
             loc=7,
-            column="target_table_name",
+            column=consts.TARGET_TABLE_NAME,
             value=self.config_manager.full_target_table,
         )
-        df.insert(loc=10, column="aggregation_type", value="Schema")
+        df.insert(loc=10, column=consts.AGGREGATION_TYPE, value="Schema")
 
         # empty columns added due to changes on the results schema
         df.insert(loc=14, column="primary_keys", value=None)
         df.insert(loc=15, column="num_random_rows", value=None)
-        df.insert(loc=16, column="group_by_columns", value=None)
+        df.insert(loc=16, column=consts.GROUP_BY_COLUMNS, value=None)
         df.insert(loc=17, column="difference", value=None)
         df.insert(loc=18, column="pct_threshold", value=None)
 

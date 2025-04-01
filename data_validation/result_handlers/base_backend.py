@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 import ibis
 
+from data_validation import consts
 from data_validation.result_handlers import text as text_handler
 
 
@@ -29,22 +30,22 @@ RH_NO_WRITE_MESSAGE = "No results to write"
 
 RESULTS_TABLE_SCHEMA = ibis.schema(
     {
-        "validation_name": "!string",
-        "validation_type": "!string",
-        "aggregation_type": "string",
-        "source_table_name": "string",
-        "source_column_name": "string",
-        "source_agg_value": "string",
-        "target_table_name": "string",
-        "target_column_name": "string",
-        "target_agg_value": "string",
-        "group_by_columns": "string",
+        consts.VALIDATION_NAME: "!string",
+        consts.VALIDATION_TYPE: "!string",
+        consts.AGGREGATION_TYPE: "string",
+        consts.SOURCE_TABLE_NAME: "string",
+        consts.SOURCE_COLUMN_NAME: "string",
+        consts.SOURCE_AGG_VALUE: "string",
+        consts.TARGET_TABLE_NAME: "string",
+        consts.TARGET_COLUMN_NAME: "string",
+        consts.TARGET_AGG_VALUE: "string",
+        consts.GROUP_BY_COLUMNS: "string",
         "primary_keys": "string",
         "num_random_rows": "int64",
         "difference": "float64",
         "pct_difference": "float64",
         "pct_threshold": "float64",
-        "validation_status": "!string",
+        consts.VALIDATION_STATUS: "!string",
         "run_id": "!string",
         "labels": "array<str>",
         "start_time": "!timestamp('UTC')",

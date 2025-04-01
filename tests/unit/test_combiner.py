@@ -171,22 +171,22 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
                     ],
-                    "source_table_name": ["bq-public.source_dataset.test_source"],
-                    "source_column_name": [None],
-                    "target_table_name": ["bq-public.target_dataset.test_target"],
-                    "target_column_name": [None],
-                    "validation_type": ["Column"],
-                    "aggregation_type": ["count"],
-                    "validation_name": ["count"],
-                    "source_agg_value": ["1"],
-                    "target_agg_value": ["2"],
-                    "group_by_columns": [None],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"],
+                    consts.SOURCE_COLUMN_NAME: [None],
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"],
+                    consts.TARGET_COLUMN_NAME: [None],
+                    consts.VALIDATION_TYPE: ["Column"],
+                    consts.AGGREGATION_TYPE: ["count"],
+                    consts.VALIDATION_NAME: ["count"],
+                    consts.SOURCE_AGG_VALUE: ["1"],
+                    consts.TARGET_AGG_VALUE: ["2"],
+                    consts.GROUP_BY_COLUMNS: [None],
                     "primary_keys": [None],
                     "num_random_rows": [None],
                     "difference": [1.0],
                     "pct_difference": [100.0],
                     "pct_threshold": [0.0],
-                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[]],
                 }
             ),
@@ -228,22 +228,22 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
                     ],
-                    "source_table_name": ["bq-public.source_dataset.test_source"],
-                    "source_column_name": ["timecol"],
-                    "target_table_name": ["bq-public.target_dataset.test_target"],
-                    "target_column_name": ["timecol"],
-                    "validation_type": ["Column"],
-                    "aggregation_type": ["max"],
-                    "validation_name": ["timecol__max"],
-                    "source_agg_value": ["2020-07-01 16:00:00+00:00"],
-                    "target_agg_value": ["2020-07-01 16:00:00+00:00"],
-                    "group_by_columns": [None],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"],
+                    consts.SOURCE_COLUMN_NAME: ["timecol"],
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"],
+                    consts.TARGET_COLUMN_NAME: ["timecol"],
+                    consts.VALIDATION_TYPE: ["Column"],
+                    consts.AGGREGATION_TYPE: ["max"],
+                    consts.VALIDATION_NAME: ["timecol__max"],
+                    consts.SOURCE_AGG_VALUE: ["2020-07-01 16:00:00+00:00"],
+                    consts.TARGET_AGG_VALUE: ["2020-07-01 16:00:00+00:00"],
+                    consts.GROUP_BY_COLUMNS: [None],
                     "primary_keys": [None],
                     "num_random_rows": [None],
                     "difference": [0.0],
                     "pct_difference": [0.0],
                     "pct_threshold": [0.0],
-                    "validation_status": [consts.VALIDATION_STATUS_SUCCESS],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS],
                     "labels": [[]],
                 }
             ),
@@ -293,22 +293,22 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
                     ],
-                    "source_table_name": ["bq-public.source_dataset.test_source"],
-                    "source_column_name": ["timecol"],
-                    "target_table_name": ["bq-public.target_dataset.test_target"],
-                    "target_column_name": ["timecol"],
-                    "validation_type": ["Column"],
-                    "aggregation_type": ["max"],
-                    "validation_name": ["timecol__max"],
-                    "source_agg_value": ["2020-09-13 12:26:40+00:00"],
-                    "target_agg_value": ["2033-05-18 03:33:20+00:00"],
-                    "group_by_columns": [None],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"],
+                    consts.SOURCE_COLUMN_NAME: ["timecol"],
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"],
+                    consts.TARGET_COLUMN_NAME: ["timecol"],
+                    consts.VALIDATION_TYPE: ["Column"],
+                    consts.AGGREGATION_TYPE: ["max"],
+                    consts.VALIDATION_NAME: ["timecol__max"],
+                    consts.SOURCE_AGG_VALUE: ["2020-09-13 12:26:40+00:00"],
+                    consts.TARGET_AGG_VALUE: ["2033-05-18 03:33:20+00:00"],
+                    consts.GROUP_BY_COLUMNS: [None],
                     "primary_keys": [None],
                     "num_random_rows": [None],
                     "difference": [400000000.0],
                     "pct_difference": [25.0],
                     "pct_threshold": [0.0],
-                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[]],
                 }
             ),
@@ -360,28 +360,28 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                         )
                     ]
                     * 2,
-                    "source_table_name": [
+                    consts.SOURCE_TABLE_NAME: [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",
                     ],
-                    "source_column_name": [None, "test_col"],
-                    "target_table_name": [
+                    consts.SOURCE_COLUMN_NAME: [None, "test_col"],
+                    consts.TARGET_TABLE_NAME: [
                         "bq-public.target_dataset.test_target",
                         "bq-public.target_dataset.test_target",
                     ],
-                    "target_column_name": [None, "ttteeesssttt_col"],
-                    "validation_type": ["Column", "Column"],
-                    "aggregation_type": ["count", "sum"],
-                    "validation_name": ["count", "sum__ttteeesssttt"],
-                    "source_agg_value": ["8", "-1"],
-                    "target_agg_value": ["9", "1"],
-                    "group_by_columns": [None, None],
+                    consts.TARGET_COLUMN_NAME: [None, "ttteeesssttt_col"],
+                    consts.VALIDATION_TYPE: ["Column", "Column"],
+                    consts.AGGREGATION_TYPE: ["count", "sum"],
+                    consts.VALIDATION_NAME: ["count", "sum__ttteeesssttt"],
+                    consts.SOURCE_AGG_VALUE: ["8", "-1"],
+                    consts.TARGET_AGG_VALUE: ["9", "1"],
+                    consts.GROUP_BY_COLUMNS: [None, None],
                     "primary_keys": [None, None],
                     "num_random_rows": [None, None],
                     "difference": [1.0, 2.0],
                     "pct_difference": [12.5, -200.0],
                     "pct_threshold": [30.0, 0.0],
-                    "validation_status": [
+                    consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
@@ -403,12 +403,12 @@ def test_generate_report_without_group_by(
     # https://stackoverflow.com/a/11067072/101923
     # Sort rows by name to order in the comparison.
     report = (
-        report.sort_values("validation_name")
+        report.sort_values(consts.VALIDATION_NAME)
         .reset_index(drop=True)
         .reindex(sorted(report.columns), axis=1)
     )
     expected = (
-        expected.sort_values("validation_name")
+        expected.sort_values(consts.VALIDATION_NAME)
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
@@ -466,16 +466,18 @@ def test_generate_report_without_group_by(
                         )
                     ]
                     * 4,
-                    "source_table_name": ["bq-public.source_dataset.test_source"] * 4,
-                    "source_column_name": [None] * 4,
-                    "target_table_name": ["bq-public.target_dataset.test_target"] * 4,
-                    "target_column_name": [None] * 4,
-                    "validation_type": ["Column"] * 4,
-                    "aggregation_type": ["count"] * 4,
-                    "validation_name": ["count"] * 4,
-                    "source_agg_value": ["2", "4", "8", "16"],
-                    "target_agg_value": ["1", "3", "7", "17"],
-                    "group_by_columns": [
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"]
+                    * 4,
+                    consts.SOURCE_COLUMN_NAME: [None] * 4,
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"]
+                    * 4,
+                    consts.TARGET_COLUMN_NAME: [None] * 4,
+                    consts.VALIDATION_TYPE: ["Column"] * 4,
+                    consts.AGGREGATION_TYPE: ["count"] * 4,
+                    consts.VALIDATION_NAME: ["count"] * 4,
+                    consts.SOURCE_AGG_VALUE: ["2", "4", "8", "16"],
+                    consts.TARGET_AGG_VALUE: ["1", "3", "7", "17"],
+                    consts.GROUP_BY_COLUMNS: [
                         '{"grp_a": "a", "grp_i": "0"}',
                         '{"grp_a": "a", "grp_i": "1"}',
                         '{"grp_a": "b", "grp_i": "0"}',
@@ -486,7 +488,7 @@ def test_generate_report_without_group_by(
                     "difference": [-1.0, -1.0, -1.0, 1.0],
                     "pct_difference": [-50.0, -25.0, -12.5, 6.25],
                     "pct_threshold": [7.0, 7.0, 7.0, 7.0],
-                    "validation_status": [
+                    consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
@@ -531,22 +533,24 @@ def test_generate_report_without_group_by(
                         )
                     ]
                     * 2,
-                    "source_table_name": ["bq-public.source_dataset.test_source"] * 2,
-                    "source_column_name": [None] * 2,
-                    "target_table_name": ["bq-public.target_dataset.test_target"] * 2,
-                    "target_column_name": [None] * 2,
-                    "validation_type": ["Column"] * 2,
-                    "aggregation_type": ["count"] * 2,
-                    "validation_name": ["count"] * 2,
-                    "source_agg_value": ["1", "2"],
-                    "target_agg_value": ["3", "4"],
-                    "group_by_columns": ['{"grp": "\\""}', '{"grp": "\\\\"}'],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"]
+                    * 2,
+                    consts.SOURCE_COLUMN_NAME: [None] * 2,
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"]
+                    * 2,
+                    consts.TARGET_COLUMN_NAME: [None] * 2,
+                    consts.VALIDATION_TYPE: ["Column"] * 2,
+                    consts.AGGREGATION_TYPE: ["count"] * 2,
+                    consts.VALIDATION_NAME: ["count"] * 2,
+                    consts.SOURCE_AGG_VALUE: ["1", "2"],
+                    consts.TARGET_AGG_VALUE: ["3", "4"],
+                    consts.GROUP_BY_COLUMNS: ['{"grp": "\\""}', '{"grp": "\\\\"}'],
                     "primary_keys": [None] * 2,
                     "num_random_rows": [None] * 2,
                     "difference": [2.0, 2.0],
                     "pct_difference": [200.0, 100.0],
                     "pct_threshold": [100.0, 100.0],
-                    "validation_status": [
+                    consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                     ],
@@ -601,16 +605,18 @@ def test_generate_report_without_group_by(
                         )
                     ]
                     * 6,
-                    "source_table_name": ["bq-public.source_dataset.test_source"] * 6,
-                    "source_column_name": [None] * 6,
-                    "target_table_name": ["bq-public.target_dataset.test_target"] * 6,
-                    "target_column_name": [None] * 6,
-                    "validation_type": ["Column"] * 6,
-                    "aggregation_type": ["count"] * 6,
-                    "validation_name": ["count"] * 6,
-                    "source_agg_value": ["2", "4", _NAN, _NAN, "6", "8"],
-                    "target_agg_value": ["1", "3", "5", "7", _NAN, _NAN],
-                    "group_by_columns": [
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"]
+                    * 6,
+                    consts.SOURCE_COLUMN_NAME: [None] * 6,
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"]
+                    * 6,
+                    consts.TARGET_COLUMN_NAME: [None] * 6,
+                    consts.VALIDATION_TYPE: ["Column"] * 6,
+                    consts.AGGREGATION_TYPE: ["count"] * 6,
+                    consts.VALIDATION_NAME: ["count"] * 6,
+                    consts.SOURCE_AGG_VALUE: ["2", "4", _NAN, _NAN, "6", "8"],
+                    consts.TARGET_AGG_VALUE: ["1", "3", "5", "7", _NAN, _NAN],
+                    consts.GROUP_BY_COLUMNS: [
                         '{"grp_a": "a", "grp_i": "0"}',
                         '{"grp_a": "a", "grp_i": "1"}',
                         '{"grp_a": "b", "grp_i": "0"}',
@@ -623,7 +629,7 @@ def test_generate_report_without_group_by(
                     "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
-                    "validation_status": [
+                    consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
@@ -655,14 +661,14 @@ def test_generate_report_with_group_by(
     # https://stackoverflow.com/a/11067072/101923
     # Sort rows by name to order in the comparison.
     report = (
-        report.sort_values("validation_name")
-        .sort_values("group_by_columns")
+        report.sort_values(consts.VALIDATION_NAME)
+        .sort_values(consts.GROUP_BY_COLUMNS)
         .reset_index(drop=True)
         .reindex(sorted(report.columns), axis=1)
     )
     expected = (
-        expected.sort_values("validation_name")
-        .sort_values("group_by_columns")
+        expected.sort_values(consts.VALIDATION_NAME)
+        .sort_values(consts.GROUP_BY_COLUMNS)
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
@@ -706,22 +712,22 @@ def test_generate_report_with_group_by(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
                     ],
-                    "source_table_name": ["bq-public.source_dataset.test_source"],
-                    "source_column_name": ["test_col"],
-                    "target_table_name": ["bq-public.target_dataset.test_target"],
-                    "target_column_name": ["test_col"],
-                    "validation_type": ["Column"],
-                    "aggregation_type": ["sum"],
-                    "validation_name": ["sum"],
-                    "source_agg_value": ["8093"],
-                    "target_agg_value": ["nan"],
-                    "group_by_columns": [None],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"],
+                    consts.SOURCE_COLUMN_NAME: ["test_col"],
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"],
+                    consts.TARGET_COLUMN_NAME: ["test_col"],
+                    consts.VALIDATION_TYPE: ["Column"],
+                    consts.AGGREGATION_TYPE: ["sum"],
+                    consts.VALIDATION_NAME: ["sum"],
+                    consts.SOURCE_AGG_VALUE: ["8093"],
+                    consts.TARGET_AGG_VALUE: ["nan"],
+                    consts.GROUP_BY_COLUMNS: [None],
                     "primary_keys": [None],
                     "num_random_rows": [None],
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[]],
                 }
             ),
@@ -759,22 +765,22 @@ def test_generate_report_with_group_by(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
                     ],
-                    "source_table_name": ["bq-public.source_dataset.test_source"],
-                    "source_column_name": ["test_col"],
-                    "target_table_name": ["bq-public.target_dataset.test_target"],
-                    "target_column_name": ["test_col"],
-                    "validation_type": ["Column"],
-                    "aggregation_type": ["sum"],
-                    "validation_name": ["sum"],
-                    "source_agg_value": ["nan"],
-                    "target_agg_value": ["8093"],
-                    "group_by_columns": [None],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"],
+                    consts.SOURCE_COLUMN_NAME: ["test_col"],
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"],
+                    consts.TARGET_COLUMN_NAME: ["test_col"],
+                    consts.VALIDATION_TYPE: ["Column"],
+                    consts.AGGREGATION_TYPE: ["sum"],
+                    consts.VALIDATION_NAME: ["sum"],
+                    consts.SOURCE_AGG_VALUE: ["nan"],
+                    consts.TARGET_AGG_VALUE: ["8093"],
+                    consts.GROUP_BY_COLUMNS: [None],
                     "primary_keys": [None],
                     "num_random_rows": [None],
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[]],
                 }
             ),
@@ -812,22 +818,22 @@ def test_generate_report_with_group_by(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
                     ],
-                    "source_table_name": ["bq-public.source_dataset.test_source"],
-                    "source_column_name": ["test_col"],
-                    "target_table_name": ["bq-public.target_dataset.test_target"],
-                    "target_column_name": ["test_col"],
-                    "validation_type": ["Column"],
-                    "aggregation_type": ["sum"],
-                    "validation_name": ["sum"],
-                    "source_agg_value": ["nan"],
-                    "target_agg_value": ["nan"],
-                    "group_by_columns": [None],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"],
+                    consts.SOURCE_COLUMN_NAME: ["test_col"],
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"],
+                    consts.TARGET_COLUMN_NAME: ["test_col"],
+                    consts.VALIDATION_TYPE: ["Column"],
+                    consts.AGGREGATION_TYPE: ["sum"],
+                    consts.VALIDATION_NAME: ["sum"],
+                    consts.SOURCE_AGG_VALUE: ["nan"],
+                    consts.TARGET_AGG_VALUE: ["nan"],
+                    consts.GROUP_BY_COLUMNS: [None],
                     "primary_keys": [None],
                     "num_random_rows": [None],
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "validation_status": [consts.VALIDATION_STATUS_SUCCESS],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS],
                     "labels": [[]],
                 }
             ),
@@ -865,22 +871,22 @@ def test_generate_report_with_group_by(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
                     ],
-                    "source_table_name": ["bq-public.source_dataset.test_source"],
-                    "source_column_name": [None],
-                    "target_table_name": ["bq-public.target_dataset.test_target"],
-                    "target_column_name": [None],
-                    "validation_type": ["Column"],
-                    "aggregation_type": ["count"],
-                    "validation_name": ["count"],
-                    "source_agg_value": ["1"],
-                    "target_agg_value": ["nan"],
-                    "group_by_columns": [None],
+                    consts.SOURCE_TABLE_NAME: ["bq-public.source_dataset.test_source"],
+                    consts.SOURCE_COLUMN_NAME: [None],
+                    consts.TARGET_TABLE_NAME: ["bq-public.target_dataset.test_target"],
+                    consts.TARGET_COLUMN_NAME: [None],
+                    consts.VALIDATION_TYPE: ["Column"],
+                    consts.AGGREGATION_TYPE: ["count"],
+                    consts.VALIDATION_NAME: ["count"],
+                    consts.SOURCE_AGG_VALUE: ["1"],
+                    consts.TARGET_AGG_VALUE: ["nan"],
+                    consts.GROUP_BY_COLUMNS: [None],
                     "primary_keys": [None],
                     "num_random_rows": [None],
                     "difference": [_NAN],
                     "pct_difference": [_NAN],
                     "pct_threshold": [0.0],
-                    "validation_status": [consts.VALIDATION_STATUS_FAIL],
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
                     "labels": [[]],
                 }
             ),
@@ -932,28 +938,28 @@ def test_generate_report_with_group_by(
                         )
                     ]
                     * 2,
-                    "source_table_name": [
+                    consts.SOURCE_TABLE_NAME: [
                         "bq-public.source_dataset.test_source",
                         "bq-public.source_dataset.test_source",
                     ],
-                    "source_column_name": [None, "test_col"],
-                    "target_table_name": [
+                    consts.SOURCE_COLUMN_NAME: [None, "test_col"],
+                    consts.TARGET_TABLE_NAME: [
                         "bq-public.target_dataset.test_target",
                         "bq-public.target_dataset.test_target",
                     ],
-                    "target_column_name": [None, "ttteeesssttt_col"],
-                    "validation_type": ["Column", "Column"],
-                    "aggregation_type": ["count", "sum"],
-                    "validation_name": ["count", "sum__ttteeesssttt"],
-                    "source_agg_value": ["8", "-1"],
-                    "target_agg_value": ["9", "nan"],
-                    "group_by_columns": [None, None],
+                    consts.TARGET_COLUMN_NAME: [None, "ttteeesssttt_col"],
+                    consts.VALIDATION_TYPE: ["Column", "Column"],
+                    consts.AGGREGATION_TYPE: ["count", "sum"],
+                    consts.VALIDATION_NAME: ["count", "sum__ttteeesssttt"],
+                    consts.SOURCE_AGG_VALUE: ["8", "-1"],
+                    consts.TARGET_AGG_VALUE: ["9", "nan"],
+                    consts.GROUP_BY_COLUMNS: [None, None],
                     "primary_keys": [None, None],
                     "num_random_rows": [None, None],
                     "difference": [1.0, _NAN],
                     "pct_difference": [12.5, _NAN],
                     "pct_threshold": [30.0, 0.0],
-                    "validation_status": [
+                    consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
@@ -975,12 +981,12 @@ def test_generate_report_with_nan_agg_value(
     # https://stackoverflow.com/a/11067072/101923
     # Sort rows by name to order in the comparison.
     report = (
-        report.sort_values("validation_name")
+        report.sort_values(consts.VALIDATION_NAME)
         .reset_index(drop=True)
         .reindex(sorted(report.columns), axis=1)
     )
     expected = (
-        expected.sort_values("validation_name")
+        expected.sort_values(consts.VALIDATION_NAME)
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )

@@ -99,7 +99,7 @@ def test_mysql_count_invalid_host():
             verbose=False,
         )
         df = data_validator.execute()
-        assert df["source_agg_value"][0] == df["target_agg_value"][0]
+        assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
     except exceptions.DataClientConnectionFailure:
         # Local Testing will not work for MySQL
         pass

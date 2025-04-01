@@ -89,7 +89,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             "run_id": ["grouped-test"] * 6,
             "start_time": [start] * 6,
             "end_time": [end] * 6,
-            "source_table_name": [
+            consts.SOURCE_TABLE_NAME: [
                 "schema.test_source",
                 "schema.test_source",
                 _NAN,
@@ -97,7 +97,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 "schema.test_source",
                 "schema.test_source",
             ],
-            "source_column_name": [
+            consts.SOURCE_COLUMN_NAME: [
                 "source_column",
                 "source_column",
                 _NAN,
@@ -113,7 +113,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 _NAN,
                 _NAN,
             ],
-            "target_column_name": [
+            consts.TARGET_COLUMN_NAME: [
                 "target_column",
                 "target_column",
                 "target_column",
@@ -121,12 +121,12 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 _NAN,
                 _NAN,
             ],
-            "validation_type": ["Column"] * 6,
-            "aggregation_type": ["count"] * 6,
-            "validation_name": ["count"] * 6,
-            "source_agg_value": ["2", "4", _NAN, _NAN, "6", "8"],
-            "target_agg_value": ["1", "3", "5", "7", "8", "9"],
-            "group_by_columns": [
+            consts.VALIDATION_TYPE: ["Column"] * 6,
+            consts.AGGREGATION_TYPE: ["count"] * 6,
+            consts.VALIDATION_NAME: ["count"] * 6,
+            consts.SOURCE_AGG_VALUE: ["2", "4", _NAN, _NAN, "6", "8"],
+            consts.TARGET_AGG_VALUE: ["1", "3", "5", "7", "8", "9"],
+            consts.GROUP_BY_COLUMNS: [
                 '{"grp_a": "a", "grp_i": "0"}',
                 '{"grp_a": "a", "grp_i": "1"}',
                 '{"grp_a": "b", "grp_i": "0"}',
@@ -139,7 +139,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
             "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
             "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
             "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
-            "validation_status": [
+            consts.VALIDATION_STATUS: [
                 consts.VALIDATION_STATUS_FAIL,
                 consts.VALIDATION_STATUS_SUCCESS,
                 _NAN,

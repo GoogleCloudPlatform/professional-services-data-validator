@@ -119,7 +119,7 @@ def test_sql_server_count(cloud_sql):
         verbose=False,
     )
     df = data_validator.execute()
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def test_sql_server_row(cloud_sql):
@@ -196,7 +196,7 @@ def test_sql_server_row(cloud_sql):
         verbose=False,
     )
     df = data_validator.execute()
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
     assert df.shape[0] == 5
 
 
@@ -215,7 +215,7 @@ def test_schema_validation():
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
-        assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
+        assert validation[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
 
 
 def mock_get_connection_config(*args):
@@ -401,8 +401,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         sum_cols=cols,
         expected_rows=2,
     )
-    assert "sum__col_dec_18_fail" in df["validation_name"].values
-    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
 @mock.patch(

@@ -192,7 +192,7 @@ def test_postgres_count(cloud_sql):
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert df["source_agg_value"].equals(df[consts.TARGET_AGG_VALUE])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
@@ -522,7 +522,7 @@ def test_postgres_row(cloud_sql):
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def mock_get_connection_config(*args):
@@ -597,7 +597,7 @@ def test_schema_validation(cloud_sql):
     df = data_validator.execute()
 
     for validation in df.to_dict(orient="records"):
-        assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
+        assert validation[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
 
 
 @mock.patch(
@@ -754,8 +754,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         sum_cols=cols,
         expected_rows=2,
     )
-    assert "sum__col_dec_18_fail" in df["validation_name"].values
-    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
 @mock.patch(
@@ -1040,7 +1040,7 @@ def test_column_validation_group_by_timestamp():
     assert len(df) == 3
     # All groups should be a successful validation.
     assert all(
-        _ == "success" for _ in df["validation_status"]
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
     ), "Not all records are marked as success"
 
 
@@ -1061,8 +1061,8 @@ def test_column_validation_high_epoch_seconds():
         #   failure for col_datetime_fail (which has an intentional data error)
         expected_rows=3,
     )
-    status_dict = dict(zip(df["validation_name"], df["validation_status"]))
-    value_dict = dict(zip(df["validation_name"], df["source_agg_value"]))
+    status_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.VALIDATION_STATUS]))
+    value_dict = dict(zip(df[consts.VALIDATION_NAME], df["source_agg_value"]))
     assert (
         status_dict["sum__epoch_seconds__col_datetime"]
         == consts.VALIDATION_STATUS_SUCCESS

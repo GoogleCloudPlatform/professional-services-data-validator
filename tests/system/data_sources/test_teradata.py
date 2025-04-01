@@ -233,13 +233,13 @@ def test_count_validator():
     validator = data_validation.DataValidation(TERADATA_COLUMN_CONFIG, verbose=True)
     df = validator.execute()
     assert int(df["source_agg_value"][0]) > 0
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df[consts.SOURCE_AGG_VALUE][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def test_row_validator():
     validator = data_validation.DataValidation(TERADATA_ROW_CONFIG, verbose=True)
     df = validator.execute()
-    assert df["validation_status"][0] == "success"
+    assert df[consts.VALIDATION_STATUS][0] == "success"
 
 
 def mock_get_connection_config(*args):
@@ -392,8 +392,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         expected_rows=2,
     )
     # The columns below have mismatching data and should be in the Dataframe.
-    assert "sum__col_dec_18_fail" in df["validation_name"].values
-    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
 @mock.patch(

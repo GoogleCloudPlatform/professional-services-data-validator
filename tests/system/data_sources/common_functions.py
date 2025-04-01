@@ -60,7 +60,8 @@ def id_type_test_assertions(df, expected_rows=5):
         len(df) == expected_rows
     ), f"We expect {expected_rows} rows with status success from this validation"
     assert all(
-        _ == consts.VALIDATION_STATUS_SUCCESS for _ in df["validation_status"].to_list()
+        _ == consts.VALIDATION_STATUS_SUCCESS
+        for _ in df[consts.VALIDATION_STATUS].to_list()
     ), "Not all rows have status 'success'"
 
 
@@ -69,7 +70,7 @@ def binary_key_assertions(df):
     These tests use BigQuery as a fixed target and execute against all other engines."""
     id_type_test_assertions(df)
     # Validate a sample primary key value is hex(ish).
-    sample_gbc = df["group_by_columns"].to_list().pop()
+    sample_gbc = df[consts.GROUP_BY_COLUMNS].to_list().pop()
     sample_gbc = json.loads(sample_gbc)
     sample_key = [v for _, v in sample_gbc.items()].pop()
     assert all(_ in string.hexdigits for _ in sample_key)
@@ -84,7 +85,9 @@ def null_not_null_assertions(df):
     assert len(df) == 4
     match_columns = ["col_nn", "col_nullable"]
     mismatch_columns = ["col_src_nn_trg_n", "col_src_n_trg_nn"]
-    for column_name, status in zip(df["source_column_name"], df["validation_status"]):
+    for column_name, status in zip(
+        df[consts.SOURCE_COLUMN_NAME], df[consts.VALIDATION_STATUS]
+    ):
         assert column_name in (match_columns + mismatch_columns)
         if column_name in match_columns:
             # These columns are the same for all engines and should succeed.

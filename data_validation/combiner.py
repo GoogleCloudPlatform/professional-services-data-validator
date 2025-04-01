@@ -337,7 +337,7 @@ def _calculate_differences(
         )
         differences_pivots.append(
             field_differences[
-                (ibis.literal(field).name("validation_name"),)
+                (ibis.literal(field).name(consts.VALIDATION_NAME),)
                 + join_on_fields
                 + _calculate_difference(
                     field_differences,
@@ -398,7 +398,7 @@ def _pivot_result(
             pivots.append(
                 result.projection(
                     (
-                        ibis.literal(field).name("validation_name"),
+                        ibis.literal(field).name(consts.VALIDATION_NAME),
                         ibis.literal(validation.validation_type).name(
                             consts.VALIDATION_TYPE
                         ),
@@ -463,7 +463,7 @@ def _join_pivots(
             ibis.literal(None).cast("string").name(consts.GROUP_BY_COLUMNS)
         )
 
-    join_keys = ("validation_name",) + join_on_fields
+    join_keys = (consts.VALIDATION_NAME,) + join_on_fields
     source_difference = source.join(differences, join_keys, how="outer")[
         [source[field] for field in join_keys]
         + [
@@ -481,7 +481,7 @@ def _join_pivots(
         ]
     ]
     joined = source_difference.join(target, join_keys, how="outer")[
-        source_difference["validation_name"],
+        source_difference[consts.VALIDATION_NAME],
         source_difference[consts.VALIDATION_TYPE]
         .fillna(target[consts.VALIDATION_TYPE])
         .name(consts.VALIDATION_TYPE),
