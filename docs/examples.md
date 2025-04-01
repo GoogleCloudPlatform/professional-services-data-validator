@@ -126,7 +126,7 @@ data-validation validate column \
   --count tripduration,start_station_name \
   -rh my_bqrh_conn.pso_data_validator.results
 ````
-Please replace my_bqrh_conn with the name of the connection descriptor for where you created your
+Please replace `my_bqrh_conn` with the name of the connection descriptor for where you created your
 results datasets as mentioned in the [installation](installation.md#setup) section.
 
 
