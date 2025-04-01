@@ -106,7 +106,7 @@ class PostgresResultHandler(BaseBackendResultHandler):
             logging.info(RH_NO_WRITE_MESSAGE)
         else:
             logging.info(
-                f'{RH_WRITE_MESSAGE} to {self._table_id}, run id: {result_df.iloc[0]["run_id"]}'
+                f"{RH_WRITE_MESSAGE} to {self._table_id}, run id: {result_df.iloc[0][consts.CONFIG_RUN_ID]}"
             )
 
         self._call_text_handler(result_df)

@@ -1201,7 +1201,7 @@ def test_result_handler_postgres(mock_list, caplog):
         result_handler=f"mock-conn.{table_id}",
     )
     assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
-    run_id = df["run_id"][0]
+    run_id = df[consts.CONFIG_RUN_ID][0]
 
     # Hijacking DVT raw query to query the results the table.
     rows = raw_query_rows(

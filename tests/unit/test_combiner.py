@@ -164,9 +164,9 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"],
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"],
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -181,13 +181,13 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                     consts.SOURCE_AGG_VALUE: ["1"],
                     consts.TARGET_AGG_VALUE: ["2"],
                     consts.GROUP_BY_COLUMNS: [None],
-                    "primary_keys": [None],
-                    "num_random_rows": [None],
-                    "difference": [1.0],
+                    consts.CONFIG_PRIMARY_KEYS: [None],
+                    consts.NUM_RANDOM_ROWS: [None],
+                    consts.VALIDATION_DIFFERENCE: [1.0],
                     "pct_difference": [100.0],
-                    "pct_threshold": [0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0],
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[]],
+                    consts.CONFIG_LABELS: [[]],
                 }
             ),
         ),
@@ -221,9 +221,9 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"],
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"],
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -238,13 +238,13 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                     consts.SOURCE_AGG_VALUE: ["2020-07-01 16:00:00+00:00"],
                     consts.TARGET_AGG_VALUE: ["2020-07-01 16:00:00+00:00"],
                     consts.GROUP_BY_COLUMNS: [None],
-                    "primary_keys": [None],
-                    "num_random_rows": [None],
-                    "difference": [0.0],
+                    consts.CONFIG_PRIMARY_KEYS: [None],
+                    consts.NUM_RANDOM_ROWS: [None],
+                    consts.VALIDATION_DIFFERENCE: [0.0],
                     "pct_difference": [0.0],
-                    "pct_threshold": [0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0],
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS],
-                    "labels": [[]],
+                    consts.CONFIG_LABELS: [[]],
                 }
             ),
         ),
@@ -286,9 +286,9 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"],
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"],
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -303,13 +303,13 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                     consts.SOURCE_AGG_VALUE: ["2020-09-13 12:26:40+00:00"],
                     consts.TARGET_AGG_VALUE: ["2033-05-18 03:33:20+00:00"],
                     consts.GROUP_BY_COLUMNS: [None],
-                    "primary_keys": [None],
-                    "num_random_rows": [None],
-                    "difference": [400000000.0],
+                    consts.CONFIG_PRIMARY_KEYS: [None],
+                    consts.NUM_RANDOM_ROWS: [None],
+                    consts.VALIDATION_DIFFERENCE: [400000000.0],
                     "pct_difference": [25.0],
-                    "pct_threshold": [0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0],
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[]],
+                    consts.CONFIG_LABELS: [[]],
                 }
             ),
         ),
@@ -352,9 +352,10 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"] * 2,
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"] * 2,
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)]
+                    * 2,
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -376,16 +377,16 @@ def test_generate_report_with_many_columns(module_under_test, input_df):
                     consts.SOURCE_AGG_VALUE: ["8", "-1"],
                     consts.TARGET_AGG_VALUE: ["9", "1"],
                     consts.GROUP_BY_COLUMNS: [None, None],
-                    "primary_keys": [None, None],
-                    "num_random_rows": [None, None],
-                    "difference": [1.0, 2.0],
+                    consts.CONFIG_PRIMARY_KEYS: [None, None],
+                    consts.NUM_RANDOM_ROWS: [None, None],
+                    consts.VALIDATION_DIFFERENCE: [1.0, 2.0],
                     "pct_difference": [12.5, -200.0],
-                    "pct_threshold": [30.0, 0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [30.0, 0.0],
                     consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
-                    "labels": [[]] * 2,
+                    consts.CONFIG_LABELS: [[]] * 2,
                 }
             ),
         ),
@@ -458,9 +459,10 @@ def test_generate_report_without_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["grouped-test"] * 4,
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 4,
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["grouped-test"] * 4,
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)]
+                    * 4,
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -483,18 +485,18 @@ def test_generate_report_without_group_by(
                         '{"grp_a": "b", "grp_i": "0"}',
                         '{"grp_a": "b", "grp_i": "1"}',
                     ],
-                    "primary_keys": [None] * 4,
-                    "num_random_rows": [None] * 4,
-                    "difference": [-1.0, -1.0, -1.0, 1.0],
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 4,
+                    consts.NUM_RANDOM_ROWS: [None] * 4,
+                    consts.VALIDATION_DIFFERENCE: [-1.0, -1.0, -1.0, 1.0],
                     "pct_difference": [-50.0, -25.0, -12.5, 6.25],
-                    "pct_threshold": [7.0, 7.0, 7.0, 7.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [7.0, 7.0, 7.0, 7.0],
                     consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                     ],
-                    "labels": [[]] * 4,
+                    consts.CONFIG_LABELS: [[]] * 4,
                 }
             ),
         ),
@@ -525,9 +527,10 @@ def test_generate_report_without_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["grouped-test"] * 2,
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["grouped-test"] * 2,
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)]
+                    * 2,
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -545,16 +548,16 @@ def test_generate_report_without_group_by(
                     consts.SOURCE_AGG_VALUE: ["1", "2"],
                     consts.TARGET_AGG_VALUE: ["3", "4"],
                     consts.GROUP_BY_COLUMNS: ['{"grp": "\\""}', '{"grp": "\\\\"}'],
-                    "primary_keys": [None] * 2,
-                    "num_random_rows": [None] * 2,
-                    "difference": [2.0, 2.0],
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 2,
+                    consts.NUM_RANDOM_ROWS: [None] * 2,
+                    consts.VALIDATION_DIFFERENCE: [2.0, 2.0],
                     "pct_difference": [200.0, 100.0],
-                    "pct_threshold": [100.0, 100.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [100.0, 100.0],
                     consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
                     ],
-                    "labels": [[]] * 2,
+                    consts.CONFIG_LABELS: [[]] * 2,
                 }
             ),
         ),
@@ -597,9 +600,10 @@ def test_generate_report_without_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["grouped-test"] * 6,
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 6,
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["grouped-test"] * 6,
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)]
+                    * 6,
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -624,11 +628,18 @@ def test_generate_report_without_group_by(
                         '{"grp_a": "c", "grp_i": "0"}',
                         '{"grp_a": "c", "grp_i": "1"}',
                     ],
-                    "primary_keys": [None] * 6,
-                    "num_random_rows": [None] * 6,
-                    "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 6,
+                    consts.NUM_RANDOM_ROWS: [None] * 6,
+                    consts.VALIDATION_DIFFERENCE: [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
                     "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
-                    "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
+                    consts.VALIDATION_PCT_THRESHOLD: [
+                        25.0,
+                        25.0,
+                        _NAN,
+                        _NAN,
+                        _NAN,
+                        _NAN,
+                    ],
                     consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_SUCCESS,
@@ -637,7 +648,7 @@ def test_generate_report_without_group_by(
                         consts.VALIDATION_STATUS_FAIL,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
-                    "labels": [[]] * 6,
+                    consts.CONFIG_LABELS: [[]] * 6,
                 }
             ),
         ),
@@ -705,9 +716,9 @@ def test_generate_report_with_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"],
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"],
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -722,13 +733,13 @@ def test_generate_report_with_group_by(
                     consts.SOURCE_AGG_VALUE: ["8093"],
                     consts.TARGET_AGG_VALUE: ["nan"],
                     consts.GROUP_BY_COLUMNS: [None],
-                    "primary_keys": [None],
-                    "num_random_rows": [None],
-                    "difference": [_NAN],
+                    consts.CONFIG_PRIMARY_KEYS: [None],
+                    consts.NUM_RANDOM_ROWS: [None],
+                    consts.VALIDATION_DIFFERENCE: [_NAN],
                     "pct_difference": [_NAN],
-                    "pct_threshold": [0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0],
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[]],
+                    consts.CONFIG_LABELS: [[]],
                 }
             ),
         ),
@@ -758,9 +769,9 @@ def test_generate_report_with_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"],
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"],
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -775,13 +786,13 @@ def test_generate_report_with_group_by(
                     consts.SOURCE_AGG_VALUE: ["nan"],
                     consts.TARGET_AGG_VALUE: ["8093"],
                     consts.GROUP_BY_COLUMNS: [None],
-                    "primary_keys": [None],
-                    "num_random_rows": [None],
-                    "difference": [_NAN],
+                    consts.CONFIG_PRIMARY_KEYS: [None],
+                    consts.NUM_RANDOM_ROWS: [None],
+                    consts.VALIDATION_DIFFERENCE: [_NAN],
                     "pct_difference": [_NAN],
-                    "pct_threshold": [0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0],
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[]],
+                    consts.CONFIG_LABELS: [[]],
                 }
             ),
         ),
@@ -811,9 +822,9 @@ def test_generate_report_with_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"],
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"],
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -828,13 +839,13 @@ def test_generate_report_with_group_by(
                     consts.SOURCE_AGG_VALUE: ["nan"],
                     consts.TARGET_AGG_VALUE: ["nan"],
                     consts.GROUP_BY_COLUMNS: [None],
-                    "primary_keys": [None],
-                    "num_random_rows": [None],
-                    "difference": [_NAN],
+                    consts.CONFIG_PRIMARY_KEYS: [None],
+                    consts.NUM_RANDOM_ROWS: [None],
+                    consts.VALIDATION_DIFFERENCE: [_NAN],
                     "pct_difference": [_NAN],
-                    "pct_threshold": [0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0],
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS],
-                    "labels": [[]],
+                    consts.CONFIG_LABELS: [[]],
                 }
             ),
         ),
@@ -864,9 +875,9 @@ def test_generate_report_with_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"],
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)],
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"],
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)],
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -881,13 +892,13 @@ def test_generate_report_with_group_by(
                     consts.SOURCE_AGG_VALUE: ["1"],
                     consts.TARGET_AGG_VALUE: ["nan"],
                     consts.GROUP_BY_COLUMNS: [None],
-                    "primary_keys": [None],
-                    "num_random_rows": [None],
-                    "difference": [_NAN],
+                    consts.CONFIG_PRIMARY_KEYS: [None],
+                    consts.NUM_RANDOM_ROWS: [None],
+                    consts.VALIDATION_DIFFERENCE: [_NAN],
                     "pct_difference": [_NAN],
-                    "pct_threshold": [0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [0.0],
                     consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_FAIL],
-                    "labels": [[]],
+                    consts.CONFIG_LABELS: [[]],
                 }
             ),
         ),
@@ -930,9 +941,10 @@ def test_generate_report_with_group_by(
             ),
             pandas.DataFrame(
                 {
-                    "run_id": ["test-run"] * 2,
-                    "start_time": [datetime.datetime(1998, 9, 4, 7, 30, 1)] * 2,
-                    "end_time": [
+                    consts.CONFIG_RUN_ID: ["test-run"] * 2,
+                    consts.CONFIG_START_TIME: [datetime.datetime(1998, 9, 4, 7, 30, 1)]
+                    * 2,
+                    consts.CONFIG_END_TIME: [
                         datetime.datetime(
                             1998, 9, 4, 7, 31, 42, tzinfo=datetime.timezone.utc
                         )
@@ -954,16 +966,16 @@ def test_generate_report_with_group_by(
                     consts.SOURCE_AGG_VALUE: ["8", "-1"],
                     consts.TARGET_AGG_VALUE: ["9", "nan"],
                     consts.GROUP_BY_COLUMNS: [None, None],
-                    "primary_keys": [None, None],
-                    "num_random_rows": [None, None],
-                    "difference": [1.0, _NAN],
+                    consts.CONFIG_PRIMARY_KEYS: [None, None],
+                    consts.NUM_RANDOM_ROWS: [None, None],
+                    consts.VALIDATION_DIFFERENCE: [1.0, _NAN],
                     "pct_difference": [12.5, _NAN],
-                    "pct_threshold": [30.0, 0.0],
+                    consts.VALIDATION_PCT_THRESHOLD: [30.0, 0.0],
                     consts.VALIDATION_STATUS: [
                         consts.VALIDATION_STATUS_SUCCESS,
                         consts.VALIDATION_STATUS_FAIL,
                     ],
-                    "labels": [[]] * 2,
+                    consts.CONFIG_LABELS: [[]] * 2,
                 }
             ),
         ),

@@ -111,7 +111,9 @@ class BigQueryResultHandler(BaseBackendResultHandler):
         if result_df.empty:
             logging.info(BQRH_NO_WRITE_MESSAGE)
         else:
-            logging.info(f'{BQRH_WRITE_MESSAGE}, run id: {result_df.iloc[0]["run_id"]}')
+            logging.info(
+                f"{BQRH_WRITE_MESSAGE}, run id: {result_df.iloc[0][consts.CONFIG_RUN_ID]}"
+            )
 
         self._call_text_handler(result_df)
 

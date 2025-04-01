@@ -83,17 +83,21 @@ class SchemaValidation(object):
         # Update and Assign Metadata Values
         self.run_metadata.end_time = datetime.datetime.now(datetime.timezone.utc)
 
-        df.insert(loc=0, column="run_id", value=self.run_metadata.run_id)
+        df.insert(loc=0, column=consts.CONFIG_RUN_ID, value=self.run_metadata.run_id)
         df.insert(loc=1, column=consts.VALIDATION_NAME, value="Schema")
         df.insert(loc=2, column=consts.VALIDATION_TYPE, value="Schema")
 
         df.insert(
             loc=3,
-            column="labels",
+            column=consts.CONFIG_LABELS,
             value=[self.run_metadata.labels for _ in range(len(df.index))],
         )
-        df.insert(loc=4, column="start_time", value=self.run_metadata.start_time)
-        df.insert(loc=5, column="end_time", value=self.run_metadata.end_time)
+        df.insert(
+            loc=4, column=consts.CONFIG_START_TIME, value=self.run_metadata.start_time
+        )
+        df.insert(
+            loc=5, column=consts.CONFIG_END_TIME, value=self.run_metadata.end_time
+        )
 
         df.insert(
             loc=6,
@@ -108,11 +112,11 @@ class SchemaValidation(object):
         df.insert(loc=10, column=consts.AGGREGATION_TYPE, value="Schema")
 
         # empty columns added due to changes on the results schema
-        df.insert(loc=14, column="primary_keys", value=None)
-        df.insert(loc=15, column="num_random_rows", value=None)
+        df.insert(loc=14, column=consts.CONFIG_PRIMARY_KEYS, value=None)
+        df.insert(loc=15, column=consts.NUM_RANDOM_ROWS, value=None)
         df.insert(loc=16, column=consts.GROUP_BY_COLUMNS, value=None)
-        df.insert(loc=17, column="difference", value=None)
-        df.insert(loc=18, column="pct_threshold", value=None)
+        df.insert(loc=17, column=consts.VALIDATION_DIFFERENCE, value=None)
+        df.insert(loc=18, column=consts.VALIDATION_PCT_THRESHOLD, value=None)
 
         return df
 
@@ -183,7 +187,10 @@ def schema_validation_matching(
             )
         else:
             # Target data type mismatch
-            (higher_precision, lower_precision,) = parse_n_validate_datatypes(
+            (
+                higher_precision,
+                lower_precision,
+            ) = parse_n_validate_datatypes(
                 string_val(source_field_type), string_val(target_field_type)
             )
             if higher_precision:

@@ -165,6 +165,11 @@ VALIDATION_STATUSES = [
     VALIDATION_STATUS_SUCCESS,
     VALIDATION_STATUS_FAIL,
 ]
+VALIDATION_DIFFERENCE = "difference"
+VALIDATION_PCT_DIFFERENCE = "pct_difference"
+VALIDATION_PCT_THRESHOLD = "pct_threshold"
+
+NUM_RANDOM_ROWS = "num_random_rows"
 
 # Summary stats of Row Validation results
 TOTAL_SOURCE_ROWS = "total_source_rows"
@@ -199,24 +204,24 @@ COLUMN_FILTER_LIST = [
     AGGREGATION_TYPE,
     CONFIG_END_TIME,
     CONFIG_LABELS,
-    "pct_threshold",
+    VALIDATION_PCT_THRESHOLD,
     CONFIG_START_TIME,
     TARGET_TABLE_NAME,
     TARGET_COLUMN_NAME,
-    "difference",
+    VALIDATION_DIFFERENCE,
     CONFIG_PRIMARY_KEYS,
     GROUP_BY_COLUMNS,
-    "num_random_rows",
+    NUM_RANDOM_ROWS,
 ]
 SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
     CONFIG_START_TIME,
     CONFIG_END_TIME,
     AGGREGATION_TYPE,
-    "difference",
+    VALIDATION_DIFFERENCE,
     CONFIG_PRIMARY_KEYS,
     GROUP_BY_COLUMNS,
-    "num_random_rows",
-    "pct_threshold",
+    NUM_RANDOM_ROWS,
+    VALIDATION_PCT_THRESHOLD,
 ]
 
 # Constants for the named column used in generate partitions

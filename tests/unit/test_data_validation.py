@@ -624,7 +624,7 @@ def test_grouped_column_level_validation_perfect_match(module_under_test, fs):
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
     assert expected_date_result == result_df[consts.GROUP_BY_COLUMNS].max()
 
-    assert result_df["difference"].sum() == 0
+    assert result_df[consts.VALIDATION_DIFFERENCE].sum() == 0
 
 
 def test_calc_field_validation_calc_match(module_under_test, fs):
@@ -662,7 +662,7 @@ def test_grouped_column_level_validation_non_matching(module_under_test, fs):
     result_df = client.execute()
     validation_df = result_df[result_df[consts.VALIDATION_NAME] == "count_text_value"]
     # TODO: this value is 0 because a COUNT() on no rows returns Null
-    assert result_df["difference"].sum() == 1
+    assert result_df[consts.VALIDATION_DIFFERENCE].sum() == 1
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
     grouped_column = validation_df[consts.GROUP_BY_COLUMNS].max()
@@ -770,7 +770,7 @@ def test_bad_join_row_level_validation(module_under_test, fs, caplog, monkeypatc
     assert len(comparison_df) == 202
     # The "Results written" message happens + info about the failed data, all against a generated run_id
     # assert len(caplog.records) == 202
-    run_id = result_df.iloc[0]["run_id"]
+    run_id = result_df.iloc[0][consts.CONFIG_RUN_ID]
     assert run_id != DUMMY_RUN_ID
     assert any(
         _
