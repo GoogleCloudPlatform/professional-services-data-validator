@@ -14,7 +14,7 @@
 
 """Build a result handler object."""
 
-from typing import Union
+from typing import TYPE_CHECKING
 
 import google.oauth2.service_account
 
@@ -23,13 +23,16 @@ from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.postgres import PostgresResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 
+if TYPE_CHECKING:
+    from data_validation.result_handlers.base_backend import BaseBackendResultHandler
+
 
 def build_result_handler(
     result_handler_config: dict,
     validation_type: str,
     filter_status: list,
     text_format: str = None,
-) -> Union[TextResultHandler, BigQueryResultHandler]:
+) -> "BaseBackendResultHandler":
     """Return a result handler object based on supplied args."""
     text_format = text_format or consts.FORMAT_TYPE_TABLE
     if not result_handler_config:
