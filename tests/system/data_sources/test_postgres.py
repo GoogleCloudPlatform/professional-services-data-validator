@@ -1088,6 +1088,7 @@ def test_column_validation_tricky_dates_to_bigquery():
         min_cols="*",
         max_cols="*",
         sum_cols="*",
+        grouped_columns="id",
         wildcard_include_timestamp=True,
     )
 
