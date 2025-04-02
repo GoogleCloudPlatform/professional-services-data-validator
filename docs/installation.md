@@ -112,7 +112,7 @@ bq mk --table \
 You should see a dataset named `pso_data_validator` and a table named
 `results` created inside of your project.
 
-You are now be ready to run data validation commands and output the results to BigQuery. See an example [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#store-results-in-a-bigquery-table).
+You are now ready to run data validation commands and output the results to BigQuery. See an example [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#store-results-in-a-bigquery-table).
 
 ### PostgreSQL
 
