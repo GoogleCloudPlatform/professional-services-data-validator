@@ -22,7 +22,7 @@ Create and activate a new virtual environment to sandbox the tool and its
 dependencies from your system installation of Python.
 
 ```
-python3.10 -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 
