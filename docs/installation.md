@@ -130,7 +130,7 @@ The table will be created when first referenced in a result handler and appended
 
 Details on creating a PostgreSQL connection configuration can be found [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#Postgres).
 
-You are now be ready to run data validation commands and output the results to PostgreSQL.
+You are now ready to run data validation commands and output the results to PostgreSQL.
 
 ## Test locally
 If you want to test local changes to the tool, run the following command from the root directory of this repository:
