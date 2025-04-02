@@ -32,7 +32,7 @@ sudo apt-get update  && sudo apt-get install gcc -y && sudo apt-get clean
 pip install --upgrade pip
 ```
 
-You can install the tool via [pip](https://pypi.org/project/google-pso-data-validator/1.2.0/).
+You can install the tool via [pip](https://pypi.org/project/google-pso-data-validator/#history).
 ```
 pip install google-pso-data-validator
 ```
