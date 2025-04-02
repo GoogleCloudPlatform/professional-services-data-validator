@@ -120,7 +120,6 @@ In order to allow the data validation tool to write to a PostgreSQL table you mu
 
 The example below creates a user to create and update a results table in a schema named `pso_data_validator`:
 ```sql
-CREATE USER
 CREATE USER dvt_results_writer WITH PASSWORD 'S3cr3t!';
 CREATE SCHEMA pso_data_validator;
 GRANT CREATE ON SCHEMA pso_data_validator TO dvt_results_writer;
