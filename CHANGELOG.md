@@ -2,6 +2,14 @@
 
 ## Untagged
 
+## [7.5.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.1...v7.5.2) (2025-04-02)
+
+
+### Bug Fixes
+
+* Cater for OID &gt; 2 billion in PostgreSQL _metadata method ([#1490](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1490)) ([d5f72ae](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d5f72ae3729316dc9fc544abb7a68f25e3667647))
+* NaT handling in string_to_epoch now matches datetime64 cast output ([#1488](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1488)) ([43f6e0a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/43f6e0abf5f5af2c52ac8808ff808091d0607589))
+
 ## [7.5.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.0...v7.5.1) (2025-03-31)
 
 
