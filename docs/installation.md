@@ -26,7 +26,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-Update pip and make sure gcc is installed in your environment.
+Update `pip` and make sure `gcc` is installed in your environment.
 ```
 sudo apt-get update  && sudo apt-get install gcc -y && sudo apt-get clean
 pip install --upgrade pip
