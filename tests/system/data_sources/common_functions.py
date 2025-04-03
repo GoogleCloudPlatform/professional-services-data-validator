@@ -248,6 +248,7 @@ def schema_validation_test(
     allow_list: str = None,
     allow_list_file: str = None,
     result_handler: str = None,
+    labels: str = None,
 ) -> "DataFrame":
     """Generic schema validation test.
 
@@ -265,6 +266,7 @@ def schema_validation_test(
         f"--allow-list={allow_list}" if allow_list else None,
         f"--allow-list-file={allow_list_file}" if allow_list_file else None,
         f"--result-handler={result_handler}" if result_handler else None,
+        f"--labels={labels}" if labels else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
