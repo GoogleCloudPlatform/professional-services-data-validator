@@ -2,6 +2,19 @@
 
 Capturing some testing and thoughts around result handlers that came from implementing the PostgreSQL result handler.
 
+## Timings
+
+Timings from the sections that follow this are summarised in the table below:
+
+| Destination | Technique | Total Elapsed | RH write |
+| :---- | :---- | ----- | ----- |
+| Local filesystem | stdout redirect to /tmp | 43s |  |
+| BigQuery | insert\_rows\_from\_dataframe | 3m24s | 2m58s |
+| PostgreSQL | Ibis client.insert | 2m35s | 2m9s |
+| PostgreSQL | to\_sql(chunksize=1000) | 2m12s | 1m46s |
+| PostgreSQL | to\_sql(multi, chunksize=1000) | 5m48s | 5m22s |
+| PostgreSQL | COPY | 50s | 24s |
+
 ## Tests
 
 The tests below are all using a table containing 1 million rows. The validation has hash and all 1 million vailtiona results were persisted.
