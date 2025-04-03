@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 
 import sqlalchemy
 
-from data_validation import clients, consts
+from data_validation import clients, consts, util
 from data_validation.result_handlers.base_backend import (
     BaseBackendResultHandler,
     RESULTS_TABLE_SCHEMA,
@@ -82,9 +82,8 @@ class PostgresResultHandler(BaseBackendResultHandler):
         with self._client.begin() as con:
             _ = con.exec_driver_sql(f"SET schema '{schema_name}'")
 
-    def execute(self, result_df: "DataFrame"):
+    def _insert_postgres(self, result_df: "DataFrame"):
         """Store the validation results Dataframe to an Ibis Backend."""
-        result_df = self._filter_by_status_list(result_df)
 
         if "." in self._table_id:
             schema_name, table_name = self._table_id.split(".")
@@ -108,6 +107,11 @@ class PostgresResultHandler(BaseBackendResultHandler):
             logging.info(
                 f"{RH_WRITE_MESSAGE} to {self._table_id}, run id: {result_df.iloc[0][consts.CONFIG_RUN_ID]}"
             )
+
+    def execute(self, result_df: "DataFrame"):
+        result_df = self._filter_by_status_list(result_df)
+
+        util.timed_call("Write results to PostgreSQL", self._insert_postgres, result_df)
 
         self._call_text_handler(result_df)
 
