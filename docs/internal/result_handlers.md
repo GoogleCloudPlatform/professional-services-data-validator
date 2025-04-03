@@ -250,13 +250,10 @@ DVT stages:
 04/03/2025 11:59:59 AM-DEBUG: Write results to PostgreSQL elapsed: 322.34s
 ```
 
-
 ### PostgreSQL - COPY
 
-Writing to PostgreSQL using the pandas `to_sql(method=COPY callable)` method.
-```python
+Writing to PostgreSQL using the pandas `to_sql(method=COPY callable)` method using the method described here: https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method
 
-```
 
 Command:
 ```console
@@ -265,13 +262,30 @@ time data-validation -ll DEBUG validate row -sc=oravol -tc=pg \
 --result-handler=pg_rh.pso_data_validator_results.results \
 2>/tmp/debug.log
 
+real	0m50.537s
+user	0m34.947s
+sys	0m2.750s
 ```
 
 DVT stages:
 ```
+04/03/2025 02:35:58 PM-DEBUG: Build config elapsed: 0.19s
+04/03/2025 02:36:03 PM-DEBUG: Target query elapsed: 4.66s
+04/03/2025 02:36:06 PM-DEBUG: Source query elapsed: 7.67s
+04/03/2025 02:36:22 PM-DEBUG: Generate report elapsed: 15.96s
+04/03/2025 02:36:47 PM-DEBUG: Write results to PostgreSQL elapsed: 24.28s
 ```
 
 `vmstat` output:
 ```
-
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  0      0 31628228  32032 1011728    0    0     7    15  295  445  5  1 95  0  0
+ 0  0      0 30959452  32048 1011720    0    0     0    11 4994 5501 13  3 83  0  0
+ 2  0      0 30394368  32048 1010832    0    0     0     1 1918 2496 23  5 72  0  0
+ 1  0      0 30135752  32068 1010836    0    0     0  7579 1381 1811 25  3 72  0  0
+ 1  0      0 30144104  32076 1010836    0    0     0    18 1740 1789 14  0 86  0  0
+ 0  0      0 30145512  32076 1010836    0    0     0     0 1661 1839 12  0 88  0  0
+ 0  0      0 31626232  32084 1010836    0    0     0     2 1162 1781  5  0 95  0  0
+ 0  0      0 31626232  32084 1010836    0    0     0     0  952 1723  0  0 100  0  0
 ```
