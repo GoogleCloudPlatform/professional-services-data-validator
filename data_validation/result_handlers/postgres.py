@@ -119,7 +119,9 @@ class PostgresResultHandler(BaseBackendResultHandler):
         with self._client.begin() as con:
             _ = con.exec_driver_sql(f"SET schema '{schema_name}'")
 
-    def _to_sql(self, schema_name, table_name, result_df):
+    def _dataframe_to_sql(self, schema_name, table_name, result_df):
+        """Inserts Dataframe data into PostgreSQL table using pandas.Dataframe.to_sql() method."""
+
         def label_to_string(label) -> str:
             if isinstance(label, (list, tuple, numpy.ndarray)) and len(label) == 2:
                 # This is the expected format
@@ -129,6 +131,7 @@ class PostgresResultHandler(BaseBackendResultHandler):
                 return f"'{label}'"
 
         def labels_to_array_literal(labels):
+            """Convert Pandas labels array into a PostgreSQL array literal."""
             if not labels:
                 return "{}"
             return "{" + ",".join(label_to_string(_) for _ in labels) + "}"
@@ -163,7 +166,7 @@ class PostgresResultHandler(BaseBackendResultHandler):
             self._client.create_table(table_name, schema=RESULTS_TABLE_SCHEMA)
 
         if not result_df.empty:
-            self._to_sql(schema_name, table_name, result_df)
+            self._dataframe_to_sql(schema_name, table_name, result_df)
 
         if result_df.empty:
             logging.info(RH_NO_WRITE_MESSAGE)
