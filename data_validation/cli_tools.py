@@ -1072,7 +1072,7 @@ def _check_positive(value: int, lower_bound: int = 1) -> int:
                 f"{value} is an invalid positive int value"
             )
         else:
-            raise argparse.ArgumentTypeError(f"{value} must be >= {lower_bound}")
+            raise argparse.ArgumentTypeError(f"Value must be >= {lower_bound}: {value}")
     return ivalue
 
 
