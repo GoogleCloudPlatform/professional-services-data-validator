@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" A ResultHandler class is supplied to the DataValidation manager class.
+"""A ResultHandler class is supplied to the DataValidation manager class.
 
 The execute function of any result handler is used to process
 the validation results.  It expects to receive the config
@@ -23,7 +23,7 @@ Output validation report to text-based log
 """
 from typing import TYPE_CHECKING
 
-from data_validation import consts
+from data_validation import consts, util
 
 
 if TYPE_CHECKING:
@@ -84,4 +84,4 @@ class TextResultHandler(object):
         return result_df
 
     def execute(self, result_df) -> str:
-        return self.print_formatted_(result_df)
+        return util.timed_call("Text handler output", self.print_formatted_, result_df)

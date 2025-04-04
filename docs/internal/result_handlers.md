@@ -1,6 +1,7 @@
 # Result handlers
 
-Capturing some testing and thoughts around result handlers that came from implementing the PostgreSQL result handler.
+Capturing some testing and thoughts around result handlers that came from implementing the
+PostgreSQL result handler.
 
 ## Timings
 
@@ -17,13 +18,15 @@ Timings from the sections that follow this are summarised in the table below:
 
 ## Tests
 
-The tests below are all using a table containing 1 million rows. The validation has hash and all 1 million vailtiona results were persisted.
+The tests below are all using a table containing 1 million rows. The validation has hash and
+all 1 million vailtiona results were persisted.
 
 Tests were executed on the `develop` branch on 2025-04-03.
 
 ### Local filsystem
 
-Simply redirecting results to a CSV file.
+Simply redirecting results to a CSV file. This is the baseline because no data is written to
+a result handler, although the CSV output is streamed to stdout which does take time.
 
 Command:
 ```console
