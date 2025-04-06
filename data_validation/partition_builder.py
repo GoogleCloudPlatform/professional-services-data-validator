@@ -98,14 +98,13 @@ class PartitionBuilder:
         self._store_partitions(yaml_configs_list)
 
     @staticmethod
-    def _extract_where(table_expr, client) -> str:
+    def _extract_where(table_expr:ibis.expr.types.TableExpr) -> str:
         """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the
            where clause in plain text. 
 
         Returns:
             String with the where condition
         """
-        breakpoint()
         sql_where_expr = table_expr.compile().rsplit("WHERE", 1)[1]
         sql_string_re=re.compile(r"'[^']*'")
         sql_not_string_re=re.compile(r"[^']+")
@@ -302,13 +301,11 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
-                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
-                    config_manager.target_client,
                 )
             )
 
@@ -334,13 +331,11 @@ class PartitionBuilder:
                 source_where_list.append(
                     self._extract_where(
                         source_table.filter(filter_source_clause),
-                        config_manager.source_client,
                     )
                 )
                 target_where_list.append(
                     self._extract_where(
                         target_table.filter(filter_target_clause),
-                        config_manager.target_client,
                     )
                 )
             filter_source_clause = geq_value(
@@ -356,13 +351,11 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
-                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
-                    config_manager.target_client,
                 )
             )
             master_filter_list.append([source_where_list, target_where_list])
