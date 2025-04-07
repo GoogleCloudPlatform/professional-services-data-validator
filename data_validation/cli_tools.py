@@ -298,7 +298,7 @@ def _configure_partition_parser(subparsers):
         "-pn",
         required=True,
         help="Number of partitions into which the table should be split",
-        type=_check_positive,
+        type=_check_gt_one,
     )
     # User can provide tables or custom queries, but not both
     # However, Argparse does not support adding an argument_group to an argument_group or adding a
@@ -1064,11 +1064,20 @@ def _add_common_arguments(
     )
 
 
-def _check_positive(value: int) -> int:
+def _check_positive(value: int, lower_bound: int = 1) -> int:
     ivalue = int(value)
-    if ivalue <= 0:
-        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    if ivalue < lower_bound:
+        if lower_bound == 1:
+            raise argparse.ArgumentTypeError(
+                f"{value} is an invalid positive int value"
+            )
+        else:
+            raise argparse.ArgumentTypeError(f"Value must be >= {lower_bound}: {value}")
     return ivalue
+
+
+def _check_gt_one(value: int) -> int:
+    return _check_positive(value, lower_bound=2)
 
 
 def check_no_yaml_files(partition_num: int, parts_per_file: int):
