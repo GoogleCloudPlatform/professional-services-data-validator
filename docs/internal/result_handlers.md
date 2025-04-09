@@ -74,7 +74,7 @@ Command:
 ```console
 time data-validation -ll DEBUG validate row -sc=oravol -tc=pg \
 -tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
---result-handler=db-black-belts-i-dvt.pso_data_validator_results.results \
+--result-handler=<GCP_PROJECT_ID>.pso_data_validator_results.results \
 2>/tmp/debug.log
 
 real	3m24.076s
