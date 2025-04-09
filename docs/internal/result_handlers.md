@@ -19,7 +19,7 @@ Timings from the sections that follow this are summarised in the table below:
 ## Tests
 
 The tests below are all using a table containing 1 million rows. The validation has hash and
-all 1 million vailtiona results were persisted.
+all 1 million validation results were persisted.
 
 Tests were executed on the `develop` branch on 2025-04-03.
 
