@@ -42,7 +42,7 @@ class Backend(BaseAlchemyBackend):
         database: str = None,
         url: str = None,
         driver: Literal["pyodbc"] = "pyodbc",
-        odbc_driver: str = "ODBC Driver 18 for SQL Server", # supports Ubuntu 20.04 and later (https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server)
+        odbc_driver: str = "ODBC Driver 17 for SQL Server",
         query: str = None,
     ) -> None:
         if url is None:
@@ -71,7 +71,6 @@ class Backend(BaseAlchemyBackend):
         self.database_name = alchemy_url.database
         engine = sa.create_engine(
             alchemy_url,
-            connect_args={'TrustServerCertificate': 'yes'},
             poolclass=sa.pool.StaticPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,

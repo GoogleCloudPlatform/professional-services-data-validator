@@ -24,7 +24,7 @@ def mssql_connect(
     database: str = None,
     url: str = None,
     driver: Literal["pyodbc"] = "pyodbc",
-    odbc_driver: str = "ODBC Driver 18 for SQL Server", # supports Ubuntu 20.04 and later (https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server)
+    odbc_driver: str = "ODBC Driver 17 for SQL Server",
     query: str = None,
 ):
     backend = MsSqlBackend()
