@@ -16,7 +16,7 @@
 
 import logging
 
-from data_validation import clients, consts, exceptions
+from data_validation import clients, consts, exceptions, util
 from data_validation.result_handlers.base_backend import BaseBackendResultHandler
 
 
@@ -80,9 +80,7 @@ class BigQueryResultHandler(BaseBackendResultHandler):
             text_format=text_format,
         )
 
-    def execute(self, result_df):
-        result_df = self._filter_by_status_list(result_df)
-
+    def _insert_bigquery(self, result_df):
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df
@@ -114,6 +112,11 @@ class BigQueryResultHandler(BaseBackendResultHandler):
             logging.info(
                 f"{BQRH_WRITE_MESSAGE}, run id: {result_df.iloc[0][consts.CONFIG_RUN_ID]}"
             )
+
+    def execute(self, result_df):
+        result_df = self._filter_by_status_list(result_df)
+
+        util.timed_call("Write results to BigQuery", self._insert_bigquery, result_df)
 
         self._call_text_handler(result_df)
 

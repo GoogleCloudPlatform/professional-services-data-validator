@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 import ibis
 
-from data_validation import consts
+from data_validation import consts, util
 from data_validation.result_handlers import text as text_handler
 
 
@@ -63,8 +63,11 @@ class BaseBackendResultHandler:
 
     def _filter_by_status_list(self, result_df: "DataFrame") -> "DataFrame":
         if self._status_list is not None:
-            result_df = text_handler.filter_validation_status(
-                self._status_list, result_df
+            result_df = util.timed_call(
+                "Filter by validation status",
+                text_handler.filter_validation_status,
+                self._status_list,
+                result_df,
             )
         return result_df
 
@@ -72,7 +75,11 @@ class BaseBackendResultHandler:
         # Handler can also output results to stdout after saving to backend.
         logger = logging.getLogger()
         if logger.isEnabledFor(logging.DEBUG):
-            # Checking log level to avoid evaluating a large Dataframe that will never be logged.
-            logging.debug(
-                text_handler.get_formatted(result_df, format=self._text_format)
-            )
+
+            def _fn():
+                # Checking log level to avoid evaluating a large Dataframe that will never be logged.
+                logging.debug(
+                    text_handler.get_formatted(result_df, format=self._text_format)
+                )
+
+            util.timed_call("Call text handler", _fn)

@@ -1205,8 +1205,42 @@ def test_result_handler_postgres(mock_list, caplog):
     run_id = df[consts.CONFIG_RUN_ID][0]
 
     # Hijacking DVT raw query to query the results the table.
+    # Labels columns should be empty.
     rows = raw_query_rows(
-        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}'", conn="mock-conn"
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND labels = '{{}}'",
+        conn="mock-conn",
+    )
+    # Ensure that we added the data to the results table.
+    assert len(df) == rows[0][0]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+@mock.patch(
+    "data_validation.state_manager.StateManager.list_connections",
+    return_value="mock-conn",
+)
+def test_result_handler_postgres_with_labels(mock_list, caplog):
+    """Test result handler with validation labels using dvt_core_types schema validation."""
+    table_id = "pso_data_validator_results.results_data"
+    caplog.set_level(logging.INFO)
+    df = schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        filter_status=None,
+        result_handler=f"mock-conn.{table_id}",
+        labels="a=1,b=2",
+    )
+    assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
+    run_id = df[consts.CONFIG_RUN_ID][0]
+
+    # Hijacking DVT raw query to query the results the table.
+    # Labels columns should NOT be empty.
+    rows = raw_query_rows(
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND array_length(labels, 1) = 2",
+        conn="mock-conn",
     )
     # Ensure that we added the data to the results table.
     assert len(df) == rows[0][0]

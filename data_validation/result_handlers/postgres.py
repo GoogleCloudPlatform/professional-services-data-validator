@@ -15,11 +15,12 @@
 """Output validation report to PostgreSQL table"""
 
 import logging
-from typing import TYPE_CHECKING
+from typing import Iterable, TYPE_CHECKING
 
+import numpy
 import sqlalchemy
 
-from data_validation import clients, consts
+from data_validation import clients, consts, util
 from data_validation.result_handlers.base_backend import (
     BaseBackendResultHandler,
     RESULTS_TABLE_SCHEMA,
@@ -31,6 +32,41 @@ from data_validation.result_handlers.base_backend import (
 if TYPE_CHECKING:
     from pandas import DataFrame
     from ibis.backends.base import BaseBackend
+
+
+def _psql_insert_copy(table, conn, keys: list, data_iter: Iterable):
+    """
+    Execute SQL statement inserting data
+
+    Taken from pandas documentation:
+         https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#insertion-method
+
+    Parameters
+    ----------
+    table : pandas.io.sql.SQLTable
+    conn : sqlalchemy.engine.Engine or sqlalchemy.engine.Connection
+    keys : list[str]: List of column names
+    data_iter : Iterable that iterates the values to be inserted
+    """
+    import csv
+    from io import StringIO
+
+    # gets a DBAPI connection that can provide a cursor
+    dbapi_conn = conn.connection
+    with dbapi_conn.cursor() as cur:
+        s_buf = StringIO()
+        writer = csv.writer(s_buf)
+        writer.writerows(data_iter)
+        s_buf.seek(0)
+
+        columns = ", ".join(['"{}"'.format(k) for k in keys])
+        if table.schema:
+            table_name = "{}.{}".format(table.schema, table.name)
+        else:
+            table_name = table.name
+
+        sql = "COPY {} ({}) FROM STDIN WITH CSV".format(table_name, columns)
+        cur.copy_expert(sql=sql, file=s_buf)
 
 
 class PostgresResultHandler(BaseBackendResultHandler):
@@ -82,9 +118,38 @@ class PostgresResultHandler(BaseBackendResultHandler):
         with self._client.begin() as con:
             _ = con.exec_driver_sql(f"SET schema '{schema_name}'")
 
-    def execute(self, result_df: "DataFrame"):
+    def _dataframe_to_sql(self, schema_name, table_name, result_df):
+        """Inserts Dataframe data into PostgreSQL table using pandas.Dataframe.to_sql() method."""
+
+        def label_to_string(label) -> str:
+            if isinstance(label, (list, tuple, numpy.ndarray)) and len(label) == 2:
+                # This is the expected format
+                return f"'{label[0]}={label[1]}'"
+            else:
+                # Anything else
+                return f"'{label}'"
+
+        def labels_to_array_literal(labels):
+            """Convert Pandas labels array into a PostgreSQL array literal."""
+            if not labels:
+                return "{}"
+            return "{" + ",".join(label_to_string(_) for _ in labels) + "}"
+
+        result_df[consts.CONFIG_LABELS] = result_df.labels.apply(
+            lambda x: labels_to_array_literal(x)
+        )
+        result_df.to_sql(
+            table_name,
+            self._client.con,
+            schema=schema_name,
+            if_exists="append",
+            index=False,
+            chunksize=1000,
+            method=_psql_insert_copy,
+        )
+
+    def _insert_postgres(self, result_df: "DataFrame"):
         """Store the validation results Dataframe to an Ibis Backend."""
-        result_df = self._filter_by_status_list(result_df)
 
         if "." in self._table_id:
             schema_name, table_name = self._table_id.split(".")
@@ -100,7 +165,7 @@ class PostgresResultHandler(BaseBackendResultHandler):
             self._client.create_table(table_name, schema=RESULTS_TABLE_SCHEMA)
 
         if not result_df.empty:
-            self._client.insert(table_name, result_df)
+            self._dataframe_to_sql(schema_name, table_name, result_df)
 
         if result_df.empty:
             logging.info(RH_NO_WRITE_MESSAGE)
@@ -108,6 +173,11 @@ class PostgresResultHandler(BaseBackendResultHandler):
             logging.info(
                 f"{RH_WRITE_MESSAGE} to {self._table_id}, run id: {result_df.iloc[0][consts.CONFIG_RUN_ID]}"
             )
+
+    def execute(self, result_df: "DataFrame"):
+        result_df = self._filter_by_status_list(result_df)
+
+        util.timed_call("Write results to PostgreSQL", self._insert_postgres, result_df)
 
         self._call_text_handler(result_df)
 
