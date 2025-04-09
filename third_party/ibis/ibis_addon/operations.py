@@ -428,7 +428,7 @@ def sa_cast_mssql(t, op):
         format_string = f'0.{("#" * scale)}'
         formatted_value = sa.func.format(sa_arg, format_string)
         # Replace trailing '.0' with ''
-        return sa.func.replace(formatted_value, '.0', '')
+        return sa.func.replace(formatted_value, ".0", "")
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
