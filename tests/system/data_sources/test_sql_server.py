@@ -23,6 +23,7 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 )
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
     binary_key_assertions,
     find_tables_test,
     id_column_row_validation_test,
@@ -340,7 +341,9 @@ def test_column_validation_core_types():
 def test_column_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have a float32 type.
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
@@ -411,10 +414,13 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 )
 def test_row_validation_core_types():
     """SQL Server to SQL Server dvt_core_types row validation"""
+    # TODO When issue-834 is complete add col_string to --hash string below.
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+    )
     row_validation_test(
         tc="mock-conn",
-        # TODO When issue-834 is complete add col_string to --hash string below.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz,col_dec_20,col_dec_38",
+        hash=cols,
         filters="id>0 AND col_int8>0",
     )
 
@@ -438,11 +444,13 @@ def test_row_validation_core_types_auto_pks():
 )
 def test_row_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types row validation"""
+    # TODO When issue-834 is complete add col_string to --hash string below.
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+    )
     row_validation_test(
         tc="bq-conn",
-        # TODO When issue-834 is complete add col_string to --hash string below.
-        # TODO When issue-1111 is complete add col_dec_10_2 to --hash string below.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
+        hash=cols,
     )
 
 
