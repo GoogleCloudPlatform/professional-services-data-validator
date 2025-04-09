@@ -15,7 +15,7 @@
 """Output validation report to PostgreSQL table"""
 
 import logging
-from typing import TYPE_CHECKING
+from typing import Iterable, TYPE_CHECKING
 
 import numpy
 import sqlalchemy
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from ibis.backends.base import BaseBackend
 
 
-def psql_insert_copy(table, conn, keys, data_iter):
+def _psql_insert_copy(table, conn, keys: list, data_iter: Iterable):
     """
     Execute SQL statement inserting data
 
@@ -45,8 +45,7 @@ def psql_insert_copy(table, conn, keys, data_iter):
     ----------
     table : pandas.io.sql.SQLTable
     conn : sqlalchemy.engine.Engine or sqlalchemy.engine.Connection
-    keys : list of str
-        Column names
+    keys : list[str]: List of column names
     data_iter : Iterable that iterates the values to be inserted
     """
     import csv
@@ -146,7 +145,7 @@ class PostgresResultHandler(BaseBackendResultHandler):
             if_exists="append",
             index=False,
             chunksize=1000,
-            method=psql_insert_copy,
+            method=_psql_insert_copy,
         )
 
     def _insert_postgres(self, result_df: "DataFrame"):
