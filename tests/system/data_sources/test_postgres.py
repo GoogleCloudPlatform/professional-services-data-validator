@@ -1223,7 +1223,7 @@ def test_result_handler_postgres(mock_list, caplog):
     return_value="mock-conn",
 )
 def test_result_handler_postgres_with_labels(mock_list, caplog):
-    """Test result handler using dvt_core_types schema validation."""
+    """Test result handler with validation labels using dvt_core_types schema validation."""
     table_id = "pso_data_validator_results.results_data"
     caplog.set_level(logging.INFO)
     df = schema_validation_test(
