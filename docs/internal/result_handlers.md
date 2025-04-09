@@ -127,7 +127,7 @@ Writing to PostgreSQL using the `insert()` method provided by Ibis.
 self._client.insert(table_name, result_df)
 ```
 
-Command:
+Command (where `pg_rh` is the name of a PostgreSQL connection configuration file):
 ```console
 time data-validation -ll DEBUG validate row -sc=oravol -tc=pg \
 -tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
@@ -186,7 +186,7 @@ Writing to PostgreSQL using the pandas `to_sql(chunksize=1000)` method.
             )
 ```
 
-Command:
+Command (where `pg_rh` is the name of a PostgreSQL connection configuration file):
 ```console
 time data-validation -ll DEBUG validate row -sc=oravol -tc=pg \
 -tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
@@ -245,7 +245,7 @@ Writing to PostgreSQL using the pandas `to_sql(method=multi)` method.
             )
 ```
 
-Command:
+Command (where `pg_rh` is the name of a PostgreSQL connection configuration file):
 ```console
 time data-validation -ll DEBUG validate row -sc=oravol -tc=pg \
 -tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
@@ -271,7 +271,7 @@ DVT stages:
 Writing to PostgreSQL using the pandas `to_sql(method=COPY callable)` method using the method described here: https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method
 
 
-Command:
+Command (where `pg_rh` is the name of a PostgreSQL connection configuration file):
 ```console
 time data-validation -ll DEBUG validate row -sc=oravol -tc=pg \
 -tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
