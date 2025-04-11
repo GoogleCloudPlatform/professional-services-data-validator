@@ -15,7 +15,7 @@
 import os
 from unittest import mock
 
-from data_validation import cli_tools
+from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     schema_validation_test,
     column_validation_test,
@@ -32,7 +32,7 @@ DB2_HOST = os.getenv("DB2_HOST", "localhost")
 DB2_PASSWORD = os.getenv("DB2_PASSWORD")
 
 CONN = {
-    "source_type": "DB2",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
     "host": DB2_HOST,
     "user": "db2inst1",
     "password": DB2_PASSWORD,

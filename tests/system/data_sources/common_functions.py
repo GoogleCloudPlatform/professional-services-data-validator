@@ -60,7 +60,8 @@ def id_type_test_assertions(df, expected_rows=5):
         len(df) == expected_rows
     ), f"We expect {expected_rows} rows with status success from this validation"
     assert all(
-        _ == consts.VALIDATION_STATUS_SUCCESS for _ in df["validation_status"].to_list()
+        _ == consts.VALIDATION_STATUS_SUCCESS
+        for _ in df[consts.VALIDATION_STATUS].to_list()
     ), "Not all rows have status 'success'"
 
 
@@ -69,7 +70,7 @@ def binary_key_assertions(df):
     These tests use BigQuery as a fixed target and execute against all other engines."""
     id_type_test_assertions(df)
     # Validate a sample primary key value is hex(ish).
-    sample_gbc = df["group_by_columns"].to_list().pop()
+    sample_gbc = df[consts.GROUP_BY_COLUMNS].to_list().pop()
     sample_gbc = json.loads(sample_gbc)
     sample_key = [v for _, v in sample_gbc.items()].pop()
     assert all(_ in string.hexdigits for _ in sample_key)
@@ -84,7 +85,9 @@ def null_not_null_assertions(df):
     assert len(df) == 4
     match_columns = ["col_nn", "col_nullable"]
     mismatch_columns = ["col_src_nn_trg_n", "col_src_n_trg_nn"]
-    for column_name, status in zip(df["source_column_name"], df["validation_status"]):
+    for column_name, status in zip(
+        df[consts.SOURCE_COLUMN_NAME], df[consts.VALIDATION_STATUS]
+    ):
         assert column_name in (match_columns + mismatch_columns)
         if column_name in match_columns:
             # These columns are the same for all engines and should succeed.
@@ -244,8 +247,9 @@ def schema_validation_test(
     exclusion_columns: str = "id",
     allow_list: str = None,
     allow_list_file: str = None,
-    bq_result_handler: str = None,
-):
+    result_handler: str = None,
+    labels: str = None,
+) -> "DataFrame":
     """Generic schema validation test.
 
     All tests expect an empty dataframe as the assertion.
@@ -261,7 +265,8 @@ def schema_validation_test(
         f"--filter-status={filter_status}" if filter_status else None,
         f"--allow-list={allow_list}" if allow_list else None,
         f"--allow-list-file={allow_list_file}" if allow_list_file else None,
-        f"--bq-result-handler={bq_result_handler}" if bq_result_handler else None,
+        f"--result-handler={result_handler}" if result_handler else None,
+        f"--labels={labels}" if labels else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
@@ -269,6 +274,7 @@ def schema_validation_test(
     if filter_status == "fail":
         # With filter on failures the data frame should be empty
         assert len(df) == 0
+    return df
 
 
 def column_validation_test_args(
@@ -282,6 +288,7 @@ def column_validation_test_args(
     grouped_columns: str = None,
     filter_status: str = "fail",
     wildcard_include_timestamp: bool = False,
+    result_handler: str = None,
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -298,6 +305,7 @@ def column_validation_test_args(
         f"--filters={filters}" if filters else None,
         f"--grouped-columns={grouped_columns}" if grouped_columns else None,
         "--wildcard-include-timestamp" if wildcard_include_timestamp else None,
+        f"--result-handler={result_handler}" if result_handler else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
@@ -315,6 +323,7 @@ def column_validation_test(
     wildcard_include_timestamp: bool = False,
     filter_status: str = "fail",
     expected_rows=0,
+    result_handler: str = None,
 ):
     """Generic column validation test.
 
@@ -331,6 +340,7 @@ def column_validation_test(
         grouped_columns=grouped_columns,
         wildcard_include_timestamp=wildcard_include_timestamp,
         filter_status=filter_status,
+        result_handler=result_handler,
     )
     df = run_test_from_cli_args(args)
     assert len(df) == expected_rows
@@ -371,6 +381,7 @@ def row_validation_test(
     concat=None,
     use_randow_row=False,
     random_row_batch_size=None,
+    result_handler: str = None,
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
@@ -396,6 +407,7 @@ def row_validation_test(
             if random_row_batch_size
             else None
         ),
+        f"--result-handler={result_handler}" if result_handler else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
@@ -443,6 +455,8 @@ def partition_table_test(
     pk="course_id,quarter_id,student_id",
     tables="pso_data_validator.test_generate_partitions",
     filters="quarter_id != 1111",
+    partition_num=9,
+    parts_per_file=5,
 ):
     """Test generate table partitions for a database. Usually only the partition_filter is different
     because of the differences in SQL between the databases. Some databases have different table names,
@@ -452,20 +466,20 @@ def partition_table_test(
     """
 
     parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(
-        [
-            "generate-table-partitions",
-            "-sc=mock-conn",
-            "-tc=mock-conn",
-            f"-tbls={tables}",
-            f"-pk={pk}",
-            "-hash=*",
-            "-cdir=/home/users/yaml",
-            "-pn=9",
-            "-ppf=5",
-            f"-filters={filters}",
-        ]
-    )
+    cli_arg_list = [
+        "generate-table-partitions",
+        "-sc=mock-conn",
+        "-tc=mock-conn",
+        f"-tbls={tables}",
+        f"-pk={pk}",
+        "-hash=*",
+        "-cdir=/home/users/yaml",
+        f"-pn={partition_num}",
+        f"-ppf={parts_per_file}",
+        f"-filters={filters}" if filters else None,
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
     config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
     partition_builder = PartitionBuilder(config_managers, args)
     partition_filters = partition_builder._get_partition_key_filters()
@@ -582,6 +596,21 @@ def custom_query_validation_test(
         assert len(df) == 0
 
 
+def raw_query_rows(
+    query: str,
+    conn: str = "mock-conn",
+) -> list:
+    """Get rows for a raw query test."""
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "query",
+        f"--conn={conn}",
+        f"--query={query}",
+    ]
+    args = parser.parse_args(cli_arg_list)
+    return raw_query.run_raw_query_against_connection(args)
+
+
 def raw_query_test(
     capsys,
     conn: str = "mock-conn",
@@ -590,16 +619,9 @@ def raw_query_test(
     expected_rows: int = 3,
 ):
     """Raw query test."""
-    parser = cli_tools.configure_arg_parser()
     if table:
         query = f"select * from {table}"
-    cli_arg_list = [
-        "query",
-        f"--conn={conn}",
-        f"--query={query}",
-    ]
-    args = parser.parse_args(cli_arg_list)
-    rows = raw_query.run_raw_query_against_connection(args)
+    rows = raw_query_rows(query, conn=conn)
     assert len(rows) == expected_rows
     assert len(rows[0]) > 0
     raw_query.print_raw_query_output(rows)

@@ -43,7 +43,7 @@ HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
 
 
 CONN = {
-    "source_type": "Impala",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_IMPALA,
     "host": HIVE_HOST,
     "port": 10000,
     "database": HIVE_DATABASE,
@@ -76,7 +76,7 @@ def test_count_validator():
     validator = data_validation.DataValidation(HIVE_CONFIG, verbose=True)
     df = validator.execute()
     assert int(df["source_agg_value"][0]) > 0
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def mock_get_connection_config(*args):

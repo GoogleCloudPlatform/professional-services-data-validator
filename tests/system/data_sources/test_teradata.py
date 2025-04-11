@@ -44,7 +44,7 @@ TERADATA_HOST = os.getenv("TERADATA_HOST")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 CONN = {
-    "source_type": "Teradata",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_TERADATA,
     "host": TERADATA_HOST,
     "user_name": TERADATA_USER,
     "password": TERADATA_PASSWORD,
@@ -217,17 +217,29 @@ DVT_CORE_TYPES_RAW_DATA_TYPES = [
 ]
 
 
+EXPECTED_DATETIME_ID_PARTITION_FILTER = [
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+]
+
+
 def test_count_validator():
     validator = data_validation.DataValidation(TERADATA_COLUMN_CONFIG, verbose=True)
     df = validator.execute()
     assert int(df["source_agg_value"][0]) > 0
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df[consts.SOURCE_AGG_VALUE][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def test_row_validator():
     validator = data_validation.DataValidation(TERADATA_ROW_CONFIG, verbose=True)
     df = validator.execute()
-    assert df["validation_status"][0] == "success"
+    assert df[consts.VALIDATION_STATUS][0] == "success"
 
 
 def mock_get_connection_config(*args):
@@ -380,8 +392,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         expected_rows=2,
     )
     # The columns below have mismatching data and should be in the Dataframe.
-    assert "sum__col_dec_18_fail" in df["validation_name"].values
-    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
 @mock.patch(
@@ -623,6 +635,22 @@ def test_row_validation_datetime_pk_to_bigquery():
     id_column_row_validation_test(
         "udf.dvt_datetime_id=pso_data_validator.dvt_datetime_id",
         use_randow_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_partitions_datetime_pk():
+    """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk because of issue-1443")
+    partition_table_test(
+        EXPECTED_DATETIME_ID_PARTITION_FILTER,
+        pk="id",
+        tables="udf.dvt_datetime_id",
+        filters="other_data IS NOT NULL",
+        partition_num=2,
     )
 
 

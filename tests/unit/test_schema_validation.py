@@ -30,14 +30,14 @@ SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 
 SOURCE_CONN_CONFIG = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "my_table",
     "file_path": SOURCE_TABLE_FILE_PATH,
     "file_type": "json",
 }
 
 TARGET_CONN_CONFIG = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "my_table",
     "file_path": TARGET_TABLE_FILE_PATH,
     "file_type": "json",
@@ -50,10 +50,10 @@ SAMPLE_SCHEMA_CONFIG = {
     # Validation Type
     consts.CONFIG_TYPE: "Schema",
     # Configuration Required Depending on Validator Type
-    "schema_name": None,
-    "table_name": "my_table",
-    "target_schema_name": None,
-    "target_table_name": "my_table",
+    consts.CONFIG_SCHEMA_NAME: None,
+    consts.CONFIG_TABLE_NAME: "my_table",
+    consts.CONFIG_TARGET_SCHEMA_NAME: None,
+    consts.CONFIG_TARGET_TABLE_NAME: "my_table",
     consts.CONFIG_GROUPED_COLUMNS: [],
     consts.CONFIG_AGGREGATES: [],
     consts.CONFIG_THRESHOLD: 0.0,
@@ -505,9 +505,9 @@ def test_execute(module_under_test, ibis_pandas, fs):
     dv_client = data_validation.DataValidation(SAMPLE_SCHEMA_CONFIG, verbose=True)
     result_df = dv_client.schema_validator.execute()
     failures = result_df[
-        result_df["validation_status"].str.contains(consts.VALIDATION_STATUS_FAIL)
+        result_df[consts.VALIDATION_STATUS].str.contains(consts.VALIDATION_STATUS_FAIL)
     ]
     assert len(result_df) == len(source_data[0]) + 1
     assert result_df.labels[0] == SAMPLE_SCHEMA_CONFIG[consts.CONFIG_LABELS]
-    assert failures["source_column_name"].to_list() == ["id", "N/A"]
-    assert failures["target_column_name"].to_list() == ["N/A", "id_new"]
+    assert failures[consts.SOURCE_COLUMN_NAME].to_list() == ["id", "N/A"]
+    assert failures[consts.TARGET_COLUMN_NAME].to_list() == ["N/A", "id_new"]

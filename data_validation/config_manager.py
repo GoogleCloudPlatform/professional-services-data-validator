@@ -18,13 +18,11 @@ import string
 import random
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Tuple
 
-import google.oauth2.service_account
 import ibis.expr.datatypes as dt
 import yaml
 
 from data_validation import clients, consts, gcs_helper, state_manager
-from data_validation.result_handlers.bigquery import BigQueryResultHandler
-from data_validation.result_handlers.text import TextResultHandler
+from data_validation.result_handlers.factory import build_result_handler
 from data_validation.validation_builder import ValidationBuilder
 
 if TYPE_CHECKING:
@@ -495,46 +493,14 @@ class ConfigManager(object):
 
     def get_result_handler(self):
         """Return ResultHandler instance from supplied config."""
-        if not self.result_handler_config:
-            if self.config[consts.CONFIG_TYPE] == consts.SCHEMA_VALIDATION:
-                cols_filter_list = consts.SCHEMA_VALIDATION_COLUMN_FILTER_LIST
-            else:
-                cols_filter_list = consts.COLUMN_FILTER_LIST
-            # handler that display results either to output or in a file
-            return TextResultHandler(
-                self._config.get(consts.CONFIG_FORMAT, consts.FORMAT_TYPE_TABLE),
-                self.filter_status,
-                cols_filter_list,
-            )
-
-        result_type = self.result_handler_config[consts.CONFIG_TYPE]
-        if result_type == "BigQuery":
-            project_id = self.result_handler_config[consts.PROJECT_ID]
-            table_id = self.result_handler_config[consts.TABLE_ID]
-            key_path = self.result_handler_config.get(
-                consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
-            )
-            if key_path:
-                credentials = (
-                    google.oauth2.service_account.Credentials.from_service_account_file(
-                        key_path
-                    )
-                )
-            else:
-                credentials = None
-            api_endpoint = self.result_handler_config.get(consts.API_ENDPOINT)
-            return BigQueryResultHandler.get_handler_for_project(
-                project_id,
-                self.filter_status,
-                table_id=table_id,
-                credentials=credentials,
-                api_endpoint=api_endpoint,
-                text_format=self._config.get(
-                    consts.CONFIG_FORMAT, consts.FORMAT_TYPE_TABLE
-                ),
-            )
-        else:
-            raise ValueError(f"Unknown ResultHandler Class: {result_type}")
+        return build_result_handler(
+            self.result_handler_config,
+            self.config[consts.CONFIG_TYPE],
+            self.filter_status,
+            text_format=self._config.get(
+                consts.CONFIG_FORMAT, consts.FORMAT_TYPE_TABLE
+            ),
+        )
 
     @staticmethod
     def build_config_manager(

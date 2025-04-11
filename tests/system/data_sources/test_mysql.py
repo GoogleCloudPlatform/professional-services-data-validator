@@ -44,7 +44,7 @@ from tests.system.data_sources.common_functions import (
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "dvt")
 CONN = {
-    "source_type": "MySQL",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_MYSQL,
     "host": MYSQL_HOST,
     "user": MYSQL_USER,
     "password": os.getenv("MYSQL_PASSWORD"),
@@ -73,6 +73,17 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_FILTER_STATUS: None,
 }
 
+EXPECTED_DATETIME_ID_PARTITION_FILTER = [
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+]
+
 
 def mock_get_connection_config(*args):
     if args[1] in ("mysql-conn", "mock-conn"):
@@ -88,7 +99,7 @@ def test_mysql_count_invalid_host():
             verbose=False,
         )
         df = data_validator.execute()
-        assert df["source_agg_value"][0] == df["target_agg_value"][0]
+        assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
     except exceptions.DataClientConnectionFailure:
         # Local Testing will not work for MySQL
         pass
@@ -405,6 +416,22 @@ def test_row_validation_datetime_pk_to_bigquery():
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
         use_randow_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_partitions_datetime_pk():
+    """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
+    partition_table_test(
+        EXPECTED_DATETIME_ID_PARTITION_FILTER,
+        pk="id",
+        tables="pso_data_validator.dvt_datetime_id",
+        filters="other_data IS NOT NULL",
+        partition_num=2,
     )
 
 

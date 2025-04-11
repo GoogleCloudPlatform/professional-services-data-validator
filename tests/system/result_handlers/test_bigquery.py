@@ -56,14 +56,32 @@ def get_dataframe(bigquery_client, table_id):
     while True:
         # Run a query rather than call list_rows so that rows are fetched from
         # the streaming buffer.
+        cols = ",".join(
+            [
+                consts.CONFIG_RUN_ID,
+                consts.CONFIG_START_TIME,
+                consts.CONFIG_END_TIME,
+                consts.SOURCE_TABLE_NAME,
+                consts.SOURCE_COLUMN_NAME,
+                consts.TARGET_TABLE_NAME,
+                consts.TARGET_COLUMN_NAME,
+                consts.VALIDATION_TYPE,
+                consts.AGGREGATION_TYPE,
+                consts.VALIDATION_NAME,
+                consts.SOURCE_AGG_VALUE,
+                consts.TARGET_AGG_VALUE,
+                consts.GROUP_BY_COLUMNS,
+                consts.CONFIG_PRIMARY_KEYS,
+                consts.NUM_RANDOM_ROWS,
+                consts.VALIDATION_DIFFERENCE,
+                consts.VALIDATION_PCT_DIFFERENCE,
+                consts.VALIDATION_PCT_THRESHOLD,
+                consts.VALIDATION_STATUS,
+                consts.CONFIG_LABELS,
+            ]
+        )
         result = bigquery_client.query(
-            "SELECT run_id, start_time, end_time, source_table_name, "
-            "source_column_name, target_table_name, target_column_name, "
-            "validation_type, aggregation_type, validation_name, "
-            "source_agg_value, target_agg_value, group_by_columns, "
-            "primary_keys, num_random_rows, difference, pct_difference, "
-            "pct_threshold, validation_status, labels "
-            f" FROM `{table_id}` ORDER BY target_agg_value ASC"
+            f"SELECT {cols} FROM `{table_id}` ORDER BY {consts.TARGET_AGG_VALUE} ASC"
         ).to_dataframe()
 
         if len(result.index) > 0 or time.time() > timeout:
@@ -86,10 +104,10 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
     start = end - datetime.timedelta(minutes=1)
     df = pandas.DataFrame(
         {
-            "run_id": ["grouped-test"] * 6,
-            "start_time": [start] * 6,
-            "end_time": [end] * 6,
-            "source_table_name": [
+            consts.CONFIG_RUN_ID: ["grouped-test"] * 6,
+            consts.CONFIG_START_TIME: [start] * 6,
+            consts.CONFIG_END_TIME: [end] * 6,
+            consts.SOURCE_TABLE_NAME: [
                 "schema.test_source",
                 "schema.test_source",
                 _NAN,
@@ -97,7 +115,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 "schema.test_source",
                 "schema.test_source",
             ],
-            "source_column_name": [
+            consts.SOURCE_COLUMN_NAME: [
                 "source_column",
                 "source_column",
                 _NAN,
@@ -113,7 +131,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 _NAN,
                 _NAN,
             ],
-            "target_column_name": [
+            consts.TARGET_COLUMN_NAME: [
                 "target_column",
                 "target_column",
                 "target_column",
@@ -121,12 +139,12 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 _NAN,
                 _NAN,
             ],
-            "validation_type": ["Column"] * 6,
-            "aggregation_type": ["count"] * 6,
-            "validation_name": ["count"] * 6,
-            "source_agg_value": ["2", "4", _NAN, _NAN, "6", "8"],
-            "target_agg_value": ["1", "3", "5", "7", "8", "9"],
-            "group_by_columns": [
+            consts.VALIDATION_TYPE: ["Column"] * 6,
+            consts.AGGREGATION_TYPE: ["count"] * 6,
+            consts.VALIDATION_NAME: ["count"] * 6,
+            consts.SOURCE_AGG_VALUE: ["2", "4", _NAN, _NAN, "6", "8"],
+            consts.TARGET_AGG_VALUE: ["1", "3", "5", "7", "8", "9"],
+            consts.GROUP_BY_COLUMNS: [
                 '{"grp_a": "a", "grp_i": "0"}',
                 '{"grp_a": "a", "grp_i": "1"}',
                 '{"grp_a": "b", "grp_i": "0"}',
@@ -134,12 +152,12 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 '{"grp_a": "c", "grp_i": "0"}',
                 '{"grp_a": "c", "grp_i": "1"}',
             ],
-            "primary_keys": [None, None, None, None, None, None],
-            "num_random_rows": [_NAN, _NAN, _NAN, _NAN, _NAN, _NAN],
-            "difference": [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
-            "pct_difference": [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
-            "pct_threshold": [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
-            "validation_status": [
+            consts.CONFIG_PRIMARY_KEYS: [None, None, None, None, None, None],
+            consts.NUM_RANDOM_ROWS: [_NAN, _NAN, _NAN, _NAN, _NAN, _NAN],
+            consts.VALIDATION_DIFFERENCE: [-1.0, -1.0, _NAN, _NAN, _NAN, _NAN],
+            consts.VALIDATION_PCT_DIFFERENCE: [-50.0, -25.0, _NAN, _NAN, _NAN, _NAN],
+            consts.VALIDATION_PCT_THRESHOLD: [25.0, 25.0, _NAN, _NAN, _NAN, _NAN],
+            consts.VALIDATION_STATUS: [
                 consts.VALIDATION_STATUS_FAIL,
                 consts.VALIDATION_STATUS_SUCCESS,
                 _NAN,
@@ -147,7 +165,7 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
                 _NAN,
                 _NAN,
             ],
-            "labels": [[{"key": "name", "value": "test_label"}]] * 6,
+            consts.CONFIG_LABELS: [[{"key": "name", "value": "test_label"}]] * 6,
         }
     )
     object_under_test.execute(df)

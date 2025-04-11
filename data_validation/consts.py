@@ -122,15 +122,32 @@ YAML_SOURCE = "source"
 YAML_TARGET = "target"
 YAML_VALIDATIONS = "validations"
 
+# Connection key constants.
+SOURCE_TYPE_BIGQUERY = "BigQuery"
+SOURCE_TYPE_DB2 = "DB2"
+SOURCE_TYPE_FILESYSTEM = "FileSystem"
+SOURCE_TYPE_IMPALA = "Impala"
+SOURCE_TYPE_MSSQL = "MSSQL"
+SOURCE_TYPE_MYSQL = "MySQL"
+SOURCE_TYPE_ORACLE = "Oracle"
+SOURCE_TYPE_POSTGRES = "Postgres"
+SOURCE_TYPE_REDSHIFT = "Redshift"
+SOURCE_TYPE_SNOWFLAKE = "Snowflake"
+SOURCE_TYPE_SPANNER = "Spanner"
+SOURCE_TYPE_TERADATA = "Teradata"
+
 # BigQuery Result Handler Configs
+RH_TYPE = "type"
+RH_CONN = "connection"
 PROJECT_ID = "project_id"
 TABLE_ID = "table_id"
 GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
 API_ENDPOINT = "api_endpoint"
 STORAGE_API_ENDPOINT = "storage_api_endpoint"
 
-# BigQuery Output Table Fields
+# Result Handler Output Table Fields
 VALIDATION_TYPE = "validation_type"
+VALIDATION_NAME = "validation_name"
 AGGREGATION_TYPE = "aggregation_type"
 GROUP_BY_COLUMNS = "group_by_columns"
 
@@ -149,6 +166,11 @@ VALIDATION_STATUSES = [
     VALIDATION_STATUS_SUCCESS,
     VALIDATION_STATUS_FAIL,
 ]
+VALIDATION_DIFFERENCE = "difference"
+VALIDATION_PCT_DIFFERENCE = "pct_difference"
+VALIDATION_PCT_THRESHOLD = "pct_threshold"
+
+NUM_RANDOM_ROWS = "num_random_rows"
 
 # Summary stats of Row Validation results
 TOTAL_SOURCE_ROWS = "total_source_rows"
@@ -183,24 +205,24 @@ COLUMN_FILTER_LIST = [
     AGGREGATION_TYPE,
     CONFIG_END_TIME,
     CONFIG_LABELS,
-    "pct_threshold",
+    VALIDATION_PCT_THRESHOLD,
     CONFIG_START_TIME,
     TARGET_TABLE_NAME,
     TARGET_COLUMN_NAME,
-    "difference",
+    VALIDATION_DIFFERENCE,
     CONFIG_PRIMARY_KEYS,
     GROUP_BY_COLUMNS,
-    "num_random_rows",
+    NUM_RANDOM_ROWS,
 ]
 SCHEMA_VALIDATION_COLUMN_FILTER_LIST = [
     CONFIG_START_TIME,
     CONFIG_END_TIME,
     AGGREGATION_TYPE,
-    "difference",
+    VALIDATION_DIFFERENCE,
     CONFIG_PRIMARY_KEYS,
     GROUP_BY_COLUMNS,
-    "num_random_rows",
-    "pct_threshold",
+    NUM_RANDOM_ROWS,
+    VALIDATION_PCT_THRESHOLD,
 ]
 
 # Constants for the named column used in generate partitions

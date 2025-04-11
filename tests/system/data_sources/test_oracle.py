@@ -50,7 +50,7 @@ ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
 ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XEPDB1")
 
 CONN = {
-    "source_type": "Oracle",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
     "host": ORACLE_HOST,
     "user": "SYSTEM",
     "password": ORACLE_PASSWORD,
@@ -128,12 +128,23 @@ DVT_CORE_TYPES_RAW_DATA_TYPES = [
     ("COL_TSTZ", "TIMESTAMP_TZ", None, None, 0, 3, 1),
 ]
 
+EXPECTED_DATETIME_ID_PARTITION_FILTER = [
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+]
+
 
 def test_count_validator():
     validator = data_validation.DataValidation(ORACLE_CONFIG, verbose=True)
     df = validator.execute()
     assert int(df["source_agg_value"][0]) > 0
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def mock_get_connection_config(*args):
@@ -397,8 +408,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         expected_rows=2,
     )
     # The columns below have mismatching data and should be in the Dataframe.
-    assert "sum__col_dec_18_fail" in df["validation_name"].values
-    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
 @mock.patch(
@@ -426,13 +437,17 @@ def test_column_validation_view_core_types_vw():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # TODO We can uncomment the sum line below once issue-1391 has been resolved.
+    # We cannot test sum(col_dt_low) and sum(col_ts_low) on Oracle because there are days
+    # missing from October 1582 in the Gregorian calendar which are not reflected in BigQuery
+    # or PostgreSQL calendars. This gap is discussed on Wikipedia page for 1582.
+    sum_cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
         min_cols="*",
         max_cols="*",
-        # sum_cols="*",
+        sum_cols=sum_cols,
+        grouped_columns="id",
         wildcard_include_timestamp=True,
     )
 
@@ -645,6 +660,22 @@ def test_row_validation_datetime_pk_to_bigquery():
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
         use_randow_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_partitions_datetime_pk():
+    """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
+    partition_table_test(
+        EXPECTED_DATETIME_ID_PARTITION_FILTER,
+        pk="id",
+        tables="pso_data_validator.dvt_datetime_id",
+        filters="other_data IS NOT NULL",
+        partition_num=2,
     )
 
 
@@ -1102,7 +1133,7 @@ def test_column_validation_group_by_timestamp():
     assert len(df) == 3
     # All groups should be a successful validation.
     assert all(
-        _ == "success" for _ in df["validation_status"]
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
     ), "Not all records are marked as success"
 
 

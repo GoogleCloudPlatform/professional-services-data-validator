@@ -41,7 +41,7 @@ gcloud storage buckets create gs://${CONFIG_GCS_BUCKET_NAME}
 
 Next, generate the table partitions and store the YAMLs in the GCS bucket you created.
 
-```
+```shell
 export BQ_RESULT_TABLE=<BQ_RESULT_TABLE> # i.e. 'project.dataset.table'
 data-validation generate-table-partitions \
   -sc bq \
@@ -51,7 +51,7 @@ data-validation generate-table-partitions \
   --hash '*' \
   --config-dir "gs://${CONFIG_GCS_BUCKET_NAME}/" \
   --partition-num 50 \
-  -bqrh ${BQ_RESULT_TABLE}
+  -rh ${BQ_RESULT_TABLE}
 ```
 
 The `generate-table-partitions` command will create a folder named `bigquery-public-data.new_york_trees.tree_census_2015` within your GCS bucket populated with the 50 YAML files.

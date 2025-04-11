@@ -25,7 +25,7 @@ def module_under_test():
     return bigquery
 
 
-def test_get_handler_for_project_sets_user_agent(module_under_test, monkeypatch):
+def test_get_handler_sets_user_agent(module_under_test, monkeypatch):
     mock_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_client)
     module_under_test.BigQueryResultHandler.get_handler_for_project(

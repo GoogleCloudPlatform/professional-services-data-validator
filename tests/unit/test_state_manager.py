@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from data_validation import state_manager
+from data_validation import consts, state_manager
 import yaml
 
 TEST_CONN_NAME = "example"
 TEST_CONN = {
-    "source_type": "BigQuery",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
     "project_id": "my-project",
 }
 

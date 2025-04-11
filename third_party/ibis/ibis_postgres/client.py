@@ -82,9 +82,11 @@ def _metadata(self, query: str) -> sch.Schema:
     )
     with self.begin() as con:
         cur = con.exec_driver_sql(f"SELECT * FROM {query} t0 LIMIT 0")
+        # Table OID below is cast to bigint because OID is based on
+        # an unsigned integer which can overflow integer data type.
         qry_cols = [
             f"('{column.name}'::text, {column.type_code},"
-            + f"{column.table_oid if column.table_oid else 'NULL'}::int,"
+            + f"{column.table_oid if column.table_oid else 'NULL'}::bigint,"
             + f"{column.table_column if column.table_column else 'NULL'}::int, {idx})"
             for idx, column in enumerate(cur.cursor.description)
         ]
@@ -93,7 +95,7 @@ def _metadata(self, query: str) -> sch.Schema:
                                 THEN format_type(t0.type_code, NULL)
                                 ELSE format_type(t1.atttypid, t1.atttypmod) END AS type
                     FROM UNNEST(array[{','.join(qry_cols)}])
-                    AS t0(name text, type_code int, attrelid int, attnum int, col_ord int)
+                    AS t0(name text, type_code int, attrelid bigint, attnum int, col_ord int)
                     LEFT JOIN pg_attribute t1 USING (attrelid, attnum) ORDER BY col_ord"""
         )
     yield from ((col, _get_type(typestr)) for col, typestr in type_info)

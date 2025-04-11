@@ -47,7 +47,7 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
-BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
+BQ_CONN = {consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY, "project_id": PROJECT_ID}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -422,20 +422,22 @@ def test_count_validator():
     validator = data_validation.DataValidation(CONFIG_COUNT_VALID, verbose=True)
     df = validator.execute()
 
-    count_value = df[df["validation_name"] == "count"]["source_agg_value"].values[0]
-    count_tripduration_value = df[df["validation_name"] == "count_tripduration"][
+    count_value = df[df[consts.VALIDATION_NAME] == "count"]["source_agg_value"].values[
+        0
+    ]
+    count_tripduration_value = df[df[consts.VALIDATION_NAME] == "count_tripduration"][
         "source_agg_value"
     ].values[0]
-    avg_tripduration_value = df[df["validation_name"] == "avg_tripduration"][
+    avg_tripduration_value = df[df[consts.VALIDATION_NAME] == "avg_tripduration"][
         "source_agg_value"
     ].values[0]
-    max_birth_year_value = df[df["validation_name"] == "max_birth_year"][
+    max_birth_year_value = df[df[consts.VALIDATION_NAME] == "max_birth_year"][
         "source_agg_value"
     ].values[0]
-    min_birth_year_value = df[df["validation_name"] == "min_birth_year"][
+    min_birth_year_value = df[df[consts.VALIDATION_NAME] == "min_birth_year"][
         "source_agg_value"
     ].values[0]
-    std_tripduration_value = df[df["validation_name"] == "std_tripduration"][
+    std_tripduration_value = df[df[consts.VALIDATION_NAME] == "std_tripduration"][
         "source_agg_value"
     ].values[0]
 
@@ -446,25 +448,25 @@ def test_count_validator():
     assert float(min_birth_year_value) > 0
     assert float(std_tripduration_value) > 0
     assert (
-        df["source_agg_value"].astype(float).sum()
-        == df["target_agg_value"].astype(float).sum()
+        df[consts.SOURCE_AGG_VALUE].astype(float).sum()
+        == df[consts.TARGET_AGG_VALUE].astype(float).sum()
     )
 
 
 def test_grouped_count_validator():
     validator = data_validation.DataValidation(CONFIG_GROUPED_COUNT_VALID, verbose=True)
     df = validator.execute()
-    rows = list(df[df["validation_name"] == "count"].iterrows())
+    rows = list(df[df[consts.VALIDATION_NAME] == "count"].iterrows())
 
     # Check that all partitions are unique.
-    partitions = frozenset(df["group_by_columns"])
+    partitions = frozenset(df[consts.GROUP_BY_COLUMNS])
     assert len(rows) == len(partitions)
     assert len(rows) > 1
-    assert df["source_agg_value"].sum() == df["target_agg_value"].sum()
+    assert df[consts.SOURCE_AGG_VALUE].sum() == df[consts.TARGET_AGG_VALUE].sum()
 
     for _, row in rows:
-        assert float(row["source_agg_value"]) > 0
-        assert row["source_agg_value"] == row["target_agg_value"]
+        assert float(row[consts.SOURCE_AGG_VALUE]) > 0
+        assert row[consts.SOURCE_AGG_VALUE] == row[consts.TARGET_AGG_VALUE]
 
 
 def test_numeric_types():
@@ -473,7 +475,7 @@ def test_numeric_types():
 
     for validation in df.to_dict(orient="records"):
         assert float(validation["source_agg_value"]) == float(
-            validation["target_agg_value"]
+            validation[consts.TARGET_AGG_VALUE]
         )
 
 
@@ -695,7 +697,7 @@ def test_timestamp_aggs():
     validator = data_validation.DataValidation(CONFIG_TIMESTAMP_AGGS)
     df = validator.execute()
     for validation in df.to_dict(orient="records"):
-        assert validation["source_agg_value"] == validation["target_agg_value"]
+        assert validation["source_agg_value"] == validation[consts.TARGET_AGG_VALUE]
 
 
 def test_cli_find_tables():
@@ -1006,7 +1008,7 @@ def test_bigquery_row():
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def test_custom_query():
@@ -1429,7 +1431,7 @@ def test_bq_result_handler(mock_conn, bigquery_client, bigquery_dataset_id, capl
         tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
         filter_status=None,
-        bq_result_handler=f"{PROJECT_ID}.{table_id}",
+        result_handler=f"{PROJECT_ID}.{table_id}",
     )
     assert any(_ for _ in caplog.records if BQRH_WRITE_MESSAGE in _.msg)
 

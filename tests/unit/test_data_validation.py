@@ -24,6 +24,7 @@ from google.cloud import bigquery
 import ibis.expr.datatypes as dt
 
 from data_validation import consts
+from data_validation.result_handlers.bigquery import BQRH_NO_WRITE_MESSAGE
 
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
@@ -621,9 +622,9 @@ def test_grouped_column_level_validation_perfect_match(module_under_test, fs):
     result_df = client.execute()
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
-    assert expected_date_result == result_df["group_by_columns"].max()
+    assert expected_date_result == result_df[consts.GROUP_BY_COLUMNS].max()
 
-    assert result_df["difference"].sum() == 0
+    assert result_df[consts.VALIDATION_DIFFERENCE].sum() == 0
 
 
 def test_calc_field_validation_calc_match(module_under_test, fs):
@@ -636,9 +637,9 @@ def test_calc_field_validation_calc_match(module_under_test, fs):
 
     client = module_under_test.DataValidation(SAMPLE_GC_CALC_CONFIG)
     result_df = client.execute()
-    calc_val_df = result_df[result_df["validation_name"] == "sum_length"]
-    calc_val_df2 = result_df[result_df["validation_name"] == "sum_concat_length"]
-    calc_val_df3 = result_df[result_df["validation_name"] == "sum_text_numeric"]
+    calc_val_df = result_df[result_df[consts.VALIDATION_NAME] == "sum_length"]
+    calc_val_df2 = result_df[result_df[consts.VALIDATION_NAME] == "sum_concat_length"]
+    calc_val_df3 = result_df[result_df[consts.VALIDATION_NAME] == "sum_text_numeric"]
 
     assert calc_val_df["source_agg_value"].sum() == str(num_rows * len(STRING_CONSTANT))
 
@@ -659,12 +660,12 @@ def test_grouped_column_level_validation_non_matching(module_under_test, fs):
     _create_table_file(TARGET_TABLE_FILE_PATH, target_json_data)
     client = module_under_test.DataValidation(SAMPLE_GC_CONFIG)
     result_df = client.execute()
-    validation_df = result_df[result_df["validation_name"] == "count_text_value"]
+    validation_df = result_df[result_df[consts.VALIDATION_NAME] == "count_text_value"]
     # TODO: this value is 0 because a COUNT() on no rows returns Null
-    assert result_df["difference"].sum() == 1
+    assert result_df[consts.VALIDATION_DIFFERENCE].sum() == 1
 
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
-    grouped_column = validation_df["group_by_columns"].max()
+    grouped_column = validation_df[consts.GROUP_BY_COLUMNS].max()
     assert expected_date_result == grouped_column
 
 
@@ -681,11 +682,11 @@ def test_grouped_column_level_validation_smart_count(module_under_test, fs):
     result_df = client.execute()
     expected_date_result = '{"date_value": "%s"}' % str(datetime.now().date())
 
-    assert expected_date_result == result_df["group_by_columns"].max()
+    assert expected_date_result == result_df[consts.GROUP_BY_COLUMNS].max()
 
-    smart_count_df = result_df[result_df["validation_name"] == "count_text_value"]
-    assert smart_count_df["source_agg_value"].astype(int).sum() == 100
-    assert smart_count_df["target_agg_value"].astype(int).sum() == 200
+    smart_count_df = result_df[result_df[consts.VALIDATION_NAME] == "count_text_value"]
+    assert smart_count_df[consts.SOURCE_AGG_VALUE].astype(int).sum() == 100
+    assert smart_count_df[consts.TARGET_AGG_VALUE].astype(int).sum() == 200
 
 
 def test_grouped_column_level_validation_multiple_aggregations(module_under_test):
@@ -700,11 +701,13 @@ def test_grouped_column_level_validation_multiple_aggregations(module_under_test
 
     client = module_under_test.DataValidation(SAMPLE_MULTI_GC_CONFIG)
     result_df = client.execute()
-    validation_df = result_df  # [result_df["validation_name"] == "count_text_value"]
+    validation_df = (
+        result_df  # [result_df[consts.VALIDATION_NAME] == "count_text_value"]
+    )
     # Expect 11 rows, one for each PK value
     assert len(validation_df) == 11
-    assert validation_df["source_agg_value"].astype(float).sum() == 10
-    assert validation_df["target_agg_value"].astype(float).sum() == 11
+    assert validation_df[consts.SOURCE_AGG_VALUE].astype(float).sum() == 10
+    assert validation_df[consts.TARGET_AGG_VALUE].astype(float).sum() == 11
 
 
 def test_row_level_validation(module_under_test, fs, monkeypatch):
@@ -721,8 +724,8 @@ def test_row_level_validation(module_under_test, fs, monkeypatch):
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
     # Then we expect
-    str_comparison_df = result_df[result_df["validation_name"] == "text_value"]
-    int_comparison_df = result_df[result_df["validation_name"] == "int_value"]
+    str_comparison_df = result_df[result_df[consts.VALIDATION_NAME] == "text_value"]
+    int_comparison_df = result_df[result_df[consts.VALIDATION_NAME] == "int_value"]
     assert len(result_df) == 200
     assert len(str_comparison_df) == 100
     assert len(int_comparison_df) == 100
@@ -736,7 +739,9 @@ def test_fail_row_level_validation(module_under_test, fs):
     result_df = client.execute()
 
     # based on shared keys
-    fail_df = result_df[result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL]
+    fail_df = result_df[
+        result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
+    ]
     assert len(fail_df) == 5
 
 
@@ -757,7 +762,7 @@ def test_bad_join_row_level_validation(module_under_test, fs, caplog, monkeypatc
     client = module_under_test.DataValidation(SAMPLE_ROW_CONFIG)
     result_df = client.execute()
     comparison_df = result_df[
-        result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL
+        result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
     ]
     # Then we expect
     # 2 validations * (100 source + 1 target)
@@ -765,7 +770,7 @@ def test_bad_join_row_level_validation(module_under_test, fs, caplog, monkeypatc
     assert len(comparison_df) == 202
     # The "Results written" message happens + info about the failed data, all against a generated run_id
     # assert len(caplog.records) == 202
-    run_id = result_df.iloc[0]["run_id"]
+    run_id = result_df.iloc[0][consts.CONFIG_RUN_ID]
     assert run_id != DUMMY_RUN_ID
     assert any(
         _
@@ -802,7 +807,9 @@ def test_no_console_data_shown_for_validation_with_result_written_to_bq_in_info_
     # Then...
     # 2 failures returned
     assert len(result_df) == 2
-    fail_df = result_df[result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL]
+    fail_df = result_df[
+        result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
+    ]
     assert len(fail_df) == 2
     # Only the "Results written" message happens
     # Important because the results could include sensitive data, which some users need to exclude
@@ -833,7 +840,7 @@ def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq
     # Only the "No results" message happens
     caplog_messages = [_.message for _ in caplog.records]
     assert not any([_ for _ in caplog_messages if CAPLOG_DF_HEADER in _])
-    assert "No results to write to BigQuery" in caplog_messages
+    assert BQRH_NO_WRITE_MESSAGE in caplog_messages
 
 
 def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mode(
@@ -857,7 +864,9 @@ def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mo
     # Then...
     # 2 failures returned
     assert len(result_df) == 2
-    fail_df = result_df[result_df["validation_status"] == consts.VALIDATION_STATUS_FAIL]
+    fail_df = result_df[
+        result_df[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_FAIL
+    ]
     assert len(fail_df) == 2
     # The "Results written" message happens + info about the failed data
     caplog_messages = [_.message for _ in caplog.records]
@@ -888,5 +897,5 @@ def test_console_data_shown_for_matching_validation_with_result_written_to_bq_in
     assert len(result_df) == 0
     # The "No results" message happens + "Empty DataFrame" because there are no failures to display
     caplog_messages = [_.message for _ in caplog.records]
-    assert "No results to write to BigQuery" in caplog_messages
+    assert BQRH_NO_WRITE_MESSAGE in caplog_messages
     assert any([_ for _ in caplog_messages if _.startswith("Empty DataFrame")])
