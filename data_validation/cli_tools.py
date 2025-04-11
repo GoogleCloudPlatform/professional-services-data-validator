@@ -76,11 +76,11 @@ CONNECTION_SOURCE_FIELDS = {
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
             "api_endpoint",
-            '(Optional) GCP BigQuery API endpoint (e.g. "https://mybq.p.googleapis.com")',
+            '(Optional) GCP BigQuery API endpoint (e.g. "https://bigquery-mypsc.p.googleapis.com")',
         ],
         [
             "storage_api_endpoint",
-            '(Optional) GCP BigQuery Storage API endpoint (e.g. "https://mybqstorage.p.googleapis.com")',
+            '(Optional) GCP BigQuery Storage API endpoint (e.g. "https://bigquerystorage-mypsc.p.googleapis.com")',
         ],
     ],
     consts.SOURCE_TYPE_TERADATA: [
@@ -144,7 +144,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
             "api_endpoint",
-            '(Optional) GCP Spanner API endpoint (e.g. "https://mycs.p.googleapis.com")',
+            '(Optional) GCP Spanner API endpoint (e.g. "https://spanner-mypsc.p.googleapis.com")',
         ],
     ],
     consts.SOURCE_TYPE_FILESYSTEM: [

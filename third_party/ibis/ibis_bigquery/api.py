@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from third_party.ibis.ibis_biquery import Backend as BigQueryBackend
+from third_party.ibis.ibis_bigquery import Backend as BigQueryBackend
 
 
 def bigquery_connect(
