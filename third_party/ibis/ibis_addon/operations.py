@@ -416,6 +416,19 @@ def sa_cast_mssql(t, op):
     elif arg_dtype.is_string() and typ.is_binary():
         # Binary from string cast is a "from hex" conversion for DVT.
         return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
+    # Specialize going from DECIMAL(p,s>0) to string
+    elif (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        scale = arg_dtype.scale
+        # Considering any number of fractional digits
+        format_string = f'0.{("#" * scale)}'
+        formatted_value = sa.func.format(sa_arg, format_string)
+        # Replace trailing '.0' with ''
+        return sa.func.replace(formatted_value, ".0", "")
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)

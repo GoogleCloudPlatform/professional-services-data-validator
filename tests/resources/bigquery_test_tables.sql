@@ -8,6 +8,22 @@ SELECT
     CAST(2 AS STRING) text_type,
     CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions`
+( course_id STRING
+, quarter_id INT64
+, student_id INT64
+, grade FLOAT64
+, registration_timestamp TIMESTAMP
+, registration_date DATE );
+INSERT INTO `pso_data_validator`.`test_generate_partitions`
+(course_id,quarter_id,student_id,grade)
+VALUES ('ALG001',1,5678,3.5), ('TRI001',1,5678,3.5), ('GEO001',1,5678,3.5), ('TRI001',1,9012,2.3),
+('ALG001',1,9012,2.3), ('GEO001',1,9012,2.3), ('ALG001',1,1234,2.1), ('TRI001',1,1234,2.1),
+('GEO001',1,1234,2.1), ('TRI001',2,1234,3.5), ('GEO001',2,9012,3.5), ('GEO001',2,1234,3.5),
+('ALG001',2,9012,3.5), ('ALG001',2,1234,3.5), ('TRI001',2,9012,3.5), ('TRI001',2,5678,2.6),
+('ALG001',2,5678,2.6), ('GEO001',2,5678,2.6), ('GEO001',3,5678,3.5), ('ALG001',3,5678,3.5),
+('TRI001',3,5678,3.5), ('ALG001',3,9012,2.8), ('TRI001',3,9012,2.8), ('GEO001',3,9012,2.8),
+('TRI001',3,1234,2.7), ('ALG001',3,1234,2.7), ('GEO001',3,1234,2.7);
 
 -- Core data types test table, to be kept in sync with same table in other SQL engines
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_core_types`

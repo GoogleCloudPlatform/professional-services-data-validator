@@ -313,7 +313,7 @@ data-validation connections add
     --connection-name CONN_NAME FileSystem              Connection name
     --table-name TABLE_NAME                             Table name to use as reference for file data
     --file-path FILE_PATH                               Local, GCS, or S3 file path
-    --file-type FILE_TYPE                               File type (csv, json)
+    --file-type FILE_TYPE                               File type (csv, json, orc, parquet)
 ```
 
 ## Impala

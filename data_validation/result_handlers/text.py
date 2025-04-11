@@ -23,7 +23,7 @@ Output validation report to text-based log
 """
 from typing import TYPE_CHECKING
 
-from data_validation import consts
+from data_validation import consts, util
 
 
 if TYPE_CHECKING:
@@ -84,4 +84,4 @@ class TextResultHandler(object):
         return result_df
 
     def execute(self, result_df) -> str:
-        return self.print_formatted_(result_df)
+        return util.timed_call("Text handler output", self.print_formatted_, result_df)

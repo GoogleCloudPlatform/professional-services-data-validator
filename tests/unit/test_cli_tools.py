@@ -988,3 +988,42 @@ def test_arg_parser_generate_table_partitions_help(capsys):
         _ = parser.parse_args(["generate-table-partitions", "--help"])
     captured = capsys.readouterr()
     assert "--partition-num" in captured.out
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        (1),
+        (100),
+        (99999),
+    ],
+)
+def test_check_positive_pass(test_input: int):
+    """Test _check_positive."""
+    _ = cli_tools._check_positive(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        (-1),
+        (0),
+        (-99999),
+    ],
+)
+def test_check_positive_fail(test_input: int):
+    """Test _check_positive."""
+    with pytest.raises(argparse.ArgumentTypeError):
+        _ = cli_tools._check_positive(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        (0),
+    ],
+)
+def test_check_gt_one_fail(test_input: int):
+    """Test _check_positive."""
+    with pytest.raises(argparse.ArgumentTypeError):
+        _ = cli_tools._check_gt_one(test_input)

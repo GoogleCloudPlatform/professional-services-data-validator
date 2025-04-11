@@ -57,7 +57,7 @@ def module_under_test():
 def pandas_df(cols: int, rows: int):
     data = {"count": [1]}
     for i in range(cols):
-        col_name = f"count__col{i+1}"
+        col_name = f"count__col{i + 1}"
         data[col_name] = range(rows)
     return pandas.DataFrame(data)
 
