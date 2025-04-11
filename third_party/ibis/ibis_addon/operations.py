@@ -629,16 +629,16 @@ if OracleExprTranslator:
     OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
     OracleExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
-PostgreSQLExprTranslator._registry[ops.HashBytes] = (
-    postgres_registry.sa_format_hashbytes
-)
+PostgreSQLExprTranslator._registry[
+    ops.HashBytes
+] = postgres_registry.sa_format_hashbytes
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[ops.Cast] = sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = (
-    postgres_registry.sa_epoch_seconds
-)
+PostgreSQLExprTranslator._registry[
+    ops.ExtractEpochSeconds
+] = postgres_registry.sa_epoch_seconds
 
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
