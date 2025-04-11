@@ -20,7 +20,7 @@ import re
 import datetime
 from typing import List, Dict, TYPE_CHECKING
 
-from data_validation import cli_tools, consts
+from data_validation import cli_tools, consts, util
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
 from data_validation.validation_builder import ValidationBuilder
@@ -28,6 +28,7 @@ from data_validation.validation_builder import list_to_sublists
 
 if TYPE_CHECKING:
     from argparse import Namespace
+    import ibis.expr.types.Table
 
 
 class PartitionBuilder:
@@ -98,26 +99,28 @@ class PartitionBuilder:
         self._store_partitions(yaml_configs_list)
 
     @staticmethod
-    def _extract_where(table_expr:ibis.expr.types.TableExpr) -> str:
+    def _extract_where(table_expr: "ibis.expr.types.Table") -> str:
         """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the
-           where clause in plain text. 
+           where clause in plain text.
 
         Returns:
             String with the where condition
         """
-        sql_where_expr = table_expr.compile().rsplit("WHERE", 1)[1]
-        sql_string_re=re.compile(r"'[^']*'")
-        sql_not_string_re=re.compile(r"[^']+")
-        sql_where_less_ws = ''
+        sql_where_expr = util.ibis_table_to_sql(table_expr).rsplit("WHERE", 1)[1]
+        sql_string_re = re.compile(r"'[^']*'")
+        sql_not_string_re = re.compile(r"[^']+")
+        sql_where_less_ws = ""
         # Remove references to t0 and extra whitespace, but only outside quoted strings.
-        while sql_where_expr :
-            if (match_obj := sql_not_string_re.match(sql_where_expr)): # Not a quoted string
-                repl_str=re.sub(r"\s\s+", r" ", match_obj.group(0)).replace("t0.", "")
-            else : # quoted strings should not be substituted
+        while sql_where_expr:
+            if match_obj := sql_not_string_re.match(
+                sql_where_expr
+            ):  # Not a quoted string
+                repl_str = re.sub(r"\s\s+", r" ", match_obj.group(0)).replace("t0.", "")
+            else:  # quoted strings should not be substituted
                 repl_str = (match_obj := sql_string_re.match(sql_where_expr)).group(0)
             sql_where_less_ws += repl_str
-            sql_where_expr = sql_where_expr[match_obj.end():]
-        return (sql_where_less_ws)
+            sql_where_expr = sql_where_expr[match_obj.end() :]
+        return sql_where_less_ws
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
         """The PartitionBuilder object contains the configuration of the table pairs (source and target)
