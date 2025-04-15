@@ -702,13 +702,8 @@ def test_column_validation_pg_types():
 )
 def test_column_validation_core_types_to_bigquery():
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
     cols = ",".join(
-        [
-            _
-            for _ in DVT_CORE_TYPES_COLUMNS
-            if _ not in ("id", "col_float32", "col_char_2")
-        ]
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
     )
     column_validation_test(
         tc="bq-conn",
@@ -764,10 +759,7 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 )
 def test_column_validation_view_core_types_vw():
     """PostgreSQL to PostgreSQL view dvt_core_types_vw column validation"""
-    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
-    cols = ",".join(
-        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_char_2")]
-    )
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id",)])
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types_vw",
@@ -907,6 +899,23 @@ def test_generate_partitions_datetime_pk():
         tables="pso_data_validator.dvt_datetime_id",
         filters="other_data IS NOT NULL",
         partition_num=2,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_pangrams_to_bigquery():
+    """PostgreSQL to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
     )
 
 
