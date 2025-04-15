@@ -656,7 +656,7 @@ def test_extract_where(mocked_to_sql, ibis_table_str, where_exp):
         'SELECT t0."at0.b" FROM sch.tbl t0\nWHERE t0."at0.b" < 2',
     ]
     if ibis_table_str in failed_cases:
-        pytest.skip("Skipping test_extract_where due to issue 1555")
+        pytest.skip("Skipping test_extract_where due to issue 1503")
     mocked_to_sql.return_value = ibis_table_str
     assert PartitionBuilder._extract_where("dummy ibis table") == where_exp
 
