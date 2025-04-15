@@ -106,8 +106,12 @@ class PartitionBuilder:
         Returns:
             String with the where condition
         """
-        sql_where_expr = util.ibis_table_to_sql(table_expr).rsplit("WHERE", 1)[1]
-        sql_string_re = re.compile(r"'[^']*'")
+        # This extraction of the where clause is a bit of a hack. To extract it correctly, the SQL table
+        # expression should be correctly parsed and the where clause extracted. Perhaps use something like Sqlglot.
+        sql_where_expr = re.split(
+            r"\sWHERE\s", util.ibis_table_to_sql(table_expr), flags=re.I
+        )[-1]
+        sql_string_re = re.compile(r"'(?:''|\\'|[^'])*'")
         sql_not_string_re = re.compile(r"[^']+")
         sql_where_less_ws = ""
         # Remove references to t0 and extra whitespace, but only outside quoted strings.
@@ -246,10 +250,18 @@ class PartitionBuilder:
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
 
+            # The objective is to generate the SQL expression string that is saved in the yaml file as a
+            # filters property. This SQL expression is used as a filter during validation to ensure
+            # that the yaml file is only validating the specific partition. This string is backend specific as
+            # the SQL syntax varies slightly across backends. We get Ibis to generate the string for
+            # a table expression with the filter (where) clause and then extract the SQL expression string.
+            # The function _extract_where extracts the expression string from the Ibis SQL table expression.
+
             # Once we have the first element of each partition, we can generate the where clause
             # i.e. greater than or equal to first element and less than first element of next partition
             # The first and the last partitions have special where clauses - less than first element of second
             # partition and greater than or equal to the first element of the last partition respectively
+
             source_where_list = []
             target_where_list = []
 

@@ -452,7 +452,7 @@ def id_column_row_validation_test(
 
 def partition_table_test(
     expected_filter: str,
-    pk="course_id,quarter_id,registration_date,approved",
+    pk="course_id,quarter_id,recd_timestamp,registration_date,approved",
     tables="pso_data_validator.test_generate_partitions_v2",
     filters="quarter_id != 1111",
     partition_num=9,
@@ -493,7 +493,7 @@ def partition_table_test(
 def partition_query_test(
     expected_filter: str,
     tmp_path: pathlib.Path,
-    pk="course_id,quarter_id,registration_date,approved",
+    pk="course_id,quarter_id,recd_timestamp,registration_date,approved",
     tables="pso_data_validator.test_generate_partitions_v2",
     filters="quarter_id != 1111",
 ):
