@@ -72,7 +72,7 @@ CREATE VIEW pso_data_validator.dvt_core_types_vw AS
 SELECT * FROM pso_data_validator.dvt_core_types;
 
  /* Following table used for validating generating table partitions  version 2*/
-drop table if exists pso_data_validator.test_generate_partitions_v2 ;
+DROP TABLE pso_data_validator.test_generate_partitions_v2 ;
 CREATE TABLE pso_data_validator.test_generate_partitions_v2 (
         course_id VARCHAR(12),
         quarter_id INTEGER,

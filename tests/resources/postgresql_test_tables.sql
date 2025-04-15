@@ -135,7 +135,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 );
 
  /* Following table used for validating generating table partitions */
-drop table if exists public.test_generate_partitions ;
+DROP TABLE IF EXISTS public.test_generate_partitions ;
 CREATE TABLE public.test_generate_partitions (
         course_id VARCHAR(12),
         quarter_id INTEGER,
@@ -181,7 +181,7 @@ INSERT INTO public.test_generate_partitions (course_id, quarter_id, recd_timesta
         ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5);
 
  /* Following table used for validating generating table partitions  version 2*/
-drop table if exists pso_data_validator.test_generate_partitions_v2 ;
+DROP TABLE IF EXISTS pso_data_validator.test_generate_partitions_v2 ;
 CREATE TABLE pso_data_validator.test_generate_partitions_v2 (
         course_id VARCHAR(12),
         quarter_id INTEGER,

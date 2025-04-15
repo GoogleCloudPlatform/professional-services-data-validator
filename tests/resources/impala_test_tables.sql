@@ -113,7 +113,7 @@ INSERT INTO `pso_data_validator`.`test_generate_partitions`
 ,('TRI001',3,1234,2.7),('TRI001',3,5678,3.5),('TRI001',3,9012,2.8);
 
  /* Following table used for validating generating table partitions  version 2*/
-drop table if exists `pso_data_validator`.`test_generate_partitions_v2` ;
+DROP TABLE IF EXISTS `pso_data_validator`.`test_generate_partitions_v2` ;
 CREATE TABLE `pso_data_validator`.`test_generate_partitions_v2` (
         course_id STRING,
         quarter_id INTEGER,

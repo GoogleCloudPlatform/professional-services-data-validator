@@ -129,7 +129,7 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions_v2` (
         registration_date DATE,
         approved Boolean,
         grade NUMERIC,
-        ) OPTIONS (description='Test table to test generate partitions, using 4 primary key datatypes - varchar, integer, date and boolean');
+        ) OPTIONS (description='Table for testing generate table partitions, consists of 32 rows with a composite primary key Quoted Strings are handled correctly');
 INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` VALUES
         ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
         ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),

@@ -96,7 +96,7 @@ CREATE OR REPLACE TABLE test_generate_partitions_v2 (
         approved Boolean,
         grade DECIMAL(5,2)
         );
-COMMENT ON table test_generate_partitions_v2 IS 'Test table to test generate partitions, using 4 primary key datatypes - varchar, integer, date and boolean';
+COMMENT ON table test_generate_partitions_v2 IS 'Table for testing generate table partitions, consists of 32 rows with a composite primary key Quoted Strings are handled correctly';
 INSERT INTO test_generate_partitions_v2 VALUES
         ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
         ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
