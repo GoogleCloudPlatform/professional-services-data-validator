@@ -26,7 +26,7 @@ from data_validation.result_handlers.factory import build_result_handler
 from data_validation.validation_builder import ValidationBuilder
 
 if TYPE_CHECKING:
-    import ibis.expr.types.TableExpr
+    import ibis.expr.types.Table
 
 
 class ConfigManager(object):
@@ -1134,8 +1134,8 @@ class ConfigManager(object):
         source_column: str,
         target_column: str,
         col_config: dict,
-        source_table: "ibis.expr.types.TableExpr",
-        target_table: "ibis.expr.types.TableExpr",
+        source_table: "ibis.expr.types.Table",
+        target_table: "ibis.expr.types.Table",
     ) -> dict:
         """Mutates col_config to contain any overrides. Also returns col_config for convenience."""
         if col_config["calc_type"] != "cast":
