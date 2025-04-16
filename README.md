@@ -66,8 +66,10 @@ please review the [Connections](https://github.com/GoogleCloudPlatform/professio
 ### Running Validations
 
 The CLI is the main interface to use this tool and it has several different
-commands which can be used to create and run validations. Below are the command
-syntax and options for running validations.
+commands which can be used to create and run validations. DVT is designed to run in
+an environment connected to GCP services, specifically, BigQuery, GCS and Secret manager.
+If DVT is being run on-prem or in an environment with restricted access to GCP services, see
+[running DVT  at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
 
 Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud Functions, or Airflow
 ([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
@@ -525,6 +527,11 @@ For example, this flag can be used as follows:
     "target_query": "SELECT `hash__all`, `station_id`\nFROM ..."
 }
 ```
+#### Running DVT at on-prem
+On prem environments can have limited access to GCP services. DVT uses BigQuery for storing validation results, GCS for storage and
+the secret manager for secrets. DVT may also use BigQuery and Spanner as a source or target for validation. These service
+API's (i.e. storage.googleapis.com) may not be accessible directly due to firewall restrictions. Work with your network
+adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoints](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). Information about environment variables to set here. 
 
 ### Running DVT with YAML Configuration Files
 
