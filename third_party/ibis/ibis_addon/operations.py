@@ -58,7 +58,7 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
+from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValue
 
 # Do not remove these lines, they trigger patching of Ibis code.
 import third_party.ibis.ibis_biquery.api  # noqa
@@ -106,6 +106,12 @@ class BinaryLength(ops.Value):
     output_shape = rlz.shape_like("arg")
 
 
+class PaddedCharLength(ops.Value):
+    arg = rlz.one_of([rlz.value(dt.String)])
+    output_dtype = dt.int32
+    output_shape = rlz.shape_like("arg")
+
+
 class ToChar(ops.Value):
     arg = rlz.one_of(
         [
@@ -126,6 +132,10 @@ class RawSQL(ops.Comparison):
 
 def compile_binary_length(binary_value):
     return BinaryLength(binary_value).to_expr()
+
+
+def compile_padded_char_length(char_value):
+    return PaddedCharLength(char_value).to_expr()
 
 
 def compile_to_char(numeric_value, fmt):
@@ -598,6 +608,8 @@ execute_epoch_seconds = execute_epoch_seconds_new
 
 BinaryValue.byte_length = compile_binary_length
 
+StringValue.padded_char_length = compile_padded_char_length
+
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
 
@@ -614,6 +626,8 @@ AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
+# Base length of padded string is the same as for a standard string.
+ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
 ImpalaExprTranslator._registry[ops.Cast] = sa_cast_hive
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
@@ -639,6 +653,10 @@ PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 PostgreSQLExprTranslator._registry[
     ops.ExtractEpochSeconds
 ] = postgres_registry.sa_epoch_seconds
+PostgreSQLExprTranslator._registry[
+    PaddedCharLength
+] = postgres_registry.sa_format_postgres_padded_char_length
+
 
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
