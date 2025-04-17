@@ -2,6 +2,22 @@
 
 ## Untagged
 
+## [7.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.2...v7.6.0) (2025-04-17)
+
+
+### Features
+
+* Add result handler for PostgreSQL ([#1480](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1480)) ([ac66c2b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ac66c2b64b1598b6819b1185f7e19069a5a4c892))
+* Optimize PostgreSQL result handler ([#1495](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1495)) ([a2f5794](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a2f57940779ac358be2662c9a888752e4bb133f3))
+
+
+### Bug Fixes
+
+* Ensure --partition-num option is &gt; 1 ([#1496](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1496)) ([b96a5e4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b96a5e48fc5a39ef3fc588fc7d9e0e05cea18cd7))
+* Issue 1497 generate partitions custom query ([#1500](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1500)) ([4e0e890](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4e0e8903633c085f2922f5e3596e8b8c721be525))
+* Issue casting SQL Server DECIMAL with scale &gt; 0 to string ([#1499](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1499)) ([bf81df3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bf81df3b56406012a7ef6a202583e038154e09cf))
+* Support Teradata filters containing quotes when generating partitions ([#1506](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1506)) ([d9f5528](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d9f55287a43f0542e40d83324897da23117fa565))
+
 ## [7.5.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.1...v7.5.2) (2025-04-02)
 
 
