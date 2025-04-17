@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import TYPE_CHECKING
+
 import google.auth.credentials
 import google.cloud.bigquery as bq
 import pydata_google_auth
@@ -26,6 +28,9 @@ from ibis.backends.bigquery import (
     EXTERNAL_DATA_SCOPES,
     SCOPES,
 )
+
+if TYPE_CHECKING:
+    import google.cloud.bigquery_storage_v1
 
 
 class Backend(BigQueryBackend):
@@ -44,10 +49,10 @@ class Backend(BigQueryBackend):
         auth_cache: str = "default",
         partition_column: str = "PARTITIONTIME",
         # Custom DVT arguments:
-        bigquery_client=None,
-        bqstorage_client=None,
+        bigquery_client: bq.Client = None,
+        bqstorage_client: "google.cloud.bigquery_storage_v1.BigQueryReadClient" = None,
     ):
-        """Copy of Ibis v5 BigQuery do_connect() customized for DVT, see oringal method for docs."""
+        """Copy of Ibis v5 BigQuery do_connect() customized for DVT, see original method for docs."""
         default_project_id = ""
 
         if credentials is None:
