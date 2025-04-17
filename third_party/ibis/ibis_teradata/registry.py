@@ -22,7 +22,11 @@ from multipledispatch import Dispatcher
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 from ibis.common.exceptions import UnsupportedOperationError
-from ibis.backends.base.sql.registry import operation_registry, fixed_arity
+from ibis.backends.base.sql.registry import (
+    fixed_arity,
+    literal as ibis_literal,
+    operation_registry,
+)
 from third_party.ibis.ibis_teradata.datatypes import ibis_type_to_teradata_type
 
 _operation_registry = operation_registry.copy()
@@ -104,6 +108,21 @@ def teradata_cast_decimal_to_string(compiled_arg, from_, to):
         fmt = "FM" + ("9" * (precision - from_.scale))
         return f"TO_CHAR({compiled_arg},'{fmt}')"
     return "TO_CHAR({},'TM9')".format(compiled_arg)
+
+
+@teradata_cast.register(str, dt.Int8, dt.String)
+@teradata_cast.register(str, dt.Int16, dt.String)
+@teradata_cast.register(str, dt.Int32, dt.String)
+def teradata_cast_integer_to_string(compiled_arg, from_, to):
+    # INTEGER in a string cannot be longer than 10 characters (+1 for sign).
+    # Included smaller integers here too to minimize overloads.
+    return "CAST({} AS VARCHAR(11))".format(compiled_arg)
+
+
+@teradata_cast.register(str, dt.Int64, dt.String)
+def teradata_cast_bigint_to_string(compiled_arg, from_, to):
+    # BIGINT in a string cannot be longer than 20 characters (+1 for sign).
+    return "CAST({} AS VARCHAR(21))".format(compiled_arg)
 
 
 @teradata_cast.register(str, dt.Time, dt.String)
@@ -325,9 +344,22 @@ def _rstrip(translator, op):
     return f"RTRIM({arg}, _latin '20090B0A0D0C'XCV)"
 
 
+def _string_literal_format(translator, op):
+    return "'{}'".format(op.value.replace("'", "''"))
+
+
+def _literal(t, op):
+    dtype = op.output_dtype
+    if dtype.is_string():
+        return _string_literal_format(t, op)
+    else:
+        return ibis_literal(t, op)
+
+
 """ Add New Customizations to Operations registry """
 _operation_registry.update(
     {
+        ops.Literal: _literal,
         ops.TableColumn: _table_column,
         ops.Strftime: _strftime,
         ops.Cast: _cast,

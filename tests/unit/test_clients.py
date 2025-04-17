@@ -21,7 +21,7 @@ import pandas
 import ibis.backends.pandas
 from ibis.backends.pandas import BasePandasBackend as PandasBackend
 
-from data_validation import clients, exceptions
+from data_validation import clients, consts, exceptions
 
 
 TABLE_NAME = "my_table"
@@ -31,14 +31,14 @@ TABLES_RESULT = [(None, TABLE_NAME)]
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
 SOURCE_CONN_CONFIG = {
-    "source_type": "FileSystem",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "my_table",
     "file_path": SOURCE_TABLE_FILE_PATH,
     "file_type": "json",
 }
 
 ORACLE_CONN_CONFIG = {
-    "source_type": "Oracle",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
     "host": "127.0.0.1",
     "port": 1521,
 }

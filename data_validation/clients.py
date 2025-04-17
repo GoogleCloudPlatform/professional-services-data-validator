@@ -369,16 +369,16 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
 
 
 CLIENT_LOOKUP = {
-    "BigQuery": get_bigquery_client,
-    "Impala": impala_connect,
-    "MySQL": ibis.mysql.connect,
-    "Oracle": oracle_connect,
-    "FileSystem": get_pandas_client,
-    "Postgres": ibis.postgres.connect,
-    "Redshift": redshift_connect,
-    "Teradata": teradata_connect,
-    "MSSQL": mssql_connect,
-    "Snowflake": snowflake_connect,
-    "Spanner": spanner_connect,
-    "DB2": db2_connect,
+    consts.SOURCE_TYPE_BIGQUERY: get_bigquery_client,
+    consts.SOURCE_TYPE_IMPALA: impala_connect,
+    consts.SOURCE_TYPE_MYSQL: ibis.mysql.connect,
+    consts.SOURCE_TYPE_ORACLE: oracle_connect,
+    consts.SOURCE_TYPE_FILESYSTEM: get_pandas_client,
+    consts.SOURCE_TYPE_POSTGRES: ibis.postgres.connect,
+    consts.SOURCE_TYPE_REDSHIFT: redshift_connect,
+    consts.SOURCE_TYPE_TERADATA: teradata_connect,
+    consts.SOURCE_TYPE_MSSQL: mssql_connect,
+    consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
+    consts.SOURCE_TYPE_SPANNER: spanner_connect,
+    consts.SOURCE_TYPE_DB2: db2_connect,
 }

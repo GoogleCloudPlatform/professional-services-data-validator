@@ -33,18 +33,18 @@ SAMPLE_RESULT_COLUMNS = [
     "B",
     "C",
     "D",
-    "validation_type",
-    "source_agg_value",
-    "target_agg_value",
-    "validation_status",
+    consts.VALIDATION_TYPE,
+    consts.SOURCE_AGG_VALUE,
+    consts.TARGET_AGG_VALUE,
+    consts.VALIDATION_STATUS,
 ]
 SAMPLE_RESULT_COLUMNS_FILTER_LIST = [
     "B",
     "D",
-    "validation_type",
-    "source_agg_value",
-    "target_agg_value",
-    "validation_status",
+    consts.VALIDATION_TYPE,
+    consts.SOURCE_AGG_VALUE,
+    consts.TARGET_AGG_VALUE,
+    consts.VALIDATION_STATUS,
 ]
 
 
@@ -141,7 +141,7 @@ def test_column_filter_list(format, module_under_test):
     print("printed_output", printed_output)
     if format in (consts.FORMAT_TYPE_CSV, consts.FORMAT_TYPE_JSON):
         # CSV and JSON don't filter out columns.
-        assert "validation_type" in printed_output
+        assert consts.VALIDATION_TYPE in printed_output
     else:
         # Other formats do filter out columns.
-        assert "validation_type" not in printed_output
+        assert consts.VALIDATION_TYPE not in printed_output

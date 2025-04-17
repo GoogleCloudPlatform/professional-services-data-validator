@@ -50,7 +50,7 @@ ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
 ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XEPDB1")
 
 CONN = {
-    "source_type": "Oracle",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
     "host": ORACLE_HOST,
     "user": "SYSTEM",
     "password": ORACLE_PASSWORD,
@@ -144,7 +144,7 @@ def test_count_validator():
     validator = data_validation.DataValidation(ORACLE_CONFIG, verbose=True)
     df = validator.execute()
     assert int(df["source_agg_value"][0]) > 0
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def mock_get_connection_config(*args):
@@ -159,51 +159,52 @@ def mock_get_connection_config(*args):
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
     ],
 ]
 
+# For some reason integers from subqueries are converted to decimals
 QUERY_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
     ],
 ]
 
@@ -214,8 +215,15 @@ QUERY_PARTITION_FILTER = [
 )
 def test_generate_partitions(tmp_path: pathlib.Path):
     """Test generate partitions on Oracle, first on table, then on custom query"""
-    partition_table_test(EXPECTED_PARTITION_FILTER)
-    partition_query_test(QUERY_PARTITION_FILTER, tmp_path)
+    partition_table_test(
+        EXPECTED_PARTITION_FILTER,
+        pk="course_id,quarter_id,approved",
+    )
+    partition_query_test(
+        QUERY_PARTITION_FILTER,
+        tmp_path,
+        pk="course_id,quarter_id,approved",
+    )
 
 
 @mock.patch(
@@ -408,8 +416,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         expected_rows=2,
     )
     # The columns below have mismatching data and should be in the Dataframe.
-    assert "sum__col_dec_18_fail" in df["validation_name"].values
-    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
 @mock.patch(
@@ -437,13 +445,17 @@ def test_column_validation_view_core_types_vw():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # TODO We can uncomment the sum line below once issue-1391 has been resolved.
+    # We cannot test sum(col_dt_low) and sum(col_ts_low) on Oracle because there are days
+    # missing from October 1582 in the Gregorian calendar which are not reflected in BigQuery
+    # or PostgreSQL calendars. This gap is discussed on Wikipedia page for 1582.
+    sum_cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
         min_cols="*",
         max_cols="*",
-        # sum_cols="*",
+        sum_cols=sum_cols,
+        grouped_columns="id",
         wildcard_include_timestamp=True,
     )
 
@@ -1133,7 +1145,7 @@ def test_column_validation_group_by_timestamp():
     assert len(df) == 3
     # All groups should be a successful validation.
     assert all(
-        _ == "success" for _ in df["validation_status"]
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
     ), "Not all records are marked as success"
 
 

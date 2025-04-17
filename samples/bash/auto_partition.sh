@@ -31,7 +31,7 @@ MB_PER_MILLION_ROWS=2000
 # Connection names
 SRC="ora"
 TRG="pg"
-BQRH="--bq-result-handler=some-project.dvt_dataset.results"
+RH="--result-handler=conn-name.dvt_dataset.results"
 
 OPTIND=1
 
@@ -101,7 +101,7 @@ CMD="data-validation generate-table-partitions -sc=${SRC} -tc=${TRG} \
   --primary-keys=${PRIMARY_KEYS} --hash=* \
   -cdir=${YAML_DIR} \
   --partition-num=${DVT_PARTITIONS} \
-  ${BQRH}"
+  ${RH}"
 ${CMD}
 if [[ $? != 0 ]];then
   echo "Error generating partitions with command:"

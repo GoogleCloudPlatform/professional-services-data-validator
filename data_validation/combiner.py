@@ -290,9 +290,9 @@ def _calculate_difference(
             .end()
         )
     return (
-        difference.name("difference"),
-        pct_difference.name("pct_difference"),
-        pct_threshold.name("pct_threshold"),
+        difference.name(consts.VALIDATION_DIFFERENCE),
+        pct_difference.name(consts.VALIDATION_PCT_DIFFERENCE),
+        pct_threshold.name(consts.VALIDATION_PCT_THRESHOLD),
         validation_status.name(consts.VALIDATION_STATUS),
     )
 
@@ -337,7 +337,7 @@ def _calculate_differences(
         )
         differences_pivots.append(
             field_differences[
-                (ibis.literal(field).name("validation_name"),)
+                (ibis.literal(field).name(consts.VALIDATION_NAME),)
                 + join_on_fields
                 + _calculate_difference(
                     field_differences,
@@ -398,7 +398,7 @@ def _pivot_result(
             pivots.append(
                 result.projection(
                     (
-                        ibis.literal(field).name("validation_name"),
+                        ibis.literal(field).name(consts.VALIDATION_NAME),
                         ibis.literal(validation.validation_type).name(
                             consts.VALIDATION_TYPE
                         ),
@@ -415,7 +415,7 @@ def _pivot_result(
                         .name("column_name"),
                         primary_keys,
                         ibis.literal(validation.num_random_rows).name(
-                            "num_random_rows"
+                            consts.NUM_RANDOM_ROWS
                         ),
                         result[field].cast("string").name("agg_value"),
                     )
@@ -463,7 +463,7 @@ def _join_pivots(
             ibis.literal(None).cast("string").name(consts.GROUP_BY_COLUMNS)
         )
 
-    join_keys = ("validation_name",) + join_on_fields
+    join_keys = (consts.VALIDATION_NAME,) + join_on_fields
     source_difference = source.join(differences, join_keys, how="outer")[
         [source[field] for field in join_keys]
         + [
@@ -472,16 +472,16 @@ def _join_pivots(
             source[consts.CONFIG_TABLE_NAME],
             source["column_name"],
             source[consts.CONFIG_PRIMARY_KEYS],
-            source["num_random_rows"],
+            source[consts.NUM_RANDOM_ROWS],
             source["agg_value"],
-            differences["difference"],
-            differences["pct_difference"],
-            differences["pct_threshold"],
+            differences[consts.VALIDATION_DIFFERENCE],
+            differences[consts.VALIDATION_PCT_DIFFERENCE],
+            differences[consts.VALIDATION_PCT_THRESHOLD],
             differences[consts.VALIDATION_STATUS],
         ]
     ]
     joined = source_difference.join(target, join_keys, how="outer")[
-        source_difference["validation_name"],
+        source_difference[consts.VALIDATION_NAME],
         source_difference[consts.VALIDATION_TYPE]
         .fillna(target[consts.VALIDATION_TYPE])
         .name(consts.VALIDATION_TYPE),
@@ -496,10 +496,10 @@ def _join_pivots(
         target["agg_value"].name(consts.TARGET_AGG_VALUE),
         group_by_columns,
         source_difference[consts.CONFIG_PRIMARY_KEYS],
-        source_difference["num_random_rows"],
-        source_difference["difference"],
-        source_difference["pct_difference"],
-        source_difference["pct_threshold"],
+        source_difference[consts.NUM_RANDOM_ROWS],
+        source_difference[consts.VALIDATION_DIFFERENCE],
+        source_difference[consts.VALIDATION_PCT_DIFFERENCE],
+        source_difference[consts.VALIDATION_PCT_THRESHOLD],
         source_difference[consts.VALIDATION_STATUS],
     ]
     return joined

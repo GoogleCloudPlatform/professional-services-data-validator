@@ -13,12 +13,7 @@ It makes the following assumptions:
 
 In essence the script will validate the table in small enough partitions to not exceed available memory and in enough parallel streams to max out available vCPUs.
 
-To use the script please edit the following variables:
-```
-SRC="ora"
-TRG="pg"
-BQRH="--bq-result-handler=some-project.dvt_dataset.results"
-```
+To use the script please edit the `SRC`, `TRG` and `RH` variables.
 
 The script does not include `--filter-status=fail`, for a significant boost in performance you could add that option to your own script.
 
@@ -27,7 +22,7 @@ The script does not include `--filter-status=fail`, for a significant boost in p
 #### 1 million rows
 
 Validate a 1m row table on a host with 4 vCPUs and > 30GB available RAM.
-```
+```shell
 $ ./auto_partition.sh -t dvt_test.tab_vol_1m -c 1000000 -i id
 ```
 

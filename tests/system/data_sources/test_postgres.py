@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 from unittest import mock
 
@@ -20,9 +21,11 @@ import pathlib
 
 from data_validation import (
     cli_tools,
-    data_validation,
+    clients,
     consts,
+    data_validation,
 )
+from data_validation.result_handlers.base_backend import RH_WRITE_MESSAGE
 from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
     CloudSQLResourceManager,
 )
@@ -38,6 +41,7 @@ from tests.system.data_sources.common_functions import (
     null_not_null_assertions,
     partition_table_test,
     partition_query_test,
+    raw_query_rows,
     raw_query_test,
     row_validation_test,
     row_validation_many_columns_test,
@@ -57,7 +61,7 @@ POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE", "guestbook")
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 CONN = {
-    "source_type": "Postgres",
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_POSTGRES,
     "host": POSTGRES_HOST,
     "user": "postgres",
     "password": POSTGRES_PASSWORD,
@@ -188,7 +192,7 @@ def test_postgres_count(cloud_sql):
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"].equals(df["target_agg_value"])
+    assert df["source_agg_value"].equals(df[consts.TARGET_AGG_VALUE])
     assert sorted(list(df["source_agg_value"])) == ["28", "7", "7"]
 
 
@@ -518,7 +522,7 @@ def test_postgres_row(cloud_sql):
     )
     df = data_validator.execute()
 
-    assert df["source_agg_value"][0] == df["target_agg_value"][0]
+    assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
 def mock_get_connection_config(*args):
@@ -531,26 +535,26 @@ def mock_get_connection_config(*args):
 # Expected result from partitioning table into 9 partitions on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false)))) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false))))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false)))) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false))))",
     ],
 ]
 
@@ -563,14 +567,10 @@ def test_generate_partitions(cloud_sql, tmp_path: pathlib.Path):
     """Test generate partitions, first on table, then custom query on Postgres"""
     partition_table_test(
         EXPECTED_PARTITION_FILTER,
-        tables="public.test_generate_partitions",
-        pk="course_id,quarter_id,approved",
     )
     partition_query_test(
         EXPECTED_PARTITION_FILTER,
         tmp_path,
-        tables="public.test_generate_partitions",
-        pk="course_id,quarter_id,approved",
     )
 
 
@@ -593,7 +593,7 @@ def test_schema_validation(cloud_sql):
     df = data_validator.execute()
 
     for validation in df.to_dict(orient="records"):
-        assert validation["validation_status"] == consts.VALIDATION_STATUS_SUCCESS
+        assert validation[consts.VALIDATION_STATUS] == consts.VALIDATION_STATUS_SUCCESS
 
 
 @mock.patch(
@@ -750,8 +750,8 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
         sum_cols=cols,
         expected_rows=2,
     )
-    assert "sum__col_dec_18_fail" in df["validation_name"].values
-    assert "sum__col_dec_18_1_fail" in df["validation_name"].values
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
 @mock.patch(
@@ -1048,7 +1048,7 @@ def test_column_validation_group_by_timestamp():
     assert len(df) == 3
     # All groups should be a successful validation.
     assert all(
-        _ == "success" for _ in df["validation_status"]
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
     ), "Not all records are marked as success"
 
 
@@ -1069,8 +1069,8 @@ def test_column_validation_high_epoch_seconds():
         #   failure for col_datetime_fail (which has an intentional data error)
         expected_rows=3,
     )
-    status_dict = dict(zip(df["validation_name"], df["validation_status"]))
-    value_dict = dict(zip(df["validation_name"], df["source_agg_value"]))
+    status_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.VALIDATION_STATUS]))
+    value_dict = dict(zip(df[consts.VALIDATION_NAME], df["source_agg_value"]))
     assert (
         status_dict["sum__epoch_seconds__col_datetime"]
         == consts.VALIDATION_STATUS_SUCCESS
@@ -1096,6 +1096,7 @@ def test_column_validation_tricky_dates_to_bigquery():
         min_cols="*",
         max_cols="*",
         sum_cols="*",
+        grouped_columns="id",
         wildcard_include_timestamp=True,
     )
 
@@ -1194,6 +1195,69 @@ def test_row_validation_tricky_strings_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+@mock.patch(
+    "data_validation.state_manager.StateManager.list_connections",
+    return_value="mock-conn",
+)
+def test_result_handler_postgres(mock_list, caplog):
+    """Test result handler using dvt_core_types schema validation."""
+    table_id = "pso_data_validator_results.results_data"
+    caplog.set_level(logging.INFO)
+    df = schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        filter_status=None,
+        result_handler=f"mock-conn.{table_id}",
+    )
+    assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
+    run_id = df[consts.CONFIG_RUN_ID][0]
+
+    # Hijacking DVT raw query to query the results the table.
+    # Labels columns should be empty.
+    rows = raw_query_rows(
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND labels = '{{}}'",
+        conn="mock-conn",
+    )
+    # Ensure that we added the data to the results table.
+    assert len(df) == rows[0][0]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+@mock.patch(
+    "data_validation.state_manager.StateManager.list_connections",
+    return_value="mock-conn",
+)
+def test_result_handler_postgres_with_labels(mock_list, caplog):
+    """Test result handler with validation labels using dvt_core_types schema validation."""
+    table_id = "pso_data_validator_results.results_data"
+    caplog.set_level(logging.INFO)
+    df = schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        filter_status=None,
+        result_handler=f"mock-conn.{table_id}",
+        labels="a=1,b=2",
+    )
+    assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
+    run_id = df[consts.CONFIG_RUN_ID][0]
+
+    # Hijacking DVT raw query to query the results the table.
+    # Labels columns should NOT be empty.
+    rows = raw_query_rows(
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND array_length(labels, 1) = 2",
+        conn="mock-conn",
+    )
+    # Ensure that we added the data to the results table.
+    assert len(df) == rows[0][0]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
@@ -1201,8 +1265,6 @@ def test_raw_query_dvt_row_types(capsys):
 
 def test_raw_column_metadata():
     """Test that get_raw_data_types custom Backend method returns expected results."""
-    from data_validation import clients
-
     client = clients.get_data_client(CONN)
     raw_types = list(
         client.raw_column_metadata(

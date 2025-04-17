@@ -124,9 +124,10 @@ data-validation validate column \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   --count tripduration,start_station_name \
-  -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
+  -rh my_bqrh_conn.pso_data_validator.results
 ````
-Please replace $YOUR_PROJECT_ID with the correct project-id where you created your results datasets as mentioned in the [installation](installation.md#setup) section.
+Please replace `my_bqrh_conn` with the name of the connection descriptor for where you created your
+results datasets as mentioned in the [installation](installation.md#setup) section.
 
 
 #### Query results from a BigQuery results table
@@ -217,7 +218,7 @@ data-validation validate column \
   --grouped-columns region_id \
   --sum num_bikes_available,num_docks_available \
   --filters 'region_id=71' \
-  -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
+  -rh $YOUR_PROJECT_ID.pso_data_validator.results
 ````
 
 #### Apply labels
@@ -236,7 +237,7 @@ data-validation validate schema \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
-  -bqrh $YOUR_PROJECT_ID.pso_data_validator.results
+  -rh $YOUR_PROJECT_ID.pso_data_validator.results
 ````
 
 #### Run validation on a file
