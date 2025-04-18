@@ -175,6 +175,11 @@ class ConfigManager(object):
         """Return number of random rows or None."""
         return self.random_row_batch_size() if self.use_random_rows() else None
 
+    def trim_string_pks(self):
+        # Even though trim_string_pks has been deprecated, some yaml files may have that config.
+        """Return if the validation should trim string primary keys, now deprecated"""
+        return self._config.get(consts.CONFIG_TRIM_STRING_PKS, False)
+
     def case_insensitive_match(self):
         """Return if the validation should perform a case insensitive match."""
         return self._config.get(consts.CONFIG_CASE_INSENSITIVE_MATCH) or False
