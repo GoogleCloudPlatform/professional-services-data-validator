@@ -812,16 +812,16 @@ class ConfigManager(object):
                 consts.CONFIG_FIELD_ALIAS
             ]
             depth = 1
-            calc_func = "length"
+            calc_func = consts.CALC_FIELD_LENGTH
         elif column_type in ["string", "!string"]:
-            calc_func = "length"
+            calc_func = consts.CALC_FIELD_LENGTH
 
         elif self._is_uuid(column_type, target_column_type):
             calc_func = consts.CONFIG_CAST
             cast_type = consts.CONFIG_CAST_UUID_STRING
 
         elif column_type in ["binary", "!binary"]:
-            calc_func = "byte_length"
+            calc_func = consts.CALC_FIELD_BYTE_LENGTH
 
         elif column_type in ["timestamp", "!timestamp", "date", "!date"]:
             if (
@@ -841,7 +841,7 @@ class ConfigManager(object):
                 ]
                 depth = 1
 
-            calc_func = "epoch_seconds"
+            calc_func = consts.CALC_FIELD_EPOCH_SECONDS
             if agg_type == consts.CONFIG_TYPE_SUM:
                 # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
                 # See issue 1391 for details.
