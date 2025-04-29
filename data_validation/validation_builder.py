@@ -375,7 +375,9 @@ class ValidationBuilder(object):
         client: "ibis.backends.base.BaseBackend",
         raw_data_types: dict,
     ) -> str:
-        if self._is_padded_char(
+        if calc_field[
+            consts.CONFIG_TYPE
+        ] == consts.CALC_FIELD_LENGTH and self._is_padded_char(
             client,
             raw_data_types,
             column_name,
