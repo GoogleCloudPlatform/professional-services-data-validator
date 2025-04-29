@@ -88,6 +88,49 @@ INSERT INTO PSO_DATA_VALIDATOR.PUBLIC.TEST_GENERATE_PARTITIONS (COURSE_ID, QUART
         ('TRI001', 3, 5678, 3.5),
         ('TRI001', 3, 9012, 2.8);
 
+CREATE OR REPLACE TABLE test_generate_partitions_v2 (
+        course_id STRING(24),
+        quarter_id INTEGER,
+        recd_timestamp TIMESTAMP,
+        registration_date DATE,
+        approved Boolean,
+        grade DECIMAL(5,2)
+        );
+COMMENT ON table test_generate_partitions_v2 IS 'Table for testing generate table partitions, consists of 32 rows with a composite primary key Quoted Strings are handled correctly';
+INSERT INTO test_generate_partitions_v2 VALUES
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG002  t0.', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG002', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('St. John''s', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('St. John''s', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('St. John''s', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('St. John''s', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('St. Jude''s', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('St. Jude''s', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('St. Edward''s', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('St. Edward''s', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5);
+
 DROP TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_NULL_NOT_NULL;
 CREATE TABLE PSO_DATA_VALIDATOR.PUBLIC.DVT_NULL_NOT_NULL
 (   col_nn             TIMESTAMP(0) NOT NULL

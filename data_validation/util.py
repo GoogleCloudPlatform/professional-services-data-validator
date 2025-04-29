@@ -19,6 +19,11 @@ import time
 
 from data_validation import exceptions
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import ibis.expr.types.Table
+
 
 def timed_call(log_txt, fn, *args, **kwargs):
     t0 = time.time()
@@ -62,3 +67,24 @@ def dvt_config_string_to_dict(config_string: str) -> dict:
         raise exceptions.ValidationException(
             f"Invalid JSON format in connection parameter dictionary string: {config_string}"
         ) from exc
+
+
+def ibis_table_to_sql(ibis_table: "ibis.expr.types") -> str:
+    """Function to generate the SQL string for the table based on the backend"""
+    sql_alchemy_clients = [
+        "mysql",
+        "oracle",
+        "postgres",
+        "db2",
+        "mssql",
+        "redshift",
+        "snowflake",
+    ]
+    # If the backend uses sqlalchemy, we will need to request sqla to bind variables
+    # for a non sqlalchemy backend, the parameters are already bound
+    backend_name = ibis_table._find_backend().name
+    return (
+        ibis_table.compile().compile(compile_kwargs={"literal_binds": True}).string
+        if backend_name in sql_alchemy_clients
+        else ibis_table.compile()
+    )

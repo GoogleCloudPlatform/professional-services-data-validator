@@ -19,10 +19,12 @@ import json
 import random
 import math
 from datetime import datetime, timedelta
+from unittest import mock
 
 from data_validation import cli_tools
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
+from data_validation.partition_builder import PartitionBuilder
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
@@ -625,6 +627,37 @@ def test_class_object_creation(module_under_test):
     assert builder.args.primary_keys == "region_id,station_id"
     assert builder.args.source_query == SOURCE_QUERY
     assert builder.args.target_query_file == TARGET_QUERY_FILE
+
+
+@pytest.mark.parametrize(
+    "ibis_table_str,where_exp",
+    [
+        (
+            "SELECT t0.*\nFROM `pso-kokoro-resources.pso_data_validator.dvt_core_types` t0\nWHERE t0.`id` < 2",
+            "`id` < 2",
+        ),
+        (
+            'SELECT t0.*\nFROM udf.test_generate_partitions_v2 t0\nWHERE ((t0."course_id" < \'ALG002\') OR ((t0."course_id" = \'ALG002\') AND (t0."quarter_id" < 1234)))',
+            '(("course_id" < \'ALG002\') OR (("course_id" = \'ALG002\') AND ("quarter_id" < 1234)))',
+        ),
+        (
+            'SELECT t0."course_id", t0."quarter_id", t0."recd_timestamp",\n       t0."registration_date", t0."approved", t0."grade"\nFROM (\n  select * from udf.test_generate_partitions_v2 where course_id < \'ALG003\'\n) t0\nWHERE (t0."course_id" < \'ALG002\') OR ((t0."course_id" = \'ALG002\') AND (t0."quarter_id" < 1234))',
+            '("course_id" < \'ALG002\') OR (("course_id" = \'ALG002\') AND ("quarter_id" < 1234))',
+        ),
+        ("SELECT t0.a FROM sch.tbl t0\nWHERE t0.a < ' WHERE '", "t0.a < ' WHERE '"),
+        ('SELECT t0."at0.b" FROM sch.tbl t0\nWHERE t0."at0.b" < 2', '"at0.b" < 2'),
+    ],
+)
+@mock.patch("data_validation.util.ibis_table_to_sql")
+def test_extract_where(mocked_to_sql, ibis_table_str, where_exp):
+    failed_cases = [
+        "SELECT t0.a FROM sch.tbl t0\nWHERE t0.a < ' WHERE '",
+        'SELECT t0."at0.b" FROM sch.tbl t0\nWHERE t0."at0.b" < 2',
+    ]
+    if ibis_table_str in failed_cases:
+        pytest.skip("Skipping test_extract_where due to issue 1503")
+    mocked_to_sql.return_value = ibis_table_str
+    assert PartitionBuilder._extract_where("dummy ibis table") == where_exp
 
 
 def test_add_partition_filters_to_config(module_under_test):

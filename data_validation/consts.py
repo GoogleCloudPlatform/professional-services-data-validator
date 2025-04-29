@@ -181,6 +181,11 @@ FAILED_SOURCE_NOT_IN_TARGET = "failed_rows_present_in_source_not_in_target"
 FAILED_TARGET_NOT_IN_SOURCE = "failed_rows_present_in_target_not_in_source"
 FAILED_PRESENT_IN_BOTH_TABLES = "failed_rows_present_in_both_source_and_target"
 
+# Combiner only constants
+COMBINER_TABLE_NAME = "dvt_table_name"
+COMBINER_COLUMN_NAME = "dvt_column_name"
+COMBINER_AGG_VALUE = "dvt_agg_value"
+
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
 COUNT_STAR = "{count_star}"
