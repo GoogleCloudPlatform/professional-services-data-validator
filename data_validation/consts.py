@@ -241,7 +241,13 @@ MAX_CONCAT_COLUMNS_DEFAULTS = {
 }
 
 # CalculatedField expression constants.
+CALC_FIELD_CAST = "cast"
+CALC_FIELD_CONCAT = "concat"
 CALC_FIELD_BYTE_LENGTH = "byte_length"
 CALC_FIELD_EPOCH_SECONDS = "epoch_seconds"
+CALC_FIELD_HASH = "hash"
+CALC_FIELD_IFNULL = "ifnull"
 CALC_FIELD_LENGTH = "length"
 CALC_FIELD_PADDED_CHAR_LENGTH = "padded_char_length"
+CALC_FIELD_RSTRIP = "rstrip"
+CALC_FIELD_UPPER = "upper"
