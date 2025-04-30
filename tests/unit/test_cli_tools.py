@@ -63,6 +63,7 @@ CLI_EXPECTED_CONNECTION = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
     "secret_manager_type": None,
     "secret_manager_project_id": None,
+    "secret_manager_api_endpoint": None,
     "project_id": "example-project",
 }
 

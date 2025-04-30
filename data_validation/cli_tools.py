@@ -487,6 +487,12 @@ def _configure_connection_parser(subparsers):
         default=None,
         help="Project ID for the secret manager that stores the credentials",
     )
+    add_parser.add_argument(
+        "--secret-manager-api-endpoint",
+        "-smae",
+        default=None,
+        help="API endpoint for the secret manager that stores the credentials",
+    )
     _configure_database_specific_parsers(add_parser)
 
     delete_parser = connect_subparsers.add_parser(
@@ -1102,6 +1108,9 @@ def get_connection_config_from_args(args):
         consts.SECRET_MANAGER_TYPE: getattr(args, consts.SECRET_MANAGER_TYPE),
         consts.SECRET_MANAGER_PROJECT_ID: getattr(
             args, consts.SECRET_MANAGER_PROJECT_ID
+        ),
+        consts.SECRET_MANAGER_API_ENDPOINT: getattr(
+            args, consts.SECRET_MANAGER_API_ENDPOINT, None
         ),
     }
 

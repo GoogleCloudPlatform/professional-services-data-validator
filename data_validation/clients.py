@@ -297,10 +297,15 @@ def get_data_client(connection_config):
     secret_manager_project_id = connection_config.pop(
         consts.SECRET_MANAGER_PROJECT_ID, None
     )
+    secret_manager_api_endpoint = connection_config.pop(
+        consts.SECRET_MANAGER_API_ENDPOINT, None
+    )
 
     decrypted_connection_config = {}
     if secret_manager_type is not None:
-        sm = SecretManagerBuilder().build(secret_manager_type.lower())
+        sm = SecretManagerBuilder().build(
+            secret_manager_type.lower(), api_endpoint=secret_manager_api_endpoint
+        )
         for config_item in connection_config:
             decrypted_connection_config[config_item] = sm.maybe_secret(
                 secret_manager_project_id, connection_config[config_item]
