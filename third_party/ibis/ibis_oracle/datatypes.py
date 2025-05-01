@@ -17,7 +17,7 @@ from typing import Optional, TypedDict
 import sqlalchemy as sa
 import sqlalchemy.types as sat
 from sqlalchemy.dialects import oracle
-from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb 
+from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
 
 import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy.datatypes import ibis_type_to_sqla
@@ -27,8 +27,12 @@ import oracledb
 ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=4000)
 
 # This is only required for SQLAlchemy 2.0+
-ibis_type_to_sqla[dt.Float32] = sat.Float(precision=23).with_variant(oracle.FLOAT(), 'oracle')
-ibis_type_to_sqla[dt.Float64] = sat.Float(precision=53).with_variant(oracle.FLOAT(), 'oracle')
+ibis_type_to_sqla[dt.Float32] = sat.Float(precision=23).with_variant(
+    oracle.FLOAT(), "oracle"
+)
+ibis_type_to_sqla[dt.Float64] = sat.Float(precision=53).with_variant(
+    oracle.FLOAT(), "oracle"
+)
 
 
 class _FieldDescription(TypedDict):
