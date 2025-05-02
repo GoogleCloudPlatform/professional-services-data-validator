@@ -42,10 +42,29 @@ def sa_cast_postgres(t, op):
     sa_arg = t.translate(arg)
 
     if arg_dtype.is_decimal() and typ.is_string():
-        # trim_scale() is only available in PostgreSQL 13+ but solves a lot of problems
-        # when trying to get consistently formatted numerics.
-        # We've documented a workaround for PostgreSQL 12 and older.
-        return sa.cast(sa.func.trim_scale(sa_arg), t.get_sqla_type(typ))
+        if arg_dtype.scale is None:
+            # trim_scale() is only available in PostgreSQL 13+ but solves a lot of problems
+            # when trying to get consistently formatted numerics.
+            # We've documented a workaround for PostgreSQL 12 and older.
+            return sa.cast(sa.func.trim_scale(sa_arg), t.get_sqla_type(typ))
+        elif arg_dtype.scale > 0:
+            # When casting a number to string PostgreSQL includes the full scale, e.g.:
+            #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
+            #     100.00
+            # This doesn't match most engines which would return "100".
+            # Using to_char() function instead of cast to return a more typical value.
+            # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
+            #
+            # Ideally we would use trim_scale() here like above but this is a much more common
+            # scenario than decimal(scale=None) so I'm trying to minimize risk of needing a UDF.
+            precision = arg_dtype.precision or 38
+            fmt = (
+                "FM"
+                + ("9" * (precision - arg_dtype.scale - 1))
+                + "0."
+                + ("9" * arg_dtype.scale)
+            )
+            return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
     elif arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.encode(sa_arg, sa.literal("hex"))
