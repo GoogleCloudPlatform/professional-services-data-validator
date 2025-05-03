@@ -219,252 +219,252 @@ def test_postgres_row(cloud_sql):
                 "source_calculated_columns": ["serial_col"],
                 "target_calculated_columns": ["serial_col"],
                 "field_alias": "cast__serial_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["int_col"],
                 "target_calculated_columns": ["int_col"],
                 "field_alias": "cast__int_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["text_col"],
                 "target_calculated_columns": ["text_col"],
                 "field_alias": "cast__text_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["char_col"],
                 "target_calculated_columns": ["char_col"],
                 "field_alias": "cast__char_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["varchar_col"],
                 "target_calculated_columns": ["varchar_col"],
                 "field_alias": "cast__varchar_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["float_col"],
                 "target_calculated_columns": ["float_col"],
                 "field_alias": "cast__float_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["numeric_col"],
                 "target_calculated_columns": ["numeric_col"],
                 "field_alias": "cast__numeric_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["timestamp_col"],
                 "target_calculated_columns": ["timestamp_col"],
                 "field_alias": "cast__timestamp_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["date_col"],
                 "target_calculated_columns": ["date_col"],
                 "field_alias": "cast__date_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["cast__serial_col"],
                 "target_calculated_columns": ["cast__serial_col"],
                 "field_alias": "ifnull__cast__serial_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__int_col"],
                 "target_calculated_columns": ["cast__int_col"],
                 "field_alias": "ifnull__cast__int_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__text_col"],
                 "target_calculated_columns": ["cast__text_col"],
                 "field_alias": "ifnull__cast__text_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__char_col"],
                 "target_calculated_columns": ["cast__char_col"],
                 "field_alias": "ifnull__cast__char_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__varchar_col"],
                 "target_calculated_columns": ["cast__varchar_col"],
                 "field_alias": "ifnull__cast__varchar_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__float_col"],
                 "target_calculated_columns": ["cast__float_col"],
                 "field_alias": "ifnull__cast__float_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__numeric_col"],
                 "target_calculated_columns": ["cast__numeric_col"],
                 "field_alias": "ifnull__cast__numeric_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__timestamp_col"],
                 "target_calculated_columns": ["cast__timestamp_col"],
                 "field_alias": "ifnull__cast__timestamp_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__date_col"],
                 "target_calculated_columns": ["cast__date_col"],
                 "field_alias": "ifnull__cast__date_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__serial_col"],
                 "target_calculated_columns": ["ifnull__cast__serial_col"],
                 "field_alias": "rstrip__ifnull__cast__serial_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__int_col"],
                 "target_calculated_columns": ["ifnull__cast__int_col"],
                 "field_alias": "rstrip__ifnull__cast__int_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__text_col"],
                 "target_calculated_columns": ["ifnull__cast__text_col"],
                 "field_alias": "rstrip__ifnull__cast__text_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__char_col"],
                 "target_calculated_columns": ["ifnull__cast__char_col"],
                 "field_alias": "rstrip__ifnull__cast__char_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__varchar_col"],
                 "target_calculated_columns": ["ifnull__cast__varchar_col"],
                 "field_alias": "rstrip__ifnull__cast__varchar_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__float_col"],
                 "target_calculated_columns": ["ifnull__cast__float_col"],
                 "field_alias": "rstrip__ifnull__cast__float_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__numeric_col"],
                 "target_calculated_columns": ["ifnull__cast__numeric_col"],
                 "field_alias": "rstrip__ifnull__cast__numeric_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__timestamp_col"],
                 "target_calculated_columns": ["ifnull__cast__timestamp_col"],
                 "field_alias": "rstrip__ifnull__cast__timestamp_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__date_col"],
                 "target_calculated_columns": ["ifnull__cast__date_col"],
                 "field_alias": "rstrip__ifnull__cast__date_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__serial_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__serial_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__serial_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__int_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__int_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__int_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__text_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__text_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__text_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__char_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__char_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__char_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__varchar_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__varchar_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__varchar_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__float_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__float_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__float_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__numeric_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__numeric_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__numeric_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__timestamp_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__timestamp_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__timestamp_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__date_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__date_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__date_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
@@ -491,14 +491,14 @@ def test_postgres_row(cloud_sql):
                     "upper__rstrip__ifnull__cast__date_col",
                 ],
                 "field_alias": "concat__all",
-                "type": "concat",
+                "type": consts.CALC_FIELD_CONCAT,
                 "depth": 4,
             },
             {
                 "source_calculated_columns": ["concat__all"],
                 "target_calculated_columns": ["concat__all"],
                 "field_alias": "hash__all",
-                "type": "hash",
+                "type": consts.CALC_FIELD_HASH,
                 "depth": 5,
             },
         ],
@@ -698,13 +698,8 @@ def test_column_validation_pg_types():
 )
 def test_column_validation_core_types_to_bigquery():
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
     cols = ",".join(
-        [
-            _
-            for _ in DVT_CORE_TYPES_COLUMNS
-            if _ not in ("id", "col_float32", "col_char_2")
-        ]
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
     )
     column_validation_test(
         tc="bq-conn",
@@ -760,10 +755,7 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 )
 def test_column_validation_view_core_types_vw():
     """PostgreSQL to PostgreSQL view dvt_core_types_vw column validation"""
-    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
-    cols = ",".join(
-        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_char_2")]
-    )
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id",)])
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types_vw",
@@ -903,6 +895,23 @@ def test_generate_partitions_datetime_pk():
         tables="pso_data_validator.dvt_datetime_id",
         filters="other_data IS NOT NULL",
         partition_num=2,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_pangrams_to_bigquery():
+    """PostgreSQL to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
     )
 
 
