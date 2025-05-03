@@ -35,7 +35,7 @@ def sa_epoch_seconds(translator, op):
 
 
 def sa_format_postgres_padded_char_length(translator, op):
-    """Inject concat of emtpty string into length(bpchar) to protect trailing spaces.
+    """Inject concat of empty string into length(bpchar) to protect trailing spaces.
 
     Without this workaround the bpchar value is implicitly cast to varchar and loses trailing spaces.
     """
