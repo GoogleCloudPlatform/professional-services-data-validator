@@ -529,9 +529,9 @@ For example, this flag can be used as follows:
 ```
 #### Running DVT at on-prem
 On prem environments can have limited access to GCP services. DVT uses BigQuery for storing validation results, GCS for storage and
-the secret manager for secrets. DVT may also use BigQuery and Spanner as a source or target for validation. These service
-API's (i.e. storage.googleapis.com) may not be accessible directly due to firewall restrictions. Work with your network
-adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoints](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). Information about environment variables to set here. 
+the secret manager for secrets. You may also use BigQuery and Spanner as a source or target for validation. Service
+API's (i.e. bigquery.googleapis.com) may not be accessible from on prem due to firewall restrictions. Work with your network
+adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoint](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). DVT supports accessing source and target tables in Spanner and BigQuery via endpoints set up in your network. Connection Parameters for [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner) and [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery) outline regarding how to specify endpoints.
 
 ### Running DVT with YAML Configuration Files
 
