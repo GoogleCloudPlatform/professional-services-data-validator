@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 from copy import deepcopy
+import logging
+from typing import TYPE_CHECKING
 
 from data_validation import consts, metadata
 from data_validation.clients import get_max_in_list_size
@@ -24,6 +25,9 @@ from data_validation.query_builder.query_builder import (
     GroupedField,
     QueryBuilder,
 )
+
+if TYPE_CHECKING:
+    import ibis
 
 
 def list_to_sublists(id_list: list, max_size: int) -> list:
@@ -86,6 +90,23 @@ class ValidationBuilder(object):
 
         else:
             return FilterField.isin(column_name, in_list)
+
+    def _is_padded_char(
+        self,
+        client: "ibis.backends.base.BaseBackend",
+        raw_column_metadata: dict,
+        column_name: str,
+    ) -> bool:
+        # Clients only need to implement _is_char_type_padded method if they support padded strings.
+        return (
+            (
+                client.is_char_type_padded(raw_column_metadata[column_name])
+                if raw_column_metadata.get(column_name)
+                else False
+            )
+            if hasattr(client, "is_char_type_padded") and raw_column_metadata
+            else False
+        )
 
     def clone(self):
         cloned_builder = ValidationBuilder(self.config_manager)
@@ -347,32 +368,63 @@ class ValidationBuilder(object):
             threshold=self.config_manager.threshold,
         )
 
-    def add_calc(self, calc_field):
+    def _get_calc_type(
+        self,
+        calc_field: dict,
+        column_name: str,
+        client: "ibis.backends.base.BaseBackend",
+        raw_data_types: dict,
+    ) -> str:
+        if calc_field[
+            consts.CONFIG_TYPE
+        ] == consts.CALC_FIELD_LENGTH and self._is_padded_char(
+            client,
+            raw_data_types,
+            column_name,
+        ):
+            calc_type = consts.CALC_FIELD_PADDED_CHAR_LENGTH
+        else:
+            calc_type = calc_field[consts.CONFIG_TYPE]
+        # Check if valid calc field and return correct object.
+        if not hasattr(CalculatedField, calc_type):
+            raise Exception("Unknown Calculation Type: {}".format(calc_type))
+        return calc_type
+
+    def add_calc(self, calc_field: dict):
         """Add CalculatedField to Queries
 
         Args:
             calc_field (Dict): An object with source, target, and cast info
         """
-        # prepare source and target payloads
+        # Prepare source and target payloads
         source_config = deepcopy(calc_field)
         source_fields = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
         target_config = deepcopy(calc_field)
         target_fields = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
-        # grab calc field metadata
+        # Grab calc field metadata
         alias = calc_field[consts.CONFIG_FIELD_ALIAS]
-        calc_type = calc_field[consts.CONFIG_TYPE]
-        # check if valid calc field and return correct object
-        if not hasattr(CalculatedField, calc_type):
-            raise Exception("Unknown Calculation Type: {}".format(calc_type))
-        source_field = getattr(CalculatedField, calc_type)(
+        source_calc_type = self._get_calc_type(
+            calc_field,
+            source_fields[0],
+            self.source_client,
+            self.config_manager.get_source_raw_data_types(),
+        )
+        target_calc_type = self._get_calc_type(
+            calc_field,
+            target_fields[0],
+            self.target_client,
+            self.config_manager.get_target_raw_data_types(),
+        )
+
+        source_field = getattr(CalculatedField, source_calc_type)(
             config=source_config, fields=source_fields
         )
-        target_field = getattr(CalculatedField, calc_type)(
+        target_field = getattr(CalculatedField, target_calc_type)(
             config=target_config, fields=target_fields
         )
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
-        # register calc field under alias
+        # Register calc field under alias
         self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):

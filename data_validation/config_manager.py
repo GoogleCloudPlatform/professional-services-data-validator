@@ -611,7 +611,7 @@ class ConfigManager(object):
                     self.build_config_calculated_fields(
                         [casefold_source_columns[field.casefold()]],
                         [casefold_target_columns[field.casefold()]],
-                        "rstrip",
+                        consts.CALC_FIELD_RSTRIP,
                         alias,
                         0,
                     )
@@ -812,16 +812,16 @@ class ConfigManager(object):
                 consts.CONFIG_FIELD_ALIAS
             ]
             depth = 1
-            calc_func = "length"
+            calc_func = consts.CALC_FIELD_LENGTH
         elif column_type in ["string", "!string"]:
-            calc_func = "length"
+            calc_func = consts.CALC_FIELD_LENGTH
 
         elif self._is_uuid(column_type, target_column_type):
             calc_func = consts.CONFIG_CAST
             cast_type = consts.CONFIG_CAST_UUID_STRING
 
         elif column_type in ["binary", "!binary"]:
-            calc_func = "byte_length"
+            calc_func = consts.CALC_FIELD_BYTE_LENGTH
 
         elif column_type in ["timestamp", "!timestamp", "date", "!date"]:
             if (
@@ -841,7 +841,7 @@ class ConfigManager(object):
                 ]
                 depth = 1
 
-            calc_func = "epoch_seconds"
+            calc_func = consts.CALC_FIELD_EPOCH_SECONDS
             if agg_type == consts.CONFIG_TYPE_SUM:
                 # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
                 # See issue 1391 for details.
@@ -1138,7 +1138,7 @@ class ConfigManager(object):
         target_table: "ibis.expr.types.Table",
     ) -> dict:
         """Mutates col_config to contain any overrides. Also returns col_config for convenience."""
-        if col_config["calc_type"] != "cast":
+        if col_config["calc_type"] != consts.CALC_FIELD_CAST:
             return col_config
 
         source_table_schema = {k: v for k, v in source_table.schema().items()}
@@ -1186,13 +1186,19 @@ class ConfigManager(object):
 
     def _get_order_of_operations(self, calc_type: str) -> List[str]:
         """Return order of operations for row validation."""
-        order_of_operations = ["cast", "ifnull", "rstrip"]
+        order_of_operations = [
+            consts.CALC_FIELD_CAST,
+            consts.CALC_FIELD_IFNULL,
+            consts.CALC_FIELD_RSTRIP,
+        ]
         if self.case_insensitive_match():
-            order_of_operations.append("upper")
-        if calc_type == "hash":
-            order_of_operations.extend(["concat", "hash"])
-        elif calc_type == "concat":
-            order_of_operations.append("concat")
+            order_of_operations.append(consts.CALC_FIELD_UPPER)
+        if calc_type == consts.CALC_FIELD_HASH:
+            order_of_operations.extend(
+                [consts.CALC_FIELD_CONCAT, consts.CALC_FIELD_HASH]
+            )
+        elif calc_type == consts.CALC_FIELD_CONCAT:
+            order_of_operations.append(consts.CALC_FIELD_CONCAT)
 
         return order_of_operations
 
@@ -1241,7 +1247,7 @@ class ConfigManager(object):
                 previous_level = [x for x in casefold_source_columns.keys()]
             else:
                 previous_level = [k for k, v in column_aliases.items() if v == i - 1]
-            if calc in ["concat", "hash"]:
+            if calc in [consts.CALC_FIELD_CONCAT, consts.CALC_FIELD_HASH]:
                 col = {}
                 col["source_reference"] = previous_level
                 col["target_reference"] = previous_level
