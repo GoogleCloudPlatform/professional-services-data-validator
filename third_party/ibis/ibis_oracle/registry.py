@@ -507,6 +507,6 @@ operation_registry.update(
         ops.DayOfWeekName: _day_of_week_name,
         ops.RandomScalar: _random,
         # now is in the timezone of the server, but we want UTC
-        ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
+        ops.TimestampNow: lambda *args: sa.func.timezone("+00:00", sa.func.now()),
     }
 )

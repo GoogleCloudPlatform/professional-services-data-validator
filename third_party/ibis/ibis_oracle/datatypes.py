@@ -70,8 +70,8 @@ _type_mapping = {
     oracledb.DB_TYPE_NCHAR: dt.String,
     oracledb.DB_TYPE_DATE: dt.Date,
     oracledb.DB_TYPE_TIMESTAMP: dt.Timestamp,
-    oracledb.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="UTC"),
-    oracledb.DB_TYPE_TIMESTAMP_LTZ: dt.Timestamp(timezone="UTC"),
+    oracledb.DB_TYPE_TIMESTAMP_TZ: dt.Timestamp(timezone="+00:00"),
+    oracledb.DB_TYPE_TIMESTAMP_LTZ: dt.Timestamp(timezone="+00:00"),
     oracledb.DB_TYPE_RAW: dt.Binary,
     oracledb.DB_TYPE_LONG_RAW: dt.Binary,
     oracledb.DB_TYPE_BFILE: dt.Binary,
@@ -174,7 +174,7 @@ def sa_oracle_NCHAR(_, satype, nullable=True):
 @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.TIMESTAMP)
 def sa_oracle_TIMESTAMP(_, satype, nullable=True):
     if satype.timezone:
-        return dt.Timestamp(timezone="UTC", nullable=nullable)
+        return dt.Timestamp(timezone="+00:00", nullable=nullable)
     else:
         return dt.Timestamp(nullable=nullable)
 

@@ -125,7 +125,7 @@ DVT_CORE_TYPES_RAW_DATA_TYPES = [
     ("COL_STRING", "VARCHAR", 4000, 4000, None, None, 1),
     ("COL_DATE", "DATE", 23, None, None, None, 1),
     ("COL_DATETIME", "TIMESTAMP", 23, None, 0, 3, 1),
-    ("COL_TSTZ", "TIMESTAMP_TZ", None, None, 0, 3, 1),
+    ("COL_TSTZ", "TIMESTAMP_TZ", 23, None, 0, 3, 1),
 ]
 
 EXPECTED_DATETIME_ID_PARTITION_FILTER = [
