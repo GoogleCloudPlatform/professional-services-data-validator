@@ -934,7 +934,7 @@ def test_column_multi_table_all_config_managers():
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
     schema_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         tc="mock-conn",
     )
 
@@ -947,7 +947,7 @@ def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
     column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         count_cols="*",
         filters="COL#HASH IS NOT NULL",
     )
