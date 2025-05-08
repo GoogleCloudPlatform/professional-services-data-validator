@@ -346,24 +346,15 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_oracle_to_postgres():
     count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
-    # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
     # TODO Change min_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change min_cols below to include col_json/col_jsonb when issue-1338 is complete.
-    sum_cols = ",".join(
-        [
-            _
-            for _ in ORA2PG_COLUMNS
-            if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
-        ]
-    )
+    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw",)])
     min_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
             if _
             not in (
-                "col_char_2",
-                "col_nchar_2",
                 "col_long_raw",
                 "col_interval_ds",
                 "col_json",
@@ -684,6 +675,23 @@ def test_generate_partitions_datetime_pk():
         tables="pso_data_validator.dvt_datetime_id",
         filters="other_data IS NOT NULL",
         partition_num=2,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_pangrams_to_bigquery():
+    """Oracle to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
     )
 
 

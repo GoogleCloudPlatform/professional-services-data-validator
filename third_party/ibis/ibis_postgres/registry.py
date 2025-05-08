@@ -74,3 +74,12 @@ def sa_cast_postgres(t, op):
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
+
+
+def sa_format_postgres_padded_char_length(translator, op):
+    """Inject concat of empty string into length(bpchar) to protect trailing spaces.
+
+    Without this workaround the bpchar value is implicitly cast to varchar and loses trailing spaces.
+    """
+    arg = translator.translate(op.arg)
+    return sa.func.char_length(sa.func.concat(arg, sa.text("''")))
