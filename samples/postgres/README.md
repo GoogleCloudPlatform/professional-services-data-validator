@@ -135,3 +135,60 @@ Time: 61640.150 ms (01:01.640)
 
 Average: 68761ms
 Delta: +56290ms (+450%)
+
+## Inline CASE expression
+
+```
+CREATE TABLE trim_scale_tab
+AS
+SELECT CASE
+    WHEN trim(i::text, '0') IN ('.', '') THEN 0
+    WHEN trim(i::text, '0')::numeric = i THEN trim(i::text, '0')::numeric
+    ELSE i END c1,
+    CASE
+    WHEN trim((i+1)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+1)::text, '0')::numeric = i+1 THEN trim((i+1)::text, '0')::numeric
+    ELSE i+1 END c2,
+    CASE
+    WHEN trim((i+2)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+2)::text, '0')::numeric = i+2 THEN trim((i+2)::text, '0')::numeric
+    ELSE i+2 END c3,
+    CASE
+    WHEN trim((i+3)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+3)::text, '0')::numeric = i+3 THEN trim((i+3)::text, '0')::numeric
+    ELSE i+3 END c4,
+    CASE
+    WHEN trim((i+4)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+4)::text, '0')::numeric = i+4 THEN trim((i+4)::text, '0')::numeric
+    ELSE i+4 END c5,
+    CASE
+    WHEN trim((i+5)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+5)::text, '0')::numeric = i+5 THEN trim((i+5)::text, '0')::numeric
+    ELSE i+5 END c6,
+    CASE
+    WHEN trim((i+6)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+6)::text, '0')::numeric = i+6 THEN trim((i+6)::text, '0')::numeric
+    ELSE i+6 END c7,
+    CASE
+    WHEN trim((i+7)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+7)::text, '0')::numeric = i+7 THEN trim((i+7)::text, '0')::numeric
+    ELSE i+7 END c8,
+    CASE
+    WHEN trim((i+8)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+8)::text, '0')::numeric = i+8 THEN trim((i+8)::text, '0')::numeric
+    ELSE i+8 END c9,
+    CASE
+    WHEN trim((i+9)::text, '0') IN ('.', '') THEN 0
+    WHEN trim((i+9)::text, '0')::numeric = i+9 THEN trim((i+9)::text, '0')::numeric
+    ELSE i+9 END c10
+FROM generate_series(1,5000000) AS t(i);
+
+Time: 51362.997 ms (00:51.363)
+Time: 44526.158 ms (00:44.526)
+Time: 43060.392 ms (00:43.060)
+Time: 42366.208 ms (00:42.366)
+Time: 61329.184 ms (01:01.329)
+```
+
+Average: 48529ms
+Delta: +36058ms (+289%)
