@@ -55,7 +55,7 @@ tool on your CLI.
 
 If you intend to validate against PostgreSQL v12 or prior then you should create a custom UDF to support `trim_scale()` functionality added in PostgreSQL v13.
 
-See the sample provided [here](/samples/postgres/trim_scale.sql).
+See a [sample UDF](/samples/postgres/trim_scale.sql) and [more details on the UDF](/samples/postgres/README.md).
 
 ## Result Handler Setup
 
