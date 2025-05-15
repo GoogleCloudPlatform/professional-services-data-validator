@@ -45,7 +45,7 @@ def sa_cast_postgres(t, op):
         if arg_dtype.scale is None:
             # trim_scale() is only available in PostgreSQL 13+ but solves a lot of problems
             # when trying to get consistently formatted numerics.
-            # We've documented a workaround for PostgreSQL 12 and older.
+            # We've documented a workaround for PostgreSQL 12 and prior versions.
             return sa.cast(sa.func.trim_scale(sa_arg), t.get_sqla_type(typ))
         elif arg_dtype.scale > 0:
             # When casting a number to string PostgreSQL includes the full scale, e.g.:
@@ -55,8 +55,9 @@ def sa_cast_postgres(t, op):
             # Using to_char() function instead of cast to return a more typical value.
             # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
             #
-            # Ideally we would use trim_scale() here like above but this is a much more common
-            # scenario than decimal(scale=None) so I'm trying to minimize risk of needing a UDF.
+            # Potentially we could use trim_scale() here like when scale is None but this is
+            # a much more common scenario than decimal(scale=None) so I'm trying to minimize
+            # risk of needing a UDF.
             precision = arg_dtype.precision or 38
             fmt = (
                 "FM"
