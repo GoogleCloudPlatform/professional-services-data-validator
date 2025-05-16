@@ -2,6 +2,13 @@
 
 ## Untagged
 
+## [7.6.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.6.0...v7.6.1) (2025-05-03)
+
+
+### Bug Fixes
+
+* Protect trailing spaces in PostgreSQL length(bpchar) expression ([#1513](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1513)) ([b198a6d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b198a6d7a5dca1ad2180586e30a50612de7c6120))
+
 ## [7.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.2...v7.6.0) (2025-04-17)
 
 
