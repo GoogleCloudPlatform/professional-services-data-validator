@@ -146,7 +146,7 @@ class Backend(BaseAlchemyBackend):
         @sa.event.listens_for(engine, "connect")
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
-                cur.execute("ALTER SESSION SET TIME_ZONE='+00:00'")
+                cur.execute("ALTER SESSION SET TIME_ZONE='UTC'")
                 # Standardise numeric formatting on en_US (issue 1033).
                 cur.execute("ALTER SESSION SET NLS_NUMERIC_CHARACTERS='.,'")
 

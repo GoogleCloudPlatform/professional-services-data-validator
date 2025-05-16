@@ -376,8 +376,10 @@ def _table_column(t, op):
         timezone = op.output_dtype.timezone
         if timezone is not None:
             # Using literal_column on Oracle because the time zone string cannot be a bind.
+            # DVT by default converts everything to UTC, so special case it here to use numeric timezone to overcome that
+            # Thin mode python-oracledb does not support named timezones per https://github.com/oracle/python-oracledb/issues/20
             out_expr = sa.literal_column(
-                f"{out_expr.name} AT TIME ZONE '{timezone}'"
+                f'{out_expr.name} AT TIME ZONE \'{"+00:00" if timezone == "UTC" else timezone}\''
             ).label(op.name)
 
     # If the column does not originate from the table set in the current SELECT
@@ -507,6 +509,6 @@ operation_registry.update(
         ops.DayOfWeekName: _day_of_week_name,
         ops.RandomScalar: _random,
         # now is in the timezone of the server, but we want UTC
-        ops.TimestampNow: lambda *args: sa.func.timezone("+00:00", sa.func.now()),
+        ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
     }
 )
