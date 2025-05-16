@@ -80,7 +80,7 @@ def test_raw_column_metadata_core_types(mock_begin, module_under_test):
             database="pso_data_validator", table="dvt_core_types"
         )
     )
-    # Assert that the cx_Oracle prefix was removed from data types.
+    # Assert that the oracle prefix was removed from data types.
     assert all(_[1] == "MOCKTYPE" for _ in raw_types)
     # Ensure we have 7 attributes.
     assert all(len(_) == 7 for _ in raw_types)
@@ -96,7 +96,7 @@ def test_raw_column_metadata_qry(mock_begin, module_under_test):
             query="SELECT * FROM pso_data_validator.dvt_core_types"
         )
     )
-    # Assert that the cx_Oracle prefix was removed from data types.
+    # Assert that the oracle prefix was removed from data types.
     assert all(_[1] == "MOCKTYPE" for _ in raw_types)
     # Ensure we have 7 attributes.
     assert all(len(_) == 7 for _ in raw_types)
