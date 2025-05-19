@@ -45,7 +45,7 @@ python -m pip install teradatasql
 
 ## Supporting Objects
 ### Teradata
-If you plan to perform row level hashing on teradata, you will need to install a UDF that implements sha256 on your Teradata instance. An example can be found [here](https://downloads.teradata.com/forum/extensibility/sha-2-udfs-for-teradata).
+If you plan to perform row level hashing on Teradata, you will need to install a UDF that implements sha256 on your Teradata instance. An example can be found [here](https://downloads.teradata.com/forum/extensibility/sha-2-udfs-for-teradata).
 
 After installing the Data Validation package you will
 have access to the `data-validation -h` or `python -m data_validation -h`
