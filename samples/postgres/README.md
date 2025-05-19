@@ -57,7 +57,9 @@ FROM (
 
 ## Performance test
 
-This basic performance test generates a rowset with 5 million rows each containing 10 decimal columns and records five elapsed times. It then repeats this applying the build in `trim_scale()` function and the proposed DVT `time_scale()` UDF. This gives us the overhead for each technique.
+This basic performance test generates a table with 5 million rows each containing 10 decimal columns. This step is executed five times so an average elapsed time can be obtained at the end.
+
+A new table is created with the same approach but applying the built in `trim_scale()` function and afterwards an other table is also created in the same way but using the proposed DVT `time_scale()` UDF. This gives us the overhead for each technique.
 
 ### Baseline
 ```
