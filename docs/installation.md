@@ -43,12 +43,19 @@ If you require Teradata and have a license, install the `teradatasql` package.
 python -m pip install teradatasql
 ```
 
-If you plan to perform row level hashing on teradata, you will need to install a UDF that implements sha256 on your Teradata instance. An example can be found [here](https://downloads.teradata.com/forum/extensibility/sha-2-udfs-for-teradata).
+## Supporting Objects
+### Teradata
+If you plan to perform row level hashing on Teradata, you will need to install a UDF that implements sha256 on your Teradata instance. An example can be found [here](https://downloads.teradata.com/forum/extensibility/sha-2-udfs-for-teradata).
 
 After installing the Data Validation package you will
 have access to the `data-validation -h` or `python -m data_validation -h`
 tool on your CLI.
 
+### PostgreSQL
+
+If you intend to validate against PostgreSQL v12 or prior then you should create a custom UDF to support `trim_scale()` functionality added in PostgreSQL v13.
+
+See a [sample UDF](/samples/postgres/trim_scale.sql) and [more details on the UDF](/samples/postgres/README.md).
 
 ## Result Handler Setup
 

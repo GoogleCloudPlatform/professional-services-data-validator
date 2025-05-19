@@ -1192,6 +1192,32 @@ def test_row_validation_tricky_strings_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_decimals_no_precision():
+    """Test column validation on a table with decimals columns with no defined precision."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_no_precision():
+    """Test row validation on a table with decimals columns with no defined precision."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 @mock.patch(
     "data_validation.state_manager.StateManager.list_connections",
     return_value="mock-conn",

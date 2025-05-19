@@ -738,3 +738,12 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
 , `STRING`   STRING
 ) OPTIONS (description='Integration test table used to test potentially difficult column names.');
 INSERT INTO `pso_data_validator`.`dvt_reserved_word_columns` (id) VALUES (1);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals_no_precision` (
+  id              INT64
+, col_zero        NUMERIC
+, col_trail_zero  NUMERIC
+, col_negative    NUMERIC
+) OPTIONS (description='Integration test table used to test decimals without a precision or scale.');
+INSERT INTO `pso_data_validator`.`dvt_decimals_no_precision` VALUES
+(1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);

@@ -329,40 +329,6 @@ def sa_format_binary_length_oracle(translator, op):
     return sa.func.dbms_lob.getlength(arg)
 
 
-def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
-    """Caters for engines that fully pad scale with 0s when casting decimal to string and support FM format."""
-    # Add cast from numeric to string
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    # Specialize going from numeric(p,s>0) to string
-    if (
-        arg_dtype.is_decimal()
-        and arg_dtype.scale
-        and arg_dtype.scale > 0
-        and typ.is_string()
-    ):
-        sa_arg = t.translate(arg)
-        # When casting a number to string PostgreSQL and Snowflake include the full scale, e.g.:
-        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
-        #     100.00
-        # This doesn't match most engines which would return "100".
-        # Using to_char() function instead of cast to return a more typical value.
-        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
-        # Would have liked to use trim_scale but this is only available in PostgreSQL 13+
-        #     return (sa.cast(sa.func.trim_scale(arg), typ))
-        precision = arg_dtype.precision or 38
-        fmt = (
-            "FM"
-            + ("9" * (precision - arg_dtype.scale - 1))
-            + "0."
-            + ("9" * arg_dtype.scale)
-        )
-        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
-    return None
-
-
 def sa_cast_hive(t, op):
     arg = op.arg
     typ = op.to
@@ -385,27 +351,6 @@ def sa_cast_hive(t, op):
         return f"LOWER({cast_expr})"
     else:
         return cast_expr
-
-
-def sa_cast_postgres(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
-    if custom_cast is not None:
-        return custom_cast
-
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.encode(sa_arg, sa.literal("hex"))
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.decode(sa_arg, sa.literal("hex"))
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
 
 
 def sa_cast_mssql(t, op):
@@ -477,15 +422,33 @@ def sa_cast_mysql(t, op):
 
 
 def sa_cast_snowflake(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
-    if custom_cast is not None:
-        return custom_cast
-
     arg = op.arg
     typ = op.to
     arg_dtype = arg.output_dtype
-
     sa_arg = t.translate(arg)
+
+    # Specialize going from numeric(p,s>0) to string
+    if (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        # When casting a number to string Snowflake includes the full scale, e.g.:
+        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
+        #     100.00
+        # This doesn't match most engines which would return "100".
+        # Using to_char() function instead of cast to return a more typical value.
+        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
+        precision = arg_dtype.precision or 38
+        fmt = (
+            "FM"
+            + ("9" * (precision - arg_dtype.scale - 1))
+            + "0."
+            + ("9" * arg_dtype.scale)
+        )
+        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.hex_encode(sa_arg, sa.literal(0))
@@ -648,7 +611,7 @@ PostgreSQLExprTranslator._registry[
 ] = postgres_registry.sa_format_hashbytes
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
-PostgreSQLExprTranslator._registry[ops.Cast] = sa_cast_postgres
+PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 PostgreSQLExprTranslator._registry[
     ops.ExtractEpochSeconds
