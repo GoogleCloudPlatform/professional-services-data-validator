@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from google.api_core import client_options, exceptions
+from google.api_core import exceptions
 
 
 class SecretManagerBuilder:
-    def build(self, client_type: str, api_endpoint: str = None):
+    def build(self, client_type):
         """
         :param client_type:
         :return: secret manager instance currently support gcp secret manager
         """
         if client_type.lower() == "gcp":
-            return GCPSecretManager(api_endpoint=api_endpoint)
+            return GCPSecretManager()
         else:
             raise Exception(f"{client_type} is not supported yet.")
 
@@ -32,15 +32,12 @@ class GCPSecretManager:
     GCPSecretManager: client to access secrets stored at GCP secret manager
     """
 
-    def __init__(self, api_endpoint: str = None):
+    def __init__(self):
         # Import the Secret Manager client library.
         from google.cloud import secretmanager
 
         # Create the Secret Manager client.
-        options = None
-        if api_endpoint:
-            options = client_options.ClientOptions(api_endpoint=api_endpoint)
-        self.client = secretmanager.SecretManagerServiceClient(client_options=options)
+        self.client = secretmanager.SecretManagerServiceClient()
 
     def maybe_secret(self, project_id: str, secret_id: str, version_id="latest") -> str:
         """Get information about the given secret.

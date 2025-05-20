@@ -51,17 +51,6 @@ data-validation connections add \
     --url="dvt-url-secret"
 ```
 
-Example 4: A BigQuery connection specifying a specific Secret Manager API endpoint:
-
-```sh
-data-validation connections add \
-    --secret-manager-type GCP \
-    --secret-manager-project-id my-project \
-    --secret-manager-api-endpoint secretmanager-mypsc.p.googleapis.com \
-    --connection-name bq BigQuery \
-    --project-id "dvt-project-secret"
-```
-
 ## List existing connections
 
 ```sh
@@ -118,7 +107,6 @@ Below are the connection parameters for each database.
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Raw                     Connection name
     --json JSON                                         Raw JSON for connection
 ```
@@ -132,7 +120,6 @@ The raw JSON can also be found in the connection config file. For example,
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME BigQuery                Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
     [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
@@ -162,7 +149,6 @@ data-validation connections add
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Spanner                 Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
     --instance-id MY_INSTANCE                           Spanner instance to connect to
@@ -185,7 +171,6 @@ via `pip install teradatasql` if you have a license.
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Teradata                Connection name
     --host HOST                                         Teradata host
     --port PORT                                         Teradata port, defaults to 1025
@@ -205,7 +190,6 @@ Then `pip install cx_Oracle`.
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Oracle                  Connection name
     --host HOST                                         Oracle host
     --port PORT                                         Oracle port, defaults to 1521
@@ -242,7 +226,6 @@ For connection query parameter options, see <https://docs.sqlalchemy.org/en/20/d
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME MSSQL                   Connection name
     --host HOST                                         MSSQL host
     --port PORT                                         MSSQL port, defaults to 1433
@@ -259,7 +242,6 @@ data-validation connections add
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Postgres                Connection name
     --host HOST                                         Postgres host
     --port PORT                                         Postgres port, defaults to 5432
@@ -290,7 +272,6 @@ Please note AlloyDB supports same connection config as Postgres.
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Postgres                Connection name
     --host HOST                                         Postgres host
     --port PORT                                         Postgres port, defaults to 5432
@@ -305,7 +286,6 @@ data-validation connections add
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME MySQL                   Connection name
     --host HOST                                         MySQL host
     --port PORT                                         MySQL port, defaults to 3306
@@ -320,7 +300,6 @@ data-validation connections add
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Redshift                Connection name
     --host HOST                                         Redshift host
     --port PORT                                         Redshift port, defaults to 5439
@@ -335,7 +314,6 @@ data-validation connections add
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME FileSystem              Connection name
     --table-name TABLE_NAME                             Table name to use as reference for file data
     --file-path FILE_PATH                               Local, GCS, or S3 file path
@@ -348,7 +326,6 @@ data-validation connections add
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Impala                  Connection name
     --host HOST                                         Impala host
     --port PORT                                         Impala port
@@ -385,7 +362,6 @@ Please note that for Group By validations, the following property must be set in
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Impala                  Connection name
     --host HOST                                         Hive host
     --port PORT                                         Hive port, defaults to 10000
@@ -412,7 +388,6 @@ DB2 requires the `ibm_db_sa` package. We currently support only IBM DB2 LUW - Un
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME DB2                     Connection name
     --host HOST                                         DB2 host
     --port PORT                                         DB2 port, defaults to 50000
@@ -432,7 +407,6 @@ For details on connection parameters, see the [Ibis Snowflake connection paramet
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    [--secret-manager-api-endpoint API_ENDPOINT]        Secret Manager API endpoint
     --connection-name CONN_NAME Snowflake               Connection name
     --user USER                                         Snowflake user
     --password PASSWORD                                 Snowflake password

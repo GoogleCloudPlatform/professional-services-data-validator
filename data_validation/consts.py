@@ -23,7 +23,6 @@
 SOURCE_TYPE = "source_type"
 SECRET_MANAGER_TYPE = "secret_manager_type"
 SECRET_MANAGER_PROJECT_ID = "secret_manager_project_id"
-SECRET_MANAGER_API_ENDPOINT = "secret_manager_api_endpoint"
 CONFIG = "config"
 CONFIG_FILE = "config_file"
 CONFIG_FILE_JSON = "config_file_json"
