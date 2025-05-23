@@ -162,6 +162,21 @@ class DataValidation(object):
                 **{source_pk_column: query[source_pk_column].cast("string")}
             )
 
+        # If the primary key is a padded string, then update the query to ensure the string
+        # is rstripped in the results.
+        if self.config_manager.source_table:  # Not a custom query
+            table = self.config_manager.get_source_ibis_table()
+            if table[
+                source_pk_column
+            ].type().is_string() and ValidationBuilder._needs_trimming(
+                self.config_manager.source_client,
+                self.config_manager.get_source_raw_data_types(),
+                source_pk_column,
+            ):
+                query = query.mutate(
+                    **{source_pk_column: query[source_pk_column].rstrip()}
+                )
+
         random_rows = self.config_manager.source_client.execute(query)
         if len(random_rows) == 0:
             return
