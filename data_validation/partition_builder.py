@@ -201,7 +201,7 @@ class PartitionBuilder:
                 for key in source_pks.copy():
                     if source_table[
                         key
-                    ].type().is_string() and ValidationBuilder._needs_trimming(
+                    ].type().is_string() and ValidationBuilder.is_padded_char(
                         config_manager.source_client,
                         config_manager.get_source_raw_data_types(),
                         key,

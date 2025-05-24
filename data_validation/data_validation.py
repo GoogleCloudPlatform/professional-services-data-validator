@@ -168,7 +168,7 @@ class DataValidation(object):
             table = self.config_manager.get_source_ibis_table()
             if table[
                 source_pk_column
-            ].type().is_string() and ValidationBuilder._needs_trimming(
+            ].type().is_string() and ValidationBuilder.is_padded_char(
                 self.config_manager.source_client,
                 self.config_manager.get_source_raw_data_types(),
                 source_pk_column,

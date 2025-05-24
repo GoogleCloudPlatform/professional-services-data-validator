@@ -89,7 +89,7 @@ class ValidationBuilder(object):
             return FilterField.isin(column_name, in_list)
 
     @staticmethod
-    def _needs_trimming(
+    def is_padded_char(
         client: ibis.backends.base.BaseBackend,
         raw_column_metadata: dict,
         column_name: str,
@@ -291,7 +291,7 @@ class ValidationBuilder(object):
         if config_manager.source_table:  # Not a custom query
             table = config_manager.get_source_ibis_table()
             if table[source_field_name].type().is_string():
-                trim = self._needs_trimming(
+                trim = self.is_padded_char(
                     config_manager.source_client,
                     config_manager.get_source_raw_data_types(),
                     source_field_name,
@@ -303,7 +303,7 @@ class ValidationBuilder(object):
         if config_manager.target_table:  # Not a custom query
             table = config_manager.get_target_ibis_table()
             if table[target_field_name].type().is_string():
-                trim = self._needs_trimming(
+                trim = self.is_padded_char(
                     config_manager.target_client,
                     config_manager.get_target_raw_data_types(),
                     target_field_name,
