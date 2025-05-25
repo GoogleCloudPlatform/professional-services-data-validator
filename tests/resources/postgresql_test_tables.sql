@@ -939,3 +939,14 @@ CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
 );
 COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_decimals_no_precision;
+CREATE TABLE pso_data_validator.dvt_decimals_no_precision (
+  id              bigint NOT NULL PRIMARY KEY
+, col_zero        decimal
+, col_trail_zero  decimal
+, col_negative    decimal
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals_no_precision IS 'Integration test table used to test decimals without a precision or scale.';
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES
+(1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);

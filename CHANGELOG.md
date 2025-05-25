@@ -2,6 +2,18 @@
 
 ## Untagged
 
+## [7.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.6.1...v7.7.0) (2025-05-20)
+
+
+### Features
+
+* Support custom BigQuery storage api endpoint ([#1501](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1501)) ([4fc741c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4fc741c655f281c836e2a234a8fedf1e44e06c1a))
+
+
+### Bug Fixes
+
+* Use trim_scale() to format cast(decimal, string) consistently when scale is None ([#1516](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1516)) ([1c2d215](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1c2d215e3f2700685cd8c8cad3831ea8e69e984a))
+
 ## [7.6.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.6.0...v7.6.1) (2025-05-03)
 
 

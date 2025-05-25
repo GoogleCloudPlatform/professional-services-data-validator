@@ -123,8 +123,12 @@ data-validation connections add
     --connection-name CONN_NAME BigQuery                Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
     [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
-    [--api-endpoint ENDPOINT_URI]                       BigQuery API endpoint (e.g.
-                                                        "https://mybq.p.googleapis.com)
+    [--api-endpoint API_ENDPOINT]                       BigQuery API endpoint (e.g.
+                                                        "https://bigquery-mypsc.p.googleapis.com)
+    [--storage-api-endpoint STORAGE_API_ENDPOINT]       BigQuery Storage API endpoint (e.g.
+                                                        "bigquerystorage-mypsc.p.googleapis.com)
+                                                        Note this is a GRPC endpoint and does not
+                                                        include a URI scheme.
 ```
 
 ### User/Service account needs following BigQuery permissions to run DVT
@@ -150,8 +154,8 @@ data-validation connections add
     --instance-id MY_INSTANCE                           Spanner instance to connect to
     --database-id MY-DB                                 Spanner database (schema) to connect to
     [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
-    [--api-endpoint ENDPOINT_URI]                       Spanner API endpoint (e.g.
-                                                        "https://mycs.p.googleapis.com)
+    [--api-endpoint API_ENDPOINT]                       Spanner API endpoint (e.g.
+                                                        "https://spanner-mypsc.p.googleapis.com")
 ```
 
 ### User/Service account needs following Spanner role to run DVT

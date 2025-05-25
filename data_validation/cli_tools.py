@@ -76,7 +76,11 @@ CONNECTION_SOURCE_FIELDS = {
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
             "api_endpoint",
-            '(Optional) GCP BigQuery API endpoint (e.g. "https://mybq.p.googleapis.com")',
+            '(Optional) GCP BigQuery API endpoint (e.g. "https://bigquery-mypsc.p.googleapis.com")',
+        ],
+        [
+            "storage_api_endpoint",
+            '(Optional) GCP BigQuery Storage API endpoint (e.g. "https://bigquerystorage-mypsc.p.googleapis.com")',
         ],
     ],
     consts.SOURCE_TYPE_TERADATA: [
@@ -140,7 +144,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
             "api_endpoint",
-            '(Optional) GCP Spanner API endpoint (e.g. "https://mycs.p.googleapis.com")',
+            '(Optional) GCP Spanner API endpoint (e.g. "https://spanner-mypsc.p.googleapis.com")',
         ],
     ],
     consts.SOURCE_TYPE_FILESYSTEM: [
@@ -1284,6 +1288,9 @@ def _get_result_handler(rc_value: str, sa_file=None) -> dict:
                 consts.PROJECT_ID: conn_from_file["project_id"],
                 consts.TABLE_ID: config[1],
                 consts.API_ENDPOINT: conn_from_file.get("api_endpoint", None),
+                consts.STORAGE_API_ENDPOINT: conn_from_file.get(
+                    "storage_api_endpoint", None
+                ),
             }
         elif conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_POSTGRES:
             result_handler = {
