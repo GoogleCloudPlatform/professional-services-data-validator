@@ -83,7 +83,9 @@ CLI_ADD_BQ_CONNECTION_ARGS = [
     "--project-id",
     "example-project",
     "--api-endpoint",
-    "https://mybq.p.googleapis.com",
+    "https://bigquery-mypsc.p.googleapis.com",
+    "--storage-api-endpoint",
+    "https://bigquerystorage-mypsc.p.googleapis.com",
 ]
 
 
@@ -309,7 +311,7 @@ def test_create_bq_connection(caplog, fs):
     assert bq_conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_BIGQUERY
 
     conn_from_file = cli_tools.get_connection(args.connection_name)
-    assert conn_from_file["api_endpoint"] == "https://mybq.p.googleapis.com"
+    assert conn_from_file["api_endpoint"] == "https://bigquery-mypsc.p.googleapis.com"
 
 
 @mock.patch(
@@ -625,6 +627,7 @@ def test_get_result_handler_by_conn_file(fs):
         consts.PROJECT_ID: args.project_id,
         consts.TABLE_ID: "dataset.table",
         consts.API_ENDPOINT: args.api_endpoint,
+        consts.STORAGE_API_ENDPOINT: args.storage_api_endpoint,
     }
 
     # Plus check standard format still works.

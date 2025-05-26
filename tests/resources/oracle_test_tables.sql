@@ -863,3 +863,17 @@ CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
 COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_decimals_no_precision;
+CREATE TABLE pso_data_validator.dvt_decimals_no_precision (
+  id              NUMBER(5) NOT NULL PRIMARY KEY
+, col_zero        NUMBER
+, col_trail_zero  NUMBER
+, col_negative    NUMBER
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals_no_precision IS 'Integration test table used to test decimals without a precision or scale.';
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (1,0,99.785,-1.01);
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (2,0,98.015,-1.01);
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (3,0,92.25,-1.01);
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (4,0,92.75,-1.01);
+COMMIT;
