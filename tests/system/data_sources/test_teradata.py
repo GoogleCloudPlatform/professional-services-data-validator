@@ -127,28 +127,28 @@ TERADATA_ROW_CONFIG = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["cast__calendar_date"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["cast__calendar_date"],
             consts.CONFIG_FIELD_ALIAS: "ifnull__cast__calendar_date",
-            consts.CONFIG_TYPE: "ifnull",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_IFNULL,
             consts.CONFIG_DEPTH: 1,
         },
         {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["cast__day_of_week"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["cast__day_of_week"],
             consts.CONFIG_FIELD_ALIAS: "ifnull__cast__day_of_week",
-            consts.CONFIG_TYPE: "ifnull",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_IFNULL,
             consts.CONFIG_DEPTH: 1,
         },
         {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["ifnull__cast__calendar_date"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["ifnull__cast__calendar_date"],
             consts.CONFIG_FIELD_ALIAS: "rstrip__ifnull__cast__calendar_date",
-            consts.CONFIG_TYPE: "rstrip",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_RSTRIP,
             consts.CONFIG_DEPTH: 2,
         },
         {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["ifnull__cast__day_of_week"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["ifnull__cast__day_of_week"],
             consts.CONFIG_FIELD_ALIAS: "rstrip__ifnull__cast__day_of_week",
-            consts.CONFIG_TYPE: "rstrip",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_RSTRIP,
             consts.CONFIG_DEPTH: 2,
         },
         {
@@ -159,7 +159,7 @@ TERADATA_ROW_CONFIG = {
                 "rstrip__ifnull__cast__calendar_date"
             ],
             consts.CONFIG_FIELD_ALIAS: "upper__rstrip__ifnull__cast__calendar_date",
-            consts.CONFIG_TYPE: "upper",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_UPPER,
             consts.CONFIG_DEPTH: 3,
         },
         {
@@ -170,7 +170,7 @@ TERADATA_ROW_CONFIG = {
                 "rstrip__ifnull__cast__day_of_week"
             ],
             consts.CONFIG_FIELD_ALIAS: "upper__rstrip__ifnull__cast__day_of_week",
-            consts.CONFIG_TYPE: "upper",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_UPPER,
             consts.CONFIG_DEPTH: 3,
         },
         {
@@ -183,7 +183,7 @@ TERADATA_ROW_CONFIG = {
                 "upper__rstrip__ifnull__cast__day_of_week",
             ],
             consts.CONFIG_FIELD_ALIAS: "concat__all",
-            consts.CONFIG_TYPE: "concat",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_CONCAT,
             consts.CONFIG_DEPTH: 4,
         },
     ],

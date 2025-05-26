@@ -359,6 +359,14 @@ class CalculatedField(object):
         )
 
     @staticmethod
+    def padded_char_length(config, fields):
+        return CalculatedField(
+            ibis.expr.types.StringValue.padded_char_length,
+            config,
+            fields,
+        )
+
+    @staticmethod
     def byte_length(config, fields):
         return CalculatedField(
             ibis.expr.types.BinaryValue.byte_length,
@@ -403,7 +411,7 @@ class CalculatedField(object):
     @staticmethod
     def custom(config, fields):
         """Returns a CalculatedField instance built for any custom ibis expression
-        i.e. 'ibis.expr.api.StringValue.replace'. For a list of supported functions,
+        e.g. 'ibis.expr.api.StringValue.replace'. For a list of supported functions,
         see https://github.com/ibis-project/ibis/blob/1.4.0/ibis/expr/api.py
         Args:
             expr (Str): A custom ibis expression to be used as a calc field

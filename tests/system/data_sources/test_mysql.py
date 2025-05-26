@@ -265,7 +265,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """MySQL to BigQuery dvt_core_types column validation"""
-    # TODO Change --sum, --min and --max options to include col_char_2 when issue-842 is complete.
+    # TODO Change --sum, --min and --max options to include col_char_2 when issue-1514 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     cols = ",".join(
         [
