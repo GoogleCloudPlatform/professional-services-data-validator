@@ -626,6 +626,7 @@ def test_row_validation_binary_pk_to_bigquery():
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -640,6 +641,7 @@ def test_row_validation_fixed_char_pk_to_bigquery():
         use_randow_row=False,
     )
 
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -652,6 +654,7 @@ def test_row_validation_varchar_pk_to_bigquery():
     id_column_row_validation_test(
         "pso_data_validator.dvt_varchar_id",
     )
+
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
