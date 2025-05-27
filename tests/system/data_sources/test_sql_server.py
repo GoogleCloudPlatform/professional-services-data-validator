@@ -293,7 +293,9 @@ def test_schema_validation_core_types_to_bigquery():
             # All SQL Server integers go to BigQuery INT64.
             "int8:int64,int16:int64,int32:int64,"
             # BigQuery does not have a float32 type.
-            "float32:float64"
+            "float32:float64,",
+            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
+            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
         ),
     )
 
@@ -312,6 +314,8 @@ def test_schema_validation_not_null_vs_nullable():
             "-sc=sql-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
+            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
+            "--allow-list=timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
         ]
     )
     df = run_test_from_cli_args(args)
