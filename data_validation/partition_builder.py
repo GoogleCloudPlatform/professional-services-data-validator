@@ -206,7 +206,6 @@ class PartitionBuilder:
                         config_manager.get_source_raw_data_types(),
                         key,
                     ):
-                        rstrip_key = source_table[key].rstrip().name(key)
                         dvt_keys.append(source_table[key].rstrip().name(key))
                     else:
                         dvt_keys.append(key)
