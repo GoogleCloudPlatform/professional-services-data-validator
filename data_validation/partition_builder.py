@@ -20,7 +20,7 @@ import re
 import datetime
 from typing import List, Dict, TYPE_CHECKING
 
-from data_validation import cli_tools, consts
+from data_validation import cli_tools, consts, util
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
 from data_validation.validation_builder import ValidationBuilder
@@ -28,6 +28,7 @@ from data_validation.validation_builder import list_to_sublists
 
 if TYPE_CHECKING:
     from argparse import Namespace
+    import ibis.expr.types.Table
 
 
 class PartitionBuilder:
@@ -98,24 +99,32 @@ class PartitionBuilder:
         self._store_partitions(yaml_configs_list)
 
     @staticmethod
-    def _extract_where(table_expr, client) -> str:
-        """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the where clause
-        in plain text
+    def _extract_where(table_expr: "ibis.expr.types.Table") -> str:
+        """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the
+           where clause in plain text.
 
         Returns:
             String with the where condition
         """
-        if client.name == "spanner":
-            # As per Issue #1059, use the BQ dialect for Spanner as they have the same query syntax
-            return re.sub(
-                r"\s\s+",
-                " ",
-                ibis.to_sql(table_expr, dialect="bigquery").sql.split("WHERE")[1],
-            ).replace("t0.", "")
-
-        return re.sub(
-            r"\s\s+", " ", ibis.to_sql(table_expr).sql.split("WHERE")[1]
-        ).replace("t0.", "")
+        # This extraction of the where clause is a bit of a hack. To extract it correctly, the SQL table
+        # expression should be correctly parsed and the where clause extracted. Perhaps use something like Sqlglot.
+        sql_where_expr = re.split(
+            r"\sWHERE\s", util.ibis_table_to_sql(table_expr), flags=re.I
+        )[-1]
+        sql_string_re = re.compile(r"'(?:''|\\'|[^'])*'")
+        sql_not_string_re = re.compile(r"[^']+")
+        sql_where_less_ws = ""
+        # Remove references to t0 and extra whitespace, but only outside quoted strings.
+        while sql_where_expr:
+            if match_obj := sql_not_string_re.match(
+                sql_where_expr
+            ):  # Not a quoted string
+                repl_str = re.sub(r"\s\s+", r" ", match_obj.group(0)).replace("t0.", "")
+            else:  # quoted strings should not be substituted
+                repl_str = (match_obj := sql_string_re.match(sql_where_expr)).group(0)
+            sql_where_less_ws += repl_str
+            sql_where_expr = sql_where_expr[match_obj.end() :]
+        return sql_where_less_ws
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
         """The PartitionBuilder object contains the configuration of the table pairs (source and target)
@@ -241,10 +250,18 @@ class PartitionBuilder:
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
 
+            # The objective is to generate the SQL expression string that is saved in the yaml file as a
+            # filters property. This SQL expression is used as a filter during validation to ensure
+            # that the yaml file is only validating the specific partition. This string is backend specific as
+            # the SQL syntax varies slightly across backends. We get Ibis to generate the string for
+            # a table expression with the filter (where) clause and then extract the SQL expression string.
+            # The function _extract_where extracts the expression string from the Ibis SQL table expression.
+
             # Once we have the first element of each partition, we can generate the where clause
             # i.e. greater than or equal to first element and less than first element of next partition
             # The first and the last partitions have special where clauses - less than first element of second
             # partition and greater than or equal to the first element of the last partition respectively
+
             source_where_list = []
             target_where_list = []
 
@@ -299,13 +316,11 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
-                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
-                    config_manager.target_client,
                 )
             )
 
@@ -331,13 +346,11 @@ class PartitionBuilder:
                 source_where_list.append(
                     self._extract_where(
                         source_table.filter(filter_source_clause),
-                        config_manager.source_client,
                     )
                 )
                 target_where_list.append(
                     self._extract_where(
                         target_table.filter(filter_target_clause),
-                        config_manager.target_client,
                     )
                 )
             filter_source_clause = geq_value(
@@ -353,13 +366,11 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
-                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
-                    config_manager.target_client,
                 )
             )
             master_filter_list.append([source_where_list, target_where_list])

@@ -21,5 +21,9 @@ class ValidationException(Exception):
     pass
 
 
+class ResultHandlerException(Exception):
+    pass
+
+
 class SchemaValidationException(ValidationException):
     pass

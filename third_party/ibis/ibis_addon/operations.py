@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" The Ibis Addons Operations are intended to help facilitate new expressions
+"""The Ibis Addons Operations are intended to help facilitate new expressions
 when required before they can be pushed upstream to Ibis.
 
 Raw SQL Filters:
@@ -24,6 +24,7 @@ non-textual languages.
 """
 import datetime
 import dateutil
+import numpy as np
 import string
 
 import google.cloud.bigquery as bq
@@ -57,10 +58,10 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
+from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValue
 
 # Do not remove these lines, they trigger patching of Ibis code.
-import third_party.ibis.ibis_biquery.api  # noqa
+import third_party.ibis.ibis_bigquery.api  # noqa
 import third_party.ibis.ibis_mysql.compiler  # noqa
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
@@ -94,8 +95,19 @@ except Exception:
     SnowflakeExprTranslator = None
 
 
+# Cast of datetime64 NaT to int64 and then in seconds results in the value below.
+# We need to use this value in the datetime.date simulation of the datetime64 behaviour.
+NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
+
+
 class BinaryLength(ops.Value):
     arg = rlz.one_of([rlz.value(dt.Binary)])
+    output_dtype = dt.int32
+    output_shape = rlz.shape_like("arg")
+
+
+class PaddedCharLength(ops.Value):
+    arg = rlz.one_of([rlz.value(dt.String)])
     output_dtype = dt.int32
     output_shape = rlz.shape_like("arg")
 
@@ -120,6 +132,10 @@ class RawSQL(ops.Comparison):
 
 def compile_binary_length(binary_value):
     return BinaryLength(binary_value).to_expr()
+
+
+def compile_padded_char_length(char_value):
+    return PaddedCharLength(char_value).to_expr()
 
 
 def compile_to_char(numeric_value, fmt):
@@ -313,40 +329,6 @@ def sa_format_binary_length_oracle(translator, op):
     return sa.func.dbms_lob.getlength(arg)
 
 
-def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
-    """Caters for engines that fully pad scale with 0s when casting decimal to string and support FM format."""
-    # Add cast from numeric to string
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    # Specialize going from numeric(p,s>0) to string
-    if (
-        arg_dtype.is_decimal()
-        and arg_dtype.scale
-        and arg_dtype.scale > 0
-        and typ.is_string()
-    ):
-        sa_arg = t.translate(arg)
-        # When casting a number to string PostgreSQL and Snowflake include the full scale, e.g.:
-        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
-        #     100.00
-        # This doesn't match most engines which would return "100".
-        # Using to_char() function instead of cast to return a more typical value.
-        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
-        # Would have liked to use trim_scale but this is only available in PostgreSQL 13+
-        #     return (sa.cast(sa.func.trim_scale(arg), typ))
-        precision = arg_dtype.precision or 38
-        fmt = (
-            "FM"
-            + ("9" * (precision - arg_dtype.scale - 1))
-            + "0."
-            + ("9" * arg_dtype.scale)
-        )
-        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
-    return None
-
-
 def sa_cast_hive(t, op):
     arg = op.arg
     typ = op.to
@@ -371,27 +353,6 @@ def sa_cast_hive(t, op):
         return cast_expr
 
 
-def sa_cast_postgres(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
-    if custom_cast is not None:
-        return custom_cast
-
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.encode(sa_arg, sa.literal("hex"))
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.decode(sa_arg, sa.literal("hex"))
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
-
-
 def sa_cast_mssql(t, op):
     arg = op.arg
     typ = op.to
@@ -410,6 +371,19 @@ def sa_cast_mssql(t, op):
     elif arg_dtype.is_string() and typ.is_binary():
         # Binary from string cast is a "from hex" conversion for DVT.
         return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
+    # Specialize going from DECIMAL(p,s>0) to string
+    elif (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        scale = arg_dtype.scale
+        # Considering any number of fractional digits
+        format_string = f'0.{("#" * scale)}'
+        formatted_value = sa.func.format(sa_arg, format_string)
+        # Replace trailing '.0' with ''
+        return sa.func.replace(formatted_value, ".0", "")
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -448,15 +422,33 @@ def sa_cast_mysql(t, op):
 
 
 def sa_cast_snowflake(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
-    if custom_cast is not None:
-        return custom_cast
-
     arg = op.arg
     typ = op.to
     arg_dtype = arg.output_dtype
-
     sa_arg = t.translate(arg)
+
+    # Specialize going from numeric(p,s>0) to string
+    if (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        # When casting a number to string Snowflake includes the full scale, e.g.:
+        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
+        #     100.00
+        # This doesn't match most engines which would return "100".
+        # Using to_char() function instead of cast to return a more typical value.
+        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
+        precision = arg_dtype.precision or 38
+        fmt = (
+            "FM"
+            + ("9" * (precision - arg_dtype.scale - 1))
+            + "0."
+            + ("9" * arg_dtype.scale)
+        )
+        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.hex_encode(sa_arg, sa.literal(0))
@@ -534,6 +526,10 @@ def _bigquery_field_to_ibis_dtype(field):
 def string_to_epoch(ts: str) -> int:
     """Function to convert string timestamp to epoch seconds"""
     try:
+        if pd.isna(ts):
+            # Casting datetime64 to int64 uses the minimum possible int64 when it
+            # encounters NaT. Simulating the same here for when auto cast fails.
+            return NAT_INT64_MIN_IN_SECONDS
         parsed_ts = dateutil.parser.isoparse(ts).astimezone(dateutil.tz.UTC)
         return (
             parsed_ts - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
@@ -547,12 +543,11 @@ def string_to_epoch(ts: str) -> int:
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
 def execute_epoch_seconds_new(op, data, **kwargs):
-    import numpy as np
-
     convert = getattr(data, "view", data.astype)
     try:
         series = convert(np.int64)
-        return (series // 1_000_000_000).astype(np.int32)
+        # We need int64 below because NaT overflows int32.
+        return (series // 1_000_000_000).astype(np.int64)
     except TypeError:
         # Catch 'TypeError' for large timestamps beyond max datetime64[ns] as per Issue #1053
         # Cast to string instead to work around datetime64[ns] limitation
@@ -576,6 +571,8 @@ execute_epoch_seconds = execute_epoch_seconds_new
 
 BinaryValue.byte_length = compile_binary_length
 
+StringValue.padded_char_length = compile_padded_char_length
+
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
 
@@ -592,6 +589,8 @@ AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
+# Base length of padded string is the same as for a standard string.
+ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
 ImpalaExprTranslator._registry[ops.Cast] = sa_cast_hive
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
@@ -612,11 +611,15 @@ PostgreSQLExprTranslator._registry[
 ] = postgres_registry.sa_format_hashbytes
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
-PostgreSQLExprTranslator._registry[ops.Cast] = sa_cast_postgres
+PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 PostgreSQLExprTranslator._registry[
     ops.ExtractEpochSeconds
 ] = postgres_registry.sa_epoch_seconds
+PostgreSQLExprTranslator._registry[
+    PaddedCharLength
+] = postgres_registry.sa_format_postgres_padded_char_length
+
 
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql

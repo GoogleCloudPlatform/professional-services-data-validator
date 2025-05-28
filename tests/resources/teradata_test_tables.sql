@@ -216,6 +216,49 @@ INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 1234, TIMESTAMP 
 INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 2.1);
 INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 3.5);
 
+DROP TABLE udf.test_generate_partitions_v2;
+CREATE TABLE udf.test_generate_partitions_v2(
+    course_id VARCHAR(24),
+    quarter_id INTEGER,
+    recd_timestamp TIMESTAMP,
+    registration_date DATE,
+    approved BYTEINT,
+    grade Numeric)
+UNIQUE PRIMARY INDEX (course_id,quarter_id,recd_timestamp, registration_date, approved);
+
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0, 3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1, 2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002  t0.', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
+
 DROP TABLE udf.dvt_latin;
 CREATE TABLE udf.dvt_latin (
     id INTEGER NOT NULL,
@@ -262,7 +305,7 @@ VALUES (5,'Turkish',
 
 DROP TABLE udf.dvt_many_cols;
 CREATE TABLE udf.dvt_many_cols
-( id NUMBER(5)
+( id NUMBER(5) NOT NULL PRIMARY KEY
 , col_001 VARCHAR(2)
 , col_002 VARCHAR(2)
 , col_003 VARCHAR(2)
@@ -707,6 +750,7 @@ INSERT INTO udf.dvt_tricky_dates VALUES
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00');
 -- col_ts_high value above forced to UTC based on article below, but we still get wrong answer from the test:
 --   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
+INSERT INTO udf.dvt_tricky_dates (id) VALUES (2);
 
 DROP TABLE udf.dvt_tricky_strings;
 CREATE TABLE udf.dvt_tricky_strings (

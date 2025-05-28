@@ -111,3 +111,52 @@ INSERT INTO `pso_data_validator`.`test_generate_partitions`
 ,('TRI001',1,1234,2.1),('TRI001',1,5678,3.5),('TRI001',1,9012,2.3)
 ,('TRI001',2,1234,3.5),('TRI001',2,5678,2.6),('TRI001',2,9012,3.5)
 ,('TRI001',3,1234,2.7),('TRI001',3,5678,3.5),('TRI001',3,9012,2.8);
+
+ /* Following table used for validating generating table partitions  version 2*/
+DROP TABLE IF EXISTS `pso_data_validator`.`test_generate_partitions_v2` ;
+CREATE TABLE `pso_data_validator`.`test_generate_partitions_v2` (
+        course_id STRING,
+        quarter_id INTEGER,
+        recd_timestamp TIMESTAMP,
+        registration_date DATE,
+        approved Boolean,
+        grade DECIMAL(5,2))
+STORED AS PARQUET
+TBLPROPERTIES ('comment'= 'Table for testing generate table partitions,
+  consists of 32 rows with a composite primary key
+  Quoted Strings are handled correctly');
+
+INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` (course_id, quarter_id, recd_timestamp, registration_date, approved, grade) VALUES
+        ('ALG001', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('ALG001', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('ALG001', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('ALG001', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('ALG003', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('ALG003', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('ALG003', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('ALG003', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5),
+        ('ALG002', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('ALG002', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('ALG002  t0.', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('ALG002', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('ALG004', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('ALG004', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('ALG004', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('ALG004', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5),
+        ('St. John''s', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('St. John''s', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('St. John''s', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('St. John''s', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('St. Jude''s', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('St. Jude''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('St. Edward''s', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('St. Edward''s', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5);
+

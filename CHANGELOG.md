@@ -2,6 +2,56 @@
 
 ## Untagged
 
+## [7.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.6.1...v7.7.0) (2025-05-20)
+
+
+### Features
+
+* Support custom BigQuery storage api endpoint ([#1501](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1501)) ([4fc741c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4fc741c655f281c836e2a234a8fedf1e44e06c1a))
+
+
+### Bug Fixes
+
+* Use trim_scale() to format cast(decimal, string) consistently when scale is None ([#1516](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1516)) ([1c2d215](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1c2d215e3f2700685cd8c8cad3831ea8e69e984a))
+
+## [7.6.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.6.0...v7.6.1) (2025-05-03)
+
+
+### Bug Fixes
+
+* Protect trailing spaces in PostgreSQL length(bpchar) expression ([#1513](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1513)) ([b198a6d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b198a6d7a5dca1ad2180586e30a50612de7c6120))
+
+## [7.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.2...v7.6.0) (2025-04-17)
+
+
+### Features
+
+* Add result handler for PostgreSQL ([#1480](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1480)) ([ac66c2b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ac66c2b64b1598b6819b1185f7e19069a5a4c892))
+* Optimize PostgreSQL result handler ([#1495](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1495)) ([a2f5794](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a2f57940779ac358be2662c9a888752e4bb133f3))
+
+
+### Bug Fixes
+
+* Ensure --partition-num option is &gt; 1 ([#1496](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1496)) ([b96a5e4](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b96a5e48fc5a39ef3fc588fc7d9e0e05cea18cd7))
+* Issue 1497 generate partitions custom query ([#1500](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1500)) ([4e0e890](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/4e0e8903633c085f2922f5e3596e8b8c721be525))
+* Issue casting SQL Server DECIMAL with scale &gt; 0 to string ([#1499](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1499)) ([bf81df3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bf81df3b56406012a7ef6a202583e038154e09cf))
+* Support Teradata filters containing quotes when generating partitions ([#1506](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1506)) ([d9f5528](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d9f55287a43f0542e40d83324897da23117fa565))
+
+## [7.5.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.1...v7.5.2) (2025-04-02)
+
+
+### Bug Fixes
+
+* Cater for OID &gt; 2 billion in PostgreSQL _metadata method ([#1490](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1490)) ([d5f72ae](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d5f72ae3729316dc9fc544abb7a68f25e3667647))
+* NaT handling in string_to_epoch now matches datetime64 cast output ([#1488](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1488)) ([43f6e0a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/43f6e0abf5f5af2c52ac8808ff808091d0607589))
+
+## [7.5.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.5.0...v7.5.1) (2025-03-31)
+
+
+### Bug Fixes
+
+* Reduced VARCHAR length when casting Teradata integrals to string ([#1481](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1481)) ([726a137](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/726a137846953ef556e09bd5aec7dbc5959d4dc7))
+
 ## [7.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.4.0...v7.5.0) (2025-03-25)
 
 

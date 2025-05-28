@@ -8,6 +8,22 @@ SELECT
     CAST(2 AS STRING) text_type,
     CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions`
+( course_id STRING
+, quarter_id INT64
+, student_id INT64
+, grade FLOAT64
+, registration_timestamp TIMESTAMP
+, registration_date DATE );
+INSERT INTO `pso_data_validator`.`test_generate_partitions`
+(course_id,quarter_id,student_id,grade)
+VALUES ('ALG001',1,5678,3.5), ('TRI001',1,5678,3.5), ('GEO001',1,5678,3.5), ('TRI001',1,9012,2.3),
+('ALG001',1,9012,2.3), ('GEO001',1,9012,2.3), ('ALG001',1,1234,2.1), ('TRI001',1,1234,2.1),
+('GEO001',1,1234,2.1), ('TRI001',2,1234,3.5), ('GEO001',2,9012,3.5), ('GEO001',2,1234,3.5),
+('ALG001',2,9012,3.5), ('ALG001',2,1234,3.5), ('TRI001',2,9012,3.5), ('TRI001',2,5678,2.6),
+('ALG001',2,5678,2.6), ('GEO001',2,5678,2.6), ('GEO001',3,5678,3.5), ('ALG001',3,5678,3.5),
+('TRI001',3,5678,3.5), ('ALG001',3,9012,2.8), ('TRI001',3,9012,2.8), ('GEO001',3,9012,2.8),
+('TRI001',3,1234,2.7), ('ALG001',3,1234,2.7), ('GEO001',3,1234,2.7);
 
 -- Core data types test table, to be kept in sync with same table in other SQL engines
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_core_types`
@@ -105,6 +121,48 @@ INSERT INTO `pso_data_validator`.`dvt_large_decimals` VALUES
 ,NUMERIC '12345678901234567890123456789.123456789'
 ,BIGNUMERIC '12345678.123456789012345678901234567890'
 ,987654321012345670,12345678901234567.0);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions_v2` (
+        course_id STRING(24),
+        quarter_id INTEGER,
+        recd_timestamp TIMESTAMP,
+        registration_date DATE,
+        approved Boolean,
+        grade NUMERIC,
+        ) OPTIONS (description='Table for testing generate table partitions, consists of 32 rows with a composite primary key Quoted Strings are handled correctly');
+INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` VALUES
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG002  t0.', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG002', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ("St. John''s", 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ("St. John''s", 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ("St. John''s", 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ("St. John''s", 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ("St. Jude''s", 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ("St. Jude''s", 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ("St. Jude''s", 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ("St. Jude''s", 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ("St. Edward''s", 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ("St. Edward''s", 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ("St. Edward''s", 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ("St. Edward''s", 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ("St. Paul''s", 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ("St. Paul''s", 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5);
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_binary`
 (   binary_id       BYTES(16) NOT NULL
@@ -654,6 +712,8 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_dates` (
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59');
+-- NULL in all columns.
+INSERT INTO `pso_data_validator`.`dvt_tricky_dates` (id) VALUES (2);
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_strings` (
   id           INT64
@@ -678,3 +738,12 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
 , `STRING`   STRING
 ) OPTIONS (description='Integration test table used to test potentially difficult column names.');
 INSERT INTO `pso_data_validator`.`dvt_reserved_word_columns` (id) VALUES (1);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals_no_precision` (
+  id              INT64
+, col_zero        NUMERIC
+, col_trail_zero  NUMERIC
+, col_negative    NUMERIC
+) OPTIONS (description='Integration test table used to test decimals without a precision or scale.');
+INSERT INTO `pso_data_validator`.`dvt_decimals_no_precision` VALUES
+(1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);

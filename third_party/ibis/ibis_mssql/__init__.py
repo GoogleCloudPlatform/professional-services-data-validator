@@ -20,7 +20,6 @@ from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.mssql.compiler import MsSqlCompiler
 from ibis.backends.mssql.datatypes import _type_from_result_set_info
 
-import third_party.ibis.ibis_mssql.datatypes
 import json
 
 
@@ -81,6 +80,7 @@ class Backend(BaseAlchemyBackend):
             with dbapi_connection.cursor() as cur:
                 cur.execute("SET DATEFIRST 1")
 
+        self.client = engine
         return super().do_connect(engine)
 
     def _metadata(self, query):
@@ -109,3 +109,33 @@ class Backend(BaseAlchemyBackend):
         with self.begin() as con:
             result = con.exec_driver_sql(list_pk_col_sql, parameters=(database, table))
             return [_[0] for _ in result.cursor.fetchall()]
+
+    def list_databases(self, schema=None):
+        schema_like = f"%{schema or ''}%"
+        list_database_sql = """
+            SELECT schema_name FROM information_schema.schemata
+            WHERE schema_name LIKE ?
+        """
+        with self.begin() as con:
+            result = con.exec_driver_sql(list_database_sql, parameters=(schema_like,))
+            return [_[0] for _ in result.cursor.fetchall()]
+
+    def list_tables(self, table=None, schema=None, type_like: str = "%") -> list:
+        schema_like = f"%{schema or ''}%"
+        table_like = f"%{table or ''}%"
+        list_table_sql = """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema LIKE ?
+            AND table_name LIKE ?
+            AND table_type LIKE ?
+        """
+        with self.begin() as con:
+            result = con.exec_driver_sql(
+                list_table_sql, parameters=(schema_like, table_like, type_like)
+            )
+            return [_[0] for _ in result.cursor.fetchall()]
+
+    def dvt_list_tables(self, like=None, database=None) -> list:
+        """Duplicate of list_tables() but only returning tables in the output."""
+        return self.list_tables(table=like, schema=database, type_like="BASE TABLE")

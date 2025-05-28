@@ -16,14 +16,15 @@
 
 import logging
 
-from data_validation import clients, consts
-from data_validation.result_handlers import text as text_handler
+from data_validation import clients, consts, exceptions, util
+from data_validation.result_handlers.base_backend import BaseBackendResultHandler
 
 
 BQRH_WRITE_MESSAGE = "Results written to BigQuery"
+BQRH_NO_WRITE_MESSAGE = "No results to write to BigQuery"
 
 
-class BigQueryResultHandler(object):
+class BigQueryResultHandler(BaseBackendResultHandler):
     """Write results of data validation to BigQuery.
 
     Arguments:
@@ -64,7 +65,7 @@ class BigQueryResultHandler(object):
                 Explicit credentials to use in case default credentials
                 aren't working properly.
             status_list (list): provided status to filter the results with
-            api_endpoint (str): BigQuery API endpoint (e.g. https://mybq.p.googleapis.com)
+            api_endpoint (str): BigQuery API endpoint (e.g. https://bigquery-mypsc.p.googleapis.com)
             text_format (str, optional):
                 This allows the user to influence the text results written via logger.debug.
                 See: https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/871
@@ -79,12 +80,7 @@ class BigQueryResultHandler(object):
             text_format=text_format,
         )
 
-    def execute(self, result_df):
-        if self._status_list is not None:
-            result_df = text_handler.filter_validation_status(
-                self._status_list, result_df
-            )
-
+    def _insert_bigquery(self, result_df):
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df
@@ -94,31 +90,34 @@ class BigQueryResultHandler(object):
                 chunk_errors[0][0]["errors"][0]["message"]
                 == "no such field: validation_status."
             ):
-                raise RuntimeError(
-                    f"Please update your BigQuery results table schema using the script : samples/bq_utils/rename_column_schema.sh.\n"
+                raise exceptions.ResultHandlerException(
+                    f"Please update your BigQuery results table schema using the script: samples/bq_utils/rename_column_schema.sh.\n"
                     f"The latest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
                 )
             elif (
                 chunk_errors[0][0]["errors"][0]["message"]
                 == "no such field: primary_keys."
             ):
-                raise RuntimeError(
-                    f"Please update your BigQuery results table schema using the script : samples/bq_utils/add_columns_schema.sh.\n"
+                raise exceptions.ResultHandlerException(
+                    f"Please update your BigQuery results table schema using the script: samples/bq_utils/add_columns_schema.sh.\n"
                     f"The latest release of DVT has added two fields 'primary_keys' and 'num_random_rows': {chunk_errors}"
                 )
-            raise RuntimeError(f"Could not write rows: {chunk_errors}")
+            raise exceptions.ResultHandlerException(
+                f"Could not write rows: {chunk_errors}"
+            )
 
         if result_df.empty:
-            logging.info("No results to write to BigQuery")
+            logging.info(BQRH_NO_WRITE_MESSAGE)
         else:
-            logging.info(f'{BQRH_WRITE_MESSAGE}, run id: {result_df.iloc[0]["run_id"]}')
-
-        # Handler can also output results after saving to BigQuery.
-        logger = logging.getLogger()
-        if logger.isEnabledFor(logging.DEBUG):
-            # Checking log level to avoid evaluating a large Dataframe that will never be logged.
-            logging.debug(
-                text_handler.get_formatted(result_df, format=self._text_format)
+            logging.info(
+                f"{BQRH_WRITE_MESSAGE}, run id: {result_df.iloc[0][consts.CONFIG_RUN_ID]}"
             )
+
+    def execute(self, result_df):
+        result_df = self._filter_by_status_list(result_df)
+
+        util.timed_call("Write results to BigQuery", self._insert_bigquery, result_df)
+
+        self._call_text_handler(result_df)
 
         return result_df

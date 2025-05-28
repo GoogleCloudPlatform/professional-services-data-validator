@@ -66,8 +66,10 @@ please review the [Connections](https://github.com/GoogleCloudPlatform/professio
 ### Running Validations
 
 The CLI is the main interface to use this tool and it has several different
-commands which can be used to create and run validations. Below are the command
-syntax and options for running validations.
+commands which can be used to create and run validations. DVT is designed to run in
+an environment connected to GCP services, specifically, BigQuery, GCS and Secret manager.
+If DVT is being run on-premises or in an environment with restricted access to GCP services, see
+[running DVT  at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
 
 Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud Functions, or Airflow
 ([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
@@ -113,9 +115,12 @@ data-validation
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
-  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
-                        BigQuery destination for validation results. Defaults to stdout.
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
+                        Specify a BigQuery or PostgreSQL connection name as destination for validation results.
+                        Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
+                        This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--wildcard-include-string-len or -wis]
@@ -197,9 +202,12 @@ data-validation
                         from the source or target table if available.  See *Primary Keys* section
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
-  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
-                        BigQuery destination for validation results. Defaults to stdout.
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
+                        Specify a BigQuery or PostgreSQL connection name as destination for validation results.
+                        Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
+                        This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--filters SOURCE_FILTER:TARGET_FILTER]
@@ -278,9 +286,12 @@ data-validation
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                         Comma separated list of primary key columns, when not specified the value will be inferred
                         from the source or target table if available.  See *Primary Keys* section
-  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
-                        BigQuery destination for validation results. Defaults to stdout.
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
+                        Specify a BigQuery or PostgreSQL connection name as destination for validation results.
+                        Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
+                        This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--parts-per-file INT], [-ppf INT]
@@ -324,9 +335,12 @@ data-validation
                         Comma separated list of tables in the form schema.table=target_schema.target_table. Or shorthand schema.* for all tables.
                         Target schema name and table name are optional.
                         e.g.: 'bigquery-public-data.new_york_citibike.citibike_trips'
-  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
-                        BigQuery destination for validation results. Defaults to stdout.
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
+                        Specify a BigQuery or PostgreSQL connection name as destination for validation results.
+                        Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
+                        This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
@@ -384,9 +398,12 @@ data-validation
   [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
-  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
-                        BigQuery destination for validation results. Defaults to stdout.
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
+                        Specify a BigQuery or PostgreSQL connection name as destination for validation results.
+                        Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
+                        This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
@@ -453,9 +470,12 @@ data-validation
                        Common column between source and target queries for join
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded from hash or concat instead of included.
-  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
-                        BigQuery destination for validation results. Defaults to stdout.
+  [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
+                        Specify a BigQuery or PostgreSQL connection name as destination for validation results.
+                        Also supports legacy BigQuery format BQ_PROJECT_ID.DATASET.TABLE.
                         See: *Validation Reports* section
+  [--bq-result-handler or -bqrh PROJECT_ID.DATASET.TABLE or CONNECTION_NAME.DATASET.TABLE]
+                        This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
   [--config-file or -c CONFIG_FILE]
@@ -507,6 +527,11 @@ For example, this flag can be used as follows:
     "target_query": "SELECT `hash__all`, `station_id`\nFROM ..."
 }
 ```
+#### Running DVT at on-prem
+On-premises environments can have limited access to GCP services. DVT supports using BigQuery for storing validation results, GCS for storage and
+the Secret Manager for secrets. You may also use BigQuery and Spanner as a source or target for validation. Service
+APIs (i.e. bigquery.googleapis.com) may not always be accessible due to firewall restrictions. Work with your network
+adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoint](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). DVT supports accessing source and target tables in Spanner and BigQuery via endpoints set up in your network. Connection Parameters for [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner) and [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery) outline regarding how to specify endpoints.
 
 ### Running DVT with YAML Configuration Files
 
@@ -565,20 +590,40 @@ The `--config-dir` flag will specify the directory with the YAML files to be exe
 
 ### Validation Reports
 
-The result handlers tell DVT where to store the results of
-each validation. The tool can write the results of a validation run to Google
-BigQuery or print to stdout (default). View the schema of the results
-table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+The result handlers tell DVT where to store the results of each validation. The
+tool can write the results of a validation run to Google BigQuery, PostgreSQL
+or print to stdout (default). View the schema of the results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
 
-To output to BigQuery, simply include the `-bqrh` flag during a validation run
-like so:
+To output to BigQuery or PostgreSQL, simply include the `-rh` flag during a validation run including
+the schema and table name for the results.
+
+BigQuery example by connection name:
+```shell
+data-validation validate column \
+  -sc bq_conn \
+  -tc bq_conn \
+  -tbls bigquery-public-data.new_york_citibike.citibike_trips \
+  -rh bq_conn.dataset.results_table \
+  -sa 'service-acct@project.iam.gserviceaccount.com'
 ```
-data-validation validate column
-  -sc bq_conn
-  -tc bq_conn
-  -tbls bigquery-public-data.new_york_citibike.citibike_trips
-  -bqrh project_id.dataset.table
-  -sa service-acct@project.iam.gserviceaccount.com
+
+BigQuery example by project name:
+```shell
+data-validation validate column \
+  -sc bq_conn \
+  -tc bq_conn \
+  -tbls bigquery-public-data.new_york_citibike.citibike_trips \
+  -rh bq-project-id.dataset.results_table \
+  -sa 'service-acct@project.iam.gserviceaccount.com'
+```
+
+PostgreSQL example:
+```shell
+data-validation validate column \
+  -sc ora_conn \
+  -tc pg_conn1 \
+  -tbls my_schema.some_table \
+  -rh pg_conn2.dvt_schema.results_table
 ```
 
 ### Ad Hoc SQL Exploration
@@ -611,7 +656,7 @@ target. The `find-tables` command:
 
 Note that our default value for the `score-cutoff` parameter is 1 and it seeks for identical matches. If no matches occur, reduce this value as deemed necessary. By using smaller numbers such as 0.7, 0.65 etc you can get more matches. For reference, we make use of [this jaro_similarity method](https://jamesturk.github.io/jellyfish/functions/#jaro-similarity) for the string comparison.
 
-```
+```shell
 data-validation find-tables --source-conn source --target-conn target \
     --allowed-schemas pso_data_validator \
     --score-cutoff 1

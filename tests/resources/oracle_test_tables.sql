@@ -71,6 +71,54 @@ COMMIT;
 CREATE VIEW pso_data_validator.dvt_core_types_vw AS
 SELECT * FROM pso_data_validator.dvt_core_types;
 
+ /* Following table used for validating generating table partitions  version 2*/
+DROP TABLE pso_data_validator.test_generate_partitions_v2 ;
+CREATE TABLE pso_data_validator.test_generate_partitions_v2 (
+        course_id VARCHAR(12),
+        quarter_id INTEGER,
+        recd_timestamp TIMESTAMP,
+        registration_date DATE,
+        approved CHAR(1),
+        grade NUMERIC,
+        PRIMARY KEY (course_id, quarter_id, recd_timestamp, registration_date, approved));
+COMMENT ON TABLE pso_data_validator.test_generate_partitions_v2 IS 'Table for testing generate table partitions,
+  consists of 32 rows with a composite primary key string, integer - because Oracle does not support date (without time) and boolean data types
+  Quoted Strings are handled correctly';
+
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG001', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG001', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG001', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG001', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'N', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG003', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG003', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG003', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG003', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'N', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG002', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG002', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG002  t0.', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG002', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'N', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG004', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG004', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG004', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG004', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'N', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. John''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. John''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. John''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. John''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'N', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Jude''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Jude''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Jude''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Jude''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'N', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Edward''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Edward''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Edward''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Edward''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 'N', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'Y', 3.5);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 'N', 2.8);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'Y', 2.1);
+INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 'N', 3.5);
+
+
 DROP TABLE pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null
 (   col_nn             TIMESTAMP(0) NOT NULL
@@ -306,7 +354,7 @@ COMMIT;
 
 DROP TABLE pso_data_validator.dvt_many_cols;
 CREATE TABLE pso_data_validator.dvt_many_cols
-( id NUMBER(5)
+( id NUMBER(5) NOT NULL PRIMARY KEY
 , col_001 VARCHAR2(2)
 , col_002 VARCHAR2(2)
 , col_003 VARCHAR2(2)
@@ -781,6 +829,8 @@ COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table 
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 (1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
 ,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+-- NULL in all columns.
+INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
 COMMIT;
 
 DROP TABLE pso_data_validator.dvt_tricky_strings;
@@ -812,4 +862,18 @@ CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
 );
 COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
+COMMIT;
+
+DROP TABLE pso_data_validator.dvt_decimals_no_precision;
+CREATE TABLE pso_data_validator.dvt_decimals_no_precision (
+  id              NUMBER(5) NOT NULL PRIMARY KEY
+, col_zero        NUMBER
+, col_trail_zero  NUMBER
+, col_negative    NUMBER
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals_no_precision IS 'Integration test table used to test decimals without a precision or scale.';
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (1,0,99.785,-1.01);
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (2,0,98.015,-1.01);
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (3,0,92.25,-1.01);
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES (4,0,92.75,-1.01);
 COMMIT;

@@ -27,6 +27,8 @@ import pandas
 
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
+
+from third_party.ibis.ibis_bigquery.api import bigquery_connect
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
@@ -111,23 +113,41 @@ def get_google_bigquery_client(
     )
 
 
+def _get_google_bqstorage_client(credentials=None, api_endpoint: str = None):
+    options = None
+    if api_endpoint:
+        options = client_options.ClientOptions(api_endpoint=api_endpoint)
+    from google.cloud import bigquery_storage_v1 as bigquery_storage
+
+    return bigquery_storage.BigQueryReadClient(
+        credentials=credentials,
+        client_options=options,
+    )
+
+
 def get_bigquery_client(
-    project_id: str, dataset_id: str = "", credentials=None, api_endpoint: str = None
+    project_id: str,
+    dataset_id: str = "",
+    credentials=None,
+    api_endpoint: str = None,
+    storage_api_endpoint: str = None,
 ):
     google_client = get_google_bigquery_client(
         project_id, credentials=credentials, api_endpoint=api_endpoint
     )
+    bqstorage_client = None
+    if storage_api_endpoint:
+        bqstorage_client = _get_google_bqstorage_client(
+            credentials=credentials, api_endpoint=storage_api_endpoint
+        )
 
-    ibis_client = ibis.bigquery.connect(
+    return bigquery_connect(
         project_id=project_id,
         dataset_id=dataset_id,
         credentials=credentials,
+        bigquery_client=google_client,
+        bqstorage_client=bqstorage_client,
     )
-
-    # Override the BigQuery client object to ensure the correct user agent is
-    # included and any api_endpoint is used.
-    ibis_client.client = google_client
-    return ibis_client
 
 
 def get_pandas_client(table_name, file_path, file_type):
@@ -241,7 +261,7 @@ def list_tables(client, schema_name, tables_only=True):
         if tables_only and client.name != "pandas"
         else client.list_tables
     )
-    if client.name in ["db2", "mssql", "redshift", "snowflake", "pandas"]:
+    if client.name in ["db2", "redshift", "snowflake", "pandas"]:
         return fn()
     return fn(database=schema_name)
 
@@ -369,16 +389,16 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
 
 
 CLIENT_LOOKUP = {
-    "BigQuery": get_bigquery_client,
-    "Impala": impala_connect,
-    "MySQL": ibis.mysql.connect,
-    "Oracle": oracle_connect,
-    "FileSystem": get_pandas_client,
-    "Postgres": ibis.postgres.connect,
-    "Redshift": redshift_connect,
-    "Teradata": teradata_connect,
-    "MSSQL": mssql_connect,
-    "Snowflake": snowflake_connect,
-    "Spanner": spanner_connect,
-    "DB2": db2_connect,
+    consts.SOURCE_TYPE_BIGQUERY: get_bigquery_client,
+    consts.SOURCE_TYPE_IMPALA: impala_connect,
+    consts.SOURCE_TYPE_MYSQL: ibis.mysql.connect,
+    consts.SOURCE_TYPE_ORACLE: oracle_connect,
+    consts.SOURCE_TYPE_FILESYSTEM: get_pandas_client,
+    consts.SOURCE_TYPE_POSTGRES: ibis.postgres.connect,
+    consts.SOURCE_TYPE_REDSHIFT: redshift_connect,
+    consts.SOURCE_TYPE_TERADATA: teradata_connect,
+    consts.SOURCE_TYPE_MSSQL: mssql_connect,
+    consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
+    consts.SOURCE_TYPE_SPANNER: spanner_connect,
+    consts.SOURCE_TYPE_DB2: db2_connect,
 }

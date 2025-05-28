@@ -41,7 +41,7 @@ CONFIG_RUNNER_ARGS_1 = {
     "command": "configs",
     "validation_config_cmd": "run",
     "dry_run": False,
-    "config_file": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations/first.yaml",
+    "config_file": "gs://pso-project/resources/test/unit/test__main/3validations/first.yaml",
     "config_dir": None,
     "kube_completions": True,
 }
@@ -61,7 +61,7 @@ CONFIG_RUNNER_ARGS_3 = {
     "command": "configs",
     "kube_completions": True,
     "validation_config_cmd": "run",
-    "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/4partitions",
+    "config_dir": "gs://pso-project/resources/test/unit/test__main/4partitions",
 }
 CONFIG_RUNNER_ARGS_4 = {
     "verbose": False,
@@ -158,13 +158,14 @@ CONNECTION_ADD_ARGS = {
     "log_level": "INFO",
     "command": "connections",
     "connect_cmd": "add",
-    "connect_type": "BigQuery",
+    "connect_type": consts.SOURCE_TYPE_BIGQUERY,
     consts.SECRET_MANAGER_TYPE: "gcp",
     consts.SECRET_MANAGER_PROJECT_ID: "dummy-gcp-project",
     consts.PROJECT_ID: "dummy-gcp-project",
     consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH: None,
     "connection_name": "dummy-bq-connection",
-    "api_endpoint": None,
+    consts.API_ENDPOINT: None,
+    consts.STORAGE_API_ENDPOINT: None,
 }
 CONNECTION_DESCRIBE_ARGS = {
     "verbose": False,
@@ -186,13 +187,13 @@ BROKEN_CONNECTION_CONFIG_INCORRECT_COMMAND = {
     "log_level": "INFO",
     "command": "connections",
     "connect_cmd": "incorrectconnectioncommand",
-    "connect_type": "BigQuery",
+    "connect_type": consts.SOURCE_TYPE_BIGQUERY,
     consts.SECRET_MANAGER_TYPE: "gcp",
     consts.SECRET_MANAGER_PROJECT_ID: "dummy-gcp-project",
     consts.PROJECT_ID: "dummy-gcp-project",
     consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH: None,
     "connection_name": "dummy-bq-connection",
-    "api_endpoint": None,
+    consts.API_ENDPOINT: None,
 }  # same as CONNECTION_ADD_ARGS but with the command item replaced
 FIND_TABLES_ARGS = {
     "verbose": False,
@@ -224,7 +225,7 @@ QUERY_CONFIG = {
 
 
 class MockIbisClient(object):
-    _source_type = "BigQuery"
+    _source_type = consts.SOURCE_TYPE_BIGQUERY
     name = "bigquery"
 
 
