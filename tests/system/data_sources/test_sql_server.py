@@ -293,7 +293,9 @@ def test_schema_validation_core_types_to_bigquery():
             # All SQL Server integers go to BigQuery INT64.
             "int8:int64,int16:int64,int32:int64,"
             # BigQuery does not have a float32 type.
-            "float32:float64"
+            "float32:float64,",
+            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
+            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
         ),
     )
 
@@ -312,6 +314,8 @@ def test_schema_validation_not_null_vs_nullable():
             "-sc=sql-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
+            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
+            "--allow-list=timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -376,8 +380,7 @@ def test_column_validation_tricky_dates_to_bigquery():
 )
 def test_column_validation_large_decimals_to_bigquery():
     """SQL Server to BigQuery dvt_large_decimals column validation."""
-    # TODO When issue-1079 is complete add col_dec_38_30 to --hash string below.
-    cols = "col_dec_18,col_dec_38,col_dec_38_9"
+    cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
     column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
@@ -467,8 +470,7 @@ def test_row_validation_large_decimals_to_bigquery():
     row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
-        # TODO When issue-1079 is complete add col_dec_38_30 to --hash string below.
-        hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9",
+        hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
     )
 
 
@@ -629,7 +631,6 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
 )
 def test_find_tables():
     """SQL Server to BigQuery test of find-tables command."""
-    pytest.skip("Skipping test_find_tables until issue 1198 has been resolved.")
     find_tables_test()
 
 
