@@ -14,7 +14,7 @@ DVT (and Python) default to using variable length character strings encoded in U
 | --- | --- | --- | --- |
 | AlloyDB | See Postgres | See Postgres | See Postgres |
 | BigQuery | STRING | None | All stored in UTF8 |
-| DB2 | CHAR, VARCHAR | | CHAR datatype is padded; Encoding specified per database |
+| Db2 | CHAR, VARCHAR | | CHAR datatype is padded; Encoding specified per database |
 | Hive | STRING, CHAR, VARCHAR | | CHAR datatype is padded; Encoding specified per table |
 | Impala | CHAR, VARCHAR | | CHAR datatype is padded; Stored as UTF8 |
 | MSSQL | CHAR, VARCHAR | NCHAR, NVARCHAR |CHAR datatype is padded; Encoding for CHAR/VARCHAR specified at server, database, table and column level; Encoding for NCHAR/NVARCHAR limited to UTF16 or UCS-2 at the database level |
@@ -27,7 +27,7 @@ DVT (and Python) default to using variable length character strings encoded in U
 | Teradata | char, varchar | None |Shorter of two strings is padded during comparison per SQL-92 standard; Encoding and collation specified at the column level |
 
 ## Handling fixed and variable length character strings
-DVT (Python) strings have variable length. Some databases (BigQuery, Spanner, Snowflake) do not support fixed length strings. Trailing blanks are not semantically significant in fixed length strings and are semantically significant in variable length strings. Therefore to correctly compare a string from a source database (say postgres) with a string in BigQuery, DVT must remove trailing blanks if the data type is fixed length string. DVT must not remove trailing blanks if the data type is variable length string. An [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1422) has been opened.
+DVT (Python) strings have variable length. Some databases (BigQuery, Spanner, Snowflake) do not support fixed length strings. Trailing blanks are not semantically significant in fixed length strings and are semantically significant in variable length strings. Therefore to correctly compare a string from a source database (say Postgres) with a string in BigQuery, DVT must remove trailing blanks if the data type is fixed length string. DVT must not remove trailing blanks if the data type is variable length string. An [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1422) has been opened.
 
 Fortunately, most databases trim trailing blanks when a fixed length string is cast to a variable length string. So the statement SELECT CAST(CAST('ABCD' AS CHAR(10)) AS VARCHAR(10)) produces 'ABCD'. Therefore in most databases, DVT can cast a string column to VARCHAR without considering whether the string column is of fixed length (and needs trailing blanks removed) or variable length (no character removal required). The database will return the correct result.  
 
@@ -35,11 +35,11 @@ There are a few databases (Db2, Microsoft SQL Server and Oracle) where trailing 
 
 ## Handling ASCII, Latin-1 and Unicode character sets
 
-The DVT test suite has tests for Latin and Asian characters (dvt-pangrams) represented in UTF-8 for all databases except DB2. See [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1425). These tests pass. Therefore DVT correctly processes string data stored in UTF-8 across the databases.
+The DVT test suite has tests for Latin and Asian characters (dvt-pangrams) represented in UTF-8 for all databases except Db2. See [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1425). These tests pass. Therefore DVT correctly processes string data stored in UTF-8 across the databases.
 
-For databases where the encoding can only be set at the database or server level (Oracle, DB2 and Postgres) we need to test with a database with a different encoding (e.g. ISO-8859-1), store Latin characters in it and compare it against the same strings stored in BQ. A separate [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1423) has been opened.
+For databases where the encoding can only be set at the database or server level (Oracle, Db2 and Postgres) we need to test with a database with a different encoding (e.g. ISO-8859-1), store Latin characters in it and compare it against the same strings stored in BigQuery. A separate [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1423) has been opened.
 
-For Hive, MySQl and Microsoft SQL Server the encoding can be set at the table level, create a table with ISO-8859-1 encoding, store Latin characters in it and compare against the same strings stored in BQ. A separate [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1424) has been opened.
+For Hive, MySQl and Microsoft SQL Server the encoding can be set at the table level, create a table with ISO-8859-1 encoding, store Latin characters in it and compare against the same strings stored in BigQuery. A separate [issue](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1424) has been opened.
 
 DVT correctly handles Teradata strings encoded in ISO-8859 (Latin) encoding [PR 1226](https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/1226)
 
