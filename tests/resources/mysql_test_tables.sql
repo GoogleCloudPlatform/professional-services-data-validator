@@ -171,7 +171,7 @@ DROP TABLE IF EXISTS `pso_data_validator`.`dvt_varchar_id`
 CREATE TABLE `pso_data_validator`.`dvt_varchar_id`
 (   id          varchar(15) NOT NULL
 ,   other_data  varchar(100)
-) OPTIONS (description='Integration test table used to test variable length string, trailing blanks are significant');
+) COMMENT='Integration test table used to test variable length string, trailing blanks are significant';
 INSERT INTO `pso_data_validator`.`dvt_varchar_id` VALUES
 ('DVT-key-1', 'Row 1'),
 ('DVT-key-2', 'Row 2'),
@@ -183,7 +183,7 @@ DROP TABLE IF EXISTS `pso_data_validator`.`dvt_fixed_char_id`
 CREATE TABLE `pso_data_validator`.`dvt_fixed_char_id`
 (   id          char(6) NOT NULL
 ,   other_data  varchar(100)
-) OPTIONS (description='Integration test table used to test fixed char primary key - trailing blanks are not significant');
+) COMMENT='Integration test table used to test fixed char primary key - trailing blanks are not significant';
 INSERT INTO `pso_data_validator`.`dvt_fixed_char_id` VALUES
 ('DVT1', 'Row 1	  '),
 ('DVT2', 'Row 2  	'),

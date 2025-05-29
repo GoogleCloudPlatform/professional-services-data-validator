@@ -424,7 +424,6 @@ def id_column_row_validation_test(
     hash: str = "id,other_data",
     comp_fields: str = None,
     use_randow_row: bool = True,
-    trim_string_pks: bool = False,
 ):
     """Specific row validation test for primary key data type tests"""
     parser = cli_tools.configure_arg_parser()
@@ -442,12 +441,26 @@ def id_column_row_validation_test(
         col_option,
         "--use-random-row" if use_randow_row else None,
         "--random-row-batch-size=5" if use_randow_row else None,
-        "--trim-string-pks" if trim_string_pks else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     id_type_test_assertions(df)
+
+
+def fixed_char_varchar_test(
+    tables: tuple[str, str] = (
+        "pso_data_validator.dvt_fixed_char_id",
+        "pso_data_validator.dvt_varchar_id",
+    ),
+):
+    """Row validation test for fixed and variable length character types as primary keys"""
+    id_column_row_validation_test(
+        tables[0],
+    )
+    id_column_row_validation_test(
+        tables[1],
+    )
 
 
 def partition_table_test(

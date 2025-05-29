@@ -15,7 +15,6 @@ from copy import deepcopy
 import logging
 from typing import TYPE_CHECKING
 
-import ibis.backends.base
 from data_validation import consts, metadata
 from data_validation.clients import get_max_in_list_size
 from data_validation.query_builder.query_builder import (
@@ -94,7 +93,7 @@ class ValidationBuilder(object):
 
     @staticmethod
     def is_padded_char(
-        client: ibis.backends.base.BaseBackend,
+        client: "ibis.backends.base.BaseBackend",
         raw_column_metadata: dict,
         column_name: str,
     ) -> bool:

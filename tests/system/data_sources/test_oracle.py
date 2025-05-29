@@ -638,7 +638,6 @@ def test_row_validation_fixed_char_pk_to_bigquery():
     """
     id_column_row_validation_test(
         "pso_data_validator.dvt_fixed_char_id",
-        use_randow_row=False,
     )
 
 
