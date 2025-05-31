@@ -26,6 +26,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test_config_managers,
     find_tables_test,
     id_column_row_validation_test,
+    fixed_char_varchar_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -631,28 +632,9 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_fixed_char_pk_to_bigquery():
-    """Oracle to BigQuery dvt_fixed_char_id row validation.
-    This is testing CHAR primary key join columns.
-    Random rows don't play well with fixed char pk columns see https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1471
-    """
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_fixed_char_id",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_varchar_pk_to_bigquery():
-    """Oracle to BigQuery dvt_varchar_id row validation.
-    This is testing CHAR primary key join columns.
-    Includes random row filter test.
-    """
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_varchar_id",
-    )
+def test_fixed_variable_char_pk_to_bigquery():
+    """Test fixed and variable char primary keys"""
+    fixed_char_varchar_test()
 
 
 @mock.patch(

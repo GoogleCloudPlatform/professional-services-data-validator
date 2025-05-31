@@ -290,27 +290,38 @@ class ValidationBuilder(object):
         alias = primary_key.get(consts.CONFIG_FIELD_ALIAS)
         cast = primary_key.get(consts.CONFIG_CAST)
         config_manager = self.config_manager
-        trim = False
-        if config_manager.source_table:  # Not a custom query
-            table = config_manager.get_source_ibis_table()
-            if table[source_field_name].type().is_string():
-                trim = self.is_padded_char(
-                    config_manager.source_client,
-                    config_manager.get_source_raw_data_types(),
-                    source_field_name,
-                )
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.config_manager.get_source_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_source_ibis_table()
+        # If a string is padded, it will need to be trimmed
+        trim = (
+            self.is_padded_char(
+                config_manager.source_client,
+                config_manager.get_source_raw_data_types(),
+                source_field_name,
+            )
+            if table[source_field_name].type().is_string()
+            else False
+        )
         source_field = ComparisonField(
             field_name=source_field_name, alias=alias, cast=cast, trim=trim
         )
-        trim = False
-        if config_manager.target_table:  # Not a custom query
-            table = config_manager.get_target_ibis_table()
-            if table[target_field_name].type().is_string():
-                trim = self.is_padded_char(
-                    config_manager.target_client,
-                    config_manager.get_target_raw_data_types(),
-                    target_field_name,
-                )
+
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.config_manager.get_target_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_target_ibis_table()
+        # If a string is padded, it will need to be trimmed
+        trim = (
+            self.is_padded_char(
+                config_manager.target_client,
+                config_manager.get_target_raw_data_types(),
+                target_field_name,
+            )
+            if table[target_field_name].type().is_string()
+            else False
+        )
         target_field = ComparisonField(
             field_name=target_field_name, alias=alias, cast=cast, trim=trim
         )

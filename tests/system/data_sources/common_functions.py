@@ -448,6 +448,35 @@ def id_column_row_validation_test(
     id_type_test_assertions(df)
 
 
+def id_column_query_row_validation_test(
+    tables: str,
+    tc: str = "bq-conn",
+    hash: str = "id,other_data",
+    comp_fields: str = None,
+):
+    """Specific custom query row validation test for primary key data type tests"""
+    parser = cli_tools.configure_arg_parser()
+    if comp_fields:
+        col_option = f"--comparison-fields={comp_fields}"
+    else:
+        col_option = f"--hash={hash}"
+    cli_arg_list = [
+        "validate",
+        "custom-query",
+        "row",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-sq=SELECT * FROM {tables.split('=')[0]}",
+        f"-tq=SELECT * FROM {tables.split('=')[1] if '=' in tables else tables.split('=')[0]}",
+        "--primary-keys=id",
+        col_option,
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
 def fixed_char_varchar_test(
     tables: tuple[str, str] = (
         "pso_data_validator.dvt_fixed_char_id",
@@ -459,6 +488,12 @@ def fixed_char_varchar_test(
         tables[0],
     )
     id_column_row_validation_test(
+        tables[1],
+    )
+    id_column_query_row_validation_test(
+        tables[0],
+    )
+    id_column_query_row_validation_test(
         tables[1],
     )
 
