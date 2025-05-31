@@ -14,7 +14,7 @@
 
 import json
 import string
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple # Build is still on Python 3.8
 import pathlib
 
 from data_validation import __main__ as main
@@ -478,7 +478,7 @@ def id_column_query_row_validation_test(
 
 
 def fixed_char_varchar_test(
-    tables: tuple[str, str] = (
+    tables: Tuple[str, str] = (
         "pso_data_validator.dvt_fixed_char_id",
         "pso_data_validator.dvt_varchar_id",
     ),
