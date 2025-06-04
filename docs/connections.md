@@ -184,7 +184,7 @@ data-validation connections add
 ## Oracle
 
 Please note the Oracle package is not installed by default. You will need to follow [python-oracledb](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
-Then `pip install oracledb`.
+Then `pip install oracledb`. DVT uses oracledb in Thin Mode which permits TLS and mTLS connections. Differences between Thin and Thick mode are [discussed in the docs](https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_b.html#)
 
 ```
 data-validation connections add
@@ -196,7 +196,7 @@ data-validation connections add
     --user USER                                         Oracle user
     --password PASSWORD                                 Oracle password
     --database DATABASE                                 Oracle database
-    [--url URL]                                         SQLAlchemy connection URL
+    [--connect-params CONNECT_PARAMS]                   Additional oracledb ConnectParams
 ```
 
 ### Oracle User permissions to run DVT
@@ -205,18 +205,18 @@ data-validation connections add
 * READ or SELECT on any tables to be validated
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
-### Using an Oracle wallet
+### Using TLS, mTLS connections or running DVT within a container
 
-After creating an Oracle wallet and supporting configuration you can add the connection using the `--url` option, remembering to set `TNS_ADMIN` correctly before doing so. For example:
+oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the config as a python dict as stated [here](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set_from_config).
 
-```sh
-export TNS_ADMIN=/opt/dvt/dvt_tns_admin
+For setting up a TLS connection specify the configuration directory where `tnsnames.ora` is located, the wallet directory where `ewallet.pem` is located and the distinguished name of the server. For example, the --connect-params parameter can be specified as follows:
 
-data-validation connections add \
- --connection-name ora_secure Oracle \
- --url="oracle+cx_oracle://@dvt_prod_db"
 ```
-
+data-validation connections add \
+ --connection-name ora_secure Oracle --host <hostname> ... --database <database>\
+ --connect-params='{"pyo": { "wallet_password": <password>, "wallet_location": <wallet-dir>, "config_dir": <config-dir>, "ssl_server_cert_dn": <distinguished-name>}}'
+```
+In order to connect to an Oracle database when DVT is running in a container, you may need to specify  `"disable_oob": True,` as one of the key value pairs in the connect-params dictionary.
 ## MSSQL Server
 
 MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.

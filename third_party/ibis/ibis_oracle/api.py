@@ -23,7 +23,7 @@ def oracle_connect(
     port: int = 1521,
     database: str = None,
     protocol: str = "TCP",
-    url: str = None,
+    connect_params: str = None,
     driver: Literal["oracledb"] = "oracledb",
 ):
     backend = OracleBackend()
@@ -34,7 +34,7 @@ def oracle_connect(
         password=password,
         database=database,
         protocol=protocol,
-        url=url,
+        connect_params=connect_params,
         driver=driver,
     )
     return backend

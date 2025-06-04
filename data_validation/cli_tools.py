@@ -98,7 +98,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to"],
-        ["url", "Oracle SQLAlchemy connection URL"],
+        ["connect_params", "(Optional) Additional oracledb ConnectParams"],
     ],
     consts.SOURCE_TYPE_MSSQL: [
         ["host", "Desired SQL Server host (default localhost)"],
