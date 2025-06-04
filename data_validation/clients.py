@@ -73,11 +73,11 @@ except Exception:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
 
-# Oracle requires cx_Oracle driver
+# Oracle requires python-oracldb driver
 try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
 except Exception:
-    oracle_connect = _raise_missing_client_error("pip install cx_Oracle")
+    oracle_connect = _raise_missing_client_error("pip install oracledb")
 
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:

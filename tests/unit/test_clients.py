@@ -78,13 +78,13 @@ def test_import_oracle_client():
     try:
         from third_party.ibis.ibis_oracle.api import oracle_connect  # noqa: F401
     except ModuleNotFoundError as e:
-        # If we cannot import the Oracle api then assert cx_Oracle is mentioned in the exception text.
-        assert "No module named 'cx_Oracle'" in str(e)
+        # If we cannot import the Oracle api then assert oracledb is mentioned in the exception text.
+        assert "No module named 'oracledb'" in str(e)
 
 
 def test_get_oracle_data_client():
     with pytest.raises(
-        exceptions.DataClientConnectionFailure, match=r".*pip install cx_Oracle"
+        exceptions.DataClientConnectionFailure, match=r".*pip install oracledb"
     ):
         clients.get_data_client(ORACLE_CONN_CONFIG)
 
