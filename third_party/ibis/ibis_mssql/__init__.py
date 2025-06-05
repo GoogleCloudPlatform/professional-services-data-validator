@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, List, Tuple
 
 import sqlalchemy as sa
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
@@ -109,6 +109,28 @@ class Backend(BaseAlchemyBackend):
         with self.begin() as con:
             result = con.exec_driver_sql(list_pk_col_sql, parameters=(database, table))
             return [_[0] for _ in result.cursor.fetchall()]
+
+    def raw_column_metadata_not_implemented(
+        self, database: str = None, table: str = None, query: str = None
+    ) -> List[Tuple]:
+        """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
+        Partner method to _metadata that retains raw data type information instead of converting
+        to Ibis types.  This works in the same way as _metadata by running a query over the DVT
+        source, either schema.table or a custom query, and fetching the metadata using sp_describe_first_result_set.
+
+        THIS METHOD IS NOT IMPLEMENTED YET.
+        There is a related pyodbc issue https://github.com/mkleehammer/pyodbc/issues/167
+
+        Returns:
+            list: A list of tuples containing the standard 7 DB API fields:
+                  https://peps.python.org/pep-0249/#description
+        """
+        return ()
+
+    def is_char_type_padded(self, char_type: Tuple) -> bool:
+        """Define this method if the backend supports character/string types that are padded and returns
+        padded values, which DVT may want to trim"""
+        return char_type[0] in ["char", "nchar"]
 
     def list_databases(self, schema=None):
         schema_like = f"%{schema or ''}%"

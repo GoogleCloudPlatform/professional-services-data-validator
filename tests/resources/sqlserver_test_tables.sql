@@ -174,6 +174,30 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-3' AS binary), 3
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS binary), 4, 'Row 4');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS binary), 5, 'Row 5');
 
+DROP TABLE pso_data_validator.dvt_fixed_char_id;
+CREATE TABLE pso_data_validator.dvt_fixed_char_id
+(   id          CHAR(6) NOT NULL PRIMARY KEY
+,   other_data  CHAR(100)
+);
+execute sp_addextendedproperty 'Comment', 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_fixed_char_id';
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
+
+DROP TABLE pso_data_validator.dvt_varchar_id;
+CREATE TABLE pso_data_validator.dvt_varchar_id
+(   id          VARCHAR(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+execute sp_addextendedproperty 'Comment', 'Integration test table used to test varchar pk matching. Trailing blanks are significant', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_varchar_id';
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-4 ', 'Row 4');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-5', 'Row 5');
+
 DROP TABLE pso_data_validator.dvt_datetime_id;
 CREATE TABLE pso_data_validator.dvt_datetime_id
 (   id          datetime2(0) NOT NULL PRIMARY KEY

@@ -162,25 +162,68 @@ class DataValidation(object):
                 **{source_pk_column: query[source_pk_column].cast("string")}
             )
 
-        if self.config_manager.trim_string_pks():
+        # If the primary key is a padded string, then update the query to ensure the string
+        # is rstripped in the results.
+        if query[
+            source_pk_column
+        ].type().is_string() and ValidationBuilder.is_padded_char(
+            self.config_manager.source_client,
+            self.config_manager.get_source_raw_data_types(),
+            source_pk_column,
+        ):
             query = query.mutate(**{source_pk_column: query[source_pk_column].rstrip()})
 
         random_rows = self.config_manager.source_client.execute(query)
         if len(random_rows) == 0:
             return
 
-        random_values = list(random_rows[source_pk_column])
+        source_values = target_values = list(random_rows[source_pk_column])
         if binary_conversion_required:
             # For binary ids we have a list of hex strings for our IN list.
             # Each of these needs to be cast back to binary.
-            random_values = [ibis.literal(_).cast("binary") for _ in random_values]
+            target_values = source_values = [
+                ibis.literal(_).cast("binary") for _ in source_values
+            ]
+        elif query[source_pk_column].type().is_string():
+            # If the source or client is Oracle and the character type is padded, we need to
+            # ljust the string to the padded length because the adapter passes string literals as
+            # VARCHAR and oracle uses "Non padded semantics" for comparison
+            # see https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Data-Type-Comparison-Rules.html#GUID-A114F1F4-A08D-4107-B679-323DC7FEA31C
+            if (
+                self.config_manager.source_client.name == "oracle"
+                and ValidationBuilder.is_padded_char(
+                    self.config_manager.source_client,
+                    self.config_manager.get_source_raw_data_types(),
+                    source_pk_column,
+                )
+            ):
+                char_length = self.config_manager.get_source_raw_data_types()[
+                    source_pk_column
+                ][2]
+                source_values = [
+                    key_value.ljust(char_length) for key_value in source_values
+                ]
+            if (
+                self.config_manager.target_client.name == "oracle"
+                and ValidationBuilder.is_padded_char(
+                    self.config_manager.target_client,
+                    self.config_manager.get_target_raw_data_types(),
+                    target_pk_column,
+                )
+            ):
+                char_length = self.config_manager.get_target_raw_data_types()[
+                    target_pk_column
+                ][2]
+                target_values = [
+                    key_value.ljust(char_length) for key_value in source_values
+                ]
 
         filter_field = {
             consts.CONFIG_TYPE: consts.FILTER_TYPE_ISIN,
             consts.CONFIG_FILTER_SOURCE_COLUMN: source_pk_column,
-            consts.CONFIG_FILTER_SOURCE_VALUE: random_values,
+            consts.CONFIG_FILTER_SOURCE_VALUE: source_values,
             consts.CONFIG_FILTER_TARGET_COLUMN: target_pk_column,
-            consts.CONFIG_FILTER_TARGET_VALUE: random_values,
+            consts.CONFIG_FILTER_TARGET_VALUE: target_values,
         }
 
         self.validation_builder.add_filter(filter_field)

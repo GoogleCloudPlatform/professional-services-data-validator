@@ -520,6 +520,11 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
         if clients.is_sqlalchemy_backend(config_manager.target_client)
         else None
     )
+    # Though trims string based primary key value has been deprecated, some yaml files may still have that property set.
+    if config_manager.trim_string_pks():
+        logging.warning(
+            "Trim String Primary Keys has been deprecated, validation results may vary"
+        )
     with DataValidation(
         config_manager.config,
         validation_builder=None,

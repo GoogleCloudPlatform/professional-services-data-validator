@@ -229,8 +229,6 @@ data-validation
                         Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
-  [--trim-string-pks, -tsp]
-                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
@@ -306,8 +304,6 @@ data-validation
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
-  [--trim-string-pks, -tsp]
-                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
@@ -489,8 +485,6 @@ data-validation
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
-  [--trim-string-pks, -tsp]
-                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```

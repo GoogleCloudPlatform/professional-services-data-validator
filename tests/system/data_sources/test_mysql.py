@@ -23,6 +23,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_test,
     id_column_row_validation_test,
+    id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -399,17 +400,36 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Test padded char primary key join columns.
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_fixed_char_id")
 
-    Note that this test will fail unless PAD_CHAR_TO_FULL_LENGTH SQL mode is enabled.
-    """
-    pytest.skip(
-        "Skipping test_row_validation_char_pk_to_bigquery because PAD_CHAR_TO_FULL_LENGTH SQL mode needs to be enabled."
-    )
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_char_id",
-    )
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 @mock.patch(

@@ -91,13 +91,18 @@ class ValidationBuilder(object):
         else:
             return FilterField.isin(column_name, in_list)
 
-    def _is_padded_char(
-        self,
+    @staticmethod
+    def is_padded_char(
         client: "ibis.backends.base.BaseBackend",
         raw_column_metadata: dict,
         column_name: str,
     ) -> bool:
-        # Clients only need to implement _is_char_type_padded method if they support padded strings.
+        """Returns true if the string column provided needs to be trimmed based on the backend.
+        Some databases automatically pad fixed length chars when storing them and returning the value, these
+        will need to be trimmed before comparison. Some databases - do not support
+        fixed length character strings (BQ, Spanner) or trim them before returning the value (mysql)
+        """
+        # Clients only need to implement _is_char_type_padded method if they pad strings
         return (
             (
                 client.is_char_type_padded(raw_column_metadata[column_name])
@@ -284,14 +289,43 @@ class ValidationBuilder(object):
         # grab calc field metadata
         alias = primary_key.get(consts.CONFIG_FIELD_ALIAS)
         cast = primary_key.get(consts.CONFIG_CAST)
-        trim = self.config_manager.trim_string_pks()
-        # check if valid calc field and return correct object
+        config_manager = self.config_manager
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.config_manager.get_source_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_source_ibis_table()
+        # If a string is padded, it will need to be trimmed
+        trim = (
+            self.is_padded_char(
+                config_manager.source_client,
+                config_manager.get_source_raw_data_types(),
+                source_field_name,
+            )
+            if table[source_field_name].type().is_string()
+            else False
+        )
         source_field = ComparisonField(
             field_name=source_field_name, alias=alias, cast=cast, trim=trim
+        )
+
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.config_manager.get_target_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_target_ibis_table()
+        # If a string is padded, it will need to be trimmed
+        trim = (
+            self.is_padded_char(
+                config_manager.target_client,
+                config_manager.get_target_raw_data_types(),
+                target_field_name,
+            )
+            if table[target_field_name].type().is_string()
+            else False
         )
         target_field = ComparisonField(
             field_name=target_field_name, alias=alias, cast=cast, trim=trim
         )
+        # check if valid calc field and return correct object
         self.source_builder.add_comparison_field(source_field)
         self.target_builder.add_comparison_field(target_field)
         self.primary_keys[alias] = primary_key
@@ -377,7 +411,7 @@ class ValidationBuilder(object):
     ) -> str:
         if calc_field[
             consts.CONFIG_TYPE
-        ] == consts.CALC_FIELD_LENGTH and self._is_padded_char(
+        ] == consts.CALC_FIELD_LENGTH and self.is_padded_char(
             client,
             raw_data_types,
             column_name,

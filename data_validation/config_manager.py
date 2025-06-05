@@ -176,8 +176,9 @@ class ConfigManager(object):
         return self.random_row_batch_size() if self.use_random_rows() else None
 
     def trim_string_pks(self):
-        """Return if the validation should trim string primary keys."""
-        return self._config.get(consts.CONFIG_TRIM_STRING_PKS) or False
+        # Even though trim_string_pks has been deprecated, some yaml files may have that config.
+        """Return if the validation should trim string primary keys, now deprecated"""
+        return self._config.get(consts.CONFIG_TRIM_STRING_PKS, False)
 
     def case_insensitive_match(self):
         """Return if the validation should perform a case insensitive match."""
@@ -518,7 +519,6 @@ class ConfigManager(object):
         result_handler_config=None,
         filter_config=None,
         filter_status=None,
-        trim_string_pks=None,
         case_insensitive_match=None,
         concat=None,
         hash=None,
@@ -551,7 +551,6 @@ class ConfigManager(object):
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
             consts.CONFIG_FILTER_STATUS: filter_status,
-            consts.CONFIG_TRIM_STRING_PKS: trim_string_pks,
             consts.CONFIG_CASE_INSENSITIVE_MATCH: case_insensitive_match,
             consts.CONFIG_ROW_CONCAT: concat,
             consts.CONFIG_ROW_HASH: hash,
