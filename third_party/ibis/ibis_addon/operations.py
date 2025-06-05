@@ -587,6 +587,9 @@ BigQueryExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
+AlchemyExprTranslator._registry[PaddedCharLength] = AlchemyExprTranslator._registry[
+    ops.StringLength
+]
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
 # Base length of padded string is the same as for a standard string.
@@ -605,6 +608,9 @@ if OracleExprTranslator:
     OracleExprTranslator._registry[ToChar] = sa_format_to_char
     OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
     OracleExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+    OracleExprTranslator._registry[PaddedCharLength] = OracleExprTranslator._registry[
+        ops.StringLength
+    ]
 
 PostgreSQLExprTranslator._registry[
     ops.HashBytes
@@ -633,6 +639,9 @@ MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
 MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
 # TODO Uncomment the line below when working on issue-1419.
 # MsSqlExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
+    ops.StringLength
+]
 
 MySQLExprTranslator._registry[ops.Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -643,6 +652,9 @@ MySQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 RedShiftExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_redshift
 RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
 RedShiftExprTranslator._registry[BinaryLength] = sa_format_binary_length
+RedShiftExprTranslator._registry[PaddedCharLength] = RedShiftExprTranslator._registry[
+    ops.StringLength
+]
 
 if Db2ExprTranslator:
     Db2ExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_db2
@@ -650,6 +662,9 @@ if Db2ExprTranslator:
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
     Db2ExprTranslator._registry[ops.Strftime] = strftime_db2
     Db2ExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+    Db2ExprTranslator._registry[PaddedCharLength] = Db2ExprTranslator._registry[
+        ops.StringLength
+    ]
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
 SpannerExprTranslator._registry[ops.HashBytes] = format_hashbytes_bigquery
@@ -659,6 +674,9 @@ if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
     TeradataExprTranslator._registry[ops.HashBytes] = format_hashbytes_teradata
     TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    TeradataExprTranslator._registry[
+        PaddedCharLength
+    ] = TeradataExprTranslator._registry[ops.StringLength]
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake

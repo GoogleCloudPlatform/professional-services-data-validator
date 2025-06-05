@@ -261,7 +261,7 @@ def list_tables(client, schema_name, tables_only=True):
         if tables_only and client.name != "pandas"
         else client.list_tables
     )
-    if client.name in ["db2", "mssql", "redshift", "snowflake", "pandas"]:
+    if client.name in ["db2", "redshift", "snowflake", "pandas"]:
         return fn()
     return fn(database=schema_name)
 

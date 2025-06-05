@@ -158,15 +158,6 @@ INSERT INTO pso_data_validator.dvt_binary VALUES
 ('DVT-key-4', 4, 'Row 4'),
 ('DVT-key-5', 5, 'Row 5');
 
-DROP TABLE IF EXISTS `pso_data_validator`.`dvt_char_id`;
-CREATE TABLE `pso_data_validator`.`dvt_char_id`
-(   id          char(6) NOT NULL PRIMARY KEY
-,   other_data  varchar(100)
-) COMMENT 'Integration test table used to test CHAR pk matching.';
-INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
-('DVT1', 'Row 1'), ('DVT2', 'Row 2'), ('DVT3', 'Row 3'),
-('DVT4', 'Row 4'), ('DVT5', 'Row 5');
-
 DROP TABLE IF EXISTS `pso_data_validator`.`dvt_datetime_id`;
 CREATE TABLE `pso_data_validator`.`dvt_datetime_id`
 (   id          datetime NOT NULL PRIMARY KEY
@@ -175,6 +166,30 @@ CREATE TABLE `pso_data_validator`.`dvt_datetime_id`
 INSERT INTO `pso_data_validator`.`dvt_datetime_id` VALUES
 ('2020-01-01 12:00:00', 'Row 1'), ('2020-02-01 12:00:00', 'Row 2'), ('2020-03-01 12:00:00', 'Row 3'),
 ('2020-04-01 12:00:00', 'Row 4'), ('2020-05-01 12:00:00', 'Row 5');
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_varchar_id`
+CREATE TABLE `pso_data_validator`.`dvt_varchar_id`
+(   id          varchar(15) NOT NULL
+,   other_data  varchar(100)
+) COMMENT='Integration test table used to test variable length string, trailing blanks are significant';
+INSERT INTO `pso_data_validator`.`dvt_varchar_id` VALUES
+('DVT-key-1', 'Row 1'),
+('DVT-key-2', 'Row 2'),
+('DVT-key-3', 'Row 3'),
+('DVT-key-4 ', 'Row 4'),
+('DVT-key-5', 'Row 5');
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_fixed_char_id`
+CREATE TABLE `pso_data_validator`.`dvt_fixed_char_id`
+(   id          char(6) NOT NULL
+,   other_data  varchar(100)
+) COMMENT='Integration test table used to test fixed char primary key - trailing blanks are not significant';
+INSERT INTO `pso_data_validator`.`dvt_fixed_char_id` VALUES
+('DVT1', 'Row 1	  '),
+('DVT2', 'Row 2  	'),
+('DVT3', 'Row 3  '),
+('DVT4', 'Row 4  	  '),
+('DVT5', 'Row 5');
 
 DROP TABLE IF EXISTS `pso_data_validator`.`dvt_pangrams`;
 CREATE TABLE `pso_data_validator`.`dvt_pangrams`

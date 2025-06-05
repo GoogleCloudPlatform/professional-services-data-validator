@@ -161,7 +161,8 @@ def _list_primary_key_columns(self, database: str, table: str) -> list:
 def _raw_column_metadata(
     self, database: str = None, table: str = None, query: str = None
 ) -> Iterable[Tuple]:
-    """Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
+    """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
+    Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
     This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
     custom query, and fetching the first row. From the cursor we can detect data types of the row's columns.
 
