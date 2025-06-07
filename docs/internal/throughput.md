@@ -195,7 +195,7 @@ gcloud builds submit \
 
 ## Test commands
 
-### Oracle/BigQuery without results handler writes
+### Oracle & BigQuery validation without result handler writes
 ```
 PSO_DV_CONN_HOME=gs://${BUCKET}
 PART_DIR="partitions_dir/ora2bq_t16/dvt_test.tab_vol_100m"
