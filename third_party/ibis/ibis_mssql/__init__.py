@@ -190,12 +190,4 @@ class Backend(BaseAlchemyBackend):
 
     def dvt_list_tables(self, like=None, database=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""
-
-        # TODO: Test only block, remove later
-        print("Raw column metadata for dvt_binary table:")
-        for column_info in self.raw_column_metadata(
-            database="pso_data_validator", table="dvt_binary"
-        ):
-            print(column_info)
-
         return self.list_tables(table=like, schema=database, type_like="BASE TABLE")
