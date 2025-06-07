@@ -253,7 +253,7 @@ gcloud run jobs create ${JOB_NAME} \
   --args="configs,run,-kc,-cdir=gs://${BUCKET}/${PART_DIR}"
 ```
 
-### Oracle/BigQuery with results handler writes
+### Oracle & BigQuery validation with result  handler writes
 ```
 PSO_DV_CONN_HOME=gs://${BUCKET}
 PART_DIR="partitions_dir/ora2bq_t16_rh/dvt_test.tab_vol_100m"
