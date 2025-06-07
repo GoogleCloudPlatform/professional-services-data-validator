@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Literal
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
-import cx_Oracle  # NOQA fail early if the driver is missing
+import oracledb  # NOQA fail early if the driver is missing
 
 
 def oracle_connect(
@@ -24,7 +24,7 @@ def oracle_connect(
     database: str = None,
     protocol: str = "TCP",
     url: str = None,
-    driver: Literal["cx_Oracle"] = "cx_Oracle",
+    driver: Literal["oracledb"] = "oracledb",
 ):
     backend = OracleBackend()
     backend.do_connect(

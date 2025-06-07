@@ -17,27 +17,27 @@ from unittest import mock
 import pytest
 
 
-class cxoDbTypeMock:
+class oDbTypeMock:
     name: str = "DB_TYPE_MOCKTYPE"
 
 
 DVT_CORE_TYPES_CURS = [
-    ("ID", cxoDbTypeMock(), 9, None, 8, 0, 0),
-    ("COL_INT8", cxoDbTypeMock(), 3, None, 2, 0, 1),
-    ("COL_INT16", cxoDbTypeMock(), 5, None, 4, 0, 1),
-    ("COL_INT32", cxoDbTypeMock(), 10, None, 9, 0, 1),
-    ("COL_INT64", cxoDbTypeMock(), 19, None, 18, 0, 1),
-    ("COL_DEC_20", cxoDbTypeMock(), 21, None, 20, 0, 1),
-    ("COL_DEC_38", cxoDbTypeMock(), 39, None, 38, 0, 1),
-    ("COL_DEC_10_2", cxoDbTypeMock(), 14, None, 10, 2, 1),
-    ("COL_FLOAT32", cxoDbTypeMock(), 127, None, None, None, 1),
-    ("COL_FLOAT64", cxoDbTypeMock(), 127, None, None, None, 1),
-    ("COL_VARCHAR_30", cxoDbTypeMock(), 30, 30, None, None, 1),
-    ("COL_CHAR_2", cxoDbTypeMock(), 2, 2, None, None, 1),
-    ("COL_STRING", cxoDbTypeMock(), 4000, 4000, None, None, 1),
-    ("COL_DATE", cxoDbTypeMock(), 23, None, None, None, 1),
-    ("COL_DATETIME", cxoDbTypeMock(), 23, None, 0, 3, 1),
-    ("COL_TSTZ", cxoDbTypeMock(), None, None, 0, 3, 1),
+    ("ID", oDbTypeMock(), 9, None, 8, 0, 0),
+    ("COL_INT8", oDbTypeMock(), 3, None, 2, 0, 1),
+    ("COL_INT16", oDbTypeMock(), 5, None, 4, 0, 1),
+    ("COL_INT32", oDbTypeMock(), 10, None, 9, 0, 1),
+    ("COL_INT64", oDbTypeMock(), 19, None, 18, 0, 1),
+    ("COL_DEC_20", oDbTypeMock(), 21, None, 20, 0, 1),
+    ("COL_DEC_38", oDbTypeMock(), 39, None, 38, 0, 1),
+    ("COL_DEC_10_2", oDbTypeMock(), 14, None, 10, 2, 1),
+    ("COL_FLOAT32", oDbTypeMock(), 127, None, None, None, 1),
+    ("COL_FLOAT64", oDbTypeMock(), 127, None, None, None, 1),
+    ("COL_VARCHAR_30", oDbTypeMock(), 30, 30, None, None, 1),
+    ("COL_CHAR_2", oDbTypeMock(), 2, 2, None, None, 1),
+    ("COL_STRING", oDbTypeMock(), 4000, 4000, None, None, 1),
+    ("COL_DATE", oDbTypeMock(), 23, None, None, None, 1),
+    ("COL_DATETIME", oDbTypeMock(), 23, None, 0, 3, 1),
+    ("COL_TSTZ", oDbTypeMock(), None, None, 0, 3, 1),
 ]
 
 
@@ -80,7 +80,7 @@ def test_raw_column_metadata_core_types(mock_begin, module_under_test):
             database="pso_data_validator", table="dvt_core_types"
         )
     )
-    # Assert that the cx_Oracle prefix was removed from data types.
+    # Assert that the oracle prefix was removed from data types.
     assert all(_[1] == "MOCKTYPE" for _ in raw_types)
     # Ensure we have 7 attributes.
     assert all(len(_) == 7 for _ in raw_types)
@@ -96,7 +96,7 @@ def test_raw_column_metadata_qry(mock_begin, module_under_test):
             query="SELECT * FROM pso_data_validator.dvt_core_types"
         )
     )
-    # Assert that the cx_Oracle prefix was removed from data types.
+    # Assert that the oracle prefix was removed from data types.
     assert all(_[1] == "MOCKTYPE" for _ in raw_types)
     # Ensure we have 7 attributes.
     assert all(len(_) == 7 for _ in raw_types)
