@@ -259,4 +259,4 @@ PSO_DV_CONN_HOME=gs://${BUCKET}
 PART_DIR="partitions_dir/ora2bq_t16_rh/dvt_test.tab_vol_100m"
 ```
 
-Same commands as those without results handler.
+Same commands as those without results handler, only changing `JOB_NAME=$(echo "dvt_ora2bq_rh_px<parallelism_number>_$(date +'%Y%m%d%H%M%S')"|tr _ -)` to be able to properly distinguish the jobs with the result handler from the previous ones.
