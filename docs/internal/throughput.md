@@ -7,12 +7,53 @@ We only tested up to Cloud Run parallelism of 8. Customers could go higher but s
 
 All tests were a table containing 100 million rows.
 
-| Engines | Parallelism | No Result Handler <br /> Elapsed time | No Result Handler <br /> Throughput (rows/minute) | PostgreSQL Result Handler <br /> Elapsed time | PostgreSQL Result Handler <br /> Throughput (rows/minute) |
-| :---- | ----- | ----- | ----- | ----- | ----- |
-| Oracle / BigQuery | 1 | 62m32s | 1.5 million | 103m51s | 1 million |
-|  | 2 | 30m54s | 3.2 million | 52m27s | 1.9 million |
-|  | 4 | 15m53s | 6.2 million | 28m10s | 3.5 million |
-|  | 8 | 8m49s | 11.3 million | 15m5s | 6.6 million |
+<table>
+  <thead>
+    <tr>
+      <th rowspan="2">Engines <br>(source & target)</th>
+      <th rowspan="2">Parallelism</th>
+      <th colspan="2">No Result Handler</th>
+      <th colspan="2">PostgreSQL Result Handler</th>
+    </tr>
+    <tr>
+      <th>Elapsed time</th>
+      <th>Throughput (rows/minute)</th>
+      <th>Elapsed time</th>
+      <th>Throughput (rows/minute)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="4">Oracle & BigQuery</td>
+      <td>1</td>
+      <td>62m32s</td>
+      <td>1.5 million</td>
+      <td>103m51s</td>
+      <td>1 million</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>30m54s</td>
+      <td>3.2 million</td>
+      <td>52m27s</td>
+      <td>1.9 million</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>15m53s</td>
+      <td>6.2 million</td>
+      <td>28m10s</td>
+      <td>3.5 million</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>8m49s</td>
+      <td>11.3 million</td>
+      <td>15m5s</td>
+      <td>6.6 million</td>
+    </tr>
+  </tbody>
+</table>
 
 
 ## Assumptions
