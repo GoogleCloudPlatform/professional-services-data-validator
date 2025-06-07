@@ -126,7 +126,7 @@ DVT_CORE_TYPES_RAW_DATA_TYPES = [
     ("COL_STRING", "VARCHAR", 4000, 4000, None, None, 1),
     ("COL_DATE", "DATE", 23, None, None, None, 1),
     ("COL_DATETIME", "TIMESTAMP", 23, None, 0, 3, 1),
-    ("COL_TSTZ", "TIMESTAMP_TZ", None, None, 0, 3, 1),
+    ("COL_TSTZ", "TIMESTAMP_TZ", 23, None, 0, 3, 1),
 ]
 
 EXPECTED_DATETIME_ID_PARTITION_FILTER = [
@@ -949,7 +949,7 @@ def test_column_multi_table_all_config_managers():
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
     schema_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         tc="mock-conn",
     )
 
@@ -962,7 +962,7 @@ def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
     column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         count_cols="*",
         filters="COL#HASH IS NOT NULL",
     )

@@ -76,7 +76,7 @@ try:
 except Exception:
     Db2ExprTranslator = None
 
-# Oracle requires cx_Oracle
+# Oracle requires oracledb
 try:
     from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 except Exception:
