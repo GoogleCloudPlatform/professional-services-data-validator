@@ -5,7 +5,7 @@ Customers often ask for throughput numbers for DVT row hash validations. This do
 
 We only tested up to Cloud Run parallelism of 8. Customers could go higher but should keep in mind the overhead on source and target systems.
 
-All tests were a table containing 100 million rows.
+All tests were executed for tables containing 100 million rows each.
 
 <table>
   <thead>
