@@ -243,7 +243,7 @@ def integration_oracle(session):
     """Run Oracle integration tests.
     Ensure Oracle validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["cx_Oracle"])
+    _setup_session_requirements(session, extra_packages=["oracledb"])
 
     expected_env_vars = [
         "PROJECT_ID",

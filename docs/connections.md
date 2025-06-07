@@ -183,8 +183,8 @@ data-validation connections add
 
 ## Oracle
 
-Please note the Oracle package is not installed by default. You will need to follow [cx_Oracle](https://cx-oracle.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
-Then `pip install cx_Oracle`.
+Please note the Oracle package is not installed by default. You will need to follow [python-oracledb](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
+Then `pip install oracledb`.
 
 ```
 data-validation connections add
