@@ -63,7 +63,7 @@ The source and target databases are in GCP in the same region as DVT itself. Aga
 
 DVT utilizes threads when receiving results from source and target engines but is single threaded when doing its own CPU intensive work, therefore it will only fully consume a single vCPU.
 
-Working assumption (based on internal testing) that we need 2GB of RAM per million rows processed in a single pass. We've carefully sized DVT partitions to fit within the memory provisioned in Cloud Run for a single vCPU. For limits see https://cloud.google.com/run/docs/configuring/jobs/memory-limits.
+Working assumption (based on internal testing) is that we need 2GB of RAM per million rows processed in a single pass. We've carefully sized DVT partitions to fit within the memory provisioned in Cloud Run for a single vCPU. For limits see https://cloud.google.com/run/docs/configuring/jobs/memory-limits.
 
 
 ## Helper environment variables
