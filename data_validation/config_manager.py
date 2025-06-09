@@ -101,7 +101,7 @@ class ConfigManager(object):
         The raw data type is the source/target engine type, for example it might
         be "NCLOB" or "char" when the Ibis type simply states "string".
         The data is cached in state when fetched for the first time.
-        The retuen value is keyed on the casefolded column name and the tuple is
+        The return value is keyed on the casefolded column name and the tuple is
         the remaining 6 elements of the DB API cursor description specification."""
         if self._source_raw_data_types is None:
             if hasattr(self.source_client, "raw_column_metadata"):
@@ -123,7 +123,7 @@ class ConfigManager(object):
         The raw data type is the source/target engine type, for example it might
         be "NCLOB" or "char" when the Ibis type simply states "string".
         The data is cached in state when fetched for the first time.
-        The retuen value is keyed on the casefolded column name and the tuple is
+        The return value is keyed on the casefolded column name and the tuple is
         the remaining 6 elements of the DB API cursor description specification."""
         if self._target_raw_data_types is None:
             if hasattr(self.target_client, "raw_column_metadata"):
