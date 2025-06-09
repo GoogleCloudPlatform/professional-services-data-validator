@@ -380,6 +380,7 @@ def test_row_validation_hash_bool_to_bigquery():
     )
 
 
+@pytest.mark.slow
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -392,6 +393,20 @@ def test_row_validation_tricky_dates_to_bigquery():
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
         hash="col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch,col_ts_high",
+    )
+
+
+@pytest.mark.slow
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields="*",
     )
 
 
