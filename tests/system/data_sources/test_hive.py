@@ -386,7 +386,11 @@ def test_row_validation_hash_bool_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_tricky_dates_to_bigquery():
-    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    """Test with date values that are at the extremes, e.g. 9999-12-31.
+    This test is marked as slow and will not run unless --run-slow is included.
+    It is duplicated in our Impala testing which mostly tests the same code path,
+    but not the same SQL engine.
+    """
     # We cannot test col_dt_low because of an issue in early versions of Hive:
     # https://docs.cloudera.com/runtime/7.3.1/impala-sql-reference/topics/impala-date.html
     row_validation_test(
@@ -402,7 +406,11 @@ def test_row_validation_tricky_dates_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_comp_fields_tricky_dates_to_bigquery():
-    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    """Test with date values that are at the extremes, e.g. 9999-12-31.
+    This test is marked as slow and will not run unless --run-slow is included.
+    It is duplicated in our Impala testing which mostly tests the same code path,
+    but not the same SQL engine.
+    """
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
