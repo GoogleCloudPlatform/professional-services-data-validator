@@ -20,6 +20,7 @@ import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     find_tables_test,
     id_type_test_assertions,
@@ -393,10 +394,11 @@ def test_row_validation_tricky_dates_to_bigquery():
     """
     # We cannot test col_dt_low because of an issue in early versions of Hive:
     # https://docs.cloudera.com/runtime/7.3.1/impala-sql-reference/topics/impala-date.html
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_dt_low")
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="col_dt_epoch,col_dt_high,col_dt_4712,col_ts_low,col_ts_epoch,col_ts_high,col_ts_4712",
+        hash=cols,
     )
 
 
@@ -414,7 +416,7 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        comp_fields="*",
+        comp_fields=",".join(DVT_TRICKY_DATES_COLUMNS),
     )
 
 

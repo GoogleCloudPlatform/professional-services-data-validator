@@ -20,6 +20,7 @@ import pytest
 
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
+    DVT_TRICKY_DATES_COLUMNS,
     column_validation_test,
     find_tables_test,
     id_type_test_assertions,
@@ -342,10 +343,13 @@ def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
     # We cannot test col_dt/ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
+    cols = ",".join(
+        _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
+    )
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        concat="col_dt_epoch,col_dt_high,col_dt_4712,col_ts_epoch,col_ts_high,col_ts_4712",
+        concat=cols,
     )
 
 
@@ -357,10 +361,13 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
     # We cannot test col_dt/ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
+    cols = ",".join(
+        _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
+    )
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        comp_fields="col_dt_epoch,col_dt_high,col_dt_4712,col_ts_epoch,col_ts_high,col_ts_4712",
+        comp_fields=cols,
     )
 
 

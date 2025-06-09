@@ -20,6 +20,7 @@ import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     find_tables_test,
     id_column_row_validation_test,
@@ -259,12 +260,13 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     column_validation_test(
         tc="bq-conn",
         tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_TRICKY_DATES=pso_data_validator.dvt_tricky_dates",
-        min_cols="*",
-        max_cols="*",
-        sum_cols="*",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
         wildcard_include_timestamp=True,
     )
 
@@ -459,10 +461,11 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_TRICKY_DATES=pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="*",
+        hash=cols,
     )
 
 
