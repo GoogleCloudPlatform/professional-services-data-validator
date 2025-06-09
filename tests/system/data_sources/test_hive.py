@@ -396,7 +396,7 @@ def test_row_validation_tricky_dates_to_bigquery():
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch,col_ts_high",
+        hash="col_dt_epoch,col_dt_high,col_dt_4712,col_ts_low,col_ts_epoch,col_ts_high,col_ts_4712",
     )
 
 
