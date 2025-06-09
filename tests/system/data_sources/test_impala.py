@@ -322,14 +322,13 @@ def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
     # We cannot test col_dt/ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
-    sum_cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
-    min_cols = sum_cols
+    cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        min_cols=min_cols,
-        max_cols="*",
-        sum_cols=sum_cols,
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
     )
