@@ -320,9 +320,9 @@ def test_row_validation_bool_to_bigquery():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # We cannot test col_ts_low because the low value of Impala timestamps
+    # We cannot test col_dt/ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
-    sum_cols = "col_dt_low,col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
+    sum_cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
     min_cols = sum_cols
     column_validation_test(
         tc="bq-conn",
@@ -341,12 +341,12 @@ def test_column_validation_tricky_dates_to_bigquery():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # We cannot test col_ts_low because the low value of Impala timestamps
+    # We cannot test col_dt/ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        concat="col_dt_low,col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high",
+        concat="col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high",
     )
 
 
@@ -356,12 +356,12 @@ def test_row_validation_tricky_dates_to_bigquery():
 )
 def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # We cannot test col_ts_low because the low value of Impala timestamps
+    # We cannot test col_dt/ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        comp_fields="col_dt_low,col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high",
+        comp_fields="col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high",
     )
 
 
