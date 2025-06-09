@@ -318,6 +318,36 @@ def test_row_validation_bool_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    # We cannot test col_ts_low because the low value of Impala timestamps
+    # is incompatible with other engines.
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash="col_dt_low,col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    # We cannot test col_ts_low because the low value of Impala timestamps
+    # is incompatible with other engines.
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields="col_dt_low,col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_find_tables():
     """Impala to BigQuery test of find-tables command."""
     # check_for_view=False because there is no practical way to exclude views on Impala.
