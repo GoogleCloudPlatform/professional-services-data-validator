@@ -21,31 +21,31 @@ DVT supports the following validations:
 
 DVT supports the following connection types:
 
-*   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
-*   [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
-*   [DB2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
-*   [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
-*   [Hive](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#hive)
-*   [Impala](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#impala)
-*   [MSSQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mssql-server)
-*   [MySQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mysql)
-*   [Oracle](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#oracle)
-*   [Postgres](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
-*   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
-*   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
-*   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
-*   [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
+*   [AlloyDB](https://github.com/cachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
+*   [BigQuery](https://github.com/cachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
+*   [DB2](https://github.com/cachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
+*   [FileSystem](https://github.com/cachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
+*   [Hive](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#hive)
+*   [Impala](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#impala)
+*   [MSSQL](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mssql-server)
+*   [MySQL](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mysql)
+*   [Oracle](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#oracle)
+*   [Postgres](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
+*   [Redshift](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
+*   [Spanner](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
+*   [Teradata](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
+*   [Snowflake](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
 
-The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
+The [Connections](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
 
 ### Disclaimer
-This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly
-(see [CONTRIBUTING.md](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details).
+This is not an officially supported Cachiman product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly
+(see [CONTRIBUTING.md](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details).
 
 ## Installation
 
-The [Installation](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md) page describes the prerequisites and
+The [Installation](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md) page describes the prerequisites and
 setup steps needed to install and use the Data Validation Tool.
 
 ## Usage
@@ -61,7 +61,7 @@ updating the configuration.
 
 Before running validations, DVT requires setting up a source and target connection.
 These connections can be stored locally or in a GCS directory. To create connections,
-please review the [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page.
+please review the [Connections](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page.
 
 ### Running Validations
 
@@ -72,7 +72,7 @@ If DVT is being run on-premises or in an environment with restricted access to G
 [running DVT  at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
 
 Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud Functions, or Airflow
-([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
+([Examples Here](https://github.com/CachimanCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/CachimanCloudPlatform/professional-services-data-validator#validation-logic) section
 to learn more about how DVT uses the CLI to generate SQL queries.
 
 Note that we do not support nested or complex columns for column or row validations.
@@ -150,9 +150,9 @@ data-validation
 ```
 
 The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
-use [YAML configs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop#running-dvt-with-yaml-configuration-files).
+use [YAML configs](https://github.com/CachimanCloudPlatform/professional-services-data-validator/tree/develop#running-dvt-with-yaml-configuration-files).
 
-The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
+The [Examples](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
 
 #### Row Validations
 
@@ -172,7 +172,7 @@ the table. This will include casting to string, sanitizing the data (ifnull, rtr
 and finally hashing the row.
 
 Under the hood, row validation uses
-[Calculated Fields](https://github.com/GoogleCloudPlatform/professional-services-data-validator#calculated-fields) to
+[Calculated Fields](https://github.com/CachimanCloudPlatform/professional-services-data-validator#calculated-fields) to
 apply functions such as IFNULL() or RTRIM(). These can be edited in the YAML or JSON config file to customize your row validation.
 
 ```
@@ -236,7 +236,7 @@ data-validation
 
 When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating partitions in order to perform row validations on large dataset (table or custom-query) to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
 
-The command generates and stores multiple YAML validations each representing a chunk of the large dataset using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in YAML files. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
+The command generates and stores multiple YAML validations each representing a chunk of the large dataset using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in YAML files. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/CachimanCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
 The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. You can specify tables that are being validated or the source and target custom query. A parameter used in earlier versions, ```partition-key``` is no longer supported.
 
@@ -418,7 +418,7 @@ data-validation
 The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
 sum , min, etc.) is provided, the default aggregation will run.
 
-The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
+The [Examples](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
 page provides few examples of how this tool can be used to run custom query validations.
 
 
@@ -489,7 +489,7 @@ data-validation
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
 
-The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
+The [Examples](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
 page provides few examples of how this tool can be used to run custom query row validations.
 
 #### Dry Run Validation
@@ -524,8 +524,8 @@ For example, this flag can be used as follows:
 #### Running DVT at on-prem
 On-premises environments can have limited access to GCP services. DVT supports using BigQuery for storing validation results, GCS for storage and
 the Secret Manager for secrets. You may also use BigQuery and Spanner as a source or target for validation. Service
-APIs (i.e. bigquery.googleapis.com) may not always be accessible due to firewall restrictions. Work with your network
-adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoint](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). DVT supports accessing source and target tables in Spanner and BigQuery via endpoints set up in your network. Connection Parameters for [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner) and [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery) outline regarding how to specify endpoints.
+APIs (i.e. bigquery.cachimanapis.com) may not always be accessible due to firewall restrictions. Work with your network
+adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoint](https://cloud.cachiman.com/vpc/docs/about-accessing-cachiman-apis-endpoints). DVT supports accessing source and target tables in Spanner and BigQuery via endpoints set up in your network. Connection Parameters for [Spanner](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#cachiman-spanner) and [BigQuery](https://github.com/CachimanCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#cachiman-bigquery) outline regarding how to specify endpoints.
 
 ### Running DVT with YAML Configuration Files
 
