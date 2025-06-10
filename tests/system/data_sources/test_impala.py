@@ -341,7 +341,7 @@ def test_column_validation_tricky_dates_to_bigquery():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # We cannot test col_dt/ts_low because the low value of Impala timestamps
+    # We cannot test col_dt_low and col_ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
     cols = ",".join(
         _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
