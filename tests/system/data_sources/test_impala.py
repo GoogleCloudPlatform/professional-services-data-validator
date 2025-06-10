@@ -321,7 +321,7 @@ def test_row_validation_bool_to_bigquery():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    # We cannot test col_dt/ts_low because the low value of Impala timestamps
+    # We cannot test col_dt_low and col_ts_low because the low value of Impala timestamps
     # is incompatible with other engines.
     cols = "col_dt_epoch,col_dt_high,col_dt_4712,col_ts_epoch,col_ts_high,col_ts_4712"
     column_validation_test(
