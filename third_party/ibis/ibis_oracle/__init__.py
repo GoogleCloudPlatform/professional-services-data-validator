@@ -19,7 +19,7 @@ from sqlalchemy.dialects.oracle.base import (
     OracleIdentifierPreparer,
     RESERVED_WORDS as ORACLE_RESERVED_WORDS,
 )
-from sqlalchemy.dialects.oracle.cx_oracle import OracleDialect_cx_oracle
+from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
 import re
 
 import ibis.expr.datatypes as dt
@@ -52,10 +52,10 @@ def _ora_denormalize_name(self, name):
 
     if self.identifier_preparer._requires_quotes_illegal_chars(name):
         name = name.upper()
-    return super(OracleDialect_cx_oracle, self).denormalize_name(name)
+    return super(OracleDialect_oracledb, self).denormalize_name(name)
 
 
-OracleDialect_cx_oracle.denormalize_name = _ora_denormalize_name
+OracleDialect_oracledb.denormalize_name = _ora_denormalize_name
 
 
 class DVTOracleIdentifierPreparer(OracleIdentifierPreparer):
@@ -80,7 +80,7 @@ class DVTOracleIdentifierPreparer(OracleIdentifierPreparer):
             return super().quote_identifier(value)
 
 
-OracleDialect_cx_oracle.preparer = DVTOracleIdentifierPreparer
+OracleDialect_oracledb.preparer = DVTOracleIdentifierPreparer
 
 
 class Backend(BaseAlchemyBackend):
@@ -100,18 +100,18 @@ class Backend(BaseAlchemyBackend):
         database: str = None,
         protocol: str = "TCP",
         url: str = None,
-        driver: Literal["cx_Oracle"] = "cx_Oracle",
+        driver: Literal["oracledb"] = "oracledb",
     ) -> None:
         if url is None:
-            if driver != "cx_Oracle":
+            if driver != "oracledb":
                 raise NotImplementedError(
-                    "cx_Oracle is currently the only supported driver"
+                    "oracledb is currently the only supported driver"
                 )
             dsn = """(description=(address=(protocol={})(host={})(port={}))(connect_data=(service_name={})))""".format(
                 protocol, host, port, database
             )
             sa_url = sa.engine.url.URL.create(
-                "oracle+cx_oracle",
+                "oracle+oracledb",
                 user,
                 password,
                 dsn,
@@ -139,7 +139,7 @@ class Backend(BaseAlchemyBackend):
         )
         try:
             # Identify the session in Oracle as DVT, no-op if this fails.
-            engine.raw_connection().connection.module = "DVT"
+            engine.raw_connection().driver_connection.module = "DVT"
         except Exception:
             pass
 
@@ -184,7 +184,8 @@ class Backend(BaseAlchemyBackend):
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
     ) -> Iterable[Tuple]:
-        """Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
+        """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
+        Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
         This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
         custom query, and fetching the first row. From the cursor we can detect data types of the row's columns.
 
@@ -212,3 +213,8 @@ class Backend(BaseAlchemyBackend):
                 (column[0], strip_prefix(column[1].name), *column[2:])
                 for column in cursor.description
             )
+
+    def is_char_type_padded(self, char_type: Tuple) -> bool:
+        """Define this method if the backend supports character/string types that are padded and returns
+        padded values, which DVT may want to trim"""
+        return char_type[0] in ["CHAR", "NCHAR"]

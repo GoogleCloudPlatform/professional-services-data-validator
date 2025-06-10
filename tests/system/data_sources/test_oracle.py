@@ -26,6 +26,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test_config_managers,
     find_tables_test,
     id_column_row_validation_test,
+    id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -125,7 +126,7 @@ DVT_CORE_TYPES_RAW_DATA_TYPES = [
     ("COL_STRING", "VARCHAR", 4000, 4000, None, None, 1),
     ("COL_DATE", "DATE", 23, None, None, None, 1),
     ("COL_DATETIME", "TIMESTAMP", 23, None, 0, 3, 1),
-    ("COL_TSTZ", "TIMESTAMP_TZ", None, None, 0, 3, 1),
+    ("COL_TSTZ", "TIMESTAMP_TZ", 23, None, 0, 3, 1),
 ]
 
 EXPECTED_DATETIME_ID_PARTITION_FILTER = [
@@ -631,22 +632,36 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_string_pk_to_bigquery():
-    """Test string primary key join columns"""
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_string_id",
-    )
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_fixed_char_id")
 
 
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Test padded char primary key join columns"""
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_char_id",
-    )
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 @mock.patch(
@@ -934,7 +949,7 @@ def test_column_multi_table_all_config_managers():
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
     schema_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         tc="mock-conn",
     )
 
@@ -947,7 +962,7 @@ def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
     column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         count_cols="*",
         filters="COL#HASH IS NOT NULL",
     )

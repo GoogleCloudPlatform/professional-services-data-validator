@@ -76,7 +76,7 @@ try:
 except Exception:
     Db2ExprTranslator = None
 
-# Oracle requires cx_Oracle
+# Oracle requires oracledb
 try:
     from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 except Exception:
@@ -353,42 +353,6 @@ def sa_cast_hive(t, op):
         return cast_expr
 
 
-def sa_cast_mssql(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    # Specialize going from a binary float type to a string.
-    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
-        # This prevents output in scientific notation, at least for my tests it did.
-        return sa.func.format(sa_arg, "G")
-    elif arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.lower(
-            sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
-        )
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
-    # Specialize going from DECIMAL(p,s>0) to string
-    elif (
-        arg_dtype.is_decimal()
-        and arg_dtype.scale
-        and arg_dtype.scale > 0
-        and typ.is_string()
-    ):
-        scale = arg_dtype.scale
-        # Considering any number of fractional digits
-        format_string = f'0.{("#" * scale)}'
-        formatted_value = sa.func.format(sa_arg, format_string)
-        # Replace trailing '.0' with ''
-        return sa.func.replace(formatted_value, ".0", "")
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
-
-
 def sa_cast_mysql(t, op):
     # Add cast from numeric to string
     arg = op.arg
@@ -458,22 +422,6 @@ def sa_cast_snowflake(t, op):
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
-
-
-def _sa_string_join(t, op):
-    if (
-        len(op.arg) == 1
-    ):  # SQL Server CONCAT errs when there is one column being hashed (issue #1202), renaming using type_coerce rather than CONCAT
-        return sa.type_coerce(
-            t.translate(op.arg[0]),
-            sa.types.String,
-        )
-    else:
-        return sa.func.concat(*map(t.translate, op.arg))
-
-
-def sa_format_new_id(t, op):
-    return sa.func.NEWID()
 
 
 def sa_format_random(t, op):
@@ -587,6 +535,9 @@ BigQueryExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
+AlchemyExprTranslator._registry[PaddedCharLength] = AlchemyExprTranslator._registry[
+    ops.StringLength
+]
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
 # Base length of padded string is the same as for a standard string.
@@ -605,6 +556,9 @@ if OracleExprTranslator:
     OracleExprTranslator._registry[ToChar] = sa_format_to_char
     OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
     OracleExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+    OracleExprTranslator._registry[PaddedCharLength] = OracleExprTranslator._registry[
+        ops.StringLength
+    ]
 
 PostgreSQLExprTranslator._registry[
     ops.HashBytes
@@ -624,15 +578,17 @@ PostgreSQLExprTranslator._registry[
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.isnull, 2)
-MsSqlExprTranslator._registry[ops.StringJoin] = _sa_string_join
-MsSqlExprTranslator._registry[ops.RandomScalar] = sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
+MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
 MsSqlExprTranslator._registry[ops.Strftime] = mssql_registry.strftime
-MsSqlExprTranslator._registry[ops.Cast] = sa_cast_mssql
+MsSqlExprTranslator._registry[ops.Cast] = mssql_registry.sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
 MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
 MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
-# TODO Uncomment the line below when working on issue-1419.
-# MsSqlExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+MsSqlExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
+MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
+    ops.StringLength
+]
 
 MySQLExprTranslator._registry[ops.Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -643,6 +599,9 @@ MySQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 RedShiftExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_redshift
 RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
 RedShiftExprTranslator._registry[BinaryLength] = sa_format_binary_length
+RedShiftExprTranslator._registry[PaddedCharLength] = RedShiftExprTranslator._registry[
+    ops.StringLength
+]
 
 if Db2ExprTranslator:
     Db2ExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_db2
@@ -650,6 +609,9 @@ if Db2ExprTranslator:
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
     Db2ExprTranslator._registry[ops.Strftime] = strftime_db2
     Db2ExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+    Db2ExprTranslator._registry[PaddedCharLength] = Db2ExprTranslator._registry[
+        ops.StringLength
+    ]
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
 SpannerExprTranslator._registry[ops.HashBytes] = format_hashbytes_bigquery
@@ -659,6 +621,9 @@ if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
     TeradataExprTranslator._registry[ops.HashBytes] = format_hashbytes_teradata
     TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    TeradataExprTranslator._registry[
+        PaddedCharLength
+    ] = TeradataExprTranslator._registry[ops.StringLength]
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake

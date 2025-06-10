@@ -185,9 +185,23 @@ class MockIbisColumn(object):
 
     def type(self):
         if self.column == "c":
+            return MockIbisType("!string")
+        else:
+            return MockIbisType("int64")
+
+
+class MockIbisType(object):
+    def __init__(self, coltype: str):
+        self.coltype = coltype
+
+    def __str__(self):
+        if self.coltype == "!string":
             return "!string"
         else:
             return "int64"
+
+    def is_string(self):
+        return self.coltype in ["string", "!string"]
 
 
 @pytest.fixture

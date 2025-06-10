@@ -195,16 +195,19 @@ class PartitionBuilder:
             window1 = ibis.window(order_by=source_pks)
             row_number = (ibis.row_number().over(window1) + 1).name(consts.DVT_POS_COL)
 
-            if config_manager.trim_string_pks():
-                dvt_keys = []
-                for key in source_pks.copy():
-                    if source_table[key].type().is_string():
-                        rstrip_key = source_table[key].rstrip().name(key)
-                        dvt_keys.append(rstrip_key)
-                    else:
-                        dvt_keys.append(key)
-            else:
-                dvt_keys = source_pks.copy()
+            # If any of the keys are padded strings, we need to rstrip them so the values come out right
+            dvt_keys = []
+            for key in source_pks.copy():
+                if source_table[
+                    key
+                ].type().is_string() and ValidationBuilder.is_padded_char(
+                    config_manager.source_client,
+                    config_manager.get_source_raw_data_types(),
+                    key,
+                ):
+                    dvt_keys.append(source_table[key].rstrip().name(key))
+                else:
+                    dvt_keys.append(key)
 
             dvt_keys.append(row_number)
             rownum_table = source_table.select(dvt_keys)
