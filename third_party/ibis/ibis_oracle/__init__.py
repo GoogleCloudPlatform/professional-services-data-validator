@@ -99,7 +99,6 @@ class Backend(BaseAlchemyBackend):
         port: int = 1521,
         database: str = None,
         protocol: str = "TCP",
-        url: str = None,
         driver: Literal["oracledb"] = "oracledb",
         connect_args: str = None,
     ) -> None:

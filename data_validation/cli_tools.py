@@ -100,7 +100,6 @@ CONNECTION_SOURCE_FIELDS = {
         ["database", "Database to connect to"],
         ["protocol", "Oracle networking protocol (default TPC)"],
         ["connect_args", "(Optional) Additional connection argument mapping"],
-        ["url", "Oracle SQLAlchemy connection URL"],
     ],
     consts.SOURCE_TYPE_MSSQL: [
         ["host", "Desired SQL Server host (default localhost)"],
