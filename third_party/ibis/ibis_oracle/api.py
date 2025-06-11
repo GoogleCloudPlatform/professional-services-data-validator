@@ -26,10 +26,11 @@ def oracle_connect(
     port: int = 1521,
     database: str = None,
     protocol: str = "TCP",
+    thick_mode: bool = False,
     driver: Literal["oracledb"] = "oracledb",
     connect_args: str = None,
 ):
-    connect_args = dvt_config_string_to_dict(connect_args) if connect_args else {}
+    connect_args_dict = dvt_config_string_to_dict(connect_args) if connect_args else {}
     backend = OracleBackend()
     backend.do_connect(
         host=host,
@@ -38,7 +39,8 @@ def oracle_connect(
         password=password,
         database=database,
         protocol=protocol,
+        thick_mode=thick_mode,
         driver=driver,
-        connect_args=connect_args,
+        connect_args=connect_args_dict,
     )
     return backend
