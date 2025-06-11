@@ -191,12 +191,13 @@ data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Oracle                  Connection name
-    --host HOST                                         Oracle host
-    --port PORT                                         Oracle port, defaults to 1521
-    --user USER                                         Oracle user
-    --password PASSWORD                                 Oracle password
-    --database DATABASE                                 Oracle database
-    [--connect-params CONNECT_PARAMS]                   Additional oracledb ConnectParams
+    [--thick-mode]                                        Use Thick mode, requires local Oracle client libraries
+    [--host HOST]                                         Oracle host
+    [--port PORT]                                         Oracle port, defaults to 1521
+    [--user USER]                                         Oracle user, if not specified using credentials stored in wallet (see below)
+    [--password PASSWORD]                                 Oracle password
+    [--database DATABASE]                                 Oracle database
+    [--connect-args CONNECT_PARAMS]                   Additional oracledb ConnectParams
 ```
 
 ### Oracle User permissions to run DVT
@@ -207,16 +208,26 @@ data-validation connections add
 
 ### Using TLS, mTLS connections or running DVT within a container
 
-oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the config as a python dict as stated [here](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set_from_config).
+oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the config as a python dict as stated [here](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set_from_config). 
 
 For setting up a TLS connection specify the configuration directory where `tnsnames.ora` is located, the wallet directory where `ewallet.pem` is located and the distinguished name of the server. For example, the --connect-params parameter can be specified as follows:
 
 ```
 data-validation connections add \
  --connection-name ora_secure Oracle --host <hostname> ... --database <database>\
- --connect-params='{"pyo": { "wallet_password": <password>, "wallet_location": <wallet-dir>, "config_dir": <config-dir>, "ssl_server_cert_dn": <distinguished-name>}}'
+ --connect-args='{ "wallet_password": <password>, "wallet_location": <wallet-dir>, "config_dir": <config-dir>, "ssl_server_cert_dn": <distinguished-name>}'
 ```
 In order to connect to an Oracle database when DVT is running in a container, you may need to specify  `"disable_oob": True,` as one of the key value pairs in the connect-params dictionary.
+
+### Using thick mode and credentials from a wallet
+To run oracledb in Thick mode, specify `--thick_mode`. Thick mode requires local installation of Oracle client. If a wallet has been created to store credentials - user name and password, the user name and password must *not* be specified while adding a connection. Only the `dsn` (db_connect_string mentioned in [doc](https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/using-the-orapki-utility-to-manage-pki-elements.html#GUID-25509071-ABC0-4A0E-A3DB-4D4F61024F25)) and `config_dir`(optional) may be specified as part of `--connect-args` dict string. Other parameters are ignored. For example, the following is sufficient
+```
+data-validation connections add \
+ --connection-name ora_secure Oracle \
+ --connect-args='{"dsn": <dsn>, "config_dir": <config-dir>,}'
+```
+`config_dir` if provided will override the value of the environment variable TNS_ADMIN. pythondb thick mode will be used when credentials are in a wallet. All other parameters host, port, user, database are stored in `tnsnames.ora`  
+
 ## MSSQL Server
 
 MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
