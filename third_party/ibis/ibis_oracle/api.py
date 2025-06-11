@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Literal
+
+import oracledb  # NOQA fail early if the driver is missing
+
+from data_validation.util import dvt_config_string_to_dict
 from third_party.ibis.ibis_oracle import Backend as OracleBackend
 import oracledb  # NOQA fail early if the driver is missing
 
@@ -23,9 +27,11 @@ def oracle_connect(
     port: int = 1521,
     database: str = None,
     protocol: str = "TCP",
-    connect_params: str = None,
+    url: str = None,
     driver: Literal["oracledb"] = "oracledb",
+    connect_args: str = None,
 ):
+    connect_args = dvt_config_string_to_dict(connect_args) if connect_args else {}
     backend = OracleBackend()
     backend.do_connect(
         host=host,
@@ -36,5 +42,6 @@ def oracle_connect(
         protocol=protocol,
         connect_params=connect_params,
         driver=driver,
+        connect_args=connect_args,
     )
     return backend

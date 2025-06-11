@@ -99,8 +99,9 @@ class Backend(BaseAlchemyBackend):
         port: int = 1521,
         database: str = None,
         protocol: str = "TCP",
-        connect_params: str = None,
+        url: str = None,
         driver: Literal["oracledb"] = "oracledb",
+        connect_args: str = None,
     ) -> None:
         if url is None:
             if driver != "oracledb":
@@ -134,8 +135,10 @@ class Backend(BaseAlchemyBackend):
             # Therefore the ugly hardcoding of 128 kicks the can down the road and unblocks a customer
             # who is working with Oracle 11g and a max identifier length of 30.
             max_identifier_length=128,
-            # Pessimistic disconnect handling
+            # Pessimistic disconnect handling.
             pool_pre_ping=True,
+            # Extra oracledb connection arguments.
+            connect_args=connect_args,
         )
         try:
             # Identify the session in Oracle as DVT, no-op if this fails.

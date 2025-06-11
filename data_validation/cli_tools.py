@@ -98,7 +98,9 @@ CONNECTION_SOURCE_FIELDS = {
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to"],
-        ["connect_params", "(Optional) Additional oracledb ConnectParams"],
+        ["protocol", "Oracle networking protocol (default TPC)"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
+        ["url", "Oracle SQLAlchemy connection URL"],
     ],
     consts.SOURCE_TYPE_MSSQL: [
         ["host", "Desired SQL Server host (default localhost)"],
@@ -121,7 +123,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["account", "Snowflake account to connect to"],
         ["database", "Database in snowflake to connect to"],
-        ["connect_args", "(Optional) Additional connection arg mapping"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
     consts.SOURCE_TYPE_POSTGRES: [
         ["host", "Desired PostgreSQL host."],
