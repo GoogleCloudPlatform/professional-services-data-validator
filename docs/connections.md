@@ -184,7 +184,7 @@ data-validation connections add
 ## Oracle
 
 Please note the Oracle package is not installed by default. You will need to follow [python-oracledb](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
-Then `pip install oracledb`. DVT uses oracledb in Thin Mode which permits TLS and mTLS connections. Differences between Thin and Thick mode are [discussed in the docs](https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_b.html#)
+Then `pip install oracledb`. DVT uses oracledb in Thin Mode by default which permits TLS and mTLS connections. Differences between Thin and Thick mode are [discussed in the docs](https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_b.html#)
 
 ```
 data-validation connections add
@@ -220,13 +220,13 @@ data-validation connections add \
 In order to connect to an Oracle database when DVT is running in a container, you may need to specify  `"disable_oob": True,` as one of the key value pairs in the connect-params dictionary.
 
 ### Using thick mode and credentials from a wallet
-To run oracledb in Thick mode, specify `--thick_mode`. Thick mode requires local installation of Oracle client. If a wallet has been created to store credentials - user name and password, the user name and password must *not* be specified while adding a connection. Only the `dsn` (db_connect_string mentioned in [doc](https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/using-the-orapki-utility-to-manage-pki-elements.html#GUID-25509071-ABC0-4A0E-A3DB-4D4F61024F25)) and `config_dir`(optional) may be specified as part of `--connect-args` dict string. Other parameters are ignored. For example, the following is sufficient
+To run oracledb in Thick mode, specify `--thick-mode`. Thick mode requires local installation of Oracle client. If a wallet has been created to store credentials - user name and password, the user name and password must *not* be specified while adding a connection. Only the `dsn` (db_connect_string mentioned in [doc](https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/using-the-orapki-utility-to-manage-pki-elements.html#GUID-25509071-ABC0-4A0E-A3DB-4D4F61024F25)) and `config_dir`(optional) may be specified as part of `--connect-args` dict string. Other parameters are ignored. For example, the following is sufficient
 ```
 data-validation connections add \
  --connection-name ora_secure Oracle \
  --connect-args='{"dsn": <dsn>, "config_dir": <config-dir>,}'
 ```
-`config_dir` if provided will override the value of the environment variable TNS_ADMIN. pythondb thick mode will be used when credentials are in a wallet. All other parameters host, port, user, database are stored in `tnsnames.ora`  
+`config_dir` if provided will override the value of the environment variable TNS_ADMIN. pythondb thick mode will be used when credentials are in a wallet. All other parameters host, port, user, database and settings are stored in `tnsnames.ora` and `sqlnet.ora`. 
 
 ## MSSQL Server
 
