@@ -102,13 +102,14 @@ class Backend(BaseAlchemyBackend):
         protocol: str = "TCP",
         thick_mode: bool = False,
         driver: Literal["oracledb"] = "oracledb",
-        connect_args: Dict[str, Any] = {},
+        connect_args: Dict[str, Any] = None,
     ) -> None:
         if driver != "oracledb":
             raise NotImplementedError("oracledb is currently the only supported driver")
         if thick_mode or not user:
             # Configuration explicitly requests thick_mode or user not specified, credentials in wallet - requires thick_mode
             oracledb.init_oracle_client(config_dir=connect_args.get("config_dir", None))
+        connect_args = {} if not connect_args else connect_args
         if user:
             connect_args.update(
                 {
