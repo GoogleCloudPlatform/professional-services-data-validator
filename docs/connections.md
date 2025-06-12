@@ -191,14 +191,14 @@ data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Oracle                  Connection name
-    [--thick-mode]                                        Use Thick mode, requires local Oracle client libraries
-    [--host HOST]                                         Oracle host
-    [--port PORT]                                         Oracle port, defaults to 1521
-    [--user USER]                                         Oracle user, if not specified using credentials stored in wallet (see below)
+    [--thick-mode]                                      Use Thick mode, requires local Oracle client libraries
+    [--host HOST]                                       Oracle host
+    [--port PORT]                                       Oracle port, defaults to 1521
+    [--user USER]                                       Oracle user, if not specified using credentials stored in wallet (see below)
     [--protocol PROTOCOL]                               Oracle networking protocol (TPC, TPCS)
-    [--password PASSWORD]                                 Oracle password
-    [--database DATABASE]                                 Oracle database
-    [--connect-args CONNECT_PARAMS]                   Additional oracledb ConnectParams
+    [--password PASSWORD]                               Oracle password
+    [--database DATABASE]                               Oracle database
+    [--connect-args CONNECT_PARAMS]                     Additional oracledb ConnectParams
 ```
 
 ### Oracle User permissions to run DVT
