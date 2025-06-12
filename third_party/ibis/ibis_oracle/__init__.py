@@ -109,7 +109,7 @@ class Backend(BaseAlchemyBackend):
         if thick_mode or not user:
             # Configuration explicitly requests thick_mode or user not specified, credentials in wallet - requires thick_mode
             oracledb.init_oracle_client(config_dir=connect_args.get("config_dir", None))
-        if user : 
+        if user:
             connect_args.update(
                 {
                     "host": host,
@@ -140,10 +140,6 @@ class Backend(BaseAlchemyBackend):
             # oracledb connection arguments.
             connect_args=connect_args,
         )
-        self.database_name = connect_args[
-            "service_name"
-        ]  # key will be present because of update statement
-        breakpoint()
         try:
             # Identify the session in Oracle as DVT, no-op if this fails.
             engine.raw_connection().driver_connection.module = "DVT"
@@ -158,6 +154,10 @@ class Backend(BaseAlchemyBackend):
                 cur.execute("ALTER SESSION SET NLS_NUMERIC_CHARACTERS='.,'")
 
         super().do_connect(engine)
+        # the database / service name is usually obtained from tnsnames.ora, we fetch it here
+        self.database_name = self.raw_sql(
+            "select sys_context('USERENV', 'SERVICE_NAME') from dual"
+        ).fetchall()[0][0]
 
     def _metadata(self, query) -> Iterable[Tuple[str, dt.DataType]]:
         if (
