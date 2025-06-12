@@ -154,7 +154,8 @@ CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
     "--connection-name",
     "ora_wal_test",
     "Oracle",
-    "--url=oracle+cx_oracle://@dvt_user_db",
+    """--connect-args='{"dsn": "@dvt_user_db", "config_dir": "/opt/oracle/client_files", "disable_oob": true}'""",
+    "--thick-mode",
 ]
 
 TEST_VALIDATION_CONFIG = {
@@ -329,7 +330,9 @@ def test_create_connections_oracle(mock_write_file):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS)
     conn = cli_tools.get_connection_config_from_args(args)
-    assert "url" in conn
+    assert "connect_args" in conn
+    assert "config_dir" in conn["connect_args"]
+    assert "thick_mode" in conn
     cli_tools.store_connection(args.connection_name, conn)
 
 
