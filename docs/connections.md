@@ -18,37 +18,37 @@ DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manag
 
 If the secret-manager flags are present, any of the remaining connection flags can reference secret names instead of the secret itself.
 
-Example 1: A BigQuery connection referencing a secret with name "dvt-project-secret" stored in project `my-project`:
+Example 1: A BigQuery connection referencing a secret with name PROJECT_SECRET stored in project PROJECT_NAME:
 
 ```sh
 data-validation connections add \
     --secret-manager-type GCP \
-    --secret-manager-project-id my-project \
+    --secret-manager-project-id PROJECT_NAME \
     --connection-name bq BigQuery \
-    --project-id "dvt-project-secret"
+    --project-id PROJECT_SECRET
 ```
 
-Example 2: A PostgreSQL connection referencing a mixture of secrets (for `--host` and `--password`) stored in project `my-project` and simple string tokens:
+Example 2: A PostgreSQL connection referencing a mixture of secrets (for `--host` and `--password`) stored in project PROJECT_NAME and simple string tokens:
 
 ```sh
 data-validation connections add \
     --secret-manager-type GCP \
-    --secret-manager-project-id my-project \
-    --connection-name pg Postgres \
-    --host=pg-host-secret \
-    --user=dvt_user \
-    --password=dvt-password-secret \
-    --database=mydatabase
+    --secret-manager-project-id PROJECT_NAME \
+    --connection-name CONN Postgres \
+    --host=HOST_SECRET \
+    --user=USER_NAME \
+    --password=PASSWORD_SECRET \
+    --database=DATABASE
 ```
 
-Example 3: An entire Oracle URL stored as a secret with name "dvt-url-secret" stored in project `my-project`:
+Example 3: An entire Oracle Credential alias stored as a secret with name CREDENTIAL_SECRET stored in project PROJECT_NAME:
 
 ```sh
 data-validation connections add \
     --secret-manager-type GCP \
-    --secret-manager-project-id my-project \
+    --secret-manager-project-id PROJECT_NAME \
     --connection-name ora_uat Oracle \
-    --url="dvt-url-secret"
+    --connect-args=CREDENTIAL_SECRET
 ```
 
 ## List existing connections
@@ -178,7 +178,7 @@ data-validation connections add
     --password PASSWORD                                 Teradata password
     [--logmech LOGMECH]                                 Teradata logmech, defaults to "TD2"
     [--use-no-lock-tables USE_NO_LOCK_TABLES]           Use access lock for queries, defaults to "False"
-    [--json-params JSON_PARAMS]                         Additional teradatasql JSON string parameters (Optional)
+    [--json-params JSON_PARAMS]                         Additional teradatasql JSON string dict (Optional)
 ```
 
 ## Oracle
@@ -198,7 +198,7 @@ data-validation connections add
     [--protocol PROTOCOL]                               Oracle networking protocol (TPC, TPCS)
     [--password PASSWORD]                               Oracle password
     [--database DATABASE]                               Oracle database
-    [--connect-args CONNECT_PARAMS]                     Additional oracledb ConnectParams
+    [--connect-args CONNECT_PARAMS]                     Additional oracledb ConnectParams, JSON String dict
 ```
 
 ### Oracle User permissions to run DVT
@@ -214,8 +214,8 @@ For setting up a TLS connection, specify the configuration directory where `tnsn
 
 ```
 data-validation connections add \
- --connection-name ora_secure Oracle \
- --connect-args='{ "wallet_password": <password>, "wallet_location": <wallet-dir>, "config_dir": <config-dir>, "ssl_server_cert_dn": <distinguished-name>}'
+ --connection-name ora_secure Oracle --user USER --password PASSWORD \
+ --connect-args='{ "wallet_password": PASSWORD, "wallet_location": WALLET_DIR, "config_dir": CONFIG_DIR, "ssl_server_cert_dn": DISTINGUISHED_NAME}'
 ```
 When DVT is running in a container, you may need to specify  `"disable_oob": True,` as one of the key value pairs in the `connect-args` dictionary to connect to Oracle.
 
@@ -224,7 +224,7 @@ When a user name is not specified, credentials (user name and password) are assu
 ```
 data-validation connections add \
  --connection-name ora_secure Oracle \
- --connect-args='{"dsn": <dsn>, "config_dir": <config-dir>,}'
+ --connect-args='{"dsn": TNS_ALIAS}'
 ```
 
 ## MSSQL Server
@@ -269,9 +269,9 @@ export PGSSLCERT="/path/to/certs/client-cert.pem" \
 export PGSSLKEY=/path/to/certs/client-key.pem \
 export PGSSLROOTCERT=/path/to/certs/server-ca.pem \
 export PGSSLMODE=verify-ca
-data-validation connections add --connection-name pg_tls_ca Postgres \
---host=10.1.0.2 --user=dvt_user --password=secret-password-123 \
---database=appdb
+data-validation connections add --connection-name CONN_NAME Postgres \
+--host=HOST_NAME --user=USER --password=PASSWORD \
+--database=DATABASE
 ```
 
 ## AlloyDB
@@ -422,10 +422,10 @@ data-validation connections add
     --password PASSWORD                                 Snowflake password
     --account ACCOUNT                                   Snowflake account
     --database DATABASE/SCHEMA                          Snowflake database and schema, separated by a `/`
-    [--connect-args CONNECT_ARGS]                       Additional connection args, default {}
+    [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
 ```
 
 To connect to Snowflake using key-pair authentication you will need to use the `--connect-args` options. Example content from a connection file is included below for reference:
 ```
-{"source_type": "Snowflake", "secret_manager_type": null, "secret_manager_project_id": null, "user": "dvtuserp8", "password": "", "account": "my-account", "database": "my_dvt_database", "connect_args": {"private_key_file": "/some/path/snowflake/rsa_key.p8", "private_key_file_pwd": "my-passphrase"}}
+{"source_type": "Snowflake", "user": USER_NAME, "password": "", "account": ACCOUNT, "database": DATABASE, "connect_args": '{"private_key_file": PATH_TO_RSA_KEY/RSA_KEY.p8, "private_key_file_pwd": PASSPHRASE}'}
 ```
