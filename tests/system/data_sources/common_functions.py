@@ -52,6 +52,18 @@ DVT_CORE_TYPES_COLUMNS = [
     "col_tstz",
 ]
 
+DVT_TRICKY_DATES_COLUMNS = [
+    "id",
+    "col_dt_low",
+    "col_dt_epoch",
+    "col_dt_high",
+    "col_dt_4712",
+    "col_ts_low",
+    "col_ts_epoch",
+    "col_ts_high",
+    "col_ts_4712",
+]
+
 
 def id_type_test_assertions(df, expected_rows=5):
     """Standard assertions for assorted primary key type integration tests."""

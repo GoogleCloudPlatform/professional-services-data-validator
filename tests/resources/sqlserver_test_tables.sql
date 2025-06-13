@@ -659,12 +659,14 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 , col_dt_low    date
 , col_dt_epoch  date
 , col_dt_high   date
+, col_dt_4712   date
 , col_ts_low    datetime2
 , col_ts_epoch  datetime2
-, col_ts_high   datetime2);
+, col_ts_high   datetime2
+, col_ts_4712   datetime2);
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
-(1,'1000-01-01','1970-01-01','9999-12-31'
-,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59');
+(1,'1000-01-01','1970-01-01','9999-12-31','4712-12-31'
+,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59','4712-12-31 23:23:59');
 INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_strings;

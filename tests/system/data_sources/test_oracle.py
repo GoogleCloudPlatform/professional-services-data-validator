@@ -20,6 +20,7 @@ import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     column_validation_test_args,
@@ -440,12 +441,15 @@ def test_column_validation_tricky_dates_to_bigquery():
     # We cannot test sum(col_dt_low) and sum(col_ts_low) on Oracle because there are days
     # missing from October 1582 in the Gregorian calendar which are not reflected in BigQuery
     # or PostgreSQL calendars. This gap is discussed on Wikipedia page for 1582.
-    sum_cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    sum_cols = ",".join(
+        _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        min_cols="*",
-        max_cols="*",
+        min_cols=cols,
+        max_cols=cols,
         sum_cols=sum_cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
@@ -1124,10 +1128,25 @@ def test_row_validation_uuid_rr_oracle_to_postgres():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="*",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 

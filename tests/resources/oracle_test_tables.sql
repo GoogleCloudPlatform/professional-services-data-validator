@@ -822,13 +822,16 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 , col_dt_low    DATE
 , col_dt_epoch  DATE
 , col_dt_high   DATE
+, col_dt_4712   DATE
 , col_ts_low    TIMESTAMP(0)
 , col_ts_epoch  TIMESTAMP(0)
-, col_ts_high   TIMESTAMP(0));
+, col_ts_high   TIMESTAMP(0)
+, col_ts_4712   TIMESTAMP(0)
+);
 COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table used to test potentially difficult Timestamps.';
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
-(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59',TIMESTAMP'4712-12-31 23:23:59');
 -- NULL in all columns.
 INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
 COMMIT;

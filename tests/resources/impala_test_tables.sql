@@ -160,3 +160,21 @@ INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` (course_id, quart
         ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
         ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5);
 
+DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_dates;
+CREATE TABLE pso_data_validator.dvt_tricky_dates (
+  id            bigint
+, col_dt_low    date
+, col_dt_epoch  date
+, col_dt_high   date
+, col_dt_4712   date
+, col_ts_low    timestamp
+, col_ts_epoch  timestamp
+, col_ts_high   timestamp
+, col_ts_4712   timestamp)
+STORED AS PARQUET
+TBLPROPERTIES ('comment'='Integration test table used to test potentially difficult timestamps.');
+INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
+(1,'1000-01-01','1970-01-01','9999-12-31','4712-12-31'
+,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59','4712-12-31 23:23:59');
+-- NULL in all columns.
+INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);

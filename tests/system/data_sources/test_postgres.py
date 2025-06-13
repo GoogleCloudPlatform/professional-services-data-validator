@@ -31,6 +31,7 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 )
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     column_validation_test_args,
@@ -1113,12 +1114,13 @@ def test_column_validation_high_epoch_seconds():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        min_cols="*",
-        max_cols="*",
-        sum_cols="*",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
     )
@@ -1194,10 +1196,25 @@ def test_row_validation_comp_fields_reserved_words():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="*",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 

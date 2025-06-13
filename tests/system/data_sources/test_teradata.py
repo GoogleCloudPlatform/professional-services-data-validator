@@ -21,6 +21,7 @@ import pathlib
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     custom_query_validation_test,
@@ -426,7 +427,7 @@ def test_column_validation_tricky_dates_to_bigquery():
     # Excluded col_ts_high below because I'm unable to correctly insert desired literal.
     #   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
     """
-    cols = "col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch"
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_ts_high")
     column_validation_test(
         tc="bq-conn",
         tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
@@ -902,10 +903,30 @@ def test_row_validation_tricky_dates_to_bigquery():
     Excluded col_ts_high below because I'm unable to correctly insert desired literal.
       https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
     """
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_ts_high")
     row_validation_test(
         tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """
+    Test with date values that are at the extremes, e.g. 9999-12-31.
+
+    Excluded col_ts_high below because I'm unable to correctly insert desired literal.
+      https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
+    """
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_ts_high")
+    row_validation_test(
+        tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
