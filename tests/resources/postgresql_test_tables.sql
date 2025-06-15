@@ -13,10 +13,10 @@
 -- limitations under the License.
 
 -- Schema for storing results handler data.
-CREATE SCHEMA pso_data_validator_results;
+CREATE SCHEMA IF NOT EXISTS pso_data_validator_results;
 -- Schema containing ONLY integration test tables.
-CREATE SCHEMA pso_data_validator;
-DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
+CREATE SCHEMA IF NOT EXISTS pso_data_validator;
+DROP TABLE IF EXISTS pso_data_validator.dvt_core_types CASCADE;
 CREATE TABLE pso_data_validator.dvt_core_types
 (   id              int NOT NULL PRIMARY KEY
 ,   col_int8        smallint
@@ -266,7 +266,7 @@ CREATE TABLE pso_data_validator.dvt_pg_types
 );
 COMMENT ON TABLE pso_data_validator.dvt_pg_types IS 'PostgreSQL data types integration test table';
 
-CREATE EXTENSION pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 INSERT INTO pso_data_validator.dvt_pg_types
 (col_int2,col_int4,col_int8,col_dec,col_dec_10_2
 --,col_money
@@ -362,7 +362,7 @@ INSERT INTO pso_data_validator.dvt_binary VALUES
 (CAST('DVT-key-4' AS bytea), 4, 'Row 4'),
 (CAST('DVT-key-5' AS bytea), 5, 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_fixed_char_id;
+DROP TABLE IF EXISTS pso_data_validator.dvt_fixed_char_id;
 CREATE TABLE pso_data_validator.dvt_fixed_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
 ,   other_data  CHAR(100)
@@ -375,7 +375,7 @@ INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_varchar_id;
+DROP TABLE IF EXISTS pso_data_validator.dvt_varchar_id;
 CREATE TABLE pso_data_validator.dvt_varchar_id
 (   id          VARCHAR(15) NOT NULL PRIMARY KEY
 ,   other_data  VARCHAR(100)
