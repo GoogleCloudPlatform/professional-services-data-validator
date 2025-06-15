@@ -12,8 +12,12 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-use guestbook;
-CREATE SCHEMA pso_data_validator;
+USE guestbook;
+
+IF (SCHEMA_ID('pso_data_validator') IS NULL) 
+BEGIN
+    EXEC ('CREATE SCHEMA pso_data_validator')
+END
 
 -- Core data types test table, to be kept in sync with same table in other SQL engines
 DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
@@ -35,7 +39,7 @@ CREATE TABLE pso_data_validator.dvt_core_types
 ,   col_datetime    datetime2(3)
 ,   col_tstz        datetimeoffset(3)
 );
-
+EXECUTE sp_addextendedproperty 'Comment', 'Core data types integration test table', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_core_types';
 INSERT INTO pso_data_validator.dvt_core_types VALUES
 (1,1,1,1,1
 ,12345678901234567890,1234567890123456789012345,123.11,123456.1,12345678.1
@@ -55,8 +59,10 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
 ,'1970-01-03','1970-01-03 00:00:03'
 ,cast('1970-01-03 00:00:03 -03:00' as datetimeoffset(3)));
 
-CREATE VIEW pso_data_validator.dvt_core_types_vw AS
+GO -- Separates the previous statements from the view creation
+CREATE OR ALTER VIEW pso_data_validator.dvt_core_types_vw AS
 SELECT * FROM pso_data_validator.dvt_core_types;
+GO -- Separates the view creation from any subsequent statements
 
 DROP TABLE IF EXISTS pso_data_validator.test_generate_partitions_v2;
 CREATE TABLE pso_data_validator.test_generate_partitions_v2
@@ -67,7 +73,7 @@ CREATE TABLE pso_data_validator.test_generate_partitions_v2
 ,   approved            BIT
 ,   grade               DECIMAL(5,2)
 );
-
+EXECUTE sp_addextendedproperty 'Comment', 'Table for testing generate table partitions, consists of 32 rows with a composite primary key. Quoted Strings are handled correctly', 'SCHEMA', 'pso_data_validator', 'table', 'test_generate_partitions_v2';
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', 1, 3.5);
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', 0, 2.8);
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', 1, 2.1);
@@ -108,6 +114,7 @@ CREATE TABLE pso_data_validator.dvt_null_not_null
 ,   col_src_nn_trg_n   datetime2(0) NOT NULL
 ,   col_src_n_trg_nn   datetime2(0)
 );
+EXECUTE sp_addextendedproperty 'Comment', 'Nullable integration test table, SQL Server is assumed to be a DVT source (not target)', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_null_not_null';
 
 DROP TABLE pso_data_validator.dvt_large_decimals;
 CREATE TABLE pso_data_validator.dvt_large_decimals
@@ -121,7 +128,7 @@ CREATE TABLE pso_data_validator.dvt_large_decimals
 ,   col_dec_18_fail   decimal(18)
 ,   col_dec_18_1_fail decimal(18,1)
 );
-
+EXECUTE sp_addextendedproperty 'Comment', 'Large decimals integration test table', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_large_decimals';
 INSERT INTO pso_data_validator.dvt_large_decimals VALUES
 (123456789012345678901234567890,'Row 1'
 ,987654321012345678
@@ -168,30 +175,31 @@ CREATE TABLE pso_data_validator.dvt_binary
 ,   other_data      varchar(100)
 );
 CREATE UNIQUE INDEX dvt_binary_int_id_uk ON pso_data_validator.dvt_binary (int_id);
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test both binary pk matching and binary hash/concat comparisons', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_binary';
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-1' AS binary), 1, 'Row 1');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-2' AS binary), 2, 'Row 2');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-3' AS binary), 3, 'Row 3');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS binary), 4, 'Row 4');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS binary), 5, 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_fixed_char_id;
+DROP TABLE IF EXISTS pso_data_validator.dvt_fixed_char_id;
 CREATE TABLE pso_data_validator.dvt_fixed_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
 ,   other_data  CHAR(100)
 );
-execute sp_addextendedproperty 'Comment', 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_fixed_char_id';
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_fixed_char_id';
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_varchar_id;
+DROP TABLE IF EXISTS pso_data_validator.dvt_varchar_id;
 CREATE TABLE pso_data_validator.dvt_varchar_id
 (   id          VARCHAR(15) NOT NULL PRIMARY KEY
 ,   other_data  VARCHAR(100)
 );
-execute sp_addextendedproperty 'Comment', 'Integration test table used to test varchar pk matching. Trailing blanks are significant', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_varchar_id';
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test varchar pk matching. Trailing blanks are significant', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_varchar_id';
 INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-1', 'Row 1');
 INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-2', 'Row 2');
 INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-3', 'Row 3');
@@ -203,6 +211,7 @@ CREATE TABLE pso_data_validator.dvt_datetime_id
 (   id          datetime2(0) NOT NULL PRIMARY KEY
 ,   other_data  varchar(100)
 );
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test datetime pk matching', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_datetime_id';
 INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-01-01 12:00:00', 'Row 1');
 INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-02-01 12:00:00', 'Row 2');
 INSERT INTO pso_data_validator.dvt_datetime_id VALUES ('2020-03-01 12:00:00', 'Row 3');
@@ -216,6 +225,7 @@ CREATE TABLE pso_data_validator.dvt_pangrams
 ,   words       nvarchar(1000)
 ,   words_en    varchar(1000)
 );
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test unicode characters', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_pangrams';
 -- Text taken from Wikipedia, we cannot guarantee translations :-)
 INSERT INTO pso_data_validator.dvt_pangrams VALUES (1,'Hebrew', 'שפן אכל קצת גזר בטעם חסה, ודי', 'A bunny ate some lettuce-flavored carrots, and he had enough');
 INSERT INTO pso_data_validator.dvt_pangrams VALUES (2,'Polish', 'Pchnąć w tę łódź jeża lub ośm skrzyń fig', 'Push a hedgehog or eight crates of figs in this boat');
@@ -626,6 +636,7 @@ CREATE TABLE pso_data_validator.dvt_many_cols
 , col_398 decimal(1)
 , col_399 decimal(1)
 );
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test validating many columns', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_many_cols';
 INSERT INTO pso_data_validator.dvt_many_cols (id) values (1);
 
 DROP TABLE pso_data_validator.[dvt-identifier$_#];
@@ -637,6 +648,7 @@ CREATE TABLE pso_data_validator.[dvt-identifier$_#]
 ,   [col@at]      varchar(10)
 ,   other_data    varchar(100)
 );
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test non-standard characters in identifiers', 'SCHEMA', 'pso_data_validator', 'table', 'dvt-identifier$_#';
 INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (1,'#','$','-','@','Row 1');
 INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (2,'#','$','-','@','Row 2');
 INSERT INTO pso_data_validator.[dvt-identifier$_#] VALUES (3,'#','$','-','@','Row 3');
@@ -648,6 +660,7 @@ CREATE TABLE pso_data_validator.dvt_uuid_id
 (   id        uniqueidentifier NOT NULL PRIMARY KEY
 ,   col_uuid  uniqueidentifier
 ,   col_data  varchar(10));
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test UUID data type as a primary key', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_uuid_id';
 INSERT INTO pso_data_validator.dvt_uuid_id VALUES
 ('387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','387bdc3b-2184-43b2-8ec2-3ac791c5b0f1','A');
 INSERT INTO pso_data_validator.dvt_uuid_id VALUES
@@ -660,10 +673,11 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 , col_dt_epoch  date
 , col_dt_high   date
 , col_dt_4712   date
-, col_ts_low    datetime2
-, col_ts_epoch  datetime2
-, col_ts_high   datetime2
-, col_ts_4712   datetime2);
+, col_ts_low    datetime2(7)
+, col_ts_epoch  datetime2(7)
+, col_ts_high   datetime2(7)
+, col_ts_4712   datetime2(7));
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test potentially difficult timestamps', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_tricky_dates';
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 (1,'1000-01-01','1970-01-01','9999-12-31','4712-12-31'
 ,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59','4712-12-31 23:23:59');
@@ -674,6 +688,7 @@ CREATE TABLE pso_data_validator.dvt_tricky_strings (
   id           integer NOT NULL PRIMARY KEY
 , col_string   varchar(20)
 , col_comment  varchar(40));
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test potentially difficult strings', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_tricky_strings';
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (1,'str'+CHAR(10)+'str','Contains: new line');
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (2,'str'+CHAR(10),'Trailing: new line');
 INSERT INTO pso_data_validator.dvt_tricky_strings VALUES (3,'str'+CHAR(13)+'str','Contains: carriage return');
@@ -694,4 +709,5 @@ CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
 , [number]   varchar(10)
 , [string]   varchar(10)
 );
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test potentially difficult column names', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_reserved_word_columns';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
