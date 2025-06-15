@@ -6,7 +6,7 @@ SELECT
     CAST(2 AS INT64) int_type,
     CAST(2 AS DECIMAL) decimal_type,
     CAST(2 AS STRING) text_type,
-    CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type
+    CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type;
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions`
 ( course_id STRING
@@ -68,7 +68,7 @@ INSERT INTO `pso_data_validator`.`dvt_core_types` VALUES
  ,DATE '1970-01-03',DATETIME '1970-01-03 00:00:03'
  ,TIMESTAMP '1970-01-03 00:00:03-03:00');
 
-CREATE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
+CREATE OR REPLACE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
 SELECT * FROM `pso_data_validator`.`dvt_core_types`;
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_null_not_null`
