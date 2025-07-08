@@ -45,7 +45,7 @@ class pandas_df:
         # Creating pandas dataframe from data and columns
         df = DataFrame(data, columns=columns)
 
-        # In Spanner BYTES columns are returned as a base64 string.
+        # Spanner BYTES columns are returned as a base64 string.
         # Here we convert them to a byte string to match other DVT supported engines.
         for bytes_column in bytes_columns:
             df[bytes_column] = df[bytes_column].map(base64.b64decode)
