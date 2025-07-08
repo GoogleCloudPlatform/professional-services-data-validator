@@ -32,7 +32,6 @@ DEFAULT_PYTHON_VERSION = "3.10"
 # Python versions used for testing.
 PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11"]
 PYTHON_VERSIONS_ORACLE = ["3.8", "3.9", "3.10"]
-PYTHON_VERSIONS_DB2 = ["3.9", "3.10", "3.11"]
 
 BLACK_PATHS = (
     "data_validation",
@@ -299,12 +298,12 @@ def integration_snowflake(session):
     )
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS_DB2), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["ibm-db-sa"])
+    _setup_session_requirements(session, extra_packages=["ibm-db-sa<0.4.2"])
 
     expected_env_vars = [
         "PROJECT_ID",
