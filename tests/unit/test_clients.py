@@ -23,6 +23,16 @@ from ibis.backends.pandas import BasePandasBackend as PandasBackend
 
 from data_validation import clients, consts, exceptions
 
+try:
+    import ibm_db_sa
+except Exception:
+    ibm_db_sa = None
+
+try:
+    import oracledb
+except Exception:
+    oracledb = None
+
 
 TABLE_NAME = "my_table"
 DATA = [{"a": 1, "b": 2}]
@@ -35,6 +45,14 @@ SOURCE_CONN_CONFIG = {
     "table_name": "my_table",
     "file_path": SOURCE_TABLE_FILE_PATH,
     "file_type": "json",
+}
+
+DB2_CONN_CONFIG = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
+    "database": "db",
+    "host": "127.0.0.1",
+    "user": "u",
+    "password": "p",
 }
 
 ORACLE_CONN_CONFIG = {
@@ -82,11 +100,13 @@ def test_import_oracle_client():
         assert "No module named 'oracledb'" in str(e)
 
 
-def test_get_oracle_data_client():
-    with pytest.raises(
-        exceptions.DataClientConnectionFailure, match=r".*pip install oracledb"
-    ):
-        clients.get_data_client(ORACLE_CONN_CONFIG)
+if oracledb is None:
+
+    def test_get_oracle_data_client_when_no_driver():
+        with pytest.raises(
+            exceptions.DataClientConnectionFailure, match=r".*pip install oracledb"
+        ):
+            clients.get_data_client(ORACLE_CONN_CONFIG)
 
 
 def test_get_pandas_data_client():
@@ -95,3 +115,21 @@ def test_get_pandas_data_client():
     ibis_client = clients.get_data_client(conn_config)
 
     assert isinstance(ibis_client, PandasBackend)
+
+
+if ibm_db_sa:
+
+    @mock.patch("ibm_db.connect", return_value=mock.Mock())
+    @mock.patch("ibm_db_dbi.Connection", return_value=mock.MagicMock())
+    @mock.patch.object(ibm_db_sa.ibm_db.DB2Dialect_ibm_db, "get_isolation_level")
+    def test_get_db2_data_client(fn_mock, connection_mock, connect_mock):
+        # The import is good, we can test the code.
+        clients.get_data_client(DB2_CONN_CONFIG)
+
+else:
+
+    def test_get_db2_data_client_when_no_driver():
+        with pytest.raises(
+            exceptions.DataClientConnectionFailure, match=r".*pip install ibm_db_sa"
+        ):
+            clients.get_data_client(DB2_CONN_CONFIG)
