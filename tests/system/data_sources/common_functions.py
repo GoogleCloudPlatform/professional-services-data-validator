@@ -144,39 +144,41 @@ def row_validation_many_columns_test(
     concat_arg: str = "hash",
     expected_config_managers: int = 1,
     target_conn: str = "mock-conn",
+    columns: str = "*",
+    exclude_columns: bool = None,
 ):
     """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
     parser = cli_tools.configure_arg_parser()
     schema_prefix = f"{schema}." if schema else ""
     if validation_type == "row":
-        args = parser.parse_args(
-            [
-                "validate",
-                "row",
-                "-sc=mock-conn",
-                f"-tc={target_conn}",
-                f"-tbls={schema_prefix}{table}",
-                "--primary-keys=id",
-                f"--{concat_arg}=*",
-                "--filter-status=fail",
-            ]
-        )
+        cli_arg_list = [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            f"-tc={target_conn}",
+            f"-tbls={schema_prefix}{table}",
+            "--primary-keys=id",
+            f"--{concat_arg}={columns}",
+            "--filter-status=fail",
+            "--exclude-columns" if exclude_columns else None,
+        ]
     else:
         query = f"SELECT * FROM {schema_prefix}{table}"
-        args = parser.parse_args(
-            [
-                "validate",
-                "custom-query",
-                "row",
-                "-sc=mock-conn",
-                "-tc=mock-conn",
-                f"--source-query={query}",
-                f"--target-query={query}",
-                "--primary-keys=id",
-                f"--{concat_arg}=*",
-                "--filter-status=fail",
-            ]
-        )
+        cli_arg_list = [
+            "validate",
+            "custom-query",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            f"--source-query={query}",
+            f"--target-query={query}",
+            "--primary-keys=id",
+            f"--{concat_arg}={columns}",
+            "--filter-status=fail",
+            "--exclude-columns" if exclude_columns else None,
+        ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
     # We expect the validation to be split into multiple config managers.
     for df in run_tests_from_cli_args(
         args, expected_config_managers=expected_config_managers

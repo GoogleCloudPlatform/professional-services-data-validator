@@ -943,7 +943,7 @@ class ConfigManager(object):
         return bool(source_type in supported_types and target_type in supported_types)
 
     def build_config_column_aggregates(
-        self, agg_type, arg_value, exclude_cols, supported_types, cast_to_bigint=False
+        self, agg_type, arg_value, supported_types, cast_to_bigint=False
     ):
         """Return list of aggregate objects of given agg_type."""
 
@@ -998,13 +998,6 @@ class ConfigManager(object):
 
         if arg_value:
             arg_value = [x.casefold() for x in arg_value]
-            if exclude_cols:
-                included_cols = [
-                    column
-                    for column in casefold_source_columns
-                    if column not in arg_value
-                ]
-                arg_value = included_cols
 
             if supported_types:
                 # This mutates external supported_types, making it local as part of adding more values.
@@ -1018,11 +1011,6 @@ class ConfigManager(object):
                     "binary",
                     "!binary",
                 ]
-        else:
-            if exclude_cols:
-                raise ValueError(
-                    "Exclude columns flag cannot be present with '*' column aggregation"
-                )
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
@@ -1202,29 +1190,17 @@ class ConfigManager(object):
         return order_of_operations
 
     def _filter_columns_by_column_list(
-        self, casefold_columns: list, col_list: list, exclude_cols: bool
-    ) -> list:
+        self, casefold_columns: dict, col_list: list
+    ) -> dict:
         if col_list:
             filter_list = [_.casefold() for _ in col_list]
-            if exclude_cols:
-                # Exclude columns based on col_list if provided
-                casefold_columns = {
-                    k: v for (k, v) in casefold_columns.items() if k not in filter_list
-                }
-            else:
-                # Include columns based on col_list if provided
-                casefold_columns = {
-                    k: v for (k, v) in casefold_columns.items() if k in filter_list
-                }
-        elif exclude_cols:
-            raise ValueError(
-                "Exclude columns flag cannot be present with column list '*'"
-            )
+            # Include columns based on col_list if provided
+            casefold_columns = {
+                k: v for (k, v) in casefold_columns.items() if k in filter_list
+            }
         return casefold_columns
 
-    def build_dependent_aliases(
-        self, calc_type: str, col_list=None, exclude_cols=False
-    ) -> List[Dict]:
+    def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
@@ -1233,10 +1209,10 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         casefold_source_columns = self._filter_columns_by_column_list(
-            casefold_source_columns, col_list, exclude_cols
+            casefold_source_columns, col_list
         )
         casefold_target_columns = self._filter_columns_by_column_list(
-            casefold_target_columns, col_list, exclude_cols
+            casefold_target_columns, col_list
         )
 
         column_aliases = {}
@@ -1288,13 +1264,13 @@ class ConfigManager(object):
                     col_names.append(col)
         return col_names
 
-    def build_comp_fields(self, col_list: list, exclude_cols: bool = False) -> dict:
+    def build_comp_fields(self, col_list: list) -> dict:
         """This is a utility function processing comp-fields values like we do for hash/concat."""
         source_table = self.get_source_ibis_calculated_table()
         casefold_source_columns = {_.casefold(): str(_) for _ in source_table.columns}
 
         casefold_source_columns = self._filter_columns_by_column_list(
-            casefold_source_columns, col_list, exclude_cols
+            casefold_source_columns, col_list
         )
 
         return casefold_source_columns

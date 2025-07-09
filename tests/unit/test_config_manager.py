@@ -555,29 +555,10 @@ def test_build_dependent_aliases(module_under_test):
     )
 
     # Hash includes col a
-    dependent_aliases = config_manager.build_dependent_aliases(
-        "hash", ["a"], exclude_cols=False
-    )
+    dependent_aliases = config_manager.build_dependent_aliases("hash", ["a"])
     concat_config = dependent_aliases[-2]
     assert concat_config["source_reference"] == [
         "rstrip__ifnull__cast__a",
-    ]
-
-
-def test_build_dependent_aliases_exclude_columns(module_under_test):
-    config_manager = module_under_test.ConfigManager(
-        SAMPLE_ROW_CONFIG_DEP_ALIASES, MockIbisClient(), MockIbisClient(), verbose=False
-    )
-
-    # Hash excludes col a
-    dependent_aliases = config_manager.build_dependent_aliases(
-        "hash", ["a"], exclude_cols=True
-    )
-    concat_config = dependent_aliases[-2]
-    assert concat_config["source_reference"] == [
-        "rstrip__ifnull__cast__b",
-        "rstrip__ifnull__cast__c",
-        "rstrip__ifnull__cast__d",
     ]
 
 
@@ -617,21 +598,12 @@ def test_build_comp_fields(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    # With exclude_columns=False
     comparison_fields = config_manager.build_comp_fields(
         ["a", "c", "e"],
-        False,
     )
     # Column "e" does not exists and therefore should not be in the list, even though
     # it was requested.
     assert comparison_fields == {"a": "a", "c": "c"}
-
-    # With exclude_columns=True
-    comparison_fields = config_manager.build_comp_fields(
-        ["a", "c", "e"],
-        True,
-    )
-    assert comparison_fields == {"b": "b", "d": "d"}
 
 
 @pytest.mark.parametrize(

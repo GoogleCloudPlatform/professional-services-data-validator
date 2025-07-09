@@ -1505,25 +1505,37 @@ def _concat_column_count_configs(
     return return_list
 
 
+def _get_pre_build_configs_cols_from_arg(
+    concat_arg: str, client, table_obj: dict, query_str: str, exclude_columns: bool
+) -> list:
+    if concat_arg == "*" and exclude_columns:
+        raise ValueError(
+            "Exclude columns flag cannot be present with '*' column aggregation"
+        )
+    elif concat_arg == "*" or exclude_columns:
+        # If validating with "*" or need to invert the list then we need to expand to count the columns.
+        if table_obj:
+            full_col_list = clients.get_ibis_table_schema(
+                client,
+                table_obj["schema_name"],
+                table_obj["table_name"],
+            ).names
+        else:
+            full_col_list = clients.get_ibis_query_schema(
+                client,
+                query_str,
+            ).names
+        if concat_arg == "*":
+            return full_col_list
+
+        if exclude_columns:
+            return [col for col in full_col_list if col not in get_arg_list(concat_arg)]
+    else:
+        return get_arg_list(concat_arg)
+
+
 def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
     """Return a dict of configurations to build ConfigManager object"""
-
-    def cols_from_arg(concat_arg: str, client, table_obj: dict, query_str: str) -> list:
-        if concat_arg == "*":
-            # If validating with "*" then we need to expand to count the columns.
-            if table_obj:
-                return clients.get_ibis_table_schema(
-                    client,
-                    table_obj["schema_name"],
-                    table_obj["table_name"],
-                ).names
-            else:
-                return clients.get_ibis_query_schema(
-                    client,
-                    query_str,
-                ).names
-        else:
-            return get_arg_list(concat_arg)
 
     # validate_cmd will be set to 'row`, or 'Custom-query' if invoked by generate-table-partitions depending
     # on what is being partitioned. Otherwise validate_cmd will be set to None
@@ -1632,12 +1644,13 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             or pre_build_configs[consts.CONFIG_ROW_HASH]
         ):
             # Ensure we don't have too many columns for the engines involved.
-            cols = cols_from_arg(
+            cols = _get_pre_build_configs_cols_from_arg(
                 pre_build_configs[consts.CONFIG_ROW_HASH]
                 or pre_build_configs[consts.CONFIG_ROW_CONCAT],
                 source_client,
                 table_obj,
                 query_str,
+                args.exclude_columns,
             )
             new_pre_build_configs = _concat_column_count_configs(
                 cols,
