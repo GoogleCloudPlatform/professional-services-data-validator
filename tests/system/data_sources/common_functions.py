@@ -187,6 +187,40 @@ def row_validation_many_columns_test(
         assert len(df) == 0
 
 
+def exclude_columns_test(
+    capsys,
+    tables="pso_data_validator.dvt_core_types",
+    tc="mock-conn",
+    validation_type: str = "row",
+    column_arg: str = "hash",
+    columns: str = "col_string,col_float64",
+    expected_column: str = "col_float32",
+):
+    """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "validate",
+        validation_type,
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        "--primary-keys=id" if validation_type == "row" else None,
+        f"--{column_arg}={columns}",
+        "--filter-status=fail",
+        "--exclude-columns",
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    config_managers = main.build_config_managers_from_args(args)
+    main.run_validation(config_managers[0], dry_run=True)
+    out, err = capsys.readouterr()
+    assert err == ""
+    dry_run = json.loads(out)
+    for col in columns.lower().split(","):
+        assert col not in dry_run["source_query"].lower()
+    assert expected_column.lower() in dry_run["source_query"].lower()
+
+
 def find_tables_assertions(
     command_output: str,
     expected_source_schema: str = "pso_data_validator",

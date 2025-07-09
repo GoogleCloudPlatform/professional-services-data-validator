@@ -110,6 +110,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "count",
             col_args,
+            args.exclude_columns,
             None,
             cast_to_bigint=cast_to_bigint,
         )
@@ -118,6 +119,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "sum",
             col_args,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -126,6 +128,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "avg",
             col_args,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -134,6 +137,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "min",
             col_args,
+            args.exclude_columns,
             supported_data_types + uuid_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -142,6 +146,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "max",
             col_args,
+            args.exclude_columns,
             supported_data_types + uuid_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -150,6 +155,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "bit_xor",
             col_args,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -158,6 +164,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
         aggregate_configs += config_manager.build_config_column_aggregates(
             "std",
             col_args,
+            args.exclude_columns,
             supported_data_types,
             cast_to_bigint=cast_to_bigint,
         )
@@ -225,7 +232,7 @@ def _get_comparison_config(
         if args.comparison_fields == "*"
         else cli_tools.get_arg_list(args.comparison_fields)
     )
-    comparison_fields = config_manager.build_comp_fields(col_list)
+    comparison_fields = config_manager.build_comp_fields(col_list, args.exclude_columns)
     # We can't have the PK columns in the comparison SQL twice therefore filter them out here if included.
     comparison_fields = [_ for _ in comparison_fields if _ not in primary_keys]
 

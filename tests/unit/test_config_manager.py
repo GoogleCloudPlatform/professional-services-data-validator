@@ -562,19 +562,6 @@ def test_build_dependent_aliases(module_under_test):
     ]
 
 
-def test_build_dependent_aliases_exception(module_under_test):
-    config_manager = module_under_test.ConfigManager(
-        SAMPLE_ROW_CONFIG_DEP_ALIASES, MockIbisClient(), MockIbisClient(), verbose=False
-    )
-
-    with pytest.raises(ValueError) as excinfo:
-        config_manager.build_dependent_aliases("hash", None, True)
-    assert (
-        str(excinfo.value)
-        == "Exclude columns flag cannot be present with column list '*'"
-    )
-
-
 def test_get_correct_run_id(module_under_test):
     config_manager = module_under_test.ConfigManager(
         SAMPLE_ROW_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False

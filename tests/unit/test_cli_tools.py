@@ -897,17 +897,13 @@ class MockIbisSchema:
         self.names = names
 
 
-@mock.patch("data_validation.clients.get_ibis_query_schema")
-@mock.patch("data_validation.clients.get_ibis_table_schema")
 @pytest.mark.parametrize(
-    "concat_arg,exclude_columns,table_obj,query_str,mock_schema_names,expected_result,expected_exception",
+    "concat_arg,exclude_columns,base_columns,expected_result,expected_exception",
     [
         # Scenario 1: wildcard with exclude_columns raises ValueError
         (
             "*",
             True,
-            {"schema_name": "a", "table_name": "b"},
-            None,
             ["col1", "col2"],
             None,
             ValueError,
@@ -916,8 +912,6 @@ class MockIbisSchema:
         (
             "*",
             False,
-            {"schema_name": "a", "table_name": "b"},
-            None,
             ["col1", "col2", "col3"],
             ["col1", "col2", "col3"],
             None,
@@ -926,8 +920,6 @@ class MockIbisSchema:
         (
             "*",
             False,
-            None,
-            "SELECT * FROM a.b",
             ["col_a", "col_b"],
             ["col_a", "col_b"],
             None,
@@ -936,8 +928,6 @@ class MockIbisSchema:
         (
             "col1,col3",
             True,
-            {"schema_name": "a", "table_name": "b"},
-            None,
             ["col1", "col2", "col3", "col4"],
             ["col2", "col4"],
             None,
@@ -946,39 +936,30 @@ class MockIbisSchema:
         (
             "col_a",
             True,
-            None,
-            "SELECT * FROM a.b",
             ["col_a", "col_b", "col_c"],
             ["col_b", "col_c"],
             None,
         ),
         # Scenario 4: simple column list
-        ("col1,col2", False, None, None, [], ["col1", "col2"], None),
+        ("col1,col2", False, [], ["col1", "col2"], None),
     ],
 )
 def test__get_pre_build_configs_cols_from_arg(
-    mock_get_table_schema,
-    mock_get_query_schema,
     concat_arg,
     exclude_columns,
-    table_obj,
-    query_str,
-    mock_column_names,
+    base_columns,
     expected_result,
     expected_exception,
 ):
     """Test _get_pre_build_configs_cols_from_arg."""
-    mock_get_table_schema.return_value = MockIbisSchema(mock_column_names)
-    mock_get_query_schema.return_value = MockIbisSchema(mock_column_names)
-
     if expected_exception:
         with pytest.raises(expected_exception):
             cli_tools._get_pre_build_configs_cols_from_arg(
-                concat_arg, None, table_obj, query_str, exclude_columns
+                concat_arg, base_columns, exclude_columns
             )
     else:
         result = cli_tools._get_pre_build_configs_cols_from_arg(
-            concat_arg, None, table_obj, query_str, exclude_columns
+            concat_arg, base_columns, exclude_columns
         )
         assert result == expected_result
 

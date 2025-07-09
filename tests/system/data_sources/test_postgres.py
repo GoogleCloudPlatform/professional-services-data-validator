@@ -1038,7 +1038,7 @@ def test_row_validation_many_columns_standard():
 def test_row_validation_many_columns_exclude():
     """dvt_many_cols row validation including --exclude-columns.
 
-    We have this specific test for --exlcude-columns as a regression test for issue-1542.
+    We have this specific test for --exclude-columns as a regression test for issue-1542.
     The code being tested is not PostgreSQL specific therefore we do not need this in other test files.
     """
     row_validation_many_columns_test(
