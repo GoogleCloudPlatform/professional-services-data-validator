@@ -17,15 +17,18 @@
 set -e
 
 # Decode environment variables to connection files if they exist.
-# These files can then be referenced in the validation YAML config.
+# These connections can then be referenced in the validation YAML config.
+mkdir -p $HOME/.config/google-pso-data-validator/
 if [ -n "$DVT_SRC_CONN" ]; then
-  echo "Found DVT_SRC_CONN, decoding to /app/source_connection.json"
-  echo "$DVT_SRC_CONN" | base64 -d > /app/source_connection.json
+  src=`echo $DVT_SRC_CONN | cut -d ':' -f 1`
+  echo "Found DVT_SRC_CONN, setting up connection for ${src}"
+  echo $DVT_SRC_CONN | cut -d ':' -f 2 | base64 -d > $HOME/.config/google-pso-data-validator/${src}.connection.json
 fi
 
 if [ -n "$DVT_TGT_CONN" ]; then
-  echo "Found DVT_TGT_CONN, decoding to /app/target_connection.json"
-  echo "$DVT_TGT_CONN" | base64 -d > /app/target_connection.json
+  tgt=`echo $DVT_TGT_CONN | cut -d ':' -f 1`
+  echo "Found DVT_TGT_CONN, setting up connection for ${tgt}"
+  echo $DVT_TGT_CONN | cut -d ':' -f 2 | base64 -d > $HOME/.config/google-pso-data-validator/${tgt}.connection.json
 fi
 
 # Execute the main data validation command, passing all arguments (`$@`)
