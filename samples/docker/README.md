@@ -18,4 +18,3 @@ You can run following command to run data validation tool as a docker container,
 ```buildoutcfg
  docker run -e DVT_SRC_CONN -e DVT_TGT_CONN data_validation:7.7.0 validate row -sc postgres -tc bigquery -tbls=pso_data_validator.dvt_core_types -pk=id -hash='*'
 ```
-**Please note:** 
