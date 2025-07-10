@@ -587,10 +587,30 @@ def test_build_comp_fields(module_under_test):
 
     comparison_fields = config_manager.build_comp_fields(
         ["a", "c", "e"],
+        False,
     )
     # Column "e" does not exists and therefore should not be in the list, even though
     # it was requested.
     assert comparison_fields == {"a": "a", "c": "c"}
+
+
+@mock.patch(
+    "data_validation.config_manager.ConfigManager.get_source_ibis_calculated_table",
+    new=lambda x: MockIbisTable(),
+)
+def test_build_comp_fields_exclude_columns(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
+    comparison_fields = config_manager.build_comp_fields(
+        [
+            "a",
+        ],
+        True,
+    )
+    # Column "a" was excluded and therefore should not be in the list.
+    assert comparison_fields == {"b": "b", "c": "c", "d": "d"}
 
 
 @pytest.mark.parametrize(
