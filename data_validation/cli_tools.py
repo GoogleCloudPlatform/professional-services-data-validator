@@ -1656,8 +1656,8 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
         }
 
         if (
-            pre_build_configs[consts.CONFIG_ROW_HASH]
-            or pre_build_configs[consts.CONFIG_ROW_CONCAT]
+            pre_build_configs[consts.CONFIG_ROW_CONCAT]
+            or pre_build_configs[consts.CONFIG_ROW_HASH]
         ):
             # Ensure we don't have too many columns for the engines involved.
             cols = _get_pre_build_configs_cols_from_arg(
