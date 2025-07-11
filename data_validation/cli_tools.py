@@ -641,9 +641,9 @@ def _configure_row_parser(
         "-mcc",
         type=int,
         help=(
-            "The maximum number of columns accepted by a --hash or --concat validation. When there are "
-            "more columns than this the validation will implicitly be split into multiple validations. "
-            "This option has engine specific defaults."
+            """Maximum number of columns used in one --hash or --concat validation. When there are more columns
+                in the validation, the validation will be split into multiple validations. There are engine specific
+                defaults, so most users do not need to use this option unless they encounter errors."""
         ),
     )
     # Generate-table-partitions and custom-query does not support random row
