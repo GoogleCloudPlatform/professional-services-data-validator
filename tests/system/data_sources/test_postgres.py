@@ -1024,11 +1024,28 @@ def test_column_validation_many_columns():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_many_columns():
+def test_row_validation_many_columns_standard():
     """dvt_many_cols row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
     row_validation_many_columns_test(expected_config_managers=5)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns_exclude():
+    """dvt_many_cols row validation including --exclude-columns.
+
+    We have this specific test for --exclude-columns as a regression test for issue-1542.
+    The code being tested is not PostgreSQL specific therefore we do not need this in other test files.
+    """
+    row_validation_many_columns_test(
+        expected_config_managers=5,
+        columns="col_004,col_005,col_006",
+        exclude_columns=True,
+    )
 
 
 @mock.patch(

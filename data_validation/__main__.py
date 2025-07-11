@@ -108,7 +108,11 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, args.exclude_columns, None, cast_to_bigint=cast_to_bigint
+            "count",
+            col_args,
+            args.exclude_columns,
+            None,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
@@ -181,18 +185,14 @@ def _get_calculated_config(args, config_manager: ConfigManager) -> List[dict]:
             if config_manager.hash == "*"
             else cli_tools.get_arg_list(config_manager.hash)
         )
-        fields = config_manager.build_dependent_aliases(
-            "hash", col_list, args.exclude_columns
-        )
+        fields = config_manager.build_dependent_aliases("hash", col_list)
     elif config_manager.concat:
         col_list = (
             None
             if config_manager.concat == "*"
             else cli_tools.get_arg_list(config_manager.concat)
         )
-        fields = config_manager.build_dependent_aliases(
-            "concat", col_list, args.exclude_columns
-        )
+        fields = config_manager.build_dependent_aliases("concat", col_list)
 
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
@@ -232,10 +232,7 @@ def _get_comparison_config(
         if args.comparison_fields == "*"
         else cli_tools.get_arg_list(args.comparison_fields)
     )
-    comparison_fields = config_manager.build_comp_fields(
-        col_list,
-        args.exclude_columns,
-    )
+    comparison_fields = config_manager.build_comp_fields(col_list, args.exclude_columns)
     # We can't have the PK columns in the comparison SQL twice therefore filter them out here if included.
     comparison_fields = [_ for _ in comparison_fields if _ not in primary_keys]
 

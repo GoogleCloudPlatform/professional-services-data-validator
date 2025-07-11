@@ -1505,25 +1505,48 @@ def _concat_column_count_configs(
     return return_list
 
 
+def _get_pre_build_configs_base_columns(
+    client, table_obj: dict, query_str: str
+) -> list:
+    """Return a list of base columns for the table/custom query, used for both columns="*" and --exclude-columns."""
+    if table_obj:
+        full_col_list = clients.get_ibis_table_schema(
+            client,
+            table_obj["schema_name"],
+            table_obj["table_name"],
+        ).names
+    else:
+        full_col_list = clients.get_ibis_query_schema(
+            client,
+            query_str,
+        ).names
+    return [_.casefold() for _ in full_col_list]
+
+
+def _get_pre_build_configs_cols_from_arg(
+    column_csv_arg: str, casefold_columns: list, exclude_columns: bool
+) -> Optional[list]:
+    if column_csv_arg is None:
+        return None
+
+    column_arg_list = [_.casefold() for _ in get_arg_list(column_csv_arg)]
+    if column_csv_arg == "*" and exclude_columns:
+        raise ValueError(
+            "Exclude columns flag cannot be present with '*' column specification"
+        )
+    elif column_csv_arg == "*" or exclude_columns:
+        # If validating with "*" or need to invert the list then we need to expand to count the columns.
+        if column_csv_arg == "*":
+            return casefold_columns
+
+        if exclude_columns:
+            return [col for col in casefold_columns if col not in column_arg_list]
+    else:
+        return column_arg_list
+
+
 def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
     """Return a dict of configurations to build ConfigManager object"""
-
-    def cols_from_arg(concat_arg: str, client, table_obj: dict, query_str: str) -> list:
-        if concat_arg == "*":
-            # If validating with "*" then we need to expand to count the columns.
-            if table_obj:
-                return clients.get_ibis_table_schema(
-                    client,
-                    table_obj["schema_name"],
-                    table_obj["table_name"],
-                ).names
-            else:
-                return clients.get_ibis_query_schema(
-                    client,
-                    query_str,
-                ).names
-        else:
-            return get_arg_list(concat_arg)
 
     # validate_cmd will be set to 'row`, or 'Custom-query' if invoked by generate-table-partitions depending
     # on what is being partitioned. Otherwise validate_cmd will be set to None
@@ -1604,6 +1627,10 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             tables_list, source_client, target_client
         )
     for table_obj in tables_list:
+        casefold_source_columns = _get_pre_build_configs_base_columns(
+            source_client, table_obj, query_str
+        )
+
         pre_build_configs = {
             "config_type": config_type,
             consts.CONFIG_SOURCE_CONN_NAME: args.source_conn,
@@ -1627,18 +1654,25 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             consts.CONFIG_RUN_ID: getattr(args, consts.CONFIG_RUN_ID, None),
             "verbose": args.verbose,
         }
+
         if (
             pre_build_configs[consts.CONFIG_ROW_CONCAT]
             or pre_build_configs[consts.CONFIG_ROW_HASH]
         ):
             # Ensure we don't have too many columns for the engines involved.
-            cols = cols_from_arg(
+            cols = _get_pre_build_configs_cols_from_arg(
                 pre_build_configs[consts.CONFIG_ROW_HASH]
                 or pre_build_configs[consts.CONFIG_ROW_CONCAT],
-                source_client,
-                table_obj,
-                query_str,
+                casefold_source_columns,
+                args.exclude_columns,
             )
+            if args.exclude_columns:
+                # Put the column csv back into pre_build_configs because it has been inverted.
+                if pre_build_configs[consts.CONFIG_ROW_HASH]:
+                    pre_build_configs[consts.CONFIG_ROW_HASH] = ",".join(cols)
+                elif pre_build_configs[consts.CONFIG_ROW_CONCAT]:
+                    pre_build_configs[consts.CONFIG_ROW_CONCAT] = ",".join(cols)
+
             new_pre_build_configs = _concat_column_count_configs(
                 cols,
                 pre_build_configs,

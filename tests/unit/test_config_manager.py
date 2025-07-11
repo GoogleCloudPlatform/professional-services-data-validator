@@ -555,43 +555,11 @@ def test_build_dependent_aliases(module_under_test):
     )
 
     # Hash includes col a
-    dependent_aliases = config_manager.build_dependent_aliases(
-        "hash", ["a"], exclude_cols=False
-    )
+    dependent_aliases = config_manager.build_dependent_aliases("hash", ["a"])
     concat_config = dependent_aliases[-2]
     assert concat_config["source_reference"] == [
         "rstrip__ifnull__cast__a",
     ]
-
-
-def test_build_dependent_aliases_exclude_columns(module_under_test):
-    config_manager = module_under_test.ConfigManager(
-        SAMPLE_ROW_CONFIG_DEP_ALIASES, MockIbisClient(), MockIbisClient(), verbose=False
-    )
-
-    # Hash excludes col a
-    dependent_aliases = config_manager.build_dependent_aliases(
-        "hash", ["a"], exclude_cols=True
-    )
-    concat_config = dependent_aliases[-2]
-    assert concat_config["source_reference"] == [
-        "rstrip__ifnull__cast__b",
-        "rstrip__ifnull__cast__c",
-        "rstrip__ifnull__cast__d",
-    ]
-
-
-def test_build_dependent_aliases_exception(module_under_test):
-    config_manager = module_under_test.ConfigManager(
-        SAMPLE_ROW_CONFIG_DEP_ALIASES, MockIbisClient(), MockIbisClient(), verbose=False
-    )
-
-    with pytest.raises(ValueError) as excinfo:
-        config_manager.build_dependent_aliases("hash", None, True)
-    assert (
-        str(excinfo.value)
-        == "Exclude columns flag cannot be present with column list '*'"
-    )
 
 
 def test_get_correct_run_id(module_under_test):
@@ -617,7 +585,6 @@ def test_build_comp_fields(module_under_test):
         SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
     )
 
-    # With exclude_columns=False
     comparison_fields = config_manager.build_comp_fields(
         ["a", "c", "e"],
         False,
@@ -626,12 +593,24 @@ def test_build_comp_fields(module_under_test):
     # it was requested.
     assert comparison_fields == {"a": "a", "c": "c"}
 
-    # With exclude_columns=True
+
+@mock.patch(
+    "data_validation.config_manager.ConfigManager.get_source_ibis_calculated_table",
+    new=lambda x: MockIbisTable(),
+)
+def test_build_comp_fields_exclude_columns(module_under_test):
+    config_manager = module_under_test.ConfigManager(
+        SAMPLE_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
+    )
+
     comparison_fields = config_manager.build_comp_fields(
-        ["a", "c", "e"],
+        [
+            "a",
+        ],
         True,
     )
-    assert comparison_fields == {"b": "b", "d": "d"}
+    # Column "a" was excluded and therefore should not be in the list.
+    assert comparison_fields == {"b": "b", "c": "c", "d": "d"}
 
 
 @pytest.mark.parametrize(

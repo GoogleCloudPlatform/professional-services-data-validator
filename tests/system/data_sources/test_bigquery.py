@@ -41,6 +41,7 @@ from tests.system.data_sources.common_functions import (
     raw_query_test,
     row_validation_test,
     custom_query_validation_test,
+    exclude_columns_test,
 )
 from tests.system.result_handlers.test_bigquery import create_bigquery_results_table
 
@@ -1202,6 +1203,66 @@ def test_bigquery_dry_run(mock_conn, capsys):
         dry_run["source_query"]
         == f"WITH t0 AS (\n  SELECT t5.*, t5.`col_string` AS `cast__col_string`\n  FROM `{PROJECT_ID}.pso_data_validator.dvt_core_types` t5\n),\nt1 AS (\n  SELECT t0.*,\n         IFNULL(t0.`cast__col_string`, 'DEFAULT_REPLACEMENT_STRING') AS `ifnull__cast__col_string`\n  FROM t0\n),\nt2 AS (\n  SELECT t1.*,\n         rtrim(t1.`ifnull__cast__col_string`) AS `rstrip__ifnull__cast__col_string`\n  FROM t1\n),\nt3 AS (\n  SELECT t2.*,\n         ARRAY_TO_STRING([t2.`rstrip__ifnull__cast__col_string`], '') AS `concat__all`\n  FROM t2\n)\nSELECT t4.`hash__all`, t4.`id`\nFROM (\n  SELECT t3.*, TO_HEX(SHA256(t3.`concat__all`)) AS `hash__all`\n  FROM t3\n) t4"
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_hash_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_concat_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, column_arg="concat")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_comp_fields_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, column_arg="comparison-fields")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_column_count_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, validation_type="column", column_arg="count")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_column_sum_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, validation_type="column", column_arg="sum")
 
 
 @mock.patch(

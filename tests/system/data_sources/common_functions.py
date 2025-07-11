@@ -144,45 +144,81 @@ def row_validation_many_columns_test(
     concat_arg: str = "hash",
     expected_config_managers: int = 1,
     target_conn: str = "mock-conn",
+    columns: str = "*",
+    exclude_columns: bool = None,
 ):
     """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
     parser = cli_tools.configure_arg_parser()
     schema_prefix = f"{schema}." if schema else ""
     if validation_type == "row":
-        args = parser.parse_args(
-            [
-                "validate",
-                "row",
-                "-sc=mock-conn",
-                f"-tc={target_conn}",
-                f"-tbls={schema_prefix}{table}",
-                "--primary-keys=id",
-                f"--{concat_arg}=*",
-                "--filter-status=fail",
-            ]
-        )
+        cli_arg_list = [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            f"-tc={target_conn}",
+            f"-tbls={schema_prefix}{table}",
+            "--primary-keys=id",
+            f"--{concat_arg}={columns}",
+            "--filter-status=fail",
+            "--exclude-columns" if exclude_columns else None,
+        ]
     else:
         query = f"SELECT * FROM {schema_prefix}{table}"
-        args = parser.parse_args(
-            [
-                "validate",
-                "custom-query",
-                "row",
-                "-sc=mock-conn",
-                "-tc=mock-conn",
-                f"--source-query={query}",
-                f"--target-query={query}",
-                "--primary-keys=id",
-                f"--{concat_arg}=*",
-                "--filter-status=fail",
-            ]
-        )
+        cli_arg_list = [
+            "validate",
+            "custom-query",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            f"--source-query={query}",
+            f"--target-query={query}",
+            "--primary-keys=id",
+            f"--{concat_arg}={columns}",
+            "--filter-status=fail",
+            "--exclude-columns" if exclude_columns else None,
+        ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
     # We expect the validation to be split into multiple config managers.
     for df in run_tests_from_cli_args(
         args, expected_config_managers=expected_config_managers
     ):
         # With filter on failures the data frame should be empty.
         assert len(df) == 0
+
+
+def exclude_columns_test(
+    capsys,
+    tables="pso_data_validator.dvt_core_types",
+    tc="mock-conn",
+    validation_type: str = "row",
+    column_arg: str = "hash",
+    columns: str = "col_string,col_float64",
+    expected_column: str = "col_float32",
+):
+    """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "validate",
+        validation_type,
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        "--primary-keys=id" if validation_type == "row" else None,
+        f"--{column_arg}={columns}",
+        "--filter-status=fail",
+        "--exclude-columns",
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    config_managers = main.build_config_managers_from_args(args)
+    main.run_validation(config_managers[0], dry_run=True)
+    out, err = capsys.readouterr()
+    assert err == ""
+    dry_run = json.loads(out)
+    for col in columns.lower().split(","):
+        assert col not in dry_run["source_query"].lower()
+    assert expected_column.lower() in dry_run["source_query"].lower()
 
 
 def find_tables_assertions(
