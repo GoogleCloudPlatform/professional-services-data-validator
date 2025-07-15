@@ -140,7 +140,6 @@ class PartitionBuilder:
         master_filter_list = []
         for config_manager in self.config_managers:  # For each pair of tables
             validation_builder = ValidationBuilder(config_manager)
-
             source_pks, target_pks = [], []
             for pk in config_manager.primary_keys:
                 source_pks.append(pk["source_column"])
@@ -419,9 +418,13 @@ class PartitionBuilder:
                 yaml_config = self._add_filters_get_yaml_file(
                     config_manager, source_filters_list[i], target_filters_list[i]
                 )
-                yaml_configs_list[ind]["yaml_files"].append(
+                if ind == 0 : # First source/target table pair being partitioned 
+                    yaml_configs_list[0]["yaml_files"].append(
                     {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
                 )
+                else : # Subsequent table pairs - extend existing yaml by adding additional validations
+                    yaml_configs_list[0]["yaml_files"][i]['yaml_config']['validations'].extend(yaml_config['validations'])
+
         return yaml_configs_list
 
     def _store_partitions(self, yaml_configs_list: List[Dict]) -> None:
