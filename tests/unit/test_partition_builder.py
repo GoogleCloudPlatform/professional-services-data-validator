@@ -689,6 +689,39 @@ def test_add_partition_filters_to_config(module_under_test):
     assert yaml_configs_list == expected_yaml_configs_list
 
 
+def test_add_partition_filters_to_multiple_configs(module_under_test):
+    """Add partition filters to 2 ConfigManager objects, build YAML config list
+    and assert YAML configs. Generally we don't expect users to invoke generate-table-partitions with
+    multiple table pairs from command line, where both pairs have the same primary key, columns to validate,
+    number of partitions and partitions per file. DVT can add the same partition_filters to multiple configs
+    because the validation for a table with numerous columns had to be split into multiple validations performeed serially.
+    Each validation has its own config with fewer columns which can be successfully validated.
+    This test addresses issue 1549.
+    """
+    # Generate dummy YAML configs list
+    config_manager = _generate_config_manager("test_table")
+    config_managers = [config_manager, config_manager]
+
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(TABLE_PART_ARGS)
+
+    # two partition filters are needed, one for source and one for target
+    master_filter_list = []
+    for i in range(len(config_managers)):
+        master_filter_list.append([PARTITION_FILTERS_LIST, PARTITION_FILTERS_LIST])
+
+    # Create PartitionBuilder object and get YAML configs list
+    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
+    yaml_configs_list = builder._add_partition_filters(master_filter_list)
+
+    # There were nine validations with one table, there should be 18 now.
+    num_val = 0
+    for yaml_config in yaml_configs_list:
+        for yaml_file in yaml_config["yaml_files"]:
+            num_val = num_val + len(yaml_file["yaml_config"]["validations"])
+    assert num_val == 18
+
+
 def test_store_yaml_partitions(module_under_test, tmp_path):
     """Store all the Partition YAMLs for a table to specified local directory"""
 
