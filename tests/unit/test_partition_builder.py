@@ -691,10 +691,10 @@ def test_add_partition_filters_to_config(module_under_test):
 
 def test_add_partition_filters_to_multiple_configs(module_under_test):
     """Add partition filters to 2 ConfigManager objects, build YAML config list
-    and assert YAML configs. Generally we don't expect users to invoke generate-table-partitions with
+    and assert number of validations twice as in single config. Generally we don't expect users to invoke generate-table-partitions with
     multiple table pairs from command line, where both pairs have the same primary key, columns to validate,
     number of partitions and partitions per file. DVT can add the same partition_filters to multiple configs
-    because the validation for a table with numerous columns had to be split into multiple validations performeed serially.
+    because the validation for a table with numerous columns had to be split into multiple validations performed serially.
     Each validation has its own config with fewer columns which can be successfully validated.
     This test addresses issue 1549.
     """
@@ -706,6 +706,7 @@ def test_add_partition_filters_to_multiple_configs(module_under_test):
     mock_args = parser.parse_args(TABLE_PART_ARGS)
 
     # two partition filters are needed, one for source and one for target
+    # have to add a pair for each config_manager object
     master_filter_list = []
     for i in range(len(config_managers)):
         master_filter_list.append([PARTITION_FILTERS_LIST, PARTITION_FILTERS_LIST])
@@ -714,7 +715,8 @@ def test_add_partition_filters_to_multiple_configs(module_under_test):
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     yaml_configs_list = builder._add_partition_filters(master_filter_list)
 
-    # There were nine validations with one table, there should be 18 now.
+    # There were nine validations with one table in
+    # test_add_partition_filters_to_config, there should be 18 now.
     num_val = 0
     for yaml_config in yaml_configs_list:
         for yaml_file in yaml_config["yaml_files"]:
