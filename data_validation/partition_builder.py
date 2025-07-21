@@ -18,6 +18,8 @@ import pandas
 import logging
 import re
 import datetime
+import hashlib
+import base64
 from typing import List, Dict, TYPE_CHECKING
 
 from data_validation import cli_tools, consts, util
@@ -397,28 +399,40 @@ class PartitionBuilder:
         """
         # Since we store yaml configs in directories by schema.source_table_name, there can be
         # only one yaml config per schema.source_table_name, even if shows up in multiple table
-        # pairs. We store the configs in a list and a dict mapping source table name to list index
+        # pairs. In the case of custom query validation, we need to generate a "reasonably" unique name for the directory
+        # based on the source query. As mentioned in issue 1428, this not friendly, so something we should change.
+        # We store the configs in a list and a dict mapping source table name, or directory name in case of custom-query to list index
         yaml_configs_list = []
         src_config_dict = {}
+
         for ind, config_manager in enumerate(self.config_managers):
+            if config_manager.source_table:
+                dir_name = config_manager.full_source_table
+            else:
+                dir_name = (
+                    "custom."
+                    + base64.b64encode(
+                        hashlib.sha256(
+                            config_manager.source_query.encode("utf-8")
+                        ).digest()
+                    ).decode("ascii")[:5]
+                )
             filter_list = partition_filters[ind]
 
-            if (
-                src_config_dict.get(config_manager.full_source_table) is None
-            ):  # First time encountering this source table
+            if src_config_dict.get(dir_name) is None:
+                # First time encountering this source table or source query
                 source_table_repeat = False
                 yaml_configs_list.append(
                     {
-                        "target_folder_name": config_manager.full_source_table,
+                        "target_folder_name": dir_name,
                         "yaml_files": [],
                     }
                 )
-                src_config_dict[config_manager.full_source_table] = (
-                    len(yaml_configs_list) - 1
-                )
+                src_config_dict[dir_name] = len(yaml_configs_list) - 1
+
             else:
                 source_table_repeat = True
-            yaml_ind = src_config_dict[config_manager.full_source_table]
+            yaml_ind = src_config_dict[dir_name]
 
             # Create a list of lists chunked by partitions per file
             # Both source and target table are divided into the same number of partitions, so we are

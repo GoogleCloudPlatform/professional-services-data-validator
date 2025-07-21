@@ -135,6 +135,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -173,6 +174,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -211,6 +213,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -249,6 +252,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -287,6 +291,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -335,6 +340,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -373,6 +379,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -411,6 +418,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -449,6 +457,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -537,9 +546,14 @@ def _generate_fake_data(
     return data
 
 
-def _generate_config_manager(table_name: str = "my_table") -> ConfigManager:
-    """Returns a Dummy ConfigManager Object"""
+def _generate_config_manager(
+    table_name: str = "test_table", query: str = None
+) -> ConfigManager:
+    """Returns a Dummy ConfigManager Object
+    If query keyword parameter is provided, then query validation is assumed"""
 
+    if query:
+        table_name = None
     row_config = {
         # BigQuery Specific Connection Config
         "source_conn": SOURCE_CONN_CONFIG,
@@ -551,6 +565,7 @@ def _generate_config_manager(table_name: str = "my_table") -> ConfigManager:
         "table_name": table_name,
         "target_schema_name": None,
         "target_table_name": table_name,
+        consts.CONFIG_SOURCE_QUERY: query,
         consts.CONFIG_PRIMARY_KEYS: [
             {
                 consts.CONFIG_FIELD_ALIAS: "id",
@@ -610,7 +625,7 @@ def test_class_object_creation(module_under_test):
     3. single primary_key value (is this already tested in row validation?)
     4. multiple primary keys (is this already tested in row validation?)
     """
-    mock_config_manager = _generate_config_manager("test_table")
+    mock_config_manager = _generate_config_manager()
     config_managers = [mock_config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -665,7 +680,7 @@ def test_add_partition_filters_to_config(module_under_test):
     and assert YAML configs
     """
     # Generate dummy YAML configs list
-    config_manager = _generate_config_manager("test_table")
+    config_manager = _generate_config_manager()
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -699,7 +714,7 @@ def test_add_partition_filters_to_multiple_configs(module_under_test):
     This test addresses issue 1549.
     """
     # Generate dummy YAML configs list
-    config_manager = _generate_config_manager("test_table")
+    config_manager = _generate_config_manager()
     config_managers = [config_manager, config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -733,7 +748,7 @@ def test_store_yaml_partitions(module_under_test, tmp_path):
     TABLE_PART_ARGS[TABLE_PART_ARGS.index("-cdir") + 1] = str(folder_path)
 
     # Generate dummy YAML configs list
-    config_manager = _generate_config_manager("test_table")
+    config_manager = _generate_config_manager()
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -759,7 +774,7 @@ def test_create_partition_query_yaml(module_under_test):
     and assert that the folder name, number of files and number of validations are what we would expect.
     """
     # Generate dummy YAML configs list
-    config_manager = _generate_config_manager(None)
+    config_manager = _generate_config_manager(query="Select 1")
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()

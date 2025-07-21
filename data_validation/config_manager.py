@@ -14,8 +14,6 @@
 
 import copy
 import logging
-import string
-import random
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Tuple
 
 import ibis.expr.datatypes as dt
@@ -333,13 +331,11 @@ class ConfigManager(object):
 
     @property
     def full_source_table(self):
-        """Return string value of target table."""
+        """Return string value of fully qualified source table."""
         if self.source_table and self.source_schema:
             return self.source_schema + "." + self.source_table
-        elif self.source_table:
-            return self.source_table
         else:
-            return f"custom.{''.join(random.choice(string.ascii_lowercase) for _ in range(5))}"
+            return self.source_table
 
     @property
     def labels(self):
