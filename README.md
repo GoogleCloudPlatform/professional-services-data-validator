@@ -197,6 +197,8 @@ data-validation
                         See: *Calculated Fields* section for details
   --hash COLUMNS        Comma separated list of columns to hash or * for all columns
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
+  --max-concat-columns INT, -mcc INT
+                        Maximum number of columns used in one --hash or --concat validation. When there are more columns in the validation, the validation will be split into multiple validations. There are engine specific defaults, so most users do not need to use this option unless they encounter errors.
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                         Comma separated list of primary key columns, when not specified the value will be inferred
                         from the source or target table if available.  See *Primary Keys* section
@@ -462,6 +464,8 @@ data-validation
   --hash '*'            '*' to hash all columns.
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns
                         (use if a common hash function is not available between databases)
+  --max-concat-columns INT, -mcc INT
+                        Maximum number of columns used in one --hash or --concat validation. When there are more columns in the validation, the validation will be split into multiple validations. There are engine specific defaults, so most users do not need to use this option unless they encounter errors.
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                        Common column between source and target queries for join
   [--exclude-columns or -ec]

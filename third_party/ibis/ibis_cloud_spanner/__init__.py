@@ -15,7 +15,6 @@
 from typing import Any, Mapping, Optional, Tuple
 
 from google.api_core import client_options
-import google.cloud.spanner as cs
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from google.cloud import spanner
@@ -43,21 +42,19 @@ class Backend(BaseSQLBackend):
         api_endpoint: str = None,
     ) -> None:
 
-        self.spanner_client = spanner.Client(
-            project=project_id, credentials=credentials
+        options = None
+        if api_endpoint:
+            options = client_options.ClientOptions(api_endpoint=api_endpoint)
+
+        self.client = spanner.Client(
+            project=project_id, credentials=credentials, client_options=options
         )
-        self.instance = self.spanner_client.instance(instance_id)
+        self.instance = self.client.instance(instance_id)
         self.database_name = self.instance.database(database_id)
         (
             self.data_instance,
             self.dataset,
         ) = parse_instance_and_dataset(instance_id, database_id)
-
-        options = None
-        if api_endpoint:
-            options = client_options.ClientOptions(api_endpoint=api_endpoint)
-
-        self.client = cs.Client(client_options=options)
 
     def _parse_instance_and_dataset(self, dataset):
         if not dataset and not self.dataset:
