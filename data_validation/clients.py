@@ -90,7 +90,8 @@ except Exception:
 # DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
-except Exception:
+except Exception as e:
+    logging.error(f"Exception {str(e)} while importing db2_connect")
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
 
