@@ -49,7 +49,7 @@ class Backend(BaseSQLBackend):
         self.client = spanner.Client(
             project=project_id, credentials=credentials, client_options=options
         )
-        self.instance = self.spanner_client.instance(instance_id)
+        self.instance = self.client.instance(instance_id)
         self.database_name = self.instance.database(database_id)
         (
             self.data_instance,
