@@ -158,7 +158,7 @@ def _cast(t, op):
         return sa.case(
             (sa_arg.in_("0", "N"), sa.literal(0)),
             (sa_arg.in_("1", "Y"), sa.literal(1)),
-            else_=sa.literal(None),
+            else_=sa.literal_column("TO_NUMBER(NULL)"),
         )
     elif (arg_dtype.is_timestamp() or arg_dtype.is_date()) and typ.is_date():
         # If we are casting to Date then simulate what all other engines
