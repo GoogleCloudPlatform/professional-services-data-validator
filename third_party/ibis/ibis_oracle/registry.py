@@ -156,8 +156,8 @@ def _cast(t, op):
         return sa.func.to_char(sa_arg)
     elif arg_dtype.is_string() and typ.is_boolean():
         return sa.case(
-            (sa_arg.in_("0", "N"), sa.literal(0)),
-            (sa_arg.in_("1", "Y"), sa.literal(1)),
+            (sa_arg.in_(["0", "N"]), sa.literal(0)),
+            (sa_arg.in_(["1", "Y"]), sa.literal(1)),
             else_=sa.literal_column("TO_NUMBER(NULL)"),
         )
     elif (arg_dtype.is_timestamp() or arg_dtype.is_date()) and typ.is_date():
