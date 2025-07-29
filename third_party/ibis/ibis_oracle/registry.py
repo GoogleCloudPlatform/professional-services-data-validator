@@ -115,7 +115,7 @@ def _cast(t, op):
         # For example 0.5 becomes ".5", -0.5 becomes "-.5". This does not match most supported engines.
         # When we have precision/scale we can use a TO_CHAR format but Oracle supports NUMBER(*) - without precision/scale.
         # The ugly expression here is the only efficient way I can come up with
-        # to get the output we want:
+        # to get the output we want (converted to SQLAlchemy methods):
         #   SELECT CASE WHEN c1>0 AND c1<1 THEN '0'||TO_CHAR(0.5)
         #               WHEN c1>-1 AND c1<0 THEN '-0'||TO_CHAR(ABS(0.5))
         #               ELSE TO_CHAR(c1) END
@@ -124,13 +124,22 @@ def _cast(t, op):
         #   CAS
         #   ---
         #   0.5
-        return sa.literal_column(
+        return sa.case(
             (
-                "CASE "
-                f"WHEN {sa_arg}>0 AND {sa_arg}<1 THEN '0'||TO_CHAR({sa_arg}) "
-                f"WHEN {sa_arg}>-1 AND {sa_arg}<0 THEN '-0'||TO_CHAR(ABS({sa_arg})) "
-                f"ELSE TO_CHAR({sa_arg}) END"
-            )
+                sa.and_(
+                    sa_arg > sa.literal_column("0"), sa_arg < sa.literal_column("1")
+                ),
+                sa.literal_column("'0'").concat(
+                    sa.func.to_char(sa_arg),
+                ),
+            ),
+            (
+                sa.and_(
+                    sa_arg > sa.literal_column("-1"), sa_arg < sa.literal_column("0")
+                ),
+                sa.literal_column("'-0'").concat(sa.func.to_char(sa.func.abs(sa_arg))),
+            ),
+            else_=sa.func.to_char(sa_arg),
         )
     elif arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
@@ -146,13 +155,10 @@ def _cast(t, op):
     elif arg_dtype.is_interval() and typ.is_string():
         return sa.func.to_char(sa_arg)
     elif arg_dtype.is_string() and typ.is_boolean():
-        return sa.literal_column(
-            (
-                "CASE  "
-                f"WHEN {sa_arg} IN ('0','N') THEN 0 "
-                f"WHEN {sa_arg} IN ('1','Y') THEN 1 "
-                "ELSE TO_NUMBER(NULL) END"
-            )
+        return sa.case(
+            (sa_arg.in_(["0", "N"]), sa.literal(0)),
+            (sa_arg.in_(["1", "Y"]), sa.literal(1)),
+            else_=sa.literal_column("TO_NUMBER(NULL)"),
         )
     elif (arg_dtype.is_timestamp() or arg_dtype.is_date()) and typ.is_date():
         # If we are casting to Date then simulate what all other engines
