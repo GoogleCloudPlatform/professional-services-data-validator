@@ -32,6 +32,7 @@ import oracledb
 EXTRA_RESERVED_WORDS = set(
     [
         "COLUMN",
+        "ROWID",
     ]
 )
 
