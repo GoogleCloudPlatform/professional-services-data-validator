@@ -83,6 +83,7 @@ _type_mapping = {
     oracledb.DB_TYPE_BINARY_FLOAT: dt.Float32,
     oracledb.DB_TYPE_BINARY_DOUBLE: dt.Float64,
     oracledb.DB_TYPE_INTERVAL_DS: dt.Interval,
+    oracledb.DB_TYPE_BOOLEAN: dt.Boolean,
 }
 
 # SQL Alchemy doesn't support LONG RAW which drops us into Ibis 5.1.0 method:
@@ -202,3 +203,8 @@ def sa_oracle_BINARY_DOUBLE(_, satype, nullable=True):
 @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.ROWID)
 def sa_oracle_ROWID(_, satype, nullable=True):
     return dt.String(nullable=nullable)
+
+
+@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.BOOLEAN)
+def sa_oracle_BOOLEAN(_, satype, nullable=True):
+    return dt.Boolean(nullable=nullable)
