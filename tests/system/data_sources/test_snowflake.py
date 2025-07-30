@@ -244,7 +244,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """Snowflake to BigQuery dvt_core_types column validation"""
-    # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
+    # TODO Add col_tstz to cols and std_cols when issue-916 is complete
     cols = ",".join(
         [
             _
