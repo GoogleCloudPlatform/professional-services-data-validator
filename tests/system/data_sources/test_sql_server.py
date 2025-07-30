@@ -394,9 +394,9 @@ def test_column_validation_tricky_dates_to_bigquery():
 def test_column_validation_large_decimals_to_bigquery():
     """SQL Server to BigQuery dvt_large_decimals column validation."""
     cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
-    # SQL Server stdev returns Float32. This is incomatible with stddev_samp
+    # SQL Server stdev returns Float32. This is incompatible with stddev_samp
     # from most other engines when the inputs have precision > float64.
-    # Therefore we have excluded std_cols below.
+    # Therefore we have excluded std_cols from the test below.
 
     # Excluding col_dec_38 from avg_cols due to:
     # 1> SELECT avg(t0.col_dec_38) FROM pso_data_validator.dvt_large_decimals AS t0;
