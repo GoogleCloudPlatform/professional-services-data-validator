@@ -24,6 +24,7 @@ import re
 
 import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
+from third_party.ibis.ibis_addon.api import dvt_handle_failed_column_type_inference
 from third_party.ibis.ibis_oracle.compiler import OracleCompiler
 from third_party.ibis.ibis_oracle.datatypes import _get_type
 import oracledb
@@ -160,6 +161,11 @@ class Backend(BaseAlchemyBackend):
         self.database_name = self.raw_sql(
             "select sys_context('USERENV', 'SERVICE_NAME') from dual"
         ).fetchall()[0][0]
+
+    def _handle_failed_column_type_inference(
+        self, table: sa.Table, nulltype_cols: Iterable[str]
+    ) -> sa.Table:
+        return dvt_handle_failed_column_type_inference(self, table, nulltype_cols)
 
     def _metadata(self, query) -> Iterable[Tuple[str, dt.DataType]]:
         if (

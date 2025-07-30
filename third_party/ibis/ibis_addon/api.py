@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Iterable
+
+from ibis.backends.base.sql.alchemy.datatypes import to_sqla_type
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
-import parsy
-
 from ibis.expr.types.generic import Value
+import parsy
+import sqlalchemy as sa
 
 from data_validation import consts
 
@@ -114,6 +117,40 @@ def force_cast(self, target_type: str) -> Value:
             return self
 
     return op.to_expr()
+
+
+def dvt_handle_failed_column_type_inference(
+    self, table: sa.Table, nulltype_cols: Iterable[str]
+) -> sa.Table:
+    """Handle cases where SQLAlchemy cannot infer the column types of `table`.
+
+    This DVT duplication of Ibis code is so we can prefix the table name with
+    a schema name when required. To minimize risk we've not done this globally,
+    this function is imported by specific Backends as and when needed."""
+
+    self.inspector.reflect_table(table, table.columns)
+    dialect = self.con.dialect
+    quoted_name = dialect.identifier_preparer.quote(table.name)
+    # Start of custom DVT code
+    if table.schema:
+        quoted_schema = dialect.identifier_preparer.quote(table.schema)
+        quoted_name = quoted_schema + "." + quoted_name
+    # End of custom DVT code
+
+    for colname, type in self._metadata(quoted_name):
+        if colname.lower() in nulltype_cols:
+            # replace null types discovered by sqlalchemy with non null
+            # types
+            table.append_column(
+                sa.Column(
+                    colname.lower(),
+                    to_sqla_type(dialect, type),
+                    nullable=type.nullable,
+                    quote=self.compiler.translator_class._quote_column_names,
+                ),
+                replace_existing=True,
+            )
+    return table
 
 
 Value.force_cast = force_cast
