@@ -336,7 +336,7 @@ def test_column_validation_core_types_to_bigquery():
             )
         ]
     )
-    # Teradata stddev_samp returns REAL. This is incomatible with stddev_samp
+    # Teradata stddev_samp returns REAL. This is incompatible with stddev_samp
     # from other engines when the inputs have precision > float64.
     std_cols = ",".join(
         [
