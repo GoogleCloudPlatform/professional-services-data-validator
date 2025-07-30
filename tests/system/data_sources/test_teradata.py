@@ -387,9 +387,9 @@ def test_column_validation_large_decimals_to_bigquery():
     """Teradata to BigQuery dvt_large_decimals column validation."""
     # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
     cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
-    # Teradata stddev_samp returns REAL. This is incomatible with stddev_samp
+    # Teradata stddev_samp returns REAL. This is incompatible with stddev_samp
     # from other engines when the inputs have precision > float64. Therefore
-    # we have excluded std_cols below.
+    # we have excluded std_cols from the test below.
     column_validation_test(
         tables="udf.dvt_large_decimals=pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
