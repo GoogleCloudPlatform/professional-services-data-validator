@@ -352,6 +352,7 @@ def test_column_validation_core_types_to_bigquery():
     cols = ",".join(
         [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
     )
+    # Excluded col_float64 from std_cols due to STDDEV_SAMP inconsistent results. See issue-1540.
     std_cols = ",".join(
         [
             _
