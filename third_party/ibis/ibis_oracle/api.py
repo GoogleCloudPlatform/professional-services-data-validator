@@ -29,6 +29,7 @@ def oracle_connect(
     thick_mode: bool = False,
     driver: Literal["oracledb"] = "oracledb",
     connect_args: str = None,
+    url: str = None,
 ):
     connect_args_dict = dvt_config_string_to_dict(connect_args) if connect_args else {}
     backend = OracleBackend()
@@ -42,5 +43,6 @@ def oracle_connect(
         thick_mode=thick_mode,
         driver=driver,
         connect_args=connect_args_dict,
+        url=url,
     )
     return backend
