@@ -21,7 +21,7 @@ export PSO_DV_CONN_HOME=gs://<GCS_CONN_PATH>
 data-validation connections add --connection-name bq BigQuery --project-id ${PROJECT_ID}
 ```
 
-The `PSO_DV_CONN_HOME` environment variable will indicate that you want your connection files stored and retrieved from GCS automatically. Read more about it [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#gcs-connection-management-recommended).
+The `PSO_DV_CONN_HOME` environment variable indicates that you want your connection files stored and retrieved from GCS automatically. Read more about it [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#gcs-connection-management-recommended).
 
 ## Generate Table Partition YAMLs in GCS
 

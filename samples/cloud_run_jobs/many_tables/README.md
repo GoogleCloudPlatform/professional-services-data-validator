@@ -1,6 +1,6 @@
 # Distributed Data Validation with Cloud Run Jobs
 
-This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs) to many tables concurrently. This example uses column validation which is the most likely validation type to run in this scenario.
+This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs) to validate many tables concurrently. This example uses column validation which is the most likely validation type to run in this scenario.
 
 In this sample, you will first generate DVT configuration files. Cloud Run Jobs can then distribute each table's YAML configuration as a Cloud Run Task concurrently.
 
@@ -14,10 +14,10 @@ You will need to build a Docker image to be used by your Cloud Run Job with DVT 
 PROJECT_ID=<PROJECT-ID>
 REGION=<REGION> # e.g. us-central1
 REPO=<ARTIFACT-REGISTRY-REPOSITORY-NAME>
-SA=<SERVICE_ACCOUNT_NAME>@${PROJECT}.iam.gserviceaccount.com
+SA=<SERVICE_ACCOUNT_NAME>@${PROJECT_ID}.iam.gserviceaccount.com
 gcloud builds submit \
   --project=${PROJECT} \
-  --service-account=projects/${PROJECT}/serviceAccounts/${SA} \
+  --service-account=projects/${PROJECT_ID}/serviceAccounts/${SA} \
   --tag=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/dvt
 ```
 
@@ -30,13 +30,13 @@ export PSO_DV_CONN_HOME=gs://<GCS-CONN-PATH>
 data-validation connections add --connection-name bq BigQuery --project-id ${PROJECT_ID}
 ```
 
-The `PSO_DV_CONN_HOME` environment variable will indicate that you want your connection files stored and retrieved from GCS automatically. Read more about it [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#gcs-connection-management-recommended).
+The `PSO_DV_CONN_HOME` environment variable indicates that you want your connection files stored and retrieved from GCS automatically. Read more about it [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#gcs-connection-management-recommended).
 
 ## Generate Table Partition YAMLs in GCS
 
 To run jobs via Cloud Run Jobs we first need to generate YAML files for each table. Unfortunately the YAML files (currently, see issue 1205 note above) have a strict naming convention of `nnnn.yaml`, starting from "0000".
 
-This example uses tables from the integration test `pso_data_validator` schema:
+This example uses four tables from the integration test `pso_data_validator` schema, the driving loop would more likely be the output of the `data-validation find-tables` command:
 
 ```shell
 GCS_YAML_PATH=gs://<GCS-YAML-PATH>
@@ -53,7 +53,7 @@ for TABLE in dvt_core_types dvt_large_decimals dvt_binary dvt_char_id; do
 done
 ```
 
-Output example:
+Example output configuration files:
 ```shell
 $ gsutil ls gs://example-dvt-bucket/dvt_configs/pso_data_validator
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0000.yaml
@@ -76,7 +76,7 @@ GCS_YAML_PATH=gs://<GCS-YAML-PATH>/pso_data_validator
 JOB_NAME="dvt-$(date +'%Y%m%d%H%M%S')"
 gcloud run jobs create ${JOB_NAME} \
   --project ${PROJECT} --region ${REGION} --network=${NETWORK} \
-  --image ${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/dvt \
+  --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/dvt \
   --tasks 4 --max-retries 2 --parallelism 2 \
   --task-timeout=900s --execute-now \
   --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} \
