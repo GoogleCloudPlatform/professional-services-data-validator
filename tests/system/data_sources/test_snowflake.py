@@ -20,6 +20,7 @@ import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     find_tables_test,
@@ -243,14 +244,33 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """Snowflake to BigQuery dvt_core_types column validation"""
-    # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
+    # TODO Add col_tstz to cols and std_cols when issue-916 is complete
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_tstz")
+        ]
+    )
+    # Excluded col_dec_20,col_dec_38 from std_cols because they overflow STDDEV_SAMP fuction:
+    # SELECT stddev("COL_DEC_20") FROM pso_data_validator.public."DVT_CORE_TYPES";
+    #   Value overflow in a SUM aggregate
+    # Excluded col_float64 from std_cols due to STDDEV_SAMP inconsistent results. See issue-1540.
+    std_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float64", "col_dec_20", "col_dec_38", "col_tstz")
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES=pso_data_validator.dvt_core_types",
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=std_cols,
     )
 
 

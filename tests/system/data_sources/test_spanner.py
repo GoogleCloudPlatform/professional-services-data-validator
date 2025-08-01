@@ -74,31 +74,31 @@ def count_config():
         consts.CONFIG_GROUPED_COLUMNS: [],
         consts.CONFIG_AGGREGATES: [
             {
-                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
                 consts.CONFIG_SOURCE_COLUMN: None,
                 consts.CONFIG_TARGET_COLUMN: None,
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
             {
-                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
                 consts.CONFIG_SOURCE_COLUMN: "string_col",
                 consts.CONFIG_TARGET_COLUMN: "string_col",
                 consts.CONFIG_FIELD_ALIAS: "count_string_col",
             },
             {
-                consts.CONFIG_TYPE: "avg",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
                 consts.CONFIG_SOURCE_COLUMN: "float_col",
                 consts.CONFIG_TARGET_COLUMN: "float_col",
                 consts.CONFIG_FIELD_ALIAS: "avg_float_col",
             },
             {
-                consts.CONFIG_TYPE: "max",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
                 consts.CONFIG_SOURCE_COLUMN: "timestamp_col",
                 consts.CONFIG_TARGET_COLUMN: "timestamp_col",
                 consts.CONFIG_FIELD_ALIAS: "max_timestamp_col",
             },
             {
-                consts.CONFIG_TYPE: "min",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
                 consts.CONFIG_SOURCE_COLUMN: "int_col",
                 consts.CONFIG_TARGET_COLUMN: "int_col",
                 consts.CONFIG_FIELD_ALIAS: "min_int_col",
@@ -278,6 +278,8 @@ def test_column_validation_core_types_to_bigquery():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
     )
 
 

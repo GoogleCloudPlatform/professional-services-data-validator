@@ -751,3 +751,14 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals_no_precision` (
 ) OPTIONS (description='Integration test table used to test decimals without a precision or scale.');
 INSERT INTO `pso_data_validator`.`dvt_decimals_no_precision` VALUES
 (1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_intervals` (
+  id              INT64
+, col_interval_ds INTERVAL
+, col_interval_ym INTERVAL
+) OPTIONS (description='Integration test table used to test INTERVAL data types.');
+INSERT INTO `pso_data_validator`.`dvt_intervals` VALUES
+(0,INTERVAL '0 02:03:44' DAY TO SECOND,INTERVAL '0-2' YEAR TO MONTH),
+(1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-2' YEAR TO MONTH),
+(2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-2' YEAR TO MONTH),
+(3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);

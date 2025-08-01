@@ -2,6 +2,39 @@
 
 ## Untagged
 
+## [8.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.7.0...v8.0.0) (2025-07-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* Full Support for Oracle Wallets - TLS, mTLS and Credentials ([#1533](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1533))
+
+### Features
+
+* Full Support for Oracle Wallets - TLS, mTLS and Credentials ([#1533](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1533)) ([d6520b3](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d6520b311a3992d62c36ac09f29c197fee7b829d))
+* Prevent exceptions when using Oracle INTERVAL YM and PostgreSQL INTERVAL ([#1556](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1556)) ([be74726](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/be74726f28b75f3e1bdaf31eb5e1e8ba3eab8635))
+* use python-oracledb instead of cx_Oracle ([#1515](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1515)) ([9918456](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/9918456e9bd0bba3b15ef8cc00289552f0c51fa8))
+
+
+### Bug Fixes
+
+* Convert base64 Spanner BYTES string to standard bytes string ([#1539](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1539)) ([c3cf02e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c3cf02e4b5110acc2253c02656a25d1c9f9cae90))
+* deduplicate spanner client in SpannerBackend ([#1554](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1554)) ([546e334](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/546e334f3c0351b3eb4a557f8c76b155142b8dc8))
+* Fix `find-tables` execution for SQL Server to properly filter by schema ([#1521](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1521)) ([cf4492b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cf4492bca91a25aa72025fc02b428435334d5900))
+* Fix exception when using --hash on TEXT column for row validation on SQL Server table ([#1530](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1530)) ([6642eef](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/6642eef0460e4d55878f896258f89b5bc48630b9))
+* Fixes and tests for validate column avg and std ([#1552](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1552)) ([e1997f9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e1997f9a8cf620e7286e55469076faefe7386e80))
+* generate-table-partitions generates correct yaml with multiple tables ([#1553](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1553)) ([456ca79](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/456ca79e9bc727a9745f410a1bfef8e0e09fe206))
+* Move exclude columns processing to cli_tools from config manager ([#1543](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1543)) ([f0dec60](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f0dec603c4e9ba496581efb4f4ed297ee20802b3))
+* Only strip primary keys when they are fixed chars, not for varchars ([#1472](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1472)) ([506d8db](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/506d8db5a6da60b7f4f49bdb8037f7fe0acd7893))
+* Protect column name escaping in Oracle case expressions ([#1560](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1560)) ([f955f0d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f955f0d274e96c72eed3b5af70dae603f409a7d3))
+* samples/docker code and  document max-concat-columns ([#1545](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1545)) ([fb32dba](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/fb32dbaaf7405a82ba0c6084ff2871a54f5fc6a1))
+* Use Pandas object for Impala timestamp (not datetime64[ns]) ([#1532](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1532)) ([81a3bfe](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/81a3bfe0021fa42fa9c1789a091abfa41c053e4b))
+
+
+### Documentation
+
+* Add internal doc for DVT row hash throughput test ([#1531](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1531)) ([c120fe2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c120fe2fb5882dbd869e034b65ff59796aa92db1))
+
 ## [7.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.6.1...v7.7.0) (2025-05-20)
 
 

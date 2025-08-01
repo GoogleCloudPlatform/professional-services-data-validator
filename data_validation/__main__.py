@@ -108,7 +108,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count",
+            consts.CONFIG_TYPE_COUNT,
             col_args,
             args.exclude_columns,
             None,
@@ -117,7 +117,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum",
+            consts.CONFIG_TYPE_SUM,
             col_args,
             args.exclude_columns,
             supported_data_types,
@@ -126,7 +126,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg",
+            consts.CONFIG_TYPE_AVG,
             col_args,
             args.exclude_columns,
             supported_data_types,
@@ -135,7 +135,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min",
+            consts.CONFIG_TYPE_MIN,
             col_args,
             args.exclude_columns,
             supported_data_types + uuid_types,
@@ -144,7 +144,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max",
+            consts.CONFIG_TYPE_MAX,
             col_args,
             args.exclude_columns,
             supported_data_types + uuid_types,
@@ -153,7 +153,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.bit_xor:
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "bit_xor",
+            consts.CONFIG_TYPE_BIT_XOR,
             col_args,
             args.exclude_columns,
             supported_data_types,
@@ -162,7 +162,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.std:
         col_args = None if args.std == "*" else cli_tools.get_arg_list(args.std)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "std",
+            consts.CONFIG_TYPE_STD,
             col_args,
             args.exclude_columns,
             supported_data_types,

@@ -294,9 +294,9 @@ def test_schema_validation_core_types_to_bigquery():
             # All SQL Server integers go to BigQuery INT64.
             "int8:int64,int16:int64,int32:int64,"
             # BigQuery does not have a float32 type.
-            "float32:float64,",
+            "float32:float64,"
             # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
-            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
+            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),"
         ),
     )
 
@@ -335,6 +335,8 @@ def test_column_validation_core_types():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
         filters="id>0 AND col_int8>0",
         grouped_columns="col_varchar_30",
     )
@@ -350,12 +352,22 @@ def test_column_validation_core_types_to_bigquery():
     cols = ",".join(
         [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
     )
+    # Excluded col_float64 from std_cols due to STDDEV_SAMP inconsistent results. See issue-1540.
+    std_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_float64")
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=std_cols,
     )
 
 
@@ -383,12 +395,23 @@ def test_column_validation_tricky_dates_to_bigquery():
 def test_column_validation_large_decimals_to_bigquery():
     """SQL Server to BigQuery dvt_large_decimals column validation."""
     cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    # SQL Server stdev returns Float32. This is incompatible with stddev_samp
+    # from most other engines when the inputs have precision > float64.
+    # Therefore we have excluded std_cols from the test below.
+
+    # Excluding col_dec_38 from avg_cols due to:
+    # 1> SELECT avg(t0.col_dec_38) FROM pso_data_validator.dvt_large_decimals AS t0;
+    # 2> go
+    # Msg 8115, Level 16, State 2, Server 969116d95f4d397, Line 1
+    # Arithmetic overflow error converting expression to data type numeric.
+    avg_cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
     column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         count_cols=cols,
         min_cols=cols,
         sum_cols=cols,
+        avg_cols=avg_cols,
     )
 
 

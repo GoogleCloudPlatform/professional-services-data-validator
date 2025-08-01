@@ -977,9 +977,10 @@ class ConfigManager(object):
                 "date",
                 "!date",
             ] and agg_type in (
-                "sum",
-                "avg",
-                "bit_xor",
+                consts.CONFIG_TYPE_AVG,
+                consts.CONFIG_TYPE_BIT_XOR,
+                consts.CONFIG_TYPE_STD,
+                consts.CONFIG_TYPE_SUM,
             ):
                 # For timestamps: do not convert to epoch seconds for min/max
                 return True
@@ -1073,7 +1074,15 @@ class ConfigManager(object):
                     target_column_ibis_type,
                     margin=(2 if agg_type == consts.CONFIG_TYPE_SUM else 0),
                 ):
-                    aggregate_config[consts.CONFIG_CAST] = "string"
+                    if agg_type in (consts.CONFIG_TYPE_STD, consts.CONFIG_TYPE_AVG):
+                        # std and avg change the shape of the column result and we
+                        # can't know how to format them reliably, float64 is our best bet.
+                        # This may be lossy and generate false success validations.
+                        aggregate_config[consts.CONFIG_CAST] = "float64"
+                    else:
+                        # Other agg types should retain the shape of the results and can be
+                        # reliably formated as strings when the Pandas native types will overflow.
+                        aggregate_config[consts.CONFIG_CAST] = "string"
 
             aggregate_configs.append(aggregate_config)
 
