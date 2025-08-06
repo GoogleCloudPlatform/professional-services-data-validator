@@ -112,7 +112,9 @@ data-validation
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
-  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric.
+                        Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific equivalent) that
+                        are comparable across all other supported SQL engines. This option may produce unreliable results.
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
   [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
@@ -197,6 +199,8 @@ data-validation
                         See: *Calculated Fields* section for details
   --hash COLUMNS        Comma separated list of columns to hash or * for all columns
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
+  --max-concat-columns INT, -mcc INT
+                        Maximum number of columns used in one --hash or --concat validation. When there are more columns in the validation, the validation will be split into multiple validations. There are engine specific defaults, so most users do not need to use this option unless they encounter errors.
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                         Comma separated list of primary key columns, when not specified the value will be inferred
                         from the source or target table if available.  See *Primary Keys* section
@@ -391,7 +395,9 @@ data-validation
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
-  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric.
+                        Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific equivalent) that
+                        are comparable across all other supported SQL engines. This option may produce unreliable results.
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
   [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
@@ -462,6 +468,8 @@ data-validation
   --hash '*'            '*' to hash all columns.
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns
                         (use if a common hash function is not available between databases)
+  --max-concat-columns INT, -mcc INT
+                        Maximum number of columns used in one --hash or --concat validation. When there are more columns in the validation, the validation will be split into multiple validations. There are engine specific defaults, so most users do not need to use this option unless they encounter errors.
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                        Common column between source and target queries for join
   [--exclude-columns or -ec]

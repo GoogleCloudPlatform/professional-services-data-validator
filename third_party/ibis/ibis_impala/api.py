@@ -29,6 +29,12 @@ import fsspec
 import re
 
 
+# Issue-1525: datetime64[ns] overflows datetimes way in the future.
+# Using "object" instead which is what BigQuery implementation results in.
+_DVT_HS2_TTypeId_to_dtype = ibis.backends.impala._HS2_TTypeId_to_dtype.copy()
+_DVT_HS2_TTypeId_to_dtype["TIMESTAMP"] = "object"
+
+
 def do_connect(
     # Override do_connect to add use_http_transport and http_path params
     self,
@@ -143,7 +149,7 @@ def _chunks_to_pandas_array(chunks):
         have_nulls = have_nulls or c.nulls.any()
 
     type_ = chunks[0].data_type
-    numpy_type = ibis.backends.impala._HS2_TTypeId_to_dtype[type_]
+    numpy_type = _DVT_HS2_TTypeId_to_dtype[type_]
 
     def fill_nonnull(target, chunks):
         pos = 0

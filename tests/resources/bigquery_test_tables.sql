@@ -6,7 +6,7 @@ SELECT
     CAST(2 AS INT64) int_type,
     CAST(2 AS DECIMAL) decimal_type,
     CAST(2 AS STRING) text_type,
-    CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type
+    CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type;
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions`
 ( course_id STRING
@@ -68,7 +68,7 @@ INSERT INTO `pso_data_validator`.`dvt_core_types` VALUES
  ,DATE '1970-01-03',DATETIME '1970-01-03 00:00:03'
  ,TIMESTAMP '1970-01-03 00:00:03-03:00');
 
-CREATE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
+CREATE OR REPLACE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
 SELECT * FROM `pso_data_validator`.`dvt_core_types`;
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_null_not_null`
@@ -707,13 +707,15 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_dates` (
 , col_dt_low    DATE
 , col_dt_epoch  DATE
 , col_dt_high   DATE
+, col_dt_4712   DATE
 , col_ts_low    DATETIME
 , col_ts_epoch  DATETIME
 , col_ts_high   DATETIME
+, col_ts_4712   DATETIME
 ) OPTIONS (description='Integration test table used to test potentially difficult Timestamps.');
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
-(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59');
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59',DATETIME'4712-12-31 23:23:59');
 -- NULL in all columns.
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` (id) VALUES (2);
 
@@ -749,3 +751,14 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals_no_precision` (
 ) OPTIONS (description='Integration test table used to test decimals without a precision or scale.');
 INSERT INTO `pso_data_validator`.`dvt_decimals_no_precision` VALUES
 (1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_intervals` (
+  id              INT64
+, col_interval_ds INTERVAL
+, col_interval_ym INTERVAL
+) OPTIONS (description='Integration test table used to test INTERVAL data types.');
+INSERT INTO `pso_data_validator`.`dvt_intervals` VALUES
+(0,INTERVAL '0 02:03:44' DAY TO SECOND,INTERVAL '0-2' YEAR TO MONTH),
+(1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-2' YEAR TO MONTH),
+(2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-2' YEAR TO MONTH),
+(3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);

@@ -20,6 +20,7 @@ import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     find_tables_test,
     id_type_test_assertions,
@@ -230,10 +231,18 @@ def test_column_validation_core_types():
 def test_column_validation_core_types_to_bigquery():
     # Hive tests are really slow so I've excluded --min below assuming that --max is effectively the same test.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
+    # Excluded decimals larger than 64bit int/float because HiveQL stddev_samp returns nan.
     # TODO Change --sum and --max options to include col_char_2 when issue-1514 is complete.
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_string,col_date,col_datetime,col_tstz"
+    # Excluded col_float64 from std_cols due to stddev_samp inconsistent results. See issue-1540.
+    std_cols = "col_int8,col_int16,col_int32,col_int64,col_dec_10_2"
     column_validation_test(
-        tc="bq-conn", filters="id>0 AND col_int8>0", sum_cols=cols, max_cols=cols
+        tc="bq-conn",
+        filters="id>0 AND col_int8>0",
+        sum_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=std_cols,
     )
 
 
@@ -377,6 +386,45 @@ def test_row_validation_hash_bool_to_bigquery():
         tables="pso_data_validator.dvt_bool",
         tc="bq-conn",
         hash="*",
+    )
+
+
+@pytest.mark.slow
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31.
+    This test is marked as slow and will not run unless --run-slow is included.
+    It is duplicated in our Impala testing which mostly tests the same code path,
+    but not the same SQL engine.
+    """
+    # We cannot test col_dt_low because of an issue in early versions of Hive:
+    # https://docs.cloudera.com/runtime/7.3.1/impala-sql-reference/topics/impala-date.html
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_dt_low")
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@pytest.mark.slow
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31.
+    This test is marked as slow and will not run unless --run-slow is included.
+    It is duplicated in our Impala testing which mostly tests the same code path,
+    but not the same SQL engine.
+    """
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=",".join(DVT_TRICKY_DATES_COLUMNS),
     )
 
 

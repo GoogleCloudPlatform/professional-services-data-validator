@@ -154,7 +154,8 @@ CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
     "--connection-name",
     "ora_wal_test",
     "Oracle",
-    "--url=oracle+cx_oracle://@dvt_user_db",
+    """--connect-args='{"dsn": "@dvt_user_db", "config_dir": "/opt/oracle/client_files", "disable_oob": true}'""",
+    "--thick-mode",
 ]
 
 TEST_VALIDATION_CONFIG = {
@@ -329,7 +330,9 @@ def test_create_connections_oracle(mock_write_file):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS)
     conn = cli_tools.get_connection_config_from_args(args)
-    assert "url" in conn
+    assert "connect_args" in conn
+    assert "config_dir" in conn["connect_args"]
+    assert "thick_mode" in conn
     cli_tools.store_connection(args.connection_name, conn)
 
 
@@ -887,6 +890,78 @@ def test_concat_column_count_configs(
         assert result == expected_result
     else:
         assert result == [pre_build_config]
+
+
+class MockIbisSchema:
+    def __init__(self, names):
+        self.names = names
+
+
+@pytest.mark.parametrize(
+    "concat_arg,exclude_columns,base_columns,expected_result,expected_exception",
+    [
+        # Scenario 1: wildcard with exclude_columns raises ValueError
+        (
+            "*",
+            True,
+            ["col1", "col2"],
+            None,
+            ValueError,
+        ),
+        # Scenario 2a: wildcard with table_obj
+        (
+            "*",
+            False,
+            ["col1", "col2", "col3"],
+            ["col1", "col2", "col3"],
+            None,
+        ),
+        # Scenario 2b: wildcard with query_str
+        (
+            "*",
+            False,
+            ["col_a", "col_b"],
+            ["col_a", "col_b"],
+            None,
+        ),
+        # Scenario 3a: exclude_columns with table_obj
+        (
+            "col1,col3",
+            True,
+            ["col1", "col2", "col3", "col4"],
+            ["col2", "col4"],
+            None,
+        ),
+        # Scenario 3b: exclude_columns with query_str
+        (
+            "col_a",
+            True,
+            ["col_a", "col_b", "col_c"],
+            ["col_b", "col_c"],
+            None,
+        ),
+        # Scenario 4: simple column list
+        ("col1,col2", False, [], ["col1", "col2"], None),
+    ],
+)
+def test__get_pre_build_configs_cols_from_arg(
+    concat_arg,
+    exclude_columns,
+    base_columns,
+    expected_result,
+    expected_exception,
+):
+    """Test _get_pre_build_configs_cols_from_arg."""
+    if expected_exception:
+        with pytest.raises(expected_exception):
+            cli_tools._get_pre_build_configs_cols_from_arg(
+                concat_arg, base_columns, exclude_columns
+            )
+    else:
+        result = cli_tools._get_pre_build_configs_cols_from_arg(
+            concat_arg, base_columns, exclude_columns
+        )
+        assert result == expected_result
 
 
 @pytest.mark.parametrize(

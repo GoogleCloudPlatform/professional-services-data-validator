@@ -41,6 +41,7 @@ from tests.system.data_sources.common_functions import (
     raw_query_test,
     row_validation_test,
     custom_query_validation_test,
+    exclude_columns_test,
 )
 from tests.system.result_handlers.test_bigquery import create_bigquery_results_table
 
@@ -60,37 +61,37 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_GROUPED_COLUMNS: [],
     consts.CONFIG_AGGREGATES: [
         {
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
             consts.CONFIG_SOURCE_COLUMN: None,
             consts.CONFIG_TARGET_COLUMN: None,
             consts.CONFIG_FIELD_ALIAS: "count",
         },
         {
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "count_tripduration",
         },
         {
-            consts.CONFIG_TYPE: "avg",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "avg_tripduration",
         },
         {
-            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "max_birth_year",
         },
         {
-            consts.CONFIG_TYPE: "min",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "min_birth_year",
         },
         {
-            consts.CONFIG_TYPE: "std",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_STD,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "std_tripduration",
@@ -173,19 +174,19 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_SOURCE_COLUMN: None,
             consts.CONFIG_TARGET_COLUMN: None,
             consts.CONFIG_FIELD_ALIAS: "count",
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_FIELD_ALIAS: "sum__epoch_seconds__cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_SUM,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_FIELD_ALIAS: "avg__epoch_seconds__cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "avg",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
@@ -197,13 +198,13 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_SOURCE_COLUMN: "start_date",
             consts.CONFIG_TARGET_COLUMN: "start_date",
             consts.CONFIG_FIELD_ALIAS: "min__start_date",
-            consts.CONFIG_TYPE: "min",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "start_date",
             consts.CONFIG_TARGET_COLUMN: "start_date",
             consts.CONFIG_FIELD_ALIAS: "max__start_date",
-            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
         },
     ],
 }
@@ -1208,6 +1209,66 @@ def test_bigquery_dry_run(mock_conn, capsys):
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
+def test_bigquery_exclude_columns_row_hash_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_concat_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, column_arg="concat")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_comp_fields_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, column_arg="comparison-fields")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_column_count_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, validation_type="column", column_arg="count")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_column_sum_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, validation_type="column", column_arg="sum")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
 def test_schema_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types schema validation"""
     schema_validation_test(
@@ -1239,6 +1300,8 @@ def test_column_validation_core_types(mock_conn):
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 

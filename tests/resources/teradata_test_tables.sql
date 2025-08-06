@@ -743,12 +743,14 @@ CREATE TABLE udf.dvt_tricky_dates (
 , col_dt_low    DATE
 , col_dt_epoch  DATE
 , col_dt_high   DATE
+, col_dt_4712   DATE
 , col_ts_low    TIMESTAMP(0)
 , col_ts_epoch  TIMESTAMP(0)
-, col_ts_high   TIMESTAMP(0));
+, col_ts_high   TIMESTAMP(0)
+, col_ts_4712   TIMESTAMP(0));
 INSERT INTO udf.dvt_tricky_dates VALUES
-(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00');
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00',TIMESTAMP'4712-12-31 23:23:59');
 -- col_ts_high value above forced to UTC based on article below, but we still get wrong answer from the test:
 --   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
 INSERT INTO udf.dvt_tricky_dates (id) VALUES (2);
@@ -781,3 +783,18 @@ CREATE TABLE udf.dvt_reserved_word_columns (
 );
 COMMENT ON TABLE udf.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
 INSERT INTO udf.dvt_reserved_word_columns (id) VALUES (1);
+
+DROP TABLE udf.dvt_intervals;
+CREATE TABLE udf.dvt_intervals
+( id              INTEGER NOT NULL PRIMARY KEY
+, col_interval_ds INTERVAL DAY TO SECOND(3)
+, col_interval_ym INTERVAL YEAR TO MONTH);
+COMMENT ON TABLE udf.dvt_intervals IS 'Integration test table used to test INTERVAL data types.';
+INSERT INTO udf.dvt_intervals VALUES
+(0,INTERVAL '0 02:03:44' DAY TO SECOND,INTERVAL '0-02' YEAR TO MONTH);
+INSERT INTO udf.dvt_intervals VALUES
+(1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-02' YEAR TO MONTH);
+INSERT INTO udf.dvt_intervals VALUES
+(2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-02' YEAR TO MONTH);
+INSERT INTO udf.dvt_intervals VALUES
+(3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);

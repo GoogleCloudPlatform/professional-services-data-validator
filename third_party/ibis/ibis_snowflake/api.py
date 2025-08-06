@@ -12,13 +12,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 import logging
-from typing import Any, Mapping
 
 import ibis
 
-# Fail fast with imports
-import snowflake.connector
-import snowflake.sqlalchemy
+import snowflake.connector  # NOQA fail early if the driver is missing
+import snowflake.sqlalchemy  # NOQA fail early if the driver is missing
 
 logging.getLogger("snowflake.connector").setLevel(logging.WARNING)
 

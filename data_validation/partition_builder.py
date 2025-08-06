@@ -18,6 +18,8 @@ import pandas
 import logging
 import re
 import datetime
+import hashlib
+import base64
 from typing import List, Dict, TYPE_CHECKING
 
 from data_validation import cli_tools, consts, util
@@ -140,7 +142,6 @@ class PartitionBuilder:
         master_filter_list = []
         for config_manager in self.config_managers:  # For each pair of tables
             validation_builder = ValidationBuilder(config_manager)
-
             source_pks, target_pks = [], []
             for pk in config_manager.primary_keys:
                 source_pks.append(pk["source_column"])
@@ -396,14 +397,42 @@ class PartitionBuilder:
         Returns:
             yaml_configs_list (List[Dict]): List of YAML dicts (folder), one folder for each table pair being validated.
         """
-        yaml_configs_list = [None] * len(self.config_managers)
+        # Since we store yaml configs in directories by schema.source_table_name, there can be
+        # only one yaml config per schema.source_table_name, even if shows up in multiple table
+        # pairs. In the case of custom query validation, we need to generate a "reasonably" unique name for the directory
+        # based on the source query. As mentioned in issue 1428, this not friendly, so something we should change.
+        # We store the configs in a list and a dict mapping source table name, or directory name in case of custom-query to list index
+        yaml_configs_list = []
+        src_config_dict = {}
+
         for ind, config_manager in enumerate(self.config_managers):
+            if config_manager.source_table:
+                dir_name = config_manager.full_source_table
+            else:
+                dir_name = (
+                    "custom."
+                    + base64.b64encode(
+                        hashlib.sha256(
+                            config_manager.source_query.encode("utf-8")
+                        ).digest()
+                    ).decode("ascii")[:5]
+                )
             filter_list = partition_filters[ind]
 
-            yaml_configs_list[ind] = {
-                "target_folder_name": config_manager.full_source_table,
-                "yaml_files": [],
-            }
+            if src_config_dict.get(dir_name) is None:
+                # First time encountering this source table or source query
+                source_table_repeat = False
+                yaml_configs_list.append(
+                    {
+                        "target_folder_name": dir_name,
+                        "yaml_files": [],
+                    }
+                )
+                src_config_dict[dir_name] = len(yaml_configs_list) - 1
+
+            else:
+                source_table_repeat = True
+            yaml_ind = src_config_dict[dir_name]
 
             # Create a list of lists chunked by partitions per file
             # Both source and target table are divided into the same number of partitions, so we are
@@ -419,9 +448,16 @@ class PartitionBuilder:
                 yaml_config = self._add_filters_get_yaml_file(
                     config_manager, source_filters_list[i], target_filters_list[i]
                 )
-                yaml_configs_list[ind]["yaml_files"].append(
-                    {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
-                )
+                if (
+                    source_table_repeat
+                ):  # Same source table, yaml configs exist, add these validations by extending existing ones.
+                    yaml_configs_list[yaml_ind]["yaml_files"][i]["yaml_config"][
+                        "validations"
+                    ].extend(yaml_config["validations"])
+                else:  # New yaml files, append these validations as yaml_config
+                    yaml_configs_list[yaml_ind]["yaml_files"].append(
+                        {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
+                    )
         return yaml_configs_list
 
     def _store_partitions(self, yaml_configs_list: List[Dict]) -> None:

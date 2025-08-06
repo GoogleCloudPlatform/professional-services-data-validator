@@ -13,10 +13,10 @@
 -- limitations under the License.
 
 -- Schema for storing results handler data.
-CREATE SCHEMA pso_data_validator_results;
+CREATE SCHEMA IF NOT EXISTS pso_data_validator_results;
 -- Schema containing ONLY integration test tables.
-CREATE SCHEMA pso_data_validator;
-DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
+CREATE SCHEMA IF NOT EXISTS pso_data_validator;
+DROP TABLE IF EXISTS pso_data_validator.dvt_core_types CASCADE;
 CREATE TABLE pso_data_validator.dvt_core_types
 (   id              int NOT NULL PRIMARY KEY
 ,   col_int8        smallint
@@ -266,7 +266,7 @@ CREATE TABLE pso_data_validator.dvt_pg_types
 );
 COMMENT ON TABLE pso_data_validator.dvt_pg_types IS 'PostgreSQL data types integration test table';
 
-CREATE EXTENSION pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 INSERT INTO pso_data_validator.dvt_pg_types
 (col_int2,col_int4,col_int8,col_dec,col_dec_10_2
 --,col_money
@@ -362,7 +362,7 @@ INSERT INTO pso_data_validator.dvt_binary VALUES
 (CAST('DVT-key-4' AS bytea), 4, 'Row 4'),
 (CAST('DVT-key-5' AS bytea), 5, 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_fixed_char_id;
+DROP TABLE IF EXISTS pso_data_validator.dvt_fixed_char_id;
 CREATE TABLE pso_data_validator.dvt_fixed_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
 ,   other_data  CHAR(100)
@@ -375,7 +375,7 @@ INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
 
-DROP TABLE pso_data_validator.dvt_varchar_id;
+DROP TABLE IF EXISTS pso_data_validator.dvt_varchar_id;
 CREATE TABLE pso_data_validator.dvt_varchar_id
 (   id          VARCHAR(15) NOT NULL PRIMARY KEY
 ,   other_data  VARCHAR(100)
@@ -916,13 +916,15 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 , col_dt_low    date
 , col_dt_epoch  date
 , col_dt_high   date
+, col_dt_4712   date
 , col_ts_low    timestamp(0)
 , col_ts_epoch  timestamp(0)
-, col_ts_high   timestamp(0));
+, col_ts_high   timestamp(0)
+, col_ts_4712   timestamp(0));
 COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table used to test potentially difficult Timestamps.';
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
-(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59',TIMESTAMP'4712-12-31 23:23:59');
 INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_strings;
@@ -962,3 +964,15 @@ CREATE TABLE pso_data_validator.dvt_decimals_no_precision (
 COMMENT ON TABLE pso_data_validator.dvt_decimals_no_precision IS 'Integration test table used to test decimals without a precision or scale.';
 INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES
 (1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_intervals;
+CREATE TABLE pso_data_validator.dvt_intervals
+( id              int NOT NULL PRIMARY KEY
+, col_interval_ds interval
+, col_interval_ym interval);
+COMMENT ON TABLE pso_data_validator.dvt_intervals IS 'Integration test table used to test INTERVAL data types.';
+INSERT INTO pso_data_validator.dvt_intervals VALUES
+(0,INTERVAL '0 day 2 hours 3 minutes 44 seconds',INTERVAL '0 year 2 months'),
+(1,INTERVAL '1 day 2 hours 3 minutes 44 seconds',INTERVAL '1 year 2 months'),
+(2,INTERVAL '2 days 2 hours 3 minutes 44.123 seconds',INTERVAL '2 years 2 months'),
+(3,INTERVAL '30 days 22 hours 33 minutes 44 seconds',INTERVAL '30 years 11 months');

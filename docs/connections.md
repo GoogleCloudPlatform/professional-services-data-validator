@@ -18,37 +18,37 @@ DVT supports [Google Cloud Secret Manager](https://cloud.google.com/secret-manag
 
 If the secret-manager flags are present, any of the remaining connection flags can reference secret names instead of the secret itself.
 
-Example 1: A BigQuery connection referencing a secret with name "dvt-project-secret" stored in project `my-project`:
+Example 1: A BigQuery connection referencing a secret with name PROJECT_SECRET stored in project PROJECT_NAME:
 
 ```sh
 data-validation connections add \
     --secret-manager-type GCP \
-    --secret-manager-project-id my-project \
+    --secret-manager-project-id PROJECT_NAME \
     --connection-name bq BigQuery \
-    --project-id "dvt-project-secret"
+    --project-id PROJECT_SECRET
 ```
 
-Example 2: A PostgreSQL connection referencing a mixture of secrets (for `--host` and `--password`) stored in project `my-project` and simple string tokens:
+Example 2: A PostgreSQL connection referencing a mixture of secrets (for `--host` and `--password`) stored in project PROJECT_NAME and simple string tokens:
 
 ```sh
 data-validation connections add \
     --secret-manager-type GCP \
-    --secret-manager-project-id my-project \
-    --connection-name pg Postgres \
-    --host=pg-host-secret \
-    --user=dvt_user \
-    --password=dvt-password-secret \
-    --database=mydatabase
+    --secret-manager-project-id PROJECT_NAME \
+    --connection-name CONN Postgres \
+    --host=HOST_SECRET \
+    --user=USER_NAME \
+    --password=PASSWORD_SECRET \
+    --database=DATABASE
 ```
 
-Example 3: An entire Oracle URL stored as a secret with name "dvt-url-secret" stored in project `my-project`:
+Example 3: An entire Oracle Credential alias stored as a secret with name CREDENTIAL_SECRET stored in project PROJECT_NAME:
 
 ```sh
 data-validation connections add \
     --secret-manager-type GCP \
-    --secret-manager-project-id my-project \
+    --secret-manager-project-id PROJECT_NAME \
     --connection-name ora_uat Oracle \
-    --url="dvt-url-secret"
+    --connect-args=CREDENTIAL_SECRET
 ```
 
 ## List existing connections
@@ -178,25 +178,27 @@ data-validation connections add
     --password PASSWORD                                 Teradata password
     [--logmech LOGMECH]                                 Teradata logmech, defaults to "TD2"
     [--use-no-lock-tables USE_NO_LOCK_TABLES]           Use access lock for queries, defaults to "False"
-    [--json-params JSON_PARAMS]                         Additional teradatasql JSON string parameters (Optional)
+    [--json-params JSON_PARAMS]                         Additional teradatasql JSON string dict (Optional)
 ```
 
 ## Oracle
 
 Please note the Oracle package is not installed by default. You will need to follow [python-oracledb](https://python-oracledb.readthedocs.io/en/latest/user_guide/installation.html) installation steps.
-Then `pip install oracledb`.
+Then `pip install oracledb`. DVT uses oracledb in Thin Mode by default which permits TLS and mTLS connections. You can also enable thick mode by specifying the `--thick-mode` parameter. Thick mode requires installation of Oracle client libraries. Differences between Thin and Thick mode are [discussed in the docs](https://python-oracledb.readthedocs.io/en/latest/user_guide/appendix_b.html#)
 
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME Oracle                  Connection name
-    --host HOST                                         Oracle host
-    --port PORT                                         Oracle port, defaults to 1521
-    --user USER                                         Oracle user
-    --password PASSWORD                                 Oracle password
-    --database DATABASE                                 Oracle database
-    [--url URL]                                         SQLAlchemy connection URL
+    [--thick-mode]                                      Use Thick mode, requires local Oracle client libraries
+    [--host HOST]                                       Oracle host
+    [--port PORT]                                       Oracle port, defaults to 1521
+    [--user USER]                                       Oracle user, if not specified using credentials stored in wallet (see below)
+    [--protocol PROTOCOL]                               Oracle networking protocol (TPC, TPCS)
+    [--password PASSWORD]                               Oracle password
+    [--database DATABASE]                               Oracle database
+    [--connect-args CONNECT_PARAMS]                     Additional oracledb ConnectParams, JSON String dict
 ```
 
 ### Oracle User permissions to run DVT
@@ -205,16 +207,24 @@ data-validation connections add
 * READ or SELECT on any tables to be validated
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
-### Using an Oracle wallet
+### Additional Connect parameters, using TLS, mTLS connections and running DVT within a container
+oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the `--connect-args` as a python dict. 
 
-After creating an Oracle wallet and supporting configuration you can add the connection using the `--url` option, remembering to set `TNS_ADMIN` correctly before doing so. For example:
+For setting up a TLS connection, specify the configuration directory where `tnsnames.ora` is located, the wallet directory where `ewallet.pem` is located and the distinguished name of the server used when creating the certificate. The protocol, host, port and service_name are best specified in `tnsnames.ora` as they take precedence. For example, the `--connect-args` parameter can be specified as follows:
 
-```sh
-export TNS_ADMIN=/opt/dvt/dvt_tns_admin
+```
+data-validation connections add \
+ --connection-name ora_secure Oracle --user USER --password PASSWORD \
+ --connect-args='{ "wallet_password": PASSWORD, "wallet_location": WALLET_DIR, "config_dir": CONFIG_DIR, "ssl_server_cert_dn": DISTINGUISHED_NAME}'
+```
+When DVT is running in a container, you may need to specify  `"disable_oob": True,` as one of the key value pairs in the `connect-args` dictionary to connect to Oracle.
 
+### Using credentials from a wallet
+When a user name is not specified, credentials (user name and password) are assumed to be in a wallet. Thick mode is automatically used, so Oracle client libraries are required. Only [the name of the credential created with the `mkstore createCredential` command](https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/using-the-orapki-utility-to-manage-pki-elements.html#GUID-25509071-ABC0-4A0E-A3DB-4D4F61024F25), the `dsn`, is required. `config_dir` indicating location of `tnsnames.ora` and `sqlnet.ora` if not provided, is assumed from the environment variable `TNS_ADMIN`. Other connection parameters must be specified in `tnsnames.ora`. For example, the following is sufficient
+```
 data-validation connections add \
  --connection-name ora_secure Oracle \
- --url="oracle+cx_oracle://@dvt_prod_db"
+ --connect-args='{"dsn": TNS_ALIAS}'
 ```
 
 ## MSSQL Server
@@ -259,9 +269,9 @@ export PGSSLCERT="/path/to/certs/client-cert.pem" \
 export PGSSLKEY=/path/to/certs/client-key.pem \
 export PGSSLROOTCERT=/path/to/certs/server-ca.pem \
 export PGSSLMODE=verify-ca
-data-validation connections add --connection-name pg_tls_ca Postgres \
---host=10.1.0.2 --user=dvt_user --password=secret-password-123 \
---database=appdb
+data-validation connections add --connection-name CONN_NAME Postgres \
+--host=HOST_NAME --user=USER --password=PASSWORD \
+--database=DATABASE
 ```
 
 ## AlloyDB
@@ -412,10 +422,10 @@ data-validation connections add
     --password PASSWORD                                 Snowflake password
     --account ACCOUNT                                   Snowflake account
     --database DATABASE/SCHEMA                          Snowflake database and schema, separated by a `/`
-    [--connect-args CONNECT_ARGS]                       Additional connection args, default {}
+    [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
 ```
 
 To connect to Snowflake using key-pair authentication you will need to use the `--connect-args` options. Example content from a connection file is included below for reference:
 ```
-{"source_type": "Snowflake", "secret_manager_type": null, "secret_manager_project_id": null, "user": "dvtuserp8", "password": "", "account": "my-account", "database": "my_dvt_database", "connect_args": {"private_key_file": "/some/path/snowflake/rsa_key.p8", "private_key_file_pwd": "my-passphrase"}}
+{"source_type": "Snowflake", "user": USER_NAME, "password": "", "account": ACCOUNT, "database": DATABASE, "connect_args": '{"private_key_file": PATH_TO_RSA_KEY/RSA_KEY.p8, "private_key_file_pwd": PASSPHRASE}'}
 ```

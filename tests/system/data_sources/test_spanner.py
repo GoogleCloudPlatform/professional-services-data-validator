@@ -74,31 +74,31 @@ def count_config():
         consts.CONFIG_GROUPED_COLUMNS: [],
         consts.CONFIG_AGGREGATES: [
             {
-                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
                 consts.CONFIG_SOURCE_COLUMN: None,
                 consts.CONFIG_TARGET_COLUMN: None,
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
             {
-                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
                 consts.CONFIG_SOURCE_COLUMN: "string_col",
                 consts.CONFIG_TARGET_COLUMN: "string_col",
                 consts.CONFIG_FIELD_ALIAS: "count_string_col",
             },
             {
-                consts.CONFIG_TYPE: "avg",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
                 consts.CONFIG_SOURCE_COLUMN: "float_col",
                 consts.CONFIG_TARGET_COLUMN: "float_col",
                 consts.CONFIG_FIELD_ALIAS: "avg_float_col",
             },
             {
-                consts.CONFIG_TYPE: "max",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
                 consts.CONFIG_SOURCE_COLUMN: "timestamp_col",
                 consts.CONFIG_TARGET_COLUMN: "timestamp_col",
                 consts.CONFIG_FIELD_ALIAS: "max_timestamp_col",
             },
             {
-                consts.CONFIG_TYPE: "min",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
                 consts.CONFIG_SOURCE_COLUMN: "int_col",
                 consts.CONFIG_TARGET_COLUMN: "int_col",
                 consts.CONFIG_FIELD_ALIAS: "min_int_col",
@@ -278,6 +278,8 @@ def test_column_validation_core_types_to_bigquery():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
     )
 
 
@@ -332,6 +334,20 @@ def test_row_validation_binary_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
+    )
 
 
 @mock.patch(

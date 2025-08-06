@@ -108,12 +108,16 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.count:
         col_args = None if args.count == "*" else cli_tools.get_arg_list(args.count)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "count", col_args, args.exclude_columns, None, cast_to_bigint=cast_to_bigint
+            consts.CONFIG_TYPE_COUNT,
+            col_args,
+            args.exclude_columns,
+            None,
+            cast_to_bigint=cast_to_bigint,
         )
     if args.sum:
         col_args = None if args.sum == "*" else cli_tools.get_arg_list(args.sum)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "sum",
+            consts.CONFIG_TYPE_SUM,
             col_args,
             args.exclude_columns,
             supported_data_types,
@@ -122,7 +126,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.avg:
         col_args = None if args.avg == "*" else cli_tools.get_arg_list(args.avg)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "avg",
+            consts.CONFIG_TYPE_AVG,
             col_args,
             args.exclude_columns,
             supported_data_types,
@@ -131,7 +135,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.min:
         col_args = None if args.min == "*" else cli_tools.get_arg_list(args.min)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "min",
+            consts.CONFIG_TYPE_MIN,
             col_args,
             args.exclude_columns,
             supported_data_types + uuid_types,
@@ -140,7 +144,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.max:
         col_args = None if args.max == "*" else cli_tools.get_arg_list(args.max)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "max",
+            consts.CONFIG_TYPE_MAX,
             col_args,
             args.exclude_columns,
             supported_data_types + uuid_types,
@@ -149,7 +153,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.bit_xor:
         col_args = None if args.bit_xor == "*" else cli_tools.get_arg_list(args.bit_xor)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "bit_xor",
+            consts.CONFIG_TYPE_BIT_XOR,
             col_args,
             args.exclude_columns,
             supported_data_types,
@@ -158,7 +162,7 @@ def get_aggregate_config(args, config_manager: ConfigManager):
     if args.std:
         col_args = None if args.std == "*" else cli_tools.get_arg_list(args.std)
         aggregate_configs += config_manager.build_config_column_aggregates(
-            "std",
+            consts.CONFIG_TYPE_STD,
             col_args,
             args.exclude_columns,
             supported_data_types,
@@ -181,18 +185,14 @@ def _get_calculated_config(args, config_manager: ConfigManager) -> List[dict]:
             if config_manager.hash == "*"
             else cli_tools.get_arg_list(config_manager.hash)
         )
-        fields = config_manager.build_dependent_aliases(
-            "hash", col_list, args.exclude_columns
-        )
+        fields = config_manager.build_dependent_aliases("hash", col_list)
     elif config_manager.concat:
         col_list = (
             None
             if config_manager.concat == "*"
             else cli_tools.get_arg_list(config_manager.concat)
         )
-        fields = config_manager.build_dependent_aliases(
-            "concat", col_list, args.exclude_columns
-        )
+        fields = config_manager.build_dependent_aliases("concat", col_list)
 
     if len(fields) > 0:
         max_depth = max([x["depth"] for x in fields])
@@ -232,10 +232,7 @@ def _get_comparison_config(
         if args.comparison_fields == "*"
         else cli_tools.get_arg_list(args.comparison_fields)
     )
-    comparison_fields = config_manager.build_comp_fields(
-        col_list,
-        args.exclude_columns,
-    )
+    comparison_fields = config_manager.build_comp_fields(col_list, args.exclude_columns)
     # We can't have the PK columns in the comparison SQL twice therefore filter them out here if included.
     comparison_fields = [_ for _ in comparison_fields if _ not in primary_keys]
 

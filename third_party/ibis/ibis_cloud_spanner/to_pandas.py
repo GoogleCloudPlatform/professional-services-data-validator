@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
+
+from google.cloud.spanner_v1.types import TypeCode
 from pandas import DataFrame
 
 
@@ -34,9 +37,17 @@ class pandas_df:
         for row in data_qry:
             data.append(row)
 
-        columns = [f.name for f in data_qry.fields]
+        columns = [_.name for _ in data_qry.fields]
+        bytes_columns = [
+            _.name for _ in data_qry.fields if _.type_.code == TypeCode.BYTES
+        ]
 
         # Creating pandas dataframe from data and columns
         df = DataFrame(data, columns=columns)
+
+        # Spanner BYTES columns are returned as a base64 string.
+        # Here we convert them to a byte string to match other DVT supported engines.
+        for bytes_column in bytes_columns:
+            df[bytes_column] = df[bytes_column].map(base64.b64decode)
 
         return df
