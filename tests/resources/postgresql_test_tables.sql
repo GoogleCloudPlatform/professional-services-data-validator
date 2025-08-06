@@ -964,3 +964,15 @@ CREATE TABLE pso_data_validator.dvt_decimals_no_precision (
 COMMENT ON TABLE pso_data_validator.dvt_decimals_no_precision IS 'Integration test table used to test decimals without a precision or scale.';
 INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES
 (1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_intervals;
+CREATE TABLE pso_data_validator.dvt_intervals
+( id              int NOT NULL PRIMARY KEY
+, col_interval_ds interval
+, col_interval_ym interval);
+COMMENT ON TABLE pso_data_validator.dvt_intervals IS 'Integration test table used to test INTERVAL data types.';
+INSERT INTO pso_data_validator.dvt_intervals VALUES
+(0,INTERVAL '0 day 2 hours 3 minutes 44 seconds',INTERVAL '0 year 2 months'),
+(1,INTERVAL '1 day 2 hours 3 minutes 44 seconds',INTERVAL '1 year 2 months'),
+(2,INTERVAL '2 days 2 hours 3 minutes 44.123 seconds',INTERVAL '2 years 2 months'),
+(3,INTERVAL '30 days 22 hours 33 minutes 44 seconds',INTERVAL '30 years 11 months');

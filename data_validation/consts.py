@@ -86,7 +86,12 @@ CONFIG_FILTER_STATUS = "filter_status"
 
 CONFIG_RESULT_HANDLER = "result_handler"
 
+CONFIG_TYPE_AVG = "avg"
+CONFIG_TYPE_BIT_XOR = "bit_xor"
 CONFIG_TYPE_COUNT = "count"
+CONFIG_TYPE_MAX = "max"
+CONFIG_TYPE_MIN = "min"
+CONFIG_TYPE_STD = "std"
 CONFIG_TYPE_SUM = "sum"
 
 # Default values

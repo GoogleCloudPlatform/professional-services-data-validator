@@ -186,6 +186,36 @@ class TeradataTypeTranslator(object):
             return dt.time(nullable=cls._col_data_nullable(col_data))
         return "TIME WITH TIME ZONE"
 
+    @classmethod
+    def to_ibis_from_DS(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Interval(nullable=cls._col_data_nullable(col_data))
+        return "INTERVAL DAY TO SECOND"
+
+    @classmethod
+    def to_ibis_from_DH(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Interval(nullable=cls._col_data_nullable(col_data))
+        return "INTERVAL DAY TO HOUR"
+
+    @classmethod
+    def to_ibis_from_DM(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Interval(nullable=cls._col_data_nullable(col_data))
+        return "INTERVAL DAY TO MINUTE"
+
+    @classmethod
+    def to_ibis_from_Y(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Interval(nullable=cls._col_data_nullable(col_data))
+        return "INTERVAL YEAR"
+
+    @classmethod
+    def to_ibis_from_YM(cls, col_data, return_ibis_type=True):
+        if return_ibis_type:
+            return dt.Interval(nullable=cls._col_data_nullable(col_data))
+        return "INTERVAL YEAR TO MONTH"
+
 
 ibis_type_to_teradata_type = Dispatcher("ibis_type_to_teradata_type")
 

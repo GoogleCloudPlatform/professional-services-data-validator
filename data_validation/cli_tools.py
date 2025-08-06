@@ -744,7 +744,10 @@ def _configure_column_parser(column_parser):
     optional_arguments.add_argument(
         "--std",
         "-std",
-        help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+        help="""Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns.
+                Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific
+                equivalent) that are comparable across all other supported SQL engines. This option may produce
+                unreliable results.""",
     )
     optional_arguments.add_argument(
         "--grouped-columns",
@@ -940,7 +943,10 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     optional_arguments.add_argument(
         "--std",
         "-std",
-        help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+        help="""Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns.
+                Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific
+                equivalent) that are comparable across all other supported SQL engines. This option may produce
+                unreliable results.""",
     )
     optional_arguments.add_argument(
         "--exclude-columns",

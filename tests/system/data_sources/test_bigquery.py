@@ -61,37 +61,37 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_GROUPED_COLUMNS: [],
     consts.CONFIG_AGGREGATES: [
         {
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
             consts.CONFIG_SOURCE_COLUMN: None,
             consts.CONFIG_TARGET_COLUMN: None,
             consts.CONFIG_FIELD_ALIAS: "count",
         },
         {
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "count_tripduration",
         },
         {
-            consts.CONFIG_TYPE: "avg",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "avg_tripduration",
         },
         {
-            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "max_birth_year",
         },
         {
-            consts.CONFIG_TYPE: "min",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "min_birth_year",
         },
         {
-            consts.CONFIG_TYPE: "std",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_STD,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "std_tripduration",
@@ -174,19 +174,19 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_SOURCE_COLUMN: None,
             consts.CONFIG_TARGET_COLUMN: None,
             consts.CONFIG_FIELD_ALIAS: "count",
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_FIELD_ALIAS: "sum__epoch_seconds__cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_SUM,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_FIELD_ALIAS: "avg__epoch_seconds__cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "avg",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
@@ -198,13 +198,13 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_SOURCE_COLUMN: "start_date",
             consts.CONFIG_TARGET_COLUMN: "start_date",
             consts.CONFIG_FIELD_ALIAS: "min__start_date",
-            consts.CONFIG_TYPE: "min",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "start_date",
             consts.CONFIG_TARGET_COLUMN: "start_date",
             consts.CONFIG_FIELD_ALIAS: "max__start_date",
-            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
         },
     ],
 }
@@ -1300,6 +1300,8 @@ def test_column_validation_core_types(mock_conn):
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 

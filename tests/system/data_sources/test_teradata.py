@@ -313,6 +313,8 @@ def test_column_validation_core_types():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
     )
 
 
@@ -322,6 +324,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types column validation"""
+    # TODO Remove col_tstz from exclusion list below when issue-916 is complete.
     cols = ",".join(
         [
             _
@@ -334,13 +337,29 @@ def test_column_validation_core_types_to_bigquery():
             )
         ]
     )
+    # Excluded col_float64 from std_cols due to STDDEV_SAMP inconsistent results. See issue-1540.
+    # Teradata stddev_samp returns REAL. This is incompatible with stddev_samp from other engines
+    # when the inputs have precision > float64 therefore excluded col_dec_20/38 from std_cols.
+    std_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _
+            not in (
+                "col_float64",
+                "col_dec_20",
+                "col_dec_38",
+            )
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
-        # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=std_cols,
     )
 
 
@@ -366,12 +385,16 @@ def test_column_validation_large_decimals_to_bigquery():
     """Teradata to BigQuery dvt_large_decimals column validation."""
     # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
     cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
+    # Teradata stddev_samp returns REAL. This is incompatible with stddev_samp
+    # from other engines when the inputs have precision > float64. Therefore
+    # we have excluded std_cols from the test below.
     column_validation_test(
         tables="udf.dvt_large_decimals=pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         count_cols=cols,
         min_cols=cols,
         sum_cols=cols,
+        avg_cols=cols,
     )
 
 
@@ -980,6 +1003,49 @@ def test_row_validation_comp_fields_bool_to_bigquery():
         tables="udf.dvt_bool=pso_data_validator.dvt_bool",
         tc="bq-conn",
         comp_fields="col_bool_dec,col_bool_int,col_bool_ch1,col_bool_chy",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_intervals():
+    """Test schema validation on a table with columns of type INTERVAL."""
+    schema_validation_test(
+        tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_intervals():
+    """Test column validation on a table with columns of type INTERVAL."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
+        count_cols="col_interval_ds,col_interval_ym",
+        sum_cols="col_interval_ds,col_interval_ym",
+        min_cols="col_interval_ds,col_interval_ym",
+        max_cols="col_interval_ds,col_interval_ym",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_intervals():
+    """Test row validation on a table with columns of type INTERVAL."""
+    pytest.skip("Skipping test_row_validation_intervals due to issue-1214.")
+    row_validation_test(
+        tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+        hash="col_interval_ds,col_interval_ym",
     )
 
 

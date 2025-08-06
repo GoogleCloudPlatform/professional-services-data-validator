@@ -112,7 +112,9 @@ data-validation
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
-  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric.
+                        Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific equivalent) that
+                        are comparable across all other supported SQL engines. This option may produce unreliable results.
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
   [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
@@ -393,7 +395,9 @@ data-validation
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
-  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric.
+                        Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific equivalent) that
+                        are comparable across all other supported SQL engines. This option may produce unreliable results.
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
   [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
