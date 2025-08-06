@@ -131,7 +131,7 @@ class Backend(BaseAlchemyBackend):
         else:
             connect_args = {} if not connect_args else connect_args
             if thick_mode:
-                # Configuration explicitly requests thick_mode or user not specified, credentials in wallet - requires thick_mode
+                # Configuration explicitly requests thick_mode.
                 oracledb.init_oracle_client(
                     config_dir=connect_args.get("config_dir", None)
                 )

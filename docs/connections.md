@@ -199,7 +199,20 @@ data-validation connections add
     [--password PASSWORD]                               Oracle password
     [--database DATABASE]                               Oracle database
     [--connect-args CONNECT_PARAMS]                     Additional oracledb ConnectParams, JSON String dict
+    [--url URL]                                         SQLAlchemy connection URL
 ```
+
+### --url note
+
+Note that the `--url` option allows specification of a SQLAlchemy URL, not an Oracle Easy Connect URL. This can be used to supply oracledb parameters inline, for example:
+```
+"oracle+oracledb://dvt_user:dvt_user@localhost:1521/?service_name=pdb1&disable_oob=true"
+```
+or in conjunction with `--connect-args` to combine a SQLAlchemy URL and additional oracledb parameters, for example:
+```
+{"source_type": "Oracle", "url": "oracle+oracledb://dvt_user:dvt_user@localhost:1521/?service_name=pdb1", "connect_args": "{\"disable_oob\": true}"}
+```
+See [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/20/dialects/oracle.html#module-sqlalchemy.dialects.oracle.oracledb) for additional details. You may also use `--thick-mode` with the `--url` option.
 
 ### Oracle User permissions to run DVT
 
@@ -208,7 +221,7 @@ data-validation connections add
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ### Additional Connect parameters, using TLS, mTLS connections and running DVT within a container
-oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the `--connect-args` as a python dict. 
+oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the `--connect-args` as a python dict.
 
 For setting up a TLS connection, specify the configuration directory where `tnsnames.ora` is located, the wallet directory where `ewallet.pem` is located and the distinguished name of the server used when creating the certificate. The protocol, host, port and service_name are best specified in `tnsnames.ora` as they take precedence. For example, the `--connect-args` parameter can be specified as follows:
 
@@ -404,7 +417,7 @@ data-validation connections add
     --user USER                                         DB2 user
     --password PASSWORD                                 DB2 password
     --database DATABASE                                 DB2 database
-    [--url URL]                                         URL link in DB2 to connect to
+    [--url URL]                                         SQLAlchemy connection URL
     [--driver DRIVER]                                   DB2 driver, defaults to "ibm_db_sa"
 ```
 
