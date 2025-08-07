@@ -321,14 +321,6 @@ def get_data_client(connection_config):
                 key_path
             )
 
-    # Oracle no longer supports the url option, so check and warn users
-    if (
-        source_type == consts.SOURCE_TYPE_ORACLE
-        and "url" in decrypted_connection_config
-    ):
-        msg = f"Connection Configuration Error: url parameter no longer supported for {source_type}.\nRecreate connection with --connect-args parameter."
-        raise Exception(msg)
-
     if source_type not in CLIENT_LOOKUP:
         msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
             source_type=source_type

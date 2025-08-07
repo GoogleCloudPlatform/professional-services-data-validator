@@ -50,14 +50,21 @@ ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
 ORACLE_PORT = os.getenv("ORACLE_PORT", "1521")
 ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
 ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XEPDB1")
+ORACLE_USER = "SYSTEM"
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
     "host": ORACLE_HOST,
-    "user": "SYSTEM",
+    "user": ORACLE_USER,
     "password": ORACLE_PASSWORD,
     "port": int(ORACLE_PORT),
     "database": ORACLE_DATABASE,
+}
+CONN_BY_URL = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
+    consts.SECRET_MANAGER_TYPE: None,
+    consts.SECRET_MANAGER_PROJECT_ID: None,
+    "url": f"oracle+oracledb://{ORACLE_USER}:{ORACLE_PASSWORD}@{ORACLE_HOST}:{ORACLE_PORT}/?service_name={ORACLE_DATABASE}",
 }
 
 
@@ -152,6 +159,8 @@ def test_count_validator():
 def mock_get_connection_config(*args):
     if args[1] in ("ora-conn", "mock-conn"):
         return CONN
+    elif args[1] == "ora-url-conn":
+        return CONN_BY_URL
     elif args[1] == "bq-conn":
         return BQ_CONN
     elif args[1] == "pg-conn":
@@ -1289,6 +1298,18 @@ def test_row_validation_intervals():
         tables="pso_data_validator.dvt_intervals",
         tc="bq-conn",
         hash="col_interval_ds,col_interval_ym",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_by_url():
+    """Oracle to Oracle validation testing connection by URL string works."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="ora-url-conn",
     )
 
 
