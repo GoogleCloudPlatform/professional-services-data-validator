@@ -1,4 +1,4 @@
-# Distributed Data Validation with Cloud Run Jobs
+# Running Multiple Data Validations Concurrently with Cloud Run Jobs
 
 This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs) to validate many tables concurrently. This example uses column validation which is the most likely validation type to run in this scenario.
 
@@ -21,7 +21,7 @@ gcloud builds submit \
   --tag=${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/dvt
 ```
 
-## Store connections in Cloud Storage
+## Store Connections in Cloud Storage
 
 Store your connections in GCS so they will be accessible to your Cloud Run Job.
 
@@ -32,7 +32,7 @@ data-validation connections add --connection-name bq BigQuery --project-id ${PRO
 
 The `PSO_DV_CONN_HOME` environment variable indicates that you want your connection files stored and retrieved from GCS automatically. Read more about it [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#gcs-connection-management-recommended).
 
-## Generate Table Partition YAMLs in GCS
+## Generate Table YAMLs in GCS
 
 To run jobs via Cloud Run Jobs we first need to generate YAML files for each table. Unfortunately the YAML files (currently, see issue 1205 note above) have a strict naming convention of `nnnn.yaml`, starting from "0000".
 
@@ -62,7 +62,7 @@ gs://example-dvt-bucket/dvt_configs/pso_data_validator/0002.yaml
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0003.yaml
 ```
 
-## Run concurrent validation
+## Run Concurrent Validation
 
 This Cloud Run command will work through the YAML files in 2 parallel streams.
 

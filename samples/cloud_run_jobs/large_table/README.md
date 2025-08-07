@@ -1,6 +1,8 @@
-# Distributed Data Validation with Cloud Run Jobs
+# Distributing a Single Data Validation with Cloud Run Jobs
 
-This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). Distributed DVT usage alleviates memory constraints when running large table validations. In this sample, you will first generate table partitions with the `generate-table-partitions` command, which will partition your large table into smaller pieces with filters. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator?#generate-table-partitions-for-large-table-row-validations).The Cloud Run Job can then distribute each partition's YAML configuration as a Cloud Run Task in parallel.
+This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). Distributed DVT usage alleviates memory constraints when running large table validations.
+
+In this sample, you will first generate table partitions with the `generate-table-partitions` command, which will partition your large table into smaller pieces with filters. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator?#generate-table-partitions-for-large-table-row-validations).The Cloud Run Job can then distribute each partition's YAML configuration as a Cloud Run Task in parallel.
 
 ## Build a Docker Image
 
@@ -12,7 +14,7 @@ gcloud builds submit --tag gcr.io/${PROJECT_ID}/data-validation \
     --project=${PROJECT_ID}
 ```
 
-## Store connections in Cloud Storage
+## Store Connections in Cloud Storage
 
 Store your connections in GCS so they will be accessible to your Cloud Run Job.
 
@@ -31,8 +33,8 @@ and validate the table against itself.
 First, create a GCS path to store the YAML configs for this table.
 
 ```
-export CONFIG_GCS_BUCKET_NAME=<BUCKET_NAME>
-export CONFIG_GCS_BUCKET_LOCATION=<BUCKET_LOCATION> # i.e. 'us-central1'
+CONFIG_GCS_BUCKET_NAME=<BUCKET_NAME>
+CONFIG_GCS_BUCKET_LOCATION=<BUCKET_LOCATION> # i.e. 'us-central1'
 gcloud storage buckets create gs://${CONFIG_GCS_BUCKET_NAME}
   --location=${CONFIG_GCS_BUCKET_LOCATION}
 ```
@@ -40,7 +42,7 @@ gcloud storage buckets create gs://${CONFIG_GCS_BUCKET_NAME}
 Next, generate the table partitions and store the YAMLs in the GCS bucket you created.
 
 ```shell
-export BQ_RESULT_TABLE=<BQ_RESULT_TABLE> # i.e. 'project.dataset.table'
+BQ_RESULT_TABLE=<BQ_RESULT_TABLE> # i.e. 'project.dataset.table'
 data-validation generate-table-partitions \
   -sc bq \
   -tc bq \
