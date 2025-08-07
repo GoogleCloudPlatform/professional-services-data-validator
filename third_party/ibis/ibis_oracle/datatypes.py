@@ -15,6 +15,7 @@ from functools import partial
 from typing import Optional, TypedDict
 
 import sqlalchemy as sa
+from sqlalchemy.sql import sqltypes
 import sqlalchemy.types as sat
 from sqlalchemy.dialects import oracle
 from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
@@ -46,6 +47,14 @@ class _FieldDescription(TypedDict):
     scale: Optional[int]
     null_ok: Optional[int]
 
+
+class ORACLE_BOOLEAN(sqltypes.TypeEngine):
+    """Oracle Database BOOLEAN type.
+    
+    Only active on Oracle 23c and above."""
+
+    __visit_name__ = "BOOLEAN"
+    
 
 def _get_type(col: _FieldDescription) -> dt.DataType:
     typename = col[1]
@@ -206,6 +215,6 @@ def sa_oracle_ROWID(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
 
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.BOOLEAN)
+@dt.dtype.register(OracleDialect_oracledb, ORACLE_BOOLEAN)
 def sa_oracle_BOOLEAN(_, satype, nullable=True):
     return dt.Boolean(nullable=nullable)
