@@ -195,7 +195,7 @@ data-validation connections add
     [--host HOST]                                       Oracle host
     [--port PORT]                                       Oracle port, defaults to 1521
     [--user USER]                                       Oracle user, if not specified using credentials stored in wallet (see below)
-    [--protocol PROTOCOL]                               Oracle networking protocol (TPC, TPCS)
+    [--protocol PROTOCOL]                               Oracle networking protocol (TCP, TCPS)
     [--password PASSWORD]                               Oracle password
     [--database DATABASE]                               Oracle database
     [--connect-args CONNECT_PARAMS]                     Additional oracledb ConnectParams, JSON String dict
