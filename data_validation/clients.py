@@ -66,35 +66,6 @@ def _raise_missing_client_error(msg):
     return get_client_call
 
 
-# Teradata requires teradatasql and licensing
-try:
-    from third_party.ibis.ibis_teradata.api import teradata_connect
-except Exception:
-    msg = "pip install teradatasql (requires Teradata licensing)"
-    teradata_connect = _raise_missing_client_error(msg)
-
-# Oracle requires python-oracldb driver
-try:
-    from third_party.ibis.ibis_oracle.api import oracle_connect
-except Exception:
-    oracle_connect = _raise_missing_client_error("pip install oracledb")
-
-# Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
-try:
-    from third_party.ibis.ibis_snowflake.api import snowflake_connect
-except Exception:
-    snowflake_connect = _raise_missing_client_error(
-        "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
-    )
-
-# DB2 requires ibm_db_sa
-try:
-    from third_party.ibis.ibis_db2.api import db2_connect
-except Exception as e:
-    logging.error(f"Exception {str(e)} while importing db2_connect")
-    db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
-
-
 def get_google_bigquery_client(
     project_id: str, credentials=None, api_endpoint: str = None
 ):
@@ -290,6 +261,67 @@ def get_all_tables(client, allowed_schemas=None, tables_only=True):
     return table_objs
 
 
+CLIENT_LOOKUP = {
+    consts.SOURCE_TYPE_BIGQUERY: get_bigquery_client,
+    consts.SOURCE_TYPE_DB2: None,
+    consts.SOURCE_TYPE_FILESYSTEM: get_pandas_client,
+    consts.SOURCE_TYPE_IMPALA: impala_connect,
+    consts.SOURCE_TYPE_MSSQL: mssql_connect,
+    consts.SOURCE_TYPE_MYSQL: ibis.mysql.connect,
+    consts.SOURCE_TYPE_ORACLE: None,
+    consts.SOURCE_TYPE_POSTGRES: ibis.postgres.connect,
+    consts.SOURCE_TYPE_REDSHIFT: redshift_connect,
+    consts.SOURCE_TYPE_SNOWFLAKE: None,
+    consts.SOURCE_TYPE_SPANNER: spanner_connect,
+    consts.SOURCE_TYPE_TERADATA: None,
+}
+
+
+def client_factory(source_type: str):
+    if source_type not in CLIENT_LOOKUP:
+        msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
+            source_type=source_type
+        )
+        raise Exception(msg)
+
+    if source_type == consts.SOURCE_TYPE_DB2:
+        # DB2 requires ibm_db_sa
+        try:
+            from third_party.ibis.ibis_db2.api import db2_connect
+        except ImportError:
+            db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+        return db2_connect
+
+    if source_type == consts.SOURCE_TYPE_ORACLE:
+        # Oracle requires python-oracldb driver
+        try:
+            from third_party.ibis.ibis_oracle.api import oracle_connect
+        except ImportError:
+            oracle_connect = _raise_missing_client_error("pip install oracledb")
+        return oracle_connect
+
+    if source_type == consts.SOURCE_TYPE_TERADATA:
+        # Teradata requires teradatasql and licensing
+        try:
+            from third_party.ibis.ibis_teradata.api import teradata_connect
+        except ImportError:
+            msg = "pip install teradatasql (requires Teradata licensing)"
+            teradata_connect = _raise_missing_client_error(msg)
+        return teradata_connect
+
+    if source_type == consts.SOURCE_TYPE_SNOWFLAKE:
+        # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
+        try:
+            from third_party.ibis.ibis_snowflake.api import snowflake_connect
+        except ImportError:
+            snowflake_connect = _raise_missing_client_error(
+                "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
+            )
+        return snowflake_connect
+
+    return CLIENT_LOOKUP[source_type]
+
+
 def get_data_client(connection_config):
     """Return DataClient client from given configuration"""
     connection_config = copy.deepcopy(connection_config)
@@ -321,14 +353,9 @@ def get_data_client(connection_config):
                 key_path
             )
 
-    if source_type not in CLIENT_LOOKUP:
-        msg = 'ConfigurationError: Source type "{source_type}" is not supported'.format(
-            source_type=source_type
-        )
-        raise Exception(msg)
-
+    client_fn = client_factory(source_type)
     try:
-        data_client = CLIENT_LOOKUP[source_type](**decrypted_connection_config)
+        data_client = client_fn(**decrypted_connection_config)
         data_client._source_type = source_type
     except Exception as e:
         msg = 'Connection Type "{source_type}" could not connect: {error}'.format(
@@ -387,19 +414,3 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
         return 1000
     else:
         return None
-
-
-CLIENT_LOOKUP = {
-    consts.SOURCE_TYPE_BIGQUERY: get_bigquery_client,
-    consts.SOURCE_TYPE_IMPALA: impala_connect,
-    consts.SOURCE_TYPE_MYSQL: ibis.mysql.connect,
-    consts.SOURCE_TYPE_ORACLE: oracle_connect,
-    consts.SOURCE_TYPE_FILESYSTEM: get_pandas_client,
-    consts.SOURCE_TYPE_POSTGRES: ibis.postgres.connect,
-    consts.SOURCE_TYPE_REDSHIFT: redshift_connect,
-    consts.SOURCE_TYPE_TERADATA: teradata_connect,
-    consts.SOURCE_TYPE_MSSQL: mssql_connect,
-    consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
-    consts.SOURCE_TYPE_SPANNER: spanner_connect,
-    consts.SOURCE_TYPE_DB2: db2_connect,
-}
