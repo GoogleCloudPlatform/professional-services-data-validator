@@ -36,7 +36,9 @@ The `PSO_DV_CONN_HOME` environment variable indicates that you want your connect
 
 To run jobs via Cloud Run Jobs we first need to generate YAML files for each table. Unfortunately the YAML files (currently, see issue 1205 note above) have a strict naming convention of `nnnn.yaml`, starting from "0000".
 
-This example uses four tables from the integration test `pso_data_validator` schema, the driving loop would more likely be the output of the `data-validation find-tables` command:
+### Static Table List
+
+This example uses a static list of 4 tables from the integration test `pso_data_validator` schema and creates a single YAML file for each table:
 
 ```shell
 GCS_YAML_PATH=gs://<GCS-YAML-PATH>
@@ -55,16 +57,40 @@ done
 
 Example output configuration files:
 ```shell
-$ gsutil ls gs://example-dvt-bucket/dvt_configs/pso_data_validator
+$ gsutil ls ${GCS_YAML_PATH}/${SCHEMA}
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0000.yaml
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0001.yaml
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0002.yaml
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0003.yaml
 ```
 
+### Dynamic Table List
+
+This example uses the `data-validation find-tables` command to generate a dynamic list of all tables in a schema and batches the tables into 4 YAML files. The advantage of batching multiple tables per configuration file is reduced overhead from starting many Cloud Run Jobs, we can benefit from concurrent processing while also letting DVT process multiple tables serially.
+
+```shell
+GCS_YAML_PATH=gs://<GCS-YAML-PATH>
+SCHEMA=pso_data_validator
+NUM_CONFIG_FILES=4
+
+data-validation find-tables -sc ora -tc pg \
+ --allowed-schemas ${SCHEMA} \
+ |jq "[_nwise((length/${NUM_CONFIG_FILES})|ceil)]" > ${SCHEMA}.json
+
+for N in $(seq 0 $((NUM_CONFIG_FILES - 1))); do
+  YAML_FILE="$(printf "%04d\n" ${N}).yaml"
+  INPUT_TABLES=$(cat ${SCHEMA}.json|jq ".[${N}]")
+  data-validation validate column -sc ora -tc pg \
+  --tables-list="${INPUT_TABLES}" \
+  --count="*" --min="*" --max="*" --sum="*" \
+  --filter-status=fail \
+  --config-file=${GCS_YAML_PATH}/${SCHEMA}/${YAML_FILE}
+done
+```
+
 ## Run Concurrent Validation
 
-This Cloud Run command will work through the YAML files in 2 parallel streams.
+The Cloud Run command below will work through the 4 YAML files in 2 parallel streams. `--tasks 4` should be changed to match however many input YAML files you have. `--parallelism 2` should be changed to reflect the desired concurrency.
 
 ```shell
 PROJECT_ID=<PROJECT-ID>
