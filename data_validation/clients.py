@@ -69,20 +69,20 @@ def _raise_missing_client_error(msg):
 # Teradata requires teradatasql and licensing
 try:
     from third_party.ibis.ibis_teradata.api import teradata_connect
-except Exception:
+except ImportError:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
 
 # Oracle requires python-oracldb driver
 try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
-except Exception:
+except ImportError:
     oracle_connect = _raise_missing_client_error("pip install oracledb")
 
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
     from third_party.ibis.ibis_snowflake.api import snowflake_connect
-except Exception:
+except ImportError:
     snowflake_connect = _raise_missing_client_error(
         "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
     )
@@ -90,8 +90,7 @@ except Exception:
 # DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
-except Exception as e:
-    logging.error(f"Exception {str(e)} while importing db2_connect")
+except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
 
