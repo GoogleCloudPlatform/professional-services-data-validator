@@ -90,15 +90,15 @@ _type_mapping = {
 # _handle_failed_column_type_inference().
 # This method has a flaw that is doesn't prefix the table name with the schema
 # which causes a table not found exception.
-# I (nj@2024-02-15) felt the simplest change was to add LONG RAW to SQL Alchemy
+# I (nj@2024-02-15) felt the simplest change was to add LONG RAW to SQLAlchemy
 # as a RAW variant, as below.
 if "LONG RAW" not in OracleDialect_oracledb.ischema_names:
     OracleDialect_oracledb.ischema_names["LONG RAW"] = oracle.RAW
 # Same as above but for LOCAL TIME ZONE.
 if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_oracledb.ischema_names:
-    OracleDialect_oracledb.ischema_names[
-        "TIMESTAMP WITH LOCAL TIME ZONE"
-    ] = oracle.TIMESTAMP(timezone=True)
+    OracleDialect_oracledb.ischema_names["TIMESTAMP WITH LOCAL TIME ZONE"] = (
+        oracle.TIMESTAMP(timezone=True)
+    )
 
 
 @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.CLOB)

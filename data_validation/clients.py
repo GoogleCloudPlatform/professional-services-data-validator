@@ -33,6 +33,7 @@ from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
+from third_party.ibis.ibis_sybase.api import sybase_connect
 
 if TYPE_CHECKING:
     import ibis.expr.schema as sch
@@ -56,6 +57,7 @@ IBIS_ALCHEMY_BACKENDS = [
     "mssql",
     "redshift",
     "snowflake",
+    "sybase",
 ]
 
 
@@ -202,6 +204,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "db2",
         "mssql",
         "redshift",
+        "sybase",
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif client.name == "pandas":
@@ -314,10 +317,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config[
-                "credentials"
-            ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                key_path
+            decrypted_connection_config["credentials"] = (
+                google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
+                )
             )
 
     if source_type not in CLIENT_LOOKUP:
@@ -400,5 +403,6 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_MSSQL: mssql_connect,
     consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
+    consts.SOURCE_TYPE_SYBASE: sybase_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,
 }
