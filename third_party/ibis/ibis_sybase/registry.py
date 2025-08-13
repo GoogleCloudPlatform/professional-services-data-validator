@@ -15,7 +15,7 @@
 import sqlalchemy as sa
 
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
-from third_party.ibis.ibis_sybase.registry import sa_cast_mssql
+from third_party.ibis.ibis_mssql.registry import sa_cast_mssql
 
 
 def sa_cast_sybase(t, op):
