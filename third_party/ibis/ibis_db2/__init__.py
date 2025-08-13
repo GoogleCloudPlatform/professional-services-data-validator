@@ -117,7 +117,7 @@ class Backend(BaseAlchemyBackend):
             list: A list of tuples containing the standard 7 DB API fields:
                   https://peps.python.org/pep-0249/#description
         """
-        return ()
+        return []
 
     def is_char_type_padded(self, char_type: Tuple) -> bool:
         """Define this method if the backend supports character/string types that are padded and returns

@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
+import decimal
 from functools import partial
 
 from sqlalchemy.types import DATETIME
-from sqlalchemy_sybase.base import SybaseDialect, ischema_names
+from sqlalchemy_sybase.base import ischema_names
 import ibis.expr.datatypes as dt
 
 
@@ -61,7 +63,11 @@ _type_mapping = {
     "timestamp": dt.Binary,
     # cursor.description is returning Python type instead of true data type.
     int: dt.Int32,
+    float: dt.Float64,
     str: dt.String,
+    decimal.Decimal: dt.Decimal,
+    datetime.date: dt.Date,
+    datetime.datetime: dt.Timestamp,
 }
 
 
