@@ -2,6 +2,20 @@
 
 ## Untagged
 
+## [8.1.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.1.0...v8.1.1) (2025-08-08)
+
+
+### Bug Fixes
+
+* Remove logging.error call when Db2 driver is missing ([#1567](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1567)) ([0f1dd24](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0f1dd24a50fc68dbd39ef6ebbd75d8ca1fa50088))
+
+## [8.1.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.0.0...v8.1.0) (2025-08-07)
+
+
+### Features
+
+* Reinstate support for SQLAlchemy url for Oracle connections ([#1561](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1561)) ([03eb513](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/03eb513d4a34ead4f987c7264e537010c5065d17))
+
 ## [8.0.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v7.7.0...v8.0.0) (2025-07-30)
 
 
