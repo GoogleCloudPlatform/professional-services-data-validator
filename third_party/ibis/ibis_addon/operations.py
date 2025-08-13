@@ -58,6 +58,7 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
+from third_party.ibis.ibis_sybase.compiler import SybaseExprTranslator
 from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValue
 
 # Do not remove these lines, they trigger patching of Ibis code.
@@ -66,6 +67,7 @@ import third_party.ibis.ibis_mysql.compiler  # noqa
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
 import third_party.ibis.ibis_postgres.client  # noqa
+from third_party.ibis.ibis_sybase import registry as sybase_registry
 
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
@@ -560,19 +562,19 @@ if OracleExprTranslator:
         ops.StringLength
     ]
 
-PostgreSQLExprTranslator._registry[
-    ops.HashBytes
-] = postgres_registry.sa_format_hashbytes
+PostgreSQLExprTranslator._registry[ops.HashBytes] = (
+    postgres_registry.sa_format_hashbytes
+)
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[
-    ops.ExtractEpochSeconds
-] = postgres_registry.sa_epoch_seconds
-PostgreSQLExprTranslator._registry[
-    PaddedCharLength
-] = postgres_registry.sa_format_postgres_padded_char_length
+PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = (
+    postgres_registry.sa_epoch_seconds
+)
+PostgreSQLExprTranslator._registry[PaddedCharLength] = (
+    postgres_registry.sa_format_postgres_padded_char_length
+)
 
 
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
@@ -621,9 +623,9 @@ if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
     TeradataExprTranslator._registry[ops.HashBytes] = format_hashbytes_teradata
     TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
-    TeradataExprTranslator._registry[
-        PaddedCharLength
-    ] = TeradataExprTranslator._registry[ops.StringLength]
+    TeradataExprTranslator._registry[PaddedCharLength] = (
+        TeradataExprTranslator._registry[ops.StringLength]
+    )
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake
@@ -634,3 +636,5 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RandomScalar] = sa_format_random
     SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+
+SybaseExprTranslator._registry[ops.Cast] = sybase_registry.sa_cast_sybase

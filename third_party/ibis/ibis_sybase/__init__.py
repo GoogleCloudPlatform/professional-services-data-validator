@@ -19,12 +19,33 @@ import re
 from typing import Iterable, Literal, Tuple, Optional
 
 import sqlalchemy as sa
+from sqlalchemy_sybase.base import (
+    SybaseDialect,
+    SybaseIdentifierPreparer,
+    RESERVED_WORDS as SYBASE_RESERVED_WORDS,
+)
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 import ibis.expr.datatypes as dt
 
 from third_party.ibis.ibis_addon.api import dvt_handle_failed_column_type_inference
 from third_party.ibis.ibis_sybase.compiler import SybaseCompiler
 from third_party.ibis.ibis_sybase.datatypes import type_from_result_set_info
+
+
+EXTRA_RESERVED_WORDS = set(
+    [
+        "count",
+    ]
+)
+
+
+class DVTSybaseIdentifierPreparer(SybaseIdentifierPreparer):
+    reserved_words = {
+        x.lower() for x in SYBASE_RESERVED_WORDS.union(EXTRA_RESERVED_WORDS)
+    }
+
+
+SybaseDialect.preparer = DVTSybaseIdentifierPreparer
 
 
 # The Sybase backend uses the Ibis MSSQL compiler.
