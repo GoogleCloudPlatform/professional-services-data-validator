@@ -119,31 +119,24 @@ class Backend(BaseAlchemyBackend):
             re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
             is not None
         ):
-            with self.begin() as con:
-                result = con.exec_driver_sql(f"SELECT TOP 1 * FROM ({query}) AS t0")
-                col_types = result.cursor.description
-                breakpoint()
-                yield from (
-                    (column[0], type_from_result_set_info(todo_column_attribs_here))
-                    for column in col_types
-                )
+            result = self.raw_sql(f"SELECT TOP 1 * FROM ({query}) AS t0")
+            col_types = result.cursor.description
+            yield from (
+                (c[0], type_from_result_set_info(c[0], c[1], c[4], c[5], c[6]))
+                for c in col_types
+            )
         else:
             database, table = query.split(".", maxsplit=1)
-            sql = f"EXEC sp_columns {table}, {database}"
-            with self.begin() as con:
-                result = con.exec_driver_sql(sql)
-                return [
-                    (_[3], type_from_result_set_info(_[3], _[5], _[6], _[8], _[10]))
-                    for _ in result.cursor.fetchall()
-                ]
+            result = self.raw_sql(f"EXEC sp_columns [{table}], [{database}]")
+            return [
+                (_[3], type_from_result_set_info(_[3], _[5], _[6], _[8], _[10]))
+                for _ in result.fetchall()
+            ]
 
     def list_primary_key_columns(self, database: str, table: str) -> list:
         """Return a list of primary key column names."""
-        list_pk_col_sql = f"EXEC sp_pkeys {table}, {database}"
-        with self.begin() as con:
-            result = con.exec_driver_sql(list_pk_col_sql)
-            breakpoint()
-            return [_[0] for _ in result.cursor.fetchall()]
+        result = self.raw_sql(f"EXEC sp_pkeys [{table}], [{database}]")
+        return [_[3] for _ in result.fetchall()]
 
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
@@ -167,16 +160,13 @@ class Backend(BaseAlchemyBackend):
 
         if database and table:
             # Properly quote and format the table name with schema
-            quoted_table = f"[{database}].[{table}]"
-            sql = f"EXEC sp_columns {table}, {database}"
-            with self.begin() as con:
-                result = con.exec_driver_sql(sql)
-                return list(result.cursor.fetchall())
+            result = self.raw_sql(f"EXEC sp_columns [{table}], [{database}]")
+            return list(result.fetchall())
         elif query:
             sql = f"SELECT TOP 1 * FROM ({query}) AS t0"
-            with self.begin() as con:
-                result = con.exec_driver_sql(sql)
-                yield from result.cursor.description
+            result = self.raw_sql(sql)
+            breakpoint()
+            yield from result.cursor.description
 
             return
             for column in result.mappings():
@@ -198,14 +188,13 @@ class Backend(BaseAlchemyBackend):
         return char_type[0] in ["char", "nchar"]
 
     def list_databases(self, schema=None):
-        schema_like = f"%{schema or ''}%"
-        list_database_sql = """
-            SELECT schema_name FROM information_schema.schemata
-            WHERE schema_name LIKE ?
-        """
-        with self.begin() as con:
-            result = con.exec_driver_sql(list_database_sql, parameters=(schema_like,))
-            return [_[0] for _ in result.cursor.fetchall()]
+        schema_like = f'"%{schema or ""}%"' if schema else "NULL"
+        # I couldn't find SQL to report table/view owners so get the object list and then de-dupe the owner.
+        list_table_sql = f"EXEC sp_tables NULL, {schema_like}, NULL, NULL"
+        rows = self.raw_sql(list_table_sql).fetchall()
+        owners = {row[1] for row in rows}
+        breakpoint()
+        return list(owners)
 
     def list_tables(self, table=None, schema=None, type_like: str = "%") -> list:
         """Return a list of table names from sp_table stored procedure using input filters."""
@@ -215,9 +204,8 @@ class Backend(BaseAlchemyBackend):
         list_table_sql = (
             f"EXEC sp_tables {table_like}, {schema_like}, NULL, {type_filter}"
         )
-        with self.begin() as con:
-            result = con.exec_driver_sql(list_table_sql)
-            return [_[2] for _ in result.cursor.fetchall()]
+        rows = self.raw_sql(list_table_sql).fetchall()
+        return [_[2] for _ in rows]
 
     def dvt_list_tables(self, like=None, database=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""

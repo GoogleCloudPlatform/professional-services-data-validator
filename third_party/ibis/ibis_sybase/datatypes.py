@@ -59,6 +59,9 @@ _type_mapping = {
     # See:
     # https://learn.microsoft.com/en-us/sql/t-sql/data-types/rowversion-transact-sql?view=sql-server-ver16
     "timestamp": dt.Binary,
+    # cursor.description is returning Python type instead of true data type.
+    int: dt.Int32,
+    str: dt.String,
 }
 
 
@@ -68,8 +71,8 @@ def type_from_result_set_info(
 ) -> dt.DataType:
     """Construct an ibis type from Sybase result set description."""
     typ = _type_mapping.get(type_name)
-    breakpoint()
     if typ is None:
+        breakpoint()
         raise NotImplementedError(f"Sybase type {type_name} is not supported")
 
     if type_name == "decimal":
