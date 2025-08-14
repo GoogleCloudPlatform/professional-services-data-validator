@@ -16,6 +16,8 @@
 
 import logging
 
+from google.api_core.exceptions import BadRequest
+
 from data_validation import clients, consts, exceptions, util
 from data_validation.result_handlers.base_backend import BaseBackendResultHandler
 
@@ -82,28 +84,27 @@ class BigQueryResultHandler(BaseBackendResultHandler):
 
     def _insert_bigquery(self, result_df):
         table = self._bigquery_client.get_table(self._table_id)
-        chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
-            table, result_df
-        )
-        if any(chunk_errors):
-            if (
-                chunk_errors[0][0]["errors"][0]["message"]
-                == "no such field: validation_status."
-            ):
+        try:
+            job = self._bigquery_client.load_table_from_dataframe(result_df, table)
+        except BadRequest as exc:
+            if "field: validation_status" in str(exc):
                 raise exceptions.ResultHandlerException(
-                    f"Please update your BigQuery results table schema using the script: samples/bq_utils/rename_column_schema.sh.\n"
-                    f"The latest release of DVT has updated the column name 'status' to 'validation_status': {chunk_errors}"
-                )
-            elif (
-                chunk_errors[0][0]["errors"][0]["message"]
-                == "no such field: primary_keys."
-            ):
+                    "Please update your BigQuery results table schema using the script: samples/bq_utils/rename_column_schema.sh.\n"
+                    "The latest release of DVT has updated the column name 'status' to 'validation_status'"
+                ) from exc
+            elif "field: primary_keys" in str(exc):
                 raise exceptions.ResultHandlerException(
-                    f"Please update your BigQuery results table schema using the script: samples/bq_utils/add_columns_schema.sh.\n"
-                    f"The latest release of DVT has added two fields 'primary_keys' and 'num_random_rows': {chunk_errors}"
-                )
+                    "Please update your BigQuery results table schema using the script: samples/bq_utils/add_columns_schema.sh.\n"
+                    "The latest release of DVT has added two fields 'primary_keys' and 'num_random_rows'"
+                ) from exc
+            else:
+                raise
+
+        # Wait for the job to complete.
+        job.result()
+        if job.errors:
             raise exceptions.ResultHandlerException(
-                f"Could not write rows: {chunk_errors}"
+                f"Could not write rows: {job.errors}"
             )
 
         if result_df.empty:

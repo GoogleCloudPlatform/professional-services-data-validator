@@ -60,7 +60,7 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
  1  0      0 31727504  21900 913108    0    0     0 29241 1002 1548  0  0 96  3  0
 ```
 
-### BigQuery
+### BigQuery - insert_rows_from_dataframe
 
 Writing to BigQuery using the BigQuery client `insert_rows_from_dataframe()` method:
 ```python
@@ -72,10 +72,9 @@ Writing to BigQuery using the BigQuery client `insert_rows_from_dataframe()` met
 
 Command:
 ```console
-time data-validation -ll DEBUG validate row -sc=oravol -tc=pg \
+time data-validation validate row -sc=oravol -tc=pg \
 -tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
---result-handler=<GCP_PROJECT_ID>.pso_data_validator_results.results \
-2>/tmp/debug.log
+--result-handler=<GCP_PROJECT_ID>.pso_data_validator_results.results
 
 real	3m24.076s
 user	1m57.846s
@@ -118,6 +117,34 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
  1  0      0 30604352  21556 557968    0    0     0    14 1201 1558 13  0 87  0  0
  0  0      0 32091888  21572 557980    0    0     0     4 1108 1599  9  0 90  0  0
  0  0      0 32091888  21572 557980    0    0     0     0  853 1527  0  0 100  0  0
+```
+
+### BigQuery - insert_rows_from_dataframe
+
+Writing to BigQuery using the BigQuery client `insert_rows_from_dataframe()` method:
+```python
+        table = self._bigquery_client.get_table(self._table_id)
+        chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
+            table, result_df
+        )
+```
+
+Command:
+```console
+time data-validation validate row -sc=oravol -tc=pg \
+-tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
+--result-handler=<GCP_PROJECT_ID>.pso_data_validator_results.results
+
+```
+
+DVT stages:
+```
+
+```
+
+`vmstat` output:
+```
+
 ```
 
 ### PostgreSQL - Ibis client.insert
