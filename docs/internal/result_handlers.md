@@ -11,6 +11,7 @@ Timings from the sections that follow this are summarised in the table below:
 | :---- | :---- | ----- | ----- |
 | Local filesystem | stdout redirect to /tmp | 43s |  |
 | BigQuery | insert\_rows\_from\_dataframe | 3m24s | 2m58s |
+| BigQuery | load\_table\_from\_dataframe | 38s | 12s |
 | PostgreSQL | Ibis client.insert | 2m35s | 2m9s |
 | PostgreSQL | to\_sql(chunksize=1000) | 2m12s | 1m46s |
 | PostgreSQL | to\_sql(multi, chunksize=1000) | 5m48s | 5m22s |
@@ -64,10 +65,10 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
 
 Writing to BigQuery using the BigQuery client `insert_rows_from_dataframe()` method:
 ```python
-        table = self._bigquery_client.get_table(self._table_id)
-        chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
-            table, result_df
-        )
+    table = self._bigquery_client.get_table(self._table_id)
+    chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
+        table, result_df
+    )
 ```
 
 Command:
@@ -119,14 +120,12 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
  0  0      0 32091888  21572 557980    0    0     0     0  853 1527  0  0 100  0  0
 ```
 
-### BigQuery - insert_rows_from_dataframe
+### BigQuery - load_table_from_dataframe
 
-Writing to BigQuery using the BigQuery client `insert_rows_from_dataframe()` method:
+Writing to BigQuery using the BigQuery client `load_table_from_dataframe()` method:
 ```python
-        table = self._bigquery_client.get_table(self._table_id)
-        chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
-            table, result_df
-        )
+    job = self._bigquery_client.load_table_from_dataframe(result_df, table)
+    job.result()
 ```
 
 Command:
@@ -135,16 +134,30 @@ time data-validation validate row -sc=oravol -tc=pg \
 -tbls=dvt_test.tab_vol_1m -pk=id --hash='*' \
 --result-handler=<GCP_PROJECT_ID>.pso_data_validator_results.results
 
+real	0m38.334s
+user	0m24.498s
+sys	0m3.128s
 ```
 
 DVT stages:
 ```
-
+08/14/2025 08:08:15 AM-DEBUG: Build config elapsed: 0.21s
+08/14/2025 08:08:19 AM-DEBUG: Target query elapsed: 4.07s
+08/14/2025 08:08:24 AM-DEBUG: Source query elapsed: 8.78s
+08/14/2025 08:08:40 AM-DEBUG: Generate report elapsed: 16.04s
+08/14/2025 08:08:52 AM-DEBUG: Write results to BigQuery elapsed: 11.42s
 ```
 
 `vmstat` output:
 ```
-
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  0      0 12901476 135428 3157588    0    0     0    13    1    2  0  0 99  0  0
+ 1  0      0 12325348 135428 3157588    0    0     0     0 4209 4962 30  5 65  0  0
+ 2  0      0 11674856 135428 3157588    0    0     0     0 1408 1790 40  7 53  0  0
+ 1  0      0 11042840 135428 3157588    0    0     0     0  763 1186 45  5 51  0  0
+ 0  0      0 12897392 135428 3157840    0    0     0 13403 1211 1459  8  2 86  3  0
+ 0  0      0 12897492 135428 3157840    0    0     0     0  833 1487  0  0 100  0  0
 ```
 
 ### PostgreSQL - Ibis client.insert
