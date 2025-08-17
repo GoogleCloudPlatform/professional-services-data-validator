@@ -48,14 +48,6 @@ class _FieldDescription(TypedDict):
     null_ok: Optional[int]
 
 
-class ORACLE_BOOLEAN(sqltypes.TypeEngine):
-    """Oracle Database BOOLEAN type.
-    
-    Only active on Oracle 23c and above."""
-
-    __visit_name__ = "BOOLEAN"
-    
-
 def _get_type(col: _FieldDescription) -> dt.DataType:
     typename = col[1]
     typ = _type_mapping.get(typename)
@@ -215,6 +207,9 @@ def sa_oracle_ROWID(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
 
-@dt.dtype.register(OracleDialect_oracledb, ORACLE_BOOLEAN)
-def sa_oracle_BOOLEAN(_, satype, nullable=True):
-    return dt.Boolean(nullable=nullable)
+@dt.dtype.register(OracleDialect_oracledb, sat.BOOLEAN)
+def sa_oracle_BOOLEAN(dialect, satype, nullable=True):
+    version = getattr(dialect, "server_version_info", None)
+    if isinstance(version, tuple) and version and version[0] >= 23:
+        return dt.Boolean(nullable=nullable)
+    return dt.Int8(nullable=nullable)
