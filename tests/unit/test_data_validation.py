@@ -461,6 +461,18 @@ def module_under_test(ibis_pandas):
     return data_validation.data_validation
 
 
+@pytest.fixture
+def mock_bq_client():
+    """Mock BigQuery client for testing."""
+    mock_client = mock.create_autospec(bigquery.Client)
+    # Create a mock for the job object returned by load_table_from_dataframe
+    # The `errors` attribute needs to be an empty list for the validation to pass.
+    mock_job = mock.Mock()
+    mock_job.errors = []
+    mock_client.return_value.load_table_from_dataframe.return_value = mock_job
+    return mock_client
+
+
 def _create_table_file(table_path, data):
     """Create JSON File"""
     with open(table_path, "w") as f:
@@ -710,9 +722,7 @@ def test_grouped_column_level_validation_multiple_aggregations(module_under_test
     assert validation_df[consts.TARGET_AGG_VALUE].astype(float).sum() == 11
 
 
-def test_row_level_validation(module_under_test, fs, monkeypatch):
-    # Mock the big query client
-    mock_bq_client = mock.create_autospec(bigquery.Client)
+def test_row_level_validation(module_under_test, mock_bq_client, fs, monkeypatch):
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
     # With some mocked data - source and target the same
     data = _generate_fake_data(rows=100, second_range=0)
@@ -745,9 +755,9 @@ def test_fail_row_level_validation(module_under_test, fs):
     assert len(fail_df) == 5
 
 
-def test_bad_join_row_level_validation(module_under_test, fs, caplog, monkeypatch):
-    # Mock the big query client
-    mock_bq_client = mock.create_autospec(bigquery.Client)
+def test_bad_join_row_level_validation(
+    module_under_test, mock_bq_client, fs, caplog, monkeypatch
+):
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
     # With some mocked data - source and target different
     data = _generate_fake_data(rows=100, second_range=0)
@@ -787,10 +797,8 @@ def test_bad_join_row_level_validation(module_under_test, fs, caplog, monkeypatc
 
 
 def test_no_console_data_shown_for_validation_with_result_written_to_bq_in_info_mode(
-    module_under_test, fs, caplog, monkeypatch
+    module_under_test, mock_bq_client, fs, caplog, monkeypatch
 ):
-    # Mock the big query client
-    mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
     # With some mocked data - source and target different
     data = _generate_fake_data(rows=10, second_range=0)
@@ -818,10 +826,8 @@ def test_no_console_data_shown_for_validation_with_result_written_to_bq_in_info_
 
 
 def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq_in_info_mode(
-    module_under_test, fs, caplog, monkeypatch
+    module_under_test, mock_bq_client, fs, caplog, monkeypatch
 ):
-    # Mock the big query client
-    mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
     # With some mocked data - source and target the same
     data = _generate_fake_data(rows=10, second_range=0)
@@ -844,10 +850,8 @@ def test_no_console_data_shown_for_matching_validation_with_result_written_to_bq
 
 
 def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mode(
-    module_under_test, fs, caplog, monkeypatch
+    module_under_test, mock_bq_client, fs, caplog, monkeypatch
 ):
-    # Mock the big query client
-    mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
     # With some mocked data - source and target different
     data = _generate_fake_data(rows=10, second_range=0)
@@ -876,10 +880,8 @@ def test_console_data_shown_for_validation_with_result_written_to_bq_in_debug_mo
 
 
 def test_console_data_shown_for_matching_validation_with_result_written_to_bq_in_debug_mode(
-    module_under_test, fs, caplog, monkeypatch
+    module_under_test, mock_bq_client, fs, caplog, monkeypatch
 ):
-    # Mock the big query client
-    mock_bq_client = mock.create_autospec(bigquery.Client)
     monkeypatch.setattr(bigquery, "Client", value=mock_bq_client)
     # With some mocked data - source and target the same
     data = _generate_fake_data(rows=10, second_range=0)
