@@ -101,6 +101,8 @@ if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_oracledb.ischema_names:
         "TIMESTAMP WITH LOCAL TIME ZONE"
     ] = oracle.TIMESTAMP(timezone=True)
 
+if "BOOLEAN" not in OracleDialect_oracledb.ischema_names:
+    OracleDialect_oracledb.ischema_names["BOOLEAN"] = sat.BOOLEAN
 
 @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.CLOB)
 def sa_oracle_CLOB(_, satype, nullable=True):
@@ -206,7 +208,6 @@ def sa_oracle_ROWID(_, satype, nullable=True):
     return dt.String(nullable=nullable)
 
 
-@dt.dtype.register(OracleDialect_oracledb, sat.BOOLEAN)
 def sa_oracle_BOOLEAN(dialect, satype, nullable=True):
     version = getattr(dialect, "server_version_info", None)
     if isinstance(version, tuple) and version and version[0] >= 23:
