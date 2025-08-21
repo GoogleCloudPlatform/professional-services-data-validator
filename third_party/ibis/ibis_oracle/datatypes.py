@@ -15,7 +15,6 @@ from functools import partial
 from typing import Optional, TypedDict
 
 import sqlalchemy as sa
-from sqlalchemy.sql import sqltypes
 import sqlalchemy.types as sat
 from sqlalchemy.dialects import oracle
 from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
