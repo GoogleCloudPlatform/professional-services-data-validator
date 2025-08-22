@@ -28,12 +28,13 @@ import numpy as np
 import string
 
 # import google.cloud.bigquery as bq
+import pandas as pd
+import sqlalchemy as sa
 import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
-import pandas as pd
-import sqlalchemy as sa
+from ibis.formats.pandas import PandasData
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 
@@ -104,6 +105,31 @@ except Exception:
 # Cast of datetime64 NaT to int64 and then in seconds results in the value below.
 # We need to use this value in the datetime.date simulation of the datetime64 behaviour.
 NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
+
+
+def _dvt_patched_convert_Date(s, dtype, pandas_type):
+    """This is a a copy of PandasData.convert_Date from Ibis v8.
+
+    We're patching this in Ibis v7 temporarily, this might change if we can get directly to v8.
+    """
+    if isinstance(s.dtype, pd.DatetimeTZDtype):
+        s = s.dt.tz_convert("UTC").dt.tz_localize(None)
+    try:
+        return s.astype(pandas_type).dt.date
+    except (TypeError, pd._libs.tslibs.OutOfBoundsDatetime):
+
+        def try_date(v):
+            if isinstance(v, datetime.datetime):
+                return v.date()
+            elif isinstance(v, str):
+                return datetime.date.fromisoformat(v)
+            else:
+                return v
+
+        return s.map(try_date, na_action="ignore")
+
+
+PandasData.convert_Date = _dvt_patched_convert_Date
 
 
 class BinaryLength(ops.Value):
