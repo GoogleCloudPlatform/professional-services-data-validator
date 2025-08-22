@@ -471,13 +471,9 @@ operation_registry.update(
         # Floating
         ops.IsNan: _is_nan,
         ops.IsInf: _is_inf,
-        # null handling
-        ops.IfNull: fixed_arity(sa.func.coalesce, 2),
         # boolean reductions
         ops.Any: unary(sa.func.bool_or),
         ops.All: unary(sa.func.bool_and),
-        ops.NotAny: unary(lambda x: sa.not_(sa.func.bool_or(x))),
-        ops.NotAll: unary(lambda x: sa.not_(sa.func.bool_and(x))),
         # strings
         ops.Substring: _substr,
         ops.StringFind: _string_find,
@@ -525,8 +521,6 @@ operation_registry.update(
         ops.Variance: variance_reduction("var", suffix={"sample": "", "pop": "p"}),
         ops.RandomScalar: _random,
         ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
-        ops.CumulativeAll: unary(sa.func.bool_and),
-        ops.CumulativeAny: unary(sa.func.bool_or),
         ops.IdenticalTo: _identical_to,
         # aggregate methods
         ops.Count: _reduction_count(sa.func.count),

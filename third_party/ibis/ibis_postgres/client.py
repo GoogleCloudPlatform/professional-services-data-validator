@@ -14,11 +14,10 @@
 
 from typing import Iterable, Literal, Tuple
 
-import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 import sqlalchemy as sa
 from ibis.backends.postgres import Backend as PostgresBackend
-from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
+from ibis.backends.postgres.datatypes import PostgresType
 import re
 
 
@@ -98,34 +97,7 @@ def _metadata(self, query: str) -> sch.Schema:
                     AS t0(name text, type_code int, attrelid bigint, attnum int, col_ord int)
                     LEFT JOIN pg_attribute t1 USING (attrelid, attnum) ORDER BY col_ord"""
         )
-    yield from ((col, _get_type(typestr)) for col, typestr in type_info)
-
-
-def _get_type(typestr: str) -> dt.DataType:
-    is_array = typestr.endswith(_BRACKETS)
-    # typ = _type_mapping.get(typestr.replace(_BRACKETS, ""))
-    # handle bracket length
-    typestr_wob = typestr.replace(_BRACKETS, "")
-    if "(" in typestr_wob:
-        typestr_wo_length = (
-            typestr_wob[: typestr_wob.index("(")]
-            + typestr_wob[typestr_wob.index(")") + 1 :]
-        )
-    else:
-        typestr_wo_length = typestr_wob
-    typ = _type_mapping.get(typestr_wo_length)
-    # Added != "numeric" below for issue:
-    #   https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1302
-    # We do not want to map all numerics to decimal(None, None), we want "numeric" to be
-    # passed to the _parse_numeric() function.
-    # An alternative was to remove "numeric" from _type_mapping but that would be yet more monkey
-    # patching, at least this function is already patched.
-    if typ and typestr_wo_length == "numeric":
-        return _parse_numeric(typestr)
-    elif typ:
-        return dt.Array(typ) if is_array else typ
-    else:
-        return None  # Type is not known - will result in a NotImplemented Error
+    yield from ((col, PostgresType.from_string(typestr)) for col, typestr in type_info)
 
 
 def list_schemas(self, like=None):

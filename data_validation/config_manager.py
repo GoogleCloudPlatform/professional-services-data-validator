@@ -819,23 +819,6 @@ class ConfigManager(object):
             calc_func = consts.CALC_FIELD_BYTE_LENGTH
 
         elif column_type in ["timestamp", "!timestamp", "date", "!date"]:
-            if (
-                self.source_client.name == "bigquery"
-                or self.target_client.name == "bigquery"
-            ):
-                pre_calculated_config = self.build_and_append_pre_agg_calc_config(
-                    source_column,
-                    target_column,
-                    consts.CONFIG_CAST,
-                    column_position,
-                    cast_type="timestamp",
-                    depth=depth,
-                )
-                source_column = target_column = pre_calculated_config[
-                    consts.CONFIG_FIELD_ALIAS
-                ]
-                depth = 1
-
             calc_func = consts.CALC_FIELD_EPOCH_SECONDS
             if agg_type == consts.CONFIG_TYPE_SUM:
                 # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
@@ -1168,7 +1151,7 @@ class ConfigManager(object):
             col_config["calc_type"] = consts.CONFIG_CUSTOM
             custom_params = {
                 "calc_params": {
-                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TemporalValue.strftime",
+                    consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TimestampValue.strftime",
                     consts.CONFIG_CUSTOM_PARAMS: [
                         {consts.CONFIG_CUSTOM_PARAM_FORMAT_STR: fmt}
                     ],

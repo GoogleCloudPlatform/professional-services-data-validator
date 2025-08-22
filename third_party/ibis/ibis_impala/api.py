@@ -196,11 +196,6 @@ def _chunks_to_pandas_array(chunks):
     return target
 
 
-@rewrites(ops.IfNull)
-def _if_null(op):
-    return ops.Coalesce((op.arg, op.ifnull_expr))
-
-
 def update_query_with_limit(query):
     limit_pattern = re.compile(r"LIMIT\s+\d+(\s+OFFSET\s+\d+)?\s*;?\s*$", re.IGNORECASE)
     last_limit_match = limit_pattern.search(query)

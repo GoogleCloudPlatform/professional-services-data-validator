@@ -18,7 +18,7 @@ from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
 from ibis import util
-from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
+from ibis.backends.postgres.datatypes import PostgresType
 
 
 class Backend(BaseAlchemyBackend):
@@ -97,7 +97,9 @@ class Backend(BaseAlchemyBackend):
             type_info = con.execute(
                 sa.text(type_info_sql).bindparams(raw_name=raw_name)
             )
-            yield from ((col, _get_type(typestr)) for col, typestr in type_info)
+            yield from (
+                (col, PostgresType.from_string(typestr)) for col, typestr in type_info
+            )
             con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
 
     def _get_temp_view_definition(

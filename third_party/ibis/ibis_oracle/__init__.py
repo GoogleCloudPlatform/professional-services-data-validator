@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from typing import Iterable, Literal, Optional, Tuple, Dict, Any
 
+import oracledb
 import sqlalchemy as sa
 from sqlalchemy.dialects.oracle.base import (
     OracleIdentifierPreparer,
     RESERVED_WORDS as ORACLE_RESERVED_WORDS,
 )
 from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
-import re
 
 import ibis.expr.datatypes as dt
-from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
-from third_party.ibis.ibis_addon.api import dvt_handle_failed_column_type_inference
-from third_party.ibis.ibis_oracle.compiler import OracleCompiler
-from third_party.ibis.ibis_oracle.datatypes import _get_type
-import oracledb
+from ibis.backends.oracle import Backend
+from ibis.backends.oracle.datatypes import OracleType
+
+# from third_party.ibis.ibis_oracle.compiler import OracleCompiler
 
 
 EXTRA_RESERVED_WORDS = set(
@@ -55,6 +55,10 @@ def _ora_denormalize_name(self, name):
 
     if self.identifier_preparer._requires_quotes_illegal_chars(name):
         name = name.upper()
+    elif isinstance(name, sa.sql.elements.quoted_name) and '"' not in name:
+        # TODO can't find a better way to upper case Oracle identifiers.
+        name = str(name)
+
     return super(OracleDialect_oracledb, self).denormalize_name(name)
 
 
@@ -86,9 +90,8 @@ class DVTOracleIdentifierPreparer(OracleIdentifierPreparer):
 OracleDialect_oracledb.preparer = DVTOracleIdentifierPreparer
 
 
-class Backend(BaseAlchemyBackend):
-    name = "oracle"
-    compiler = OracleCompiler
+class DVTOracleBackend(Backend):
+    # compiler = OracleCompiler
 
     def __init__(self, arraysize: int = 500):
         super().__init__()
@@ -169,18 +172,29 @@ class Backend(BaseAlchemyBackend):
                 # Standardise numeric formatting on en_US (issue 1033).
                 cur.execute("ALTER SESSION SET NLS_NUMERIC_CHARACTERS='.,'")
 
-        super().do_connect(engine)
+        super(Backend, self).do_connect(engine)
+
+        def normalize_name(name):
+            if name is None:
+                return None
+            elif not name:
+                return ""
+            elif name.lower() == name:
+                # return sa.sql.quoted_name(name, quote=True)
+                # This is tricky because we auto uppercase all names and do not support mixed or lower case names.
+                return sa.sql.quoted_name(name, quote=False)
+            else:
+                return name
+
+        self.con.dialect.normalize_name = normalize_name
+
         # the database / service name is usually obtained from tnsnames.ora, we fetch it here
         self.database_name = self.raw_sql(
             "select sys_context('USERENV', 'SERVICE_NAME') from dual"
         ).fetchall()[0][0]
 
-    def _handle_failed_column_type_inference(
-        self, table: sa.Table, nulltype_cols: Iterable[str]
-    ) -> sa.Table:
-        return dvt_handle_failed_column_type_inference(self, table, nulltype_cols)
-
     def _metadata(self, query) -> Iterable[Tuple[str, dt.DataType]]:
+        """DVT override of Ibis equivalent to avoid creating views"""
         if (
             re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)
             is not None
@@ -190,7 +204,48 @@ class Backend(BaseAlchemyBackend):
         with self.begin() as con:
             result = con.exec_driver_sql(f"SELECT * FROM {query} t0 WHERE ROWNUM <= 1")
             cursor = result.cursor
-            yield from ((column[0], _get_type(column)) for column in cursor.description)
+            for (
+                name,
+                type_string,
+                _,
+                _,
+                precision,
+                scale,
+                nullable,
+            ) in cursor.description:
+                # NUMBER(null, null) --> FLOAT
+                # (null, null) --> from_string()
+                if type_string == "NUMBER" and precision is None and scale is None:
+                    typ = dt.Float64(nullable=nullable)
+
+                # (null, 0) --> INT
+                # (null, 3), (null, 6), (null, 9) --> from_string() - TIMESTAMP(3)/(6)/(9)
+                elif precision is None and (scale is not None and scale == 0):
+                    typ = dt.Int64(nullable=nullable)
+
+                # NUMBER(*, 0) --> INT
+                # (*, 0) --> from_string() - INTERVAL DAY(3) TO SECOND(0)
+                elif (
+                    type_string == "NUMBER"
+                    and precision is not None
+                    and (scale is not None and scale == 0)
+                ):
+                    typ = dt.Int64(nullable=nullable)
+
+                # NUMBER(*, > 0) --> DECIMAL
+                # (*, > 0) --> from_string() - INTERVAL DAY(3) TO SECOND(2)
+                elif (
+                    type_string == "NUMBER"
+                    and precision is not None
+                    and (scale is not None and scale > 0)
+                ):
+                    typ = dt.Decimal(
+                        precision=precision, scale=scale, nullable=nullable
+                    )
+
+                else:
+                    typ = OracleType.from_string(type_string, nullable=nullable)
+                yield name, typ
 
     def list_primary_key_columns(self, database: str, table: str) -> list:
         """Return a list of primary key column names."""

@@ -16,7 +16,7 @@ from typing import Literal
 import oracledb  # NOQA fail early if the driver is missing
 
 from data_validation.util import dvt_config_string_to_dict
-from third_party.ibis.ibis_oracle import Backend as OracleBackend
+from third_party.ibis.ibis_oracle import DVTOracleBackend
 
 
 def oracle_connect(
@@ -32,7 +32,7 @@ def oracle_connect(
     url: str = None,
 ):
     connect_args_dict = dvt_config_string_to_dict(connect_args) if connect_args else {}
-    backend = OracleBackend()
+    backend = DVTOracleBackend()
     backend.do_connect(
         host=host,
         port=port,

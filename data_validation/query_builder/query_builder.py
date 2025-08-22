@@ -81,7 +81,7 @@ class AggregateField(object):
     @staticmethod
     def sum(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.sum,
+            ibis.expr.types.IntegerColumn.sum,
             field_name=field_name,
             alias=alias,
             cast=cast,
@@ -90,7 +90,7 @@ class AggregateField(object):
     @staticmethod
     def bit_xor(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.bit_xor,
+            ibis.expr.types.IntegerColumn.bit_xor,
             field_name=field_name,
             alias=alias,
             cast=cast,

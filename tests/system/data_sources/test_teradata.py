@@ -115,7 +115,7 @@ TERADATA_ROW_CONFIG = {
             consts.CONFIG_FIELD_ALIAS: "cast__calendar_date",
             consts.CONFIG_TYPE: "custom",
             consts.CONFIG_DEPTH: 0,
-            consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TemporalValue.strftime",
+            consts.CONFIG_CUSTOM_IBIS_EXPR: "ibis.expr.types.TimestampValue.strftime",
             consts.CONFIG_CUSTOM_PARAMS: [{"format_str": "%Y-%m-%d"}],
         },
         {

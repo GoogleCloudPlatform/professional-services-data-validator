@@ -33,17 +33,18 @@ dependencies = [
     "google-cloud-secret-manager>=2.20.2",
     "google-cloud-spanner>=3.49.1",
     "google-cloud-storage>=2.18.2",
-    "ibis-framework==5.1.0",  # Pinned to 5.1.0, significant work to bump to 7.1.0
+    "ibis-framework==7.2.0",
     "impyla>=0.19.0",
     "jellyfish>=1.1.0",
-    "pandas==2.0.3",  # 2.03 is the highest version that still supports python 3.8
+    "pandas",
     "parsy>=2.1",
     "psycopg2-binary>=2.9.9",
-    "pyarrow==14.0.1",  # ibis-framework 7.1.0 depends on pyarrow<15 and >=2
+    "pyarrow",
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
     "SQLAlchemy==2.0.41",  # Need 2.0 or higher for oracledb
+    "sqlglot>=18.7.0,<19",  # >= 19 (can try again with 20.7.1 which still has sg.exp.NULL)
     "tabulate>=0.9.0",
 ]
 

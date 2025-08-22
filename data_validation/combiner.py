@@ -458,6 +458,12 @@ def _join_pivots(
         group_by_columns = (
             ibis.literal("{") + ibis.literal(", ").join(join_values) + ibis.literal("}")
         ).name(consts.GROUP_BY_COLUMNS)
+
+        # breakpoint()
+        # TODO temp workaround blocking out reported group_by_columns.
+        group_by_columns = (
+            ibis.literal("TODO FIX").cast("string").name(consts.GROUP_BY_COLUMNS)
+        )
     else:
         group_by_columns = (
             ibis.literal(None).cast("string").name(consts.GROUP_BY_COLUMNS)
