@@ -16,6 +16,45 @@
 CREATE SCHEMA IF NOT EXISTS pso_data_validator_results;
 -- Schema containing ONLY integration test tables.
 CREATE SCHEMA IF NOT EXISTS pso_data_validator;
+
+DROP TABLE IF EXISTS pso_data_validator.entries CASCADE;
+CREATE TABLE pso_data_validator.entries
+( guestname character varying(255)
+, content   character varying(255)
+, entryid   integer NOT NULL);
+INSERT INTO pso_data_validator.entries VALUES
+ ('Madeline','Arrived',1)
+,('Annie','Me too!',2)
+,('Bob','More data coming',3)
+,('Joe','Me too!',4)
+,('John','Here!',5)
+,('Alex','Me too!',6)
+,('Zoe','Same!',7);
+
+DROP TABLE IF EXISTS pso_data_validator.test_data_types_postgres_row;
+CREATE TABLE pso_data_validator.test_data_types_postgres_row
+( serial_col    serial PRIMARY KEY
+, int_col       integer
+, text_col      text
+, char_col      character(1)
+, varchar_col   character varying
+, float_col     double precision
+, numeric_col   numeric(5,2)
+, timestamp_col timestamp without time zone
+, date_col      date);
+
+INSERT INTO pso_data_validator.test_data_types_postgres_row VALUES
+(1,10,'row1_text',1,'row1_varchar',10.1,10.10,'2016-06-22 19:10:25','2020-01-01'),
+(2,20,'row2_text',2,'row2_varchar',20.2,20.20,'2016-06-22 19:20:25','2020-02-02'),
+(3,30,'row3_text',3,'row3_varchar',30.2,30.20,'2016-06-22 19:30:25','2020-03-03'),
+(4,40,'row4_text',4,'row4_varchar',40.2,40.40,'2016-06-22 19:30:45','2020-04-04'),
+(5,50,'row5_text',5,'row5_varchar',50.2,50.40,'2016-06-22 19:50:44','2020-05-05'),
+(6,60,'row6_text',6,'row6_varchar',60.2,60.40,'2016-01-22 19:51:44','2020-06-06'),
+(7,70,'row7_text',7,'row7_varchar',70.2,70.40,'2017-01-22 19:51:44','2020-06-07'),
+(8,80,'row8_text',8,'row8_varchar',80.2,80.40,'2018-01-22 19:51:44','2020-06-08'),
+(9,90,'row9_text',9,'row9_varchar',90.2,90.40,'2019-01-22 19:51:44','2020-06-09'),
+(10,100,'row10_text',1,'row10_varchar',100.2,100.40,'2020-01-22 19:51:44','2021-06-09');
+
 DROP TABLE IF EXISTS pso_data_validator.dvt_core_types CASCADE;
 CREATE TABLE pso_data_validator.dvt_core_types
 (   id              int NOT NULL PRIMARY KEY
