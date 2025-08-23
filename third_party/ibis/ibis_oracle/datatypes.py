@@ -206,10 +206,3 @@ def sa_oracle_BINARY_DOUBLE(_, satype, nullable=True):
 @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.ROWID)
 def sa_oracle_ROWID(_, satype, nullable=True):
     return dt.String(nullable=nullable)
-
-
-def sa_oracle_BOOLEAN(dialect, satype, nullable=True):
-    version = getattr(dialect, "server_version_info", None)
-    if isinstance(version, tuple) and version and version[0] >= 23:
-        return dt.Boolean(nullable=nullable)
-    return dt.Int8(nullable=nullable)
