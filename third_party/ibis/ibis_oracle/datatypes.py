@@ -104,6 +104,7 @@ if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_oracledb.ischema_names:
 if "BOOLEAN" not in OracleDialect_oracledb.ischema_names:
     OracleDialect_oracledb.ischema_names["BOOLEAN"] = sat.BOOLEAN
 
+
 @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.CLOB)
 def sa_oracle_CLOB(_, satype, nullable=True):
     return dt.String(nullable=nullable)
