@@ -501,6 +501,20 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_pangrams_to_bigquery():
+    """SQL Server to BigQuery test with nvarchar column validation."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_pangrams",
+        tc="bq-conn",
+        count_cols="words",
+        sum_cols="words",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """SQL Server to SQL Server dvt_core_types row validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
