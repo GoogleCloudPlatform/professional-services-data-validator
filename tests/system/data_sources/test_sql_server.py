@@ -70,6 +70,36 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
     ],
 ]
 
+DVT_SQLSERVER_TYPES_COLUMNS = [
+    "id",
+    "col_int1",
+    "col_int2",
+    "col_int4",
+    "col_int8",
+    "col_dec",
+    "col_dec_10_2",
+    "col_float32",
+    "col_float64",
+    "col_money",
+    "col_smallmoney",
+    "col_varchar_30",
+    "col_char_2",
+    "col_nvarchar_30",
+    "col_nchar_2",
+    "col_text",
+    "col_ntext",
+    "col_date",
+    "col_datetime",
+    "col_datetime2",
+    "col_smalldatetime",
+    "col_datetimeoffset",
+    "col_time",
+    "col_binary",
+    "col_varbinary",
+    "col_varbinary_max",
+    "col_bit",
+]
+
 
 @pytest.fixture
 def cloud_sql(request):
@@ -305,6 +335,17 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_sql_server_types():
+    """Test schema validation on most SQL Server scalar data types."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_sqlserver_types", tc="mock-conn"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_not_null_vs_nullable():
     """Compares a source table with a BigQuery target and ensure we match/fail on nnot null/nullable correctly."""
     parser = cli_tools.configure_arg_parser()
@@ -368,6 +409,25 @@ def test_column_validation_core_types_to_bigquery():
         max_cols=cols,
         avg_cols=cols,
         std_cols=std_cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_sql_server_types():
+    """SQL Server to SQL Server extended data type column validation test"""
+    count_cols = ",".join(DVT_SQLSERVER_TYPES_COLUMNS)
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_sqlserver_types",
+        count_cols=count_cols,
+        sum_cols=count_cols,
+        min_cols=count_cols,
+        max_cols=count_cols,
+        avg_cols=count_cols,
+        std_cols=count_cols,
     )
 
 
@@ -473,6 +533,19 @@ def test_row_validation_core_types_to_bigquery():
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
     row_validation_test(
         tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_sql_server_types():
+    """SQL Server to SQL Server dvt_sqlserver_types row validation"""
+    cols = ",".join([_ for _ in DVT_SQLSERVER_TYPES_COLUMNS if _ not in ("id")])
+    row_validation_test(
+        tc="mock-conn",
         hash=cols,
     )
 
