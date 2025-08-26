@@ -1126,6 +1126,7 @@ def test_row_validation_hash_bool_oracle():
             f"Skipping test_row_validation_hash_bool_oracle due to version {version} < 23."
         )
     row_validation_test(
+        tc="mock-conn",
         tables="pso_data_validator.dvt_bool=pso_data_validator.dvt_bool_native",
         hash="*",
     )
