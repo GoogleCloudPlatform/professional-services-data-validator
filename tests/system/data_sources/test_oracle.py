@@ -30,6 +30,7 @@ from tests.system.data_sources.common_functions import (
     id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
+    raw_query_rows,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -1106,6 +1107,28 @@ def test_row_validation_comp_fields_bool_to_postgres():
         tables="pso_data_validator.dvt_bool",
         tc="pg-conn",
         comp_fields="col_bool_dec,col_bool_int,col_bool_ch1,col_bool_chy",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_hash_bool_oracle():
+    """Test row validation --hash on a table with bool data types in the target, Oracle does not have a bool type."""
+    rows = raw_query_rows(
+        "SELECT version FROM PRODUCT_COMPONENT_VERSION WHERE product LIKE 'Oracle Database%'",
+        conn="mock-conn",
+    )
+    version = rows[0][0].split(".")[0] if rows else "0"
+    if version < "23":
+        pytest.skip(
+            f"Skipping test_row_validation_hash_bool_oracle due to version {version} < 23."
+        )
+    row_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_bool=pso_data_validator.dvt_bool_native",
+        hash="*",
     )
 
 

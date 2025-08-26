@@ -160,6 +160,8 @@ def _cast(t, op):
             (sa_arg.in_(["1", "Y"]), sa.literal(1)),
             else_=sa.literal_column("TO_NUMBER(NULL)"),
         )
+    elif arg_dtype.is_boolean() and typ.is_string():
+        return sa.func.lower(sa.func.to_char(sa_arg))
     elif (arg_dtype.is_timestamp() or arg_dtype.is_date()) and typ.is_date():
         # If we are casting to Date then simulate what all other engines
         # understand to be a Date, which is without the time element.
