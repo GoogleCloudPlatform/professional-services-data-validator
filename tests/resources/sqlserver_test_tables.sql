@@ -149,7 +149,7 @@ INSERT INTO pso_data_validator.dvt_sqlserver_types VALUES
 INSERT INTO pso_data_validator.dvt_sqlserver_types VALUES
 (2,21,2111,223456789,223456789012345678
 ,223456789012345678,223.12,223456.1,22345678.1,22345678.111,123456.222
-,'Hello DVT','B ','Hello DVT','B ','Hello DVT','Hello DVT'
+,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
 ,'1970-02-02','1970-02-02 00:00:02','1970-02-02 00:00:02','1970-02-02 00:00:02'
 ,cast('1970-02-02 00:00:01 -02:00' as datetimeoffset(3)),'00:00:02.123'
 ,CAST('B' AS binary),CAST('B' AS binary),CAST('B' AS binary),'TRUE'

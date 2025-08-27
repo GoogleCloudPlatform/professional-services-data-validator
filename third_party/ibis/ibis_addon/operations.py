@@ -101,7 +101,7 @@ NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
 
 
 class BinaryLength(ops.Value):
-    arg = rlz.one_of([rlz.value(dt.Binary)])
+    arg = rlz.one_of([rlz.value(dt.Binary), rlz.value(dt.String)])
     output_dtype = dt.int32
     output_shape = rlz.shape_like("arg")
 

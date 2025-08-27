@@ -1131,7 +1131,7 @@ def test_column_validation_high_epoch_seconds():
         expected_rows=3,
     )
     status_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.VALIDATION_STATUS]))
-    value_dict = dict(zip(df[consts.VALIDATION_NAME], df["source_agg_value"]))
+    value_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.SOURCE_AGG_VALUE]))
     assert (
         status_dict["sum__epoch_seconds__col_datetime"]
         == consts.VALIDATION_STATUS_SUCCESS

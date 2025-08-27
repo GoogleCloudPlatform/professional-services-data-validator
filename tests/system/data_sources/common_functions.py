@@ -375,7 +375,7 @@ def column_validation_test(
     filters=None,
     grouped_columns: Optional[str] = None,
     wildcard_include_timestamp: bool = False,
-    filter_status: str = "fail",
+    filter_status: Optional[str] = "fail",
     expected_rows=0,
     result_handler: Optional[str] = None,
 ):
@@ -399,7 +399,9 @@ def column_validation_test(
         result_handler=result_handler,
     )
     df = run_test_from_cli_args(args)
-    assert len(df) == expected_rows
+    assert (
+        len(df) == expected_rows
+    ), f"len(df) != expected_rows: {len(df)} != {expected_rows}"
     return df
 
 

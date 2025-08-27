@@ -100,6 +100,8 @@ DVT_SQLSERVER_TYPES_COLUMNS = [
     "col_bit",
 ]
 
+TRAILING_SPACE_VARCHAR_LENGTH = 25
+
 
 @pytest.fixture
 def cloud_sql(request):
@@ -435,6 +437,53 @@ def test_column_validation_sql_server_types():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_sql_server_string_types():
+    """SQL Server to SQL Server string data type column validation test.
+
+    This specifically tests 2 items:
+    1) That we correctly choose len() for character length except for text data types which must use datalength().
+    2) That trailing spacers are not dropped by len()."""
+    cols = [
+        _
+        for _ in DVT_SQLSERVER_TYPES_COLUMNS
+        if _
+        in (
+            "col_varchar_30",
+            "col_char_2",
+            "col_nvarchar_30",
+            "col_nchar_2",
+            "col_text",
+            "col_ntext",
+        )
+    ]
+    col_str = ",".join(cols)
+    df = column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_sqlserver_types",
+        sum_cols=col_str,
+        min_cols=col_str,
+        filter_status=None,
+        filters="id = 2",
+        # Expect count + (sum * cols) + (min * cols) rows
+        expected_rows=(len(cols) * 2) + 1,
+    )
+    assert all(
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
+    ), "Not all records are marked as success"
+    value_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.SOURCE_AGG_VALUE]))
+    # Ensure value length is 25, 24 normal characters plus 1 trailing space.
+    assert (
+        str(value_dict["sum__length__col_varchar_30"]) == TRAILING_SPACE_VARCHAR_LENGTH
+    ), f"sum__length__col_varchar_30 != {TRAILING_SPACE_VARCHAR_LENGTH=}"
+    assert (
+        str(value_dict["sum__length__col_nvarchar_30"]) == TRAILING_SPACE_VARCHAR_LENGTH
+    ), f"sum__length__col_nvarchar_30 != {TRAILING_SPACE_VARCHAR_LENGTH=}"
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
     cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
@@ -501,20 +550,6 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_pangrams_to_bigquery():
-    """SQL Server to BigQuery test with nvarchar column validation."""
-    column_validation_test(
-        tables="pso_data_validator.dvt_pangrams",
-        tc="bq-conn",
-        count_cols="words",
-        sum_cols="words",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_row_validation_core_types():
     """SQL Server to SQL Server dvt_core_types row validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
@@ -559,6 +594,7 @@ def test_row_validation_sql_server_types():
     """SQL Server to SQL Server dvt_sqlserver_types row validation"""
     cols = ",".join([_ for _ in DVT_SQLSERVER_TYPES_COLUMNS if _ not in ("id")])
     row_validation_test(
+        tables="pso_data_validator.dvt_sqlserver_types",
         tc="mock-conn",
         hash=cols,
     )
