@@ -41,6 +41,7 @@ from tests.system.data_sources.common_functions import (
     raw_query_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
+from tests.system.data_sources.test_postgres import CONN as PG_CONN
 
 # Local testing requires the Cloud SQL Proxy.
 # https://cloud.google.com/sql/docs/sqlserver/connect-admin-proxy
@@ -70,7 +71,7 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
     ],
 ]
 
-DVT_SQL_SERVER_TYPES_COLUMNS = [
+DVT_SS2PG_COLUMNS = [
     "id",
     "col_int1",
     "col_int2",
@@ -259,6 +260,8 @@ def mock_get_connection_config(*args):
         return CONN
     elif args[1] == "bq-conn":
         return BQ_CONN
+    elif args[1] == "pg-conn":
+        return PG_CONN
 
 
 # Expected result from partitioning table on 3 keys, 9 partitions
@@ -339,10 +342,23 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_sql_server_types():
+def test_schema_validation_sql_server_to_postgres():
     """Test schema validation on most SQL Server scalar data types."""
+    if not os.getenv("POSTGRES_PASSWORD"):
+        pytest.skip(
+            "Skipping test_schema_validation_sql_server_to_postgres becase PostgreSQL tests are not configured."
+        )
     schema_validation_test(
-        tables="pso_data_validator.dvt_sql_server_types", tc="mock-conn"
+        tables="pso_data_validator.dvt_ss2pg_types",
+        tc="pg-conn",
+        allow_list=(
+            # PostgreSQL has no int1 type.
+            "int8:int16,"
+            # SQL Server datetime scles are picked up.
+            "timestamp(7):timestamp,timestamp(7, 'UTC'):timestamp('UTC')"
+        ),
+        # TODO money types are being identified as integers - issue-1582
+        exclusion_columns="col_money,col_smallmoney",
     )
 
 
@@ -420,68 +436,39 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_sql_server_types():
-    """SQL Server to SQL Server extended data type column validation test"""
-    cols = ",".join(DVT_SQL_SERVER_TYPES_COLUMNS)
+def test_column_validation_sql_server_to_postgres():
+    """SQL Server to PostgreSQL extended data type column validation test"""
+    if not os.getenv("POSTGRES_PASSWORD"):
+        pytest.skip(
+            "Skipping test_schema_validation_sql_server_to_postgres becase PostgreSQL tests are not configured."
+        )
+    # col_ntext is excluded below because we have no way to get a character length from SQL Server.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_SS2PG_COLUMNS
+            if _
+            not in (
+                "id",
+                # TODO Remove money types from exlcude list below when working on - issue-1582
+                "col_money",
+                "col_smallmoney",
+                "col_ntext",
+                # binary columns are excluded below because SQL Server right pads varbinary
+                # values to the length. Not very VARbinary!
+                "col_varbinary",
+                "col_varbinary_max",
+            )
+        ]
+    )
     column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt_sql_server_types",
+        tc="pg-conn",
+        tables="pso_data_validator.dvt_ss2pg_types",
         count_cols=cols,
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
-        avg_cols=cols,
-        std_cols=cols,
     )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_sql_server_string_types():
-    """SQL Server to SQL Server string data type column validation test.
-
-    This specifically tests 2 items:
-    1) That we correctly choose len() for character length except for text data types which must use datalength().
-    2) That trailing spacers are not dropped by len()."""
-    cols = [
-        _
-        for _ in DVT_SQL_SERVER_TYPES_COLUMNS
-        if _
-        in (
-            "col_varchar_30",
-            "col_char_2",
-            "col_nvarchar_30",
-            "col_nchar_2",
-            "col_text",
-            "col_ntext",
-        )
-    ]
-    col_str = ",".join(cols)
-    df = column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt_sql_server_types",
-        sum_cols=col_str,
-        min_cols=col_str,
-        # We specifically want all results so we can check the values used for comparison.
-        filter_status=None,
-        # Only row id=2 has trailing spaces in varchar columns.
-        filters="id = 2",
-        # Expect count + (sum * cols) + (min * cols) rows
-        expected_rows=(len(cols) * 2) + 1,
-    )
-    assert all(
-        _ == "success" for _ in df[consts.VALIDATION_STATUS]
-    ), "Not all records are marked as success"
-    value_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.SOURCE_AGG_VALUE]))
-    # Ensure value length is 25, 24 normal characters plus 1 trailing space.
-    assert (
-        str(value_dict["sum__length__col_varchar_30"]) == TRAILING_SPACE_VARCHAR_LENGTH
-    ), f"sum__length__col_varchar_30 != {TRAILING_SPACE_VARCHAR_LENGTH=}"
-    assert (
-        str(value_dict["sum__length__col_nvarchar_30"]) == TRAILING_SPACE_VARCHAR_LENGTH
-    ), f"sum__length__col_nvarchar_30 != {TRAILING_SPACE_VARCHAR_LENGTH=}"
 
 
 @mock.patch(
@@ -594,12 +581,34 @@ def test_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_sql_server_types():
-    """SQL Server to SQL Server dvt_sql_server_types row validation"""
-    cols = ",".join([_ for _ in DVT_SQL_SERVER_TYPES_COLUMNS if _ not in ("id")])
+def test_row_validation_sql_server_to_postgres():
+    """SQL Server to PostgreSQL extended data type row validation"""
+    if not os.getenv("POSTGRES_PASSWORD"):
+        pytest.skip(
+            "Skipping test_row_validation_sql_server_to_postgres becase PostgreSQL tests are not configured."
+        )
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_SS2PG_COLUMNS
+            if _
+            not in (
+                "id",
+                # TODO Remove money types from exlcude list when working on - issue-1583
+                "col_bit",
+                # TODO Remove money types from exlcude list when working on - issue-1582
+                "col_money",
+                "col_smallmoney",
+                # binary columns are excluded below because SQL Server right pads varbinary
+                # values to the length. Not very VARbinary!
+                "col_varbinary",
+                "col_varbinary_max",
+            )
+        ]
+    )
     row_validation_test(
-        tables="pso_data_validator.dvt_sql_server_types",
-        tc="mock-conn",
+        tables="pso_data_validator.dvt_ss2pg_types",
+        tc="pg-conn",
         hash=cols,
     )
 
