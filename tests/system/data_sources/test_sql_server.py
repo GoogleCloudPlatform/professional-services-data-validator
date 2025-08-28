@@ -422,16 +422,16 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_sql_server_types():
     """SQL Server to SQL Server extended data type column validation test"""
-    count_cols = ",".join(DVT_SQL_SERVER_TYPES_COLUMNS)
+    cols = ",".join(DVT_SQL_SERVER_TYPES_COLUMNS)
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_sql_server_types",
-        count_cols=count_cols,
-        sum_cols=count_cols,
-        min_cols=count_cols,
-        max_cols=count_cols,
-        avg_cols=count_cols,
-        std_cols=count_cols,
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 
@@ -464,7 +464,9 @@ def test_column_validation_sql_server_string_types():
         tables="pso_data_validator.dvt_sql_server_types",
         sum_cols=col_str,
         min_cols=col_str,
+        # We specifically want all results so we can check the values used for comparison.
         filter_status=None,
+        # Only row id=2 has trailing spaces in varchar columns.
         filters="id = 2",
         # Expect count + (sum * cols) + (min * cols) rows
         expected_rows=(len(cols) * 2) + 1,
