@@ -346,7 +346,7 @@ def test_schema_validation_ss_types_to_bigquery():
         tc="bq-conn",
         allow_list=(
             # All SQL Server integers go to BigQuery INT64.
-            "int8:int64,int16:int64,int32:int64,"
+            "int8:int64,int16:int64,int32:int64,!int32:!int64,"
             # BigQuery does not have a float32 type.
             "float32:float64,"
             # SQL Server datetime scales are picked up.
