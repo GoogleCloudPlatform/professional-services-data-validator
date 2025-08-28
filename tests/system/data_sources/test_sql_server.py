@@ -326,7 +326,7 @@ def test_schema_validation_core_types_to_bigquery():
         tc="bq-conn",
         allow_list=(
             # All SQL Server integers go to BigQuery INT64.
-            "int8:int64,int16:int64,int32:int64,"
+            "int8:int64,int16:int64,int32:int64,!int32:!int64,"
             # BigQuery does not have a float32 type.
             "float32:float64,"
             # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
@@ -441,6 +441,8 @@ def test_column_validation_ss_types_to_bigquery():
             if _
             not in (
                 "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
                 # TODO Remove money types from exclude list below when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
@@ -581,6 +583,8 @@ def test_row_validation_ss_types_to_bigquery():
             if _
             not in (
                 "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
                 # TODO Remove col_bit from exclude list when working on - issue-1583
                 "col_bit",
                 # TODO Remove money types from exclude list when working on - issue-1582
