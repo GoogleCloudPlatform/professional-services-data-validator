@@ -98,7 +98,8 @@ DVT_SQL_SERVER_TYPES_COLUMNS = [
     "col_varbinary",
     "col_varbinary_max",
     "col_bit",
-    "col_image",
+    # TODO uncomment line below when working on issue-1578.
+    # "col_image",
 ]
 
 TRAILING_SPACE_VARCHAR_LENGTH = "25"
