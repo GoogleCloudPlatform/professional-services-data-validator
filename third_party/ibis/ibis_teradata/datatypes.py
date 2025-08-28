@@ -167,7 +167,7 @@ class TeradataTypeTranslator(object):
     def to_ibis_from_TS(cls, col_data, return_ibis_type=True):
         if return_ibis_type:
             return dt.timestamp(
-                nullable=cls._col_data_nullable(col_data), timestamp="UTC"
+                nullable=cls._col_data_nullable(col_data), timezone="UTC"
             )
         return "TIMESTAMP"
 

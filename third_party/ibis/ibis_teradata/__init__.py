@@ -131,9 +131,9 @@ class Backend(BaseSQLBackend):
         schema_list = schema_df.to_dict("records")
         schema = {}
         for col_data in schema_list:
-            schema[
-                col_data["Column SQL Name"].rstrip()
-            ] = TeradataTypeTranslator.to_ibis(col_data)
+            schema[col_data["Column SQL Name"].rstrip()] = (
+                TeradataTypeTranslator.to_ibis(col_data)
+            )
 
         return schema
 
@@ -197,41 +197,19 @@ class Backend(BaseSQLBackend):
         limit: str = "default",
         **kwargs: Any,
     ):
-        """Compile and execute an Ibis expression.
-        Compile and execute Ibis expression using this backend client
-        interface, returning results in-memory in the appropriate object type
-        Parameters
-        ----------
-        expr
-            Ibis expression
-        limit
-            For expressions yielding result sets; retrieve at most this number
-            of values/rows. Overrides any limit already set on the expression.
-        params
-            Named unbound parameters
-        kwargs
-            Backend specific arguments. For example, the clickhouse backend
-            uses this to receive `external_tables` as a dictionary of pandas
-            DataFrames.
-        Returns
-        -------
-        DataFrame | Series | Scalar
-            * `Table`: pandas.DataFrame
-            * `Column`: pandas.Series
-            * `Scalar`: Python scalar value
-        """
-        # Overwrite the execute() function to use read_sql method
+        """DVT copy/modification of BaseSqlBackend.execute()."""
+        self._run_pre_execute_hooks(expr)
+
         kwargs.pop("timecontext", None)
         query_ast = self.compiler.to_ast_ensure_limit(expr, limit, params=params)
         sql = query_ast.compile()
-        self._register_in_memory_tables(expr)
 
         if self.use_no_lock_tables and sql.strip().startswith("SELECT"):
             sql = self.NO_LOCK_SQL + sql
 
         self._log(sql)
 
-        schema = self.ast_schema(query_ast, **kwargs)
+        schema = expr.as_table().schema()
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support
