@@ -41,7 +41,6 @@ from tests.system.data_sources.common_functions import (
     raw_query_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.test_postgres import CONN as PG_CONN
 
 # Local testing requires the Cloud SQL Proxy.
 # https://cloud.google.com/sql/docs/sqlserver/connect-admin-proxy
@@ -71,7 +70,7 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
     ],
 ]
 
-DVT_SS2PG_COLUMNS = [
+DVT_SS2BQ_COLUMNS = [
     "id",
     "col_int1",
     "col_int2",
@@ -260,8 +259,6 @@ def mock_get_connection_config(*args):
         return CONN
     elif args[1] == "bq-conn":
         return BQ_CONN
-    elif args[1] == "pg-conn":
-        return PG_CONN
 
 
 # Expected result from partitioning table on 3 keys, 9 partitions
@@ -342,19 +339,17 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_sql_server_to_postgres():
+def test_schema_validation_ss_types_to_bigquery():
     """Test schema validation on most SQL Server scalar data types."""
-    if not os.getenv("POSTGRES_PASSWORD"):
-        pytest.skip(
-            "Skipping test_schema_validation_sql_server_to_postgres becase PostgreSQL tests are not configured."
-        )
     schema_validation_test(
-        tables="pso_data_validator.dvt_ss2pg_types",
-        tc="pg-conn",
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
         allow_list=(
-            # PostgreSQL has no int1 type.
-            "int8:int16,"
-            # SQL Server datetime scles are picked up.
+            # All SQL Server integers go to BigQuery INT64.
+            "int8:int64,int16:int64,int32:int64,"
+            # BigQuery does not have a float32 type.
+            "float32:float64,"
+            # SQL Server datetime scales are picked up.
             "timestamp(7):timestamp,timestamp(7, 'UTC'):timestamp('UTC')"
         ),
         # TODO money types are being identified as integers - issue-1582
@@ -436,21 +431,17 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_sql_server_to_postgres():
-    """SQL Server to PostgreSQL extended data type column validation test"""
-    if not os.getenv("POSTGRES_PASSWORD"):
-        pytest.skip(
-            "Skipping test_schema_validation_sql_server_to_postgres becase PostgreSQL tests are not configured."
-        )
+def test_column_validation_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type column validation test"""
     # col_ntext is excluded below because we have no way to get a character length from SQL Server.
     cols = ",".join(
         [
             _
-            for _ in DVT_SS2PG_COLUMNS
+            for _ in DVT_SS2BQ_COLUMNS
             if _
             not in (
                 "id",
-                # TODO Remove money types from exlcude list below when working on - issue-1582
+                # TODO Remove money types from exclude list below when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
                 "col_ntext",
@@ -462,8 +453,8 @@ def test_column_validation_sql_server_to_postgres():
         ]
     )
     column_validation_test(
-        tc="pg-conn",
-        tables="pso_data_validator.dvt_ss2pg_types",
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_sql_server_types",
         count_cols=cols,
         sum_cols=cols,
         min_cols=cols,
@@ -581,22 +572,18 @@ def test_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_sql_server_to_postgres():
-    """SQL Server to PostgreSQL extended data type row validation"""
-    if not os.getenv("POSTGRES_PASSWORD"):
-        pytest.skip(
-            "Skipping test_row_validation_sql_server_to_postgres becase PostgreSQL tests are not configured."
-        )
+def test_row_validation_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type row validation"""
     cols = ",".join(
         [
             _
-            for _ in DVT_SS2PG_COLUMNS
+            for _ in DVT_SS2BQ_COLUMNS
             if _
             not in (
                 "id",
-                # TODO Remove money types from exlcude list when working on - issue-1583
+                # TODO Remove col_bit from exclude list when working on - issue-1583
                 "col_bit",
-                # TODO Remove money types from exlcude list when working on - issue-1582
+                # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
                 # binary columns are excluded below because SQL Server right pads varbinary
@@ -607,8 +594,8 @@ def test_row_validation_sql_server_to_postgres():
         ]
     )
     row_validation_test(
-        tables="pso_data_validator.dvt_ss2pg_types",
-        tc="pg-conn",
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
         hash=cols,
     )
 

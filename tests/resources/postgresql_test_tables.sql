@@ -173,56 +173,6 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}'
 );
 
-
-DROP TABLE IF EXISTS pso_data_validator.dvt_ss2pg_types;
-CREATE TABLE pso_data_validator.dvt_ss2pg_types
-(   id                 int NOT NULL PRIMARY KEY
-,   col_int1           smallint
-,   col_int2           smallint
-,   col_int4           int
-,   col_int8           bigint
-,   col_dec            decimal(18,0)
-,   col_dec_10_2       decimal(10,2)
-,   col_float32        real
-,   col_float64        double precision
-,   col_money          decimal(19,4)
-,   col_smallmoney     decimal(10,4)
-,   col_varchar_30     varchar(30)
-,   col_char_2         char(2)
-,   col_nvarchar_30    varchar(30)
-,   col_nchar_2        char(2)
-,   col_text           text
-,   col_ntext          text
-,   col_date           date
-,   col_datetime       timestamp(3)
-,   col_datetime2      timestamp(3)
-,   col_smalldatetime  timestamp(0)
-,   col_datetimeoffset timestamp(3) with time zone
-,   col_time           time(3)
-,   col_binary         bytea
-,   col_varbinary      bytea
-,   col_varbinary_max  bytea
-,   col_bit            boolean
-,   col_image          bytea
-);
-COMMENT ON TABLE pso_data_validator.dvt_ss2pg_types IS 'SQL Server to PostgreSQL integration test table';
-INSERT INTO pso_data_validator.dvt_ss2pg_types VALUES
-(1,11,1111,123456789,123456789012345678
-,123456789012345678,123.12,123456.1,12345678.1,12345678.111,123456.111
-,'Hello DVT','A ','Hello DVT','A ','Hello DVT','Hello DVT'
-,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01',TIMESTAMP'1970-01-01 00:00:01',TIMESTAMP'1970-01-01 01:00:00'
-,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01 -01:00',TIME'00:00:01.123'
-,CAST('A' AS BYTEA),CAST('A' AS BYTEA),CAST('A' AS BYTEA),True,CAST('A' AS BYTEA)
-);
-INSERT INTO pso_data_validator.dvt_ss2pg_types VALUES
-(2,21,2111,223456789,223456789012345678
-,223456789012345678,223.12,223456.1,22345678.1,22345678.111,123456.222
-,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
-,DATE'1970-02-02',TIMESTAMP'1970-02-02 00:00:02',TIMESTAMP'1970-02-02 00:00:02',TIMESTAMP'1970-02-02 02:00:00'
-,TIMESTAMP WITH TIME ZONE'1970-02-02 00:00:01 -02:00',TIME'00:00:02.123'
-,CAST('B' AS BYTEA),CAST('B' AS BYTEA),CAST('B' AS BYTEA),False,CAST('A' AS BYTEA)
-);
-
  /* Following table used for validating generating table partitions */
 DROP TABLE IF EXISTS public.test_generate_partitions ;
 CREATE TABLE public.test_generate_partitions (

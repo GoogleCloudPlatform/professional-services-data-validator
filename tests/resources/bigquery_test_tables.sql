@@ -164,6 +164,52 @@ INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` VALUES
         ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
         ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5);
 
+CREATE OR REPLACE TABLE pso_data_validator.dvt_sql_server_types
+(   id                 INT64 NOT NULL
+,   col_int1           INT64
+,   col_int2           INT64
+,   col_int4           INT64
+,   col_int8           INT64
+,   col_dec            NUMERIC
+,   col_dec_10_2       NUMERIC(10,2)
+,   col_float32        FLOAT64
+,   col_float64        FLOAT64
+,   col_money          NUMERIC(19,4)
+,   col_smallmoney     NUMERIC(10,4)
+,   col_varchar_30     STRING
+,   col_char_2         STRING
+,   col_nvarchar_30    STRING
+,   col_nchar_2        STRING
+,   col_text           STRING
+,   col_ntext          STRING
+,   col_date           DATE
+,   col_datetime       DATETIME
+,   col_datetime2      DATETIME
+,   col_smalldatetime  DATETIME
+,   col_datetimeoffset TIMESTAMP
+,   col_time           TIME
+,   col_binary         BYTES
+,   col_varbinary      BYTES(10)
+,   col_varbinary_max  BYTES
+,   col_bit            BOOLEAN
+,   col_image          BYTES
+) OPTIONS (description='SQL Server data types integration test table (BigQuery target)');
+INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
+(1,11,1111,123456789,123456789012345678
+,NUMERIC'123456789012345678',NUMERIC'123.12',123456.1,12345678.1,NUMERIC'12345678.111',NUMERIC'123456.111'
+,'Hello DVT','A ','Hello DVT','A ','Hello DVT','Hello DVT'
+,DATE'1970-01-01',DATETIME'1970-01-01 00:00:01',DATETIME'1970-01-01 00:00:01',DATETIME'1970-01-01 01:00:00'
+,TIMESTAMP'1970-01-01 00:00:01-01:00',TIME'00:00:01.123'
+,CAST('A' AS BYTES),CAST('A' AS BYTES),CAST('A' AS BYTES),TRUE,CAST('A' AS BYTES)
+),
+(2,21,2111,223456789,223456789012345678
+,NUMERIC'223456789012345678',NUMERIC'223.12',223456.1,22345678.1,NUMERIC'22345678.111',NUMERIC'123456.222'
+,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
+,DATE'1970-02-02',DATETIME'1970-02-02 00:00:02',DATETIME'1970-02-02 00:00:02',DATETIME'1970-02-02 02:00:00'
+,TIMESTAMP'1970-02-02 00:00:01-02:00',TIME'00:00:02.123'
+,CAST('B' AS BYTES),CAST('B' AS BYTES),CAST('B' AS BYTES),FALSE,CAST('A' AS BYTES)
+);
+
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_binary`
 (   binary_id       BYTES(16) NOT NULL
 ,   int_id          INT64 NOT NULL
@@ -210,7 +256,7 @@ INSERT INTO `pso_data_validator`.`dvt_datetime_id` VALUES
 (DATETIME'2020-04-01 12:00:00', 'Row 4'), (DATETIME'2020-05-01 12:00:00', 'Row 5');
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_time_table`
-(   id          INTEGER NOT NULL
+(   id        INTEGER NOT NULL
 ,   col_time  TIME
 ) OPTIONS (description='Integration test table used to test Time data type');
 INSERT INTO `pso_data_validator`.`dvt_time_table` VALUES
