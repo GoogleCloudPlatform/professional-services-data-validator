@@ -102,8 +102,6 @@ DVT_SS2BQ_COLUMNS = [
     # "col_image",
 ]
 
-TRAILING_SPACE_VARCHAR_LENGTH = "25"
-
 
 @pytest.fixture
 def cloud_sql(request):
