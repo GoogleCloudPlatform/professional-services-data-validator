@@ -402,6 +402,21 @@ def test_column_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_binary_to_bigquery():
+    """Oracle to BigQuery dvt_binary column validation."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        count_cols="binary_id",
+        min_cols="binary_id",
+        sum_cols="binary_id",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_large_decimals_to_bigquery():
     """Oracle to BigQuery dvt_large_decimals column validation."""
     cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"

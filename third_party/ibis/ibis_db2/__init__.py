@@ -104,7 +104,7 @@ class Backend(BaseAlchemyBackend):
 
     def raw_column_metadata_not_implemented(
         self, database: str = None, table: str = None, query: str = None
-    ) -> list[Tuple]:
+    ) -> list:
         """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
         Partner method to _metadata that retains raw data type information instead of converting
         to Ibis types.  This works in the same way as _metadata by running a query over the DVT
@@ -117,7 +117,7 @@ class Backend(BaseAlchemyBackend):
             list: A list of tuples containing the standard 7 DB API fields:
                   https://peps.python.org/pep-0249/#description
         """
-        return ()
+        return []
 
     def is_char_type_padded(self, char_type: Tuple) -> bool:
         """Define this method if the backend supports character/string types that are padded and returns
