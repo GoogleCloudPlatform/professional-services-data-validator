@@ -70,7 +70,7 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
     ],
 ]
 
-DVT_SQLSERVER_TYPES_COLUMNS = [
+DVT_SQL_SERVER_TYPES_COLUMNS = [
     "id",
     "col_int1",
     "col_int2",
@@ -98,6 +98,7 @@ DVT_SQLSERVER_TYPES_COLUMNS = [
     "col_varbinary",
     "col_varbinary_max",
     "col_bit",
+    "col_image",
 ]
 
 TRAILING_SPACE_VARCHAR_LENGTH = "25"
@@ -340,7 +341,7 @@ def test_schema_validation_core_types_to_bigquery():
 def test_schema_validation_sql_server_types():
     """Test schema validation on most SQL Server scalar data types."""
     schema_validation_test(
-        tables="pso_data_validator.dvt_sqlserver_types", tc="mock-conn"
+        tables="pso_data_validator.dvt_sql_server_types", tc="mock-conn"
     )
 
 
@@ -420,10 +421,10 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_sql_server_types():
     """SQL Server to SQL Server extended data type column validation test"""
-    count_cols = ",".join(DVT_SQLSERVER_TYPES_COLUMNS)
+    count_cols = ",".join(DVT_SQL_SERVER_TYPES_COLUMNS)
     column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt_sqlserver_types",
+        tables="pso_data_validator.dvt_sql_server_types",
         count_cols=count_cols,
         sum_cols=count_cols,
         min_cols=count_cols,
@@ -445,7 +446,7 @@ def test_column_validation_sql_server_string_types():
     2) That trailing spacers are not dropped by len()."""
     cols = [
         _
-        for _ in DVT_SQLSERVER_TYPES_COLUMNS
+        for _ in DVT_SQL_SERVER_TYPES_COLUMNS
         if _
         in (
             "col_varchar_30",
@@ -459,7 +460,7 @@ def test_column_validation_sql_server_string_types():
     col_str = ",".join(cols)
     df = column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt_sqlserver_types",
+        tables="pso_data_validator.dvt_sql_server_types",
         sum_cols=col_str,
         min_cols=col_str,
         filter_status=None,
@@ -591,10 +592,10 @@ def test_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_sql_server_types():
-    """SQL Server to SQL Server dvt_sqlserver_types row validation"""
-    cols = ",".join([_ for _ in DVT_SQLSERVER_TYPES_COLUMNS if _ not in ("id")])
+    """SQL Server to SQL Server dvt_sql_server_types row validation"""
+    cols = ",".join([_ for _ in DVT_SQL_SERVER_TYPES_COLUMNS if _ not in ("id")])
     row_validation_test(
-        tables="pso_data_validator.dvt_sqlserver_types",
+        tables="pso_data_validator.dvt_sql_server_types",
         tc="mock-conn",
         hash=cols,
     )

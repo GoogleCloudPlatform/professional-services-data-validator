@@ -107,8 +107,8 @@ INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s'
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', 1, 2.1);
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', 0, 3.5);
 
-DROP TABLE IF EXISTS pso_data_validator.dvt_sqlserver_types;
-CREATE TABLE pso_data_validator.dvt_sqlserver_types
+DROP TABLE IF EXISTS pso_data_validator.dvt_sql_server_types;
+CREATE TABLE pso_data_validator.dvt_sql_server_types
 (   id                 int NOT NULL PRIMARY KEY
 ,   col_int1           tinyint
 ,   col_int2           smallint
@@ -136,23 +136,24 @@ CREATE TABLE pso_data_validator.dvt_sqlserver_types
 ,   col_varbinary      varbinary(10)
 ,   col_varbinary_max  varbinary(max)
 ,   col_bit            bit
+,   col_image          image
 );
-EXECUTE sp_addextendedproperty 'Comment', 'SQL Server data types integration test table', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_sqlserver_types';
-INSERT INTO pso_data_validator.dvt_sqlserver_types VALUES
+EXECUTE sp_addextendedproperty 'Comment', 'SQL Server data types integration test table', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_sql_server_types';
+INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
 (1,11,1111,123456789,123456789012345678
 ,123456789012345678,123.12,123456.1,12345678.1,12345678.111,123456.111
 ,'Hello DVT','A ','Hello DVT','A ','Hello DVT','Hello DVT'
 ,'1970-01-01','1970-01-01 00:00:01','1970-01-01 00:00:01','1970-01-01 00:00:01'
 ,cast('1970-01-01 00:00:01 -01:00' as datetimeoffset(3)),'00:00:01.123'
-,CAST('A' AS binary),CAST('A' AS binary),CAST('A' AS binary),'TRUE'
+,CAST('A' AS binary),CAST('A' AS binary),CAST('A' AS binary),'TRUE',CAST('A' AS binary)
 );
-INSERT INTO pso_data_validator.dvt_sqlserver_types VALUES
+INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
 (2,21,2111,223456789,223456789012345678
 ,223456789012345678,223.12,223456.1,22345678.1,22345678.111,123456.222
 ,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
 ,'1970-02-02','1970-02-02 00:00:02','1970-02-02 00:00:02','1970-02-02 00:00:02'
 ,cast('1970-02-02 00:00:01 -02:00' as datetimeoffset(3)),'00:00:02.123'
-,CAST('B' AS binary),CAST('B' AS binary),CAST('B' AS binary),'TRUE'
+,CAST('B' AS binary),CAST('B' AS binary),CAST('B' AS binary),'TRUE',CAST('A' AS binary)
 );
 
 
