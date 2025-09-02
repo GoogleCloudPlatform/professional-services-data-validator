@@ -432,33 +432,33 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_ss_types_to_bigquery():
     """SQL Server to BigQuery extended data type column validation test"""
     # col_ntext is excluded below because we have no way to get a character length from SQL Server.
-    cols = ",".join(
-        [
-            _
-            for _ in DVT_SS2BQ_COLUMNS
-            if _
-            not in (
-                "id",
-                # Excluded col_float32 because BigQuery does not have a float32 type.
-                "col_float32",
-                # TODO Remove money types from exclude list below when working on - issue-1582
-                "col_money",
-                "col_smallmoney",
-                "col_ntext",
-                # binary columns are excluded below because SQL Server right pads varbinary
-                # values to the length. Not very VARbinary!
-                "col_varbinary",
-                "col_varbinary_max",
-            )
-        ]
-    )
+    cols = [
+        _
+        for _ in DVT_SS2BQ_COLUMNS
+        if _
+        not in (
+            "id",
+            # Excluded col_float32 because BigQuery does not have a float32 type.
+            "col_float32",
+            # TODO Remove money types from exclude list below when working on - issue-1582
+            "col_money",
+            "col_smallmoney",
+            "col_ntext",
+            # binary columns are excluded below because SQL Server right pads varbinary
+            # values to the length. Not very VARbinary!
+            "col_varbinary",
+            "col_varbinary_max",
+        )
+    ]
+    # TODO Include col_int1 in max_cols when working on issue-1585.
+    max_cols = [_ for _ in cols if _ not in ("col_int1",)]
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_sql_server_types",
-        count_cols=cols,
-        sum_cols=cols,
-        min_cols=cols,
-        max_cols=cols,
+        count_cols=",".join(cols),
+        sum_cols=",".join(cols),
+        min_cols=",".join(cols),
+        max_cols=",".join(max_cols),
         # SQL Server requires cast_to_bigint for summing tinyint/smallint/int.
         cast_to_bigint=True,
     )
