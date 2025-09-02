@@ -140,7 +140,7 @@ CREATE TABLE pso_data_validator.dvt_sql_server_types
 );
 EXECUTE sp_addextendedproperty 'Comment', 'SQL Server data types integration test table', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_sql_server_types';
 INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
-(1,11,1111,123456789,123456789012345678
+(1,110,11111,1000000000,123456789012345678
 ,123456789012345678,123.12,123456.1,12345678.1,12345678.111,123456.111
 ,'Hello DVT','A ','Hello DVT','A ','Hello DVT','Hello DVT'
 ,'1970-01-01','1970-01-01 00:00:01','1970-01-01 00:00:01','1970-01-01 01:00:00'
@@ -148,7 +148,7 @@ INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
 ,CAST('A' AS binary),CAST('A' AS binary),CAST('A' AS binary),'TRUE',CAST('A' AS binary)
 );
 INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
-(2,21,2111,223456789,223456789012345678
+(2,210,22222,2000000000,223456789012345678
 ,223456789012345678,223.12,223456.1,22345678.1,22345678.111,123456.222
 ,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
 ,'1970-02-02','1970-02-02 00:00:02','1970-02-02 00:00:02','1970-02-02 02:00:00'

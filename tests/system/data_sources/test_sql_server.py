@@ -459,6 +459,8 @@ def test_column_validation_ss_types_to_bigquery():
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        # SQL Server requires cast_to_bigint for summing tinyint/smallint/int.
+        cast_to_bigint=True,
     )
 
 

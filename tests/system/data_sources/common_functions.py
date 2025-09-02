@@ -339,6 +339,7 @@ def column_validation_test_args(
     filter_status: str = "fail",
     wildcard_include_timestamp: bool = False,
     result_handler: Optional[str] = None,
+    cast_to_bigint: Optional[bool] = False,
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -358,6 +359,7 @@ def column_validation_test_args(
         f"--grouped-columns={grouped_columns}" if grouped_columns else None,
         "--wildcard-include-timestamp" if wildcard_include_timestamp else None,
         f"--result-handler={result_handler}" if result_handler else None,
+        "--cast-to-bigint" if cast_to_bigint else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
@@ -378,6 +380,7 @@ def column_validation_test(
     filter_status: Optional[str] = "fail",
     expected_rows=0,
     result_handler: Optional[str] = None,
+    cast_to_bigint: Optional[bool] = False,
 ):
     """Generic column validation test.
 
@@ -397,6 +400,7 @@ def column_validation_test(
         wildcard_include_timestamp=wildcard_include_timestamp,
         filter_status=filter_status,
         result_handler=result_handler,
+        cast_to_bigint=cast_to_bigint,
     )
     df = run_test_from_cli_args(args)
     assert (
