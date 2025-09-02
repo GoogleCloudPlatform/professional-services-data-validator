@@ -37,4 +37,4 @@ RUN \
 # RUN pip install snowflake-connector-python
 
 # The entrypoint script will handle connections and run the application
-ENTRYPOINT ["/bin/sh", "-c", "./entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
