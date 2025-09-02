@@ -1,4 +1,4 @@
-FROM python:3.9.0-slim
+FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
 
 # App version is passed as a build argument.
 # If not provided, the latest version will be installed.
@@ -10,6 +10,12 @@ WORKDIR /app
 # Copy and set up the entrypoint script
 COPY samples/docker/entrypoint.sh .
 RUN chmod +x entrypoint.sh
+# Need venv package
+RUN apt-get update
+RUN apt-get install -y python3-full
+RUN python3 -m venv env
+# Enable venv
+ENV PATH="/app/env/bin:$PATH"
 
 # Install the Data Validator from PyPI
 RUN pip install --upgrade pip
@@ -31,4 +37,4 @@ RUN \
 # RUN pip install snowflake-connector-python
 
 # The entrypoint script will handle connections and run the application
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "-c", "./entrypoint.sh"]

@@ -32,4 +32,7 @@ if [ -n "$DVT_TGT_CONN" ]; then
 fi
 
 # Execute the main data validation command, passing all arguments (`$@`)
-exec python -m data_validation "$@"
+echo "building /tmp/foobar"
+# data-validation $@ 1> /tmp/foobar
+echo "Not printing /tmp/foobar"
+# cat /tmp/foobar
