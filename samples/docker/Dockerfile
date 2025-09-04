@@ -12,7 +12,7 @@ COPY samples/docker/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 # Need venv package
 RUN apt-get update
-RUN apt-get install -y python3-full
+RUN apt-get install -y python3-venv
 RUN python3 -m venv env
 # Enable venv
 ENV PATH="/app/env/bin:$PATH"

@@ -32,7 +32,9 @@ if [ -n "$DVT_TGT_CONN" ]; then
 fi
 
 # Execute the main data validation command, passing all arguments (`$@`)
-echo "building /tmp/foobar"
-# data-validation $@ 1> /tmp/foobar
-echo "Not printing /tmp/foobar"
-# cat /tmp/foobar
+if  [ -n "$DVT_GCS_PREFIX" ]; then
+  data-validation "$@" | sed -e '/^$/,+1d' | gsutil cp - ${DVT_GCS_PREFIX}${CLOUD_RUN_EXECUTION}${CLOUD_RUN_TASK_INDEX}.csv
+else
+  data-validation "$@"
+fi
+

@@ -43,7 +43,7 @@ echo "Building Docker image with tag: ${IMAGE_TAG}"
 
 docker build \
     --build-arg "_APP_VERSION=${APP_VERSION}" \
-    -t "data_validation:${IMAGE_TAG}" \
+    -t "data_csv:${IMAGE_TAG}" \
     -f samples/docker/Dockerfile . # Build from the root context
 
 echo "Successfully built Docker image: data_validation:${IMAGE_TAG}"
