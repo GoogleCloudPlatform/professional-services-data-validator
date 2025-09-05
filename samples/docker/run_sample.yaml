@@ -1,0 +1,52 @@
+apiVersion: run.googleapis.com/v1
+kind: Execution
+metadata:
+  annotations:
+    run.googleapis.com/creator: xxxxxxxx@google.com
+    run.googleapis.com/execution-environment: gen2
+    run.googleapis.com/lastModifier: xxxxxxxx@google.com
+    run.googleapis.com/vpc-access-connector: projects/pso-kokoro-resources/locations/us-central1/connectors/xxxxxxxx-run-vpc
+    run.googleapis.com/vpc-access-egress: private-ranges-only
+  labels:
+    cloud.googleapis.com/location: us-central1
+    run.googleapis.com/job: data-val-csv
+    run.googleapis.com/jobGeneration: '10'
+    run.googleapis.com/jobResourceVersion: '1757031024926914'
+    run.googleapis.com/jobUid: bca1ec70-ab43-4da3-a529-7edade3700ab
+  name: data-val-csv-zdfx4
+  namespace: '38376331460'
+  ownerReferences:
+  - apiVersion: serving.knative.dev/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Job
+    name: data-val-csv
+    uid: bca1ec70-ab43-4da3-a529-7edade3700ab
+spec:
+  parallelism: 2
+  taskCount: 2
+  template:
+    spec:
+      containers:
+      - args:
+        - -ll
+        - WARNING
+        - configs
+        - run
+        - -kc
+        - -cdir
+        - gs://pso-kokoro-mudupalli/blog/test_csv
+        env:
+        - name: PSO_DV_CONN_HOME
+          value: gs://pso-kokoro-mudupalli/blog
+        - name: DVT_GCS_PREFIX
+          value: gs://pso-kokoro-mudupalli/blog/csv_results/
+        image: us-central1-docker.pkg.dev/pso-kokoro-resources/pso-dvt-docker-repo/data_val_csv@sha256:e65788e1855877301bca23c10322693b75ce1434c3731590f974eab60bdfa3da
+        name: data-val-csv-1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+      maxRetries: 2
+      serviceAccountName: dvt-cloud-run@pso-kokoro-resources.iam.gserviceaccount.com
+      timeoutSeconds: '600'

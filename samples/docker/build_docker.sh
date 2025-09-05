@@ -24,7 +24,7 @@
 # Example run command with base64 encoded connection strings:
 # export DVT_SRC_CONN=$(echo '{"source_type": "BigQuery", "project_id": "my-gcp-project"}' | base64 -w 0)
 # export DVT_TGT_CONN=$(echo '{"source_type": "BigQuery", "project_id": "my-gcp-project"}' | base64 -w 0)
-# docker run -e DVT_SRC_CONN -e DVT_TGT_CONN data_validation:latest \
+# docker run -e DVT_SRC_CONN -e DVT_TGT_CONN data_validation_csv:latest \
 #   --config-file my_validation.yaml
 
 set -e
@@ -43,7 +43,7 @@ echo "Building Docker image with tag: ${IMAGE_TAG}"
 
 docker build \
     --build-arg "_APP_VERSION=${APP_VERSION}" \
-    -t "data_csv:${IMAGE_TAG}" \
+    -t "data_validation_csv:${IMAGE_TAG}" \
     -f samples/docker/Dockerfile . # Build from the root context
 
-echo "Successfully built Docker image: data_validation:${IMAGE_TAG}"
+echo "Successfully built Docker image: data_validation_csv:${IMAGE_TAG}"

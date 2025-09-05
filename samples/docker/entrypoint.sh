@@ -33,7 +33,14 @@ fi
 
 # Execute the main data validation command, passing all arguments (`$@`)
 if  [ -n "$DVT_GCS_PREFIX" ]; then
-  data-validation "$@" | sed -e '/^$/,+1d' | gsutil cp - ${DVT_GCS_PREFIX}${CLOUD_RUN_EXECUTION}${CLOUD_RUN_TASK_INDEX}.csv
+  data-validation "$@" > /tmp/output
+  val_status=$?
+  if [ $val_status -ne 0 ] ; then
+    exit $val_status
+  else
+    sed -i -e '/^$/,+1d' /tmp/output
+    gsutil cp /tmp/output ${DVT_GCS_PREFIX}${CLOUD_RUN_EXECUTION}${CLOUD_RUN_TASK_INDEX}.csv
+  fi
 else
   data-validation "$@"
 fi
