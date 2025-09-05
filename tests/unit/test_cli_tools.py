@@ -1059,6 +1059,15 @@ def test_arg_parser_validate_custom_query_row_help(capsys):
     assert "--primary-keys" in captured.out
 
 
+def test_arg_parser_validate_custom_query_column_help(capsys):
+    """Test validate custom-query column --help arg."""
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit):
+        _ = parser.parse_args(["validate", "custom-query", "column", "--help"])
+    captured = capsys.readouterr()
+    assert "--grouped-columns" in captured.out
+
+
 def test_arg_parser_generate_table_partitions_help(capsys):
     """Test generate-table-partitions --help arg."""
     parser = cli_tools.configure_arg_parser()
