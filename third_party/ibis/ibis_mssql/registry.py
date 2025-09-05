@@ -84,6 +84,17 @@ def sa_epoch_seconds(translator, op):
     )
 
 
+def sa_format_string_length(translator, op):
+    """Calculate SQL Server string length in characters, not bytes.
+
+    This uses len() rather than datalength() to give an output compatible with BigQuery.
+    We need to protect trailing spaces due to an odd quirk in SQL Server len()
+    behaviour that ignores them, so this is done by first replacing spaces with
+    underscores before passing the string to len()."""
+    arg = translator.translate(op.arg)
+    return sa.func.len(sa.func.replace(arg, " ", "_"))
+
+
 def sa_format_binary_length(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.datalength(arg)

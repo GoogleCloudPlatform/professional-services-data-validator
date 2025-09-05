@@ -99,7 +99,7 @@ NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
 
 
 class BinaryLength(ops.Value):
-    arg = rlz.one_of([rlz.value(dt.Binary)])
+    arg = rlz.one_of([rlz.value(dt.Binary), rlz.value(dt.String)])
     output_dtype = dt.int32
     output_shape = rlz.shape_like("arg")
 
@@ -536,6 +536,7 @@ MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.isnull, 2)
 MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
 MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringLength] = mssql_registry.sa_format_string_length
 MsSqlExprTranslator._registry[ops.Strftime] = mssql_registry.strftime
 MsSqlExprTranslator._registry[ops.Cast] = mssql_registry.sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
