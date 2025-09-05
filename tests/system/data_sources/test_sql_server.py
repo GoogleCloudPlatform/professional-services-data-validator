@@ -585,8 +585,6 @@ def test_row_validation_ss_types_to_bigquery():
                 "id",
                 # Excluded col_float32 because BigQuery does not have a float32 type.
                 "col_float32",
-                # TODO Remove col_bit from exclude list when working on - issue-1583
-                "col_bit",
                 # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
