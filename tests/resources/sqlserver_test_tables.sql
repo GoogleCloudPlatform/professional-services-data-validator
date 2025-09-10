@@ -155,6 +155,11 @@ INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
 ,cast('1970-02-02 00:00:01 -02:00' as datetimeoffset(3)),'00:00:02.123'
 ,CAST('B' AS binary),CAST('B' AS binary),CAST('B' AS binary),'FALSE',CAST('A' AS binary)
 );
+INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
+(3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+);
 
 DROP TABLE pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null
