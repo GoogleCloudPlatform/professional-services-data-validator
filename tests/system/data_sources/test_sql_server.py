@@ -350,8 +350,6 @@ def test_schema_validation_ss_types_to_bigquery():
             # SQL Server datetime scales are picked up.
             "timestamp(7):timestamp,timestamp(7, 'UTC'):timestamp('UTC')"
         ),
-        # TODO money types are being identified as integers - issue-1582
-        exclusion_columns="col_money,col_smallmoney",
     )
 
 
@@ -440,9 +438,6 @@ def test_column_validation_ss_types_to_bigquery():
             "id",
             # Excluded col_float32 because BigQuery does not have a float32 type.
             "col_float32",
-            # TODO Remove money types from exclude list below when working on - issue-1582
-            "col_money",
-            "col_smallmoney",
             "col_ntext",
             # binary columns are excluded below because SQL Server right pads varbinary
             # values to the length. Not very VARbinary!
@@ -587,9 +582,6 @@ def test_row_validation_ss_types_to_bigquery():
                 "col_float32",
                 # TODO Remove col_bit from exclude list when working on - issue-1583
                 "col_bit",
-                # TODO Remove money types from exclude list when working on - issue-1582
-                "col_money",
-                "col_smallmoney",
                 # binary columns are excluded below because SQL Server right pads varbinary
                 # values to the length. Not very VARbinary!
                 "col_varbinary",
