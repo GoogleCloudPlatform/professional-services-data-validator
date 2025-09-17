@@ -141,6 +141,12 @@ def sa_cast_mssql(t, op):
         formatted_value = sa.func.format(sa_arg, format_string)
         # Replace trailing '.0' with ''
         return sa.func.replace(formatted_value, ".0", "")
+    elif arg_dtype.is_boolean() and typ.is_string():
+        return sa.case(
+            (sa_arg == 0, sa.literal_column("'false'")),
+            (sa_arg == 1, sa.literal_column("'true'")),
+            else_=sa.null(),
+        )
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
