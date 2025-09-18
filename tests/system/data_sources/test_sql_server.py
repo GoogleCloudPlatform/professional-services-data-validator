@@ -574,6 +574,40 @@ def test_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_comp_fields_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type row validation using comparison fields"""
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_SS2BQ_COLUMNS
+            if _
+            not in (
+                "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
+                # TODO Include col_int1 in max_cols when working on issue-1585.
+                "col_int1",
+                # TODO Remove money types from exclude list when working on - issue-1582
+                "col_money",
+                "col_smallmoney",
+                # binary columns are excluded below because SQL Server right pads varbinary
+                # values to the length. Not very VARbinary!
+                "col_varbinary",
+                "col_varbinary_max",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_ss_types_to_bigquery():
     """SQL Server to BigQuery extended data type row validation"""
     cols = ",".join(
@@ -585,8 +619,6 @@ def test_row_validation_ss_types_to_bigquery():
                 "id",
                 # Excluded col_float32 because BigQuery does not have a float32 type.
                 "col_float32",
-                # TODO Remove col_bit from exclude list when working on - issue-1583
-                "col_bit",
                 # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
