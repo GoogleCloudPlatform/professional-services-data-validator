@@ -187,6 +187,38 @@ def test_validation_add_groups(module_under_test):
     assert list(builder.get_group_aliases()) == ["start_alias"]
 
 
+def test_custom_query_validation_add_groups(module_under_test):
+    mock_config_manager = ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+
+    custom_query_groups = [
+        {
+            consts.CONFIG_FIELD_ALIAS: "col1",
+            consts.CONFIG_SOURCE_COLUMN: "col1",
+            consts.CONFIG_TARGET_COLUMN: "col1",
+            consts.CONFIG_CAST: None,
+        },
+        {
+            consts.CONFIG_FIELD_ALIAS: "col2",
+            consts.CONFIG_SOURCE_COLUMN: "col2",
+            consts.CONFIG_TARGET_COLUMN: "col2",
+            consts.CONFIG_CAST: None,
+        },
+    ]
+
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+    mock_config_manager.append_query_groups(custom_query_groups)
+    builder.add_config_query_groups()
+
+    assert list(builder.get_group_aliases()) == ["col1", "col2"]
+    assert builder.get_grouped_alias_source_column("col1") == "col1"
+    assert builder.get_grouped_alias_target_column("col2") == "col2"
+
+
 def test_column_validation_calculate(module_under_test):
     mock_config_manager = ConfigManager(
         COLUMN_VALIDATION_CONFIG, MockIbisClient(), MockIbisClient(), verbose=False
