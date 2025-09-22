@@ -90,14 +90,19 @@ def sa_format_string_length(translator, op):
     This uses len() rather than datalength() to give an output compatible with BigQuery.
     We need to protect trailing spaces due to an odd quirk in SQL Server len()
     behaviour that ignores them, so this is done by first replacing spaces with
-    underscores before passing the string to len()."""
+    underscores before passing the string to len().
+
+    The len expression is cast to BIGINT to prevent int overflow for large tables."""
     arg = translator.translate(op.arg)
-    return sa.func.len(sa.func.replace(arg, " ", "_"))
+    return sa.func.cast(sa.func.len(sa.func.replace(arg, " ", "_")), sa.BIGINT)
 
 
 def sa_format_binary_length(translator, op):
+    """Calculate SQL Server bytes/string length in bytes, not characters.
+
+    The len expression is cast to BIGINT to prevent int overflow for large tables."""
     arg = translator.translate(op.arg)
-    return sa.func.datalength(arg)
+    return sa.func.cast(sa.func.datalength(arg), sa.BIGINT)
 
 
 def sa_format_hashbytes(translator, op):
