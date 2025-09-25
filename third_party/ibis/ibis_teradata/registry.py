@@ -352,6 +352,8 @@ def _literal(t, op):
     dtype = op.output_dtype
     if dtype.is_string():
         return _string_literal_format(t, op)
+    elif dtype.is_time():  # The base backend does not have a renderer for TIME Literals
+        return f"TIME '{op.value.isoformat()}'"
     else:
         return ibis_literal(t, op)
 
