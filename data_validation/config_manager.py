@@ -1275,7 +1275,24 @@ class ConfigManager(object):
             raise ValueError(
                 "Exclude columns flag cannot be present with column list '*'"
             )
+
         return casefold_columns
+
+    def _filter_columns_by_data_type(
+        self, source_columns: dict, target_columns: dict
+    ) -> tuple:
+        """Filter out columns with a data type that is incompatible with DVT."""
+        result_source_columns = source_columns.copy()
+        result_target_columns = target_columns.copy()
+        for source_column, target_column in zip(source_columns, target_columns):
+            if self._is_sql_server_image(source_column, target_column):
+                logging.info(
+                    f"Skipping column {source_column} due to SQL Server image data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+
+        return result_source_columns, result_target_columns
 
     def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
@@ -1290,6 +1307,12 @@ class ConfigManager(object):
         )
         casefold_target_columns = self._filter_columns_by_column_list(
             casefold_target_columns, col_list
+        )
+
+        casefold_source_columns, casefold_target_columns = (
+            self._filter_columns_by_data_type(
+                casefold_source_columns, casefold_target_columns
+            )
         )
 
         column_aliases = {}
@@ -1347,6 +1370,9 @@ class ConfigManager(object):
         casefold_source_columns = {_.casefold(): str(_) for _ in source_table.columns}
         casefold_source_columns = self._filter_columns_by_column_list(
             casefold_source_columns, col_list, exclude_cols=exclude_cols
+        )
+        casefold_source_columns, _ = self._filter_columns_by_data_type(
+            casefold_source_columns, casefold_source_columns
         )
         return casefold_source_columns
 
