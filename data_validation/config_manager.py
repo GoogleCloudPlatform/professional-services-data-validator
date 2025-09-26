@@ -671,20 +671,38 @@ class ConfigManager(object):
 
         This is because SQL Server text does not support the len() function to get the length in characters.
         Instead we must fall back to using ByteLength."""
+        return self._is_sql_server_type(
+            source_column_name, target_column_name, ["text", "ntext"]
+        )
+
+    def _is_sql_server_image(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is of SQL Server image data type.
+
+        This is because SQL Server image is deprecated and not supported by a number of SQL functions.
+        """
+        return self._is_sql_server_type(
+            source_column_name, target_column_name, ["image"]
+        )
+
+    def _is_sql_server_type(
+        self, source_column_name: str, target_column_name: str, type_list: List[str]
+    ) -> bool:
+        """Returns True when either source or target column is of a SQL Server type listed in type_list."""
 
         raw_source_types = self.get_source_raw_data_types()
         raw_target_types = self.get_target_raw_data_types()
-        text_types = ("text", "ntext")
         return bool(
             (
                 self.source_client.name == "mssql"
                 and raw_source_types
-                and raw_source_types.get(source_column_name, [None])[0] in text_types
+                and raw_source_types.get(source_column_name, [None])[0] in type_list
             )
             or (
                 self.target_client.name == "mssql"
                 and raw_target_types
-                and raw_target_types.get(target_column_name, [None])[0] in text_types
+                and raw_target_types.get(target_column_name, [None])[0] in type_list
             )
         )
 
@@ -1073,6 +1091,12 @@ class ConfigManager(object):
                 if self.verbose:
                     logging.info(
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
+                    )
+                continue
+            elif self._is_sql_server_image(column, column):
+                if self.verbose:
+                    logging.info(
+                        f"Skipping {agg_type} on {column} due to SQL Server image data type"
                     )
                 continue
 
