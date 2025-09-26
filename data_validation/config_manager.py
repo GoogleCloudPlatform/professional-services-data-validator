@@ -1094,10 +1094,9 @@ class ConfigManager(object):
                     )
                 continue
             elif self._is_sql_server_image(column, column):
-                if self.verbose:
-                    logging.info(
-                        f"Skipping {agg_type} on {column} due to SQL Server image data type"
-                    )
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to SQL Server image data type"
+                )
                 continue
 
             if require_pre_agg_calc_field(
