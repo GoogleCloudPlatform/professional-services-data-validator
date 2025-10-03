@@ -43,3 +43,14 @@ def sa_format_string_length(translator, op):
     """Sybase string length function is char_length()."""
     arg = translator.translate(op.arg)
     return sa.func.char_length(arg)
+
+
+def sa_epoch_seconds(translator, op):
+    """Override for standard ExtractEpochSeconds but catering for larger second values."""
+    arg = translator.translate(op.arg)
+    return sa.cast(
+        sa.func.datediff(
+            sa.text("SECOND"), sa.literal_column("'1970-01-01 00:00:00'"), arg
+        ),
+        sa.BIGINT,
+    )

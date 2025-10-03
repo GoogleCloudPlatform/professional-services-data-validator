@@ -595,6 +595,9 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
 SybaseExprTranslator._registry[ops.Cast] = sybase_registry.sa_cast_sybase
+MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = (
+    sybase_registry.sa_epoch_seconds
+)
 SybaseExprTranslator._registry[ops.StringLength] = (
     sybase_registry.sa_format_string_length
 )
