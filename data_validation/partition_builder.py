@@ -409,14 +409,7 @@ class PartitionBuilder:
             if config_manager.source_table:
                 dir_name = config_manager.full_source_table
             else:
-                dir_name = (
-                    "custom."
-                    + base64.b64encode(
-                        hashlib.sha256(
-                            config_manager.source_query.encode("utf-8")
-                        ).digest()
-                    ).decode("ascii")[:5]
-                )
+                dir_name = ""
             filter_list = partition_filters[ind]
 
             if src_config_dict.get(dir_name) is None:
