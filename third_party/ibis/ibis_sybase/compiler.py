@@ -14,6 +14,27 @@
 
 from sqlalchemy_sybase import DATETIME
 from ibis.backends.mssql.compiler import MsSqlCompiler, MsSqlExprTranslator
+from ibis.backends.base.sql.alchemy.query_builder import AlchemySelect
+
+
+class SybaseAlchemySelect(AlchemySelect):
+    def _compile_subqueries(self):
+        """Sybase specific subquery compilation that prevents use of CTEs.
+
+        Sybase does not support them: https://userapps.support.sap.com/sap/support/knowledge/en/2466482
+
+        This code was copied from Ibis v5 ibis/backends/base/sql/alchemy/query_builder.py.
+        When we upgrade Ibis we'll need to revisit this.
+        """
+        if not self.subqueries:
+            return
+
+        for expr in self.subqueries:
+            result = self.context.get_compiled_expr(expr)
+            alias = self.context.get_ref(expr)
+            result = result.subquery(alias)  # DVT custom change.
+            # result = result.cte(alias)  # Original Ibis code.
+            self.context.set_ref(expr, result)
 
 
 class SybaseExprTranslator(MsSqlExprTranslator):
@@ -22,5 +43,6 @@ class SybaseExprTranslator(MsSqlExprTranslator):
 
 class SybaseCompiler(MsSqlCompiler):
     translator_class = SybaseExprTranslator
+    select_class = SybaseAlchemySelect
 
     supports_indexed_grouping_keys = False
