@@ -23,15 +23,13 @@ def sa_cast_sybase(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
-    sa_arg = t.translate(arg)
-
     # Specialize going from DECIMAL(p,s>0) to string
     if (
         arg_dtype.is_decimal()
         and arg_dtype.scale
         and arg_dtype.scale > 0
         and typ.is_string()
-    ):
+    ) or ((arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string()):
         # Prevent SQL Server specific workaround.
         return sa_fixed_cast(t, op)
 

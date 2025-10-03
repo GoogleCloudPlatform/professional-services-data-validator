@@ -79,6 +79,7 @@ except Exception:
 # Oracle requires oracledb
 try:
     from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
+    from third_party.ibis.ibis_oracle import registry as oracle_registry
 except Exception:
     OracleExprTranslator = None
 
@@ -601,3 +602,4 @@ MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = (
 SybaseExprTranslator._registry[ops.StringLength] = (
     sybase_registry.sa_format_string_length
 )
+SybaseExprTranslator._registry[ops.StringJoin] = oracle_registry._string_join
