@@ -18,8 +18,6 @@ import pandas
 import logging
 import re
 import datetime
-import hashlib
-import base64
 from typing import List, Dict, TYPE_CHECKING
 
 from data_validation import cli_tools, consts, util
