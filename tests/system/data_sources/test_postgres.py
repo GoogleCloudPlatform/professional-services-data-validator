@@ -162,7 +162,7 @@ def test_postgres_count(cloud_sql):
         # Validation Type
         consts.CONFIG_TYPE: "Column",
         # Configuration Required Depending on Validator Type
-        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_AGGREGATES: [
             {
@@ -206,7 +206,7 @@ def test_postgres_row(cloud_sql):
         # Validation Type
         consts.CONFIG_TYPE: "Row",
         # Configuration Required Depending on Validator Type
-        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
         consts.CONFIG_TABLE_NAME: "test_data_types_postgres_row",
         consts.CONFIG_COMPARISON_FIELDS: [
             {
@@ -582,7 +582,7 @@ def test_schema_validation(cloud_sql):
         consts.CONFIG_SOURCE_CONN: CONN,
         consts.CONFIG_TARGET_CONN: CONN,
         consts.CONFIG_TYPE: "Schema",
-        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
@@ -1131,7 +1131,7 @@ def test_column_validation_high_epoch_seconds():
         expected_rows=3,
     )
     status_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.VALIDATION_STATUS]))
-    value_dict = dict(zip(df[consts.VALIDATION_NAME], df["source_agg_value"]))
+    value_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.SOURCE_AGG_VALUE]))
     assert (
         status_dict["sum__epoch_seconds__col_datetime"]
         == consts.VALIDATION_STATUS_SUCCESS

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pkg_resources import get_distribution
+from importlib.metadata import version
 
 
-__version__ = get_distribution("google-pso-data-validator").version
+__version__ = version("google-pso-data-validator")
 __all__ = ["__version__"]

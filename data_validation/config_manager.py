@@ -664,6 +664,30 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_sql_server_text(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is of SQL Server text data type.
+
+        This is because SQL Server text does not support the len() function to get the length in characters.
+        Instead we must fall back to using ByteLength."""
+
+        raw_source_types = self.get_source_raw_data_types()
+        raw_target_types = self.get_target_raw_data_types()
+        text_types = ("text", "ntext")
+        return bool(
+            (
+                self.source_client.name == "mssql"
+                and raw_source_types
+                and raw_source_types.get(source_column_name, [None])[0] in text_types
+            )
+            or (
+                self.target_client.name == "mssql"
+                and raw_target_types
+                and raw_target_types.get(target_column_name, [None])[0] in text_types
+            )
+        )
+
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
         field_configs = []
@@ -809,7 +833,10 @@ class ConfigManager(object):
             depth = 1
             calc_func = consts.CALC_FIELD_LENGTH
         elif column_type in ["string", "!string"]:
-            calc_func = consts.CALC_FIELD_LENGTH
+            if self._is_sql_server_text(source_column, target_column):
+                calc_func = consts.CALC_FIELD_BYTE_LENGTH
+            else:
+                calc_func = consts.CALC_FIELD_LENGTH
 
         elif self._is_uuid(column_type, target_column_type):
             calc_func = consts.CONFIG_CAST

@@ -34,7 +34,7 @@ def strftime(translator, op):
     arg = op.arg
     format_str = op.format_str
     arg_type = arg.output_dtype
-    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[arg_type]
+    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
     fmt_string = translator.translate(format_str)
     # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types
     if format_str.value.startswith("%Y"):
@@ -58,6 +58,11 @@ def epoch_seconds(translator, op):
     return f"UNIX_SECONDS(CAST({arg} AS TIMESTAMP))"
 
 
+def format_binary_length(translator, op):
+    arg = translator.translate(op.arg)
+    return f"LENGTH({arg})"
+
+
 @bigquery_cast.register(str, dt.Binary, dt.String)
 def bigquery_cast_from_binary_generate(compiled_arg, from_, to):
     """Cast of binary to string should be hex conversion."""
@@ -77,3 +82,4 @@ def bigquery_cast_to_binary_generate(compiled_arg, from_, to):
 #    This is replicating what happened in Ibis 5. In newer versions this would result
 #    in DATETIME but we only do this for epoch seconds, which requires TIMESTAMP."""
 #    return f"CAST({compiled_arg} AS TIMESTAMP)"
+

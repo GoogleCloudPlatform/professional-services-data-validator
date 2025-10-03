@@ -133,9 +133,10 @@ PandasData.convert_Date = _dvt_patched_convert_Date
 
 
 class BinaryLength(ops.Value):
-    arg: ops.Value[dt.Binary]
-    dtype = dt.int32
-    shape = rlz.shape_like("arg")
+    arg: ops.Value
+    # arg = rlz.one_of([rlz.value(dt.Binary), rlz.value(dt.String)])
+    output_dtype = dt.int32
+    output_shape = rlz.shape_like("arg")
 
 
 class PaddedCharLength(ops.Value):
@@ -514,10 +515,10 @@ BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
 BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[ops.Strftime] = bigquery_registry.strftime
-BigQueryExprTranslator._registry[BinaryLength] = sa_format_binary_length
 BigQueryExprTranslator._registry[ops.ExtractEpochSeconds] = (
     bigquery_registry.epoch_seconds
 )
+BigQueryExprTranslator._registry[BinaryLength] = bigquery_registry.format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
@@ -566,6 +567,7 @@ MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbyte
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
 MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringLength] = mssql_registry.sa_format_string_length
 MsSqlExprTranslator._registry[ops.Strftime] = mssql_registry.strftime
 MsSqlExprTranslator._registry[ops.Cast] = mssql_registry.sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length

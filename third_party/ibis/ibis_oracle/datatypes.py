@@ -87,6 +87,7 @@ _type_mapping = {
     oracledb.DB_TYPE_BINARY_DOUBLE: dt.Float64,
     oracledb.DB_TYPE_INTERVAL_DS: dt.Interval,
     oracledb.DB_TYPE_INTERVAL_YM: dt.Interval,
+    oracledb.DB_TYPE_BOOLEAN: dt.Boolean,
 }
 
 # SQL Alchemy doesn't support LONG RAW which drops us into Ibis method:
@@ -95,6 +96,9 @@ _type_mapping = {
 # as a RAW variant, as below.
 if "LONG RAW" not in OracleDialect_oracledb.ischema_names:
     OracleDialect_oracledb.ischema_names["LONG RAW"] = oracle.RAW
+
+if "BOOLEAN" not in OracleDialect_oracledb.ischema_names:
+    OracleDialect_oracledb.ischema_names["BOOLEAN"] = sat.BOOLEAN
 
 # TODO I think these are now redundant due to sqlglot, need to test
 # @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.CLOB)

@@ -47,7 +47,8 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 
 
 PROJECT_ID = os.environ["PROJECT_ID"]
-os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
+TEST_BUCKET = os.environ.get("TEST_BUCKET", PROJECT_ID)
+os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{TEST_BUCKET}/integration_tests/"
 BQ_CONN = {consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY, "project_id": PROJECT_ID}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
@@ -247,7 +248,7 @@ CONFIG_NUMERIC_AGG_VALID = {
 
 BQ_CONN_NAME = "bq-integration-test"
 CLI_CONFIG_FILE = "example_test.yaml"
-CLI_CONFIG_FILE_GCS = "gs://" + PROJECT_ID + "/system_test/example_test.yaml"
+CLI_CONFIG_FILE_GCS = f"gs://{TEST_BUCKET}/system_test/example_test.yaml"
 
 BQ_CONN_ARGS = [
     "connections",
@@ -539,7 +540,7 @@ def test_cli_store_yaml_then_run_local():
 )
 def test_cli_store_yaml_then_run_directory_gcs(mock_conn):
     """Test storing, retrieving, and executing two validation YAMLs in a provided GCS directory path."""
-    bucket_name = f"gs://{PROJECT_ID}"
+    bucket_name = f"gs://{TEST_BUCKET}"
     yaml_file_name1 = "system_test/test_dir/example_dir1.yaml"
     yaml_file_name2 = "system_test/test_dir/example_dir2.yaml"
 
@@ -576,7 +577,7 @@ def test_cli_store_yaml_then_run_directory_gcs(mock_conn):
             "configs",
             "run",
             "--config-dir",
-            f"gs://{PROJECT_ID}/system_test/test_dir",
+            f"gs://{TEST_BUCKET}/system_test/test_dir",
         ]
     )
     main.config_runner(run_config_args)
@@ -1343,7 +1344,9 @@ def test_row_validation_core_types_auto_pks(mock_conn):
 )
 def test_custom_query_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types custom-query validation"""
-    custom_query_validation_test(tc="mock-conn", count_cols="*")
+    custom_query_validation_test(
+        tc="mock-conn", count_cols="*", grouped_columns="col_varchar_30"
+    )
 
 
 @mock.patch(
