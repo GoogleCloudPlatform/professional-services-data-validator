@@ -37,3 +37,9 @@ def sa_cast_sybase(t, op):
 
     # Follow our SQL Server code path.
     return sa_cast_mssql(t, op)
+
+
+def sa_format_string_length(translator, op):
+    """Sybase string length function is char_length()."""
+    arg = translator.translate(op.arg)
+    return sa.func.char_length(arg)
