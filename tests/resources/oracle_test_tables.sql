@@ -788,6 +788,19 @@ INSERT INTO pso_data_validator.dvt_bool VALUES (1,1,1,'1','Y');
 INSERT INTO pso_data_validator.dvt_bool VALUES (2,0,0,'0','N');
 COMMIT;
 
+-- Note: The DDL below will fail on Oracle versions < 23
+DROP TABLE pso_data_validator.dvt_bool_native;
+CREATE TABLE pso_data_validator.dvt_bool_native
+(   id           NUMBER(5) NOT NULL PRIMARY KEY
+,   col_bool_dec BOOLEAN
+,   col_bool_int BOOLEAN
+,   col_bool_ch1 BOOLEAN
+,   col_bool_chy BOOLEAN);
+COMMENT ON TABLE pso_data_validator.dvt_bool_native IS 'Integration test table used to test Oracle native boolean data type, only valid on version 23 and higher.';
+INSERT INTO pso_data_validator.dvt_bool_native VALUES (1,TRUE,TRUE,TRUE,TRUE);
+INSERT INTO pso_data_validator.dvt_bool_native VALUES (2,FALSE,FALSE,FALSE,FALSE);
+COMMIT;
+
 DROP TABLE pso_data_validator.dvt_uuid_id;
 CREATE TABLE pso_data_validator.dvt_uuid_id
 (   id        RAW(16) NOT NULL PRIMARY KEY

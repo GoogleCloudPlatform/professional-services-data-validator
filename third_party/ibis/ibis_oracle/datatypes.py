@@ -84,6 +84,7 @@ _type_mapping = {
     oracledb.DB_TYPE_BINARY_DOUBLE: dt.Float64,
     oracledb.DB_TYPE_INTERVAL_DS: dt.Interval,
     oracledb.DB_TYPE_INTERVAL_YM: dt.Interval,
+    oracledb.DB_TYPE_BOOLEAN: dt.Boolean,
 }
 
 # SQL Alchemy doesn't support LONG RAW which drops us into Ibis 5.1.0 method:
@@ -99,6 +100,9 @@ if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_oracledb.ischema_names:
     OracleDialect_oracledb.ischema_names["TIMESTAMP WITH LOCAL TIME ZONE"] = (
         oracle.TIMESTAMP(timezone=True)
     )
+
+if "BOOLEAN" not in OracleDialect_oracledb.ischema_names:
+    OracleDialect_oracledb.ischema_names["BOOLEAN"] = sat.BOOLEAN
 
 
 @dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.CLOB)

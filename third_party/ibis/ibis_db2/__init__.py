@@ -104,7 +104,7 @@ class Backend(BaseAlchemyBackend):
 
     def raw_column_metadata_not_implemented(
         self, database: str = None, table: str = None, query: str = None
-    ) -> list[Tuple]:
+    ) -> list:
         """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
         Partner method to _metadata that retains raw data type information instead of converting
         to Ibis types.  This works in the same way as _metadata by running a query over the DVT

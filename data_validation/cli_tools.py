@@ -959,6 +959,11 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
                 unreliable results.""",
     )
     optional_arguments.add_argument(
+        "--grouped-columns",
+        "-gc",
+        help="Comma separated list of columns to group results by, e.g. 'col_a,col_b'. Applies to column validations, including custom-query column.",
+    )
+    optional_arguments.add_argument(
         "--exclude-columns",
         "-ec",
         action="store_true",

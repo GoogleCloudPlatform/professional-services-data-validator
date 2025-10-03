@@ -14,7 +14,7 @@
 
 USE guestbook;
 
-IF (SCHEMA_ID('pso_data_validator') IS NULL) 
+IF (SCHEMA_ID('pso_data_validator') IS NULL)
 BEGIN
     EXEC ('CREATE SCHEMA pso_data_validator')
 END
@@ -106,6 +106,55 @@ INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s'
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 1234, '2023-08-27 15:00:00', '1969-07-20', 0, 2.8);
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', 1, 2.1);
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', 0, 3.5);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_sql_server_types;
+CREATE TABLE pso_data_validator.dvt_sql_server_types
+(   id                 int NOT NULL PRIMARY KEY
+,   col_int1           tinyint
+,   col_int2           smallint
+,   col_int4           int
+,   col_int8           bigint
+,   col_dec            decimal
+,   col_dec_10_2       decimal(10,2)
+,   col_float32        float(24)
+,   col_float64        float(53)
+,   col_money          money
+,   col_smallmoney     smallmoney
+,   col_varchar_30     varchar(30)
+,   col_char_2         char(2)
+,   col_nvarchar_30    nvarchar(30)
+,   col_nchar_2        nchar(2)
+,   col_text           text
+,   col_ntext          ntext
+,   col_date           date
+,   col_datetime       datetime
+,   col_datetime2      datetime2(3)
+,   col_smalldatetime  smalldatetime
+,   col_datetimeoffset datetimeoffset(3)
+,   col_time           time(3)
+,   col_binary         binary
+,   col_varbinary      varbinary(10)
+,   col_varbinary_max  varbinary(max)
+,   col_bit            bit
+,   col_image          image
+);
+EXECUTE sp_addextendedproperty 'Comment', 'SQL Server data types integration test table', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_sql_server_types';
+INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
+(1,110,11111,1000000000,123456789012345678
+,123456789012345678,123.12,123456.1,12345678.1,12345678.111,123456.111
+,'Hello DVT','A ','Hello DVT','A ','Hello DVT','Hello DVT'
+,'1970-01-01','1970-01-01 00:00:01','1970-01-01 00:00:01','1970-01-01 01:00:00'
+,cast('1970-01-01 00:00:01 -01:00' as datetimeoffset(3)),'00:00:01.123'
+,CAST('A' AS binary),CAST('A' AS binary),CAST('A' AS binary),'TRUE',CAST('A' AS binary)
+);
+INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
+(2,210,22222,2000000000,223456789012345678
+,223456789012345678,223.12,223456.1,22345678.1,22345678.111,123456.222
+,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
+,'1970-02-02','1970-02-02 00:00:02','1970-02-02 00:00:02','1970-02-02 02:00:00'
+,cast('1970-02-02 00:00:01 -02:00' as datetimeoffset(3)),'00:00:02.123'
+,CAST('B' AS binary),CAST('B' AS binary),CAST('B' AS binary),'FALSE',CAST('A' AS binary)
+);
 
 DROP TABLE pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null

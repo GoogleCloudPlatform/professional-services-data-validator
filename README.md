@@ -390,6 +390,8 @@ data-validation
                         Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql command. Supports GCS and local paths.
+  [--grouped-columns or -gc GROUPED_COLUMNS]
+                        Comma separated list of columns for Group By i.e col_a,col_b
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
