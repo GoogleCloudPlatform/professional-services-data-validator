@@ -71,10 +71,10 @@ def _get_table_map_from_obj_list(table_objs: list) -> dict:
         }
 
     # Post process table_map and lower case table_keys, if possible.
-    for table_key in [_ for _ in table_map if _ != _.lower()]:
+    for table_key in [_ for _ in table_map if _ != _.casefold()]:
         if table_key.lower() not in table_map:
             # Only lower case the key if there isn't one already.
-            table_map[table_key.lower()] = table_map.pop(table_key)
+            table_map[table_key.casefold()] = table_map.pop(table_key)
 
     return table_map
 
