@@ -43,6 +43,44 @@ def sa_format_string_length(translator, op):
     return sa.func.char_length(arg)
 
 
+def strftime(translator, op):
+    """Use Sybase convert() for strftime().
+
+    This is pretty restrictive due to the limited styles offered by Sybase,
+    we've just covered off the generic formats used when casting date based columns
+    to string in order to complete row data comparison.
+
+    Convert formats:
+    https://infocenter.sybase.com/help/index.jsp?topic=/com.sybase.infocenter.dc36271.1600/doc/html/san1393050423349.html
+
+    Incredibly there isn't a format matching ISO formats."""
+    arg, pattern = map(translator.translate, op.args)
+    arg_type = op.args[0].output_dtype
+    if (
+        hasattr(arg_type, "timezone") and arg_type.timezone
+    ):  # Our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
+        arg = sa.cast(arg, sa.types.DateTime)
+    if pattern.value == "%Y-%m-%d":
+        # format 23 (yyyy-mm-ddTHH:mm:ss) - we trim the time from.
+        return sa.func.substring(
+            sa.func.convert(sa.text("VARCHAR"), arg, sa.literal_column("23")), 1, 10
+        )
+    elif pattern.value == "%Y-%m-%d %H:%M:%S":
+        # format 23 again (yyyy-mm-ddTHH:mm:ss) - we replace the "T".
+        return sa.func.str_replace(
+            sa.func.convert(sa.text("VARCHAR"), arg, sa.literal_column("23")),
+            sa.literal_column("'T'"),
+            sa.literal_column("' '"),
+        )
+    elif pattern.value == "%Y-%m-%d %H:%M:%S.%f":
+        # ODBC canonical (with microseconds)
+        return sa.func.convert(sa.text("VARCHAR"), arg, 140)
+    else:
+        raise NotImplementedError(
+            f"strftime format {pattern.value} not supported for Sybase."
+        )
+
+
 def sa_epoch_seconds(translator, op):
     """Override for standard ExtractEpochSeconds but catering for larger second values."""
     arg = translator.translate(op.arg)
