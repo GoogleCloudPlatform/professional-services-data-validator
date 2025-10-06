@@ -44,6 +44,7 @@ class SybaseAlchemySelect(AlchemySelect):
 
 class SybaseExprTranslator(AlchemyExprTranslator):
     _timestamp_type = DATETIME
+    _rewrites = AlchemyExprTranslator._rewrites.copy()
 
 
 class SybaseCompiler(AlchemyCompiler):
