@@ -55,6 +55,10 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
 ,'1970-01-03','1970-01-03 00:00:03','1970-01-03 03:00:03')
 GO
 
+CREATE OR REPLACE VIEW pso_data_validator.dvt_core_types_vw AS
+SELECT * FROM pso_data_validator.dvt_core_types
+GO
+
 -- Nullable integration test table, Sybase is assumed to be a DVT source (not target)
 DROP TABLE pso_data_validator.dvt_null_not_null
 GO

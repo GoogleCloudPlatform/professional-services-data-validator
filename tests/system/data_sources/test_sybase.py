@@ -105,6 +105,18 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_view_core_types_vw():
+    """Sybase view dvt_core_types_vw schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types_vw",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_core_types():
     """Sybase dvt_core_types column validation"""
     column_validation_test(
@@ -143,6 +155,75 @@ def test_column_validation_core_types_to_bigquery():
         max_cols=cols,
         avg_cols=cols,
         std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_view_core_types_vw():
+    """Sybase view dvt_core_types_vw column validation"""
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types_vw",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types():
+    """Sybase dvt_core_types concat row validation.
+
+    Sybase does not have a SHA256 hash function."""
+    # TODO Add col_string to cols below when issue-xyz is actioned.
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+    )
+    row_validation_test(
+        tc="mock-conn",
+        concat=cols,
+        filters="id>0 AND col_int8>0",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_auto_pks():
+    """Test auto population of -pks from Sybase defined constraint."""
+    row_validation_test(
+        tc="mock-conn",
+        concat="col_int8,col_int16",
+        primary_keys=None,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    """Sybase to BigQuery dvt_core_types concat row validation.
+
+    Sybase does not have a SHA256 hash function."""
+    # TODO Add col_string to cols below when issue-xyz is actioned.
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+    )
+    row_validation_test(
+        tc="bq-conn",
+        concat=cols,
     )
 
 
