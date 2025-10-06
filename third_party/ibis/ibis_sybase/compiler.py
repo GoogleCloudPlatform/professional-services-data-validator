@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from sqlalchemy_sybase import DATETIME
-from ibis.backends.mssql.compiler import MsSqlCompiler, MsSqlExprTranslator
+from ibis.backends.mssql.compiler import MsSqlExprTranslator
+from ibis.backends.base.sql.alchemy import AlchemyCompiler
+
+# , MSTypeCompiler
+# sqlalchemy/dialects/mssql/base
 from ibis.backends.base.sql.alchemy.query_builder import AlchemySelect
 
 
@@ -41,7 +45,11 @@ class SybaseExprTranslator(MsSqlExprTranslator):
     _timestamp_type = DATETIME
 
 
-class SybaseCompiler(MsSqlCompiler):
+# class SybaseTypeCompiler(MSTypeCompiler):
+#    pass
+
+
+class SybaseCompiler(AlchemyCompiler):
     translator_class = SybaseExprTranslator
     select_class = SybaseAlchemySelect
 
