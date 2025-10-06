@@ -167,7 +167,6 @@ class Backend(BaseAlchemyBackend):
         list_table_sql = f"EXEC sp_tables NULL, {schema_like}, NULL, NULL"
         rows = self.raw_sql(list_table_sql).fetchall()
         owners = {row[1] for row in rows}
-        breakpoint()
         return list(owners)
 
     def list_tables(self, table=None, schema=None, type_like: str = "%") -> list:

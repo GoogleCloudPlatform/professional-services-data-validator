@@ -84,8 +84,6 @@ def ibis_table_to_sql(ibis_table: "ibis.expr.types") -> str:
     # If the backend uses sqlalchemy, we will need to request sqla to bind variables
     # for a non sqlalchemy backend, the parameters are already bound
     backend_name = ibis_table._find_backend().name
-    if backend_name == "sybase":
-        breakpoint()
 
     return (
         ibis_table.compile().compile(compile_kwargs={"literal_binds": True}).string
