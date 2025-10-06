@@ -14,7 +14,7 @@
 
 from sqlalchemy_sybase import DATETIME
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
-from ibis.backends.base.sql.alchemy import AlchemyCompiler
+from ibis.backends.base.sql.alchemy import AlchemyCompiler, AlchemyExprTranslator
 
 # , MSTypeCompiler
 # sqlalchemy/dialects/mssql/base
@@ -41,7 +41,8 @@ class SybaseAlchemySelect(AlchemySelect):
             self.context.set_ref(expr, result)
 
 
-class SybaseExprTranslator(MsSqlExprTranslator):
+# class SybaseExprTranslator(MsSqlExprTranslator):
+class SybaseExprTranslator(AlchemyExprTranslator):
     _timestamp_type = DATETIME
 
 

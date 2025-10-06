@@ -39,7 +39,6 @@ from tests.system.data_sources.common_functions import (
     custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.test_postgres import CONN as PG_CONN
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     partition_table_test,
@@ -145,3 +144,12 @@ def test_column_validation_core_types_to_bigquery():
         avg_cols=cols,
         std_cols=cols,
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Sybase to BigQuery test of find-tables command."""
+    find_tables_test()

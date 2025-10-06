@@ -83,17 +83,7 @@ def type_from_result_set_info(
 
     if type_name == "decimal":
         typ = partial(typ, precision=precision, scale=scale)
-    # elif type_name in ("GEOMETRY", "GEOGRAPHY"):
-    #    typ = partial(typ, geotype=type_name.lower())
-    # elif type_name == "DATETIME2":
-    #    typ = partial(typ, scale=scale)
-    # elif type_name == "DATETIMEOFFSET":
-    #    typ = partial(typ, scale=col["scale"], timezone="UTC")
-    # elif type_name == "FLOAT":
-    #    if col["precision"] <= 24:
-    #        typ = dt.Float32
-    #    else:
-    #        typ = dt.Float64
+
     return typ(nullable=bool(nullable))
 
 
