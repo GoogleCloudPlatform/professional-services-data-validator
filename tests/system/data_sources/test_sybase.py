@@ -219,12 +219,79 @@ def test_row_validation_core_types_to_bigquery():
 
     Sybase does not have a SHA256 hash function."""
     # TODO Add col_string to cols below when issue-xyz is actioned.
+    # TODO Add col_dec_10_2 to cols below when issue-xyz is actioned.
     cols = ",".join(
-        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_string", "col_dec_10_2")
+        ]
     )
     row_validation_test(
         tc="bq-conn",
         concat=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_core_types_to_bigquery():
+    """Sybase to BigQuery extended data type row validation using comparison fields"""
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _
+            not in (
+                "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_column_validation_core_types_to_bigquery():
+    """Sybase to BigQuery dvt_core_types custom-query column validation"""
+    custom_query_validation_test(tc="bq-conn", count_cols="*")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_core_types_to_bigquery():
+    """Sybase to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        concat="col_int64,col_varchar_30,col_date",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_comp_fields_core_types_to_bigquery():
+    """Sybase to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        comp_fields="col_int64,col_varchar_30,col_date",
     )
 
 

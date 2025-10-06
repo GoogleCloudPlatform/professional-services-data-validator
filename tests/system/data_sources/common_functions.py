@@ -661,6 +661,7 @@ def custom_query_validation_test(
     grouped_columns=None,
     comp_fields=None,
     hash="*",
+    concat=None,
     assert_df_not_empty=False,
 ):
     """Generic custom-query validation test.
@@ -693,6 +694,8 @@ def custom_query_validation_test(
 
         if comp_fields:
             cli_arg_list.append(f"--comparison-fields={comp_fields}")
+        elif concat:
+            cli_arg_list.append(f"--concat={concat}")
         else:
             cli_arg_list.append(f"--hash={hash}")
 
