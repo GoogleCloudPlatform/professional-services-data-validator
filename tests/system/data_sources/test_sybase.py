@@ -70,6 +70,9 @@ def mock_get_connection_config(*args):
         return BQ_CONN
 
 
+#
+# SCHEMA VALIDATION
+#
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -114,6 +117,30 @@ def test_schema_validation_view_core_types_vw():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_not_null_vs_nullable():
+    """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "schema",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_null_not_null",
+            "--allow-list=timestamp:timestamp('UTC'),",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    null_not_null_assertions(df)
+
+
+#
+# ROW VALIDATION
+#
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -182,6 +209,52 @@ def test_column_validation_view_core_types_vw():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_large_decimals_to_bigquery():
+    """Sybase to BigQuery dvt_large_decimals column validation."""
+    cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    std_cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    avg_cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=avg_cols,
+        std_cols=std_cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """Oracle to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    # The columns below have mismatching data and should be in the Dataframe.
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
+
+
+#
+# ROW VALIDATION
+#
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Sybase dvt_core_types concat row validation.
 
@@ -218,13 +291,14 @@ def test_row_validation_core_types_to_bigquery():
     """Sybase to BigQuery dvt_core_types concat row validation.
 
     Sybase does not have a SHA256 hash function."""
+    # Excluded col_float32 because BigQuery does not have a float32 type.
     # TODO Add col_string to cols below when issue-xyz is actioned.
     # TODO Add col_dec_10_2 to cols below when issue-xyz is actioned.
     cols = ",".join(
         [
             _
             for _ in DVT_CORE_TYPES_COLUMNS
-            if _ not in ("id", "col_string", "col_dec_10_2")
+            if _ not in ("id", "col_float32", "col_string", "col_dec_10_2")
         ]
     )
     row_validation_test(
