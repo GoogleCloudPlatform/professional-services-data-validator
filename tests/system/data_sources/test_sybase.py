@@ -96,8 +96,8 @@ def test_schema_validation_core_types_to_bigquery():
             "int8:int64,int16:int64,int32:int64,!int32:!int64,"
             # BigQuery does not have a float32 type.
             "float32:float64,"
-            # Sybase TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
-            # "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),"
+            # Sybase does not have a time zoned timestamp.
+            "timestamp:timestamp('UTC'),"
         ),
     )
 

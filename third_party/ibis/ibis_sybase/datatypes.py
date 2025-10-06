@@ -95,3 +95,8 @@ def type_from_result_set_info(
     #    else:
     #        typ = dt.Float64
     return typ(nullable=bool(nullable))
+
+
+# @dt.dtype.register(MSDialect, mssql.DATETIME2)
+# def sa_mssql_datetime2(_, sa_type, nullable=True):
+#    return dt.Timestamp(nullable=nullable)
