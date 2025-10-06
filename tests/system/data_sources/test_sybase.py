@@ -51,6 +51,7 @@ SYBASE_HOST = os.getenv("SYBASE_HOST", "127.0.0.1")
 SYBASE_USER = os.getenv("SYBASE_USER", "sqlserver")
 SYBASE_PASSWORD = os.getenv("SYBASE_PASSWORD")
 SYBASE_DATABASE = os.getenv("SYBASE_DATABASE", "master")
+SYBASE_ODBC_DRIVER = os.getenv("SYBASE_ODBC_DRIVER", "FreeTDS")
 PROJECT_ID = os.getenv("PROJECT_ID")
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_SYBASE,
@@ -58,6 +59,7 @@ CONN = {
     "user": SYBASE_USER,
     "password": SYBASE_PASSWORD,
     "database": SYBASE_DATABASE,
+    "odbc_driver": SYBASE_ODBC_DRIVER,
 }
 
 
@@ -97,4 +99,49 @@ def test_schema_validation_core_types_to_bigquery():
             # Sybase TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
             # "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),"
         ),
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_core_types():
+    """Sybase dvt_core_types column validation"""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_core_types",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
+        avg_cols="*",
+        std_cols="*",
+        filters="id>0 AND col_int8>0",
+        grouped_columns="col_varchar_30",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_core_types_to_bigquery():
+    """Sybase to BigQuery dvt_core_types column validation"""
+    # Excluded col_float32 because BigQuery does not have a float32 type.
+    # TODO Change cols to include col_char_2 when issue-1514 is complete.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_char_2")
+        ]
+    )
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_core_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
