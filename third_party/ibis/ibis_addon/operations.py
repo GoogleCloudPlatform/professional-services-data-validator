@@ -604,4 +604,4 @@ SybaseExprTranslator._registry[ops.Strftime] = sybase_registry.strftime
 SybaseExprTranslator._registry[ops.StringLength] = (
     sybase_registry.sa_format_string_length
 )
-SybaseExprTranslator._registry[ops.StringJoin] = oracle_registry._string_join
+SybaseExprTranslator._registry[ops.StringJoin] = sybase_registry.sa_string_join

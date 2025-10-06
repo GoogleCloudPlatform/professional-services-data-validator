@@ -23,6 +23,7 @@ def sa_cast_sybase(t, op):
     typ = op.to
     arg_dtype = arg.output_dtype
 
+    sa_arg = t.translate(arg)
     # Specialize going from DECIMAL(p,s>0) to string
     if (
         arg_dtype.is_decimal()
@@ -32,6 +33,8 @@ def sa_cast_sybase(t, op):
     ) or ((arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string()):
         # Prevent SQL Server specific workaround.
         return sa_fixed_cast(t, op)
+    elif arg_dtype.is_timestamp():
+        return sa.func.convert(sa.literal_column("'BIGDATETIME'"), sa_arg)
 
     # Follow our SQL Server code path.
     return sa_cast_mssql(t, op)
@@ -56,6 +59,12 @@ def sa_format_string_length(translator, op):
     """Sybase string length function is char_length()."""
     arg = translator.translate(op.arg)
     return sa.func.char_length(arg)
+
+
+def sa_string_join(t, op):
+    sep, elements = op.args
+    columns = [str(col.name) for col in map(t.translate, elements)]
+    return sa.sql.literal_column(" || ".join(columns))
 
 
 def strftime(translator, op):

@@ -71,7 +71,6 @@ _type_mapping = {
 }
 
 
-# def _type_from_result_set_info(col: _FieldDescription) -> dt.DataType:
 def type_from_result_set_info(
     col_name: str, type_name: str, precision: int, scale: int, nullable: int
 ) -> dt.DataType:
@@ -85,8 +84,3 @@ def type_from_result_set_info(
         typ = partial(typ, precision=precision, scale=scale)
 
     return typ(nullable=bool(nullable))
-
-
-# @dt.dtype.register(MSDialect, mssql.DATETIME2)
-# def sa_mssql_datetime2(_, sa_type, nullable=True):
-#    return dt.Timestamp(nullable=nullable)
