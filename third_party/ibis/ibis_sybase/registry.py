@@ -33,7 +33,8 @@ def sa_cast_sybase(t, op):
     ) or ((arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string()):
         # Prevent SQL Server specific workaround.
         return sa_fixed_cast(t, op)
-    elif arg_dtype.is_timestamp():
+    elif typ.is_timestamp():
+        # There must be a way to set the target name for dt.Timestamp globally, need to try again.
         return sa.func.convert(sa.literal_column("'BIGDATETIME'"), sa_arg)
 
     # Follow our SQL Server code path.
