@@ -37,6 +37,21 @@ def sa_cast_sybase(t, op):
     return sa_cast_mssql(t, op)
 
 
+def sa_format_hashbytes(translator, op):
+    """Format a hash string for DVT validation.
+
+    Unfortunately the Sybase SHA algorithm is not compatible with SHA256 therefore this
+    function is more an example of how we might to it rather than a useful implementation.
+
+    Sybase ASE does not support a SHA256 algorithm:
+    https://userapps.support.sap.com/sap/support/knowledge/en/3108409
+    """
+    arg = translator.translate(op.arg)
+    cast_arg = sa.func.convert(sa.sql.literal_column("VARCHAR(16384)"), arg)
+    hash_func = sa.func.hash(cast_arg, sa.sql.literal_column("'sha1'"))
+    return hash_func
+
+
 def sa_format_string_length(translator, op):
     """Sybase string length function is char_length()."""
     arg = translator.translate(op.arg)
