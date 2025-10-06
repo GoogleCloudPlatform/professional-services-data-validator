@@ -77,7 +77,7 @@ class Backend(BaseAlchemyBackend):
             if query:
                 query_dict = json.loads(query)
                 if "driver" not in query:
-                    query_dict["driver"] = odbc_driver or "FreeTDS
+                    query_dict["driver"] = odbc_driver or "FreeTDS"
             else:
                 query_dict = {"driver": odbc_driver}
 
