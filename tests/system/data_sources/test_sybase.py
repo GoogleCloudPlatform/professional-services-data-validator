@@ -59,6 +59,7 @@ CONN = {
     "password": SYBASE_PASSWORD,
     "database": SYBASE_DATABASE,
     "odbc_driver": SYBASE_ODBC_DRIVER,
+    "query": '{"autocommit": "True"}',
 }
 
 

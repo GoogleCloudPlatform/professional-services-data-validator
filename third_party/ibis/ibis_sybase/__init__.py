@@ -75,9 +75,11 @@ class Backend(BaseAlchemyBackend):
                 )
 
             if query:
-                query = json.loads(query)
+                query_dict = json.loads(query)
+                if "driver" not in query:
+                    query_dict["driver"] = odbc_driver or "FreeTDS
             else:
-                query = {"driver": odbc_driver}
+                query_dict = {"driver": odbc_driver}
 
             alchemy_url = sa.engine.url.URL.create(
                 f"sybase+{driver}",
@@ -86,7 +88,7 @@ class Backend(BaseAlchemyBackend):
                 username=user,
                 password=password,
                 database=database,
-                query=query,
+                query=query_dict,
             )
         else:
             alchemy_url = sa.engine.url.make_url(url)
