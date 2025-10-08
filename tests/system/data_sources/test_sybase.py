@@ -276,7 +276,7 @@ def test_column_validation_tricky_dates_to_bigquery():
 def test_row_validation_core_types():
     """Sybase dvt_core_types concat row validation.
 
-    Sybase does not have a SHA256 hash function."""
+    Sybase does not have a SHA256 hash function therefore this test uses concat."""
     # TODO Add col_string to cols below when issue-xyz is actioned.
     cols = ",".join(
         [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
@@ -308,7 +308,7 @@ def test_row_validation_core_types_auto_pks():
 def test_row_validation_core_types_to_bigquery():
     """Sybase to BigQuery dvt_core_types concat row validation.
 
-    Sybase does not have a SHA256 hash function."""
+    Sybase does not have a SHA256 hash function therefore this test uses concat."""
     # Excluded col_float32 because BigQuery does not have a float32 type.
     # TODO Add col_string to cols below when issue-xyz is actioned.
     # TODO Add col_dec_10_2 to cols below when issue-xyz is actioned.
@@ -330,7 +330,9 @@ def test_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_comp_fields_core_types_to_bigquery():
-    """Sybase to BigQuery extended data type row validation using comparison fields"""
+    """Sybase to BigQuery extended data type row validation using comparison fields.
+
+    Sybase does not have a SHA256 hash function therefore this test uses concat."""
     cols = ",".join(
         [
             _
@@ -355,12 +357,14 @@ def test_row_validation_comp_fields_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_tricky_dates_to_bigquery():
-    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    """Test with date values that are at the extremes, e.g. 9999-12-31.
+
+    Sybase does not have a SHA256 hash function therefore this test uses concat."""
     cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash=cols,
+        concat=cols,
     )
 
 
@@ -396,7 +400,7 @@ def test_row_validation_binary_pk_to_bigquery():
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_binary",
             "--primary-keys=binary_id",
-            "--hash=int_id,other_data",
+            "--concat=int_id,other_data",
             "--use-random-row",
             "--random-row-batch-size=5",
         ]
@@ -422,10 +426,13 @@ def test_custom_query_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_validation_core_types_to_bigquery():
-    """Sybase to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    """Sybase to BigQuery dvt_core_types custom-query row comparison-fields validation.
+
+    Sybase identifiers are case sensitive therefore no mixed case in source_query below which
+    differs from this test in other engines."""
     custom_query_validation_test(
         validation_type="row",
-        source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        source_query="select id,col_int64,col_varchar_30,col_date from pso_data_validator.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
         concat="col_int64,col_varchar_30,col_date",
     )
@@ -436,10 +443,13 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_validation_comp_fields_core_types_to_bigquery():
-    """Sybase to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    """Sybase to BigQuery dvt_core_types custom-query row comparison-fields validation.
+
+    Sybase identifiers are case sensitive therefore no mixed case in source_query below which
+    differs from this test in other engines."""
     custom_query_validation_test(
         validation_type="row",
-        source_query="select id,col_int64,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        source_query="select id,col_int64,col_varchar_30,col_date from pso_data_validator.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
         comp_fields="col_int64,col_varchar_30,col_date",
     )
