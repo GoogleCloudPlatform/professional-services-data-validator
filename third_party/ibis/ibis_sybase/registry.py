@@ -36,6 +36,12 @@ def sa_cast_sybase(t, op):
     elif typ.is_timestamp():
         # There must be a way to set the target name for dt.Timestamp globally, need to try again.
         return sa.func.convert(sa.literal_column("'BIGDATETIME'"), sa_arg)
+    elif arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.bintostr(sa_arg)
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.strtobin(sa_arg)
 
     # Follow our SQL Server code path.
     return sa_cast_mssql(t, op)

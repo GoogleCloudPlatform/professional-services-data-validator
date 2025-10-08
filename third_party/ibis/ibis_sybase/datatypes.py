@@ -16,8 +16,8 @@ import datetime
 import decimal
 from functools import partial
 
-from sqlalchemy.types import DATETIME
-from sqlalchemy_sybase.base import ischema_names
+from sqlalchemy.types import DATETIME, VARBINARY
+from sqlalchemy_sybase.base import ischema_names, SybaseDialect
 import ibis.expr.datatypes as dt
 
 
@@ -84,3 +84,8 @@ def type_from_result_set_info(
         typ = partial(typ, precision=precision, scale=scale)
 
     return typ(nullable=bool(nullable))
+
+
+@dt.dtype.register(SybaseDialect, VARBINARY)
+def sa_sybase_varbinary(_, sa_type, nullable=True):
+    return dt.Binary(nullable=nullable)

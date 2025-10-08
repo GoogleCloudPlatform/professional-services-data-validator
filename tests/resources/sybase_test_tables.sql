@@ -64,10 +64,10 @@ DROP TABLE pso_data_validator.dvt_null_not_null
 GO
 
 CREATE TABLE pso_data_validator.dvt_null_not_null
-(   col_nn             date NOT NULL
-,   col_nullable       date NULL
-,   col_src_nn_trg_n   date NOT NULL
-,   col_src_n_trg_nn   date NULL
+(   col_nn             bigdatetime NOT NULL
+,   col_nullable       bigdatetime NULL
+,   col_src_nn_trg_n   bigdatetime NOT NULL
+,   col_src_n_trg_nn   bigdatetime NULL
 )
 GO
 
