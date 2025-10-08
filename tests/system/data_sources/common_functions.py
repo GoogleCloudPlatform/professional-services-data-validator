@@ -485,12 +485,15 @@ def id_column_row_validation_test(
     tc: str = "bq-conn",
     hash: str = "id,other_data",
     comp_fields: Optional[str] = None,
+    concat: Optional[str] = None,
     use_randow_row: bool = True,
 ):
     """Specific row validation test for primary key data type tests"""
     parser = cli_tools.configure_arg_parser()
     if comp_fields:
         col_option = f"--comparison-fields={comp_fields}"
+    elif concat:
+        col_option = f"--concat={concat}"
     else:
         col_option = f"--hash={hash}"
     cli_arg_list = [

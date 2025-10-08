@@ -62,6 +62,17 @@ CONN = {
     "query": '{"autocommit": "True"}',
 }
 
+EXPECTED_DATETIME_ID_PARTITION_FILTER = [
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+    [
+        " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
+        " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
+    ],
+]
+
 
 def mock_get_connection_config(*args):
     if args[1] in ("sybase-conn", "mock-conn"):
@@ -136,6 +147,30 @@ def test_schema_validation_not_null_vs_nullable():
     )
     df = run_test_from_cli_args(args)
     null_not_null_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_identifiers():
+    """Test schema validation on a table with special characters in table and column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
 
 
 #
@@ -266,6 +301,47 @@ def test_column_validation_tricky_dates_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_identifiers():
+    """Test column validation on a table with special characters in table and column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt-identifier$_#",
+        count_cols="*",
+        filters="'col#hash' IS NOT NULL",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_uuid_to_bigquery():
+    """Test column validation with UUID column and primary key to BigQuery"""
+    column_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        count_cols="*",
+        sum_cols="*",
+        min_cols="*",
+    )
+
+
 #
 # ROW VALIDATION TESTS
 #
@@ -356,6 +432,24 @@ def test_row_validation_comp_fields_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_large_decimals_to_bigquery():
+    """SQL Server to BigQuery dvt_large_decimals row validation.
+    See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals for the primary key join column plus the hash columns.
+
+    Sybase does not have a SHA256 hash function therefore this test uses concat.
+    """
+    row_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        concat="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31.
 
@@ -389,7 +483,9 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
 def test_row_validation_binary_pk_to_bigquery():
     """Sybase to BigQuery dvt_binary row validation.
     This is testing binary primary key join columns.
-    Includes random row filter test.
+    Includes random row filter test..
+
+    Sybase does not have a SHA256 hash function therefore this test uses concat.
     """
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(
@@ -407,6 +503,145 @@ def test_row_validation_binary_pk_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns.
+
+    Sybase does not have a SHA256 hash function therefore this test uses concat."""
+    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_randow_row=False,
+        concat="id,other_data",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_pangrams_to_bigquery():
+    """Sybase to BigQuery dvt_pangrams row validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+
+    This needs more investigation on how to handle unicode characters in Sybase.
+    """
+    pytest.skip(
+        "Skipping test_row_validation_pangrams_to_bigquery because we don't yet understand unicode."
+    )
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=sql-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_pangrams",
+            "--primary-keys=id",
+            "--concat=*",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_strings_to_bigquery():
+    """Test with string values containing special characters."""
+    # pytest.skip(
+    #    "Skipping test_row_validation_tricky_strings_to_bigquery because the version of SQL Server we have does not support rtrim of all whitespace."
+    # )
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_strings",
+        tc="bq-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """Sybase dvt_many_cols row validation"""
+    row_validation_many_columns_test(expected_config_managers=2, concat_arg="concat")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_identifiers():
+    """Test row validation on a table with special characters in table and column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names.
+
+    Sybase does not have a SHA256 hash function therefore this test uses concat."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        concat="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_hash_to_bigquery():
+    """Test row validation with UUID column and primary key to BigQuery.
+
+    Sybase does not have a SHA256 hash function therefore this test uses concat."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        concat="*",
+    )
 
 
 #
@@ -455,11 +690,39 @@ def test_custom_query_row_validation_comp_fields_core_types_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_many_columns():
+    """Sybase dvt_many_cols custom-query row validation"""
+    row_validation_many_columns_test(
+        validation_type="custom-query", expected_config_managers=2, concat_arg="concat"
+    )
+
+
+#
+# GENERATE-PARTITIONS TESTS
+#
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_partitions_datetime_pk():
+    """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
+    partition_table_test(
+        EXPECTED_DATETIME_ID_PARTITION_FILTER,
+        pk="id",
+        tables="pso_data_validator.dvt_datetime_id",
+        filters="other_data IS NOT NULL",
+        partition_num=2,
+    )
+
+
 #
 # FIND-TABLE VALIDATION TESTS
 #
-
-
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -467,3 +730,15 @@ def test_custom_query_row_validation_comp_fields_core_types_to_bigquery():
 def test_find_tables():
     """Sybase to BigQuery test of find-tables command."""
     find_tables_test()
+
+
+#
+# RAW QUERY TESTS
+#
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_raw_query_dvt_row_types(capsys):
+    """Test data-validation query command."""
+    raw_query_test(capsys)
