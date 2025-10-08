@@ -74,9 +74,9 @@ def sa_string_join(t, op):
     for arg in args:
         sa_arg = t.translate(arg)
         if expr is None:
-            expr = expr + sa.sql.literal_column("||") + sa_arg
-        else:
             expr = sa_arg
+        else:
+            expr = expr + sa.sql.literal_column("||") + sa_arg
     return expr
 
 
