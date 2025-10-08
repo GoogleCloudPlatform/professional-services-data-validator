@@ -69,9 +69,15 @@ def sa_format_string_length(translator, op):
 
 
 def sa_string_join(t, op):
-    sep, elements = op.args
-    columns = [str(col.name) for col in map(t.translate, elements)]
-    return sa.sql.literal_column(" || ".join(columns))
+    sep, args = op.args
+    expr = None
+    for arg in args:
+        sa_arg = t.translate(arg)
+        if expr is None:
+            expr = expr + sa.sql.literal_column("||") + sa_arg
+        else:
+            expr = sa_arg
+    return expr
 
 
 def strftime(translator, op):
