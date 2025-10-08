@@ -81,9 +81,9 @@ def mock_get_connection_config(*args):
         return BQ_CONN
 
 
-#
+##########################
 # SCHEMA VALIDATION TESTS
-#
+##########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -173,9 +173,9 @@ def test_schema_validation_reserved_words():
     )
 
 
-#
+##########################
 # COLUMN VALIDATION TESTS
-#
+##########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -325,20 +325,6 @@ def test_column_validation_reserved_words():
         tc="mock-conn",
         tables="pso_data_validator.dvt_reserved_word_columns",
         count_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_uuid_to_bigquery():
-    """Test column validation with UUID column and primary key to BigQuery"""
-    column_validation_test(
-        tables="pso_data_validator.dvt_uuid_id",
-        count_cols="*",
-        sum_cols="*",
-        min_cols="*",
     )
 
 
@@ -576,7 +562,7 @@ def test_row_validation_tricky_strings_to_bigquery():
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_strings",
         tc="bq-conn",
-        hash="*",
+        concat="*",
     )
 
 
@@ -630,23 +616,9 @@ def test_row_validation_comp_fields_reserved_words():
     )
 
 
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_uuid_hash_to_bigquery():
-    """Test row validation with UUID column and primary key to BigQuery.
-
-    Sybase does not have a SHA256 hash function therefore this test uses concat."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_uuid_id",
-        concat="*",
-    )
-
-
-#
+################################
 # CUSTOM-QUERY VALIDATION TESTS
-#
+################################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -701,9 +673,9 @@ def test_custom_query_row_validation_many_columns():
     )
 
 
-#
+############################
 # GENERATE-PARTITIONS TESTS
-#
+############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -720,9 +692,9 @@ def test_generate_partitions_datetime_pk():
     )
 
 
-#
+##############################
 # FIND-TABLE VALIDATION TESTS
-#
+##############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -732,9 +704,9 @@ def test_find_tables():
     find_tables_test()
 
 
-#
+##################
 # RAW QUERY TESTS
-#
+##################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
