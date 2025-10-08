@@ -572,7 +572,7 @@ def test_row_validation_tricky_strings_to_bigquery():
 )
 def test_row_validation_many_columns():
     """Sybase dvt_many_cols row validation"""
-    row_validation_many_columns_test(expected_config_managers=2, concat_arg="concat")
+    row_validation_many_columns_test(concat_arg="concat")
 
 
 @mock.patch(
@@ -669,7 +669,7 @@ def test_custom_query_row_validation_comp_fields_core_types_to_bigquery():
 def test_custom_query_row_validation_many_columns():
     """Sybase dvt_many_cols custom-query row validation"""
     row_validation_many_columns_test(
-        validation_type="custom-query", expected_config_managers=2, concat_arg="concat"
+        validation_type="custom-query", concat_arg="concat"
     )
 
 
