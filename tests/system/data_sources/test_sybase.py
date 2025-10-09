@@ -27,10 +27,8 @@ from tests.system.data_sources.common_functions import (
     column_validation_test_config_managers,
     find_tables_test,
     id_column_row_validation_test,
-    id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
-    raw_query_rows,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -339,7 +337,7 @@ def test_row_validation_core_types():
     """Sybase dvt_core_types concat row validation.
 
     Sybase does not have a SHA256 hash function therefore this test uses concat."""
-    # TODO Add col_string to cols below when issue-xyz is actioned.
+    # Excluded col_string due us not yet having support for text data type.
     cols = ",".join(
         [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
     )
@@ -372,7 +370,7 @@ def test_row_validation_core_types_to_bigquery():
 
     Sybase does not have a SHA256 hash function therefore this test uses concat."""
     # Excluded col_float32 because BigQuery does not have a float32 type.
-    # TODO Add col_string to cols below when issue-xyz is actioned.
+    # Excluded col_string due us not yet having support for text data type.
     # TODO Add col_dec_10_2 to cols below when issue-xyz is actioned.
     cols = ",".join(
         [
@@ -419,7 +417,7 @@ def test_row_validation_comp_fields_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_large_decimals_to_bigquery():
-    """SQL Server to BigQuery dvt_large_decimals row validation.
+    """Sybase to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
     This is testing large decimals for the primary key join column plus the hash columns.
 
@@ -557,7 +555,7 @@ def test_row_validation_pangrams_to_bigquery():
 def test_row_validation_tricky_strings_to_bigquery():
     """Test with string values containing special characters."""
     pytest.skip(
-        "Skipping test_row_validation_tricky_strings_to_bigquery because the version of SQL Server we have does not support rtrim of all whitespace."
+        "Skipping test_row_validation_tricky_strings_to_bigquery because the version of Sybase we have does not support rtrim of all whitespace."
     )
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_strings",

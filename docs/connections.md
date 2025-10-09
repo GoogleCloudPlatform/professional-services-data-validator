@@ -92,6 +92,7 @@ The data validation tool supports the following connection types.
 * [DB2](#db2)
 * [AlloyDB](#alloydb)
 * [Snowflake](#snowflake)
+* [Sybase](#sybase)
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
@@ -256,7 +257,7 @@ data-validation connections add
     --password PASSWORD                                 MSSQL password
     --database DATABASE                                 MSSQL database
     [--url URL]                                         SQLAlchemy connection URL
-    [--query QUERY]                                     Connection query parameters i.e. '{"TrustServerCertificate": "yes"}'
+    [--query QUERY]                                     Connection query parameters e.g. '{"TrustServerCertificate": "yes"}'
 ```
 
 ## Postgres
@@ -442,3 +443,32 @@ To connect to Snowflake using key-pair authentication you will need to use the `
 ```
 {"source_type": "Snowflake", "user": USER_NAME, "password": "", "account": ACCOUNT, "database": DATABASE, "connect_args": '{"private_key_file": PATH_TO_RSA_KEY/RSA_KEY.p8, "private_key_file_pwd": PASSPHRASE}'}
 ```
+
+## Sybase
+
+Sybase requires the `sqlalchemy_sybase` package.
+
+```
+data-validation connections add
+    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
+    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
+    --connection-name CONN_NAME Sybase                  Connection name
+    --user USER                                         Sybase user
+    --password PASSWORD                                 Sybase password
+    --host HOST                                         Sybase host
+    --port PORT                                         Sybase port, defaults to 5000
+    --database DATABASE                                 Sybase database
+    --database DATABASE/SCHEMA                          Snowflake database and schema, separated by a `/`
+    [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
+```
+
+When testing we needed to enable auto commit to be able to run catalog stored procedures, an example connection command is included below:
+
+```
+data-validation connections add -c sybase Sybase \
+  --host=sybase-host --database=somedb \
+  --user=dvt --password=DVTS3cret \
+  --connect-args='{"driver": "FreeTDS", "autocommit": "True"}'
+```
+
+See also [limitations](https://github.com/GoogleCloudPlatform/professional-services-data-validator2/blob/develop/docs/limitations.md#sybase)
