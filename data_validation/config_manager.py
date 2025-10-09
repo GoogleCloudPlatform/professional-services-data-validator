@@ -1309,10 +1309,11 @@ class ConfigManager(object):
             casefold_target_columns, col_list
         )
 
-        casefold_source_columns, casefold_target_columns = (
-            self._filter_columns_by_data_type(
-                casefold_source_columns, casefold_target_columns
-            )
+        (
+            casefold_source_columns,
+            casefold_target_columns,
+        ) = self._filter_columns_by_data_type(
+            casefold_source_columns, casefold_target_columns
         )
 
         column_aliases = {}
