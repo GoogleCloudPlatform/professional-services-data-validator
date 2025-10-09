@@ -55,7 +55,6 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from third_party.ibis.ibis_sybase.compiler import SybaseExprTranslator
 from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValue
 
 # Do not remove these lines, they trigger patching of Ibis code.
@@ -65,7 +64,6 @@ import third_party.ibis.ibis_mysql.compiler  # noqa
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
 import third_party.ibis.ibis_postgres.client  # noqa
-from third_party.ibis.ibis_sybase import registry as sybase_registry
 
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
@@ -94,6 +92,13 @@ try:
     from ibis.backends.snowflake import SnowflakeExprTranslator
 except Exception:
     SnowflakeExprTranslator = None
+
+# Sybase requires sqlalchemy_sybase package.
+try:
+    from third_party.ibis.ibis_sybase.compiler import SybaseExprTranslator
+    from third_party.ibis.ibis_sybase import registry as sybase_registry
+except Exception:
+    SybaseExprTranslator = None
 
 
 # Cast of datetime64 NaT to int64 and then in seconds results in the value below.
