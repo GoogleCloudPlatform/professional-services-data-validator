@@ -600,22 +600,25 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
-SybaseExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
-SybaseExprTranslator._registry[ops.Cast] = sybase_registry.sa_cast_sybase
-SybaseExprTranslator._registry[ops.ExtractEpochSeconds] = (
-    sybase_registry.sa_epoch_seconds
-)
-SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
-SybaseExprTranslator._registry[ops.HashBytes] = sybase_registry.sa_format_hashbytes
-SybaseExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.isnull, 2)
-SybaseExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
-    ops.StringLength
-]
-SybaseExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
-SybaseExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
-SybaseExprTranslator._registry[ops.Strftime] = sybase_registry.strftime
-SybaseExprTranslator._registry[ops.StringJoin] = sybase_registry.sa_string_join
-SybaseExprTranslator._registry[ops.StringLength] = (
-    sybase_registry.sa_format_string_length
-)
-SybaseExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
+if SybaseExprTranslator:
+    SybaseExprTranslator._registry[BinaryLength] = (
+        mssql_registry.sa_format_binary_length
+    )
+    SybaseExprTranslator._registry[ops.Cast] = sybase_registry.sa_cast_sybase
+    SybaseExprTranslator._registry[ops.ExtractEpochSeconds] = (
+        sybase_registry.sa_epoch_seconds
+    )
+    SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    SybaseExprTranslator._registry[ops.HashBytes] = sybase_registry.sa_format_hashbytes
+    SybaseExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.isnull, 2)
+    SybaseExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
+        ops.StringLength
+    ]
+    SybaseExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+    SybaseExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
+    SybaseExprTranslator._registry[ops.Strftime] = sybase_registry.strftime
+    SybaseExprTranslator._registry[ops.StringJoin] = sybase_registry.sa_string_join
+    SybaseExprTranslator._registry[ops.StringLength] = (
+        sybase_registry.sa_format_string_length
+    )
+    SybaseExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
