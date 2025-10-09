@@ -33,7 +33,6 @@ from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
-from third_party.ibis.ibis_sybase.api import sybase_connect
 
 if TYPE_CHECKING:
     import ibis.expr.schema as sch
@@ -94,6 +93,12 @@ try:
     from third_party.ibis.ibis_db2.api import db2_connect
 except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+
+# Sybase requires sqlalchemy_sybase package.
+try:
+    from third_party.ibis.ibis_sybase.api import sybase_connect
+except ImportError:
+    sybase_connect = _raise_missing_client_error("pip install sqlalchemy_sybase")
 
 
 def get_google_bigquery_client(
@@ -317,10 +322,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config["credentials"] = (
-                google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
-                )
+            decrypted_connection_config[
+                "credentials"
+            ] = google.oauth2.service_account.Credentials.from_service_account_file(
+                key_path
             )
 
     if source_type not in CLIENT_LOOKUP:

@@ -44,7 +44,6 @@ dependencies = [
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
     "SQLAlchemy==2.0.41",  # Need 2.0 or higher for oracledb
-    "sqlalchemy-sybase",
     "tabulate>=0.9.0",
 ]
 
