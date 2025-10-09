@@ -31,8 +31,37 @@ def sa_cast_sybase(t, op):
         and arg_dtype.scale > 0
         and typ.is_string()
     ) or ((arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string()):
-        # Prevent SQL Server specific workaround.
-        return sa_fixed_cast(t, op)
+        # Sybase ASE pads with zeros up to scale and does not appear to have a format function to
+        # remove irrelevant trailing zeros.
+        # The expression below is not very elegant but will ensure we don't have trailing spaces when scale>0.
+        # The gist of it is:
+        #   1. Replace all zeros with spaces and then rtrim (shame rtrim does not allow a replacement char)
+        #   2. Replace spaces back to zeros. This is assuming it is not possible to get spaces for other reasons.
+        #   3. Do the same with the dot character in case we've ended up with a lonely trailing dot.
+        # TODO can this be improved? It's pretty ugly.
+        return sa.func.str_replace(
+            sa.func.rtrim(
+                sa.func.str_replace(
+                    sa.func.str_replace(
+                        sa.func.rtrim(
+                            sa.func.str_replace(
+                                sa.func.convert(
+                                    sa.literal_column("VARCHAR(50)"), sa_arg
+                                ),
+                                "0",
+                                " ",
+                            )
+                        ),
+                        " ",
+                        "0",
+                    ),
+                    ".",
+                    " ",
+                )
+            ),
+            " ",
+            ".",
+        )
     elif typ.is_timestamp():
         # There must be a way to set the target name for dt.Timestamp globally, need to try again.
         return sa.func.convert(sa.literal_column("'BIGDATETIME'"), sa_arg)
