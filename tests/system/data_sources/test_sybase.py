@@ -370,13 +370,16 @@ def test_row_validation_core_types_to_bigquery():
 
     Sybase does not have a SHA256 hash function therefore this test uses concat."""
     # Excluded col_float32 because BigQuery does not have a float32 type.
+    # Excluded col_float64 due to the lossy nature of float data type, it matches
+    #   Oracle BINARY_DOUBLE but does not match BigQuery FLOAT64.
     # Excluded col_string due us not yet having support for text data type.
     # TODO Add col_dec_10_2 to cols below when issue-xyz is actioned.
     cols = ",".join(
         [
             _
             for _ in DVT_CORE_TYPES_COLUMNS
-            if _ not in ("id", "col_float32", "col_string", "col_dec_10_2")
+            if _
+            not in ("id", "col_float32", "col_float64", "col_string", "col_dec_10_2")
         ]
     )
     row_validation_test(

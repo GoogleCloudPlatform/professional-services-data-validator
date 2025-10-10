@@ -92,7 +92,7 @@ The data validation tool supports the following connection types.
 * [DB2](#db2)
 * [AlloyDB](#alloydb)
 * [Snowflake](#snowflake)
-* [Sybase](#sybase)
+* [Sybase ASE](#sybase-ase)
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
@@ -444,9 +444,9 @@ To connect to Snowflake using key-pair authentication you will need to use the `
 {"source_type": "Snowflake", "user": USER_NAME, "password": "", "account": ACCOUNT, "database": DATABASE, "connect_args": '{"private_key_file": PATH_TO_RSA_KEY/RSA_KEY.p8, "private_key_file_pwd": PASSPHRASE}'}
 ```
 
-## Sybase
+## Sybase ASE
 
-Sybase requires the `sqlalchemy_sybase` package.
+Sybase ASE requires the `sqlalchemy_sybase` package.
 
 ```
 data-validation connections add
