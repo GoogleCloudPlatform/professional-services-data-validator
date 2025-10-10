@@ -44,6 +44,12 @@ from tests.system.data_sources.common_functions import (
 )
 
 
+pytestmark = pytest.mark.flaky(
+    reruns=1,
+    reruns_delay=1,
+    only_rerun=["DataClientConnectionFailure"],
+)
+
 SYBASE_HOST = os.getenv("SYBASE_HOST", "127.0.0.1")
 SYBASE_USER = os.getenv("SYBASE_USER", "sqlserver")
 SYBASE_PASSWORD = os.getenv("SYBASE_PASSWORD")
@@ -96,15 +102,6 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
         " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
     ],
 ]
-
-from data_validation.exceptions import DataClientConnectionFailure
-
-pytestmark = pytest.mark.flaky(
-    reruns=1,
-    reruns_delay=1,
-    only_rerun=[DataClientConnectionFailure],
-)
-# @pytest.mark.flaky(reruns=1, reruns_delay=1, only_rerun=["OperationalError"])
 
 
 def mock_get_connection_config(*args):
