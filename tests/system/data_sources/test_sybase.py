@@ -390,9 +390,7 @@ def test_row_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_comp_fields_core_types_to_bigquery():
-    """Sybase to BigQuery extended data type row validation using comparison fields.
-
-    Sybase does not have a SHA256 hash function therefore this test uses concat."""
+    """Sybase to BigQuery extended data type row validation using comparison fields"""
     cols = ",".join(
         [
             _
@@ -402,6 +400,8 @@ def test_row_validation_comp_fields_core_types_to_bigquery():
                 "id",
                 # Excluded col_float32 because BigQuery does not have a float32 type.
                 "col_float32",
+                # TODO Change cols to include col_char_2 when issue-1514 is complete.
+                "col_char_2",
             )
         ]
     )

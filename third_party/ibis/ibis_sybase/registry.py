@@ -39,28 +39,35 @@ def sa_cast_sybase(t, op):
         #   2. Replace spaces back to zeros. This is assuming it is not possible to get spaces for other reasons.
         #   3. Do the same with the dot character in case we've ended up with a lonely trailing dot.
         # TODO can this be improved? It's pretty ugly.
-        return sa.func.str_replace(
+        # TODO what if there is a locale setting that doesn't use dot for decimal places?
+        converted = sa.func.convert(sa.literal_column("VARCHAR(50)"), sa_arg)
+        trailing_zero_removed = sa.func.str_replace(
             sa.func.rtrim(
                 sa.func.str_replace(
                     sa.func.str_replace(
                         sa.func.rtrim(
                             sa.func.str_replace(
-                                sa.func.convert(
-                                    sa.literal_column("VARCHAR(50)"), sa_arg
-                                ),
-                                "0",
-                                " ",
+                                converted,
+                                sa.literal_column("'0'"),
+                                sa.literal_column("' '"),
                             )
                         ),
-                        " ",
-                        "0",
+                        sa.literal_column("' '"),
+                        sa.literal_column("'0'"),
                     ),
-                    ".",
-                    " ",
+                    sa.literal_column("'.'"),
+                    sa.literal_column("' '"),
                 )
             ),
-            " ",
-            ".",
+            sa.literal_column("' '"),
+            sa.literal_column("'.'"),
+        )
+        return sa.case(
+            (
+                sa.func.charindex(sa.literal_column("'.'"), converted) > 0,
+                trailing_zero_removed,
+            ),
+            else_=converted,
         )
     elif typ.is_timestamp():
         # There must be a way to set the target name for dt.Timestamp globally, need to try again.
