@@ -44,6 +44,7 @@ from tests.system.data_sources.common_functions import (
 )
 
 
+# Our Sybase test infra has a habit of failing to connect but then working on retry.
 pytestmark = pytest.mark.flaky(
     reruns=1,
     reruns_delay=1,
