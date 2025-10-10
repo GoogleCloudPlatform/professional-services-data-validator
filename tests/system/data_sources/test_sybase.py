@@ -97,10 +97,12 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
     ],
 ]
 
+from data_validation.exceptions import DataClientConnectionFailure
+
 pytestmark = pytest.mark.flaky(
     reruns=1,
     reruns_delay=1,
-    only_rerun=["data_validation.exceptions.DataClientConnectionFailure"],
+    only_rerun=[DataClientConnectionFailure],
 )
 # @pytest.mark.flaky(reruns=1, reruns_delay=1, only_rerun=["OperationalError"])
 
