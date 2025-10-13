@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from unittest import mock
 
 import pytest
@@ -32,14 +33,7 @@ BQ_CONFIG = {
 PG_CONFIG = {
     consts.RH_TYPE: consts.SOURCE_TYPE_POSTGRES,
     consts.TABLE_ID: "schema.table",
-    consts.RH_CONN: {
-        "host": "localhost",
-        "port": "5432",
-        "user": "dvt_u",
-        "password": "dvt_p",
-        "database": "postgres",
-        consts.SOURCE_TYPE: consts.SOURCE_TYPE_POSTGRES,
-    },
+    consts.RH_CONN: "some_test_pg_rh",
 }
 
 IMPALA_CONFIG = {
@@ -74,7 +68,7 @@ def test_build_result_handler_default(module_under_test):
     assert handler.status_list == filter_status
 
 
-def test_build_result_handler_bigquery(module_under_test):
+def test_build_result_handler_bigquery_legacy(module_under_test):
     config = BQ_CONFIG
     filter_status = ["fail"]
     handler = module_under_test.build_result_handler(
@@ -90,7 +84,14 @@ def test_build_result_handler_bigquery(module_under_test):
     "data_validation.clients.CLIENT_LOOKUP",
     {consts.SOURCE_TYPE_POSTGRES: mock.Mock()},
 )
-def test_build_result_handler_postgres(module_under_test):
+def test_build_result_handler_postgres(fs, module_under_test):
+    pg_conn = '{"host": "localhost","port": "5432","user": "dvt_u","password": "dvt_p","database": "postgres", "source_type": "Postgres"}'
+    fs.create_file(
+        f"{consts.DEFAULT_ENV_DIRECTORY}/some_test_pg_rh.connection.json".replace(
+            "~", os.environ["HOME"]
+        ),
+        contents=pg_conn,
+    )
     config = PG_CONFIG
     filter_status = ["fail"]
     handler = module_under_test.build_result_handler(
