@@ -60,15 +60,9 @@ def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8) 
     return table_configs
 
 
-def _get_table_map(
-    client: "ibis.backends.base.BaseBackend", allowed_schemas=None, include_views=False
-):
-    """Return dict with searchable keys for table matching."""
+def _get_table_map_from_obj_list(table_objs: list) -> dict:
+    """Convert list of schema, table tuples into dict with searchable keys for table matching."""
     table_map = {}
-    table_objs = clients.get_all_tables(
-        client, allowed_schemas=allowed_schemas, tables_only=(not include_views)
-    )
-
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -76,7 +70,23 @@ def _get_table_map(
             consts.CONFIG_TABLE_NAME: table_obj[1],
         }
 
+    # Post process table_map and lower case table_keys, if possible.
+    for table_key in [_ for _ in table_map if _ != _.casefold()]:
+        if table_key.casefold() not in table_map:
+            # Only lower case the key if there isn't one already.
+            table_map[table_key.casefold()] = table_map.pop(table_key)
+
     return table_map
+
+
+def _get_table_map(
+    client: "ibis.backends.base.BaseBackend", allowed_schemas=None, include_views=False
+) -> dict:
+    """Return dict with searchable keys for table matching."""
+    table_objs = clients.get_all_tables(
+        client, allowed_schemas=allowed_schemas, tables_only=(not include_views)
+    )
+    return _get_table_map_from_obj_list(table_objs)
 
 
 def get_mapped_table_configs(
