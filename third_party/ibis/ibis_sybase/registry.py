@@ -13,8 +13,14 @@
 # limitations under the License.
 
 import sqlalchemy as sa
+import ibis.expr.operations as ops
 
-from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
+from ibis.backends.base.sql.alchemy import (
+    fixed_arity,
+    sqlalchemy_operation_registry,
+    sqlalchemy_window_functions_registry,
+)
+
 from third_party.ibis.ibis_mssql.registry import sa_cast_mssql
 
 
@@ -163,3 +169,15 @@ def sa_epoch_seconds(translator, op):
         ),
         sa.BIGINT,
     )
+
+
+operation_registry = sqlalchemy_operation_registry.copy()
+operation_registry.update(sqlalchemy_window_functions_registry)
+
+operation_registry[ops.Cast] = sa_cast_sybase
+operation_registry[ops.ExtractEpochSeconds] = sa_epoch_seconds
+operation_registry[ops.HashBytes] = sa_format_hashbytes
+operation_registry[ops.IfNull] = fixed_arity(sa.func.isnull, 2)
+operation_registry[ops.Strftime] = strftime
+operation_registry[ops.StringJoin] = sa_string_join
+operation_registry[ops.StringLength] = sa_format_string_length

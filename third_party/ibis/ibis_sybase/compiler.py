@@ -17,6 +17,8 @@ from ibis.backends.base.sql.alchemy.query_builder import AlchemySelect
 from sqlalchemy_sybase import DATETIME
 from sqlalchemy.dialects.mssql.base import MSDialect
 
+from third_party.ibis.ibis_sybase.registry import operation_registry
+
 
 class SybaseDialect(MSDialect):
     name = "sybase"
@@ -43,6 +45,7 @@ class SybaseAlchemySelect(AlchemySelect):
 
 
 class SybaseExprTranslator(AlchemyExprTranslator):
+    _registry = operation_registry
     _timestamp_type = DATETIME
     _rewrites = AlchemyExprTranslator._rewrites.copy()
 
