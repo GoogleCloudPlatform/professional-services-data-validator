@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 import ibis
 
@@ -58,7 +58,7 @@ class BaseBackendResultHandler:
     """Write results of data validation to a backend."""
 
     _table_id: str = None
-    _status_list: list = None
+    _status_list: Optional[list] = None
     _text_format: str = None
 
     def _filter_by_status_list(self, result_df: "DataFrame") -> "DataFrame":

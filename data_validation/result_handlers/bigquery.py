@@ -50,7 +50,7 @@ class BigQueryResultHandler(BaseBackendResultHandler):
     def __init__(
         self,
         bigquery_client,
-        status_list: list = None,
+        status_list: Optional[list] = None,
         table_id: str = "pso_data_validator.results",
         text_format: str = consts.FORMAT_TYPE_TABLE,
     ):
@@ -62,7 +62,7 @@ class BigQueryResultHandler(BaseBackendResultHandler):
     @staticmethod
     def get_handler_for_project(
         project_id,
-        status_list: Optional[str] = None,
+        status_list: Optional[list] = None,
         table_id: str = "pso_data_validator.results",
         sa_key_path: Optional[str] = None,
         api_endpoint: Optional[str] = None,
@@ -97,7 +97,7 @@ class BigQueryResultHandler(BaseBackendResultHandler):
     @staticmethod
     def get_handler_for_connection(
         connection_config: dict,
-        status_list: Optional[str] = None,
+        status_list: Optional[list] = None,
         table_id: str = "pso_data_validator.results",
         text_format: str = consts.FORMAT_TYPE_TABLE,
     ):

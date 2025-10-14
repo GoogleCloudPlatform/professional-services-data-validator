@@ -16,8 +16,6 @@
 
 from typing import TYPE_CHECKING, Optional
 
-import google.oauth2.service_account
-
 from data_validation import consts, exceptions, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.postgres import PostgresResultHandler
