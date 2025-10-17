@@ -68,6 +68,8 @@ In order to allow the data validation tool to write to a BigQuery table, users n
 - A Google Cloud Platform project with the BigQuery API enabled.
 - A Google user account with appropriate permissions. If you plan to run this tool in production, it's recommended that you create a service account specifically for running the tool. See our [guide](https://cloud.google.com/docs/authentication/production) on how to authenticate with your service account. If you are using a service account, you need to grant your service account appropriate roles on your project so that it has permissions to create and read resources.
 
+Note that DVT uses the BigQuery streaming API to write results to BigQuery, this is because of limits on the number of mutations per table per day.
+
 Clone the repository onto your machine and navigate inside the directory:
 
 ```
