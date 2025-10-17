@@ -594,9 +594,8 @@ The `--config-dir` flag will specify the directory with the YAML files to be exe
 
 ### Validation Reports
 
-The result handlers tell DVT where to store the results of each validation. The
-tool can write the results of a validation run to Google BigQuery, PostgreSQL
-or print to stdout (default). View the schema of the results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+The result handlers tell DVT where to store the results of each validation. The tool can write the results of a validation run to Google BigQuery, PostgreSQL or print to stdout (default). See [result handler setup](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#result-handler-setup) for pre-requisites. View the schema of the BigQuery results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+
 
 To output to BigQuery or PostgreSQL, simply include the `-rh` flag during a validation run including
 the schema and table name for the results.
