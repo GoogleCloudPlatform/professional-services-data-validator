@@ -534,18 +534,6 @@ def test_successful_find_tables_with_mock(mock_args, mock_run):
     main.main()
 
 
-@mock.patch("data_validation.__main__.PartitionBuilder")
-@mock.patch(
-    "data_validation.__main__.build_config_managers_from_args",
-    return_value=[
-        config_manager.ConfigManager(
-            GENERATE_PARTITIONS_CONFIG,
-            MockIbisClient(),
-            MockIbisClient(),
-            verbose=False,
-        )
-    ],
-)
 @mock.patch("data_validation.__main__.run_validation")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_args",
@@ -563,8 +551,9 @@ def test_successful_find_tables_with_mock(mock_args, mock_run):
     return_value=argparse.Namespace(**VALIDATE_SCHEMA_CONFIG),
 )
 def test_successful_schema_validation_with_mocked_run_validation(
-    mock_parse_args, mock_build_config_managers, mock_run_validation
+    mock_args, mock_build, mock_run
 ):
+    """Test schema validation with mocked dependencies."""
     main.main()
 
 
