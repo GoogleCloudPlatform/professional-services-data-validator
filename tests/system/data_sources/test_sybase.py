@@ -15,10 +15,9 @@
 import os
 from unittest import mock
 
-import pathlib
 import pytest
 
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
@@ -36,11 +35,7 @@ from tests.system.data_sources.common_functions import (
     custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-from tests.system.data_sources.common_functions import (
-    DVT_CORE_TYPES_COLUMNS,
-    partition_table_test,
-    partition_query_test,
-)
+from tests.system.data_sources.common_functions import DVT_CORE_TYPES_COLUMNS
 
 
 # Our Sybase test infra has a habit of failing to connect but then working on retry.
