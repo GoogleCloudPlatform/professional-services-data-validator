@@ -135,6 +135,18 @@ VALIDATE_CONFIG = {
     "config_dir": None,
     "kube_completions": None,
 }
+VALIDATE_SCHEMA_CONFIG = {
+    "verbose": False,
+    "log_level": "INFO",
+    "command": "validate",
+    "validate_cmd": "schema",
+    "dry_run": False,
+    consts.CONFIG_TYPE: consts.SCHEMA_VALIDATION,
+    consts.CONFIG_SOURCE_CONN: TEST_CONN,
+    consts.CONFIG_TARGET_CONN: TEST_CONN,
+    consts.CONFIG_FILE: None,
+    consts.CONFIG_FILE_JSON: None,
+}
 CONNECTION_LIST_ARGS = {
     "verbose": False,
     "log_level": "INFO",
@@ -522,12 +534,35 @@ def test_successful_find_tables_with_mock(mock_args, mock_run):
     main.main()
 
 
-@mock.patch("data_validation.app.app.run")
+@mock.patch("data_validation.__main__.run_validation")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_args",
+    return_value=[
+        config_manager.ConfigManager(
+            VALIDATE_SCHEMA_CONFIG,
+            MockIbisClient(),
+            MockIbisClient(),
+            verbose=False,
+        )
+    ],
+)
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**DEPLOY_ARGS),
+    return_value=argparse.Namespace(**VALIDATE_SCHEMA_CONFIG),
 )
-def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
+def test_successful_schema_validation_with_mocked_run_validation(
+    mock_args, mock_build, mock_run
+):
+    """Test schema validation with mocked dependencies."""
+    main.main()
+
+
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**QUERY_CONFIG),
+)
+def test_successful_query_with_mocked_get_data_client(mock_args, mock_get_data_client):
     main.main()
 
 
@@ -553,10 +588,10 @@ def test_successful_generate_partitions_with_mocked_partition_builder(
     main.main()
 
 
-@mock.patch("data_validation.clients.get_data_client")
+@mock.patch("data_validation.app.app.run")
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**QUERY_CONFIG),
+    return_value=argparse.Namespace(**DEPLOY_ARGS),
 )
-def test_successful_query_with_mocked_get_data_client(mock_args, mock_run):
+def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
     main.main()
