@@ -101,11 +101,10 @@ class Backend(BaseAlchemyBackend):
             pool_pre_ping=True,
         )
 
-        # TODO do we need this?
-        # @sa.event.listens_for(engine, "connect")
-        # def connect(dbapi_connection, connection_record):
-        #    with dbapi_connection.cursor() as cur:
-        #        cur.execute("SET DATEFIRST 1")
+        @sa.event.listens_for(engine, "connect")
+        def connect(dbapi_connection, connection_record):
+            with dbapi_connection.cursor() as cur:
+                cur.execute("SET DATEFIRST 1")
 
         self.client = engine
         return super().do_connect(engine)

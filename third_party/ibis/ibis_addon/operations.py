@@ -77,7 +77,6 @@ except Exception:
 # Oracle requires oracledb
 try:
     from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
-    from third_party.ibis.ibis_oracle import registry as oracle_registry
 except Exception:
     OracleExprTranslator = None
 
@@ -96,7 +95,6 @@ except Exception:
 # Sybase requires sqlalchemy_sybase package.
 try:
     from third_party.ibis.ibis_sybase.compiler import SybaseExprTranslator
-    from third_party.ibis.ibis_sybase import registry as sybase_registry
 except Exception:
     SybaseExprTranslator = None
 

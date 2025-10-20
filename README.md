@@ -34,7 +34,7 @@ DVT supports the following connection types:
 *   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
 *   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
 *   [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
-*   [Sybase](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#sybase)
+*   [Sybase ASE](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#sybase)
 *   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
 
 The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
