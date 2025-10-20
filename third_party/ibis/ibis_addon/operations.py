@@ -48,10 +48,7 @@ from ibis.backends.bigquery.client import (
     _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD,
 )
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
-from ibis.backends.bigquery.registry import (
-    STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS,
-    bigquery_cast,
-)
+from ibis.backends.bigquery.registry import bigquery_cast
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
@@ -62,6 +59,7 @@ from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValu
 
 # Do not remove these lines, they trigger patching of Ibis code.
 import third_party.ibis.ibis_bigquery.api  # noqa
+from third_party.ibis.ibis_bigquery import registry as bigquery_registry
 import third_party.ibis.ibis_mysql.compiler  # noqa
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
@@ -101,7 +99,7 @@ NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
 
 
 class BinaryLength(ops.Value):
-    arg = rlz.one_of([rlz.value(dt.Binary)])
+    arg = rlz.one_of([rlz.value(dt.Binary), rlz.value(dt.String)])
     output_dtype = dt.int32
     output_shape = rlz.shape_like("arg")
 
@@ -154,24 +152,6 @@ def bigquery_cast_to_binary_generate(compiled_arg, from_, to):
     return f"FROM_HEX({compiled_arg})"
 
 
-def format_hash_bigquery(translator, op):
-    arg = translator.translate(op.arg)
-    if op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({arg})"
-    else:
-        raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
-def format_hashbytes_bigquery(translator, op):
-    arg = translator.translate(op.arg)
-    if op.how == "sha256":
-        return f"TO_HEX(SHA256({arg}))"
-    elif op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({arg})"
-    else:
-        raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
 def format_hashbytes_teradata(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -182,30 +162,6 @@ def format_hashbytes_teradata(translator, op):
         return f"rtrim(hash_md5({arg}))"
     else:
         raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
-def strftime_bigquery(translator, op):
-    """Timestamp formatting."""
-    arg = op.arg
-    format_str = op.format_str
-    arg_type = arg.output_dtype
-    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
-    fmt_string = translator.translate(format_str)
-    # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types
-    if format_str.value.startswith("%Y"):
-        fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
-    arg_formatted = translator.translate(arg)
-    if isinstance(arg_type, dt.Timestamp):
-        return "FORMAT_{}({}, {}({}), {!r})".format(
-            strftime_format_func_name,
-            fmt_string,
-            strftime_format_func_name,
-            arg_formatted,
-            arg_type.timezone if arg_type.timezone is not None else "UTC",
-        )
-    return "FORMAT_{}({}, {})".format(
-        strftime_format_func_name, fmt_string, arg_formatted
-    )
 
 
 def strftime_mysql(translator, op):
@@ -528,10 +484,10 @@ TemporalValue.to_char = compile_to_char
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
 
-BigQueryExprTranslator._registry[ops.HashBytes] = format_hashbytes_bigquery
+BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
-BigQueryExprTranslator._registry[ops.Strftime] = strftime_bigquery
-BigQueryExprTranslator._registry[BinaryLength] = sa_format_binary_length
+BigQueryExprTranslator._registry[ops.Strftime] = bigquery_registry.strftime
+BigQueryExprTranslator._registry[BinaryLength] = bigquery_registry.format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
@@ -580,6 +536,7 @@ MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.isnull, 2)
 MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
 MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringLength] = mssql_registry.sa_format_string_length
 MsSqlExprTranslator._registry[ops.Strftime] = mssql_registry.strftime
 MsSqlExprTranslator._registry[ops.Cast] = mssql_registry.sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
@@ -614,7 +571,7 @@ if Db2ExprTranslator:
     ]
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
-SpannerExprTranslator._registry[ops.HashBytes] = format_hashbytes_bigquery
+SpannerExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if TeradataExprTranslator:

@@ -949,6 +949,11 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
                 unreliable results.""",
     )
     optional_arguments.add_argument(
+        "--grouped-columns",
+        "-gc",
+        help="Comma separated list of columns to group results by, e.g. 'col_a,col_b'. Applies to column validations, including custom-query column.",
+    )
+    optional_arguments.add_argument(
         "--exclude-columns",
         "-ec",
         action="store_true",
@@ -1303,21 +1308,16 @@ def _get_result_handler(rc_value: str, sa_file=None) -> dict:
     if config[0] in connections:
         # We received connection_name.results_table.
         conn_from_file = get_connection(config[0])
-        if conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_BIGQUERY:
-            result_handler = {
-                consts.RH_TYPE: conn_from_file[consts.SOURCE_TYPE],
-                consts.PROJECT_ID: conn_from_file["project_id"],
-                consts.TABLE_ID: config[1],
-                consts.API_ENDPOINT: conn_from_file.get("api_endpoint", None),
-                consts.STORAGE_API_ENDPOINT: conn_from_file.get(
-                    "storage_api_endpoint", None
-                ),
-            }
-        elif conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_POSTGRES:
+        if conn_from_file[consts.SOURCE_TYPE] in [
+            consts.SOURCE_TYPE_BIGQUERY,
+            consts.SOURCE_TYPE_POSTGRES,
+        ]:
             result_handler = {
                 consts.RH_TYPE: conn_from_file[consts.SOURCE_TYPE],
                 consts.TABLE_ID: config[1],
-                consts.RH_CONN: conn_from_file,
+                # Only store the connection name in the result handler to avoid accidentally
+                # storing credentials in config files.
+                consts.RH_CONN: config[0],
             }
         # TODO Add filesytem handler too.
         else:

@@ -1,31 +1,31 @@
-# Distributed Data Validation with Cloud Run Jobs
+# Distributing a Single Data Validation with Cloud Run Jobs
 
-This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). Distributed DVT usage alleviates memory constraints when running large table validations. In this sample, you will first generate table partitions with the `generate-table-partitions` command, which will partition your large table into smaller pieces with filters. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator?#generate-table-partitions-for-large-table-row-validations).The Cloud Run Job can then distribute each partition's YAML configuration as a Cloud Run Task in parallel.
+This is an example of distributed DVT usage using [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). Distributed DVT usage alleviates memory constraints when running large table validations.
 
-## Quickstart
+In this sample, you will first generate table partitions with the `generate-table-partitions` command, which will partition your large table into smaller pieces with filters. Read more on generating partitions [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator?#generate-table-partitions-for-large-table-row-validations).The Cloud Run Job can then distribute each partition's YAML configuration as a Cloud Run Task in parallel.
 
-### Build a Docker Image
+## Build a Docker Image
 
 You will need to build a Docker image to be used by your Cloud Run Job with DVT installed.
 
 ```
-export PROJECT_ID=<PROJECT-ID>
+PROJECT_ID=<PROJECT-ID>
 gcloud builds submit --tag gcr.io/${PROJECT_ID}/data-validation \
     --project=${PROJECT_ID}
 ```
 
-### Store connections in Cloud Storage
+## Store Connections in Cloud Storage
 
 Store your connections in GCS so they will be accessible to your Cloud Run Job.
 
 ```
-export PSO_DV_CONN_HOME=<GCS_CONN_PATH>
+export PSO_DV_CONN_HOME=gs://<GCS_CONN_PATH>
 data-validation connections add --connection-name bq BigQuery --project-id ${PROJECT_ID}
 ```
 
-The `PSO_DV_CONN_HOME` environment variable will indicate that you want your connection files stored and retrieved from GCS automatically. Read more about it [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#gcs-connection-management-recommended).
+The `PSO_DV_CONN_HOME` environment variable indicates that you want your connection files stored and retrieved from GCS automatically. Read more about it [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#gcs-connection-management-recommended).
 
-### Generate Table Partition YAMLs in GCS
+## Generate Table Partition YAMLs in GCS
 
 Generate table partitions for the large table you want to validate. In this example, we will use the public table `bigquery-public-data.new_york_trees.tree_census_2015`
 and validate the table against itself.
@@ -33,8 +33,8 @@ and validate the table against itself.
 First, create a GCS path to store the YAML configs for this table.
 
 ```
-export CONFIG_GCS_BUCKET_NAME=<BUCKET_NAME>
-export CONFIG_GCS_BUCKET_LOCATION=<BUCKET_LOCATION> # i.e. 'us-central1'
+CONFIG_GCS_BUCKET_NAME=<BUCKET_NAME>
+CONFIG_GCS_BUCKET_LOCATION=<BUCKET_LOCATION> # i.e. 'us-central1'
 gcloud storage buckets create gs://${CONFIG_GCS_BUCKET_NAME}
   --location=${CONFIG_GCS_BUCKET_LOCATION}
 ```
@@ -42,7 +42,7 @@ gcloud storage buckets create gs://${CONFIG_GCS_BUCKET_NAME}
 Next, generate the table partitions and store the YAMLs in the GCS bucket you created.
 
 ```shell
-export BQ_RESULT_TABLE=<BQ_RESULT_TABLE> # i.e. 'project.dataset.table'
+BQ_RESULT_TABLE=<BQ_RESULT_TABLE> # i.e. 'project.dataset.table'
 data-validation generate-table-partitions \
   -sc bq \
   -tc bq \
@@ -56,7 +56,7 @@ data-validation generate-table-partitions \
 
 The `generate-table-partitions` command will create a folder named `bigquery-public-data.new_york_trees.tree_census_2015` within your GCS bucket populated with the 50 YAML files.
 
-### Create a Cloud Run Job
+## Create a Cloud Run Job
 
 First, ensure you have the [correct permissions](https://cloud.google.com/run/docs/create-jobs#iam_permissions_required_to_create_and_execute) to create and
 execute Cloud Run Jobs. Also, make sure that the Cloud Run service account has access to Google Cloud Storage (to read connection configuration and YAML files) and BigQuery (to publish results).
@@ -80,7 +80,7 @@ We set the `--log-level (-ll)` flag to 'WARNING' to prevent logging validation r
 
 See the full list of supported flags for the `gcloud run jobs create` command [here](https://cloud.google.com/sdk/gcloud/reference/run/jobs/create).
 
-### Execute the Cloud Run Job
+## Execute the Cloud Run Job
 
 Finally, execute the Cloud Run Job and see your validation results in your BigQuery results table.
 

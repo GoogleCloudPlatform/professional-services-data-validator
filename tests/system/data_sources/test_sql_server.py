@@ -70,6 +70,38 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
     ],
 ]
 
+DVT_SS2BQ_COLUMNS = [
+    "id",
+    "col_int1",
+    "col_int2",
+    "col_int4",
+    "col_int8",
+    "col_dec",
+    "col_dec_10_2",
+    "col_float32",
+    "col_float64",
+    "col_money",
+    "col_smallmoney",
+    "col_varchar_30",
+    "col_char_2",
+    "col_nvarchar_30",
+    "col_nchar_2",
+    "col_text",
+    "col_ntext",
+    "col_date",
+    "col_datetime",
+    "col_datetime2",
+    "col_smalldatetime",
+    "col_datetimeoffset",
+    "col_time",
+    "col_binary",
+    "col_varbinary",
+    "col_varbinary_max",
+    "col_bit",
+    # TODO uncomment line below when working on issue-1578.
+    # "col_image",
+]
+
 
 @pytest.fixture
 def cloud_sql(request):
@@ -292,12 +324,34 @@ def test_schema_validation_core_types_to_bigquery():
         tc="bq-conn",
         allow_list=(
             # All SQL Server integers go to BigQuery INT64.
-            "int8:int64,int16:int64,int32:int64,"
+            "int8:int64,int16:int64,int32:int64,!int32:!int64,"
             # BigQuery does not have a float32 type.
             "float32:float64,"
             # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
             "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),"
         ),
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_ss_types_to_bigquery():
+    """Test schema validation on most SQL Server scalar data types."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
+        allow_list=(
+            # All SQL Server integers go to BigQuery INT64.
+            "int8:int64,int16:int64,int32:int64,!int32:!int64,"
+            # BigQuery does not have a float32 type.
+            "float32:float64,"
+            # SQL Server datetime scales are picked up.
+            "timestamp(7):timestamp,timestamp(7, 'UTC'):timestamp('UTC')"
+        ),
+        # TODO money types are being identified as integers - issue-1582
+        exclusion_columns="col_money,col_smallmoney",
     )
 
 
@@ -368,6 +422,45 @@ def test_column_validation_core_types_to_bigquery():
         max_cols=cols,
         avg_cols=cols,
         std_cols=std_cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type column validation test"""
+    # col_ntext is excluded below because we have no way to get a character length from SQL Server.
+    cols = [
+        _
+        for _ in DVT_SS2BQ_COLUMNS
+        if _
+        not in (
+            "id",
+            # Excluded col_float32 because BigQuery does not have a float32 type.
+            "col_float32",
+            # TODO Remove money types from exclude list below when working on - issue-1582
+            "col_money",
+            "col_smallmoney",
+            "col_ntext",
+            # binary columns are excluded below because SQL Server right pads varbinary
+            # values to the length. Not very VARbinary!
+            "col_varbinary",
+            "col_varbinary_max",
+        )
+    ]
+    # TODO Include col_int1 in max_cols when working on issue-1585.
+    max_cols = [_ for _ in cols if _ not in ("col_int1",)]
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_sql_server_types",
+        count_cols=",".join(cols),
+        sum_cols=",".join(cols),
+        min_cols=",".join(cols),
+        max_cols=",".join(max_cols),
+        # SQL Server requires cast_to_bigint for summing tinyint/smallint/int.
+        cast_to_bigint=True,
     )
 
 
@@ -472,6 +565,72 @@ def test_row_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types row validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
     row_validation_test(
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type row validation using comparison fields"""
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_SS2BQ_COLUMNS
+            if _
+            not in (
+                "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
+                # TODO Include col_int1 in max_cols when working on issue-1585.
+                "col_int1",
+                # TODO Remove money types from exclude list when working on - issue-1582
+                "col_money",
+                "col_smallmoney",
+                # binary columns are excluded below because SQL Server right pads varbinary
+                # values to the length. Not very VARbinary!
+                "col_varbinary",
+                "col_varbinary_max",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type row validation"""
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_SS2BQ_COLUMNS
+            if _
+            not in (
+                "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
+                # TODO Remove money types from exclude list when working on - issue-1582
+                "col_money",
+                "col_smallmoney",
+                # binary columns are excluded below because SQL Server right pads varbinary
+                # values to the length. Not very VARbinary!
+                "col_varbinary",
+                "col_varbinary_max",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_sql_server_types",
         tc="bq-conn",
         hash=cols,
     )

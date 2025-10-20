@@ -15,7 +15,7 @@
 """Output validation report to PostgreSQL table"""
 
 import logging
-from typing import Iterable, TYPE_CHECKING
+from typing import Iterable, Optional, TYPE_CHECKING
 
 import numpy
 import sqlalchemy
@@ -75,7 +75,7 @@ class PostgresResultHandler(BaseBackendResultHandler):
     def __init__(
         self,
         client: "BaseBackend",
-        status_list: list = None,
+        status_list: Optional[list] = None,
         table_id: str = "pso_data_validator.results",
         text_format: str = consts.FORMAT_TYPE_TABLE,
     ):
@@ -87,7 +87,7 @@ class PostgresResultHandler(BaseBackendResultHandler):
     @staticmethod
     def get_handler_for_connection(
         connection_config: dict,
-        status_list=None,
+        status_list: Optional[list] = None,
         table_id: str = "pso_data_validator.results",
         text_format: str = consts.FORMAT_TYPE_TABLE,
     ):

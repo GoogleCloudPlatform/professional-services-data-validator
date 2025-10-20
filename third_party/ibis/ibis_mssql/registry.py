@@ -84,9 +84,25 @@ def sa_epoch_seconds(translator, op):
     )
 
 
-def sa_format_binary_length(translator, op):
+def sa_format_string_length(translator, op):
+    """Calculate SQL Server string length in characters, not bytes.
+
+    This uses len() rather than datalength() to give an output compatible with BigQuery.
+    We need to protect trailing spaces due to an odd quirk in SQL Server len()
+    behaviour that ignores them, so this is done by first replacing spaces with
+    underscores before passing the string to len().
+
+    The len expression is cast to BIGINT to prevent int overflow for large tables."""
     arg = translator.translate(op.arg)
-    return sa.func.datalength(arg)
+    return sa.func.cast(sa.func.len(sa.func.replace(arg, " ", "_")), sa.BIGINT)
+
+
+def sa_format_binary_length(translator, op):
+    """Calculate SQL Server bytes/string length in bytes, not characters.
+
+    The len expression is cast to BIGINT to prevent int overflow for large tables."""
+    arg = translator.translate(op.arg)
+    return sa.func.cast(sa.func.datalength(arg), sa.BIGINT)
 
 
 def sa_format_hashbytes(translator, op):
@@ -130,6 +146,12 @@ def sa_cast_mssql(t, op):
         formatted_value = sa.func.format(sa_arg, format_string)
         # Replace trailing '.0' with ''
         return sa.func.replace(formatted_value, ".0", "")
+    elif arg_dtype.is_boolean() and typ.is_string():
+        return sa.case(
+            (sa_arg == 0, sa.literal_column("'false'")),
+            (sa_arg == 1, sa.literal_column("'true'")),
+            else_=sa.null(),
+        )
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)

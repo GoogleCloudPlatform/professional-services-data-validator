@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Iterable, Literal, Tuple, Dict, Any
+from typing import Iterable, Literal, Optional, Tuple, Dict, Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.oracle.base import (
@@ -97,35 +97,48 @@ class Backend(BaseAlchemyBackend):
     def do_connect(
         self,
         host: str = "localhost",
-        user: str = None,
-        password: str = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
         port: int = 1521,
-        database: str = None,
+        database: Optional[str] = None,
         protocol: str = "TCP",
         thick_mode: bool = False,
         driver: Literal["oracledb"] = "oracledb",
         connect_args: Dict[str, Any] = None,
+        url: Optional[str] = None,
     ) -> None:
         if driver != "oracledb":
             raise NotImplementedError("oracledb is currently the only supported driver")
-        if thick_mode or not user:
-            # Configuration explicitly requests thick_mode or user not specified, credentials in wallet - requires thick_mode
-            oracledb.init_oracle_client(config_dir=connect_args.get("config_dir", None))
-        connect_args = {} if not connect_args else connect_args
-        if user:
-            connect_args.update(
-                {
-                    "host": host,
-                    "user": user,
-                    "password": password,
-                    "port": port,
-                    "service_name": database,
-                    "protocol": protocol,
-                }
-            )
+        if url is None:
+            if thick_mode or not user:
+                # Configuration explicitly requests thick_mode or user not specified, credentials in wallet - requires thick_mode
+                oracledb.init_oracle_client(
+                    config_dir=connect_args.get("config_dir", None)
+                )
+            connect_args = {} if not connect_args else connect_args
+            if user:
+                connect_args.update(
+                    {
+                        "host": host,
+                        "user": user,
+                        "password": password,
+                        "port": port,
+                        "service_name": database,
+                        "protocol": protocol,
+                    }
+                )
+            sa_url = "oracle+oracledb://@"
+        else:
+            connect_args = {} if not connect_args else connect_args
+            if thick_mode:
+                # Configuration explicitly requests thick_mode.
+                oracledb.init_oracle_client(
+                    config_dir=connect_args.get("config_dir", None)
+                )
+            sa_url = sa.engine.url.make_url(url)
 
         engine = sa.create_engine(
-            "oracle+oracledb://@",
+            sa_url,
             poolclass=sa.pool.StaticPool,
             arraysize=self.arraysize,
             # The hardcoding of 128 below is not great but is the simplest way of dealing with:

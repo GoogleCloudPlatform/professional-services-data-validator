@@ -30,6 +30,7 @@ from tests.system.data_sources.common_functions import (
     id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
+    raw_query_rows,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -50,14 +51,21 @@ ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
 ORACLE_PORT = os.getenv("ORACLE_PORT", "1521")
 ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
 ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XEPDB1")
+ORACLE_USER = "SYSTEM"
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
     "host": ORACLE_HOST,
-    "user": "SYSTEM",
+    "user": ORACLE_USER,
     "password": ORACLE_PASSWORD,
     "port": int(ORACLE_PORT),
     "database": ORACLE_DATABASE,
+}
+CONN_BY_URL = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
+    consts.SECRET_MANAGER_TYPE: None,
+    consts.SECRET_MANAGER_PROJECT_ID: None,
+    "url": f"oracle+oracledb://{ORACLE_USER}:{ORACLE_PASSWORD}@{ORACLE_HOST}:{ORACLE_PORT}/?service_name={ORACLE_DATABASE}",
 }
 
 
@@ -152,6 +160,8 @@ def test_count_validator():
 def mock_get_connection_config(*args):
     if args[1] in ("ora-conn", "mock-conn"):
         return CONN
+    elif args[1] == "ora-url-conn":
+        return CONN_BY_URL
     elif args[1] == "bq-conn":
         return BQ_CONN
     elif args[1] == "pg-conn":
@@ -385,6 +395,21 @@ def test_column_validation_oracle_to_postgres():
         max_cols=min_cols,
         avg_cols=sum_cols,
         std_cols=sum_cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_binary_to_bigquery():
+    """Oracle to BigQuery dvt_binary column validation."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        count_cols="binary_id",
+        min_cols="binary_id",
+        sum_cols="binary_id",
     )
 
 
@@ -1104,6 +1129,28 @@ def test_row_validation_comp_fields_bool_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_hash_bool_oracle():
+    """Test row validation --hash on a table with bool data types in the target, Oracle does not have a bool type."""
+    rows = raw_query_rows(
+        "SELECT version FROM PRODUCT_COMPONENT_VERSION WHERE product LIKE 'Oracle Database%'",
+        conn="mock-conn",
+    )
+    version = rows[0][0].split(".")[0] if rows else "0"
+    if version < "23":
+        pytest.skip(
+            f"Skipping test_row_validation_hash_bool_oracle due to version {version} < 23."
+        )
+    row_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_bool=pso_data_validator.dvt_bool_native",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_uuid_oracle_to_postgres():
     """Test column validation with UUID columns to PostgreSQL"""
     column_validation_test(
@@ -1289,6 +1336,18 @@ def test_row_validation_intervals():
         tables="pso_data_validator.dvt_intervals",
         tc="bq-conn",
         hash="col_interval_ds,col_interval_ym",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_by_url():
+    """Oracle to Oracle validation testing connection by URL string works."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="ora-url-conn",
     )
 
 

@@ -627,18 +627,19 @@ def test_get_result_handler_by_conn_file(fs):
     res = cli_tools._get_result_handler(f"{args.connection_name}.dataset.table")
     assert res == {
         consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
-        consts.PROJECT_ID: args.project_id,
         consts.TABLE_ID: "dataset.table",
-        consts.API_ENDPOINT: args.api_endpoint,
-        consts.STORAGE_API_ENDPOINT: args.storage_api_endpoint,
+        consts.RH_CONN: args.connection_name,
     }
 
     # Plus check standard format still works.
-    res = cli_tools._get_result_handler("project.dataset.table")
+    res = cli_tools._get_result_handler(
+        "project.dataset.table", sa_file="/tmp/some-key.json"
+    )
     assert res == {
         consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
         consts.PROJECT_ID: "project",
         consts.TABLE_ID: "dataset.table",
+        consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH: "/tmp/some-key.json",
     }
 
 
@@ -1057,6 +1058,15 @@ def test_arg_parser_validate_custom_query_row_help(capsys):
     assert "--hash" in captured.out
     assert "--source-query" in captured.out
     assert "--primary-keys" in captured.out
+
+
+def test_arg_parser_validate_custom_query_column_help(capsys):
+    """Test validate custom-query column --help arg."""
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit):
+        _ = parser.parse_args(["validate", "custom-query", "column", "--help"])
+    captured = capsys.readouterr()
+    assert "--grouped-columns" in captured.out
 
 
 def test_arg_parser_generate_table_partitions_help(capsys):

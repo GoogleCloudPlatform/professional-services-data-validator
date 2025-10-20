@@ -788,7 +788,7 @@ def test_create_partition_query_yaml(module_under_test):
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     yaml_configs_list = builder._add_partition_filters(master_filter_list)
 
-    assert yaml_configs_list[0]["target_folder_name"].startswith("custom.")
+    assert yaml_configs_list[0]["target_folder_name"] == ""
     assert len(yaml_configs_list[0]["yaml_files"]) == 2
     # 5 validations in the first file
     assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
