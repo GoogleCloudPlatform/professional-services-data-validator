@@ -608,6 +608,3 @@ if SybaseExprTranslator:
     SybaseExprTranslator._registry[
         PaddedCharLength
     ] = mssql_registry.sa_format_string_length
-    SybaseExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
-    SybaseExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
-    SybaseExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column

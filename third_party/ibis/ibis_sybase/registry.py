@@ -21,7 +21,7 @@ from ibis.backends.base.sql.alchemy import (
     sqlalchemy_window_functions_registry,
 )
 
-from third_party.ibis.ibis_mssql.registry import sa_cast_mssql
+from third_party.ibis.ibis_mssql import registry as mssql_registry
 
 
 def sa_cast_sybase(t, op):
@@ -86,7 +86,7 @@ def sa_cast_sybase(t, op):
         return sa.func.strtobin(sa_arg)
 
     # Follow our SQL Server code path.
-    return sa_cast_mssql(t, op)
+    return mssql_registry.sa_cast_mssql(t, op)
 
 
 def sa_format_hashbytes(translator, op):
@@ -171,6 +171,11 @@ def sa_epoch_seconds(translator, op):
     )
 
 
+def sa_whitespace_rstrip(t, op):
+    sa_arg = t.translate(op.arg)
+    return sa.func.rtrim(sa_arg)
+
+
 operation_registry = sqlalchemy_operation_registry.copy()
 operation_registry.update(sqlalchemy_window_functions_registry)
 
@@ -178,6 +183,9 @@ operation_registry[ops.Cast] = sa_cast_sybase
 operation_registry[ops.ExtractEpochSeconds] = sa_epoch_seconds
 operation_registry[ops.HashBytes] = sa_format_hashbytes
 operation_registry[ops.IfNull] = fixed_arity(sa.func.isnull, 2)
+operation_registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+operation_registry[ops.RStrip] = sa_whitespace_rstrip
 operation_registry[ops.Strftime] = strftime
 operation_registry[ops.StringJoin] = sa_string_join
 operation_registry[ops.StringLength] = sa_format_string_length
+operation_registry[ops.TableColumn] = mssql_registry.sa_table_column
