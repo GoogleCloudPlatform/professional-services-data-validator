@@ -274,7 +274,8 @@ def test_column_validation_large_decimals_to_bigquery():
     # TODO Excluded col_dec_38_30 for now until we fix zero padding of scale issue.
     cols = "col_dec_18,col_dec_38,col_dec_38_9"
     std_cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
-    avg_cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    # TODO Add col_dec_38 to avg_cols below when issue-1551 is complete.
+    avg_cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
     column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
