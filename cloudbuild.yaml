@@ -140,6 +140,16 @@ steps:
   - 'PROJECT_ID=pso-kokoro-resources'
   - 'IMPALA_HOST=10.128.0.118'
   waitFor: ['-']
+- id: integration_sybase
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_sybase'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'SYBASE_HOST=sybase-instance'
+  - 'SYBASE_USER=sa'
+  secretEnv: ['SYBASE_PASSWORD']
+  waitFor: ['-']
 
 availableSecrets:
   secretManager:
@@ -161,3 +171,5 @@ availableSecrets:
     env: 'SNOWFLAKE_PASSWORD'
   - versionName: projects/$PROJECT_ID/secrets/db2_password/versions/latest
     env: 'DB2_PASSWORD'
+  - versionName: projects/$PROJECT_ID/secrets/sybase_password/versions/latest
+    env: 'SYBASE_PASSWORD'

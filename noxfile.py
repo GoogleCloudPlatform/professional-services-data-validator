@@ -374,3 +374,16 @@ def integration_impala(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", "tests/system/data_sources/test_impala.py", *session.posargs)
+
+
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+def integration_sybase(session):
+    """Run Sybase integration tests."""
+    _setup_session_requirements(session)
+
+    expected_env_vars = ["PROJECT_ID", "SYBASE_HOST", "SYBASE_USER", "SYBASE_PASSWORD"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run("pytest", "tests/system/data_sources/test_sybase.py", *session.posargs)
