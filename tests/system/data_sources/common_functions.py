@@ -14,6 +14,7 @@
 
 import json
 import os
+import random
 import string
 from typing import TYPE_CHECKING, Optional, Tuple  # Build is still on Python 3.8
 import pathlib
@@ -64,6 +65,13 @@ DVT_TRICKY_DATES_COLUMNS = [
     "col_ts_high",
     "col_ts_4712",
 ]
+
+
+def get_random_string(length=5):
+    """Returns random string
+    Args:
+        length (int): Desired length of random string"""
+    return "".join(random.choice(string.ascii_lowercase) for i in range(length))
 
 
 def id_type_test_assertions(df, expected_rows=5):
@@ -659,8 +667,9 @@ def generate_and_run_table_partitions_test(
     pk="course_id,quarter_id,recd_timestamp,registration_date,approved",
     hash: str = "*",
     concat: Optional[str] = None,
-    partition_num: int = 9,
+    partition_num: int = 2,
 ):
+    cdir = f"/tmp/yaml/{get_random_string()}"
     # Generate partition configs:
     parser = cli_tools.configure_arg_parser()
     if concat:
@@ -674,7 +683,7 @@ def generate_and_run_table_partitions_test(
         f"-tbls={tables}",
         f"-pk={pk}",
         col_option,
-        "-cdir=/home/users/yaml",
+        f"-cdir={cdir}",
         f"-pn={partition_num}",
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
@@ -683,8 +692,10 @@ def generate_and_run_table_partitions_test(
     partition_builder = PartitionBuilder(config_managers, args)
     partition_builder.partition_configs()
 
-    config_dir = f"/home/users/yaml/{tables}"
-    assert len(os.listdir(config_dir)) == partition_num
+    config_dir = f"{cdir}/{tables}"
+    assert (
+        len(os.listdir(config_dir)) == partition_num
+    ), f"{len(os.listdir(config_dir))} != {partition_num=}"
 
     # Run the validations:
     cli_arg_list = [

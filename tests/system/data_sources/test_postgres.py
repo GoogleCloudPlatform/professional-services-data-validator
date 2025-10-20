@@ -37,6 +37,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test_args,
     custom_query_validation_test,
     find_tables_test,
+    generate_and_run_table_partitions_test,
     id_column_row_validation_test,
     id_column_query_row_validation_test,
     id_type_test_assertions,
@@ -1336,6 +1337,19 @@ def test_row_validation_intervals():
         tables="pso_data_validator.dvt_intervals",
         tc="bq-conn",
         hash="col_interval_ds,col_interval_ym",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_and_run_partitions():
+    """Test generate and execute partition configs."""
+    pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
+    generate_and_run_table_partitions_test(
+        sc="mock-conn",
+        tc="bq-conn",
     )
 
 

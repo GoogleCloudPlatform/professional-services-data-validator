@@ -718,11 +718,12 @@ def test_custom_query_row_validation_many_columns():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_and_run_partitions(fs):
+def test_generate_and_run_partitions():
     """Test generate and execute partition configs."""
     generate_and_run_table_partitions_test(
         sc="bq-conn",
         tc="mock-conn",
+        concat="*",
     )
 
 
