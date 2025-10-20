@@ -49,7 +49,7 @@ def _setup_session_requirements(session, extra_packages=[]):
     """Install requirements for nox tests."""
 
     session.install(
-        "--upgrade", "pip", "pytest", "pytest-cov", "pytest-timeout", "wheel"
+        "--upgrade", "pip", "pytest", "pytest-cov", "pytest-rerunfailures", "pytest-timeout", "wheel"
     )
     session.install("--no-cache-dir", "-e", ".")
 
