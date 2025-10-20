@@ -75,3 +75,12 @@ def test_create_unknown_filepath(capsys, fs):
     file_path = manager._get_connection_path(TEST_CONN_NAME)
     expected_file_path = files_directory + f"{TEST_CONN_NAME}.connection.json"
     assert file_path == expected_file_path
+
+
+def test_get_connections_directory_gcs(monkeypatch, fs):
+    # Avoid running setup_gcs in unit test
+    monkeypatch.setattr(state_manager.StateManager, "setup_gcs", lambda x: None)
+
+    manager = state_manager.StateManager("gs://some/path/")
+    conn_dir = manager._get_connections_directory()
+    assert conn_dir == "gs://some/path/"
