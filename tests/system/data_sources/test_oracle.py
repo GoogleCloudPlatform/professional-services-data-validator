@@ -26,6 +26,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test_args,
     column_validation_test_config_managers,
     find_tables_test,
+    generate_and_run_table_partitions_test,
     id_column_row_validation_test,
     id_column_query_row_validation_test,
     id_type_test_assertions,
@@ -1348,6 +1349,18 @@ def test_schema_validation_by_url():
     schema_validation_test(
         tables="pso_data_validator.dvt_core_types",
         tc="ora-url-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_and_run_partitions(fs):
+    """Test generate and execute partition configs."""
+    generate_and_run_table_partitions_test(
+        sc="mock-conn",
+        tc="bq-conn",
     )
 
 

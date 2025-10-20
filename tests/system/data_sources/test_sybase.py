@@ -23,9 +23,8 @@ from tests.system.data_sources.common_functions import (
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
-    column_validation_test_args,
-    column_validation_test_config_managers,
     find_tables_test,
+    generate_and_run_table_partitions_test,
     id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
@@ -359,9 +358,9 @@ def test_column_validation_reserved_words():
     )
 
 
-#
+###########################
 # ROW VALIDATION TESTS
-#
+###########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -709,37 +708,21 @@ def test_custom_query_row_validation_many_columns():
 
 ############################
 # GENERATE-PARTITIONS TESTS
+#
+# Because Sybase does not support window functions we cannot test partition filters using:
+#   test_generate_partitions and test_generate_partitions_datetime_pk
+#
+# Instead we run end-to-end partition tests using Sybase as the target.
 ############################
-
-
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions(tmp_path: pathlib.Path):
-    """Test generate partitions on SQL Server, first on table, then on custom query"""
-    partition_table_test(
-        EXPECTED_PARTITION_FILTER,
-    )
-    partition_query_test(
-        EXPECTED_PARTITION_FILTER,
-        tmp_path,
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_generate_partitions_datetime_pk():
-    """Test generate partitions on datetime primary key"""
-    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
-    partition_table_test(
-        EXPECTED_DATETIME_ID_PARTITION_FILTER,
-        pk="id",
-        tables="pso_data_validator.dvt_datetime_id",
-        filters="other_data IS NOT NULL",
-        partition_num=2,
+def test_generate_and_run_partitions(fs):
+    """Test generate and execute partition configs."""
+    generate_and_run_table_partitions_test(
+        sc="bq-conn",
+        tc="mock-conn",
     )
 
 

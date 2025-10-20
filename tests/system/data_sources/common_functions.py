@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import os
 import string
 from typing import TYPE_CHECKING, Optional, Tuple  # Build is still on Python 3.8
 import pathlib
@@ -649,6 +650,53 @@ def partition_query_test(
     # Number of partitions is as requested - assume table rows > partitions requested
     assert len(partition_filters[0][0]) == partition_builder.args.partition_num
     assert partition_filters[0] == expected_filter
+
+
+def generate_and_run_table_partitions_test(
+    sc="bq-conn",
+    tc="bq-conn",
+    tables="pso_data_validator.test_generate_partitions_v2",
+    pk="course_id,quarter_id,recd_timestamp,registration_date,approved",
+    hash: str = "*",
+    concat: Optional[str] = None,
+    partition_num: int = 9,
+):
+    # Generate partition configs:
+    parser = cli_tools.configure_arg_parser()
+    if concat:
+        col_option = f"--concat={concat}"
+    else:
+        col_option = f"--hash={hash}"
+    cli_arg_list = [
+        "generate-table-partitions",
+        f"-sc={sc}",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        f"-pk={pk}",
+        col_option,
+        "-cdir=/home/users/yaml",
+        f"-pn={partition_num}",
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_builder.partition_configs()
+
+    config_dir = f"/home/users/yaml/{tables}"
+    assert len(os.listdir(config_dir)) == partition_num
+
+    # Run the validations:
+    cli_arg_list = [
+        "configs",
+        "run",
+        f"-cdir={config_dir}",
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    # It is not trivial to access the results Dataframe due to how config_runner() is structured.
+    # Here we just ensure the command completes without throwing an exception.
+    main.config_runner(args)
 
 
 def custom_query_validation_test(
