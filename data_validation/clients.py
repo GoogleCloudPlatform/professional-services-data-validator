@@ -93,6 +93,14 @@ try:
 except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
+# ClickHouse requires clickhouse-driver
+try:
+    from third_party.ibis.ibis_clickhouse.api import clickhouse_connect
+except ImportError:
+    clickhouse_connect = _raise_missing_client_error(
+        "pip install 'clickhouse-driver[numpy]' clickhouse-cityhash lz4"
+    )
+
 
 def get_google_bigquery_client(
     project_id: str, credentials=None, api_endpoint: str = None
@@ -390,6 +398,7 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
 
 CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_BIGQUERY: get_bigquery_client,
+    consts.SOURCE_TYPE_CLICKHOUSE: clickhouse_connect,
     consts.SOURCE_TYPE_IMPALA: impala_connect,
     consts.SOURCE_TYPE_MYSQL: ibis.mysql.connect,
     consts.SOURCE_TYPE_ORACLE: oracle_connect,

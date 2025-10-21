@@ -129,6 +129,7 @@ YAML_VALIDATIONS = "validations"
 
 # Connection key constants.
 SOURCE_TYPE_BIGQUERY = "BigQuery"
+SOURCE_TYPE_CLICKHOUSE = "ClickHouse"
 SOURCE_TYPE_DB2 = "DB2"
 SOURCE_TYPE_FILESYSTEM = "FileSystem"
 SOURCE_TYPE_IMPALA = "Impala"

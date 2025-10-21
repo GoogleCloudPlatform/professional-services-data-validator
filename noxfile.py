@@ -72,7 +72,7 @@ def unit(session):
         "--cov-config=.coveragerc",
         "--cov-report=term",
         os.path.join("tests", "unit"),
-        env={"PSO_DV_CONN_HOME": ""},
+        env={"PSO_DV_CONN_HOME": "", "TZ": "UTC"},
         *session.posargs,
     )
 

@@ -13,33 +13,36 @@ The Data Validation Tool (DVT) provides an automated and repeatable solution to
 perform this task.
 
 DVT supports the following validations:
-* Column validation (count, sum, avg, min, max, stddev, group by)
-* Row validation (Not supported for FileSystem connections)
-* Schema validation
-* Custom Query validation
-* Ad hoc SQL exploration
+
+- Column validation (count, sum, avg, min, max, stddev, group by)
+- Row validation (Not supported for FileSystem connections)
+- Schema validation
+- Custom Query validation
+- Ad hoc SQL exploration
 
 DVT supports the following connection types:
 
-*   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
-*   [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
-*   [DB2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
-*   [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
-*   [Hive](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#hive)
-*   [Impala](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#impala)
-*   [MSSQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mssql-server)
-*   [MySQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mysql)
-*   [Oracle](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#oracle)
-*   [Postgres](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
-*   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
-*   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
-*   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
-*   [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
+- [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
+- [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
+- [ClickHouse](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#clickhouse)
+- [DB2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
+- [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
+- [Hive](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#hive)
+- [Impala](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#impala)
+- [MSSQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mssql-server)
+- [MySQL](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#mysql)
+- [Oracle](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#oracle)
+- [Postgres](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
+- [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
+- [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
+- [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
+- [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
 
 The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
 
 ### Disclaimer
+
 This is not an officially supported Google product. Please be aware that bugs may lurk, and that we reserve the right to make small backwards-incompatible changes. Feel free to open bugs or feature requests, or contribute directly
 (see [CONTRIBUTING.md](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/CONTRIBUTING.md) for details).
 
@@ -69,7 +72,7 @@ The CLI is the main interface to use this tool and it has several different
 commands which can be used to create and run validations. DVT is designed to run in
 an environment connected to GCP services, specifically, BigQuery, GCS and Secret manager.
 If DVT is being run on-premises or in an environment with restricted access to GCP services, see
-[running DVT  at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
+[running DVT at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
 
 Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud Functions, or Airflow
 ([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
@@ -85,7 +88,7 @@ validation, simply specify the `--grouped-columns` flag.
 You can specify a list of string columns for aggregations in order to calculate
 an aggregation over the `length(string_col)`. Similarly, you can specify timestamp/date
 columns for aggregation over the `unix_seconds(timestamp_col)`. Running an aggregation
-over all columns ('*') will only run over numeric columns, unless the
+over all columns ('\*') will only run over numeric columns, unless the
 `--wildcard-include-string-len` or `--wildcard-include-timestamp` flags are present.
 
 ```
@@ -151,7 +154,7 @@ data-validation
 
 ```
 
-The default aggregation type is a 'COUNT *', which will run in addition to the validations you specify. To remove this default,
+The default aggregation type is a 'COUNT \*', which will run in addition to the validations you specify. To remove this default,
 use [YAML configs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop#running-dvt-with-yaml-configuration-files).
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md) page provides many examples of how a tool can be used to run powerful validations without writing any queries.
@@ -166,7 +169,7 @@ If you wish to perform this comparison on Teradata you will need to
 Below is the command syntax for row validations. In order to run row level validations we require
 unique columns to join row sets, which are either inferred from the source/target table or provided
 via the `--primary-keys` flag, and either the `--hash`, `--concat` or `--comparison-fields` flags.
-See *Primary Keys* section.
+See _Primary Keys_ section.
 
 The `--comparison-fields` flag specifies the values (e.g. columns) whose raw values will be compared
 based on the primary key join. The `--hash` flag will run a checksum across specified columns in
@@ -236,13 +239,14 @@ data-validation
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
+
 #### Generate Partitions for Large Row Validations
 
-When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating partitions in order to perform row validations on large dataset (table or custom-query) to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See *Primary Keys* section
+When performing row validations, Data Validation Tool brings each row into memory and can run into MemoryError. Below is the command syntax for generating partitions in order to perform row validations on large dataset (table or custom-query) to alleviate MemoryError. Each partition contains a range of primary key(s) and the ranges of keys across partitions are distinct. The partitions have nearly equal number of rows. See _Primary Keys_ section
 
 The command generates and stores multiple YAML validations each representing a chunk of the large dataset using filters (`WHERE primary_key(s) >= X AND primary_key(s) < Y`) in YAML files. The parameter parts-per-file, specifies the number of validations in one YAML file. Each yaml file will have parts-per-file validations in it - except the last one which will contain the remaining partitions (i.e. parts-per-file may not divide partition-num evenly). You can then run the validations in the directory serially (or in parallel in multiple containers, VMs) with the `data-validation configs run --config-dir PATH` command as described [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator#yaml-configuration-files).
 
-The command takes the same parameters as required for `Row Validation` *plus* a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. You can specify tables that are being validated or the source and target custom query. A parameter used in earlier versions, ```partition-key``` is no longer supported.
+The command takes the same parameters as required for `Row Validation` _plus_ a few parameters to support partitioning. Single and multiple primary keys are supported and keys can be of any indexable type, except for date and timestamp type. You can specify tables that are being validated or the source and target custom query. A parameter used in earlier versions, `partition-key` is no longer supported.
 
 ```
 data-validation
@@ -311,6 +315,7 @@ data-validation
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
+
 #### Schema Validations
 
 Below is the syntax for schema validations. These can be used to compare case insensitive column names and
@@ -423,12 +428,11 @@ data-validation
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
 ```
 
-The default aggregation type is a 'COUNT *'. If no aggregation flag (i.e count,
+The default aggregation type is a 'COUNT \*'. If no aggregation flag (i.e count,
 sum , min, etc.) is provided, the default aggregation will run.
 
 The [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md)
 page provides few examples of how this tool can be used to run custom query validations.
-
 
 #### Custom Query Row Validations
 
@@ -437,7 +441,7 @@ page provides few examples of how this tool can be used to run custom query vali
 Below is the command syntax for row validations. In order to run row level
 validations you need to pass `--hash` flag which will specify the fields
 of the custom query result that will be concatenated and hashed. The primary key should be included
-in the SELECT statement of both source_query.sql and target_query.sql.  See *Primary Keys* section
+in the SELECT statement of both source*query.sql and target_query.sql. See \_Primary Keys* section
 
 Below is the command syntax for custom query row validations.
 
@@ -531,7 +535,9 @@ For example, this flag can be used as follows:
     "target_query": "SELECT `hash__all`, `station_id`\nFROM ..."
 }
 ```
+
 #### Running DVT at on-prem
+
 On-premises environments can have limited access to GCP services. DVT supports using BigQuery for storing validation results, GCS for storage and
 the Secret Manager for secrets. You may also use BigQuery and Spanner as a source or target for validation. Service
 APIs (i.e. bigquery.googleapis.com) may not always be accessible due to firewall restrictions. Work with your network
@@ -540,8 +546,9 @@ adminstrator to identify the way to access these services. They may set up a [Pr
 ### Running DVT with YAML Configuration Files
 
 Running DVT with YAML configuration files is the recommended approach if:
-* you want to customize the configuration for any given validation OR
-* you want to run DVT at scale (i.e. run multiple validations sequentially or in parallel)
+
+- you want to customize the configuration for any given validation OR
+- you want to run DVT at scale (i.e. run multiple validations sequentially or in parallel)
 
 We recommend generating YAML configs with the `--config-file <file-name>` flag when running a validation command, which supports
 GCS and local paths.
@@ -579,11 +586,9 @@ data-validation configs get
 View the complete YAML file for a Grouped Column validation on the
 [Examples](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/examples.md#sample-yaml-config-grouped-column-validation) page.
 
-
 ### Scaling DVT
 
 You can scale DVT for large validations by running the tool in a distributed manner. To optimize the validation speed for large tables, you can use GKE Jobs ([Google Kubernetes Jobs](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-workloads-overview#batch_jobs)) or [Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs). If you are not familiar with Kubernetes or Cloud Run Jobs, see [Scaling DVT with Distributed Jobs](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/internal/distributed_jobs.md) for a detailed overview.
-
 
 We recommend first generating partitions with the `generate-table-partitions` command for your large datasets (tables or queries). Then, use Cloud Run or GKE to distribute the validation of each chunk in parallel. See the [Cloud Run Jobs Quickstart sample](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples/cloud_run_jobs) to get started.
 
@@ -591,16 +596,15 @@ When running DVT in a distributed fashion, both the `--kube-completions` and `--
 
 The `--config-dir` flag will specify the directory with the YAML files to be executed in parallel. If you used `generate-table-partitions` to generate the YAMLs, this would be the directory where the partition files numbered `0000.yaml` to `<partition_num - 1>.yaml` are stored i.e (`gs://my_config_dir/source_schema.source_table/`). When creating your Cloud Run Job, set the number of tasks equal to the number of table partitions so the task index matches the YAML file to be validated. When executed, each Cloud Run task will validate a partition in parallel.
 
-
 ### Validation Reports
 
 The result handlers tell DVT where to store the results of each validation. The tool can write the results of a validation run to Google BigQuery, PostgreSQL or print to stdout (default). See [result handler setup](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#result-handler-setup) for pre-requisites. View the schema of the BigQuery results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
-
 
 To output to BigQuery or PostgreSQL, simply include the `-rh` flag during a validation run including
 the schema and table name for the results.
 
 BigQuery example by connection name:
+
 ```shell
 data-validation validate column \
   -sc bq_conn \
@@ -611,6 +615,7 @@ data-validation validate column \
 ```
 
 BigQuery example by project name:
+
 ```shell
 data-validation validate column \
   -sc bq_conn \
@@ -621,6 +626,7 @@ data-validation validate column \
 ```
 
 PostgreSQL example:
+
 ```shell
 data-validation validate column \
   -sc ora_conn \
@@ -651,11 +657,11 @@ Creating the list of matched tables can be a hassle. We have added a feature
 which may help you to match all of the tables together between source and
 target. The `find-tables` command:
 
--   Pulls all tables in the source (applying a supplied `allowed-schemas` filter)
--   Pulls all tables from the target
--   Uses Jaro Similarity algorithm to match tables
--   Finally, it prints a JSON list of tables which can be a reference for the
-    validation run config.
+- Pulls all tables in the source (applying a supplied `allowed-schemas` filter)
+- Pulls all tables from the target
+- Uses Jaro Similarity algorithm to match tables
+- Finally, it prints a JSON list of tables which can be a reference for the
+  validation run config.
 
 Note that our default value for the `score-cutoff` parameter is 1 and it seeks for identical matches. If no matches occur, reduce this value as deemed necessary. By using smaller numbers such as 0.7, 0.65 etc you can get more matches. For reference, we make use of [this jaro_similarity method](https://jamesturk.github.io/jellyfish/functions/#jaro-similarity) for the string comparison.
 
@@ -685,6 +691,7 @@ Functions, and other deployment services.
 `data-validation beta deploy`
 
 ## Validation Logic
+
 ### Aggregated Fields
 
 Aggregate fields contain the SQL fields that you want to produce an aggregate
@@ -692,6 +699,7 @@ for. Currently the functions `COUNT()`, `AVG()`, `SUM()`, `MIN()`, `MAX()`,
 and `STDDEV_SAMP()` are supported.
 
 Here is a sample aggregate config:
+
 ```yaml
 validations:
 - aggregates:
@@ -781,18 +789,18 @@ in the resulting query. For example, with the following YAML config:
 ```yaml
 - calculated_fields:
     - field_alias: rtrim_col_a
-      source_calculated_columns: ['col_a']
-      target_calculated_columns: ['col_a']
+      source_calculated_columns: ["col_a"]
+      target_calculated_columns: ["col_a"]
       type: rtrim
       depth: 0 # generated off of a native column
     - field_alias: ltrim_col_a
-      source_calculated_columns: ['col_b']
-      target_calculated_columns: ['col_b']
+      source_calculated_columns: ["col_b"]
+      target_calculated_columns: ["col_b"]
       type: ltrim
       depth: 0 # generated off of a native column
     - field_alias: concat_col_a_col_b
-      source_calculated_columns: ['rtrim_col_a', 'ltrim_col_b']
-      target_calculated_columns: ['rtrim_col_a', 'ltrim_col_b']
+      source_calculated_columns: ["rtrim_col_a", "ltrim_col_b"]
+      target_calculated_columns: ["rtrim_col_a", "ltrim_col_b"]
       type: concat
       depth: 1 # calculated one query above
 ```
@@ -830,16 +838,16 @@ required, if any, with the 'params' block as shown below:
 
 ```yaml
 - calculated_fields:
-  - depth: 0
-    field_alias: format_start_time
-    source_calculated_columns:
-    - start_time
-    target_calculated_columns:
-    - start_time
-    type: custom
-    ibis_expr: ibis.expr.types.TemporalValue.strftime
-    params:
-    - format_str: '%m%d%Y'
+    - depth: 0
+      field_alias: format_start_time
+      source_calculated_columns:
+        - start_time
+      target_calculated_columns:
+        - start_time
+      type: custom
+      ibis_expr: ibis.expr.types.TemporalValue.strftime
+      params:
+        - format_str: "%m%d%Y"
 ```
 
 The above block references the [TemporalValue.strftime](https://ibis-project.org/reference/expressions/timestamps/#ibis.expr.types.temporal.TemporalValue.strftime) Ibis API expression.
