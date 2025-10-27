@@ -21,7 +21,7 @@ import math
 from datetime import datetime, timedelta
 from unittest import mock
 
-from data_validation import cli_tools
+from data_validation import cli_tools, exceptions
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
 from data_validation.partition_builder import PartitionBuilder
@@ -547,7 +547,7 @@ def _generate_fake_data(
 
 
 def _generate_config_manager(
-    table_name: str = "test_table", query: str = None
+    table_name: str = "test_table", query: str = None, source_conn_override=None
 ) -> ConfigManager:
     """Returns a Dummy ConfigManager Object
     If query keyword parameter is provided, then query validation is assumed"""
@@ -556,7 +556,7 @@ def _generate_config_manager(
         table_name = None
     row_config = {
         # BigQuery Specific Connection Config
-        "source_conn": SOURCE_CONN_CONFIG,
+        "source_conn": source_conn_override or SOURCE_CONN_CONFIG,
         "target_conn": TARGET_CONN_CONFIG,
         # Validation Type
         consts.CONFIG_TYPE: consts.ROW_VALIDATION,
@@ -794,3 +794,24 @@ def test_create_partition_query_yaml(module_under_test):
     assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
     # 4 validations in the second file
     assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
+
+
+@mock.patch("data_validation.clients.get_data_client")
+def test_check_partition_configs_sybase(mock_get_data_client, module_under_test):
+    """Ensure check_partition_filters raises exception for Sybase source connection"""
+    # Generate dummy YAML configs list
+    sybase_conn_config = {
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_SYBASE,
+    }
+    config_managers = [
+        _generate_config_manager(source_conn_override=sybase_conn_config)
+    ]
+
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(TABLE_PART_ARGS)
+
+    # Create PartitionBuilder object and get YAML configs list
+    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
+    with pytest.raises(exceptions.PartitionBuilderException) as excinfo:
+        builder.check_partition_configs()
+    assert "window" in str(excinfo.value)

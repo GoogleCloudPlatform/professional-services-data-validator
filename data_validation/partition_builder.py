@@ -20,7 +20,7 @@ import re
 import datetime
 from typing import List, Dict, TYPE_CHECKING
 
-from data_validation import cli_tools, consts, util
+from data_validation import cli_tools, consts, exceptions, util
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
 from data_validation.validation_builder import ValidationBuilder
@@ -97,6 +97,15 @@ class PartitionBuilder:
         partition_filters = self._get_partition_key_filters()
         yaml_configs_list = self._add_partition_filters(partition_filters)
         self._store_partitions(yaml_configs_list)
+
+    def check_partition_configs(self) -> None:
+        for config_manager in self.config_managers:
+            source_type = config_manager.get_source_connection()[consts.SOURCE_TYPE]
+            if source_type in consts.NO_WINDOW_FUNCTION_SUPPORT:
+                raise exceptions.PartitionBuilderException(
+                    f"Source client {source_type} does not support window functions, "
+                    "please use this connection as a target connection for generate-table-partitions."
+                )
 
     @staticmethod
     def _extract_where(table_expr: "ibis.expr.types.Table") -> str:

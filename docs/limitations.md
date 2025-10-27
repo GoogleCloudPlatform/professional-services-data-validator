@@ -26,3 +26,8 @@
 - The `text` data type is not currently supported because many Sybase ASE SQL functions do not support the data type.
 - Sybase ASE does not include window functions. At the current time this prevents Sybase ASE from being the source table in a `generate-table-partitions` command. A simple workaround is to flip the source and target connections.
 - We have only tested against Sybase ASE. DVT Sybase support does not include other Sybase flavours.
+
+## Teradata
+
+- Requires the `teradatasql` package to be installed as an extra dependency.
+- Teradata does not have a native SHA-256 hash function but a third party UDF can be (installed)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#teradata].

@@ -263,3 +263,6 @@ CALC_FIELD_LENGTH = "length"
 CALC_FIELD_PADDED_CHAR_LENGTH = "padded_char_length"
 CALC_FIELD_RSTRIP = "rstrip"
 CALC_FIELD_UPPER = "upper"
+
+# Backends that do not support window functions.
+NO_WINDOW_FUNCTION_SUPPORT = [SOURCE_TYPE_SYBASE]

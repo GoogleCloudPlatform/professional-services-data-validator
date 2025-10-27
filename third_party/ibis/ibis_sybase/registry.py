@@ -97,10 +97,12 @@ def sa_format_hashbytes(translator, op):
 
     Sybase ASE does not support a SHA256 algorithm:
     https://userapps.support.sap.com/sap/support/knowledge/en/3108409
+
+    It might be possible to add a customer UDF for this, see issue-xxxx for details.
     """
     arg = translator.translate(op.arg)
     cast_arg = sa.func.convert(sa.sql.literal_column("VARCHAR(16384)"), arg)
-    hash_func = sa.func.hash(cast_arg, sa.sql.literal_column("'sha1'"))
+    hash_func = sa.func.hash(cast_arg, sa.sql.literal_column("'sha256'"))
     return hash_func
 
 
