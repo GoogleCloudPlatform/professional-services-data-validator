@@ -4,7 +4,7 @@
 
 - BigQuery does not have a 32 bit float data type. Validations of systems containing 32 bit floats (e.g. Oracle BINARY_FLOAT) will likely be problematic when compared to FLOAT64.
 
-# Oracle
+## Oracle
 
 - Requires the `oracledb` package to be installed as an extra dependency.
 
