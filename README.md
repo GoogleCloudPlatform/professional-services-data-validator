@@ -51,6 +51,14 @@ This is not an officially supported Google product. Please be aware that bugs ma
 The [Installation](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md) page describes the prerequisites and
 setup steps needed to install and use the Data Validation Tool.
 
+**Note**: ClickHouse support is currently available in a development fork. To install with ClickHouse support:
+
+```bash
+pip install git+https://github.com/alexei-led/professional-services-data-validator.git
+```
+
+See the [Installation Guide](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#installing-from-github-fork-clickhouse-support) for details.
+
 ## Usage
 
 Before using this tool, you will need to create connections to the source and
