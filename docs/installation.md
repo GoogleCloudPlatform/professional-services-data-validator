@@ -38,6 +38,28 @@ You can install the tool via [pip](https://pypi.org/project/google-pso-data-vali
 pip install google-pso-data-validator
 ```
 
+### Installing from GitHub Fork (ClickHouse Support)
+
+ClickHouse support is currently available in a GitHub fork. To install DVT with ClickHouse support directly from GitHub:
+
+```bash
+pip install git+https://github.com/alexei-led/professional-services-data-validator.git
+```
+
+This will install the latest version from the fork, including all necessary dependencies.
+
+To upgrade to the latest changes:
+
+```bash
+pip install --upgrade --force-reinstall git+https://github.com/alexei-led/professional-services-data-validator.git
+```
+
+To pin to a specific commit for stability:
+
+```bash
+pip install git+https://github.com/alexei-led/professional-services-data-validator.git@<commit-sha>
+```
+
 If you require Teradata and have a license, install the `teradatasql` package.
 
 ```
