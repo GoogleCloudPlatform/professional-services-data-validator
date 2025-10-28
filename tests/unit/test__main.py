@@ -273,6 +273,7 @@ def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
     assert len(mock_run.call_args.args[1]) == 1
 
 
+@pytest.mark.skip(reason="Requires GCS bucket access (gs://pso-kokoro-resources)")
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_yaml",
@@ -329,6 +330,7 @@ def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
     assert len(mock_run.call_args.args[1]) == 1
 
 
+@pytest.mark.skip(reason="Requires GCS bucket access (gs://pso-kokoro-resources)")
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_yaml",
