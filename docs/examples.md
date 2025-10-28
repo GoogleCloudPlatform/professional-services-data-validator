@@ -1,49 +1,56 @@
 # Data Validation Examples
+
 This page describes some basic use cases of the tool.
 
 **PLEASE NOTE:** In below commands, my_bq_conn refers to the connection name for your BigQuery project. We are validating BigQuery tables that are
 available in BigQuery public datasets. These examples validate a table against itself for example purposes.
 
-Also, note that if no aggregation flag is provided, the tool will run a 'COUNT *' as the default aggregation.
+Also, note that if no aggregation flag is provided, the tool will run a 'COUNT \*' as the default aggregation.
 
-#### Simple COUNT(*) on a table
-````shell script
+#### Simple COUNT(\*) on a table
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips
-````
+```
 
 #### Run multiple tables
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips,bigquery-public-data.new_york_citibike.citibike_stations
-````
+```
 
 #### Store validation config to the file
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   -c citibike.yaml
-````
+```
+
 Above command creates a YAML file named citibike.yaml that can be used to run validations in the future.
 
 **Please note:** When the config-file (-c) option is provided, only the YAML file gets created. The validation doesn’t execute.
 
-
 #### Run validations from a configuration file
-````shell script
+
+```shell script
 data-validation configs run \
   -c citibike.yaml
-````
+```
+
 Above command executes validations stored in a config file named citibike.yaml.
 
 #### Generate partitions and save as multiple configuration files
-````shell script
+
+```shell script
 data-validation generate-table-partitions \
   -sc my_bq_conn \
   -tc my_bq_conn \
@@ -53,49 +60,56 @@ data-validation generate-table-partitions \
   --filters 'tree_id>3000' \
   --config-dir partitions_dir \
   --partition-num 200
-````
+```
+
 Above command creates multiple partitions based on the primary key. Number of generated configuration files is decided by `--partition-num`
 
 #### Run COUNT validations for all columns
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   --count '*'
-````
+```
 
 #### Run COUNT validations for selected columns
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   --count bikeid,gender
-````
+```
 
 #### Run a row hash validation for all rows
-````shell script
+
+```shell script
 data-validation validate row \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_stations \
   --primary-keys station_id \
   --hash '*'
-````
-#### Run a row hash validation with a **NUMERIC** primary key
-For Oracle and Postgres connections, numeric primary keys may not match between source and target data types due to precision or scale discrepancies. You may need to cast the primary key to a string for a valid match, which can be done by updating ````cast: null```` to ````cast: string```` in yaml file.
-  ````yaml
-    primary_keys:
-      - cast: string
-        field_alias: dept_no
-        source_column: dept_no
-        target_column: dept_no
-  ````
+```
 
+#### Run a row hash validation with a **NUMERIC** primary key
+
+For Oracle and Postgres connections, numeric primary keys may not match between source and target data types due to precision or scale discrepancies. You may need to cast the primary key to a string for a valid match, which can be done by updating `cast: null` to `cast: string` in yaml file.
+
+```yaml
+primary_keys:
+  - cast: string
+    field_alias: dept_no
+    source_column: dept_no
+    target_column: dept_no
+```
 
 #### Run a row hash validation for all rows but filter only the failed records
-````shell script
+
+```shell script
 data-validation validate row \
   -sc my_bq_conn \
   -tc my_bq_conn \
@@ -103,10 +117,11 @@ data-validation validate row \
   --filter-status fail \
   --primary-keys station_id \
   --hash '*'
-````
+```
 
 #### Run a row level comparison field validation for 100 random rows
-````shell script
+
+```shell script
 data-validation validate row \
   -sc my_bq_conn \
   -tc my_bq_conn \
@@ -115,24 +130,25 @@ data-validation validate row \
   -comp-fields name \
   -rr \
   -rbs 100
-````
+```
 
 #### Store results in a BigQuery table
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   --count tripduration,start_station_name \
   -rh my_bqrh_conn.pso_data_validator.results
-````
+```
+
 Please replace `my_bqrh_conn` with the name of the connection descriptor for where you created your
 results datasets as mentioned in the [installation](installation.md#setup) section.
 
-
 #### Query results from a BigQuery results table
 
-````sql
+```sql
 SELECT
   run_id,
   validation_name,
@@ -149,57 +165,62 @@ FROM
   `pso_data_validator.results`
 ORDER BY
   start_time DESC
-````
+```
 
 #### Run a single column GroupBy validation
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   --grouped-columns bikeid
-````
+```
 
 #### Run a multi-column GroupBy validation
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   --grouped-columns bikeid,usertype
-````
+```
 
 #### Apply single aggregation on a single field
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_stations \
   --sum num_bikes_available
-````
-
+```
 
 #### Apply single aggregation on multiple fields
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_stations \
   --sum num_bikes_available,num_docks_available
-````
+```
 
 #### Apply different aggregations on multiple fields
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_stations \
   --sum num_bikes_available,num_docks_available \
   --avg num_bikes_disabled,num_docks_disabled
-````
+```
 
 #### Apply different aggregations on multiple fields and apply GroupBy
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
@@ -207,10 +228,11 @@ data-validation validate column \
   --grouped-columns region_id \
   --sum num_bikes_available,num_docks_available \
   --avg num_bikes_disabled,num_docks_disabled
-````
+```
 
 #### Apply filters
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
@@ -219,29 +241,32 @@ data-validation validate column \
   --sum num_bikes_available,num_docks_available \
   --filters 'region_id=71' \
   -rh $YOUR_PROJECT_ID.pso_data_validator.results
-````
+```
 
 #### Apply labels
-````shell script
+
+```shell script
 data-validation validate column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   --count tripduration,start_station_name \
   -l tag=test-run,owner=name
-````
+```
 
 #### Run a schema validation
-````shell script
+
+```shell script
 data-validation validate schema \
   -sc my_bq_conn \
   -tc my_bq_conn \
   -tbls bigquery-public-data.new_york_citibike.citibike_trips \
   -rh $YOUR_PROJECT_ID.pso_data_validator.results
-````
+```
 
 #### Run validation on a file
-````shell script
+
+```shell script
 # Additional dependency needed for GCS files
 pip install gcsfs
 
@@ -260,26 +285,29 @@ data-validation validate column \
   -tc my_bq_conn \
   -tbls $FILE_NAME=$YOUR_PROJECT_ID.dataset.table \
   --count $COLUMN
-````
+```
 
 #### Run custom SQL
-````shell script
+
+```shell script
 data-validation query \
   --conn my-pg-conn \
   --query "SELECT version()"
-````
+```
 
 Or to get minimal output for use with other APIs:
-````shell script
+
+```shell script
 CONN_VER=$(data-validation query \
   --conn my-pg-conn \
   --format=minimal \
   --query "SELECT version()")
 
 echo ${CONN_VER}
-````
+```
 
 #### Sample YAML Config (Grouped Column validation)
+
 ```yaml
 result_handler:
   project_id: my-project-id
@@ -289,34 +317,34 @@ result_handler:
 source: my_bq_conn
 target: my_bq_conn
 validations:
-- aggregates:
-  - field_alias: count
-    source_column: null
-    target_column: null
-    type: count
-  calculated_fields: []
-  filters:
-  - source: region_id=71
-    target: region_id=71
-    type: custom
-  format: table
-  grouped_columns:
-  - cast: null
-    field_alias: region_id
-    source_column: region_id
-    target_column: region_id
-  labels:
-  - !!python/tuple
-    - user
-    - test
-  random_row_batch_size: null
-  schema_name: bigquery-public-data.new_york_citibike
-  table_name: citibike_stations
-  target_schema_name: bigquery-public-data.new_york_citibike
-  target_table_name: citibike_stations
-  threshold: 0.0
-  type: Column
-  use_random_rows: false
+  - aggregates:
+      - field_alias: count
+        source_column: null
+        target_column: null
+        type: count
+    calculated_fields: []
+    filters:
+      - source: region_id=71
+        target: region_id=71
+        type: custom
+    format: table
+    grouped_columns:
+      - cast: null
+        field_alias: region_id
+        source_column: region_id
+        target_column: region_id
+    labels:
+      - !!python/tuple
+        - user
+        - test
+    random_row_batch_size: null
+    schema_name: bigquery-public-data.new_york_citibike
+    table_name: citibike_stations
+    target_schema_name: bigquery-public-data.new_york_citibike
+    target_table_name: citibike_stations
+    threshold: 0.0
+    type: Column
+    use_random_rows: false
 ```
 
 #### Sample YAML with Calc Fields (Cast to NUMERIC before aggregation)
@@ -329,35 +357,35 @@ result_handler: {}
 source: my_bq_conn
 target: my_bq_conn
 validations:
-- aggregates:
-  - field_alias: count
-    source_column: null
-    target_column: null
-    type: count
-  - field_alias: sum__int
-    source_column: cast__int
-    target_column: cast__int
-    type: sum
-  calculated_fields:
-  - depth: 0
-    field_alias: cast__int
-    source_calculated_columns:
-    - int
-    target_calculated_columns:
-    - int
-    type: cast
-    default_cast: decimal(38,9)
-  filters: []
-  format: table
-  labels: []
-  random_row_batch_size: null
-  schema_name: project.dataset
-  table_name: my_table
-  target_schema_name: project.dataset
-  target_table_name: my_table
-  threshold: 0.0
-  type: Column
-  use_random_rows: false
+  - aggregates:
+      - field_alias: count
+        source_column: null
+        target_column: null
+        type: count
+      - field_alias: sum__int
+        source_column: cast__int
+        target_column: cast__int
+        type: sum
+    calculated_fields:
+      - depth: 0
+        field_alias: cast__int
+        source_calculated_columns:
+          - int
+        target_calculated_columns:
+          - int
+        type: cast
+        default_cast: decimal(38,9)
+    filters: []
+    format: table
+    labels: []
+    random_row_batch_size: null
+    schema_name: project.dataset
+    table_name: my_table
+    target_schema_name: project.dataset
+    target_table_name: my_table
+    threshold: 0.0
+    type: Column
+    use_random_rows: false
 ```
 
 #### Sample Row Validation YAML with Custom Calc Field
@@ -370,84 +398,88 @@ result_handler: {}
 source: my_bq_conn
 target: my_bq_conn
 validations:
-- calculated_fields:
-  - depth: 0
-    field_alias: replace_name
-    source_calculated_columns:
-    - name
-    target_calculated_columns:
-    - name
-    type: custom
-    ibis_expr: ibis.expr.types.StringValue.replace
-    params:
-    - pattern: '/'
-    - replacement: '-'
-  comparison_fields:
-  - cast: null
-    field_alias: replace_name
-    source_column: replace_name
-    target_column: replace_name
-  filter_status: null
-  filters: []
-  format: table
-  labels: []
-  primary_keys:
-  - cast: null
-    field_alias: station_id
-    source_column: station_id
-    target_column: station_id
-  random_row_batch_size: '5'
-  schema_name: bigquery-public-data.new_york_citibike
-  table_name: citibike_stations
-  target_schema_name: bigquery-public-data.new_york_citibike
-  target_table_name: citibike_stations
-  threshold: 0.0
-  type: Row
-  use_random_rows: true
+  - calculated_fields:
+      - depth: 0
+        field_alias: replace_name
+        source_calculated_columns:
+          - name
+        target_calculated_columns:
+          - name
+        type: custom
+        ibis_expr: ibis.expr.types.StringValue.replace
+        params:
+          - pattern: "/"
+          - replacement: "-"
+    comparison_fields:
+      - cast: null
+        field_alias: replace_name
+        source_column: replace_name
+        target_column: replace_name
+    filter_status: null
+    filters: []
+    format: table
+    labels: []
+    primary_keys:
+      - cast: null
+        field_alias: station_id
+        source_column: station_id
+        target_column: station_id
+    random_row_batch_size: "5"
+    schema_name: bigquery-public-data.new_york_citibike
+    table_name: citibike_stations
+    target_schema_name: bigquery-public-data.new_york_citibike
+    target_table_name: citibike_stations
+    threshold: 0.0
+    type: Row
+    use_random_rows: true
 ```
 
-
 #### Run a custom query column validation
-````shell script
+
+```shell script
 data-validation validate custom-query column \
   --source-query-file source_query.sql \
   --target-query-file target_query.sql \
   -sc my_bq_conn \
   -tc my_bq_conn
-````
+```
 
 #### Run a custom query validation with sum aggregation
-````shell script
+
+```shell script
 data-validation validate custom-query column \
   --source-query-file source_query.sql \
   --target-query-file target_query.sql \
   -sc my_bq_conn \
   -tc my_bq_conn \
   --sum num_bikes_available
-````
+```
 
 #### Run a custom query validation with max aggregation
-````shell script
+
+```shell script
 data-validation validate custom-query column \
   --source-query-file source_query.sql \
   --target-query-file target_query.sql \
   -sc my_bq_conn \
   -tc my_bq_conn \
   --max num_bikes_available
-````
+```
 
 #### Run a custom query column validation using inline source/target query
-````shell script
+
+```shell script
 data-validation validate custom-query column \
   -sc my_bq_conn \
   -tc my_bq_conn \
   --source-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' \
   --target-query 'select bikeid, gender from bigquery-public-data.new_york_citibike.citibike_trips' \
   --count bikeid,gender
-````
+```
 
 #### Run a custom query row validation
-````shell script
+
+```shell script
 data-validation validate custom-query row \
   --source-query-file source_query.sql \
   --target-query-file target_query.sql \
@@ -455,7 +487,152 @@ data-validation validate custom-query row \
   -tc my_bq_conn \
   --hash '*' \
   --primary-keys station_id
-````
+```
 
 Please replace source_query.sql and target_query.sql with the correct files containing sql query for source and target database respectively. The primary key should be included
 in the SELECT statement of both source_query.sql and target_query.sql
+
+## ClickHouse Examples
+
+The following examples demonstrate using DVT with ClickHouse, particularly useful for validating BigQuery to ClickHouse migrations.
+
+### Create ClickHouse Connection
+
+```shell script
+data-validation connections add \
+  --connection-name my_clickhouse \
+  ClickHouse \
+  --host clickhouse.example.com \
+  --port 9000 \
+  --database analytics \
+  --user analyst \
+  --password my_password \
+  --compression lz4
+```
+
+### Validate BigQuery to ClickHouse Column Aggregations
+
+```shell script
+# Set timezone for consistent timestamp comparisons
+export TZ=UTC
+
+data-validation validate column \
+  -sc my_bq_conn \
+  -tc my_clickhouse \
+  -tbls bigquery-project.dataset.orders=analytics.orders \
+  --count '*' \
+  --sum amount,quantity \
+  --grouped-columns region
+```
+
+### Schema Validation Between BigQuery and ClickHouse
+
+```shell script
+data-validation validate schema \
+  -sc my_bq_conn \
+  -tc my_clickhouse \
+  -tbls bigquery-project.dataset.orders=analytics.orders
+```
+
+### Row Hash Validation with ClickHouse
+
+```shell script
+export TZ=UTC
+
+data-validation validate row \
+  -sc my_bq_conn \
+  -tc my_clickhouse \
+  -tbls bigquery-project.dataset.orders=analytics.orders \
+  --primary-keys order_id \
+  --hash '*' \
+  --filters 'order_date >= "2024-01-01"'
+```
+
+### Custom Query Validation for Migration Testing
+
+This is particularly useful when migrating complex BigQuery SQL with CTEs to ClickHouse:
+
+**BigQuery Query** (`bq_query.sql`):
+
+```sql
+WITH daily_totals AS (
+  SELECT
+    DATE(order_timestamp) as order_date,
+    region,
+    COUNT(*) as order_count,
+    SUM(amount) as total_revenue
+  FROM `project.dataset.orders`
+  WHERE order_timestamp >= '2024-01-01'
+  GROUP BY 1, 2
+)
+SELECT
+  order_date,
+  region,
+  order_count,
+  total_revenue
+FROM daily_totals
+ORDER BY order_date, region
+```
+
+**ClickHouse Query** (`ch_query.sql`):
+
+```sql
+WITH daily_totals AS (
+  SELECT
+    toDate(order_timestamp) as order_date,
+    region,
+    COUNT(*) as order_count,
+    SUM(amount) as total_revenue
+  FROM analytics.orders
+  WHERE order_timestamp >= '2024-01-01'
+  GROUP BY order_date, region
+)
+SELECT
+  order_date,
+  region,
+  order_count,
+  total_revenue
+FROM daily_totals
+ORDER BY order_date, region
+```
+
+**Run Validation:**
+
+```shell script
+export TZ=UTC
+
+data-validation validate custom-query column \
+  -sc my_bq_conn \
+  -tc my_clickhouse \
+  -sqf bq_query.sql \
+  -tqf ch_query.sql \
+  --count order_count \
+  --sum total_revenue \
+  --grouped-columns order_date,region
+```
+
+### Validating ClickHouse Arrays and Complex Types
+
+```shell script
+# Validate tables with array columns
+data-validation validate column \
+  -sc my_clickhouse \
+  -tc my_clickhouse \
+  -tbls analytics.events \
+  --count user_id,event_tags \
+  --filters 'event_date = today()'
+```
+
+### Store ClickHouse Validation Results in BigQuery
+
+```shell script
+data-validation validate column \
+  -sc my_bq_conn \
+  -tc my_clickhouse \
+  -tbls bigquery-project.dataset.orders=analytics.orders \
+  --count '*' \
+  --sum amount \
+  -rh my_bq_conn.pso_data_validator.results
+```
+
+For more detailed ClickHouse examples and troubleshooting, see the [ClickHouse Guide](clickhouse_guide.md) and [ClickHouse samples](../samples/clickhouse/).

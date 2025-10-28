@@ -77,21 +77,22 @@ data-validation connections add -h
 
 The data validation tool supports the following connection types.
 
-* [Raw](#raw)
-* [BigQuery](#google-bigquery)
-* [Spanner](#google-spanner)
-* [Teradata](#teradata)
-* [Oracle](#oracle)
-* [MSSQL](#mssql-server)
-* [Postgres](#postgres)
-* [MySQL](#mysql)
-* [Redshift](#redshift)
-* [FileSystem](#filesystem-csv-orc-parquet-or-json-only)
-* [Impala](#impala)
-* [Hive](#hive)
-* [DB2](#db2)
-* [AlloyDB](#alloydb)
-* [Snowflake](#snowflake)
+- [Raw](#raw)
+- [BigQuery](#google-bigquery)
+- [ClickHouse](#clickhouse)
+- [Spanner](#google-spanner)
+- [Teradata](#teradata)
+- [Oracle](#oracle)
+- [MSSQL](#mssql-server)
+- [Postgres](#postgres)
+- [MySQL](#mysql)
+- [Redshift](#redshift)
+- [FileSystem](#filesystem-csv-orc-parquet-or-json-only)
+- [Impala](#impala)
+- [Hive](#hive)
+- [DB2](#db2)
+- [AlloyDB](#alloydb)
+- [Snowflake](#snowflake)
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
@@ -133,15 +134,126 @@ data-validation connections add
 
 ### User/Service account needs following BigQuery permissions to run DVT
 
-* bigquery.jobs.create (BigQuery JobUser role)
-* bigquery.readsessions.create (BigQuery Read Session User)
-* bigquery.tables.get (BigQuery Data Viewer)
-* bigquery.tables.getData (BigQuery Data Viewer)
+- bigquery.jobs.create (BigQuery JobUser role)
+- bigquery.readsessions.create (BigQuery Read Session User)
+- bigquery.tables.get (BigQuery Data Viewer)
+- bigquery.tables.getData (BigQuery Data Viewer)
 
 ### If you plan to store validation results in BigQuery
 
-* bigquery.tables.update (BigQuery Data Editor)
-* bigquery.tables.updateData (BigQuery Data Editor)
+- bigquery.tables.update (BigQuery Data Editor)
+- bigquery.tables.updateData (BigQuery Data Editor)
+
+## ClickHouse
+
+ClickHouse is a high-performance columnar database. DVT connects to ClickHouse using the Native TCP protocol (port 9000 by default) via the `clickhouse-driver` library included with Ibis framework 5.1.0.
+
+```
+data-validation connections add
+    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
+    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
+    --connection-name CONN_NAME ClickHouse              Connection name
+    --host HOST                                         ClickHouse server hostname (default: localhost)
+    --port PORT                                         ClickHouse TCP port (default: 9000)
+    --database DATABASE                                 Database to connect to
+    --user USER                                         Username (default: 'default')
+    --password PASSWORD                                 Password for authentication
+    [--client-name CLIENT_NAME]                         Client name for connection (default: 'ibis')
+    [--compression COMPRESSION]                         Compression type (e.g., 'lz4')
+    [--json-params JSON_PARAMS]                         Additional connection parameters as JSON string
+```
+
+### Example: Basic ClickHouse Connection
+
+```sh
+data-validation connections add \
+    --connection-name my_clickhouse \
+    ClickHouse \
+    --host clickhouse.example.com \
+    --port 9000 \
+    --database analytics \
+    --user analyst \
+    --password my_password
+```
+
+### Example: ClickHouse with Compression
+
+```sh
+data-validation connections add \
+    --connection-name my_clickhouse_lz4 \
+    ClickHouse \
+    --host clickhouse.example.com \
+    --database analytics \
+    --user analyst \
+    --password my_password \
+    --compression lz4
+```
+
+### Example: ClickHouse with Additional Parameters
+
+Use `--json-params` to pass additional connection parameters supported by the [clickhouse-driver](https://clickhouse-driver.readthedocs.io/) library:
+
+```sh
+data-validation connections add \
+    --connection-name my_clickhouse_advanced \
+    ClickHouse \
+    --host clickhouse.example.com \
+    --database analytics \
+    --user analyst \
+    --password my_password \
+    --json-params '{"connect_timeout": 30, "send_receive_timeout": 600}'
+```
+
+### Using ClickHouse for BigQuery Migration Validation
+
+ClickHouse support is particularly useful for validating BigQuery to ClickHouse migrations:
+
+1. **Schema Validation**: Compare table schemas between BigQuery and ClickHouse using `validate schema`
+2. **Column Validation**: Validate aggregated data (COUNT, SUM, AVG, etc.) using `validate column`
+3. **Custom Query Validation**: Use `validate custom-query` to compare manually converted BigQuery CTEs to ClickHouse SQL
+
+**Example: Custom Query Validation for Migration**
+
+```sh
+# Save your BigQuery SQL to a file
+cat > bq_query.sql <<EOF
+SELECT
+    region,
+    COUNT(*) as total_orders,
+    SUM(amount) as total_revenue
+FROM \`project.dataset.orders\`
+WHERE order_date >= '2024-01-01'
+GROUP BY region
+EOF
+
+# Save your converted ClickHouse SQL to a file
+cat > ch_query.sql <<EOF
+SELECT
+    region,
+    COUNT(*) as total_orders,
+    SUM(amount) as total_revenue
+FROM analytics.orders
+WHERE order_date >= '2024-01-01'
+GROUP BY region
+EOF
+
+# Validate that both queries return the same results
+data-validation validate custom-query column \
+    -sc my_bigquery_conn \
+    -tc my_clickhouse_conn \
+    -sqf bq_query.sql \
+    -tqf ch_query.sql \
+    --count total_orders \
+    --sum total_revenue
+```
+
+### Notes
+
+- **Protocol**: DVT uses ClickHouse Native TCP protocol (port 9000), not HTTP (port 8123)
+- **Timezone**: Set `TZ=UTC` environment variable for consistent timestamp comparisons between databases
+- **Arrays and Tuples**: ClickHouse Array and Tuple types are supported via Ibis framework
+- **Distributed Tables**: Can validate distributed tables and materialized views
+- **Compression**: LZ4 compression is recommended for better performance over network
 
 ## Google Spanner
 
@@ -160,7 +272,7 @@ data-validation connections add
 
 ### User/Service account needs following Spanner role to run DVT
 
-* roles/spanner.databaseReader
+- roles/spanner.databaseReader
 
 ## Teradata
 
@@ -205,22 +317,27 @@ data-validation connections add
 ### --url note
 
 Note that the `--url` option allows specification of a SQLAlchemy URL, not an Oracle Easy Connect URL. This can be used to supply oracledb parameters inline, for example:
+
 ```
 "oracle+oracledb://dvt_user:dvt_user@localhost:1521/?service_name=pdb1&disable_oob=true"
 ```
+
 or in conjunction with `--connect-args` to combine a SQLAlchemy URL and additional oracledb parameters, for example:
+
 ```
 {"source_type": "Oracle", "url": "oracle+oracledb://dvt_user:dvt_user@localhost:1521/?service_name=pdb1", "connect_args": "{\"disable_oob\": true}"}
 ```
+
 See [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/20/dialects/oracle.html#module-sqlalchemy.dialects.oracle.oracledb) for additional details. You may also use `--thick-mode` with the `--url` option.
 
 ### Oracle User permissions to run DVT
 
-* CREATE SESSION
-* READ or SELECT on any tables to be validated
-* Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
+- CREATE SESSION
+- READ or SELECT on any tables to be validated
+- Optional - Read on SYS.V\_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ### Additional Connect parameters, using TLS, mTLS connections and running DVT within a container
+
 oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the `--connect-args` as a python dict.
 
 For setting up a TLS connection, specify the configuration directory where `tnsnames.ora` is located, the wallet directory where `ewallet.pem` is located and the distinguished name of the server used when creating the certificate. The protocol, host, port and service_name are best specified in `tnsnames.ora` as they take precedence. For example, the `--connect-args` parameter can be specified as follows:
@@ -230,10 +347,13 @@ data-validation connections add \
  --connection-name ora_secure Oracle --user USER --password PASSWORD \
  --connect-args='{ "wallet_password": PASSWORD, "wallet_location": WALLET_DIR, "config_dir": CONFIG_DIR, "ssl_server_cert_dn": DISTINGUISHED_NAME}'
 ```
-When DVT is running in a container, you may need to specify  `"disable_oob": True,` as one of the key value pairs in the `connect-args` dictionary to connect to Oracle.
+
+When DVT is running in a container, you may need to specify `"disable_oob": True,` as one of the key value pairs in the `connect-args` dictionary to connect to Oracle.
 
 ### Using credentials from a wallet
+
 When a user name is not specified, credentials (user name and password) are assumed to be in a wallet. Thick mode is automatically used, so Oracle client libraries are required. Only [the name of the credential created with the `mkstore createCredential` command](https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/using-the-orapki-utility-to-manage-pki-elements.html#GUID-25509071-ABC0-4A0E-A3DB-4D4F61024F25), the `dsn`, is required. `config_dir` indicating location of `tnsnames.ora` and `sqlnet.ora` if not provided, is assumed from the environment variable `TNS_ADMIN`. Other connection parameters must be specified in `tnsnames.ora`. For example, the following is sufficient
+
 ```
 data-validation connections add \
  --connection-name ora_secure Oracle \
@@ -371,35 +491,35 @@ Please note that for Group By validations, the following property must be set in
 
 `set hive:hive.groupby.orderby.position.alias=true`
 
- If you are running Hive on Dataproc, you will also need to install the following:
+If you are running Hive on Dataproc, you will also need to install the following:
 
- ```sh
- pip install ibis-framework[impala]
- ```
+```sh
+pip install ibis-framework[impala]
+```
 
- Hive connections are based on the Ibis Impala connection which uses [impyla](https://github.com/cloudera/impyla). Only Hive >= 0.11 is supported due to impyla's dependency on HiveServer2.
+Hive connections are based on the Ibis Impala connection which uses [impyla](https://github.com/cloudera/impyla). Only Hive >= 0.11 is supported due to impyla's dependency on HiveServer2.
 
- When Kerberos needs to be used, it is necessary to set `--auth-mechanism` to `GSSAPI`.
+When Kerberos needs to be used, it is necessary to set `--auth-mechanism` to `GSSAPI`.
 
- ```
+```
 data-validation connections add
-    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
-    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    --connection-name CONN_NAME Impala                  Connection name
-    --host HOST                                         Hive host
-    --port PORT                                         Hive port, defaults to 10000
-    --database DATABASE                                 Hive database, defaults to "default"
-    [--auth-mechanism AUTH_MECH]                        Auth mechanism, defaults to "PLAIN"
-    [--user USER]                                       Hive user
-    [--password PASSWORD]                               Hive password
-    [--kerberos-service-name KERBEROS_SERVICE_NAME]     Desired Kerberos service name ('impala' if not provided)
-    [--use-ssl USE_SSL]                                 If connecting to HiveServer2, defaults to False
-    [--timeout TIMEOUT]                                 Timeout, defaults to 45
-    [--ca-cert CA_CERT]                                 Local path to 3rd party CA certificate
-    [--pool-size POOL_SIZE]                             Hive pool size, default to 8
-    [--hdfs-client CLIENT]                              An existing HDFS client
-    [--use-http-transport TRANSPORT]                    If HTTP proxy is provided, defaults to False
-    [--http-path PATH]                                  URL path of HTTP proxy
+   [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
+   [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
+   --connection-name CONN_NAME Impala                  Connection name
+   --host HOST                                         Hive host
+   --port PORT                                         Hive port, defaults to 10000
+   --database DATABASE                                 Hive database, defaults to "default"
+   [--auth-mechanism AUTH_MECH]                        Auth mechanism, defaults to "PLAIN"
+   [--user USER]                                       Hive user
+   [--password PASSWORD]                               Hive password
+   [--kerberos-service-name KERBEROS_SERVICE_NAME]     Desired Kerberos service name ('impala' if not provided)
+   [--use-ssl USE_SSL]                                 If connecting to HiveServer2, defaults to False
+   [--timeout TIMEOUT]                                 Timeout, defaults to 45
+   [--ca-cert CA_CERT]                                 Local path to 3rd party CA certificate
+   [--pool-size POOL_SIZE]                             Hive pool size, default to 8
+   [--hdfs-client CLIENT]                              An existing HDFS client
+   [--use-http-transport TRANSPORT]                    If HTTP proxy is provided, defaults to False
+   [--http-path PATH]                                  URL path of HTTP proxy
 
 ```
 
@@ -439,6 +559,7 @@ data-validation connections add
 ```
 
 To connect to Snowflake using key-pair authentication you will need to use the `--connect-args` options. Example content from a connection file is included below for reference:
+
 ```
 {"source_type": "Snowflake", "user": USER_NAME, "password": "", "account": ACCOUNT, "database": DATABASE, "connect_args": '{"private_key_file": PATH_TO_RSA_KEY/RSA_KEY.p8, "private_key_file_pwd": PASSPHRASE}'}
 ```

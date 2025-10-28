@@ -41,6 +41,23 @@ python -m pip install --upgrade pip
 python -m pip install .
 ```
 
+### Using the Fork (ClickHouse Support)
+
+If you want to use or contribute to ClickHouse support:
+
+```bash
+# Install from fork
+pip install git+https://github.com/alexei-led/professional-services-data-validator.git
+
+# Or clone fork for development
+git clone git@github.com:alexei-led/professional-services-data-validator.git
+cd professional-services-data-validator/
+python -m venv env
+source env/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
 ## Local Testing
 
 This project uses [Nox](https://nox.thea.codes/en/stable/) for managing tests. Install nox to your local environment and it will handle creating the virtual environments required for each test.
@@ -52,17 +69,20 @@ To run our local testing suite, use:
 See [our script](tests/local_check.sh) for using nox to run tests step by step.
 
 You can also run pytest directly:
+
 ```python
 pip install pytest pytest-cov pyfakefs freezegun
 pytest tests/unit
 ```
 
 To lint your code, run:
+
 ```bash
 pip install black==22.3.0 flake8
 black $BLACK_PATHS # Find this variable in our noxfile
 flake8 data_validation tests
 ```
+
 The above is similar to our [noxfile lint test](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/noxfile.py).
 
 ## Conventional Commits

@@ -83,6 +83,16 @@ CONNECTION_SOURCE_FIELDS = {
             '(Optional) GCP BigQuery Storage API endpoint (e.g. "https://bigquerystorage-mypsc.p.googleapis.com")',
         ],
     ],
+    consts.SOURCE_TYPE_CLICKHOUSE: [
+        ["host", "Desired ClickHouse host (default localhost)"],
+        ["port", "ClickHouse port to connect on (default 9000)"],
+        ["database", "Database to connect to"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["client_name", "(Optional) Client name for connection (default 'ibis')"],
+        ["compression", "(Optional) Compression type (e.g., 'lz4')"],
+        ["json_params", "(Optional) Additional connection parameters as JSON string"],
+    ],
     consts.SOURCE_TYPE_TERADATA: [
         ["host", "Desired Teradata host"],
         ["port", "Teradata port to connect on"],

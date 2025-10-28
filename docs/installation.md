@@ -4,7 +4,6 @@ The tool natively supports BigQuery connections. If you need to connect to other
 
 This tool can be installed locally on your machine or can be containerized and run with Docker.
 
-
 ## Prerequisites
 
 - Any machine with Python 3.8+ installed. (Note: Support for Python 3.7 is deprecated since [PR #894](https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/894))
@@ -27,14 +26,38 @@ source venv/bin/activate
 ```
 
 Update `pip` and make sure `gcc` is installed in your environment.
+
 ```
 sudo apt-get update  && sudo apt-get install gcc -y && sudo apt-get clean
 pip install --upgrade pip
 ```
 
 You can install the tool via [pip](https://pypi.org/project/google-pso-data-validator/#history).
+
 ```
 pip install google-pso-data-validator
+```
+
+### Installing from GitHub Fork (ClickHouse Support)
+
+ClickHouse support is currently available in a GitHub fork. To install DVT with ClickHouse support directly from GitHub:
+
+```bash
+pip install git+https://github.com/alexei-led/professional-services-data-validator.git
+```
+
+This will install the latest version from the fork, including all necessary dependencies.
+
+To upgrade to the latest changes:
+
+```bash
+pip install --upgrade --force-reinstall git+https://github.com/alexei-led/professional-services-data-validator.git
+```
+
+To pin to a specific commit for stability:
+
+```bash
+pip install git+https://github.com/alexei-led/professional-services-data-validator.git@<commit-sha>
 ```
 
 If you require Teradata and have a license, install the `teradatasql` package.
@@ -43,8 +66,18 @@ If you require Teradata and have a license, install the `teradatasql` package.
 python -m pip install teradatasql
 ```
 
+If you require ClickHouse support, install the required packages:
+
+```
+python -m pip install 'clickhouse-driver[numpy]' clickhouse-cityhash lz4
+```
+
+Note: ClickHouse dependencies are included by default when installing DVT via pip (`pip install google-pso-data-validator`), so manual installation is only needed if you're installing from source or have a custom installation.
+
 ## Supporting Objects
+
 ### Teradata
+
 If you plan to perform row level hashing on Teradata, you will need to install a UDF that implements sha256 on your Teradata instance. An example can be found [here](https://downloads.teradata.com/forum/extensibility/sha-2-udfs-for-teradata).
 
 After installing the Data Validation package you will
@@ -56,6 +89,31 @@ tool on your CLI.
 If you intend to validate against PostgreSQL v12 or prior then you should create a custom UDF to support `trim_scale()` functionality added in PostgreSQL v13.
 
 See a [sample UDF](/samples/postgres/trim_scale.sql) and [more details on the UDF](/samples/postgres/README.md).
+
+### ClickHouse
+
+DVT connects to ClickHouse using the Native TCP protocol (port 9000) via the `clickhouse-driver` library. Key points:
+
+- **Required Dependencies**: `clickhouse-driver[numpy]`, `clickhouse-cityhash`, and `lz4` (included in DVT installation)
+- **Connection Protocol**: Native TCP (port 9000), not HTTP (port 8123)
+- **Timezone Handling**: Set `TZ=UTC` environment variable for consistent timestamp comparisons
+- **Supported Features**:
+  - Column validations (COUNT, SUM, AVG, MIN, MAX, STDDEV)
+  - Row hash validations
+  - Schema validations
+  - Custom query validations (ideal for BigQuery→ClickHouse migration testing)
+  - Arrays, Tuples, and complex data types
+  - Distributed tables and materialized views
+
+**Firewall Configuration**: Ensure port 9000 (ClickHouse Native TCP) is accessible from your DVT environment.
+
+**Example Use Case**: ClickHouse support is particularly useful for validating BigQuery to ClickHouse migrations. You can:
+
+1. Compare schemas between BigQuery and ClickHouse tables
+2. Validate aggregated metrics match between systems
+3. Use custom query validation to compare manually converted BigQuery CTEs to ClickHouse SQL
+
+See the [ClickHouse connection documentation](connections.md#clickhouse) for detailed examples.
 
 ## Result Handler Setup
 
@@ -77,8 +135,7 @@ git clone https://github.com/GoogleCloudPlatform/professional-services-data-vali
 cd professional-services-data-validator
 ```
 
-There are two methods of creating the BigQuery output table for the tool: via *Terraform* or the *Cloud SDK*.
-
+There are two methods of creating the BigQuery output table for the tool: via _Terraform_ or the _Cloud SDK_.
 
 #### Cloud Resource Creation - Terraform
 
@@ -86,7 +143,6 @@ By default, Terraform is run inside a test environment and needs to be directed 
 
 1. Delete the `testenv.tf` file inside the `terraform` folder
 2. View `variables.tf` inside the `terraform` folder and replace `default = "pso-kokoro-resources"` with `default = "YOUR_PROJECT_ID"`
-
 
 After installing the [terraform CLI tool](https://learn.hashicorp.com/tutorials/terraform/install-cli) and completing the steps above, run the following commands from inside the root of the repo:
 
@@ -128,6 +184,7 @@ You are now ready to run data validation commands and output the results to BigQ
 In order to allow the data validation tool to write to a PostgreSQL table you must create a connection configuration to a PostgreSQL instance that authenticates as a user with privileges to write to a results table and optionally privileges to create the table.
 
 The example below creates a user to create and update a results table in a schema named `pso_data_validator`:
+
 ```sql
 CREATE USER dvt_results_writer WITH PASSWORD 'S3cr3t!';
 CREATE SCHEMA pso_data_validator;
@@ -142,20 +199,23 @@ Details on creating a PostgreSQL connection configuration can be found [here](ht
 You are now ready to run data validation commands and output the results to PostgreSQL.
 
 ## Test locally
+
 If you want to test local changes to the tool, run the following command from the root directory of this repository:
+
 ```
 pip install .
 ```
+
 The unit test suite can be executed using either `pytest tests/unit` or `python -m nox -s unit` from the root directory. If you are using nox, you will need to run `pip install nox` first.
 
-
 ## Build a Docker container
+
 If native installation is not an option for you, you can create a Docker image for this tool.
 
 Here's an [example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/README.md) on how you can create a sample docker image for this tool.
 
-
 ## Automate using Apache Airflow
+
 You can orchestrate DVT by running a validation as a task within an Airflow DAG.
 
 Here's a simple [example](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/airflow/dvt_airflow_dag.py) on how you can execute this tool using the [PythonVirtualenvOperator](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html#pythonvirtualenvoperator).
