@@ -274,16 +274,20 @@ class PartitionBuilder:
             # to find all rows before the row containing the values in the sort order. The next function geq_value, finds all
             # rows after the row containing the values in the sort order, including the row specified by values.
 
+            def _definitely_no_time_part(value):
+                """Oracle date has a time portion - this function ensures we don't truncate the time when we really want it."""
+                return value.hour + value.minute + value.second + value.microsecond == 0
+
             def less_than_value(table, keys, values):
                 key_column = table.__getattr__(keys[0])
                 # Due to issue 1474, the type can be datetime.datetime or datetime.date
-                # value = (
-                #    values[0].date()
-                #    if key_column.type().is_date()
-                #    and isinstance(values[0], datetime.date)
-                #    else values[0]
-                # )
-                value = values[0]
+                value = (
+                    values[0].date()
+                    if key_column.type().is_date()
+                    and isinstance(values[0], datetime.datetime)
+                    and _definitely_no_time_part(values[0])
+                    else values[0]
+                )
                 if len(keys) == 1:
                     return key_column < ibis.literal(value)
                 else:
@@ -299,6 +303,7 @@ class PartitionBuilder:
                     values[0].date()
                     if key_column.type().is_date()
                     and isinstance(values[0], datetime.datetime)
+                    and _definitely_no_time_part(values[0])
                     else values[0]
                 )
 
