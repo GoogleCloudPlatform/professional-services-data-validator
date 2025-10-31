@@ -255,7 +255,6 @@ class PartitionBuilder:
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
-
             # The objective is to generate the SQL expression string that is saved in the yaml file as a
             # filters property. This SQL expression is used as a filter during validation to ensure
             # that the yaml file is only validating the specific partition. This string is backend specific as
@@ -278,12 +277,13 @@ class PartitionBuilder:
             def less_than_value(table, keys, values):
                 key_column = table.__getattr__(keys[0])
                 # Due to issue 1474, the type can be datetime.datetime or datetime.date
-                value = (
-                    values[0].date()
-                    if key_column.type().is_date()
-                    and isinstance(values[0], datetime.datetime)
-                    else values[0]
-                )
+                # value = (
+                #    values[0].date()
+                #    if key_column.type().is_date()
+                #    and isinstance(values[0], datetime.date)
+                #    else values[0]
+                # )
+                value = values[0]
                 if len(keys) == 1:
                     return key_column < ibis.literal(value)
                 else:
