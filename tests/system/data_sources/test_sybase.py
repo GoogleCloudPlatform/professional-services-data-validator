@@ -613,7 +613,7 @@ def test_row_validation_identifiers():
     row_validation_test(
         tables="pso_data_validator.dvt-identifier$_#",
         tc="mock-conn",
-        hash="*",
+        concat="*",
     )
 
 
@@ -720,6 +720,8 @@ def test_generate_and_run_partitions():
         sc="bq-conn",
         tc="mock-conn",
         concat="*",
+        # Add approved into pk below when issue-1618 is resolved.
+        pk="course_id,quarter_id,recd_timestamp,registration_date",
     )
 
 
