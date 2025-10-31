@@ -29,6 +29,7 @@ from data_validation import consts
 from data_validation.config_manager import ConfigManager
 from data_validation.partition_builder import PartitionBuilder
 
+
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 
@@ -807,3 +808,15 @@ def test_create_partition_query_yaml(module_under_test):
     assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
     # 4 validations in the second file
     assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
+
+
+def test_definitely_no_time_part_true():
+    """Test _definitely_no_time_part returns True when no time part is present."""
+    dt = datetime(2023, 10, 27, 0, 0, 0, 0)
+    assert PartitionBuilder._definitely_no_time_part(dt) is True
+
+
+def test_definitely_no_time_part_false_hour():
+    """Test _definitely_no_time_part returns False when hour is present."""
+    dt = datetime(2023, 10, 27, 1, 0, 0, 0)
+    assert PartitionBuilder._definitely_no_time_part(dt) is False
