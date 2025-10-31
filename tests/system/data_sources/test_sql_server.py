@@ -98,8 +98,7 @@ DVT_SS2BQ_COLUMNS = [
     "col_varbinary",
     "col_varbinary_max",
     "col_bit",
-    # TODO uncomment line below when working on issue-1578.
-    # "col_image",
+    "col_image",
 ]
 
 

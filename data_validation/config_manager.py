@@ -671,20 +671,38 @@ class ConfigManager(object):
 
         This is because SQL Server text does not support the len() function to get the length in characters.
         Instead we must fall back to using ByteLength."""
+        return self._is_sql_server_type(
+            source_column_name, target_column_name, ["text", "ntext"]
+        )
+
+    def _is_sql_server_image(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is of SQL Server image data type.
+
+        This is because SQL Server image is deprecated and not supported by a number of SQL functions.
+        """
+        return self._is_sql_server_type(
+            source_column_name, target_column_name, ["image"]
+        )
+
+    def _is_sql_server_type(
+        self, source_column_name: str, target_column_name: str, type_list: List[str]
+    ) -> bool:
+        """Returns True when either source or target column is of a SQL Server type listed in type_list."""
 
         raw_source_types = self.get_source_raw_data_types()
         raw_target_types = self.get_target_raw_data_types()
-        text_types = ("text", "ntext")
         return bool(
             (
                 self.source_client.name == "mssql"
                 and raw_source_types
-                and raw_source_types.get(source_column_name, [None])[0] in text_types
+                and raw_source_types.get(source_column_name, [None])[0] in type_list
             )
             or (
                 self.target_client.name == "mssql"
                 and raw_target_types
-                and raw_target_types.get(target_column_name, [None])[0] in text_types
+                and raw_target_types.get(target_column_name, [None])[0] in type_list
             )
         )
 
@@ -1075,6 +1093,11 @@ class ConfigManager(object):
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
                     )
                 continue
+            elif self._is_sql_server_image(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to SQL Server image data type"
+                )
+                continue
 
             if require_pre_agg_calc_field(
                 column_type, target_column_type, agg_type, cast_to_bigint
@@ -1252,7 +1275,24 @@ class ConfigManager(object):
             raise ValueError(
                 "Exclude columns flag cannot be present with column list '*'"
             )
+
         return casefold_columns
+
+    def _filter_columns_by_data_type(
+        self, source_columns: dict, target_columns: dict
+    ) -> tuple:
+        """Filter out columns with a data type that is incompatible with DVT."""
+        result_source_columns = source_columns.copy()
+        result_target_columns = target_columns.copy()
+        for source_column, target_column in zip(source_columns, target_columns):
+            if self._is_sql_server_image(source_column, target_column):
+                logging.info(
+                    f"Skipping column {source_column} due to SQL Server image data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+
+        return result_source_columns, result_target_columns
 
     def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
@@ -1267,6 +1307,13 @@ class ConfigManager(object):
         )
         casefold_target_columns = self._filter_columns_by_column_list(
             casefold_target_columns, col_list
+        )
+
+        (
+            casefold_source_columns,
+            casefold_target_columns,
+        ) = self._filter_columns_by_data_type(
+            casefold_source_columns, casefold_target_columns
         )
 
         column_aliases = {}
@@ -1324,6 +1371,9 @@ class ConfigManager(object):
         casefold_source_columns = {_.casefold(): str(_) for _ in source_table.columns}
         casefold_source_columns = self._filter_columns_by_column_list(
             casefold_source_columns, col_list, exclude_cols=exclude_cols
+        )
+        casefold_source_columns, _ = self._filter_columns_by_data_type(
+            casefold_source_columns, casefold_source_columns
         )
         return casefold_source_columns
 
