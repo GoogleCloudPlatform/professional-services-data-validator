@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import ibis.expr.types.Table
+    from ibis.backends.base import BaseBackend
 
 
 def timed_call(log_txt, fn, *args, **kwargs):
@@ -69,8 +70,11 @@ def dvt_config_string_to_dict(config_string: str) -> dict:
         ) from exc
 
 
-def ibis_table_to_sql(ibis_table: "ibis.expr.types", client) -> str:
-    """Function to generate the SQL string for the table based on the backend"""
+def ibis_table_to_sql(ibis_table: "ibis.expr.types", client: "BaseBackend") -> str:
+    """Function to generate the SQL string for the table based on the backend.
+
+    We need the client in order to find the dialect, otherwise we end up with generic literals.
+    """
     sql_alchemy_clients = [
         "mysql",
         "oracle",
@@ -83,8 +87,8 @@ def ibis_table_to_sql(ibis_table: "ibis.expr.types", client) -> str:
     # If the backend uses sqlalchemy, we will need to request sqla to bind variables
     # for a non sqlalchemy backend, the parameters are already bound
     backend_name = ibis_table._find_backend().name
-    dialect = client.con.dialect
     if backend_name in sql_alchemy_clients:
+        dialect = client.con.dialect
         sql_string = str(
             ibis_table.compile().compile(
                 dialect=dialect, compile_kwargs={"literal_binds": True}
