@@ -21,6 +21,9 @@ import math
 from datetime import datetime, timedelta
 from unittest import mock
 
+import ibis
+import pandas
+
 from data_validation import cli_tools
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
@@ -512,6 +515,13 @@ def teardown_module(module):
         shutil.rmtree(folder_path)
 
 
+def _get_pandas_client():
+    df = pandas.DataFrame([{"a": 1, "b": 2}])
+    pandas_client = ibis.pandas.connect({"my_table": df})
+
+    return pandas_client
+
+
 def _generate_fake_data(
     rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
 ):
@@ -672,7 +682,10 @@ def test_extract_where(mocked_to_sql, ibis_table_str, where_exp):
     if ibis_table_str in failed_cases:
         pytest.skip("Skipping test_extract_where due to issue 1503")
     mocked_to_sql.return_value = ibis_table_str
-    assert PartitionBuilder._extract_where("dummy ibis table") == where_exp
+    assert (
+        PartitionBuilder._extract_where("dummy ibis table", _get_pandas_client())
+        == where_exp
+    )
 
 
 def test_add_partition_filters_to_config(module_under_test):
