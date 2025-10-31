@@ -69,7 +69,7 @@ def dvt_config_string_to_dict(config_string: str) -> dict:
         ) from exc
 
 
-def ibis_table_to_sql(ibis_table: "ibis.expr.types") -> str:
+def ibis_table_to_sql(ibis_table: "ibis.expr.types", client) -> str:
     """Function to generate the SQL string for the table based on the backend"""
     sql_alchemy_clients = [
         "mysql",
@@ -83,8 +83,13 @@ def ibis_table_to_sql(ibis_table: "ibis.expr.types") -> str:
     # If the backend uses sqlalchemy, we will need to request sqla to bind variables
     # for a non sqlalchemy backend, the parameters are already bound
     backend_name = ibis_table._find_backend().name
-    return (
-        ibis_table.compile().compile(compile_kwargs={"literal_binds": True}).string
-        if backend_name in sql_alchemy_clients
-        else ibis_table.compile()
-    )
+    dialect = client.con.dialect
+    if backend_name in sql_alchemy_clients:
+        sql_string = str(
+            ibis_table.compile().compile(
+                dialect=dialect, compile_kwargs={"literal_binds": True}
+            )
+        )
+    else:
+        sql_string = str(ibis_table.compile())
+    return sql_string

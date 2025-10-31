@@ -533,10 +533,12 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
                 json.dumps(
                     {
                         "source_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_source_query()
+                            validator.validation_builder.get_source_query(),
+                            source_client,
                         ),
                         "target_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_target_query()
+                            validator.validation_builder.get_target_query(),
+                            target_client,
                         ),
                     },
                     indent=4,

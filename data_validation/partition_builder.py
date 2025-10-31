@@ -98,8 +98,7 @@ class PartitionBuilder:
         yaml_configs_list = self._add_partition_filters(partition_filters)
         self._store_partitions(yaml_configs_list)
 
-    @staticmethod
-    def _extract_where(table_expr: "ibis.expr.types.Table") -> str:
+    def _extract_where(self, table_expr: "ibis.expr.types.Table", client) -> str:
         """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the
            where clause in plain text.
 
@@ -109,8 +108,9 @@ class PartitionBuilder:
         # This extraction of the where clause is a bit of a hack. To extract it correctly, the SQL table
         # expression should be correctly parsed and the where clause extracted. Perhaps use something like Sqlglot.
         sql_where_expr = re.split(
-            r"\sWHERE\s", util.ibis_table_to_sql(table_expr), flags=re.I
+            r"\sWHERE\s", util.ibis_table_to_sql(table_expr, client), flags=re.I
         )[-1]
+
         sql_string_re = re.compile(r"'(?:''|\\'|[^'])*'")
         sql_not_string_re = re.compile(r"[^']+")
         sql_where_less_ws = ""
@@ -281,10 +281,10 @@ class PartitionBuilder:
                     else values[0]
                 )
                 if len(keys) == 1:
-                    return key_column < value
+                    return key_column < ibis.literal(value)
                 else:
-                    return (key_column < value) | (
-                        (key_column == value)
+                    return (key_column < ibis.literal(value)) | (
+                        (key_column == ibis.literal(value))
                         & less_than_value(table, keys[1:], values[1:])
                     )
 
@@ -299,10 +299,11 @@ class PartitionBuilder:
                 )
 
                 if len(keys) == 1:
-                    return key_column >= value
+                    return key_column >= ibis.literal(value)
                 else:
-                    return (key_column > value) | (
-                        (key_column == value) & geq_value(table, keys[1:], values[1:])
+                    return (key_column > ibis.literal(value)) | (
+                        (key_column == ibis.literal(value))
+                        & geq_value(table, keys[1:], values[1:])
                     )
 
             filter_source_clause = less_than_value(
@@ -318,11 +319,13 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
+                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
+                    config_manager.target_client,
                 )
             )
 
@@ -348,11 +351,13 @@ class PartitionBuilder:
                 source_where_list.append(
                     self._extract_where(
                         source_table.filter(filter_source_clause),
+                        config_manager.source_client,
                     )
                 )
                 target_where_list.append(
                     self._extract_where(
                         target_table.filter(filter_target_clause),
+                        config_manager.target_client,
                     )
                 )
             filter_source_clause = geq_value(
@@ -368,11 +373,13 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
+                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
+                    config_manager.target_client,
                 )
             )
             master_filter_list.append([source_where_list, target_where_list])
