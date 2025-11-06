@@ -7,7 +7,7 @@ This tool can be installed locally on your machine or can be containerized and r
 
 ## Prerequisites
 
-- Any machine with Python 3.9+ installed. (Note: Support for Python 3.8 is deprecated since [PR #894](https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/894))
+- Any machine with Python 3.9+ installed. (Note: Support for Python 3.8 is deprecated since [PR #1621](https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/1621))
 
 ## Deploy Data Validation CLI on your machine
 
