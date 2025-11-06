@@ -264,7 +264,7 @@ Example with a specific ODBC driver name:
 ```sh
 data-validation connections add --connection-name sql_server_mydb MSSQL \
 --host=127.0.0.1 --database=mydb --user=usersecret --password=pwdsecret \
---odbc-driver="Microsoft ODBC Driver 18 for SQL Server"
+--odbc-driver="ODBC Driver 18 for SQL Server"
 ```
 
 ## Postgres
