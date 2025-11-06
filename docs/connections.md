@@ -255,6 +255,7 @@ data-validation connections add
     --user USER                                         MSSQL user
     --password PASSWORD                                 MSSQL password
     --database DATABASE                                 MSSQL database
+    --odbc-driver ODBC_DRIVER                           ODBC driver name (default "ODBC Driver 17 for SQL Server")
     [--url URL]                                         SQLAlchemy connection URL
     [--query QUERY]                                     Connection query parameters i.e. '{"TrustServerCertificate": "yes"}'
 ```
