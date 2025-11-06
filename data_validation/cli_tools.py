@@ -109,7 +109,6 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for supplied user"],
         ["database", "Database to connect to (default master)"],
         ["query", "Connection query parameters"],
-        ["odbc_driver", 'ODBC driver name (default "ODBC Driver 17 for SQL Server")'],
         ["url", "SQL Server SQLAlchemy connection URL"],
     ],
     consts.SOURCE_TYPE_MYSQL: [
