@@ -14,7 +14,7 @@
 
 import json
 import string
-from typing import TYPE_CHECKING, Optional, Tuple  # Build is still on Python 3.8
+from typing import TYPE_CHECKING, Optional, Tuple
 import pathlib
 
 from data_validation import __main__ as main
