@@ -30,8 +30,8 @@ import nox
 DEFAULT_PYTHON_VERSION = "3.10"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11"]
-PYTHON_VERSIONS_ORACLE = ["3.8", "3.9", "3.10"]
+PYTHON_VERSIONS = ["3.9", "3.10", "3.11"]
+PYTHON_VERSIONS_ORACLE = ["3.9", "3.10"]
 
 BLACK_PATHS = (
     "data_validation",
