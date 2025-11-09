@@ -271,8 +271,7 @@ def test_column_validation_view_core_types_vw():
 )
 def test_column_validation_large_decimals_to_bigquery():
     """Sybase to BigQuery dvt_large_decimals column validation."""
-    # TODO Excluded col_dec_38_30 for now until we fix zero padding of scale issue.
-    cols = "col_dec_18,col_dec_38,col_dec_38_9"
+    cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
     std_cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
     # TODO Add col_dec_38 to avg_cols below when issue-1551 is complete.
     avg_cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
@@ -401,13 +400,11 @@ def test_row_validation_core_types_to_bigquery():
     # Excluded col_float64 due to the lossy nature of float data type, it matches
     #   Oracle BINARY_DOUBLE but does not match BigQuery FLOAT64.
     # Excluded col_string due us not yet having support for text data type.
-    # TODO Add col_dec_10_2 to cols below when issue-xyz is actioned.
     cols = ",".join(
         [
             _
             for _ in DVT_CORE_TYPES_COLUMNS
-            if _
-            not in ("id", "col_float32", "col_float64", "col_string", "col_dec_10_2")
+            if _ not in ("id", "col_float32", "col_float64", "col_string")
         ]
     )
     row_validation_test(

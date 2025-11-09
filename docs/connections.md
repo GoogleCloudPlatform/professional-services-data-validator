@@ -241,9 +241,9 @@ data-validation connections add \
  --connect-args='{"dsn": TNS_ALIAS}'
 ```
 
-## MSSQL Server
+## SQL Server
 
-MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
+SQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
 For connection query parameter options, see <https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections>.
 
 ```
@@ -251,11 +251,11 @@ data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME MSSQL                   Connection name
-    --host HOST                                         MSSQL host
-    --port PORT                                         MSSQL port, defaults to 1433
-    --user USER                                         MSSQL user
-    --password PASSWORD                                 MSSQL password
-    --database DATABASE                                 MSSQL database
+    --host HOST                                         SQL Server host
+    --port PORT                                         SQL Server port, defaults to 1433
+    --user USER                                         SQL Server user
+    --password PASSWORD                                 SQL Server password
+    --database DATABASE                                 SQL Server database
     [--url URL]                                         SQLAlchemy connection URL
     [--query QUERY]                                     Connection query parameters e.g. '{"TrustServerCertificate": "yes"}'
 ```
