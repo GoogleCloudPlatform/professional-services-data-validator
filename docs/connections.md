@@ -259,6 +259,13 @@ data-validation connections add
     [--query QUERY]                                     Connection query parameters i.e. '{"TrustServerCertificate": "yes"}'
 ```
 
+Example with a specific ODBC driver name:
+```sh
+data-validation connections add --connection-name sql_server_mydb MSSQL \
+--host=127.0.0.1 --database=mydb --user=usersecret --password=pwdsecret \
+--query='{"driver": "ODBC Driver 18 for SQL Server", "TrustServerCertificate": "yes"}'
+```
+
 ## Postgres
 
 ```
