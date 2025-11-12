@@ -16,9 +16,11 @@ import json
 import logging
 import warnings
 from concurrent.futures import ThreadPoolExecutor
-import pandas
 import uuid
 from typing import TYPE_CHECKING
+
+import ibis
+import pandas
 
 from data_validation import combiner, consts, metadata, util
 from data_validation.config_manager import ConfigManager
