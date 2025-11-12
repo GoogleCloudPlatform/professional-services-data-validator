@@ -17,7 +17,7 @@ import logging
 import re
 import time
 
-from data_validation import exceptions
+from data_validation import clients, exceptions
 
 from typing import TYPE_CHECKING
 
@@ -70,24 +70,15 @@ def dvt_config_string_to_dict(config_string: str) -> dict:
         ) from exc
 
 
-def ibis_table_to_sql(ibis_table: "IbisTable", client: "BaseBackend") -> str:
+def ibis_table_to_sql(ibis_table: "IbisTable", alchemy_client: "BaseBackend") -> str:
     """Function to generate the SQL string for the table based on the backend.
 
     We need the client in order to find the dialect, otherwise we end up with generic literals.
     """
-    sql_alchemy_clients = [
-        "mysql",
-        "oracle",
-        "postgres",
-        "db2",
-        "mssql",
-        "redshift",
-        "snowflake",
-    ]
     # If the backend uses sqlalchemy, we will need to request sqla to bind variables
     # for a non sqlalchemy backend, the parameters are already bound
-    if client.name in sql_alchemy_clients:
-        dialect = client.con.dialect
+    if alchemy_client and clients.is_sqlalchemy_backend(alchemy_client):
+        dialect = alchemy_client.con.dialect
         sql_string = str(
             ibis_table.compile().compile(
                 dialect=dialect, compile_kwargs={"literal_binds": True}

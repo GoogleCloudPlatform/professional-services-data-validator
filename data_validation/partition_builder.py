@@ -28,8 +28,8 @@ from data_validation.validation_builder import list_to_sublists
 
 if TYPE_CHECKING:
     from argparse import Namespace
-    import ibis.expr.types.Table
     from ibis.backends.base import BaseBackend
+    from ibis.expr.types.relations import Table as IbisTable
 
 
 class PartitionBuilder:
@@ -106,9 +106,7 @@ class PartitionBuilder:
         self._store_partitions(yaml_configs_list)
 
     @staticmethod
-    def _extract_where(
-        table_expr: "ibis.expr.types.Table", client: "BaseBackend"
-    ) -> str:
+    def _extract_where(table_expr: "IbisTable", client: "BaseBackend") -> str:
         """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the
            where clause in plain text.
 

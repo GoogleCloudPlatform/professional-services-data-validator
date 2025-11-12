@@ -524,8 +524,8 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
         validation_builder=None,
         result_handler=None,
         verbose=verbose,
-        source_client=source_client,
-        target_client=target_client,
+        cached_source_client=source_client,
+        cached_target_client=target_client,
     ) as validator:
 
         if dry_run:
