@@ -408,8 +408,7 @@ def test_row_validation_core_types_to_bigquery():
         ]
     )
     row_validation_test(
-        tc="bq-conn",
-        concat=cols,
+        tc="bq-conn", concat=cols, use_randow_row=True, random_row_batch_size=5
     )
 
 

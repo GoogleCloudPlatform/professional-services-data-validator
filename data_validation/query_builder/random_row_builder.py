@@ -30,9 +30,11 @@ RANDOM_SORT_SUPPORTS = [
     "mssql",
     "db2",
     "mysql",
-    "spanner",
     "redshift",
     "snowflake",
+    "spanner",
+    "sybase",  # TODO we need to use TOP x instead of LIMIT for Sybase
+    # See limit_clause in site-packages/sqlalchemy_sybase/base.py
 ]
 
 
