@@ -166,6 +166,7 @@ CONNECTION_ADD_ARGS = {
     "connection_name": "dummy-bq-connection",
     consts.API_ENDPOINT: None,
     consts.STORAGE_API_ENDPOINT: None,
+    consts.CLIENT_PROJECT_ID: None,
 }
 CONNECTION_DESCRIBE_ARGS = {
     "verbose": False,
@@ -194,6 +195,7 @@ BROKEN_CONNECTION_CONFIG_INCORRECT_COMMAND = {
     consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH: None,
     "connection_name": "dummy-bq-connection",
     consts.API_ENDPOINT: None,
+    consts.CLIENT_PROJECT_ID: None,
 }  # same as CONNECTION_ADD_ARGS but with the command item replaced
 FIND_TABLES_ARGS = {
     "verbose": False,
