@@ -95,7 +95,10 @@ except ImportError:
 
 
 def get_google_bigquery_client(
-    project_id: str, credentials=None, api_endpoint: str = None, quota_project_id: str = None
+    project_id: str,
+    credentials=None,
+    api_endpoint: str = None,
+    quota_project_id: str = None,
 ):
     info = client_info.get_http_client_info()
     job_config = bigquery.QueryJobConfig(
