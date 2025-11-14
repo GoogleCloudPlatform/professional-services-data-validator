@@ -107,8 +107,10 @@ def get_google_bigquery_client(
     effective_project = quota_project_id or project_id
     options = None
     if api_endpoint or quota_project_id:
-        options = client_options.ClientOptions(api_endpoint=api_endpoint, 
-                                               quota_project_id=quota_project_id if quota_project_id else None)
+        options = client_options.ClientOptions(
+            api_endpoint=api_endpoint, 
+            quota_project_id=quota_project_id if quota_project_id else None,
+        )
     return bigquery.Client(
         project=effective_project,
         client_info=info,
@@ -118,11 +120,15 @@ def get_google_bigquery_client(
     )
 
 
-def _get_google_bqstorage_client(credentials=None, api_endpoint: str = None, quota_project_id: str = None):
+def _get_google_bqstorage_client(
+    credentials=None, api_endpoint: str = None, quota_project_id: str = None
+):
     options = None
     if api_endpoint or quota_project_id:
-        options = client_options.ClientOptions(api_endpoint=api_endpoint,
-                                               quota_project_id=quota_project_id if quota_project_id else None)
+        options = client_options.ClientOptions(
+            api_endpoint=api_endpoint,
+            quota_project_id=quota_project_id if quota_project_id else None,
+        )
     from google.cloud import bigquery_storage_v1 as bigquery_storage
 
     return bigquery_storage.BigQueryReadClient(
@@ -140,12 +146,17 @@ def get_bigquery_client(
     client_project_id: str = None,
 ):
     google_client = get_google_bigquery_client(
-        project_id, credentials=credentials, api_endpoint=api_endpoint, quota_project_id=client_project_id
+        project_id,
+        credentials=credentials,
+        api_endpoint=api_endpoint,
+        quota_project_id=client_project_id,
     )
     bqstorage_client = None
     if storage_api_endpoint:
         bqstorage_client = _get_google_bqstorage_client(
-            credentials=credentials, api_endpoint=storage_api_endpoint, quota_project_id=client_project_id
+            credentials=credentials,
+            api_endpoint=storage_api_endpoint,
+            quota_project_id=client_project_id,
         )
 
     return bigquery_connect(
