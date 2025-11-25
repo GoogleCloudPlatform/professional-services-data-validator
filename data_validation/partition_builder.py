@@ -28,7 +28,8 @@ from data_validation.validation_builder import list_to_sublists
 
 if TYPE_CHECKING:
     from argparse import Namespace
-    import ibis.expr.types.Table
+    from ibis.backends.base import BaseBackend
+    from ibis.expr.types.relations import Table as IbisTable
 
 
 class PartitionBuilder:
@@ -37,6 +38,12 @@ class PartitionBuilder:
         self.table_count = len(config_managers)
         self.args = args
         self.config_dir = self._get_arg_config_dir()
+
+    @staticmethod
+    def _definitely_no_time_part(value: datetime.datetime) -> bool:
+        """Oracle date has a time portion - this function ensures we don't truncate the time when we really want it."""
+        # The function name is a bit of a misnomer, it's checking if there is a time part.
+        return value.hour + value.minute + value.second + value.microsecond == 0
 
     def _get_arg_config_dir(self) -> str:
         """Return String yaml config folder path."""
@@ -108,7 +115,7 @@ class PartitionBuilder:
                 )
 
     @staticmethod
-    def _extract_where(table_expr: "ibis.expr.types.Table") -> str:
+    def _extract_where(table_expr: "IbisTable", client: "BaseBackend") -> str:
         """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the
            where clause in plain text.
 
@@ -118,8 +125,9 @@ class PartitionBuilder:
         # This extraction of the where clause is a bit of a hack. To extract it correctly, the SQL table
         # expression should be correctly parsed and the where clause extracted. Perhaps use something like Sqlglot.
         sql_where_expr = re.split(
-            r"\sWHERE\s", util.ibis_table_to_sql(table_expr), flags=re.I
+            r"\sWHERE\s", util.ibis_table_to_sql(table_expr, client), flags=re.I
         )[-1]
+
         sql_string_re = re.compile(r"'(?:''|\\'|[^'])*'")
         sql_not_string_re = re.compile(r"[^']+")
         sql_where_less_ws = ""
@@ -260,7 +268,6 @@ class PartitionBuilder:
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
-
             # The objective is to generate the SQL expression string that is saved in the yaml file as a
             # filters property. This SQL expression is used as a filter during validation to ensure
             # that the yaml file is only validating the specific partition. This string is backend specific as
@@ -287,13 +294,14 @@ class PartitionBuilder:
                     values[0].date()
                     if key_column.type().is_date()
                     and isinstance(values[0], datetime.datetime)
+                    and self._definitely_no_time_part(values[0])
                     else values[0]
                 )
                 if len(keys) == 1:
-                    return key_column < value
+                    return key_column < ibis.literal(value)
                 else:
-                    return (key_column < value) | (
-                        (key_column == value)
+                    return (key_column < ibis.literal(value)) | (
+                        (key_column == ibis.literal(value))
                         & less_than_value(table, keys[1:], values[1:])
                     )
 
@@ -304,14 +312,16 @@ class PartitionBuilder:
                     values[0].date()
                     if key_column.type().is_date()
                     and isinstance(values[0], datetime.datetime)
+                    and self._definitely_no_time_part(values[0])
                     else values[0]
                 )
 
                 if len(keys) == 1:
-                    return key_column >= value
+                    return key_column >= ibis.literal(value)
                 else:
-                    return (key_column > value) | (
-                        (key_column == value) & geq_value(table, keys[1:], values[1:])
+                    return (key_column > ibis.literal(value)) | (
+                        (key_column == ibis.literal(value))
+                        & geq_value(table, keys[1:], values[1:])
                     )
 
             filter_source_clause = less_than_value(
@@ -327,11 +337,13 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
+                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
+                    config_manager.target_client,
                 )
             )
 
@@ -357,11 +369,13 @@ class PartitionBuilder:
                 source_where_list.append(
                     self._extract_where(
                         source_table.filter(filter_source_clause),
+                        config_manager.source_client,
                     )
                 )
                 target_where_list.append(
                     self._extract_where(
                         target_table.filter(filter_target_clause),
+                        config_manager.target_client,
                     )
                 )
             filter_source_clause = geq_value(
@@ -377,11 +391,13 @@ class PartitionBuilder:
             source_where_list.append(
                 self._extract_where(
                     source_table.filter(filter_source_clause),
+                    config_manager.source_client,
                 )
             )
             target_where_list.append(
                 self._extract_where(
                     target_table.filter(filter_target_clause),
+                    config_manager.target_client,
                 )
             )
             master_filter_list.append([source_where_list, target_where_list])

@@ -21,10 +21,13 @@ import math
 from datetime import datetime, timedelta
 from unittest import mock
 
-from data_validation import cli_tools, exceptions
-from data_validation import consts
+import ibis
+import pandas
+
+from data_validation import cli_tools, consts, exceptions
 from data_validation.config_manager import ConfigManager
 from data_validation.partition_builder import PartitionBuilder
+
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
@@ -512,6 +515,13 @@ def teardown_module(module):
         shutil.rmtree(folder_path)
 
 
+def _get_pandas_client():
+    df = pandas.DataFrame([{"a": 1, "b": 2}])
+    pandas_client = ibis.pandas.connect({"my_table": df})
+
+    return pandas_client
+
+
 def _generate_fake_data(
     rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
 ):
@@ -672,7 +682,10 @@ def test_extract_where(mocked_to_sql, ibis_table_str, where_exp):
     if ibis_table_str in failed_cases:
         pytest.skip("Skipping test_extract_where due to issue 1503")
     mocked_to_sql.return_value = ibis_table_str
-    assert PartitionBuilder._extract_where("dummy ibis table") == where_exp
+    assert (
+        PartitionBuilder._extract_where("dummy ibis table", _get_pandas_client())
+        == where_exp
+    )
 
 
 def test_add_partition_filters_to_config(module_under_test):
@@ -796,6 +809,7 @@ def test_create_partition_query_yaml(module_under_test):
     assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
 
 
+<<<<<<< HEAD
 @mock.patch("data_validation.clients.get_data_client")
 def test_check_partition_configs_sybase(mock_get_data_client, module_under_test):
     """Ensure check_partition_filters raises exception for Sybase source connection"""
@@ -815,3 +829,15 @@ def test_check_partition_configs_sybase(mock_get_data_client, module_under_test)
     with pytest.raises(exceptions.PartitionBuilderException) as excinfo:
         builder.check_partition_configs()
     assert "window" in str(excinfo.value)
+=======
+def test_definitely_no_time_part_true():
+    """Test _definitely_no_time_part returns True when no time part is present."""
+    dt = datetime(2023, 10, 27, 0, 0, 0, 0)
+    assert PartitionBuilder._definitely_no_time_part(dt) is True
+
+
+def test_definitely_no_time_part_false_hour():
+    """Test _definitely_no_time_part returns False when hour is present."""
+    dt = datetime(2023, 10, 27, 1, 0, 0, 0)
+    assert PartitionBuilder._definitely_no_time_part(dt) is False
+>>>>>>> origin/develop

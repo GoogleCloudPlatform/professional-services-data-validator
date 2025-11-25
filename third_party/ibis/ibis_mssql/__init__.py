@@ -23,6 +23,9 @@ from ibis.backends.mssql.datatypes import _type_from_result_set_info
 import json
 
 
+DEFAULT_DRIVER_NAME = "ODBC Driver 17 for SQL Server"
+
+
 # The MSSQL backend uses the Ibis MSSQL compiler, but overrides
 # the Backend class to use pyodbc instead of pymssql
 class Backend(BaseAlchemyBackend):
@@ -41,7 +44,7 @@ class Backend(BaseAlchemyBackend):
         database: str = None,
         url: str = None,
         driver: Literal["pyodbc"] = "pyodbc",
-        odbc_driver: str = "ODBC Driver 17 for SQL Server",
+        odbc_driver: str = DEFAULT_DRIVER_NAME,
         query: str = None,
     ) -> None:
         if url is None:
@@ -51,9 +54,11 @@ class Backend(BaseAlchemyBackend):
                 )
 
             if query:
-                query = json.loads(query)
+                query_dict = json.loads(query)
+                if "driver" not in query:
+                    query_dict["driver"] = odbc_driver or DEFAULT_DRIVER_NAME
             else:
-                query = {"driver": odbc_driver}
+                query_dict = {"driver": odbc_driver}
 
             alchemy_url = sa.engine.url.URL.create(
                 f"mssql+{driver}",
@@ -62,7 +67,7 @@ class Backend(BaseAlchemyBackend):
                 username=user,
                 password=password,
                 database=database,
-                query=query,
+                query=query_dict,
             )
         else:
             alchemy_url = sa.engine.url.make_url(url)
