@@ -20,6 +20,7 @@ from ibis.backends.base.sql.alchemy import (
     sqlalchemy_operation_registry,
     sqlalchemy_window_functions_registry,
 )
+from ibis.backends.base.sql.alchemy.registry import _literal as base_literal
 
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 
@@ -178,6 +179,15 @@ def sa_whitespace_rstrip(t, op):
     return sa.func.rtrim(sa_arg)
 
 
+def sa_literal(t, op):
+    if op.output_dtype.is_timestamp() and op.output_dtype.timezone:
+        # Sybase ASE does not have a time zoned data type.
+        value = op.value.replace(tzinfo=None)
+        return sa.literal(value)
+    else:
+        return base_literal(t, op)
+
+
 operation_registry = sqlalchemy_operation_registry.copy()
 operation_registry.update(sqlalchemy_window_functions_registry)
 
@@ -185,6 +195,7 @@ operation_registry[ops.Cast] = sa_cast_sybase
 operation_registry[ops.ExtractEpochSeconds] = sa_epoch_seconds
 operation_registry[ops.HashBytes] = sa_format_hashbytes
 operation_registry[ops.IfNull] = fixed_arity(sa.func.isnull, 2)
+operation_registry[ops.Literal] = sa_literal
 operation_registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
 operation_registry[ops.RStrip] = sa_whitespace_rstrip
 operation_registry[ops.Strftime] = strftime
