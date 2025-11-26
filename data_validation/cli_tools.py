@@ -73,6 +73,10 @@ if TYPE_CHECKING:
 CONNECTION_SOURCE_FIELDS = {
     consts.SOURCE_TYPE_BIGQUERY: [
         ["project_id", "GCP Project to use for BigQuery"],
+        [
+            "client_project_id",
+            "(Optional) BigQuery job/billing project (can differ from data project)",
+        ],
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
             "api_endpoint",
