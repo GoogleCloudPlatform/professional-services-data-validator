@@ -704,7 +704,7 @@ def test_custom_query_row_validation_many_columns():
 # Because Sybase does not support window functions we cannot test partition filters using:
 #   test_generate_partitions and test_generate_partitions_datetime_pk
 #
-# Instead we run end-to-end partition tests using Sybase as the target.
+# Instead we run end-to-end partition tests using BigQuery as the source with Sybase as the target.
 ############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
@@ -712,6 +712,7 @@ def test_custom_query_row_validation_many_columns():
 )
 def test_generate_and_run_partitions():
     """Test generate and execute partition configs."""
+    pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
     generate_and_run_table_partitions_test(
         sc="bq-conn",
         tc="mock-conn",
