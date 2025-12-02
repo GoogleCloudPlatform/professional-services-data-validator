@@ -45,8 +45,9 @@ def sa_cast_sybase(t, op):
         #   1. Replace all zeros with spaces and then rtrim (shame rtrim does not allow a replacement char)
         #   2. Replace spaces back to zeros. This is assuming it is not possible to get spaces for other reasons.
         #   3. Do the same with the dot character in case we've ended up with a lonely trailing dot.
-        # TODO can this be improved? It's pretty ugly.
-        # TODO what if there is a locale setting that doesn't use dot for decimal places?
+        # The expression below assumes the decimla place spearator is ".". I can't find a session setting to control
+        # this, it might be part of the language but my test system only has "us_english". We might need users
+        # to modify the DVT user to have us_english if their default results in a decimal separator of ",".
         converted = sa.func.convert(sa.literal_column("VARCHAR(50)"), sa_arg)
         trailing_zero_removed = sa.func.str_replace(
             sa.func.rtrim(
