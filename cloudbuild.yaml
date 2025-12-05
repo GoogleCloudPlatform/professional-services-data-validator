@@ -31,7 +31,9 @@ steps:
   waitFor: ['-']
 - id: unit-alpine
   name: 'python:3.10-alpine'
-  args: ['bash', './ci/build.sh', 'python3.10']
+  script: |
+    apk install bash
+    bash ./ci/build.sh python3.10
   env:
   - 'NOX_SESSION=unit_default_python'
   waitFor: ['-']
