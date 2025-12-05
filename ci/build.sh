@@ -17,7 +17,7 @@
 #
 
 PYTHON="python3.9"
-if [[ -n "$1" && "$1" =~ "python.*" ]]; then
+if [[ -n "$1" && "$1" =~ python.* ]]; then
     PYTHON=$1
 fi
 
