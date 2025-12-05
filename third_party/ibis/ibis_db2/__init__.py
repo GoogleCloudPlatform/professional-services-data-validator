@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sqlalchemy as sa
 import re
+from typing import Iterable, Optional, Tuple, Dict, Any
+
+import sqlalchemy as sa
 
 import ibis.expr.datatypes as dt
-from typing import Iterable, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
@@ -28,12 +29,13 @@ class Backend(BaseAlchemyBackend):
     def do_connect(
         self,
         host: str = "localhost",
-        user: str = None,
-        password: str = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
         port: int = 50000,
-        database: str = None,
-        url: str = None,
+        database: Optional[str] = None,
+        url: Optional[str] = None,
         driver: str = "ibm_db_sa",
+        connect_args: Dict[str, Any] = None,
     ) -> None:
         if url is None:
             if driver != "ibm_db_sa":
@@ -56,6 +58,7 @@ class Backend(BaseAlchemyBackend):
             poolclass=sa.pool.StaticPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,
+            connect_args=connect_args or {},
         )
         self.database_name = database
         self.url = sa_url
@@ -63,7 +66,10 @@ class Backend(BaseAlchemyBackend):
         @sa.event.listens_for(engine, "connect")
         def connect(dbapi_connection, connection_record):
             with dbapi_connection.cursor() as cur:
-                cur.execute("SET TIMEZONE = UTC")
+                # On Db2 z/OS we can set the time zone as below.
+                # We cannot find an equivalent command for LUW and previously had
+                #   SET TIMEZONE = 'UTC' which silently failed anyway.
+                cur.execute("SET SESSION TIME ZONE = '00:00'")
 
         super().do_connect(engine)
 

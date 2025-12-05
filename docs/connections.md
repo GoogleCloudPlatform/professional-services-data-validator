@@ -426,6 +426,15 @@ data-validation connections add
     --database DATABASE                                 DB2 database
     [--url URL]                                         SQLAlchemy connection URL
     [--driver DRIVER]                                   DB2 driver, defaults to "ibm_db_sa"
+    [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
+```
+
+Example TLS connection:
+```
+data-validation connections add -c db2conn DB2 \
+  --host=sdb2-host --database=somedb \
+  --user=dvt --password=DVTS3cret \
+  --connect-args='{"Security": "SSL", "SSLClientKeystoredb": "/path/to/file.kdb", "SSLClientKeystash": "/path/to/file.sth"}'
 ```
 
 ## Snowflake

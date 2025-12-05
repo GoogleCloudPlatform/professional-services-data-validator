@@ -194,6 +194,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["database", "Database in DB2 to connect to"],
         ["url", "URL link in DB2 to connect to"],
         ["driver", "Driver link in DB2 to connect to (default ibm_db_sa)"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
 }
 
