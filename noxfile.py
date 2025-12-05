@@ -88,6 +88,11 @@ def unit_small(session):
     unit(session)
 
 
+@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+def unit_default_python(session):
+    unit(session)
+
+
 @nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
 def samples(session):
     """Run the snippets test suite."""
