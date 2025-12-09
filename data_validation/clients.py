@@ -159,8 +159,10 @@ def get_bigquery_client(
             quota_project_id=client_project_id,
         )
 
+    billing_project = client_project_id if client_project_id else project_id
+
     return bigquery_connect(
-        project_id=project_id,
+        project_id=billing_project,
         dataset_id=dataset_id,
         credentials=credentials,
         bigquery_client=google_client,
@@ -332,10 +334,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config[
-                "credentials"
-            ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                key_path
+            decrypted_connection_config["credentials"] = (
+                google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
+                )
             )
 
     if source_type not in CLIENT_LOOKUP:
