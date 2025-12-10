@@ -15,9 +15,53 @@
 from ibis.backends.base.sql.alchemy import AlchemyCompiler, AlchemyExprTranslator
 from ibis.backends.base.sql.alchemy.query_builder import AlchemySelect
 from sqlalchemy_sybase import DATETIME
+from sqlalchemy_sybase.base import (
+    SybaseSQLCompiler,
+    SybaseDialect as sa_SybaseDialect,
+)
 from sqlalchemy.dialects.mssql.base import MSDialect
 
 from third_party.ibis.ibis_sybase.registry import operation_registry
+
+
+class DVTSybaseSQLCompiler(SybaseSQLCompiler):
+    """DVT specific class to override sqlalchemy_sybase methods with SQL Server versions.
+
+    Methods we override are to use TOP clause for row limiting:
+        - limit_clause
+        - get_select_precolumns
+    """
+
+    def limit_clause(self, cs, **kwargs):
+        return ""
+
+    def get_select_precolumns(self, select, **kw):
+        """MS-SQL puts TOP, it's version of LIMIT here"""
+
+        s = super().get_select_precolumns(select, **kw)
+
+        if select._has_row_limiting_clause:
+            # ODBC drivers and possibly others
+            # don't support bind params in the SELECT clause on SQL Server.
+            # so have to use literal here.
+            kw["literal_execute"] = True
+            s += "TOP %s " % self.process(self._get_limit_or_fetch(select), **kw)
+            if select._fetch_clause is not None:
+                if select._fetch_clause_options["percent"]:
+                    s += "PERCENT "
+                if select._fetch_clause_options["with_ties"]:
+                    s += "WITH TIES "
+
+        return s
+
+    def _get_limit_or_fetch(self, select):
+        if select._fetch_clause is None:
+            return select._limit_clause
+        else:
+            return select._fetch_clause
+
+
+sa_SybaseDialect.statement_compiler = DVTSybaseSQLCompiler
 
 
 class SybaseDialect(MSDialect):
