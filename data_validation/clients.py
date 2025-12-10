@@ -166,8 +166,10 @@ def get_bigquery_client(
             quota_project_id=client_project_id,
         )
 
+    billing_project = client_project_id if client_project_id else project_id
+
     return bigquery_connect(
-        project_id=project_id,
+        project_id=billing_project,
         dataset_id=dataset_id,
         credentials=credentials,
         bigquery_client=google_client,
