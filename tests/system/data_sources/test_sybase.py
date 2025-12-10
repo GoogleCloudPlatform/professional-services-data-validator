@@ -508,7 +508,8 @@ def test_row_validation_binary_pk_to_bigquery():
             "-tbls=pso_data_validator.dvt_binary",
             "--primary-keys=binary_id",
             "--concat=int_id,other_data",
-            "--use-random-row",
+            # Uncomment line below when working on issue-1633.
+            # "--use-random-row",
             "--random-row-batch-size=5",
         ]
     )
