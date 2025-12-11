@@ -384,7 +384,7 @@ def integration_impala(session):
 @nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_sybase(session):
     """Run Sybase integration tests."""
-    _setup_session_requirements(session)
+    _setup_session_requirements(session, extra_packages=["sqlalchemy_sybase"])
 
     expected_env_vars = ["PROJECT_ID", "SYBASE_HOST", "SYBASE_USER", "SYBASE_PASSWORD"]
     for env_var in expected_env_vars:
