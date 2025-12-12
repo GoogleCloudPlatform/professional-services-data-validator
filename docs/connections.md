@@ -475,7 +475,7 @@ When testing we needed to enable auto commit to be able to run catalog stored pr
 data-validation connections add -c sybase Sybase \
   --host=sybase-host --database=somedb \
   --user=dvt --password=DVTS3cret \
-  --connect-args='{"driver": "FreeTDS", "autocommit": "True"}'
+  --connect-args='{"driver": "FreeTDS", "autocommit": "True", "TDS_Version": "5.0"}'
 ```
 
 See also [limitations](https://github.com/GoogleCloudPlatform/professional-services-data-validator2/blob/develop/docs/limitations.md#sybase)

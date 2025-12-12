@@ -27,15 +27,12 @@ if [[ "$NOX_SESSION" == "integration_sybase" ]]; then
     sudo add-apt-repository -y universe
     apt-get update
     sudo apt-get install -y freetds-bin freetds-common
-    # Can't install tdsodbc due to libodbc conflict, but we can download the .so file:
-    sudo apt-get download tdsodbc
-    # apt-get remove -y msodbcsql17 libodbc2
-    # apt autoremove -y
-    # apt-get install -y tdsodbc
-    # apt-get install -y freetds-dev freetds-bin tdsodbc
+    # Can't install tdsodbc due to libodbc conflict, but we can download
+    # the .so file (command from Gemini):
+    cd /tmp && sudo apt-get download tdsodbc && sudo dpkg -i --force-all tdsodbc*.deb
     echo "[FreeTDS]
 Description=FreeTDS Driver for Linux
-Driver=/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so
+Driver=libtdsodbc.so
 UsageCount=1" > /etc/odbcinst.ini
 fi
 
