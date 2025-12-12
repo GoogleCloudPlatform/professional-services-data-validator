@@ -15,10 +15,10 @@
 import json
 import logging
 import os
+import pathlib
 from unittest import mock
 
 import pytest
-import pathlib
 
 from data_validation import __main__ as main
 from data_validation import (

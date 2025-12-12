@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import pathlib
 from unittest import mock
 
 import pytest

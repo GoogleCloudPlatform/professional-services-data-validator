@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import os
+import pathlib
 from unittest import mock
 
 import pytest
-import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
