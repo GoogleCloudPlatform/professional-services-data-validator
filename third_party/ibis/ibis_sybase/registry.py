@@ -78,7 +78,7 @@ def sa_cast_sybase(t, op):
             else_=converted,
         )
     elif typ.is_timestamp():
-        # There must be a way to set the target name for dt.Timestamp globally, need to try again.
+        # There must be a way to set the target name for dt.Timestamp globally, but I couldn't find it.
         return sa.func.convert(sa.literal_column("'BIGDATETIME'"), sa_arg)
     elif arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
@@ -86,6 +86,10 @@ def sa_cast_sybase(t, op):
     elif arg_dtype.is_string() and typ.is_binary():
         # Binary from string cast is a "from hex" conversion for DVT.
         return sa.func.strtobin(sa_arg)
+    elif (arg_dtype.is_integer() or arg_dtype.is_decimal()) and typ.is_string():
+        # We can't cast to TEXT or VARCHAR(MAX) on Sybase so need to introduce a length:
+        #    Error: Explicit conversion from datatype 'INT NULL' to 'TEXT' is not allowed.
+        return sa.func.convert(sa.literal_column("VARCHAR(40)"), sa_arg)
 
     # Follow our SQL Server code path.
     return mssql_registry.sa_cast_mssql(t, op)
