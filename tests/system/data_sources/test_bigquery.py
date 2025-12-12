@@ -1493,9 +1493,10 @@ def test_row_validation_comp_fields_reserved_words(mock_conn):
     "data_validation.state_manager.StateManager.get_connection_config",
     return_value=BQ_CONN,
 )
-def test_generate_and_run_partitions(mock_conn):
+def test_generate_and_run_partitions(mock_conn, tmp_path: pathlib.Path):
     """Test generate and execute partition configs."""
     generate_and_run_table_partitions_test(
+        tmp_path,
         sc="mock-conn",
         tc="mock-conn",
     )

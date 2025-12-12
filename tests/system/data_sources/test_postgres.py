@@ -1344,10 +1344,11 @@ def test_row_validation_intervals():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_and_run_partitions():
+def test_generate_and_run_partitions(tmp_path: pathlib.Path):
     """Test generate and execute partition configs."""
     pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
     generate_and_run_table_partitions_test(
+        tmp_path,
         sc="mock-conn",
         tc="bq-conn",
     )

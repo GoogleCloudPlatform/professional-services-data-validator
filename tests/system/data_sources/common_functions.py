@@ -661,6 +661,7 @@ def partition_query_test(
 
 
 def generate_and_run_table_partitions_test(
+    tmp_path: pathlib.Path,
     sc="bq-conn",
     tc="bq-conn",
     tables="pso_data_validator.test_generate_partitions_v2",
@@ -669,7 +670,8 @@ def generate_and_run_table_partitions_test(
     concat: Optional[str] = None,
     partition_num: int = 2,
 ):
-    cdir = f"/tmp/yaml/{get_random_string()}"
+    # cdir = f"/tmp/yaml/{get_random_string()}"
+    cdir = tmp_path
     # Generate partition configs:
     parser = cli_tools.configure_arg_parser()
     if concat:
