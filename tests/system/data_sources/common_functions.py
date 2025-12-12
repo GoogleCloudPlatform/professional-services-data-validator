@@ -671,7 +671,6 @@ def generate_and_run_table_partitions_test(
     partition_num: int = 2,
 ):
     # cdir = f"/tmp/yaml/{get_random_string()}"
-    cdir = tmp_path
     # Generate partition configs:
     parser = cli_tools.configure_arg_parser()
     if concat:
@@ -685,7 +684,7 @@ def generate_and_run_table_partitions_test(
         f"-tbls={tables}",
         f"-pk={pk}",
         col_option,
-        f"-cdir={cdir}",
+        f"-cdir={tmp_path}",
         f"-pn={partition_num}",
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
@@ -694,7 +693,7 @@ def generate_and_run_table_partitions_test(
     partition_builder = PartitionBuilder(config_managers, args)
     partition_builder.partition_configs()
 
-    config_dir = f"{cdir}/{tables}"
+    config_dir = tmp_path / tables
     assert (
         len(os.listdir(config_dir)) == partition_num
     ), f"{len(os.listdir(config_dir))} != {partition_num=}"
