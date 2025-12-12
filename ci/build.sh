@@ -24,10 +24,12 @@ fi
 set -eo pipefail
 
 if [[ "$NOX_SESSION" == "integration_sybase" ]]; then
+    sudo add-apt-repository -y universe
     apt-get update
-    apt-get remove -y msodbcsql17 libodbc2
-    apt autoremove -y
-    apt-get install -y tdsodbc
+    sudo apt-get install -y freetds-bin freetds-common
+    # apt-get remove -y msodbcsql17 libodbc2
+    # apt autoremove -y
+    # apt-get install -y tdsodbc
     # apt-get install -y freetds-dev freetds-bin tdsodbc
 fi
 
