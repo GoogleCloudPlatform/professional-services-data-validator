@@ -33,6 +33,10 @@ if [[ "$NOX_SESSION" == "integration_sybase" ]]; then
     # apt autoremove -y
     # apt-get install -y tdsodbc
     # apt-get install -y freetds-dev freetds-bin tdsodbc
+    echo "[FreeTDS]
+Description=FreeTDS Driver for Linux
+Driver=libtdsodbc.so
+UsageCount=1" > /etc/odbcinst.ini
 fi
 
 # Disable buffering, so that the logs stream through.
