@@ -23,6 +23,11 @@ fi
 
 set -eo pipefail
 
+if [[ "$NOX_SESSION" == "integration_sybase" ]]; then
+    apt-get update
+    apt-get -y install freetds-dev freetds-bin tdsodbc
+fi
+
 # Disable buffering, so that the logs stream through.
 export PYTHONUNBUFFERED=1
 
