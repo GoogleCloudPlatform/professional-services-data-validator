@@ -35,7 +35,7 @@ if [[ "$NOX_SESSION" == "integration_sybase" ]]; then
     # apt-get install -y freetds-dev freetds-bin tdsodbc
     echo "[FreeTDS]
 Description=FreeTDS Driver for Linux
-Driver=libtdsodbc.so
+Driver=/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so
 UsageCount=1" > /etc/odbcinst.ini
 fi
 
