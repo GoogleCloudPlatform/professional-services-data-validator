@@ -25,7 +25,8 @@ set -eo pipefail
 
 if [[ "$NOX_SESSION" == "integration_sybase" ]]; then
     apt-get update
-    apt-get -y install freetds-dev freetds-bin tdsodbc
+    apt-get remove -y libodbc2
+    apt-get install -y freetds-dev freetds-bin tdsodbc
 fi
 
 # Disable buffering, so that the logs stream through.
