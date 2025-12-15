@@ -158,3 +158,52 @@ def test_expand_tables_of_asterisk(
             tables_list, mock.Mock(), mock.Mock()
         )
         assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    ("table_list,expected_result"),
+    (
+        (
+            # Test upper case names are coerced to lower case when possible.
+            [
+                ("own", "tab1"),
+                # This table will remain upper case because there's already a lower case one.
+                ("own", "TAB1"),
+                # The key for this will be successfully lower cased.
+                ("own", "TAB3"),
+                # This table will remain upper case because there's already a lower case one, even though it is later in the list.
+                ("own", "TAB4"),
+                ("own", "tab4"),
+            ],
+            {
+                "own.tab1": {
+                    "schema_name": "own",
+                    "table_name": "tab1",
+                },
+                "own.TAB1": {
+                    "schema_name": "own",
+                    "table_name": "TAB1",
+                },
+                "own.tab3": {
+                    "schema_name": "own",
+                    "table_name": "TAB3",
+                },
+                "own.tab4": {
+                    "schema_name": "own",
+                    "table_name": "tab4",
+                },
+                "own.TAB4": {
+                    "schema_name": "own",
+                    "table_name": "TAB4",
+                },
+            },
+        ),
+    ),
+)
+def test__get_table_map_from_obj_list_mixed_case(
+    module_under_test, table_list: list, expected_result: dict
+):
+    """Test matching tables from source and target."""
+    table_configs = module_under_test._get_table_map_from_obj_list(table_list)
+
+    assert table_configs == expected_result

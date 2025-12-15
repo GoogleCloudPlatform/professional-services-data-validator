@@ -29,6 +29,14 @@ steps:
   env:
   - 'NOX_SESSION=unit'
   waitFor: ['-']
+- id: unit-alpine
+  name: 'python:3.10-alpine'
+  script: |
+    apk add bash
+    bash ./ci/build.sh python3.10
+  env:
+  - 'NOX_SESSION=unit_default_python'
+  waitFor: ['-']
 - id: proxy-install
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/install_cloud_proxy.sh']

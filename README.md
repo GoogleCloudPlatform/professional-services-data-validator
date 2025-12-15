@@ -281,7 +281,7 @@ data-validation
                         Directory Path to store YAML Config Files
                         GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
-                        If invoked with -tbls parameter, the validations are stored in a directory named <schema>.<table>, otherwise the directory is named `custom.<random_string>`
+                        For custom queries, the yaml files are stored in CONFIG_DIR and, for tables the yamls are stored in a directory named <source_schema>.<table> within CONFIG_DIR.
   --partition-num INT, -pn INT
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
@@ -390,6 +390,8 @@ data-validation
                         Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql command. Supports GCS and local paths.
+  [--grouped-columns or -gc GROUPED_COLUMNS]
+                        Comma separated list of columns for Group By i.e col_a,col_b
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
@@ -592,9 +594,8 @@ The `--config-dir` flag will specify the directory with the YAML files to be exe
 
 ### Validation Reports
 
-The result handlers tell DVT where to store the results of each validation. The
-tool can write the results of a validation run to Google BigQuery, PostgreSQL
-or print to stdout (default). View the schema of the results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+The result handlers tell DVT where to store the results of each validation. The tool can write the results of a validation run to Google BigQuery, PostgreSQL or print to stdout (default). See [result handler setup](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#result-handler-setup) for pre-requisites. View the schema of the BigQuery results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+
 
 To output to BigQuery or PostgreSQL, simply include the `-rh` flag during a validation run including
 the schema and table name for the results.

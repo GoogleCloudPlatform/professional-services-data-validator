@@ -1343,7 +1343,9 @@ def test_row_validation_core_types_auto_pks(mock_conn):
 )
 def test_custom_query_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types custom-query validation"""
-    custom_query_validation_test(tc="mock-conn", count_cols="*")
+    custom_query_validation_test(
+        tc="mock-conn", count_cols="*", grouped_columns="col_varchar_30"
+    )
 
 
 @mock.patch(

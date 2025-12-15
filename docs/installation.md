@@ -7,11 +7,11 @@ This tool can be installed locally on your machine or can be containerized and r
 
 ## Prerequisites
 
-- Any machine with Python 3.8+ installed. (Note: Support for Python 3.7 is deprecated since [PR #894](https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/894))
+- Any machine with Python 3.9+ installed. (Note: Support for Python 3.8 is deprecated since [PR #1621](https://github.com/GoogleCloudPlatform/professional-services-data-validator/pull/1621))
 
 ## Deploy Data Validation CLI on your machine
 
-The Data Validation tooling requires Python 3.8+.
+The Data Validation tooling requires Python 3.9+.
 
 ```
 sudo apt-get install python3
@@ -67,6 +67,8 @@ In order to allow the data validation tool to write to a BigQuery table, users n
 
 - A Google Cloud Platform project with the BigQuery API enabled.
 - A Google user account with appropriate permissions. If you plan to run this tool in production, it's recommended that you create a service account specifically for running the tool. See our [guide](https://cloud.google.com/docs/authentication/production) on how to authenticate with your service account. If you are using a service account, you need to grant your service account appropriate roles on your project so that it has permissions to create and read resources.
+
+Note that DVT uses the BigQuery streaming API to write results to BigQuery, this is because of limits on the number of mutations per table per day.
 
 Clone the repository onto your machine and navigate inside the directory:
 

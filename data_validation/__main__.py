@@ -294,10 +294,7 @@ def build_config_from_args(args: "Namespace", config_manager: ConfigManager):
         and args.custom_query_type == consts.COLUMN_VALIDATION.lower()
     ):
         config_manager.append_aggregates(get_aggregate_config(args, config_manager))
-        if (
-            config_manager.validation_type == consts.COLUMN_VALIDATION
-            and args.grouped_columns  # grouped_columns not supported in custom queries - at least now.
-        ):
+        if args.grouped_columns:
             grouped_columns = cli_tools.get_arg_list(args.grouped_columns)
             config_manager.append_query_groups(
                 config_manager.build_column_configs(grouped_columns)
@@ -527,8 +524,8 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
         validation_builder=None,
         result_handler=None,
         verbose=verbose,
-        source_client=source_client,
-        target_client=target_client,
+        cached_source_client=source_client,
+        cached_target_client=target_client,
     ) as validator:
 
         if dry_run:
@@ -536,10 +533,12 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
                 json.dumps(
                     {
                         "source_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_source_query()
+                            validator.validation_builder.get_source_query(),
+                            source_client,
                         ),
                         "target_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_target_query()
+                            validator.validation_builder.get_target_query(),
+                            target_client,
                         ),
                     },
                     indent=4,

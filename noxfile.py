@@ -30,8 +30,8 @@ import nox
 DEFAULT_PYTHON_VERSION = "3.10"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11"]
-PYTHON_VERSIONS_ORACLE = ["3.8", "3.9", "3.10"]
+PYTHON_VERSIONS = ["3.9", "3.10", "3.11"]
+PYTHON_VERSIONS_ORACLE = ["3.9", "3.10"]
 
 BLACK_PATHS = (
     "data_validation",
@@ -79,6 +79,11 @@ def unit(session):
 
 @nox.session(venv_backend="venv")
 def unit_small(session):
+    unit(session)
+
+
+@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+def unit_default_python(session):
     unit(session)
 
 
@@ -279,8 +284,10 @@ def integration_snowflake(session):
     """Run Snowflake integration tests.
     Ensure Snowflake validation is running as expected.
     """
+    # TODO Remove pinned version below when working on issue-1592.
     _setup_session_requirements(
-        session, extra_packages=["snowflake-sqlalchemy", "snowflake-connector-python"]
+        session,
+        extra_packages=["snowflake-sqlalchemy==1.7.6", "snowflake-connector-python"],
     )
 
     expected_env_vars = [
@@ -303,7 +310,10 @@ def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["ibm-db-sa<0.4.2"])
+    # TODO Remove dependency "ibm-db<3.2.7" below when working on issue-1591.
+    _setup_session_requirements(
+        session, extra_packages=["ibm-db-sa<0.4.2", "ibm-db<3.2.7"]
+    )
 
     expected_env_vars = [
         "PROJECT_ID",

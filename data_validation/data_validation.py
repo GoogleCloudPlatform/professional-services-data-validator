@@ -16,15 +16,20 @@ import json
 import logging
 import warnings
 from concurrent.futures import ThreadPoolExecutor
-import ibis.backends.pandas
-import pandas
 import uuid
+from typing import TYPE_CHECKING
+
+import ibis
+import pandas
 
 from data_validation import combiner, consts, metadata, util
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.random_row_builder import RandomRowBuilder
 from data_validation.schema_validation import SchemaValidation
 from data_validation.validation_builder import ValidationBuilder
+
+if TYPE_CHECKING:
+    from ibis.backends.base import BaseBackend
 
 """ The DataValidation class is where the code becomes source/target aware
 
@@ -43,8 +48,8 @@ class DataValidation(object):
         schema_validator=None,
         result_handler=None,
         verbose=False,
-        source_client: ibis.backends.base.BaseBackend = None,
-        target_client: ibis.backends.base.BaseBackend = None,
+        cached_source_client: "BaseBackend" = None,
+        cached_target_client: "BaseBackend" = None,
     ):
         """Initialize a DataValidation client
 
@@ -54,19 +59,21 @@ class DataValidation(object):
             schema_validator (SchemaValidation): Optional instance of a SchemaValidation.
             result_handler (ResultHandler): Optional instance of as ResultHandler client.
             verbose (bool): If verbose, the Data Validation client will print the queries run.
-            source_client: Optional client to avoid unnecessary connections,
-            target_client: Optional client to avoid unnecessary connections,
+            cached_source_client: Optional client to avoid unnecessary connections,
+            cached_target_client: Optional client to avoid unnecessary connections,
         """
         self.verbose = verbose
-        self._fresh_connections = not bool(source_client and target_client)
+        self._fresh_connections = not bool(
+            cached_source_client and cached_target_client
+        )
 
         # Data Client Management
         self.config = config
 
         self.config_manager = ConfigManager(
             config,
-            source_client=source_client,
-            target_client=target_client,
+            source_client=cached_source_client,
+            target_client=cached_target_client,
             verbose=self.verbose,
         )
 
