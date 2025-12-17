@@ -71,8 +71,10 @@ from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 # DB2 requires ibm_db_dbi
 try:
     from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
+    from third_party.ibis.ibis_db2_zos.compiler import Db2zOSExprTranslator
 except Exception:
     Db2ExprTranslator = None
+    Db2zOSExprTranslator = None
 
 # Oracle requires oracledb
 try:
@@ -551,6 +553,14 @@ if Db2ExprTranslator:
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
     Db2ExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
     Db2ExprTranslator._registry[PaddedCharLength] = Db2ExprTranslator._registry[
+        ops.StringLength
+    ]
+
+if Db2zOSExprTranslator:
+    Db2zOSExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    Db2zOSExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    Db2zOSExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+    Db2zOSExprTranslator._registry[PaddedCharLength] = Db2zOSExprTranslator._registry[
         ops.StringLength
     ]
 
