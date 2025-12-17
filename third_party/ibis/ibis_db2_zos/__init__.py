@@ -17,10 +17,12 @@ from typing import Optional, Dict, Any
 import sqlalchemy as sa
 
 from third_party.ibis.ibis_db2 import Backend as Db2LUWBackend
+from third_party.ibis.ibis_db2_zos.compiler import Db2zOSCompiler
 
 
 class Backend(Db2LUWBackend):
     name = "db2_zos"
+    compiler = Db2zOSCompiler
 
     def do_connect(
         self,
