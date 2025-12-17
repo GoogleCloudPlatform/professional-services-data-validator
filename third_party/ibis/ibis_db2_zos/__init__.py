@@ -64,4 +64,4 @@ class Backend(Db2LUWBackend):
             with dbapi_connection.cursor() as cur:
                 cur.execute("SET SESSION TIME ZONE = '+0:00'")
 
-        super(Db2LUWBackend).do_connect(engine)
+        super(Db2LUWBackend, self).do_connect(engine)
