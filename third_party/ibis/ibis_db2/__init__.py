@@ -63,13 +63,11 @@ class Backend(BaseAlchemyBackend):
         self.database_name = database
         self.url = sa_url
 
-        @sa.event.listens_for(engine, "connect")
-        def connect(dbapi_connection, connection_record):
-            with dbapi_connection.cursor() as cur:
-                # On Db2 z/OS we can set the time zone as below.
-                # We cannot find an equivalent command for LUW and previously had
-                #   SET TIMEZONE = 'UTC' which silently failed anyway.
-                cur.execute("SET SESSION TIME ZONE = '00:00'")
+        # We cannot find a SET TIMEZONE command for LUW therefore commented this section out.
+        # @sa.event.listens_for(engine, "connect")
+        # def connect(dbapi_connection, connection_record):
+        #    with dbapi_connection.cursor() as cur:
+        #        cur.execute("SET TIMEZONE = 'UTC'")
 
         super().do_connect(engine)
 

@@ -23,7 +23,8 @@ DVT supports the following connection types:
 
 *   [AlloyDB](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#alloydb)
 *   [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery)
-*   [DB2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2)
+*   [Db2 LUW](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2_luw)
+*   [Db2 z/OS](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#db2_zos)
 *   [FileSystem](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#filesystem)
 *   [Hive](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#hive)
 *   [Impala](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#impala)
@@ -69,7 +70,7 @@ The CLI is the main interface to use this tool and it has several different
 commands which can be used to create and run validations. DVT is designed to run in
 an environment connected to GCP services, specifically, BigQuery, GCS and Secret manager.
 If DVT is being run on-premises or in an environment with restricted access to GCP services, see
-[running DVT  at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
+[running DVT at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
 
 Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud Functions, or Airflow
 ([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section

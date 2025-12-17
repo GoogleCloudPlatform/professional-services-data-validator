@@ -89,7 +89,8 @@ The data validation tool supports the following connection types.
 * [FileSystem](#filesystem-csv-orc-parquet-or-json-only)
 * [Impala](#impala)
 * [Hive](#hive)
-* [DB2](#db2)
+* [Db2 LUW](#db2)
+* [Db2 z/OS](#db2_zos)
 * [AlloyDB](#alloydb)
 * [Snowflake](#snowflake)
 
@@ -410,28 +411,55 @@ data-validation connections add
 
 ```
 
-## DB2
+## Db2 LUW
 
-DB2 requires the `ibm_db_sa` package. We currently support only IBM DB2 LUW - Universal Database for Linux/Unix/Windows versions 9.7 onwards.
+Db2 requires the `ibm_db_sa` package. We currently support only IBM Db2 LUW - Universal Database for Linux/Unix/Windows versions 9.7 onwards.
 
 ```
 data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
-    --connection-name CONN_NAME DB2                     Connection name
-    --host HOST                                         DB2 host
-    --port PORT                                         DB2 port, defaults to 50000
-    --user USER                                         DB2 user
-    --password PASSWORD                                 DB2 password
-    --database DATABASE                                 DB2 database
+    --connection-name CONN_NAME Db2                     Connection name
+    --host HOST                                         Db2 host
+    --port PORT                                         Db2 port, defaults to 50000
+    --user USER                                         Db2 user
+    --password PASSWORD                                 Db2 password
+    --database DATABASE                                 Db2 database
     [--url URL]                                         SQLAlchemy connection URL
-    [--driver DRIVER]                                   DB2 driver, defaults to "ibm_db_sa"
+    [--driver DRIVER]                                   Db2 driver, defaults to "ibm_db_sa"
     [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
 ```
 
 Example TLS connection:
 ```
 data-validation connections add -c db2conn DB2 \
+  --host=sdb2-host --database=somedb \
+  --user=dvt --password=DVTS3cret \
+  --connect-args='{"Security": "SSL", "SSLClientKeystoredb": "/path/to/file.kdb", "SSLClientKeystash": "/path/to/file.sth"}'
+```
+
+## Db2 z/OS
+
+Db2 requires the `ibm_db_sa` package.
+
+```
+data-validation connections add
+    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
+    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
+    --connection-name CONN_NAME DB2_zOS                 Connection name
+    --host HOST                                         Db2 host
+    --port PORT                                         Db2 port, defaults to 50000
+    --user USER                                         Db2 user
+    --password PASSWORD                                 Db2 password
+    --database DATABASE                                 Db2 database
+    [--url URL]                                         SQLAlchemy connection URL
+    [--driver DRIVER]                                   Db2 driver, defaults to "ibm_db_sa"
+    [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
+```
+
+Example TLS connection:
+```
+data-validation connections add -c db2conn DB2_zOS \
   --host=sdb2-host --database=somedb \
   --user=dvt --password=DVTS3cret \
   --connect-args='{"Security": "SSL", "SSLClientKeystoredb": "/path/to/file.kdb", "SSLClientKeystash": "/path/to/file.sth"}'

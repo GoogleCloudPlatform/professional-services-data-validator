@@ -53,6 +53,7 @@ IBIS_ALCHEMY_BACKENDS = [
     "oracle",
     "postgres",
     "db2",
+    "db2_zos",
     "mssql",
     "redshift",
     "snowflake",
@@ -90,8 +91,10 @@ except ImportError:
 # DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
+    from third_party.ibis.ibis_db2_zos.api import db2_zos_connect
 except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+    db2_zos_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
 
 def get_google_bigquery_client(
@@ -218,6 +221,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "oracle",
         "postgres",
         "db2",
+        "db2_zos",
         "mssql",
         "redshift",
     ]:
@@ -279,7 +283,7 @@ def list_tables(client, schema_name, tables_only=True):
         if tables_only and client.name != "pandas"
         else client.list_tables
     )
-    if client.name in ["db2", "redshift", "snowflake", "pandas"]:
+    if client.name in ["db2", "db2_zos", "redshift", "snowflake", "pandas"]:
         return fn()
     return fn(database=schema_name)
 
@@ -332,10 +336,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config[
-                "credentials"
-            ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                key_path
+            decrypted_connection_config["credentials"] = (
+                google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
+                )
             )
 
     if source_type not in CLIENT_LOOKUP:
@@ -419,4 +423,5 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,
+    consts.SOURCE_TYPE_DB2_ZOS: db2_zos_connect,
 }

@@ -29,6 +29,7 @@ RANDOM_SORT_SUPPORTS = [
     "postgres",
     "mssql",
     "db2",
+    "db2_zos",
     "mysql",
     "spanner",
     "redshift",
