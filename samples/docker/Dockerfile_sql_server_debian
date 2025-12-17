@@ -33,6 +33,8 @@ RUN apt-get update
 RUN apt-get install -y build-essential gcc cmake
 RUN apt-get install -y unixodbc-dev
 
+# Install SQL Server ODBC driver.
+# See https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server
 RUN curl -sSL -O https://packages.microsoft.com/config/debian/$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)/packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
 RUN apt-get update
