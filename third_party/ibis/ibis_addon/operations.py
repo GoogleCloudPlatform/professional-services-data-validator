@@ -559,7 +559,6 @@ if Db2ExprTranslator:
 if Db2zOSExprTranslator:
     Db2zOSExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2zOSExprTranslator._registry[BinaryLength] = sa_format_binary_length
-    Db2zOSExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
     Db2zOSExprTranslator._registry[PaddedCharLength] = Db2zOSExprTranslator._registry[
         ops.StringLength
     ]
