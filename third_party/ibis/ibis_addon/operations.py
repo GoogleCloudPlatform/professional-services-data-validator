@@ -187,12 +187,6 @@ def strftime_impala(t, op):
     return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
 
 
-def strftime_db2(translator, op):
-    """Date, Datetime, Timestamp formatting specific to DB2."""
-    # TODO(issue-1296): third_party/ibis/ibis_db2/registry.py:298 - AttributeError: 'Strftime' object has no attribute 'value'
-    pass
-
-
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -244,14 +238,6 @@ def sa_format_hashbytes_mysql(translator, op):
     arg = translator.translate(op.arg)
     hash_func = sa.func.sha2(arg, sa.sql.literal_column("'256'"))
     return hash_func
-
-
-def sa_format_hashbytes_db2(translator, op):
-    compiled_arg = translator.translate(op.arg)
-    hash_func = sa.func.hash(compiled_arg, sa.sql.literal_column("2"))
-    # OBS: SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
-    hex_func = sa.func.hex(hash_func)
-    return sa.func.lower(hex_func)
 
 
 def sa_format_hashbytes_redshift(translator, op):
@@ -516,19 +502,19 @@ if OracleExprTranslator:
         ops.StringLength
     ]
 
-PostgreSQLExprTranslator._registry[
-    ops.HashBytes
-] = postgres_registry.sa_format_hashbytes
+PostgreSQLExprTranslator._registry[ops.HashBytes] = (
+    postgres_registry.sa_format_hashbytes
+)
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[
-    ops.ExtractEpochSeconds
-] = postgres_registry.sa_epoch_seconds
-PostgreSQLExprTranslator._registry[
-    PaddedCharLength
-] = postgres_registry.sa_format_postgres_padded_char_length
+PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = (
+    postgres_registry.sa_epoch_seconds
+)
+PostgreSQLExprTranslator._registry[PaddedCharLength] = (
+    postgres_registry.sa_format_postgres_padded_char_length
+)
 
 
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
@@ -561,10 +547,8 @@ RedShiftExprTranslator._registry[PaddedCharLength] = RedShiftExprTranslator._reg
 ]
 
 if Db2ExprTranslator:
-    Db2ExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_db2
     Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
-    Db2ExprTranslator._registry[ops.Strftime] = strftime_db2
     Db2ExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
     Db2ExprTranslator._registry[PaddedCharLength] = Db2ExprTranslator._registry[
         ops.StringLength
@@ -578,9 +562,9 @@ if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
     TeradataExprTranslator._registry[ops.HashBytes] = format_hashbytes_teradata
     TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
-    TeradataExprTranslator._registry[
-        PaddedCharLength
-    ] = TeradataExprTranslator._registry[ops.StringLength]
+    TeradataExprTranslator._registry[PaddedCharLength] = (
+        TeradataExprTranslator._registry[ops.StringLength]
+    )
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake
