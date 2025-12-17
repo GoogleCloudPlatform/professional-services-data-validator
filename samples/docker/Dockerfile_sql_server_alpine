@@ -34,11 +34,11 @@ RUN apk add curl build-base gcc cmake unixodbc-dev
 
 # Install SQL Server ODBC driver.
 # See https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server
+# If the commands below fail please refer to the Microsoft instructions linked above for guidance.
 ENV PKGDIR=/tmp
 ENV architecture=amd64
 RUN curl -O https://download.microsoft.com/download/9dcab408-e0d4-4571-a81a-5a0951e3445f/msodbcsql18_18.6.1.1-1_$architecture.apk -o /tmp/msodbcsql.apk
 RUN curl -O https://download.microsoft.com/download/b60bb8b6-d398-4819-9950-2e30cf725fb0/mssql-tools18_18.6.1.1-1_$architecture.apk -o /tmp/mssql-tools.apk
-# If the commands below fail please refer to the Microsoft instructions linked above for guidance.
 RUN apk add --allow-untrusted /tmp/msodbcsql.apk /tmp/mssql-tools.apk
 
 # Install the Data Validator from PyPI
