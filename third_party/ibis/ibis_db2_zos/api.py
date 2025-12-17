@@ -20,7 +20,7 @@ import ibm_db_sa  # NOQA fail early if driver is missing
 from data_validation.util import dvt_config_string_to_dict
 
 
-def db2_connect(
+def db2_zos_connect(
     host: str = "localhost",
     user: Optional[str] = None,
     password: Optional[str] = None,
