@@ -44,20 +44,14 @@ RUN apk add --allow-untrusted /tmp/msodbcsql.apk /tmp/mssql-tools.apk
 # Install the Data Validator from PyPI
 ENV PIPOPTS="--root-user-action=ignore"
 RUN pip install ${PIPOPTS} --upgrade pip
-#RUN \
-#  if [ -z "$_APP_VERSION" ]; then \
-#    echo "Installing latest version of google-pso-data-validator"; \
-#    pip install ${PIPOPTS} google-pso-data-validator; \
-#  else \
-#    echo "Installing google-pso-data-validator version ${_APP_VERSION}"; \
-#    pip install ${PIPOPTS} google-pso-data-validator==${_APP_VERSION}; \
-#  fi
-#RUN pip install ${PIPOPTS} pyodbc
-
-# Only while we have to build from repo.
-RUN apk add git
-RUN cd /tmp && git clone https://github.com/GoogleCloudPlatform/professional-services-data-validator.git && cd professional-services-data-validator
-RUN cd /tmp/professional-services-data-validator && pip install ${PIPOPTS} .
+RUN \
+  if [ -z "$_APP_VERSION" ]; then \
+    echo "Installing latest version of google-pso-data-validator"; \
+    pip install ${PIPOPTS} google-pso-data-validator; \
+  else \
+    echo "Installing google-pso-data-validator version ${_APP_VERSION}"; \
+    pip install ${PIPOPTS} google-pso-data-validator==${_APP_VERSION}; \
+  fi
 RUN pip install ${PIPOPTS} pyodbc
 
 # Entrypoint
