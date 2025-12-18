@@ -27,7 +27,7 @@ def _sa_whitespace_rstrip(t, op):
     #   the data type, length or value of the argument for the parameter in position "2" of routine "RTRIM" is incorrect
     # Therefore we've removed it below and let Db2 exclude default space character.
     sa_arg = t.translate(op.arg)
-    return sa.func.rtrim(sa_arg)
+    return sa.func.rtrim(sa_arg, " \t\r")
 
 
 operation_registry[ops.RStrip] = _sa_whitespace_rstrip
