@@ -488,6 +488,7 @@ ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
 ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
 ImpalaExprTranslator._registry[ops.Cast] = sa_cast_hive
+ImpalaExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.coalesce, 2)
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[ops.HashBytes] = format_hashbytes_hive
 ImpalaExprTranslator._registry[ops.RandomScalar] = fixed_arity("RAND", 0)
