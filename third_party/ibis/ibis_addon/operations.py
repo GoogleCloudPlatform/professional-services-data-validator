@@ -39,10 +39,7 @@ from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
-from ibis.backends.base.sql.registry import (
-    fixed_arity,
-    type_to_sql_string as base_type_to_sql_string,
-)
+from ibis.backends.base.sql.registry import fixed_arity
 from ibis.backends.bigquery.client import (
     _DTYPE_TO_IBIS_TYPE as _BQ_DTYPE_TO_IBIS_TYPE,
     _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD,
@@ -60,6 +57,7 @@ from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValu
 # Do not remove these lines, they trigger patching of Ibis code.
 import third_party.ibis.ibis_bigquery.api  # noqa
 from third_party.ibis.ibis_bigquery import registry as bigquery_registry
+from third_party.ibis.ibis_impala import registry as impala_registry
 import third_party.ibis.ibis_mysql.compiler  # noqa
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
@@ -177,28 +175,6 @@ def strftime_mysql(translator, op):
     return sa.func.date_format(arg_formatted, fmt_string)
 
 
-def strftime_impala(t, op):
-    import sqlglot as sg
-
-    hive_dialect = sg.dialects.hive.Hive
-    if (time_mapping := getattr(hive_dialect, "TIME_MAPPING", None)) is None:
-        time_mapping = hive_dialect.time_mapping
-    reverse_hive_mapping = {v: k for k, v in time_mapping.items()}
-    format_str = sg.time.format_time(op.format_str.value, reverse_hive_mapping)
-    targ = t.translate(ops.Cast(op.arg, to=dt.string))
-    return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
-
-
-def format_hashbytes_hive(translator, op):
-    arg = translator.translate(op.arg)
-    if op.how == "sha256":
-        return f"sha2({arg}, 256)"
-    elif op.how == "md5":
-        return f"md5({arg})"
-    else:
-        raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
 def format_hashbytes_alchemy(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -271,30 +247,6 @@ def sa_format_binary_length(translator, op):
 def sa_format_binary_length_oracle(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.dbms_lob.getlength(arg)
-
-
-def sa_cast_hive(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    arg_formatted = t.translate(arg)
-
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return f"lower(hex({arg_formatted}))"
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return f"unhex({arg_formatted})"
-
-    # Cannot use sa_fixed_cast() because of ImpalaExprTranslator ancestry.
-    sql_type = base_type_to_sql_string(typ)
-    cast_expr = "CAST({} AS {})".format(arg_formatted, sql_type)
-
-    if arg_dtype.is_boolean() and typ.is_string():
-        return f"LOWER({cast_expr})"
-    else:
-        return cast_expr
 
 
 def sa_cast_mysql(t, op):
@@ -487,12 +439,12 @@ ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
 # Base length of padded string is the same as for a standard string.
 ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
-ImpalaExprTranslator._registry[ops.Cast] = sa_cast_hive
-ImpalaExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.coalesce, 2)
+ImpalaExprTranslator._registry[ops.Cast] = impala_registry.sa_cast
+ImpalaExprTranslator._registry[ops.IfNull] = impala_registry.sa_ifnull
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
-ImpalaExprTranslator._registry[ops.HashBytes] = format_hashbytes_hive
+ImpalaExprTranslator._registry[ops.HashBytes] = impala_registry.sa_format_hashbytes
 ImpalaExprTranslator._registry[ops.RandomScalar] = fixed_arity("RAND", 0)
-ImpalaExprTranslator._registry[ops.Strftime] = strftime_impala
+ImpalaExprTranslator._registry[ops.Strftime] = impala_registry.sa_strftime
 ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if OracleExprTranslator:
