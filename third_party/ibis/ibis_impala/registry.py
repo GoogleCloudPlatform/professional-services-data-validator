@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import sqlalchemy as sa
+import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 from ibis.backends.base.sql.registry import (
     type_to_sql_string as base_type_to_sql_string,
