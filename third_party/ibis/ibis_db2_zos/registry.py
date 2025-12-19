@@ -27,14 +27,26 @@ def _sa_ifnull(t, op):
     return sa.func.coalesce(sa_arg, sa.literal_column(f"'{op.ifnull_expr.value}'"))
 
 
+def _sa_format_hashbytes(translator, op):
+    # Use of query parameters is throwing an error on Db2 z/OS.
+    # Code below uses sa.sql.literal_column to prevent parameterization.
+    # I invested several hours into trying to find a way to utilize literal_binds=True but was unsuccessful.
+    compiled_arg = translator.translate(op.arg)
+    hash_func = sa.func.hash(
+        sa.func.unicode_str(compiled_arg), sa.sql.literal_column("2")
+    )
+    hex_func = sa.func.hex(hash_func)
+    return sa.func.lower(hex_func)
+
+
 def _sa_whitespace_rstrip(t, op):
     # The full string.whitespace second parameter was throwing an error on Db2 z/OS:
     #   the data type, length or value of the argument for the parameter in position "2" of routine "RTRIM" is incorrect
     # Therefore we've removed it below and let Db2 exclude default space character.
     sa_arg = t.translate(op.arg)
-    return sa.func.rtrim(sa_arg, sa.literal_column("' \t\r'"))
-    # return sa.func.rtrim(sa_arg, " \t\r")
+    return sa.func.rtrim(sa_arg)
 
 
-# operation_registry[ops.IfNull] = _sa_ifnull
+operation_registry[ops.HashBytes] = _sa_format_hashbytes
+operation_registry[ops.IfNull] = _sa_ifnull
 operation_registry[ops.RStrip] = _sa_whitespace_rstrip
