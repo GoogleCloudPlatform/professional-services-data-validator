@@ -196,9 +196,11 @@ def _chunks_to_pandas_array(chunks):
     return target
 
 
-@rewrites(ops.IfNull)
-def _if_null(op):
-    return ops.Coalesce((op.arg, op.ifnull_expr))
+# TODO this needs changing to not be a rewrite across all engines.
+# @rewrites(ops.IfNull)
+# def _if_null(op):
+#    breakpoint()
+#    return ops.Coalesce((op.arg, op.ifnull_expr))
 
 
 def update_query_with_limit(query):
