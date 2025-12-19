@@ -45,8 +45,8 @@ def sa_cast(t, op):
 
 
 def sa_ifnull(t, op):
-    sa_arg = t.translate(op.arg)
-    return sa.func.coalesce(sa_arg, op.ifnull_expr.value)
+    arg_formatted = t.translate(op.arg)
+    return f"coalesce({arg_formatted},'{op.ifnull_expr.value}')"
 
 
 def sa_format_hashbytes(translator, op):
