@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sqlalchemy as sa
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 from ibis.backends.base.sql.registry import (
