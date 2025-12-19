@@ -32,9 +32,7 @@ def _sa_format_hashbytes(translator, op):
     # Code below uses sa.sql.literal_column to prevent parameterization.
     # I invested several hours into trying to find a way to utilize literal_binds=True but was unsuccessful.
     compiled_arg = translator.translate(op.arg)
-    hash_func = sa.func.hash(
-        sa.func.unicode_str(compiled_arg), sa.sql.literal_column("2")
-    )
+    hash_func = sa.func.hash_sha256(sa.func.unicode_str(compiled_arg))
     hex_func = sa.func.hex(hash_func)
     return sa.func.lower(hex_func)
 
