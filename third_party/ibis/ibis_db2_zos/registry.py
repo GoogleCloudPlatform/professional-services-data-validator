@@ -36,5 +36,5 @@ def _sa_whitespace_rstrip(t, op):
     # return sa.func.rtrim(sa_arg, " \t\r")
 
 
-operation_registry[ops.IfNull] = _sa_ifnull
+# operation_registry[ops.IfNull] = _sa_ifnull
 operation_registry[ops.RStrip] = _sa_whitespace_rstrip
