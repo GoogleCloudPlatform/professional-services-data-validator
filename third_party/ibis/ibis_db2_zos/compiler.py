@@ -24,3 +24,4 @@ class Db2zOSExprTranslator(AlchemyExprTranslator):
 
 class Db2zOSCompiler(AlchemyCompiler):
     translator_class = Db2zOSExprTranslator
+    supports_indexed_grouping_keys = False
