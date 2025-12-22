@@ -22,12 +22,12 @@ from pydata_google_auth import cache
 from ibis.backends.bigquery import (
     Backend as BigQueryBackend,
     _create_client_info,
-    parse_project_and_dataset,
     CLIENT_ID,
     CLIENT_SECRET,
     EXTERNAL_DATA_SCOPES,
     SCOPES,
 )
+from ibis.backends.bigquery.client import parse_project_and_dataset
 
 if TYPE_CHECKING:
     import google.cloud.bigquery_storage_v1
@@ -53,9 +53,12 @@ class Backend(BigQueryBackend):
         bqstorage_client: "google.cloud.bigquery_storage_v1.BigQueryReadClient" = None,
     ):
         """Copy of Ibis v5 BigQuery do_connect() customized for DVT, see original method for docs."""
-        default_project_id = ""
+        client_project_id = (
+            bigquery_client.project if bigquery_client is not None else None
+        )
+        default_project_id = None
 
-        if credentials is None:
+        if bigquery_client is None and credentials is None:
             scopes = SCOPES
             if auth_external_data:
                 scopes = EXTERNAL_DATA_SCOPES
@@ -83,14 +86,11 @@ class Backend(BigQueryBackend):
                 credentials_cache=credentials_cache,
                 use_local_webserver=auth_local_webserver,
             )
+            project_id = project_id or default_project_id
 
-        project_id = project_id or default_project_id
-
-        (
-            self.data_project,
-            self.billing_project,
-            self.dataset,
-        ) = parse_project_and_dataset(project_id, dataset_id)
+        self.billing_project = client_project_id or project_id
+        self.data_project = project_id or self.billing_project
+        self.dataset = None
 
         if bigquery_client is None:
             self.client = bq.Client(
@@ -132,6 +132,16 @@ class Backend(BigQueryBackend):
         finally:
             query_result._project = orig_project
         return arrow_obj
+
+    def _parse_project_and_dataset(self, dataset) -> tuple[str, str]:
+        """Copied from Ibis code and modified to use self.data_project."""
+        if not dataset and not self.dataset:
+            raise ValueError("Unable to determine BigQuery dataset.")
+        project, _, dataset = parse_project_and_dataset(
+            self.data_project,
+            dataset or f"{self.data_project}.{self.dataset}",
+        )
+        return project, dataset
 
     def list_primary_key_columns(self, database: str, table: str) -> list:
         """Return a list of primary key column names."""
