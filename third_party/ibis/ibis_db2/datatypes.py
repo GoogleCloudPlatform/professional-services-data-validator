@@ -33,7 +33,7 @@ _type_mapping = {
     ibm_db_dbi.ROWID: dt.String,
 }
 
-ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=3000)
+ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=300)
 
 
 def _get_type(typename) -> dt.DataType:
