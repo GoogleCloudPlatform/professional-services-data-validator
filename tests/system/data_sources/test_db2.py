@@ -147,12 +147,13 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_row_validation_core_types():
     """DB2 to DB2 dvt_core_types row validation"""
-    # Excluded col_datetime,col_tstz due to strftime issue-1296.
+    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
+    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     cols = ",".join(
         [
             _
             for _ in DVT_CORE_TYPES_COLUMNS
-            if _ not in ("id", "col_datetime", "col_tstz")
+            if _ not in ("id", "col_char_2", "col_date", "col_datetime", "col_tstz")
         ]
     )
     row_validation_test(
@@ -184,12 +185,20 @@ def test_row_validation_core_types_auto_pks():
 )
 def test_row_validation_core_types_to_bigquery():
     """DB2 to BigQuery dvt_core_types row validation"""
+    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
+    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_char_2", "col_date", "col_datetime", "col_tstz")
+        ]
+    )
     row_validation_test(
         tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
         tc="bq-conn",
         # OBS: Only passing this column because SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
-        # TODO: When issue-1296 is complete change to col_date,col_datetime,col_tstz instead
-        hash="col_string",
+        hash=cols,
     )
 
 
