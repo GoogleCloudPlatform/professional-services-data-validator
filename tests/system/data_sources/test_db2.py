@@ -17,6 +17,7 @@ from unittest import mock
 
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
     schema_validation_test,
     column_validation_test,
     run_test_from_cli_args,
@@ -25,6 +26,7 @@ from tests.system.data_sources.common_functions import (
     custom_query_validation_test,
     raw_query_test,
 )
+
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
 
@@ -126,7 +128,7 @@ def test_column_validation_core_types():
 def test_column_validation_core_types_to_bigquery():
     """DB2 to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    # Excluded col_tstz since it is not possible to set time zone at this column on DB2
+    # Excluded col_tstz since it is not possible to set time zone at this column on Db2
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
     column_validation_test(
         tc="bq-conn",
@@ -145,11 +147,19 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_row_validation_core_types():
     """DB2 to DB2 dvt_core_types row validation"""
+    # Excluded col_datetime,col_tstz due to strftime issue-1296.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_datetime", "col_tstz")
+        ]
+    )
     row_validation_test(
         tables="db2inst1.dvt_core_types",
         tc="mock-conn",
         # OBS: Only passing this column because SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
-        hash="col_string",
+        hash=cols,
         filters="id>0 AND col_int8>0",
     )
 
