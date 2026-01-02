@@ -23,21 +23,21 @@ export GCS_DIRECTORY=gs://professional-services-data-validator/releases/${PACKAG
 pip install ./dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl
 
 data-validation -h
-gsutil -m rm ${GCS_DIRECTORY}**
+gcloud storage rm --recursive ${GCS_DIRECTORY}
 
-gsutil cp README.md CHANGELOG.md ${GCS_DIRECTORY}
-gsutil cp dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl ${GCS_DIRECTORY}google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl
-gsutil cp dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz ${GCS_DIRECTORY}google-pso-data-validator-${PACKAGE_VERSION}.tar.gz
+gcloud storage cp README.md CHANGELOG.md ${GCS_DIRECTORY}
+gcloud storage cp dist/google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl ${GCS_DIRECTORY}google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl
+gcloud storage cp dist/google-pso-data-validator-${PACKAGE_VERSION}.tar.gz ${GCS_DIRECTORY}google-pso-data-validator-${PACKAGE_VERSION}.tar.gz
 
-gsutil -m acl ch -u AllUsers:R ${GCS_DIRECTORY}**
+gcloud storage objects update --recursive --add-acl-grant=allUsers:READER ${GCS_DIRECTORY}
 deactivate
 rm -rf rel_venv/
 
 # Push New Release to Latest
 
-gsutil cp ${GCS_DIRECTORY}CHANGELOG.md gs://professional-services-data-validator/releases/latest/
-gsutil cp ${GCS_DIRECTORY}README.md gs://professional-services-data-validator/releases/latest/
-gsutil cp ${GCS_DIRECTORY}google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/google-pso-data-validator-latest.tar.gz
-gsutil cp ${GCS_DIRECTORY}google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/google_pso_data_validator-latest-py3-none-any.whl
+gcloud storage cp ${GCS_DIRECTORY}CHANGELOG.md gs://professional-services-data-validator/releases/latest/
+gcloud storage cp ${GCS_DIRECTORY}README.md gs://professional-services-data-validator/releases/latest/
+gcloud storage cp ${GCS_DIRECTORY}google-pso-data-validator-${PACKAGE_VERSION}.tar.gz gs://professional-services-data-validator/releases/latest/google-pso-data-validator-latest.tar.gz
+gcloud storage cp ${GCS_DIRECTORY}google_pso_data_validator-${PACKAGE_VERSION}-py3-none-any.whl gs://professional-services-data-validator/releases/latest/google_pso_data_validator-latest-py3-none-any.whl
 
-gsutil -m acl ch -u AllUsers:R gs://professional-services-data-validator/releases/latest/*
+gcloud storage objects update --add-acl-grant=allUsers:READER gs://professional-services-data-validator/releases/latest/*
