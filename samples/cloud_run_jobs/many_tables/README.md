@@ -57,7 +57,7 @@ done
 
 Example output configuration files:
 ```shell
-$ gsutil ls ${GCS_YAML_PATH}/${SCHEMA}
+$ gcloud storage ls ${GCS_YAML_PATH}/${SCHEMA}
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0000.yaml
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0001.yaml
 gs://example-dvt-bucket/dvt_configs/pso_data_validator/0002.yaml
