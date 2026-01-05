@@ -8,7 +8,7 @@ export SERVICE_ACCOUNT=<SERVICE-ACCOUNT>
 cd samples/functions/
 
 zip -r data_validation.zip .
-gsutil cp data_validation.zip gs://${BUCKET}/
+gcloud storage cp data_validation.zip gs://${BUCKET}/
 
 gcloud functions deploy data-validation --region=${REGION} \
 	--entry-point=main \
