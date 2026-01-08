@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Dict, Any
+from typing import Iterable, Optional, Dict, Any
 
 import sqlalchemy as sa
 
+from third_party.ibis.ibis_addon.api import dvt_handle_failed_column_type_inference
 from third_party.ibis.ibis_db2 import Backend as Db2LUWBackend
 from third_party.ibis.ibis_db2_zos.compiler import Db2zOSCompiler
 
@@ -67,3 +68,8 @@ class Backend(Db2LUWBackend):
                 cur.execute("SET SESSION TIME ZONE = '+0:00'")
 
         super(Db2LUWBackend, self).do_connect(engine)
+
+    def _handle_failed_column_type_inference(
+        self, table: sa.Table, nulltype_cols: Iterable[str]
+    ) -> sa.Table:
+        return dvt_handle_failed_column_type_inference(self, table, nulltype_cols)
