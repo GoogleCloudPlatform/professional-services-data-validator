@@ -194,7 +194,7 @@ def _generate_report_slice(
         logging.debug(documented.compile())
 
     result_df = client.execute(documented)
-    result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
+    result_df["validation_status"].fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
     return result_df
 
 
