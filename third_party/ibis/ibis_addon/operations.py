@@ -447,7 +447,7 @@ def string_to_epoch(ts: str) -> int:
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
 def execute_epoch_seconds_new(op, data, **kwargs):
-    convert = getattr(data, "view", data.astype)
+    convert = data.astype
     try:
         series = convert(np.int64)
         # We need int64 below because NaT overflows int32.
