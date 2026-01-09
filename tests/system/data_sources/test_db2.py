@@ -55,7 +55,7 @@ def mock_get_connection_config(*args):
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types():
-    """DB2 to DB2 dvt_core_types schema validation"""
+    """Db2 to Db2 dvt_core_types schema validation"""
     schema_validation_test(
         tables="db2inst1.dvt_core_types",
         tc="mock-conn",
@@ -67,7 +67,7 @@ def test_schema_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types schema validation"""
+    """Db2 to BigQuery dvt_core_types schema validation"""
     schema_validation_test(
         tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
         tc="bq-conn",
@@ -79,6 +79,18 @@ def test_schema_validation_core_types_to_bigquery():
             # Unable to create col_tstz with time zone on our DB2 database therefore test data is adjusted.
             "timestamp:timestamp('UTC'),"
         ),
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_db2_types():
+    """Db2 to Db2 dvt_db2_types schema validation"""
+    schema_validation_test(
+        tables="db2inst1.dvt_db2_types",
+        tc="mock-conn",
     )
 
 
