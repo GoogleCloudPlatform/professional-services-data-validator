@@ -1395,13 +1395,11 @@ class ConfigManager(object):
                         and string_column_ifnull_limits[column]
                     ):
                         # Trim the replacement token to the max length allowed for the column.
-                        col["calc_params"] = [
-                            {
-                                consts.CALC_FIELD_IFNULL_DEFAULT: consts.CALC_FIELD_IFNULL_DEFAULT_STRING[
-                                    0 : string_column_ifnull_limits[column]
-                                ]
-                            }
-                        ]
+                        col["calc_params"] = {
+                            consts.CALC_FIELD_IFNULL_DEFAULT: consts.CALC_FIELD_IFNULL_DEFAULT_STRING[
+                                0 : string_column_ifnull_limits[column]
+                            ]
+                        }
 
                     if i == 0:
                         # If depth 0, get raw column name with correct casing
