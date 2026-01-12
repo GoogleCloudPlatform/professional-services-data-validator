@@ -1392,7 +1392,7 @@ class ConfigManager(object):
                     col["depth"] = i
                     if (
                         calc == consts.CALC_FIELD_IFNULL
-                        and string_column_ifnull_limits[column]
+                        and string_column_ifnull_limits.get(column)
                     ):
                         # Trim the replacement token to the max length allowed for the column.
                         col["calc_params"] = {
@@ -1420,10 +1420,11 @@ class ConfigManager(object):
                     name = col["name"]
                     column_aliases[name] = i
                     col_names.append(col)
-                    # Keep track of column limits as we move through aliased expressions.
-                    string_column_ifnull_limits[name] = string_column_ifnull_limits[
-                        column
-                    ]
+                    if string_column_ifnull_limits.get(column):
+                        # Keep track of column limits as we move through aliased expressions.
+                        string_column_ifnull_limits[name] = string_column_ifnull_limits[
+                            column
+                        ]
         return col_names
 
     def build_comp_fields(self, col_list: list, exclude_cols: bool) -> dict:
