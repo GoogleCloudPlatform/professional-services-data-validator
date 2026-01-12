@@ -19,6 +19,7 @@ from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     schema_validation_test,
     column_validation_test,
+    id_column_row_validation_test,
     run_test_from_cli_args,
     null_not_null_assertions,
     row_validation_test,
@@ -206,6 +207,18 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         source_query="select id,col_int64,col_varchar_30 from db2inst1.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
         comp_fields="col_int64,col_varchar_30",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test(
+        "db2inst1.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id",
+        use_randow_row=False,
     )
 
 
