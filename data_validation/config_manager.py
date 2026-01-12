@@ -1160,6 +1160,8 @@ class ConfigManager(object):
             calculated_config.update(custom_params)
         elif calc_type == consts.CONFIG_CAST and custom_params:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = custom_params
+        elif calc_type == consts.CALC_FIELD_IFNULL and custom_params:
+            calculated_config.update(custom_params)
 
         return calculated_config
 
@@ -1294,6 +1296,39 @@ class ConfigManager(object):
 
         return result_source_columns, result_target_columns
 
+    def _string_column_ifnull_limits(
+        self,
+        client,
+        casefold_columns: dict,
+        ibis_table: "ibis.expr.types.Table",
+        raw_types: dict,
+    ):
+        """Returns IfNull replacement token length limits (due to Db2 limitations).
+
+        This is because in Db2 a coalesce of a column cannot exceed the length of the initial argument resulting in:
+            String data right truncation. SQLSTATE=22001
+
+        We need to ensure both source and target systems use the same replacement token therefore these limits are used for both.
+        """
+        if not casefold_columns or client.name != "db2":
+            return {}
+        table_schema = {k: v for k, v in ibis_table.schema().items()}
+        string_column_ifnull_limits = {}
+        for column in casefold_columns:
+            if table_schema[column].is_string():
+                # Position 1 in raw_types is the data length.
+                string_column_ifnull_limits[column] = raw_types[
+                    casefold_columns[column]
+                ][1]
+            elif table_schema[column].is_decimal():
+                # Position 2 in raw_types is the precision.
+                string_column_ifnull_limits[column] = raw_types[
+                    casefold_columns[column]
+                ][2]
+            else:
+                string_column_ifnull_limits[column] = None
+        return string_column_ifnull_limits
+
     def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
@@ -1318,6 +1353,17 @@ class ConfigManager(object):
 
         column_aliases = {}
         col_names = []
+        string_column_ifnull_limits = self._string_column_ifnull_limits(
+            self.source_client,
+            casefold_source_columns,
+            source_table,
+            self.get_source_raw_data_types(),
+        ) or self._string_column_ifnull_limits(
+            self.target_client,
+            casefold_target_columns,
+            target_table,
+            self.get_target_raw_data_types(),
+        )
         for i, calc in enumerate(self._get_order_of_operations(calc_type)):
             if i == 0:
                 previous_level = [x for x in casefold_source_columns.keys()]
@@ -1334,6 +1380,7 @@ class ConfigManager(object):
                 # need to capture all aliases at the previous level. probably name concat__all
                 column_aliases[name] = i
                 col_names.append(col)
+
             else:
                 # This needs to be the previous manifest of columns
                 for j, column in enumerate(previous_level):
@@ -1343,6 +1390,18 @@ class ConfigManager(object):
                     col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
+                    if (
+                        calc == consts.CALC_FIELD_IFNULL
+                        and string_column_ifnull_limits[column]
+                    ):
+                        # Trim the replacement token to the max length allowed for the column.
+                        col["calc_params"] = [
+                            {
+                                consts.CALC_FIELD_IFNULL_DEFAULT: consts.CALC_FIELD_IFNULL_DEFAULT_STRING[
+                                    0 : string_column_ifnull_limits[column]
+                                ]
+                            }
+                        ]
 
                     if i == 0:
                         # If depth 0, get raw column name with correct casing
@@ -1363,6 +1422,10 @@ class ConfigManager(object):
                     name = col["name"]
                     column_aliases[name] = i
                     col_names.append(col)
+                    # Keep track of column limits as we move through aliased expressions.
+                    string_column_ifnull_limits[name] = string_column_ifnull_limits[
+                        column
+                    ]
         return col_names
 
     def build_comp_fields(self, col_list: list, exclude_cols: bool) -> dict:
