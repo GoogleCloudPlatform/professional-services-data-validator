@@ -124,8 +124,7 @@ def test_column_validation_core_types():
         min_cols=cols,
         max_cols=cols,
         filters="id>0 AND col_int8>0",
-        # TODO When issue-1295 is complete uncomment --grouped_columns parameter below.
-        # grouped_columns="col_varchar_30",
+        grouped_columns="col_varchar_30",
     )
 
 
