@@ -25,6 +25,7 @@ from data_validation.validation_builder import ValidationBuilder
 
 if TYPE_CHECKING:
     import ibis.expr.types.Table
+    from ibis.backends.base import BaseBackend
 
 
 class ConfigManager(object):
@@ -1298,7 +1299,7 @@ class ConfigManager(object):
 
     def _string_column_ifnull_limits(
         self,
-        client,
+        client: "BaseBackend",
         casefold_columns: dict,
         ibis_table: "ibis.expr.types.Table",
         raw_types: dict,
