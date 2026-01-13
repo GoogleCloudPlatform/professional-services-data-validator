@@ -57,6 +57,7 @@ extras_require = {
         "pyfakefs",
         "pytest",
         "pytest-cov",
+        "pytest-rerunfailures",
         "pytest-timeout",
     ],
 }

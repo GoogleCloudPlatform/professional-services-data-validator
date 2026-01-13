@@ -139,6 +139,7 @@ SOURCE_TYPE_POSTGRES = "Postgres"
 SOURCE_TYPE_REDSHIFT = "Redshift"
 SOURCE_TYPE_SNOWFLAKE = "Snowflake"
 SOURCE_TYPE_SPANNER = "Spanner"
+SOURCE_TYPE_SYBASE = "Sybase"
 SOURCE_TYPE_TERADATA = "Teradata"
 
 # BigQuery Result Handler Configs
@@ -263,3 +264,6 @@ CALC_FIELD_LENGTH = "length"
 CALC_FIELD_PADDED_CHAR_LENGTH = "padded_char_length"
 CALC_FIELD_RSTRIP = "rstrip"
 CALC_FIELD_UPPER = "upper"
+
+# Backends that do not support window functions.
+NO_WINDOW_FUNCTION_SUPPORT = [SOURCE_TYPE_SYBASE]
