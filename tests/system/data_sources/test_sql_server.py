@@ -785,7 +785,7 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
 def test_row_validation_tricky_strings_to_bigquery():
     """Test with string values containing special characters."""
     pytest.skip(
-        "Skipping test_row_validation_tricky_dates_to_bigquery because the version of SQL Server we have does not support rtrim of all whitespace."
+        "Skipping test_row_validation_tricky_strings_to_bigquery because the version of SQL Server we have does not support rtrim of all whitespace."
     )
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_strings",

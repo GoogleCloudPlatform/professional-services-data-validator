@@ -71,7 +71,7 @@ class ConfigManager(object):
         """Return config object."""
         return self._config
 
-    def get_source_connection(self):
+    def get_source_connection(self) -> dict:
         """Return source connection object."""
         if not self._source_conn:
             if self._config.get(consts.CONFIG_SOURCE_CONN):
@@ -82,7 +82,7 @@ class ConfigManager(object):
 
         return self._source_conn
 
-    def get_target_connection(self):
+    def get_target_connection(self) -> dict:
         """Return target connection object."""
         if not self._target_conn:
             if self._config.get(consts.CONFIG_TARGET_CONN):

@@ -93,6 +93,7 @@ The data validation tool supports the following connection types.
 * [Db2 z/OS](#db2_zos)
 * [AlloyDB](#alloydb)
 * [Snowflake](#snowflake)
+* [Sybase ASE](#sybase-ase)
 
 Every connection type requires its own configuration for connectivity. To find out the parameters for each connection type, use the following command:
 
@@ -241,9 +242,9 @@ data-validation connections add \
  --connect-args='{"dsn": TNS_ALIAS}'
 ```
 
-## MSSQL Server
+## SQL Server
 
-MSSQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
+SQL Server connections require [pyodbc](https://pypi.org/project/pyodbc/) as the driver: `pip install pyodbc`.
 For connection query parameter options, see <https://docs.sqlalchemy.org/en/20/dialects/mssql.html#hostname-connections>.
 
 ```
@@ -251,13 +252,13 @@ data-validation connections add
     [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME MSSQL                   Connection name
-    --host HOST                                         MSSQL host
-    --port PORT                                         MSSQL port, defaults to 1433
-    --user USER                                         MSSQL user
-    --password PASSWORD                                 MSSQL password
-    --database DATABASE                                 MSSQL database
+    --host HOST                                         SQL Server host
+    --port PORT                                         SQL Server port, defaults to 1433
+    --user USER                                         SQL Server user
+    --password PASSWORD                                 SQL Server password
+    --database DATABASE                                 SQL Server database
     [--url URL]                                         SQLAlchemy connection URL
-    [--query QUERY]                                     Connection query parameters i.e. '{"TrustServerCertificate": "yes"}'
+    [--query QUERY]                                     Connection query parameters e.g. '{"TrustServerCertificate": "yes"}'
 ```
 
 Example with a specific ODBC driver name:
@@ -486,3 +487,32 @@ To connect to Snowflake using key-pair authentication you will need to use the `
 ```
 {"source_type": "Snowflake", "user": USER_NAME, "password": "", "account": ACCOUNT, "database": DATABASE, "connect_args": '{"private_key_file": PATH_TO_RSA_KEY/RSA_KEY.p8, "private_key_file_pwd": PASSPHRASE}'}
 ```
+
+## Sybase ASE
+
+Sybase ASE requires the `sqlalchemy_sybase` package.
+
+```
+data-validation connections add
+    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
+    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
+    --connection-name CONN_NAME Sybase                  Connection name
+    --user USER                                         Sybase user
+    --password PASSWORD                                 Sybase password
+    --host HOST                                         Sybase host
+    --port PORT                                         Sybase port, defaults to 5000
+    --database DATABASE                                 Sybase database
+    --database DATABASE/SCHEMA                          Snowflake database and schema, separated by a `/`
+    [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
+```
+
+When testing we needed to enable auto commit to be able to run catalog stored procedures, an example connection command is included below:
+
+```
+data-validation connections add -c sybase Sybase \
+  --host=sybase-host --database=somedb \
+  --user=dvt --password=DVTS3cret \
+  --connect-args='{"driver": "FreeTDS", "autocommit": "True", "TDS_Version": "5.0"}'
+```
+
+See also [limitations](https://github.com/GoogleCloudPlatform/professional-services-data-validator2/blob/develop/docs/limitations.md#sybase)

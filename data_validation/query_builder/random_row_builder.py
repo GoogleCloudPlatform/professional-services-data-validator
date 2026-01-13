@@ -31,9 +31,10 @@ RANDOM_SORT_SUPPORTS = [
     "db2",
     "db2_zos",
     "mysql",
-    "spanner",
     "redshift",
     "snowflake",
+    "spanner",
+    "sybase",
 ]
 
 

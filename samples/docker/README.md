@@ -18,4 +18,9 @@ You can run the following command to run data validation tool as a Docker contai
 ```buildoutcfg
  docker run -e DVT_SRC_CONN -e DVT_TGT_CONN data_validation:7.7.0 validate row -sc src_postgres -tc tgt_bigquery -tbls=pso_data_validator.dvt_core_types -pk=id -hash='*'
 ```
-The service account associated with the docker container will need access to GCP APIs (e.g BigQuery as src or target), GCS and BigQuery (for reporting) depending on the options used. 
+The service account associated with the docker container will need access to GCP APIs (e.g BigQuery as src or target), GCS and BigQuery (for reporting) depending on the options used.
+
+Sample Dockerfiles including specific pre-requisites are included for reference:
+
+- [Dockerfile_sql_server_alpine]
+- [Dockerfile_sql_server_debian]

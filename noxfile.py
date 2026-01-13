@@ -49,7 +49,13 @@ def _setup_session_requirements(session, extra_packages=[]):
     """Install requirements for nox tests."""
 
     session.install(
-        "--upgrade", "pip", "pytest", "pytest-cov", "pytest-timeout", "wheel"
+        "--upgrade",
+        "pip",
+        "pytest",
+        "pytest-cov",
+        "pytest-rerunfailures",
+        "pytest-timeout",
+        "wheel",
     )
     session.install("--no-cache-dir", "-e", ".")
 
@@ -79,6 +85,11 @@ def unit(session):
 
 @nox.session(venv_backend="venv")
 def unit_small(session):
+    unit(session)
+
+
+@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+def unit_default_python(session):
     unit(session)
 
 
@@ -368,3 +379,16 @@ def integration_impala(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", "tests/system/data_sources/test_impala.py", *session.posargs)
+
+
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+def integration_sybase(session):
+    """Run Sybase integration tests."""
+    _setup_session_requirements(session, extra_packages=["pyodbc", "sqlalchemy_sybase"])
+
+    expected_env_vars = ["PROJECT_ID", "SYBASE_HOST", "SYBASE_USER", "SYBASE_PASSWORD"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run("pytest", "tests/system/data_sources/test_sybase.py", *session.posargs)

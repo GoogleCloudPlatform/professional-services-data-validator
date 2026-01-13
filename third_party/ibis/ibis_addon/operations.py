@@ -92,6 +92,12 @@ try:
 except Exception:
     SnowflakeExprTranslator = None
 
+# Sybase requires sqlalchemy_sybase package.
+try:
+    from third_party.ibis.ibis_sybase.compiler import SybaseExprTranslator
+except Exception:
+    SybaseExprTranslator = None
+
 
 # Cast of datetime64 NaT to int64 and then in seconds results in the value below.
 # We need to use this value in the datetime.date simulation of the datetime64 behaviour.
@@ -537,3 +543,12 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RandomScalar] = sa_format_random
     SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+
+if SybaseExprTranslator:
+    SybaseExprTranslator._registry[
+        BinaryLength
+    ] = mssql_registry.sa_format_binary_length
+    SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    SybaseExprTranslator._registry[
+        PaddedCharLength
+    ] = mssql_registry.sa_format_string_length

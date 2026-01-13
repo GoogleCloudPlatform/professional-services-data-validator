@@ -15,10 +15,10 @@
 import json
 import logging
 import os
+import pathlib
 from unittest import mock
 
 import pytest
-import pathlib
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -33,6 +33,7 @@ from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 from data_validation.result_handlers.bigquery import BQRH_WRITE_MESSAGE
 from tests.system.data_sources.common_functions import (
+    generate_and_run_table_partitions_test,
     partition_table_test,
     partition_query_test,
     row_validation_many_columns_test,
@@ -1485,6 +1486,19 @@ def test_row_validation_comp_fields_reserved_words(mock_conn):
         tables="pso_data_validator.dvt_reserved_word_columns",
         tc="mock-conn",
         comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_generate_and_run_partitions(mock_conn, tmp_path: pathlib.Path):
+    """Test generate and execute partition configs."""
+    generate_and_run_table_partitions_test(
+        tmp_path,
+        sc="mock-conn",
+        tc="mock-conn",
     )
 
 

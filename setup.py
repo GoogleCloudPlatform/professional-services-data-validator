@@ -39,7 +39,7 @@ dependencies = [
     "pandas",
     "parsy>=2.1",
     "psycopg2-binary>=2.9.9",
-    "pyarrow==14.0.1",  # ibis-framework 7.1.0 depends on pyarrow<15 and >=2
+    "pyarrow",
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
@@ -57,6 +57,7 @@ extras_require = {
         "pyfakefs",
         "pytest",
         "pytest-cov",
+        "pytest-rerunfailures",
         "pytest-timeout",
     ],
 }

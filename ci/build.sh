@@ -14,21 +14,40 @@
 # limitations under the License.
 
 # Copied from https://github.com/googleapis/synthtool/blob/master/synthtool/gcp/templates/python_library/.kokoro/build.sh
+#
+
+PYTHON="python3.9"
+if [[ -n "$1" && "$1" =~ python.* ]]; then
+    PYTHON=$1
+fi
 
 set -eo pipefail
+
+if [[ "$NOX_SESSION" == "integration_sybase" ]]; then
+    sudo add-apt-repository -y universe
+    apt-get update
+    sudo apt-get install -y freetds-bin freetds-common
+    # Can't install tdsodbc due to libodbc conflict, but we can download
+    # the .so file (command from Gemini):
+    (cd /tmp && sudo apt-get download tdsodbc && sudo dpkg -i --force-all tdsodbc*.deb)
+    echo "[FreeTDS]
+Description=FreeTDS Driver for Linux
+Driver=libtdsodbc.so
+UsageCount=1" > /etc/odbcinst.ini
+fi
 
 # Disable buffering, so that the logs stream through.
 export PYTHONUNBUFFERED=1
 
 # Install nox
-python3.9 -m pip install --upgrade --quiet nox pip
-python3.9 -m nox --version
+${PYTHON} -m pip install --upgrade --quiet nox pip
+${PYTHON} -m nox --version
 
 # When NOX_SESSION is set, it only runs the specified session
 if [[ -n "${NOX_SESSION:-}" &&  ( "$NOX_SESSION" == "integration_postgres" || "$NOX_SESSION" == "integration_sql_server" || "$NOX_SESSION" == "integration_mysql" || "$NOX_SESSION" =~ integration_oracle.* ) ]]; then
-    ./cloud_sql_proxy -instances="$CLOUD_SQL_CONNECTION" & python3.9 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    ./cloud_sql_proxy -instances="$CLOUD_SQL_CONNECTION" & ${PYTHON} -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 elif [[ -n "${NOX_SESSION:-}" ]]; then
-    python3.9 -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
+    ${PYTHON} -m nox --error-on-missing-interpreters -s "${NOX_SESSION:-}"
 else
     echo "NOX_SESSION env var not set"
     exit 1

@@ -16,7 +16,7 @@
 from contextlib import contextmanager
 import copy
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import warnings
 
 import google.oauth2.service_account
@@ -57,6 +57,7 @@ IBIS_ALCHEMY_BACKENDS = [
     "mssql",
     "redshift",
     "snowflake",
+    "sybase",
 ]
 
 
@@ -96,12 +97,18 @@ except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
     db2_zos_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
+# Sybase requires sqlalchemy_sybase package.
+try:
+    from third_party.ibis.ibis_sybase.api import sybase_connect
+except ImportError:
+    sybase_connect = _raise_missing_client_error("pip install sqlalchemy_sybase")
+
 
 def get_google_bigquery_client(
     project_id: str,
     credentials=None,
-    api_endpoint: str = None,
-    quota_project_id: str = None,
+    api_endpoint: Optional[str] = None,
+    quota_project_id: Optional[str] = None,
 ):
     info = client_info.get_http_client_info()
     job_config = bigquery.QueryJobConfig(
@@ -124,7 +131,9 @@ def get_google_bigquery_client(
 
 
 def _get_google_bqstorage_client(
-    credentials=None, api_endpoint: str = None, quota_project_id: str = None
+    credentials=None,
+    api_endpoint: Optional[str] = None,
+    quota_project_id: Optional[str] = None,
 ):
     options = None
     if api_endpoint or quota_project_id:
@@ -144,9 +153,9 @@ def get_bigquery_client(
     project_id: str,
     dataset_id: str = "",
     credentials=None,
-    api_endpoint: str = None,
-    storage_api_endpoint: str = None,
-    client_project_id: str = None,
+    api_endpoint: Optional[str] = None,
+    storage_api_endpoint: Optional[str] = None,
+    client_project_id: Optional[str] = None,
 ):
     google_client = get_google_bigquery_client(
         project_id,
@@ -163,7 +172,7 @@ def get_bigquery_client(
         )
 
     return bigquery_connect(
-        project_id=project_id,
+        project_id=project_id or client_project_id,
         dataset_id=dataset_id,
         credentials=credentials,
         bigquery_client=google_client,
@@ -224,6 +233,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "db2_zos",
         "mssql",
         "redshift",
+        "sybase",
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif client.name == "pandas":
@@ -422,6 +432,7 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_MSSQL: mssql_connect,
     consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
+    consts.SOURCE_TYPE_SYBASE: sybase_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,
     consts.SOURCE_TYPE_DB2_ZOS: db2_zos_connect,
 }
