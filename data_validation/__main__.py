@@ -596,6 +596,7 @@ def partition_and_store_config_files(args: "Namespace") -> None:
         setattr(args, "custom_query_type", "row")
         config_managers = build_config_managers_from_args(args, consts.CUSTOM_QUERY)
     partition_builder = PartitionBuilder(config_managers, args)
+    partition_builder.check_partition_configs()
     partition_builder.partition_configs()
 
 

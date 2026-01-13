@@ -56,6 +56,7 @@ IBIS_ALCHEMY_BACKENDS = [
     "mssql",
     "redshift",
     "snowflake",
+    "sybase",
 ]
 
 
@@ -92,6 +93,12 @@ try:
     from third_party.ibis.ibis_db2.api import db2_connect
 except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+
+# Sybase requires sqlalchemy_sybase package.
+try:
+    from third_party.ibis.ibis_sybase.api import sybase_connect
+except ImportError:
+    sybase_connect = _raise_missing_client_error("pip install sqlalchemy_sybase")
 
 
 def get_google_bigquery_client(
@@ -222,6 +229,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "db2",
         "mssql",
         "redshift",
+        "sybase",
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif client.name == "pandas":
@@ -420,5 +428,6 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_MSSQL: mssql_connect,
     consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
+    consts.SOURCE_TYPE_SYBASE: sybase_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,
 }

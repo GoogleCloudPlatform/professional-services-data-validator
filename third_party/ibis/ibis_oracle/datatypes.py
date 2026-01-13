@@ -91,7 +91,7 @@ _type_mapping = {
 # _handle_failed_column_type_inference().
 # This method has a flaw that is doesn't prefix the table name with the schema
 # which causes a table not found exception.
-# I (nj@2024-02-15) felt the simplest change was to add LONG RAW to SQL Alchemy
+# I (nj@2024-02-15) felt the simplest change was to add LONG RAW to SQLAlchemy
 # as a RAW variant, as below.
 if "LONG RAW" not in OracleDialect_oracledb.ischema_names:
     OracleDialect_oracledb.ischema_names["LONG RAW"] = oracle.RAW

@@ -15,6 +15,8 @@
 import os
 from unittest import mock
 
+import pytest
+
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     schema_validation_test,
@@ -28,6 +30,13 @@ from tests.system.data_sources.common_functions import (
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
+
+# Our Db2 test infra has a habit of failing to connect but then working on retry.
+pytestmark = pytest.mark.flaky(
+    reruns=1,
+    reruns_delay=1,
+    only_rerun=["DataClientConnectionFailure"],
+)
 
 DB2_HOST = os.getenv("DB2_HOST", "localhost")
 DB2_PASSWORD = os.getenv("DB2_PASSWORD")

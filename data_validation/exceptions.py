@@ -27,3 +27,7 @@ class ResultHandlerException(Exception):
 
 class SchemaValidationException(ValidationException):
     pass
+
+
+class PartitionBuilderException(ValidationException):
+    pass

@@ -51,7 +51,7 @@ def sa_table_column(t, op):
 
 
 def strftime(translator, op):
-    """Use MS SQL CONVERT() in place of STRFTIME().
+    """Use SQL Server CONVERT() in place of STRFTIME().
 
     This is pretty restrictive due to the limited styles offered by SQL Server,
     we've just covered off the generic formats used when casting date based columns
