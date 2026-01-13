@@ -661,7 +661,7 @@ def partition_query_test(
 
 
 def generate_and_run_table_partitions_test(
-    tmp_path: pathlib.Path,
+    config_path: pathlib.Path,
     sc="bq-conn",
     tc="bq-conn",
     tables="pso_data_validator.test_generate_partitions_v2",
@@ -684,7 +684,7 @@ def generate_and_run_table_partitions_test(
         f"-tbls={tables}",
         f"-pk={pk}",
         col_option,
-        f"-cdir={tmp_path}",
+        f"-cdir={config_path}",
         f"-pn={partition_num}",
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
@@ -693,7 +693,7 @@ def generate_and_run_table_partitions_test(
     partition_builder = PartitionBuilder(config_managers, args)
     partition_builder.partition_configs()
 
-    config_dir = tmp_path / tables
+    config_dir = config_path / tables
     assert (
         len(os.listdir(config_dir)) == partition_num
     ), f"{len(os.listdir(config_dir))} != {partition_num=}"
