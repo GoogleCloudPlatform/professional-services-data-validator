@@ -2,6 +2,25 @@
 
 ## Untagged
 
+## [8.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.3.0...v8.4.0) (2026-01-13)
+
+
+### Features
+
+* Add Sybase support ([#1614](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1614)) ([7fef330](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/7fef33018ccc3af02298d00414ec01b08817c00c))
+* Execute a validation from a BigQuery project pointing to a table in a different project ([#1622](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1622)) ([2cf331f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2cf331f7fe396e7046ee95a18165b98f093177ab))
+
+
+### Bug Fixes
+
+* Ensure we use BigQuery data project when prefixing tables ([#1637](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1637)) ([687925f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/687925f43f40300d59333050ef7ad8bf5ef1f013))
+* Small fix to BigQuery quota project parameter implementation ([#1632](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1632)) ([49ec473](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/49ec473bf541a468aa400f5112875009c2b00a41))
+
+
+### Documentation
+
+* Add sample SQL Server Dockerfiles ([#1636](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1636)) ([543ad0d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/543ad0dfe07c6db1a0b76bd37778370da0266a24))
+
 ## [8.3.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.2.0...v8.3.0) (2025-11-13)
 
 
