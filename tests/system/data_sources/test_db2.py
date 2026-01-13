@@ -93,6 +93,18 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_db2_types():
+    """Db2 to Db2 dvt_db2_types schema validation"""
+    schema_validation_test(
+        tables="db2inst1.dvt_db2_types",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_not_null_vs_nullable():
     """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
     parser = cli_tools.configure_arg_parser()
