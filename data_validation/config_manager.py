@@ -1303,13 +1303,16 @@ class ConfigManager(object):
         casefold_columns: dict,
         ibis_table: "ibis.expr.types.Table",
         raw_types: dict,
-    ):
+    ) -> dict:
         """Returns IfNull replacement token length limits (due to Db2 limitations).
 
         This is because in Db2 a coalesce of a column cannot exceed the length of the initial argument resulting in:
             String data right truncation. SQLSTATE=22001
 
         We need to ensure both source and target systems use the same replacement token therefore these limits are used for both.
+
+        Returns dict of column names with replacement token length limits:
+            {"col1": 10, "col2": 12, "col_unlimited": None}
         """
         if not casefold_columns or client.name != "db2":
             return {}
