@@ -808,3 +808,14 @@ INSERT INTO `pso_data_validator`.`dvt_intervals` VALUES
 (1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-2' YEAR TO MONTH),
 (2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-2' YEAR TO MONTH),
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_col_mappings`
+( target_id   INT64 NOT NULL
+, target_num  NUMERIC(5)
+, target_date DATE
+, target_str  STRING
+, col_same_1  NUMERIC(5)
+, col_same_2  DATE
+) OPTIONS (description='Integration test table used to test column name mismatches across systems.');
+INSERT INTO `pso_data_validator`.`dvt_col_mappings` VALUES
+(1,123,DATE'2000-01-01','abcde',123,DATE'2000-01-01');

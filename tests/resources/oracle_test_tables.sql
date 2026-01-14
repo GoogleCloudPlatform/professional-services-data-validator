@@ -909,3 +909,17 @@ INSERT INTO pso_data_validator.dvt_intervals VALUES
 INSERT INTO pso_data_validator.dvt_intervals VALUES
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_col_mappings;
+CREATE TABLE pso_data_validator.dvt_col_mappings
+( source_id   NUMBER(5) NOT NULL PRIMARY KEY
+, source_num  NUMBER(5)
+, source_date DATE
+, source_str  VARCHAR2(5)
+, col_same_1  NUMBER(5)
+, col_same_2  DATE
+);
+COMMENT ON TABLE pso_data_validator.dvt_col_mappings IS 'Integration test table used to test column name mismatches across systems.';
+INSERT INTO pso_data_validator.dvt_col_mappings VALUES
+(1,123,DATE'2000-01-01','abcde',123,DATE'2000-01-01');
+COMMIT;

@@ -83,6 +83,7 @@ CONFIG_FILTER_TARGET_VALUE = "target_value"
 CONFIG_EXCLUSION_COLUMNS = "exclusion_columns"
 CONFIG_ALLOW_LIST = "allow_list"
 CONFIG_FILTER_STATUS = "filter_status"
+CONFIG_COLUMN_NAME_MAP = "column_name_map"
 
 CONFIG_RESULT_HANDLER = "result_handler"
 

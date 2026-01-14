@@ -506,6 +506,25 @@ def test_column_validation_tricky_dates_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_column_name_map_to_bigquery():
+    """Oracle to BigQuery dvt_col_mappings column validation."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_col_mappings",
+        tc="bq-conn",
+        count_cols="*",
+        min_cols="*",
+        sum_cols="*",
+        column_name_map="source_id=target_id,source_num=target_num,source_str=target_str,source_date=target_date",
+        grouped_columns="source_id",
+        wildcard_include_string=True,
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Oracle to Oracle dvt_core_types row validation"""
     row_validation_test(

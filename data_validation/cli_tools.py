@@ -636,6 +636,11 @@ def _configure_row_parser(
         help="Filters in the format source_filter:target_filter",
     )
     optional_arguments.add_argument(
+        "--column-name-map",
+        "-cnm",
+        help="Comma separated list of column mappings in the form 'source_col=target_col,source_col2=target_col2'",
+    )
+    optional_arguments.add_argument(
         "--trim-string-pks",
         "-tsp",
         action=deprecate_action,
@@ -787,6 +792,12 @@ def _configure_column_parser(column_parser):
         type=get_filters,
         default=[],
         help="Filters in the format source_filter:target_filter",
+    )
+
+    optional_arguments.add_argument(
+        "--column-name-map",
+        "-cnm",
+        help="Comma separated list of column mappings in the form 'source_col=target_col,source_col2=target_col2'",
     )
 
     optional_arguments.add_argument(
@@ -1367,7 +1378,7 @@ def get_arg_list(arg_value, default_value=None):
 def _read_json_value(arg_value: str) -> list:
     """Returns a deserialized JSON value or None if an error occurs."""
     try:
-        if isinstance(arg_value, list):
+        if isinstance(arg_value, (dict, list)):
             arg_value = str(arg_value)
         return json.loads(arg_value)
     except json.decoder.JSONDecodeError:
@@ -1447,6 +1458,34 @@ def split_table(table_ref, schema_required=True):
     table = table_ref_list.pop()
     schema = ".".join(table_ref_list)
     return schema.strip(), table.strip()
+
+
+def get_column_mappings(map_arg) -> dict:
+    """Returns dictionary of column name mappings from CLI argument.
+
+    This mimics the tables-list argument which accepts a JSON string or a CSV, examples of both below:
+        {"col_source": "col_target", "col_source2": "col_target2", ...}
+        col_source=col_target,col_source2=col_target2,...
+
+    map_arg (str): column_name_map argument
+    """
+    if not map_arg:
+        return {}
+
+    json_value = _read_json_value(map_arg)
+    if json_value:
+        return json_value
+
+    # Expecting a CSV instead of JSON.
+    mappings = list(csv.reader([map_arg]))[0]
+    column_name_map = {}
+    for mapping in mappings:
+        column_pair = mapping.split("=")
+        if len(column_pair) != 2:
+            raise ValueError("Incorrect format for --column-name-map argument.")
+        column_name_map[column_pair[0].strip()] = column_pair[1].strip()
+
+    return column_name_map
 
 
 def get_query_from_file(filename):
@@ -1618,6 +1657,11 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
     use_random_rows = getattr(args, "use_random_row", False)
     random_row_batch_size = getattr(args, consts.CONFIG_RANDOM_ROW_BATCH_SIZE, None)
 
+    # Column name map.
+    column_name_map = get_column_mappings(
+        getattr(args, consts.CONFIG_COLUMN_NAME_MAP, {})
+    )
+
     # Get table list. Not supported in case of custom query validation
     is_filesystem = source_client._source_type == "FileSystem"
     query_str = None
@@ -1661,6 +1705,7 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             consts.CONFIG_FORMAT: format,
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
+            consts.CONFIG_COLUMN_NAME_MAP: column_name_map,
             "source_client": source_client,
             "target_client": target_client,
             "result_handler_config": result_handler_config,

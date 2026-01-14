@@ -136,7 +136,8 @@ data-validation
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.
                         See: *Filters* section
-  [--config-file or -c CONFIG_FILE]
+  [--column-name-map COLUMN_MAP, -cnm COLUMN_MAP]
+                        Comma separated list of column mappings in the form 'source_col=target_col,source_col2=target_col2'
                         YAML Config File Path to be used for storing validations and other features. Supports GCS and local paths.
                         See: *Running DVT with YAML Configuration Files* section
   [--config-file-json or -cj CONFIG_FILE_JSON]
@@ -215,6 +216,8 @@ data-validation
                         This option has been deprecated and will be removed in a future release.
   [--service-account or -sa PATH_TO_SA_KEY]
                         Service account to use for BigQuery result handler output.
+  [--column-name-map COLUMN_MAP, -cnm COLUMN_MAP]
+                        Comma separated list of column mappings in the form 'source_col=target_col,source_col2=target_col2'
   [--filters SOURCE_FILTER:TARGET_FILTER]
                         Colon separated string values of source and target filters.
                         If target filter is not provided, the source filter will run on source and target tables.

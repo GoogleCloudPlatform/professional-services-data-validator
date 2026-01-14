@@ -1115,3 +1115,34 @@ def test_check_gt_one_fail(test_input: int):
     """Test _check_positive."""
     with pytest.raises(argparse.ArgumentTypeError):
         _ = cli_tools._check_gt_one(test_input)
+
+
+@pytest.mark.parametrize(
+    "map_arg,expected_output",
+    [
+        (
+            "source_col1=target_col1,source_col2=target_col2",
+            {"source_col1": "target_col1", "source_col2": "target_col2"},
+        ),
+        (
+            '{"source_col1": "target_col1", "source_col2": "target_col2"}',
+            {"source_col1": "target_col1", "source_col2": "target_col2"},
+        ),
+        ("", {}),
+        (None, {}),
+        (
+            " source_col1 = target_col1 , source_col2=target_col2 ",
+            {"source_col1": "target_col1", "source_col2": "target_col2"},
+        ),
+    ],
+)
+def test_get_column_mappings(map_arg, expected_output):
+    """Test get_column_mappings with various inputs."""
+    output = cli_tools.get_column_mappings(map_arg)
+    assert output == expected_output
+
+
+def test_get_column_mappings_invalid():
+    """Test get_column_mappings with invalid input."""
+    with pytest.raises(ValueError):
+        cli_tools.get_column_mappings("source_col1=target_col1,source_col2")

@@ -173,6 +173,11 @@ class ConfigManager(object):
         """Return number of random rows or None."""
         return self.random_row_batch_size() if self.use_random_rows() else None
 
+    @property
+    def column_name_map(self):
+        """Return any column name mappings for the validation."""
+        return self._config.get(consts.CONFIG_COLUMN_NAME_MAP) or {}
+
     def trim_string_pks(self):
         # Even though trim_string_pks has been deprecated, some yaml files may have that config.
         """Return if the validation should trim string primary keys, now deprecated"""
@@ -510,6 +515,7 @@ class ConfigManager(object):
         format,
         use_random_rows=None,
         random_row_batch_size=None,
+        column_name_map=None,
         source_client=None,
         target_client=None,
         result_handler_config=None,
@@ -546,6 +552,7 @@ class ConfigManager(object):
             consts.CONFIG_FILTERS: filter_config,
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
+            consts.CONFIG_COLUMN_NAME_MAP: column_name_map,
             consts.CONFIG_FILTER_STATUS: filter_status,
             consts.CONFIG_CASE_INSENSITIVE_MATCH: case_insensitive_match,
             consts.CONFIG_ROW_CONCAT: concat,
@@ -742,16 +749,18 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for column in columns:
+            target_column_name = self.column_name_map.get(column, column)
+
             if column.casefold() not in casefold_source_columns:
                 raise ValueError(f"Column DNE in source: {column}")
-            if column.casefold() not in casefold_target_columns:
-                raise ValueError(f"Column DNE in target: {column}")
+            if target_column_name.casefold() not in casefold_target_columns:
+                raise ValueError(f"Column DNE in target: {target_column_name}")
 
             source_ibis_type = source_table[
                 casefold_source_columns[column.casefold()]
             ].type()
             target_ibis_type = target_table[
-                casefold_target_columns[column.casefold()]
+                casefold_target_columns[target_column_name.casefold()]
             ].type()
             cast_type = self._key_column_needs_casting_to_string(
                 source_ibis_type, target_ibis_type
@@ -759,7 +768,9 @@ class ConfigManager(object):
 
             column_config = {
                 consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column.casefold()],
-                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column.casefold()],
+                consts.CONFIG_TARGET_COLUMN: casefold_target_columns[
+                    target_column_name.casefold()
+                ],
                 consts.CONFIG_FIELD_ALIAS: column,
                 consts.CONFIG_CAST: cast_type,
             }
@@ -1073,19 +1084,22 @@ class ConfigManager(object):
                 casefold_source_columns[column]
             ].type()
             column_type = str(source_column_ibis_type).split("(")[0]
-            target_column_ibis_type = target_table[
-                casefold_target_columns[column]
-            ].type()
-            target_column_type = str(target_column_ibis_type).split("(")[0]
+            target_column_name = self.column_name_map.get(column, column)
 
             if column not in allowlist_columns:
                 continue
-            elif column not in casefold_target_columns:
+            elif target_column_name not in casefold_target_columns:
                 logging.warning(
-                    f"Skipping {agg_type} on {column} as column is not present in target table"
+                    f"Skipping {agg_type} on {target_column_name} as column is not present in target table"
                 )
                 continue
-            elif supported_types and not self._type_is_supported_for_agg_validation(
+
+            target_column_ibis_type = target_table[
+                casefold_target_columns[target_column_name]
+            ].type()
+            target_column_type = str(target_column_ibis_type).split("(")[0]
+
+            if supported_types and not self._type_is_supported_for_agg_validation(
                 column_type, target_column_type, supported_types
             ):
                 if self.verbose:
@@ -1104,7 +1118,7 @@ class ConfigManager(object):
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
-                    casefold_target_columns[column],
+                    casefold_target_columns[target_column_name],
                     agg_type,
                     column_type,
                     target_column_type,
@@ -1113,7 +1127,9 @@ class ConfigManager(object):
             else:
                 aggregate_config = {
                     consts.CONFIG_SOURCE_COLUMN: casefold_source_columns[column],
-                    consts.CONFIG_TARGET_COLUMN: casefold_target_columns[column],
+                    consts.CONFIG_TARGET_COLUMN: casefold_target_columns[
+                        target_column_name
+                    ],
                     consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
                         column, f"{agg_type}", column_position
                     ),
