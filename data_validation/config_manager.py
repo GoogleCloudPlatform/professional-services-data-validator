@@ -1357,6 +1357,8 @@ class ConfigManager(object):
 
         column_aliases = {}
         col_names = []
+        # Get any ifnull token limits from either the source or target system.
+        # Most engines have no requireement for limits and will return an empty dict.
         string_column_ifnull_limits = self._string_column_ifnull_limits(
             self.source_client,
             casefold_source_columns,
