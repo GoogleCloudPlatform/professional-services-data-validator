@@ -293,7 +293,7 @@ def list_tables(client, schema_name, tables_only=True):
         if tables_only and client.name != "pandas"
         else client.list_tables
     )
-    if client.name in ["db2", "db2_zos", "redshift", "snowflake", "pandas"]:
+    if client.name in ["redshift", "snowflake", "pandas"]:
         return fn()
     return fn(database=schema_name)
 
@@ -346,10 +346,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config["credentials"] = (
-                google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
-                )
+            decrypted_connection_config[
+                "credentials"
+            ] = google.oauth2.service_account.Credentials.from_service_account_file(
+                key_path
             )
 
     if source_type not in CLIENT_LOOKUP:
