@@ -115,7 +115,7 @@ class Backend(BaseAlchemyBackend):
 
         Returns:
             list: A list of tuples containing the standard 7 DB API fields:
-                    https://peps.python.org/pep-0249/#description
+                  https://peps.python.org/pep-0249/#description
         """
         assert (database and table) or query, "We should never receive all args=None"
         if database and table:

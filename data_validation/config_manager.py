@@ -1386,7 +1386,6 @@ class ConfigManager(object):
                 # need to capture all aliases at the previous level. probably name concat__all
                 column_aliases[name] = i
                 col_names.append(col)
-
             else:
                 # This needs to be the previous manifest of columns
                 for j, column in enumerate(previous_level):
