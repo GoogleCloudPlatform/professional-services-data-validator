@@ -167,7 +167,7 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types():
-    """DB2 to DB2 dvt_core_types row validation"""
+    """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
     # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
@@ -222,7 +222,7 @@ def test_row_validation_core_types_auto_pks():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types row validation"""
+    """Db2 to BigQuery dvt_core_types row validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
