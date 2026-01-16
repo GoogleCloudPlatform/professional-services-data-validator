@@ -462,6 +462,14 @@ def _day_of_week_name(t, op):
     return sa.func.dayname(sa_arg)
 
 
+def sa_format_hashbytes_db2(translator, op):
+    compiled_arg = translator.translate(op.arg)
+    hash_func = sa.func.hash(compiled_arg, sa.sql.literal_column("2"))
+    # OBS: SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
+    hex_func = sa.func.hex(hash_func)
+    return sa.func.lower(hex_func)
+
+
 operation_registry.update(
     {
         ops.Literal: _literal,
@@ -488,6 +496,7 @@ operation_registry.update(
         ops.Translate: fixed_arity("translate", 3),
         ops.RegexExtract: _regex_extract,
         ops.StringJoin: _string_join,
+        ops.HashBytes: sa_format_hashbytes_db2,
         # math
         ops.Log: _log,
         ops.Log2: unary(lambda x: sa.func.log(2, x)),

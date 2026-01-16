@@ -252,14 +252,6 @@ def sa_format_hashbytes_mysql(translator, op):
     return hash_func
 
 
-def sa_format_hashbytes_db2(translator, op):
-    compiled_arg = translator.translate(op.arg)
-    hash_func = sa.func.hash(compiled_arg, sa.sql.literal_column("2"))
-    # OBS: SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
-    hex_func = sa.func.hex(hash_func)
-    return sa.func.lower(hex_func)
-
-
 def sa_format_hashbytes_redshift(translator, op):
     arg = translator.translate(op.arg)
     return sa.sql.literal_column(f"sha2({arg}, 256)")
@@ -567,7 +559,6 @@ RedShiftExprTranslator._registry[PaddedCharLength] = RedShiftExprTranslator._reg
 ]
 
 if Db2ExprTranslator:
-    Db2ExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_db2
     Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
     Db2ExprTranslator._registry[ops.Strftime] = strftime_db2
