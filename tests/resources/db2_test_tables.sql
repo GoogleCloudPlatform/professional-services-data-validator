@@ -56,6 +56,37 @@ INSERT INTO db2inst1.dvt_core_types VALUES
 ,TIMESTAMP'1970-01-02 21:23:03');
 COMMIT;
 
+-- Db2 data types test table (data types not covered by core types).
+DROP TABLE db2inst1.dvt_db2_types;
+CREATE TABLE db2inst1.dvt_db2_types
+(   id              INTEGER NOT NULL PRIMARY KEY
+,   col_smallint    SMALLINT
+,   col_int         INTEGER
+,   col_bigint      BIGINT
+,   col_decfloat_16 DECFLOAT(16)
+,   col_decfloat_32 DECFLOAT(34)
+,   col_clob        CLOB
+,   col_nvarchar_30 NVARCHAR(30)
+,   col_nchar_2     NCHAR(2)
+,   col_nclob       NCLOB
+,   col_blob        BLOB
+,   col_char_bit    CHAR(5) FOR BIT DATA
+,   col_varchar_bit VARCHAR(5) FOR BIT DATA
+,   col_graphic     GRAPHIC(3)
+,   col_vargraphic  VARGRAPHIC(3)
+,   col_time        TIME
+,   col_xml         XML
+);
+COMMENT ON TABLE db2inst1.dvt_core_types IS 'Db2 data types integration test table';
+
+INSERT INTO db2inst1.dvt_db2_types VALUES
+(1,123,12345,1123456789,123.456,123456.789
+,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB'
+,CAST('Hello BLOB' AS BLOB),'ABC','DEF','GHI','JKL'
+,TIME'00:00:01'
+,'<xml></xml>');
+COMMIT;
+
 DROP TABLE db2inst1.dvt_null_not_null;
 CREATE TABLE db2inst1.dvt_null_not_null
 (   col_nn             TIMESTAMP(0) NOT NULL
