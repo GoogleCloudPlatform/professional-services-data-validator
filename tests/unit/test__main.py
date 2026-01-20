@@ -275,6 +275,10 @@ def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
     assert len(mock_run.call_args.args[1]) == 1
 
 
+@mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["0000.yaml", "0001.yaml", "0002.yaml"],
+)
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_yaml",
@@ -284,7 +288,7 @@ def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_2),
 )
-def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
+def test_config_runner_2(mock_args, mock_build, mock_run, mock_list, caplog):
     """Second test - run validation on a directory - and provide the -kc argument,
     but not running in a Kubernetes Completion Configuration. Expected result
     1. Multiple (3) config manager created for validation
@@ -331,6 +335,10 @@ def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
     assert len(mock_run.call_args.args[1]) == 1
 
 
+@mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["0000.yaml", "0001.yaml", "0002.yaml", "0003.yaml"],
+)
 @mock.patch("data_validation.__main__.run_validations")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_yaml",
@@ -340,7 +348,7 @@ def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_4),
 )
-def test_config_runner_4(mock_args, mock_build, mock_run, caplog):
+def test_config_runner_4(mock_args, mock_build, mock_run, mock_list, caplog):
     """Third test - run validation on a directory with failures in one validation,
         Running in a non Kube completions environment. Expected Result:
     1. All 4 files are validated, even though one of them raises an exception.

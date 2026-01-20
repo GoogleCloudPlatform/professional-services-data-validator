@@ -436,18 +436,32 @@ class ConfigManager(object):
         return self._source_ibis_table
 
     def get_source_ibis_calculated_table(self, depth=None):
-        """Return mutated IbisTable from source
-        depth: Int the depth of subquery requested"""
+        """Return mutated IbisTable from source.
+
+        Args:
+           depth (int): The depth of subquery requested. If None, all calculated fields are applied.
+        """
         if self.validation_type == consts.CUSTOM_QUERY:
             table = self.get_source_ibis_table_from_query()
         else:
             table = self.get_source_ibis_table()
         vb = ValidationBuilder(self)
-        calculated_table = table.mutate(
-            vb.source_builder.compile_calculated_fields(table, n=depth)
-        )
 
-        return calculated_table
+        if depth is None:
+            if vb.source_builder.calculated_fields:
+                max_depth = max(
+                    field.config.get(consts.CONFIG_DEPTH, 0)
+                    for field in vb.source_builder.calculated_fields
+                )
+                for n in range(max_depth + 1):
+                    fields = vb.source_builder.compile_calculated_fields(table, n=n)
+                    if fields:
+                        table = table.mutate(fields)
+            return table
+        else:
+            return table.mutate(
+                vb.source_builder.compile_calculated_fields(table, n=depth)
+            )
 
     def get_target_ibis_table(self):
         """Return IbisTable from target."""
@@ -466,18 +480,32 @@ class ConfigManager(object):
         return self._target_ibis_table
 
     def get_target_ibis_calculated_table(self, depth=None):
-        """Return mutated IbisTable from target
-        n: Int the depth of subquery requested"""
+        """Return mutated IbisTable from target.
+
+        Args:
+            depth (int): The depth of subquery requested. If None, all calculated fields are applied.
+        """
         if self.validation_type == consts.CUSTOM_QUERY:
             table = self.get_target_ibis_table_from_query()
         else:
             table = self.get_target_ibis_table()
         vb = ValidationBuilder(self)
-        calculated_table = table.mutate(
-            vb.target_builder.compile_calculated_fields(table, n=depth)
-        )
 
-        return calculated_table
+        if depth is None:
+            if vb.target_builder.calculated_fields:
+                max_depth = max(
+                    field.config.get(consts.CONFIG_DEPTH, 0)
+                    for field in vb.target_builder.calculated_fields
+                )
+                for n in range(max_depth + 1):
+                    fields = vb.target_builder.compile_calculated_fields(table, n=n)
+                    if fields:
+                        table = table.mutate(fields)
+            return table
+        else:
+            return table.mutate(
+                vb.target_builder.compile_calculated_fields(table, n=depth)
+            )
 
     def get_yaml_validation_block(self):
         """Return Dict object formatted for a Yaml file."""
@@ -724,6 +752,13 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         for field in fields:
+            target_field_name = self.column_name_map.get(field, field)
+
+            if field.casefold() not in casefold_source_columns:
+                raise ValueError(f"Column DNE in source: {field}. Available: {list(casefold_source_columns.keys())}")
+            if target_field_name.casefold() not in casefold_target_columns:
+                raise ValueError(f"Column DNE in target: {target_field_name}")
+
             cast_type = self._comp_field_cast(
                 source_table_schema, target_table_schema, field
             )
@@ -732,7 +767,7 @@ class ConfigManager(object):
                     field.casefold(), field
                 ),
                 consts.CONFIG_TARGET_COLUMN: casefold_target_columns.get(
-                    field.casefold(), field
+                    target_field_name.casefold(), target_field_name
                 ),
                 consts.CONFIG_FIELD_ALIAS: field,
                 consts.CONFIG_CAST: cast_type,
@@ -1363,7 +1398,16 @@ class ConfigManager(object):
                     if i == 0:
                         # If depth 0, get raw column name with correct casing
                         source_column = casefold_source_columns[column]
-                        target_column = casefold_target_columns[column]
+                        target_column_name = self.column_name_map.get(column, column)
+
+                        if target_column_name.casefold() not in casefold_target_columns:
+                            raise ValueError(
+                                f"Column DNE in target: {target_column_name}"
+                            )
+
+                        target_column = casefold_target_columns[
+                            target_column_name.casefold()
+                        ]
                         col["source_reference"] = [source_column]
                         col["target_reference"] = [target_column]
                         # If we are casting the base column (i == 0) then apply any

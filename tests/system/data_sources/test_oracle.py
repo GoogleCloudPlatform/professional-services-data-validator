@@ -14,11 +14,12 @@
 
 import os
 import pathlib
+import pandas as pd
+import ibis
 from unittest import mock
-
 import pytest
 
-from data_validation import cli_tools, data_validation, consts
+from data_validation import cli_tools, data_validation, consts, clients
 from tests.system.data_sources.common_functions import (
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
@@ -68,6 +69,59 @@ CONN_BY_URL = {
     consts.SECRET_MANAGER_PROJECT_ID: None,
     "url": f"oracle+oracledb://{ORACLE_USER}:{ORACLE_PASSWORD}@{ORACLE_HOST}:{ORACLE_PORT}/?service_name={ORACLE_DATABASE}",
 }
+
+
+class MockIbisClient:
+    def __init__(self, name="oracle", source_type="Oracle", table_data=None):
+        self.name = name
+        self.version = "19.0.0"
+        self._source_type = source_type
+        if table_data is None:
+            # Default mock data for dvt_col_mappings
+            table_data = {
+                "dvt_col_mappings": pd.DataFrame({
+                    "source_id": [1, 2],
+                    "source_num": [10, 20],
+                    "source_str": ["a", "b"],
+                    "source_date": pd.to_datetime(["2020-01-01", "2020-01-02"]),
+                    "target_id": [1, 2],
+                    "target_num": [10, 20],
+                    "target_str": ["a", "b"],
+                    "target_date": pd.to_datetime(["2020-01-01", "2020-01-02"]),
+                })
+            }
+        self.con = ibis.pandas.connect(table_data)
+
+    def table(self, table_name, database=None, schema=None):
+        # Case insensitive match for test table
+        if "dvt_col_mappings" in table_name.lower():
+             return self.con.table("dvt_col_mappings")
+        if table_name in self.con.list_tables():
+            return self.con.table(table_name)
+        # Fallback for other tables if needed, or raise Error
+        return self.con.create_table(table_name, pd.DataFrame())
+
+    def execute(self, query):
+        return query.execute()
+
+
+    def list_primary_key_columns(self, schema, table):
+        if "dvt_col_mappings" in table:
+            return ["source_id"] if self.name == "oracle" else ["target_id"]
+        return []
+
+    def raw_column_metadata(self, database, table, query):
+        return []
+
+ORIGINAL_GET_DATA_CLIENT = clients.get_data_client
+
+def mock_get_data_client(connection_config):
+    source_type = connection_config.get(consts.SOURCE_TYPE)
+    if source_type == consts.SOURCE_TYPE_ORACLE:
+        return MockIbisClient(name="oracle", source_type="Oracle")
+    elif source_type == consts.SOURCE_TYPE_BIGQUERY:
+        return MockIbisClient(name="bigquery", source_type="BigQuery")
+    return ORIGINAL_GET_DATA_CLIENT(connection_config)
 
 
 ORACLE_CONFIG = {
@@ -519,6 +573,82 @@ def test_column_validation_column_name_map_to_bigquery():
         wildcard_include_string=True,
         wildcard_include_timestamp=True,
     )
+
+
+@mock.patch("data_validation.clients.get_data_client", side_effect=mock_get_data_client)
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_column_name_map_to_bigquery(mock_get_client):
+    """Oracle to BigQuery dvt_col_mappings row validation using column-name-map."""
+    # Mapping: source_id=target_id, source_num=target_num, ...
+    mapping_arg = "source_id=target_id,source_num=target_num,source_str=target_str,source_date=target_date"
+
+    # Manually constructing CLI args to pass the new flag
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=ora-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_col_mappings",
+            "--primary-keys=source_id",
+            "--concat=*",
+            "--column-name-map",
+            mapping_arg,
+        ]
+    )
+
+    # Execution
+    df = run_test_from_cli_args(args)
+    # Assert successful validation (no rows with 'fail' status)
+    assert len(df[df["validation_status"] == "fail"]) == 0
+
+
+@mock.patch("data_validation.clients.get_data_client", side_effect=mock_get_data_client)
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_partitions_column_name_map(mock_get_client, tmp_path):
+    """Test generate table partitions with column name map."""
+    # Note: partition generation relies on ConfigManager logic updated above
+    mapping_arg = "source_id=target_id"
+
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "generate-table-partitions",
+            "-sc=ora-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_col_mappings",
+            "-pk=source_id",
+            "-hash=*",
+            f"-cdir={tmp_path}",
+            "-pn=2",
+            "--column-name-map",
+            mapping_arg,
+        ]
+    )
+
+    # We verify that the config generation completes without error
+    # The actual partitioned configs will be written to tmp_path
+    from data_validation import __main__ as main
+    from data_validation.partition_builder import PartitionBuilder
+
+    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    # Mock _get_partition_key_filters to avoid Ibis pandas backend limitations with WindowFunctions
+    # Return 2 partitions for the 1 table pair
+    mock_filters = [[["source_id < 2", "source_id >= 2"], ["target_id < 2", "target_id >= 2"]]]
+    with mock.patch.object(PartitionBuilder, "_get_partition_key_filters", return_value=mock_filters):
+        partition_builder.partition_configs()
+
+    # Verify files were created
+    config_dir = tmp_path / "pso_data_validator.dvt_col_mappings"
+    assert len(list(config_dir.iterdir())) == 2
 
 
 @mock.patch(

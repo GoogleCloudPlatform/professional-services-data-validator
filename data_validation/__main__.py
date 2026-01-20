@@ -209,6 +209,10 @@ def _get_calculated_config(args, config_manager: ConfigManager) -> List[dict]:
                 custom_params=field.get("calc_params"),
             )
         )
+    
+    # Append calculated fields immediately so they are available for comparison field building
+    config_manager.append_calculated_fields(calculated_configs)
+
     if config_manager.hash:
         config_manager.append_comparison_fields(
             config_manager.build_config_comparison_fields(
@@ -221,7 +225,8 @@ def _get_calculated_config(args, config_manager: ConfigManager) -> List[dict]:
                 ["concat__all"], depth=max_depth
             )
         )
-    return calculated_configs
+    # Return empty list as we already appended the fields
+    return []
 
 
 def _get_comparison_config(
