@@ -282,8 +282,12 @@ def test_row_validation_core_types_to_bigquery():
 )
 def test_row_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types row validation"""
+    # Excluded col_clob,col_nclob,col_xml because they are incompatible with hex() function (due to potential length).
     # TODO: When issue-1296 is complete change col to "*" below.
-    cols = "col_decfloat_16,col_decfloat_32"
+    # TODO Add col_blob to list below once issue-1354 is complete.
+    # TODO Add col_char_2 to list below once issue-1354 is complete.
+    # TODO Add col_char_bit,col_varchar_bit to list below once issue-1655 is complete.
+    cols = "col_decfloat_16,col_decfloat_32,col_nvarchar_30,col_graphic,col_vargraphic,col_time"
     row_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
