@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_null_not_null
 );
 COMMENT ON TABLE pso_data_validator.dvt_null_not_null IS 'Nullable integration test table, DB2 is assumed to be a DVT source (not target).';
 
--- In DB2, the maximum precision for a DECIMAL (or NUMERIC) data type is 31 digits.
+-- In Db2 the maximum precision for a DECIMAL data type is 31 digits.
 -- The renders some columns in this table incompatible with the table in other systems.
 CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_large_decimals
 (   id                DECIMAL(31) NOT NULL PRIMARY KEY
