@@ -102,8 +102,8 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_large_decimals
 ,   col_data          VARCHAR(10)
 ,   col_dec_18        DECIMAL(18)
 ,   col_dec_38        DECIMAL(31)
-,   col_dec_31_9      DECIMAL(31,9)
-,   col_dec_31_30     DECIMAL(31,30)
+,   col_dec_38_9      DECIMAL(31,9)
+,   col_dec_38_30     DECIMAL(31,30)
 -- Columns with mismatched data for intentional fail status.
 ,   col_dec_18_fail   DECIMAL(18)
 ,   col_dec_18_1_fail DECIMAL(18,1)
