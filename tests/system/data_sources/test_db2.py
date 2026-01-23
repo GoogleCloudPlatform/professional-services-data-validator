@@ -97,10 +97,11 @@ def test_schema_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_schema_validation_db2_types():
-    """Db2 to Db2 dvt_db2_types schema validation"""
+    """Db2 to BigQuery dvt_db2_types schema validation"""
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",
-        tc="mock-conn",
+        tc="bq-conn",
+        allow_list=("int16:int64,int32:int64," "decimal:decimal(38,9)"),
     )
 
 
@@ -160,6 +161,25 @@ def test_column_validation_core_types_to_bigquery():
         max_cols=cols,
         avg_cols=cols,
         std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_db2_types_to_bigquery():
+    """DB2 to BigQuery dvt_db2_types column validation"""
+    cols = "*"
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_db2_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+        wildcard_include_timestamp=True,
     )
 
 
@@ -251,6 +271,21 @@ def test_row_validation_core_types_to_bigquery():
     )
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_db2_types_to_bigquery():
+    """Db2 to BigQuery dvt_db2_types row validation"""
+    # TODO: When issue-1296 is complete change col to "*" below.
+    cols = "col_decfloat_16,col_decfloat_32"
+    row_validation_test(
+        tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
         hash=cols,
     )

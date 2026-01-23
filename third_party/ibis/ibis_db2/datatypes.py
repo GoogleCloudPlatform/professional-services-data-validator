@@ -37,7 +37,8 @@ _type_mapping = {
     ibm_db_dbi.ROWID: dt.String,
 }
 
-ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=3000)
+# TODO Temporarily changed to 300 until issue-1296 is complete.
+ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=300)
 
 DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
 
