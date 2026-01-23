@@ -11,11 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sqlalchemy as sa
+
 import ibm_db_dbi
 
 import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy.datatypes import ibis_type_to_sqla
+from ibm_db_sa.ibm_db import DB2Dialect_ibm_db
+import sqlalchemy as sa
+import sqlalchemy.types as sat
+
 
 # Types from https://github.com/ibmdb/python-ibmdb/blob/master/IBM_DB/ibm_db/ibm_db_dbi.py
 _type_mapping = {
@@ -34,6 +38,8 @@ _type_mapping = {
 }
 
 ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=3000)
+
+DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
 
 
 def _get_type(typename) -> dt.DataType:

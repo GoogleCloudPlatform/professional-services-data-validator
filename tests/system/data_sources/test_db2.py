@@ -19,6 +19,8 @@ import pytest
 
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
+    find_tables_test,
     schema_validation_test,
     column_validation_test,
     run_test_from_cli_args,
@@ -62,9 +64,9 @@ def mock_get_connection_config(*args):
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types():
-    """DB2 to DB2 dvt_core_types schema validation"""
+    """Db2 to Db2 dvt_core_types schema validation"""
     schema_validation_test(
-        tables="db2inst1.dvt_core_types",
+        tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
     )
 
@@ -74,9 +76,9 @@ def test_schema_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_schema_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types schema validation"""
+    """Db2 to BigQuery dvt_core_types schema validation"""
     schema_validation_test(
-        tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
+        tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         allow_list=(
             # SMALLINT, INTEGER is equivalent to BigQuery INT64.
@@ -93,6 +95,18 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_db2_types():
+    """Db2 to Db2 dvt_db2_types schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_db2_types",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_schema_validation_not_null_vs_nullable():
     """Compares a source table with a BigQuery target and ensure we match/fail on not null/nullable correctly."""
     parser = cli_tools.configure_arg_parser()
@@ -102,7 +116,7 @@ def test_schema_validation_not_null_vs_nullable():
             "schema",
             "-sc=db2-conn",
             "-tc=bq-conn",
-            "-tbls=db2inst1.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
+            "-tbls=pso_data_validator.dvt_null_not_null",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -118,7 +132,7 @@ def test_column_validation_core_types():
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
     column_validation_test(
         tc="mock-conn",
-        tables="db2inst1.dvt_core_types",
+        tables="pso_data_validator.dvt_core_types",
         count_cols=cols,
         sum_cols=cols,
         min_cols=cols,
@@ -135,11 +149,11 @@ def test_column_validation_core_types():
 def test_column_validation_core_types_to_bigquery():
     """DB2 to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    # Excluded col_tstz since it is not possible to set time zone at this column on DB2
+    # Excluded col_tstz since it is not possible to set time zone at this column on Db2
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
     column_validation_test(
         tc="bq-conn",
-        tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
+        tables="pso_data_validator.dvt_core_types",
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
@@ -153,12 +167,38 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types():
-    """DB2 to DB2 dvt_core_types row validation"""
+    """Db2 to Db2 dvt_core_types row validation"""
+    # Exclude col_string because it is unbound and causes overflow error for HEX function.
+    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
+    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
+    # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _
+            not in (
+                "id",
+                "col_int8",  # issue-1634
+                "col_int16",  # issue-1634
+                "col_int32",  # issue-1634
+                "col_dec_20",  # issue-1634
+                "col_dec_38",  # issue-1634
+                "col_dec_10_2",  # issue-1634
+                "col_float32",  # issue-1634
+                "col_float64",  # issue-1634
+                "col_char_2",
+                "col_string",
+                "col_date",
+                "col_datetime",
+                "col_tstz",
+            )
+        ]
+    )
     row_validation_test(
-        tables="db2inst1.dvt_core_types",
+        tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
-        # OBS: Only passing this column because SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
-        hash="col_string",
+        hash=cols,
         filters="id>0 AND col_int8>0",
     )
 
@@ -170,7 +210,7 @@ def test_row_validation_core_types():
 def test_row_validation_core_types_auto_pks():
     """Test auto population of -pks from DB2 defined constraint."""
     row_validation_test(
-        tables="db2inst1.dvt_core_types",
+        tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
         hash="col_string",
         primary_keys=None,
@@ -182,13 +222,40 @@ def test_row_validation_core_types_auto_pks():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types row validation"""
+    """Db2 to BigQuery dvt_core_types row validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and
+    # float32/64 are lossy and cannot be compared.
+    # Exclude col_string because it is unbound and causes overflow error for HEX function.
+    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
+    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
+    # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _
+            not in (
+                "id",
+                "col_int8",  # issue-1634
+                "col_int16",  # issue-1634
+                "col_int32",  # issue-1634
+                "col_dec_20",  # issue-1634
+                "col_dec_38",  # issue-1634
+                "col_dec_10_2",  # issue-1634
+                "col_float32",
+                "col_float64",  # issue-1634
+                "col_char_2",
+                "col_string",
+                "col_date",
+                "col_datetime",
+                "col_tstz",
+            )
+        ]
+    )
     row_validation_test(
-        tables="db2inst1.dvt_core_types=pso_data_validator.dvt_core_types",
+        tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
-        # OBS: Only passing this column because SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
-        # TODO: When issue-1296 is complete change to col_date,col_datetime,col_tstz instead
-        hash="col_string",
+        hash=cols,
     )
 
 
@@ -199,7 +266,7 @@ def test_row_validation_core_types_to_bigquery():
 def test_custom_query_column_validation_core_types_to_bigquery():
     """DB2 to BigQuery dvt_core_types custom-query column validation"""
     custom_query_validation_test(
-        source_query="select * from db2inst1.dvt_core_types", count_cols="*"
+        source_query="select * from pso_data_validator.dvt_core_types", count_cols="*"
     )
 
 
@@ -211,7 +278,7 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     """DB2 to BigQuery dvt_core_types custom-query row comparison-fields validation"""
     custom_query_validation_test(
         validation_type="row",
-        source_query="select id,col_int64,col_varchar_30 from db2inst1.dvt_core_types",
+        source_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
         target_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
         comp_fields="col_int64,col_varchar_30",
     )
@@ -221,6 +288,15 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_find_tables():
+    """Oracle to BigQuery test of find-tables command."""
+    find_tables_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
-    raw_query_test(capsys, table="db2inst1.dvt_core_types")
+    raw_query_test(capsys, table="pso_data_validator.dvt_core_types")

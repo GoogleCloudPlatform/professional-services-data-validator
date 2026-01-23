@@ -93,7 +93,7 @@ class Backend(BaseAlchemyBackend):
         if self.inspector.has_table(query):
             query = f"TABLE {query}"
         with self.begin() as con:
-            con.exec_driver_sql(f"CREATE VIEW {name} AS {query}")
+            con.exec_driver_sql(f"CREATE VIEW {name} AS {query} WITH NO SCHEMA BINDING")
             type_info = con.execute(
                 sa.text(type_info_sql).bindparams(raw_name=raw_name)
             )
