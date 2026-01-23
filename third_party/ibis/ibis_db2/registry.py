@@ -11,20 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import functools
 import itertools
-import locale
+import operator
 import platform
 import re
 import string
-import warnings
-import operator
 
 import sqlalchemy as sa
 
+import ibis
 import ibis.common.exceptions as com
 import ibis.expr.operations as ops
-
 from ibis.backends.base.sql.alchemy import (
     fixed_arity,
     sqlalchemy_operation_registry,
@@ -273,7 +272,6 @@ def _reduce_tokens(tokens, arg):
 def _strftime(t, op):
     tokens, _ = _scanner.scan(op.format_str.value)
     reduced = _reduce_tokens(tokens, t.translate(op.arg))
-    breakpoint()
     return functools.reduce(sa.sql.ColumnElement.concat, reduced)
 
 
