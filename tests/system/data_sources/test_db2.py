@@ -169,7 +169,7 @@ def test_column_validation_core_types_to_bigquery():
 def test_row_validation_core_types():
     """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
+    # TODO: When issue-1296 is complete remove col_tstz from exclusion list below.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
     cols = ",".join(
@@ -189,8 +189,6 @@ def test_row_validation_core_types():
                 "col_float64",  # issue-1634
                 "col_char_2",
                 "col_string",
-                "col_date",
-                "col_datetime",
                 "col_tstz",
             )
         ]
