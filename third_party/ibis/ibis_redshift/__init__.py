@@ -47,7 +47,7 @@ class Backend(BaseAlchemyBackend):
             user=user,
             password=password,
             database=database,
-            driver=f"postgresql+{driver}",
+            driver=f"redshift+{driver}",
         )
         self.database_name = alchemy_url.database
 
@@ -93,7 +93,7 @@ class Backend(BaseAlchemyBackend):
         if self.inspector.has_table(query):
             query = f"TABLE {query}"
         with self.begin() as con:
-            con.exec_driver_sql(f"CREATE VIEW {name} AS {query} WITH NO SCHEMA BINDING")
+            con.exec_driver_sql(f"CREATE VIEW {name} AS {query}")
             type_info = con.execute(
                 sa.text(type_info_sql).bindparams(raw_name=raw_name)
             )
