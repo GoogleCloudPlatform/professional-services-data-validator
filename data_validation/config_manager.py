@@ -1329,6 +1329,15 @@ class ConfigManager(object):
                 string_column_ifnull_limits[column] = raw_types[
                     casefold_columns[column]
                 ][2]
+            elif table_schema[column].is_time():
+                # Time when converted to string will be at least 8 characters (HH:MI:SS).
+                string_column_ifnull_limits[column] = 8
+            elif table_schema[column].is_date():
+                # Date when converted to string will be at least 10 characters (YYYY-MM-DD).
+                string_column_ifnull_limits[column] = 10
+            elif table_schema[column].is_timestamp():
+                # Timestamp when converted to string will be at least 19 characters (YYYY-MM-DD HH:MI:SS).
+                string_column_ifnull_limits[column] = 19
             else:
                 string_column_ifnull_limits[column] = None
         return string_column_ifnull_limits
