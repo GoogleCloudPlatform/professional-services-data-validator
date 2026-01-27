@@ -35,38 +35,17 @@ def snowflake_connect(
 ):
     if connect_args:
         connect_args = dvt_config_string_to_dict(connect_args)
-    if role and warehouse:
-        return ibis.snowflake.connect(
-            user=user,
-            password=password,
-            account=account,
-            database=database,
-            connect_args=connect_args,
-            role=role,
-            warehouse=warehouse,
-        )
-    elif role:
-        return ibis.snowflake.connect(
-            user=user,
-            password=password,
-            account=account,
-            database=database,
-            connect_args=connect_args,
-            role=role,
-        )
-    elif warehouse:
-        return ibis.snowflake.connect(
-            user=user,
-            password=password,
-            account=account,
-            database=database,
-            connect_args=connect_args,
-            warehouse=warehouse,
-        )
-    return ibis.snowflake.connect(
-        user=user,
-        password=password,
-        account=account,
-        database=database,
-        connect_args=connect_args,
-    )
+
+    client_args = {
+        "user": user,
+        "password": password,
+        "account": account,
+        "database": database,
+        "connect_args": connect_args,
+    }
+    if role:
+        client_args["role"] = role
+    if warehouse:
+        client_args["warehouse"] = warehouse
+
+    return ibis.snowflake.connect(**client_args)
