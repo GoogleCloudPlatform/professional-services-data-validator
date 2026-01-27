@@ -37,9 +37,10 @@ _type_mapping = {
     ibm_db_dbi.ROWID: dt.String,
 }
 
+
 @to_sqla_type.register(DB2Dialect_ibm_db, dt.String)
 def _string(_, itype):
-  """Include a limit for casts to String due to line size limits supported by Db2 concat()."""
+    """Include a limit for casts to String due to line size limits supported by Db2 concat()."""
     return sa.sql.sqltypes.String(length=3000)
 
 
