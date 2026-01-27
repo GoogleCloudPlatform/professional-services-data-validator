@@ -1174,13 +1174,11 @@ class ConfigManager(object):
         return self._comparison_max_col_length
 
     def _strftime_format(
-        self, column_type: Union[dt.Date, dt.Timestamp, dt.Time], client
+        self, column_type: Union[dt.Date, dt.Timestamp], client
     ) -> str:
         if column_type.is_timestamp():
             return "%Y-%m-%d %H:%M:%S"
-        elif column_type.is_time():
-            return "%H:%M:%S"
-        elif clients.is_oracle_client(client):
+        if clients.is_oracle_client(client):
             # Oracle DATE is a DateTime
             return "%Y-%m-%d %H:%M:%S"
         return "%Y-%m-%d"
