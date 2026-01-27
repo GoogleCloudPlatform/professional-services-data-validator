@@ -125,6 +125,10 @@ def _cast(t, op):
     if arg_dtype.is_integer() and typ.is_timestamp():
         return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
 
+    if arg_dtype.is_time() and typ.is_string():
+        # Force colons as time separator which CHAR(column,JIS) expression.
+        return sa.func.char(sa_arg, sa.literal_column("JIS"))
+
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.lower(sa.func.hex(sa_arg))
