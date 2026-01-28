@@ -480,6 +480,8 @@ data-validation connections add
     --password PASSWORD                                 Snowflake password
     --account ACCOUNT                                   Snowflake account
     --database DATABASE/SCHEMA                          Snowflake database and schema, separated by a `/`
+    [--warehouse WAREHOUSE]                             Snowflake warehouse
+    [--role ROLE]                                       Snowflake role
     [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
 ```
 

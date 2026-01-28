@@ -127,6 +127,8 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["account", "Snowflake account to connect to"],
         ["database", "Database in snowflake to connect to"],
+        ["warehouse", "Warehouse in snowflake to connect to"],
+        ["role", "Role in snowflake to connect as"],
         ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
     consts.SOURCE_TYPE_POSTGRES: [
