@@ -148,7 +148,7 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types column validation"""
+    """Db2 to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # Excluded col_tstz since it is not possible to set time zone at this column on Db2
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
@@ -167,10 +167,53 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_large_decimals_to_bigquery():
+    """Db2 to BigQuery dvt_large_decimals column validation.
+
+    Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
+    """
+    cols = "id,col_dec_18"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """Db2 to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    # The columns below have mismatching data and should be in the Dataframe.
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
     cols = ",".join(
@@ -190,9 +233,6 @@ def test_row_validation_core_types():
                 "col_float64",  # issue-1634
                 "col_char_2",
                 "col_string",
-                "col_date",
-                "col_datetime",
-                "col_tstz",
             )
         ]
     )
@@ -257,6 +297,26 @@ def test_row_validation_core_types_to_bigquery():
         tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_large_decimals_to_bigquery():
+    """Db2 to BigQuery dvt_large_decimals row validation.
+    See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals for the primary key join column plus the hash columns.
+    Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
+    """
+    # Add id,col_data into hash value below once issue-1634 has been fixed.
+    row_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        hash="col_dec_18",
+        use_randow_row=True,
+        random_row_batch_size=5,
     )
 
 
