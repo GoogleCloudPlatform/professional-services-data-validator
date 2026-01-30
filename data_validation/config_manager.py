@@ -1320,9 +1320,9 @@ class ConfigManager(object):
             return {}
         table_schema = {k: v for k, v in ibis_table.schema().items()}
         string_column_ifnull_limits = {}
-        for column in casefold_columns:
-            string_column_ifnull_limits[column] = db2_minimum_string_length(
-                table_schema[column], raw_types[casefold_columns[column]]
+        for casefold_column, column in casefold_columns.items():
+            string_column_ifnull_limits[casefold_column] = db2_minimum_string_length(
+                table_schema[casefold_column], raw_types.get(column, [])
             )
         return string_column_ifnull_limits
 
