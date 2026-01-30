@@ -153,9 +153,10 @@ def dvt_handle_failed_column_type_inference(
     return table
 
 
-def db2_minimum_string_length(ibis_column, raw_data_type: list) -> Optional[int]:
+def db2_minimum_string_length(
+    ibis_column: dt.DataType, raw_data_type: list
+) -> Optional[int]:
     """Returns minimum length of the column after case to string."""
-    breakpoint()
     if ibis_column.is_string():
         # Position 1 in raw_types is the data length.
         return raw_data_type[1]
