@@ -207,6 +207,7 @@ def test_column_validation_large_decimals_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_large_decimals_to_bigquery_mismatch():
     """Db2 to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
 
     Regression test for:
