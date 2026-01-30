@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_types
 ,   col_nvarchar_30 NVARCHAR(30)
 ,   col_nchar_2     NCHAR(2)
 ,   col_nclob       NCLOB
+,   col_dbclob      DBCLOB
 ,   col_blob        BLOB
 ,   col_char_bit    CHAR(5) FOR BIT DATA
 ,   col_varchar_bit VARCHAR(5) FOR BIT DATA
@@ -81,7 +82,7 @@ COMMENT ON TABLE pso_data_validator.dvt_core_types IS 'Db2 data types integratio
 
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (1,123,12345,1123456789,123.456,123456.789
-,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB'
+,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
 ,CAST('Hello BLOB' AS BLOB),'ABC','DEF','GHI','JKL'
 ,TIME'00:00:01'
 ,'<xml></xml>');

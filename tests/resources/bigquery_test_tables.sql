@@ -223,6 +223,7 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 ,   col_nvarchar_30 STRING
 ,   col_nchar_2     STRING
 ,   col_nclob       STRING
+,   col_dbclob      STRING
 ,   col_blob        BYTES
 ,   col_char_bit    STRING
 ,   col_varchar_bit STRING
@@ -234,7 +235,7 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (1,123,12345,1123456789,123.456,123456.789
-,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB'
+,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
 ,CAST('Hello BLOB' AS BYTES),'ABC','DEF','GHI','JKL'
 ,TIME'00:00:01'
 ,'<xml></xml>');
