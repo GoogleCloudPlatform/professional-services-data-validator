@@ -157,12 +157,12 @@ def db2_type_string_length(
     ibis_column: dt.DataType, raw_data_type: list
 ) -> Optional[int]:
     """Returns minimum length of the column after case to string."""
-    if ibis_column.is_string():
+    if ibis_column.is_string() and raw_data_type:
         # Position 1 in raw_types is the data length.
         return raw_data_type[1]
     elif ibis_column.is_decimal():
         # Position 2 in raw_types is the precision.
-        return raw_data_type[2]
+        return raw_data_type[2] if raw_data_type else 38
     elif ibis_column.is_time():
         # Time when converted to string will be at least 8 characters (HH:MI:SS).
         return 8
