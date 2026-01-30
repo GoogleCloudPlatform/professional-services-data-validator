@@ -11,21 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import functools
 import itertools
-import locale
+import operator
 import platform
 import re
 import string
-import warnings
-import operator
 
 import sqlalchemy as sa
 
 import ibis
 import ibis.common.exceptions as com
 import ibis.expr.operations as ops
-
 from ibis.backends.base.sql.alchemy import (
     fixed_arity,
     sqlalchemy_operation_registry,
@@ -158,47 +156,23 @@ def _string_agg(t, op):
 
 
 _strftime_to_db2_rules = {
-    "%a": "TMDy",  # TM does it in a locale dependent way
-    "%A": "TMDay",
+    "%a": "Dy",  # TM does it in a locale dependent way
+    "%A": "Day",
     "%w": "D",  # 1-based day of week, see below for how we make this 0-based
     "%d": "DD",  # day of month
-    "%-d": "FMDD",
-    "%b": "TMMon",  # Sep
-    "%B": "TMMonth",  # September
+    "%b": "Mon",  # Sep
+    "%B": "Month",  # September
     "%m": "MM",  # 01
-    "%-m": "FMMM",  # 1
     "%y": "YY",  # 15
     "%Y": "YYYY",  # 2015
     "%H": "HH24",  # 09
-    "%-H": "FMHH24",  # 9
     "%I": "HH12",  # 09
-    "%-I": "FMHH12",  # 9
     "%p": "AM",  # AM or PM
     "%M": "MI",  # zero padded minute
-    "%-M": "FMMI",  # Minute
     "%S": "SS",  # zero padded second
-    "%-S": "FMSS",  # Second
-    "%f": "US",  # zero padded microsecond
-    "%z": "OF",  # utf offset
-    "%Z": "TZ",  # uppercase timezone name
+    "%f": "FF6",  # zero padded microsecond
     "%j": "DDD",  # zero padded day of year
-    "%-j": "FMDDD",  # day of year
-    "%U": "WW",  # 1-based week of year
 }
-
-try:
-    _strftime_to_db2_rules.update(
-        {
-            "%c": locale.nl_langinfo(locale.D_T_FMT),  # locale date and time
-            "%x": locale.nl_langinfo(locale.D_FMT),  # locale date
-            "%X": locale.nl_langinfo(locale.T_FMT),  # locale time
-        }
-    )
-except AttributeError:
-    warnings.warn(
-        "locale specific date formats (%%c, %%x, %%X) are not yet implemented "
-        "for %s" % platform.system()
-    )
 
 
 _scanner = re.Scanner(
@@ -232,7 +206,7 @@ _scanner = re.Scanner(
 
 _lexicon_values = frozenset(_strftime_to_db2_rules.values())
 
-_strftime_blacklist = frozenset(["%w", "%U", "%c", "%x", "%X", "%e"])
+_strftime_excludelist = frozenset(["%w", "%U", "%c", "%x", "%X", "%e"])
 
 
 def _reduce_tokens(tokens, arg):
@@ -242,7 +216,7 @@ def _reduce_tokens(tokens, arg):
     # reduced list of tokens that accounts for blacklisted values
     reduced = []
 
-    non_special_tokens = frozenset(_strftime_to_db2_rules) - _strftime_blacklist
+    non_special_tokens = frozenset(_strftime_to_db2_rules) - _strftime_excludelist
 
     # TODO: how much of a hack is this?
     for token in tokens:
@@ -256,7 +230,7 @@ def _reduce_tokens(tokens, arg):
             curtokens.append('"{}"'.format(token))
 
         # we have a token that needs special treatment
-        elif token in _strftime_blacklist:
+        elif token in _strftime_excludelist:
             if token == "%w":
                 value = sa.extract("dow", arg)  # 0 based day of week
             elif token == "%U":
@@ -299,12 +273,10 @@ def _reduce_tokens(tokens, arg):
     return reduced
 
 
-def _strftime(arg, pattern):
-    # TODO(issue-1296): third_party/ibis/ibis_db2/registry.py:298 - AttributeError: 'Strftime' object has no attribute 'value'
-    tokens, _ = _scanner.scan(pattern.value)
-    reduced = _reduce_tokens(tokens, arg)
-    result = functools.reduce(sa.sql.ColumnElement.concat, reduced)
-    return result
+def _strftime(t, op):
+    tokens, _ = _scanner.scan(op.format_str.value)
+    reduced = _reduce_tokens(tokens, t.translate(op.arg))
+    return functools.reduce(sa.sql.ColumnElement.concat, reduced)
 
 
 def _regex_replace(t, op):
