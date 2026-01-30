@@ -23,7 +23,7 @@ from data_validation import clients, consts, gcs_helper, state_manager
 from data_validation.result_handlers.factory import build_result_handler
 from data_validation.validation_builder import ValidationBuilder
 
-from third_party.ibis.ibis_db2.api import db2_minimum_string_length
+from third_party.ibis.ibis_addon.api import db2_minimum_string_length
 
 if TYPE_CHECKING:
     from ibis.backends.base import BaseBackend
