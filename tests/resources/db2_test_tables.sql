@@ -152,3 +152,60 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS VARBINARY(
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS VARBINARY(16)), 5, 'Row 5');
 COMMIT;
 
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_varchar_id
+(   id          VARCHAR(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_varchar_id IS 'Integration test table used to test varchar pk matching. Trailing blanks are significant';
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-4 ', 'Row 4');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-5', 'Row 5');
+COMMIT;
+
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_datetime_id
+(   id          TIMESTAMP(0) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_datetime_id IS 'Integration test table used to test datetime pk matching.';
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-01-01 12:00:00', 'Row 1');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-02-01 12:00:00', 'Row 2');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-03-01 12:00:00', 'Row 3');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-04-01 12:00:00', 'Row 4');
+INSERT INTO pso_data_validator.dvt_datetime_id VALUES (TIMESTAMP'2020-05-01 12:00:00', 'Row 5');
+COMMIT;
+
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_group_by_timestamp
+(   id           INTEGER NOT NULL PRIMARY KEY
+,   group_id     INTEGER
+,   col_date     DATE
+,   col_datetime TIMESTAMP(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_group_by_timestamp IS 'Integration test table used to test Timestamp grouping.';
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (1,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 12:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (2,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 13:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (3,1,DATE'2021-01-01',TIMESTAMP'2021-01-01 14:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (4,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 12:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (5,2,DATE'2022-02-02',TIMESTAMP'2022-02-02 13:00:00');
+INSERT INTO pso_data_validator.dvt_group_by_timestamp VALUES (6,3,DATE'2023-03-03',TIMESTAMP'2023-03-03 12:00:00');
+COMMIT;
+
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_tricky_dates (
+  id            INTEGER NOT NULL PRIMARY KEY
+, col_dt_low    DATE
+, col_dt_epoch  DATE
+, col_dt_high   DATE
+, col_dt_4712   DATE
+, col_ts_low    TIMESTAMP(0)
+, col_ts_epoch  TIMESTAMP(0)
+, col_ts_high   TIMESTAMP(0)
+, col_ts_4712   TIMESTAMP(0)
+);
+COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table used to test potentially difficult Timestamps.';
+INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59',TIMESTAMP'4712-12-31 23:23:59');
+-- NULL in all columns.
+INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
+COMMIT;
