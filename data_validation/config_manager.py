@@ -23,6 +23,8 @@ from data_validation import clients, consts, gcs_helper, state_manager
 from data_validation.result_handlers.factory import build_result_handler
 from data_validation.validation_builder import ValidationBuilder
 
+from third_party.ibis.ibis_db2.api import db2_minimum_string_length
+
 if TYPE_CHECKING:
     from ibis.backends.base import BaseBackend
     import ibis.expr.types.Table
@@ -1319,27 +1321,9 @@ class ConfigManager(object):
         table_schema = {k: v for k, v in ibis_table.schema().items()}
         string_column_ifnull_limits = {}
         for column in casefold_columns:
-            if table_schema[column].is_string():
-                # Position 1 in raw_types is the data length.
-                string_column_ifnull_limits[column] = raw_types[
-                    casefold_columns[column]
-                ][1]
-            elif table_schema[column].is_decimal():
-                # Position 2 in raw_types is the precision.
-                string_column_ifnull_limits[column] = raw_types[
-                    casefold_columns[column]
-                ][2]
-            elif table_schema[column].is_time():
-                # Time when converted to string will be at least 8 characters (HH:MI:SS).
-                string_column_ifnull_limits[column] = 8
-            elif table_schema[column].is_date():
-                # Date when converted to string will be at least 10 characters (YYYY-MM-DD).
-                string_column_ifnull_limits[column] = 10
-            elif table_schema[column].is_timestamp():
-                # Timestamp when converted to string will be at least 19 characters (YYYY-MM-DD HH:MI:SS).
-                string_column_ifnull_limits[column] = 19
-            else:
-                string_column_ifnull_limits[column] = None
+            string_column_ifnull_limits[column] = db2_minimum_string_length(
+                table_schema[column], raw_types[casefold_columns[column]]
+            )
         return string_column_ifnull_limits
 
     def build_dependent_aliases(
