@@ -23,7 +23,7 @@ from data_validation import clients, consts, gcs_helper, state_manager
 from data_validation.result_handlers.factory import build_result_handler
 from data_validation.validation_builder import ValidationBuilder
 
-from third_party.ibis.ibis_addon.api import db2_minimum_string_length
+from third_party.ibis.ibis_addon.api import db2_type_string_length
 
 if TYPE_CHECKING:
     from ibis.backends.base import BaseBackend
@@ -1321,7 +1321,7 @@ class ConfigManager(object):
         table_schema = {k: v for k, v in ibis_table.schema().items()}
         string_column_ifnull_limits = {}
         for casefold_column, column in casefold_columns.items():
-            string_column_ifnull_limits[casefold_column] = db2_minimum_string_length(
+            string_column_ifnull_limits[casefold_column] = db2_type_string_length(
                 table_schema[casefold_column], raw_types.get(column, [])
             )
         return string_column_ifnull_limits

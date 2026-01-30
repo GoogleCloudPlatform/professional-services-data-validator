@@ -153,7 +153,7 @@ def dvt_handle_failed_column_type_inference(
     return table
 
 
-def db2_minimum_string_length(
+def db2_type_string_length(
     ibis_column: dt.DataType, raw_data_type: list
 ) -> Optional[int]:
     """Returns minimum length of the column after case to string."""
@@ -172,6 +172,16 @@ def db2_minimum_string_length(
     elif ibis_column.is_timestamp():
         # Timestamp when converted to string will be at least 19 characters (YYYY-MM-DD HH:MI:SS).
         return 19
+    elif ibis_column.is_integer():
+        if isinstance(ibis_column, dt.Int64):
+            return 20
+        elif isinstance(ibis_column, dt.Int32):
+            return 11
+        elif isinstance(ibis_column, dt.Int16):
+            return 6
+        elif isinstance(ibis_column, dt.Int8):
+            return 4
+        return 20
     else:
         return None
 
