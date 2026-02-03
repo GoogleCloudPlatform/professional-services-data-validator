@@ -1325,9 +1325,12 @@ class ConfigManager(object):
                 table_schema[casefold_column], raw_types.get(column, [])
             )
             if (
-                casefold_column not in string_column_ifnull_limits
+                not string_column_ifnull_limits.get(casefold_column, None)
                 # If the current limit is shorter than an existing one then overwrite the value.
-                or ifnull_limit < string_column_ifnull_limits[casefold_column]
+                or (
+                    ifnull_limit
+                    and ifnull_limit < string_column_ifnull_limits[casefold_column]
+                )
             ):
                 string_column_ifnull_limits[casefold_column] = ifnull_limit
         return string_column_ifnull_limits
