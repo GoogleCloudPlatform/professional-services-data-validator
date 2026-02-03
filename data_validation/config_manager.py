@@ -1305,25 +1305,31 @@ class ConfigManager(object):
         casefold_columns: dict,
         ibis_table: "ibis.expr.types.Table",
         raw_types: dict,
-    ) -> dict:
-        """Returns IfNull replacement token length limits (due to Db2 limitations).
+        string_column_ifnull_limits: dict,
+    ):
+        """Defines IfNull replacement token length limits (due to Db2 limitations).
 
         This is because in Db2 a coalesce of a column cannot exceed the length of the initial argument resulting in:
             String data right truncation. SQLSTATE=22001
 
         We need to ensure both source and target systems use the same replacement token therefore these limits are used for both.
 
-        Returns dict of column names with replacement token length limits:
+        Mutates string_column_ifnull_limits to contain a dict of column names with replacement token length limits:
             {"col1": 10, "col2": 12, "col_unlimited": None}
         """
         if not casefold_columns or client.name != "db2":
             return {}
         table_schema = {k: v for k, v in ibis_table.schema().items()}
-        string_column_ifnull_limits = {}
         for casefold_column, column in casefold_columns.items():
-            string_column_ifnull_limits[casefold_column] = db2_type_string_length(
+            ifnull_limit = db2_type_string_length(
                 table_schema[casefold_column], raw_types.get(column, [])
             )
+            if (
+                casefold_column not in string_column_ifnull_limits
+                # If the current limit is shorter than an existing one then overwrite the value.
+                or ifnull_limit < string_column_ifnull_limits[casefold_column]
+            ):
+                string_column_ifnull_limits[casefold_column] = ifnull_limit
         return string_column_ifnull_limits
 
     def build_dependent_aliases(
@@ -1354,16 +1360,20 @@ class ConfigManager(object):
         col_names = []
         # Get any ifnull token limits from either the source or target system.
         # Most engines have no requirement for limits and will return an empty dict.
-        string_column_ifnull_limits = self._string_column_ifnull_limits(
+        string_column_ifnull_limits = {}
+        self._string_column_ifnull_limits(
             self.source_client,
             casefold_source_columns,
             source_table,
             self.get_source_raw_data_types(),
-        ) or self._string_column_ifnull_limits(
+            string_column_ifnull_limits,
+        )
+        self._string_column_ifnull_limits(
             self.target_client,
             casefold_target_columns,
             target_table,
             self.get_target_raw_data_types(),
+            string_column_ifnull_limits,
         )
         for i, calc in enumerate(self._get_order_of_operations(calc_type)):
             if i == 0:
