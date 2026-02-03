@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Iterable
+from typing import Iterable, Optional
 
 from ibis.backends.base.sql.alchemy.datatypes import to_sqla_type
 import ibis.expr.datatypes as dt
@@ -151,6 +151,39 @@ def dvt_handle_failed_column_type_inference(
                 replace_existing=True,
             )
     return table
+
+
+def db2_type_string_length(
+    ibis_column: dt.DataType, raw_data_type: list
+) -> Optional[int]:
+    """Returns minimum length of the column after case to string."""
+    if ibis_column.is_string() and raw_data_type:
+        # Position 1 in raw_types is the data length.
+        return raw_data_type[1]
+    elif ibis_column.is_decimal():
+        # Position 2 in raw_types is the precision.
+        return raw_data_type[2] if raw_data_type else 38
+    elif ibis_column.is_time():
+        # Time when converted to string will be at least 8 characters (HH:MI:SS).
+        return 8
+    elif ibis_column.is_date():
+        # Date when converted to string will be at least 10 characters (YYYY-MM-DD).
+        return 10
+    elif ibis_column.is_timestamp():
+        # Timestamp when converted to string will be at least 19 characters (YYYY-MM-DD HH:MI:SS).
+        return 19
+    elif ibis_column.is_integer():
+        if isinstance(ibis_column, dt.Int64):
+            return 20
+        elif isinstance(ibis_column, dt.Int32):
+            return 11
+        elif isinstance(ibis_column, dt.Int16):
+            return 6
+        elif isinstance(ibis_column, dt.Int8):
+            return 4
+        return 20
+    else:
+        return None
 
 
 Value.force_cast = force_cast
