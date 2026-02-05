@@ -1,0 +1,27 @@
+# Copyright 2026 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from ibm_db_sa.ibm_db import DB2Dialect_ibm_db
+from ibm_db_sa.base import GRAPHIC
+import sqlalchemy.types as sat
+
+# This import is only here to trigger the import of this module which patches ischema_names.
+from third_party.ibis.ibis_db2.datatypes import _get_type  # noqa: F401
+
+
+# TODO Temporary additions for Db2 z/OS testing.
+#      These lines are also polluting the standard Db2 ischema_names but that is low risk.
+if "VARGRAPHIC" not in DB2Dialect_ibm_db.ischema_names:
+    DB2Dialect_ibm_db.ischema_names["VARGRAPHIC"] = GRAPHIC
+DB2Dialect_ibm_db.ischema_names["ROWID"] = sat.VARCHAR
