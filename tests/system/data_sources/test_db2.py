@@ -286,7 +286,6 @@ def test_row_validation_core_types_to_bigquery():
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
     cols = ",".join(
@@ -306,8 +305,6 @@ def test_row_validation_core_types_to_bigquery():
                 "col_float64",  # issue-1634
                 "col_char_2",
                 "col_string",
-                "col_date",
-                "col_datetime",
                 "col_tstz",
             )
         ]
