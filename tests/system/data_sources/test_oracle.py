@@ -825,6 +825,26 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_custom_query_row_validation_random_rows():
+    """Oracle to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    df = custom_query_validation_test(
+        validation_type="row",
+        source_query="select * from pso_data_validator.dvt_core_types",
+        target_query="select * from pso_data_validator.dvt_core_types",
+        concat="id,col_varchar_30,col_date",
+        use_random_row=True,
+        random_row_batch_size=2,
+        filter_status=None,
+        assert_df_not_empty=True,
+    )
+    # There should only be 2 rows in the result set due to random row sampling.
+    assert len(df) == 2
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_row_hash_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types custom-query row hash validation"""
     custom_query_validation_test(

@@ -663,7 +663,7 @@ def _configure_row_parser(
         ),
     )
     # Generate-table-partitions and custom-query does not support random row
-    if not (is_generate_partitions or is_custom_query):
+    if not is_generate_partitions:
         optional_arguments.add_argument(
             "--use-random-row",
             "-rr",
@@ -675,17 +675,18 @@ def _configure_row_parser(
             "-rbs",
             help="Row batch size used for random row filters (default 10,000).",
         )
-        # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
-        # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
-        # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
-        # a required argument for validate row, validate column and validate schema.
-        required_arguments.add_argument(
-            "--tables-list",
-            "-tbls",
-            default=None,
-            required=True,
-            help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
-        )
+        if not is_custom_query:
+            # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
+            # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
+            # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
+            # a required argument for validate row, validate column and validate schema.
+            required_arguments.add_argument(
+                "--tables-list",
+                "-tbls",
+                default=None,
+                required=True,
+                help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+            )
 
     # Group for mutually exclusive required arguments. Either must be supplied
     mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(
