@@ -32,8 +32,9 @@ DEFAULT_PYTHON_VERSION = "3.11"
 # Python versions used for testing.
 #PYTHON_VERSIONS = ["3.10", "3.11"]
 PYTHON_VERSIONS = ["3.11"]
-#PYTHON_VERSIONS_ORACLE = ["3.10"]
-PYTHON_VERSIONS_ORACLE = ["3.11"]
+# As of 2026-02-05 gcr.io/pso-kokoro-resources/python-multi-oracle-21client only
+# has Python 3.10.
+PYTHON_VERSIONS_ORACLE = ["3.10"]
 
 BLACK_PATHS = (
     "data_validation",
