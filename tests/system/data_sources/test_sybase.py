@@ -409,7 +409,7 @@ def test_row_validation_core_types_to_bigquery():
         ]
     )
     row_validation_test(
-        tc="bq-conn", concat=cols, use_randow_row=True, random_row_batch_size=5
+        tc="bq-conn", concat=cols, use_random_row=True, random_row_batch_size=5
     )
 
 
@@ -540,10 +540,10 @@ def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns.
 
     Sybase does not have a SHA256 hash function therefore this test uses concat."""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
         concat="id,other_data",
     )
 
