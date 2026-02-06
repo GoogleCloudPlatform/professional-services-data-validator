@@ -495,6 +495,10 @@ data-validation
                         Comma-separated key value pair labels for the run.
   [--format or -fmt FORMAT]
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
+  [--use-random-row or -rr]
+                        Finds a set of random rows of the first primary key supplied.
+  [--random-row-batch-size or -rbs]
+                        Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
   [--case-insensitive-match, -cim]
