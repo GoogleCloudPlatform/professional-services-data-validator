@@ -77,7 +77,6 @@ def type_from_result_set_info(
     """Construct an ibis type from Sybase result set description."""
     typ = _type_mapping.get(type_name)
     if typ is None:
-        breakpoint()
         raise NotImplementedError(f"Sybase type {type_name} is not supported")
 
     if type_name == "decimal":
