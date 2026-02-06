@@ -40,6 +40,7 @@ _type_mapping = {
 ibis_type_to_sqla[dt.String] = sat.String(length=300)
 
 DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
+DB2Dialect_ibm_db.ischema_names["VARG"] = DB2Dialect_ibm_db.ischema_names["VARGRAPHIC"]
 
 
 def _get_type(typename) -> dt.DataType:
