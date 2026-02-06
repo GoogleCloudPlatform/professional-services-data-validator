@@ -19,7 +19,6 @@ import sqlalchemy as sa
 from third_party.ibis.ibis_addon.api import dvt_handle_failed_column_type_inference
 from third_party.ibis.ibis_db2 import Backend as Db2LUWBackend
 from third_party.ibis.ibis_db2_zos.compiler import Db2zOSCompiler
-import third_party.ibis.ibis_db2.datatypes  # noqa: F401
 
 
 class Backend(Db2LUWBackend):
