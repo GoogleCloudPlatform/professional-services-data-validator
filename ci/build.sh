@@ -16,7 +16,7 @@
 # Copied from https://github.com/googleapis/synthtool/blob/master/synthtool/gcp/templates/python_library/.kokoro/build.sh
 #
 
-PYTHON="python3.9"
+PYTHON="python3.11"
 if [[ -n "$1" && "$1" =~ python.* ]]; then
     PYTHON=$1
 fi

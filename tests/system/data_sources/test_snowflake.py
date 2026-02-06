@@ -429,10 +429,10 @@ def test_row_validation_char_pk_to_bigquery():
     pytest.skip(
         "Skipping test_row_validation_char_pk_to_bigquery because of Snowflake CHAR semantics"
     )
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "PSO_DATA_VALIDATOR.PUBLIC.DVT_CHAR_ID=pso_data_validator.dvt_char_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 
@@ -442,10 +442,10 @@ def test_row_validation_char_pk_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "PSO_DATA_VALIDATOR.PUBLIC.DVT_DATETIME_ID=pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 
