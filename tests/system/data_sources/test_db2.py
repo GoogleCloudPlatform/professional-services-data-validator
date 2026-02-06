@@ -312,7 +312,7 @@ def test_row_validation_large_decimals_to_bigquery():
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         hash="col_dec_18",
-        use_randow_row=True,
+        use_random_row=True,
         random_row_batch_size=5,
     )
 
