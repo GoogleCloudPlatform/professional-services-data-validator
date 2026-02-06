@@ -2,6 +2,24 @@
 
 ## Untagged
 
+## [8.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.4.0...v8.5.0) (2026-02-06)
+
+
+### Features
+
+* Add --use-random-row for custom-query row validations ([#1666](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1666)) ([1654b21](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/1654b2136b0ba0a25ad549586cc0af146ccbbb68))
+* support role and warehouse params ([#1660](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1660)) ([e94f6ad](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e94f6addc6c5ea5639d8846268a27c40e18eecde))
+
+
+### Bug Fixes
+
+* add no schema binding for support for external schemas ([#1651](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1651)) ([3f2c3a7](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/3f2c3a79d41415afb46e1b0e65e896a8f97006a2))
+* Db2 DECFLOAT data type and add tests ([#1644](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1644)) ([ad07c07](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ad07c0738b0760900056eeb39b599b647ec7ff49))
+* Db2 find-tables by schema fix ([#1647](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1647)) ([5cbc254](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5cbc2545a6dfc26c70b38ee19a244c603c206db0))
+* Db2 GROUP BY support in column validation ([#1642](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1642)) ([33145f2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/33145f2698793388d64d9dd4b069f9aec9a600f1))
+* Fix strftime for Db2 LUW ([#1652](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1652)) ([2cf6b9f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2cf6b9f684ef03ef7b61187cd9671b075d48bf3b))
+* Trim default IfNull replacement token on Db2 ([#1662](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1662)) ([28c6025](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/28c60255f3a63955e61c1b994fa9599412ca7c0f))
+
 ## [8.4.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.3.0...v8.4.0) (2026-01-13)
 
 
