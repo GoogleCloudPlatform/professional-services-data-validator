@@ -662,7 +662,7 @@ def _configure_row_parser(
                 defaults, so most users do not need to use this option unless they encounter errors."""
         ),
     )
-    # Generate-table-partitions and custom-query does not support random row
+    # Generate-table-partitions does not support random row
     if not is_generate_partitions:
         optional_arguments.add_argument(
             "--use-random-row",
