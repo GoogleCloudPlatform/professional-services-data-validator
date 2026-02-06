@@ -515,6 +515,6 @@ operation_registry.update(
         ops.CumulativeAny: unary(sa.func.bool_or),
         ops.IdenticalTo: _identical_to,
         # aggregate methods
-        ops.Count: _reduction_count(sa.func.count),
+        ops.Count: _reduction_count(sa.func.count_big),
     }
 )

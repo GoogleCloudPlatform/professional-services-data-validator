@@ -1010,9 +1010,10 @@ class ConfigManager(object):
                     # Oracle BLOB is invalid for use with SQL COUNT function.
                     # The expression below returns True if client is Oracle which
                     # has the effect of triggering use of byte_length transformation.
+                    # Same for Db2 z/OS.
                     return bool(
-                        self.source_client.name == "oracle"
-                        or self.target_client.name == "oracle"
+                        self.source_client.name in ("oracle", "db2_zos")
+                        or self.target_client.name in ("oracle", "db2_zos")
                     )
                 else:
                     # Convert to length for any min/max/sum on binary columns.
