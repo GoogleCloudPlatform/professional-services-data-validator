@@ -450,7 +450,7 @@ def row_validation_test(
     primary_keys: Optional[str] = "id",
     comp_fields: Optional[str] = None,
     concat: Optional[str] = None,
-    use_randow_row=False,
+    use_random_row=False,
     random_row_batch_size=None,
     result_handler: Optional[str] = None,
 ):
@@ -472,7 +472,7 @@ def row_validation_test(
         f"--primary-keys={primary_keys}" if primary_keys else None,
         col_option,
         f"--filter-status={filter_status}" if filter_status else None,
-        "--use-random-row" if use_randow_row else None,
+        "--use-random-row" if use_random_row else None,
         (
             f"--random-row-batch-size={random_row_batch_size}"
             if random_row_batch_size
@@ -495,7 +495,7 @@ def id_column_row_validation_test(
     hash: str = "id,other_data",
     comp_fields: Optional[str] = None,
     concat: Optional[str] = None,
-    use_randow_row: bool = True,
+    use_random_row: bool = True,
 ):
     """Specific row validation test for primary key data type tests"""
     parser = cli_tools.configure_arg_parser()
@@ -513,8 +513,8 @@ def id_column_row_validation_test(
         f"-tbls={tables}",
         "--primary-keys=id",
         col_option,
-        "--use-random-row" if use_randow_row else None,
-        "--random-row-batch-size=5" if use_randow_row else None,
+        "--use-random-row" if use_random_row else None,
+        "--random-row-batch-size=5" if use_random_row else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
@@ -717,6 +717,7 @@ def custom_query_validation_test(
     source_query="select * from pso_data_validator.dvt_core_types",
     target_query="select * from pso_data_validator.dvt_core_types",
     filters=None,
+    filter_status: str = "fail",
     count_cols=None,
     min_cols=None,
     max_cols=None,
@@ -726,6 +727,8 @@ def custom_query_validation_test(
     hash="*",
     concat=None,
     assert_df_not_empty=False,
+    use_random_row=False,
+    random_row_batch_size=None,
 ):
     """Generic custom-query validation test.
 
@@ -740,7 +743,7 @@ def custom_query_validation_test(
         f"-tc={tc}",
         f"--source-query={source_query}",
         f"--target-query={target_query}",
-        "--filter-status=fail",
+        f"--filter-status={filter_status}" if filter_status else None,
         f"--filters={filters}" if filters else None,
         # Column validation parameters
         f"--count={count_cols}" if count_cols else None,
@@ -762,6 +765,11 @@ def custom_query_validation_test(
         else:
             cli_arg_list.append(f"--hash={hash}")
 
+        if use_random_row:
+            cli_arg_list.append("--use-random-row")
+            if random_row_batch_size:
+                cli_arg_list.append(f"--random-row-batch-size={random_row_batch_size}")
+
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
     if assert_df_not_empty:
@@ -770,6 +778,7 @@ def custom_query_validation_test(
     else:
         # With filter on failures the data frame should be empty
         assert len(df) == 0
+    return df
 
 
 def raw_query_rows(
