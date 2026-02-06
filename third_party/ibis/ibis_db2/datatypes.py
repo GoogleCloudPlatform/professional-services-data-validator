@@ -17,7 +17,6 @@ import ibm_db_dbi
 import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy.datatypes import ibis_type_to_sqla
 from ibm_db_sa.ibm_db import DB2Dialect_ibm_db
-import sqlalchemy as sa
 import sqlalchemy.types as sat
 
 
@@ -38,7 +37,7 @@ _type_mapping = {
 }
 
 # TODO Temporarily changed to 300 until issue-1296 is complete.
-ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=300)
+ibis_type_to_sqla[dt.String] = sat.String(length=300)
 
 DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
 
