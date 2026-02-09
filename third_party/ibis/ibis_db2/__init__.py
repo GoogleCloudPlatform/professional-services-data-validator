@@ -186,7 +186,7 @@ class Backend(BaseAlchemyBackend):
         schema: str | None = None,
     ) -> "ir.Table":
         return_table = super().table(name, database, schema)
-        for c in DB2_HIDDEN_COLUMNS:
-            if c in return_table.columns:
-                return_table = return_table.drop(c)
+        columns_to_drop = [_ for _ in return_table.columns if _ in DB2_HIDDEN_COLUMNS]
+        if columns_to_drop:
+            return_table = return_table.drop(*columns_to_drop)
         return return_table
