@@ -136,6 +136,7 @@ def test_schema_validation_not_null_vs_nullable():
 def test_schema_validation_db2_generated_cols():
     """Test schema validation for tables with Db2 internal generated columns"""
     schema_validation_test(
+        tc="mock-conn",
         tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
     )
 
@@ -291,6 +292,7 @@ def test_column_validation_tricky_dates_to_bigquery():
 def test_column_validation_db2_generated_cols():
     """Test column validation for tables with Db2 internal generated columns"""
     column_validation_test(
+        tc="mock-conn",
         tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
     )
 
@@ -527,6 +529,7 @@ def test_fixed_char_pk_row_validation_to_bigquery():
 def test_row_validation_db2_generated_cols():
     """Test column validation for tables with Db2 internal generated columns"""
     row_validation_test(
+        tc="mock-conn",
         tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
         primary_keys="id",
     )
