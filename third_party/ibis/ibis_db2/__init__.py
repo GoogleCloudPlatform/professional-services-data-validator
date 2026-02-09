@@ -185,7 +185,10 @@ class Backend(BaseAlchemyBackend):
         database: str | None = None,
         schema: str | None = None,
     ) -> "ir.Table":
+        # TODO add docstring
         return_table = super().table(name, database, schema)
+        # Temporary early return because this code is breaking row validation.
+        return return_table
         columns_to_drop = [_ for _ in return_table.columns if _ in DB2_HIDDEN_COLUMNS]
         if columns_to_drop:
             return_table = return_table.drop(*columns_to_drop)
