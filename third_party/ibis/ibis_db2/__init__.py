@@ -184,7 +184,7 @@ class Backend(BaseAlchemyBackend):
         name: str,
         database: str | None = None,
         schema: str | None = None,
-    ) -> ir.Table:
+    ) -> "ir.Table":
         return_table = super().table(name, database, schema)
         for c in DB2_HIDDEN_COLUMNS:
             if c in return_table.columns:
