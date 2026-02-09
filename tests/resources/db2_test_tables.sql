@@ -209,3 +209,19 @@ INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 -- NULL in all columns.
 INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
 COMMIT;
+
+-- pso_data_validator.dvt_db2_generated_cols1 has fake generated columns that should be ignored.
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_generated_cols1
+(   id                          INTEGER NOT NULL PRIMARY KEY
+,   col_int                     INTEGER
+,   db2_generated_docid_for_xml INTEGER
+,   db2_generated_rowid_for_lob INTEGER);
+COMMENT ON TABLE pso_data_validator.dvt_db2_generated_cols1 IS 'Test table to prove generated columns are ignored.';
+INSERT INTO pso_data_validator.dvt_db2_generated_cols1 VALUES (1,1,1,1);
+COMMIT;
+-- pso_data_validator.dvt_db2_generated_cols2 no fake generated columns, tests in tandem with dvt_db2_generated_cols1.
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_generated_cols2
+(   id                          INTEGER NOT NULL PRIMARY KEY
+,   col_int                     INTEGER);
+COMMENT ON TABLE pso_data_validator.dvt_db2_generated_cols2 IS 'Test table to prove generated columns are ignored.';
+INSERT INTO pso_data_validator.dvt_db2_generated_cols2 VALUES (1,1);

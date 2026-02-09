@@ -133,6 +133,17 @@ def test_schema_validation_not_null_vs_nullable():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_db2_generated_cols():
+    """Test schema validation for tables with Db2 internal generated columns"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_core_types():
     """DB2 to DB2 dvt_core_types column validation"""
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
@@ -270,6 +281,17 @@ def test_column_validation_tricky_dates_to_bigquery():
         sum_cols=cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_db2_generated_cols():
+    """Test column validation for tables with Db2 internal generated columns"""
+    column_validation_test(
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
     )
 
 
@@ -495,6 +517,18 @@ def test_fixed_char_pk_row_validation_to_bigquery():
     id_column_row_validation_test(
         "db2inst1.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id",
         use_random_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_db2_generated_cols():
+    """Test column validation for tables with Db2 internal generated columns"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+        primary_keys="id",
     )
 
 

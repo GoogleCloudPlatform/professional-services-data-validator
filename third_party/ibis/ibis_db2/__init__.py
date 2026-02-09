@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
-from typing import Iterable, Optional, Tuple, Dict, Any
+from typing import Iterable, Optional, Tuple, Dict, Any, TYPE_CHECKING
 
 import sqlalchemy as sa
 
@@ -20,6 +20,12 @@ import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
+
+if TYPE_CHECKING:
+    import ibis.expr.types as ir
+
+
+DB2_HIDDEN_COLUMNS = ["db2_generated_docid_for_xml", "db2_generated_rowid_for_lob"]
 
 
 class Backend(BaseAlchemyBackend):
@@ -172,3 +178,15 @@ class Backend(BaseAlchemyBackend):
             # It's not possible to distinguish padded char types in this case,
             # so we default to False to be safe and avoid trimming incorrectly.
             return False
+
+    def table(
+        self,
+        name: str,
+        database: str | None = None,
+        schema: str | None = None,
+    ) -> ir.Table:
+        return_table = super().table(name, database, schema)
+        for c in DB2_HIDDEN_COLUMNS:
+            if c in return_table.columns:
+                return_table = return_table.drop(c)
+        return return_table
