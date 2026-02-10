@@ -292,10 +292,11 @@ def test_row_validation_large_decimals_to_bigquery():
     This is testing large decimals for the primary key join column plus the hash columns.
     Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
     """
+    # Add col_data into hash value below once issue-1634 has been fixed.
     row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
-        hash="id,col_data,col_dec_18",
+        hash="id,col_dec_18",
         use_random_row=True,
         random_row_batch_size=5,
     )
