@@ -130,10 +130,11 @@ class Backend(BaseAlchemyBackend):
         assert (database and table) or query, "We should never receive all args=None"
         if database and table:
             # For table-based validation, query the system catalog to get the true data type.
+            # SYSIBM.SYSCOLUMNS works on both LUW and z/OS. SYSCAT.COLUMNS is only valid on LUW.
             get_column_metadata_sql = """
-                SELECT COLNAME, TYPENAME, LENGTH, SCALE, NULLS
-                FROM SYSCAT.COLUMNS
-                WHERE TABSCHEMA = ? AND TABNAME = ?
+                SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS
+                FROM SYSIBM.SYSCOLUMNS
+                WHERE TBCREATOR = ? AND TBNAME = ?
                 ORDER BY COLNO
             """
             with self.begin() as con:
