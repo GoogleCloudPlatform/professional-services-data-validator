@@ -267,7 +267,6 @@ def test_row_validation_core_types_to_bigquery():
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
-    # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -275,14 +274,8 @@ def test_row_validation_core_types_to_bigquery():
             if _
             not in (
                 "id",
-                "col_int8",  # issue-1634
-                "col_int16",  # issue-1634
-                "col_int32",  # issue-1634
-                "col_dec_20",  # issue-1634
-                "col_dec_38",  # issue-1634
-                "col_dec_10_2",  # issue-1634
                 "col_float32",
-                "col_float64",  # issue-1634
+                "col_float64",
                 "col_char_2",
                 "col_string",
                 "col_tstz",
