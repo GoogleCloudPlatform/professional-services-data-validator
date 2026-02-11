@@ -49,7 +49,7 @@ def _sa_whitespace_rstrip(t, op):
 
 
 def _sa_strftime(t, op):
-    return db2_luw_strftime(t, op)
+    return db2_luw_strftime(t, op, allow_query_params=False)
 
 
 operation_registry[ops.HashBytes] = _sa_format_hashbytes
