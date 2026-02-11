@@ -113,11 +113,11 @@ def generate_report(
     # Get the first validation metadata object to fill source and/or target empty table names.
     first = run_metadata.validations[next(iter(run_metadata.validations))]
     if first.validation_type != consts.CUSTOM_QUERY:
-        result_df.source_table_name.fillna(
-            first.get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True
+        result_df["source_table_name"] = result_df["source_table_name"].fillna(
+            first.get_table_name(consts.RESULT_TYPE_SOURCE)
         )
-        result_df.target_table_name.fillna(
-            first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
+        result_df["target_table_name"] = result_df["target_table_name"].fillna(
+            first.get_table_name(consts.RESULT_TYPE_TARGET)
         )
 
     _get_summary(run_metadata, result_df, source_df, target_df)
@@ -194,7 +194,9 @@ def _generate_report_slice(
         logging.debug(documented.compile())
 
     result_df = client.execute(documented)
-    result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
+    result_df["validation_status"] = result_df["validation_status"].fillna(
+        consts.VALIDATION_STATUS_FAIL
+    )
     return result_df
 
 
