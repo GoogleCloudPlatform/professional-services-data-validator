@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Iterable, Optional, Dict, Any, Tuple
+from typing import Iterable, Optional, Dict, Any
 
 import sqlalchemy as sa
 
@@ -24,6 +24,8 @@ from third_party.ibis.ibis_db2_zos.compiler import Db2zOSCompiler
 class Backend(Db2LUWBackend):
     name = "db2_zos"
     compiler = Db2zOSCompiler
+
+    char_datatype = "CHAR"
 
     def do_connect(
         self,
@@ -73,15 +75,3 @@ class Backend(Db2LUWBackend):
         self, table: sa.Table, nulltype_cols: Iterable[str]
     ) -> sa.Table:
         return dvt_handle_failed_column_type_inference(self, table, nulltype_cols)
-
-    def is_char_type_padded(self, char_type: Tuple) -> bool:
-        """Define this method if the backend supports character/string types that are padded and returns
-        padded values, which DVT may want to trim"""
-        type_code = char_type[0]
-        if isinstance(type_code, str):
-            return type_code.upper() == "CHAR"
-        else:
-            # From cursor.description for custom queries, this is a DBAPITypeObject.
-            # It's not possible to distinguish padded char types in this case,
-            # so we default to False to be safe and avoid trimming incorrectly.
-            return False

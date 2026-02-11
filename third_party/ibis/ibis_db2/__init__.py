@@ -32,6 +32,8 @@ class Backend(BaseAlchemyBackend):
     name = "db2"
     compiler = Db2Compiler
 
+    char_datatype = "CHARACTER"
+
     def do_connect(
         self,
         host: str = "localhost",
@@ -173,7 +175,7 @@ class Backend(BaseAlchemyBackend):
         padded values, which DVT may want to trim"""
         type_code = char_type[0]
         if isinstance(type_code, str):
-            return type_code.upper() == "CHARACTER"
+            return type_code.upper() == self.char_datatype
         else:
             # From cursor.description for custom queries, this is a DBAPITypeObject.
             # It's not possible to distinguish padded char types in this case,

@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
+
 import ibis.expr.operations as ops
 import sqlalchemy as sa
 
 from third_party.ibis.ibis_db2.registry import (
     operation_registry as db2_luw_operation_registry,
+    db2_luw_strftime,
 )
 
 operation_registry = db2_luw_operation_registry.copy()
@@ -45,6 +48,11 @@ def _sa_whitespace_rstrip(t, op):
     return sa.func.rtrim(sa_arg)
 
 
+def _sa_strftime(t, op):
+    return db2_luw_strftime(t, op)
+
+
 operation_registry[ops.HashBytes] = _sa_format_hashbytes
 operation_registry[ops.IfNull] = _sa_ifnull
 operation_registry[ops.RStrip] = _sa_whitespace_rstrip
+operation_registry[ops.Strftime] = _sa_strftime

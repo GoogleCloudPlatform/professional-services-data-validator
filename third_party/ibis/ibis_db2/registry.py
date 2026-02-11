@@ -221,7 +221,13 @@ _lexicon_values = frozenset(_strftime_to_db2_rules.values())
 _strftime_excludelist = frozenset(["%w", "%U", "%c", "%x", "%X", "%e"])
 
 
-def _reduce_tokens(tokens, arg):
+def _reduce_tokens(tokens, arg, allow_query_params=True):
+    def literal_arg(s: str):
+        if allow_query_params:
+            return s
+        else:
+            return sa.sql.literal_column(s)
+
     # current list of tokens
     curtokens = []
 
@@ -246,7 +252,9 @@ def _reduce_tokens(tokens, arg):
             if token == "%w":
                 value = sa.extract("dow", arg)  # 0 based day of week
             elif token == "%U":
-                value = sa.cast(sa.func.to_char(arg, "WW"), sa.SMALLINT) - 1
+                value = (
+                    sa.cast(sa.func.to_char(arg, literal_arg("WW")), sa.SMALLINT) - 1
+                )
             elif token == "%c" or token == "%x" or token == "%X":
                 # re scan and tokenize this pattern
                 try:
@@ -260,14 +268,18 @@ def _reduce_tokens(tokens, arg):
                 new_tokens, _ = _scanner.scan(new_pattern)
                 value = functools.reduce(
                     sa.sql.ColumnElement.concat,
-                    _reduce_tokens(new_tokens, arg),
+                    _reduce_tokens(
+                        new_tokens, arg, allow_query_params=allow_query_params
+                    ),
                 )
             elif token == "%e":
                 # pad with spaces instead of zeros
-                value = sa.func.replace(sa.func.to_char(arg, "DD"), "0", " ")
+                value = sa.func.replace(
+                    sa.func.to_char(arg, literal_arg("DD")), "0", " "
+                )
 
             reduced += [
-                sa.func.to_char(arg, "".join(curtokens)),
+                sa.func.to_char(arg, literal_arg("".join(curtokens))),
                 sa.cast(value, sa.TEXT),
             ]
 
@@ -281,14 +293,20 @@ def _reduce_tokens(tokens, arg):
         # append result to r if we had more tokens or if we have no
         # blacklisted tokens
         if curtokens:
-            reduced.append(sa.func.to_char(arg, "".join(curtokens)))
+            reduced.append(sa.func.to_char(arg, literal_arg("".join(curtokens))))
     return reduced
 
 
-def _strftime(t, op):
+def db2_luw_strftime(t, op, allow_query_params=True):
     tokens, _ = _scanner.scan(op.format_str.value)
-    reduced = _reduce_tokens(tokens, t.translate(op.arg))
+    reduced = _reduce_tokens(
+        tokens, t.translate(op.arg), allow_query_params=allow_query_params
+    )
     return functools.reduce(sa.sql.ColumnElement.concat, reduced)
+
+
+def _sa_strftime(t, op):
+    return db2_luw_strftime(t, op)
 
 
 def _regex_replace(t, op):
@@ -503,7 +521,7 @@ operation_registry.update(
         ops.TimestampAdd: fixed_arity(operator.add, 2),
         ops.TimestampSub: fixed_arity(operator.sub, 2),
         ops.TimestampDiff: fixed_arity(operator.sub, 2),
-        ops.Strftime: _strftime,
+        ops.Strftime: _sa_strftime,
         ops.ExtractYear: _extract("year"),
         ops.ExtractMonth: _extract("month"),
         ops.ExtractDay: _extract("day"),
