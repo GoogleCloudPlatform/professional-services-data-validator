@@ -226,7 +226,7 @@ def _reduce_tokens(tokens, arg, allow_query_params=True):
         if allow_query_params:
             return s
         else:
-            return sa.sql.literal_column(s)
+            return sa.sql.literal_column(f"'{s}'")
 
     # current list of tokens
     curtokens = []
