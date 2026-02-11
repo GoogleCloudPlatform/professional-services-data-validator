@@ -33,6 +33,9 @@ from ibis.backends.base.sql.alchemy import (
 )
 from ibis.backends.base.sql.alchemy.registry import variance_reduction
 
+from third_party.ibis.ibis_addon.api import ibis_integer_string_length
+
+
 operation_registry = sqlalchemy_operation_registry.copy()
 operation_registry.update(sqlalchemy_window_functions_registry)
 
@@ -121,9 +124,18 @@ def _cast(t, op):
 
     sa_arg = t.translate(arg)
 
-    # specialize going from an integer type to a timestamp
-    if arg_dtype.is_integer() and typ.is_timestamp():
-        return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
+    if arg_dtype.is_integer():
+        if typ.is_timestamp():
+            # specialize going from an integer type to a timestamp
+            return t.integer_to_timestamp(sa_arg, tz=typ.timezone)
+        elif typ.is_string():
+            string_length = ibis_integer_string_length(arg_dtype)
+            if string_length:
+                # Restring target string length to appropriate length for integer size.
+                return sa.cast(sa_arg, sa.String(string_length))
+    elif arg_dtype.is_decimal() and typ.is_string():
+        # Max expected precision 38 plus 2 for minus sign and decimal place.
+        return sa.cast(sa_arg, sa.String(40))
 
     if arg_dtype.is_time() and typ.is_string():
         # Force colons as time separator which CHAR(column,JIS) expression.

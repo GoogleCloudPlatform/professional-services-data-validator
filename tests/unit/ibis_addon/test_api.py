@@ -61,3 +61,21 @@ def test_db2_type_string_length_integer(dtype, expected):
 def test_db2_type_string_length_other():
     dtype = dt.Float64()
     assert api.db2_type_string_length(dtype, []) is None
+
+
+@pytest.mark.parametrize(
+    "dtype, expected",
+    [
+        (dt.Int64(), 20),
+        (dt.Int32(), 11),
+        (dt.Int16(), 6),
+        (dt.Int8(), 4),
+    ],
+)
+def test_ibis_integer_string_length(dtype, expected):
+    assert api.ibis_integer_string_length(dtype) == expected
+
+
+def test_ibis_integer_string_length_other():
+    dtype = dt.Float64()
+    assert api.ibis_integer_string_length(dtype) is None

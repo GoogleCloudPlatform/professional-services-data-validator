@@ -173,6 +173,14 @@ def db2_type_string_length(
         # Timestamp when converted to string will be at least 19 characters (YYYY-MM-DD HH:MI:SS).
         return 19
     elif ibis_column.is_integer():
+        return ibis_integer_string_length(ibis_column)
+    else:
+        return None
+
+
+def ibis_integer_string_length(ibis_column: dt.DataType) -> Optional[int]:
+    """Return the maximum string length of an integer column, including minus sign."""
+    if ibis_column.is_integer():
         if isinstance(ibis_column, dt.Int64):
             return 20
         elif isinstance(ibis_column, dt.Int32):
@@ -181,7 +189,8 @@ def db2_type_string_length(
             return 6
         elif isinstance(ibis_column, dt.Int8):
             return 4
-        return 20
+        # Safe catch all length.
+        return 38
     else:
         return None
 
