@@ -234,7 +234,6 @@ def test_row_validation_core_types():
     """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
-    # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -242,14 +241,6 @@ def test_row_validation_core_types():
             if _
             not in (
                 "id",
-                "col_int8",  # issue-1634
-                "col_int16",  # issue-1634
-                "col_int32",  # issue-1634
-                "col_dec_20",  # issue-1634
-                "col_dec_38",  # issue-1634
-                "col_dec_10_2",  # issue-1634
-                "col_float32",  # issue-1634
-                "col_float64",  # issue-1634
                 "col_char_2",
                 "col_string",
             )
@@ -287,7 +278,7 @@ def test_row_validation_core_types_to_bigquery():
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
-    # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
+    # TODO: When issue-1669 is complete remove col_dec_10_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -295,14 +286,9 @@ def test_row_validation_core_types_to_bigquery():
             if _
             not in (
                 "id",
-                "col_int8",  # issue-1634
-                "col_int16",  # issue-1634
-                "col_int32",  # issue-1634
-                "col_dec_20",  # issue-1634
-                "col_dec_38",  # issue-1634
-                "col_dec_10_2",  # issue-1634
+                "col_dec_10_2",
                 "col_float32",
-                "col_float64",  # issue-1634
+                "col_float64",
                 "col_char_2",
                 "col_string",
                 "col_tstz",
@@ -345,11 +331,11 @@ def test_row_validation_large_decimals_to_bigquery():
     This is testing large decimals for the primary key join column plus the hash columns.
     Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
     """
-    # Add id,col_data into hash value below once issue-1634 has been fixed.
+    # Add col_data into hash value below once issue-1634 has been fixed.
     row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
-        hash="col_dec_18",
+        hash="id,col_dec_18",
         use_random_row=True,
         random_row_batch_size=5,
     )
