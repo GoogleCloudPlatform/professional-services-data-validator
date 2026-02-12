@@ -130,7 +130,7 @@ def test_schema_validation_not_null_vs_nullable():
 )
 def test_column_validation_core_types():
     """Db2 to Db2 dvt_core_types column validation"""
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id",)])
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types",
@@ -151,7 +151,13 @@ def test_column_validation_core_types_to_bigquery():
     """Db2 to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # Excluded col_tstz since it is not possible to set time zone at this column on Db2
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_tstz")
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
