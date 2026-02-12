@@ -667,6 +667,12 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type."""
+        return self._is_raw_data_type(
+            "oracle", source_column_name, target_column_name, ["CLOB", "NCLOB", "BLOB"]
+        )
+
     def _is_sql_server_text(
         self, source_column_name: str, target_column_name: str
     ) -> bool:
@@ -693,17 +699,31 @@ class ConfigManager(object):
         self, source_column_name: str, target_column_name: str, type_list: List[str]
     ) -> bool:
         """Returns True when either source or target column is of a SQL Server type listed in type_list."""
+        return self._is_raw_data_type(
+            "mssql",
+            source_column_name,
+            target_column_name,
+            type_list,
+        )
 
+    def _is_raw_data_type(
+        self,
+        client_name: str,
+        source_column_name: str,
+        target_column_name: str,
+        type_list: List[str],
+    ) -> bool:
+        """Returns True when either source or target column is of a client & type."""
         raw_source_types = self.get_source_raw_data_types()
         raw_target_types = self.get_target_raw_data_types()
         return bool(
             (
-                self.source_client.name == "mssql"
+                self.source_client.name == client_name
                 and raw_source_types
                 and raw_source_types.get(source_column_name, [None])[0] in type_list
             )
             or (
-                self.target_client.name == "mssql"
+                self.target_client.name == client_name
                 and raw_target_types
                 and raw_target_types.get(target_column_name, [None])[0] in type_list
             )
@@ -853,6 +873,7 @@ class ConfigManager(object):
             ]
             depth = 1
             calc_func = consts.CALC_FIELD_LENGTH
+
         elif column_type in ["string", "!string"]:
             if self._is_sql_server_text(source_column, target_column):
                 calc_func = consts.CALC_FIELD_BYTE_LENGTH
@@ -1001,8 +1022,12 @@ class ConfigManager(object):
                 _ in ["string", "!string", "json", "!json"]
                 for _ in [column_type, target_column_type]
             ):
-                # These data types are aggregated using their lengths.
-                return True
+                # These data types are aggregated using their lengths, except for count().
+                if agg_type == "count":
+                    # Oracle LOBs need a length before the count().
+                    return self._is_oracle_lob()
+                else:
+                    return True
             elif self._is_uuid(column_type, target_column_type):
                 return True
             elif column_type in ["binary", "!binary"]:
