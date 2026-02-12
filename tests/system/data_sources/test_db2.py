@@ -86,7 +86,7 @@ def test_schema_validation_core_types_to_bigquery():
             "int16:int64,int32:int64,"
             # BigQuery does not have decimal, float32 types.
             "decimal:float64,float32:float64,"
-            # Unable to create col_tstz with time zone on our DB2 database therefore test data is adjusted.
+            # Unable to create col_tstz with time zone on our Db2 database therefore test data is adjusted.
             "timestamp:timestamp('UTC'),"
         ),
     )
@@ -129,7 +129,7 @@ def test_schema_validation_not_null_vs_nullable():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types():
-    """DB2 to DB2 dvt_core_types column validation"""
+    """Db2 to Db2 dvt_core_types column validation"""
     cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
     column_validation_test(
         tc="mock-conn",
@@ -160,6 +160,25 @@ def test_column_validation_core_types_to_bigquery():
         max_cols=cols,
         avg_cols=cols,
         std_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_db2_types_to_bigquery():
+    """Db2 to BigQuery dvt_db2_types column validation"""
+    cols = "*"
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_db2_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+        wildcard_include_timestamp=True,
     )
 
 
@@ -240,7 +259,7 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_auto_pks():
-    """Test auto population of -pks from DB2 defined constraint."""
+    """Test auto population of -pks from Db2 defined constraint."""
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
@@ -308,7 +327,7 @@ def test_row_validation_large_decimals_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_column_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types custom-query column validation"""
+    """Db2 to BigQuery dvt_core_types custom-query column validation"""
     custom_query_validation_test(
         source_query="select * from pso_data_validator.dvt_core_types", count_cols="*"
     )
@@ -319,7 +338,7 @@ def test_custom_query_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    """Db2 to BigQuery dvt_core_types custom-query row comparison-fields validation"""
     custom_query_validation_test(
         validation_type="row",
         source_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
