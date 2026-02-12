@@ -173,6 +173,7 @@ def test_column_validation_db2_types_to_bigquery():
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_db2_types",
+        count_cols=cols,
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
