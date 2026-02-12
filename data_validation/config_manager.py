@@ -667,6 +667,12 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type."""
+        return self._is_raw_data_type(
+            "db2", source_column_name, target_column_name, ["XML"]
+        )
+
     def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
         """Returns True when either source or target column is Oracle LOB data type."""
         return self._is_raw_data_type(
@@ -1126,6 +1132,11 @@ class ConfigManager(object):
             elif self._is_sql_server_image(column, column):
                 logging.info(
                     f"Skipping {agg_type} on {column} due to SQL Server image data type"
+                )
+                continue
+            elif agg_type != "count" and self._is_db2_xml(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to Db2 XML data type"
                 )
                 continue
 
