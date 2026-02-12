@@ -166,6 +166,8 @@ def test_column_validation_core_types_to_bigquery():
         max_cols=cols,
         avg_cols=cols,
         std_cols=cols,
+        wildcard_include_timestamp=True,
+        wildcard_include_string=True,
     )
 
 
@@ -186,6 +188,7 @@ def test_column_validation_db2_types_to_bigquery():
         avg_cols=cols,
         std_cols=cols,
         wildcard_include_timestamp=True,
+        wildcard_include_string=True,
     )
 
 
