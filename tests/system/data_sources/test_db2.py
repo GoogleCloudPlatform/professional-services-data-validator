@@ -178,6 +178,11 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types column validation"""
     cols = "*"
+    # TODO Add col_char_bit into cols below once issue-1655 is resolved.
+    cols = (
+        "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,col_clob,col_nvarchar_30,col_nchar_2,"
+        "col_nclob,col_dbclob,col_blob,col_varchar_bit,col_graphic,col_vargraphic,col_xml"
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_db2_types",
