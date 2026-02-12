@@ -196,4 +196,3 @@ class Backend(BaseAlchemyBackend):
         if columns_to_drop:
             return_table = return_table.drop(*columns_to_drop)
         return return_table
-
