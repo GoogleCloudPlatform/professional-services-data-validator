@@ -1013,6 +1013,8 @@ class ConfigManager(object):
         """Return list of aggregate objects of given agg_type."""
 
         def require_pre_agg_calc_field(
+            source_column: str,
+            target_column: str,
             column_type: str,
             target_column_type: str,
             agg_type: str,
@@ -1025,7 +1027,7 @@ class ConfigManager(object):
                 # These data types are aggregated using their lengths, except for count().
                 if agg_type == "count":
                     # Oracle LOBs need a length before the count().
-                    return self._is_oracle_lob()
+                    return self._is_oracle_lob(source_column, target_column)
                 else:
                     return True
             elif self._is_uuid(column_type, target_column_type):
@@ -1128,7 +1130,12 @@ class ConfigManager(object):
                 continue
 
             if require_pre_agg_calc_field(
-                column_type, target_column_type, agg_type, cast_to_bigint
+                casefold_source_columns[column],
+                casefold_target_columns[column],
+                column_type,
+                target_column_type,
+                agg_type,
+                cast_to_bigint,
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
