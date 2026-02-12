@@ -104,24 +104,69 @@ class Backend(BaseAlchemyBackend):
             )
             return [_[0] for _ in result.cursor.fetchall()]
 
-    def raw_column_metadata_not_implemented(
+    def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
     ) -> list:
         """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
-        Partner method to _metadata that retains raw data type information instead of converting
-        to Ibis types.  This works in the same way as _metadata by running a query over the DVT
-        source, either schema.table or a custom query, and fetching the metadata using sp_describe_first_result_set.
+        Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
+        This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
+        custom query, and fetching the first row. From the cursor we can detect data types of the row's columns.
 
-        THIS METHOD IS NOT IMPLEMENTED YET.
-
+        NOTE: This only works for table look-ups. For custom queries the raw data types are not available to us
+              due to the IBM Db2 driver hiding the real data types.
 
         Returns:
             list: A list of tuples containing the standard 7 DB API fields:
                   https://peps.python.org/pep-0249/#description
         """
-        return []
+        assert (database and table) or query, "We should never receive all args=None"
+        if database and table:
+            # For table-based validation, query the system catalog to get the true data type.
+            get_column_metadata_sql = """
+                SELECT COLNAME, TYPENAME, LENGTH, SCALE, NULLS
+                FROM SYSCAT.COLUMNS
+                WHERE TABSCHEMA = ? AND TABNAME = ?
+                ORDER BY COLNO
+            """
+            with self.begin() as con:
+                result = con.exec_driver_sql(
+                    get_column_metadata_sql,
+                    parameters=(database.upper(), table.upper()),
+                )
+                # Yield a 7-tuple mimicking cursor.description, with the true typename.
+                for (
+                    colname,
+                    typename,
+                    col_length,
+                    col_scale,
+                    nullable,
+                ) in result.cursor.fetchall():
+                    yield (
+                        colname,
+                        typename,
+                        col_length,
+                        col_length,
+                        col_length,
+                        col_scale,
+                        nullable,
+                    )
+        elif query:
+            # For custom queries, the system catalog cannot be used. Fall back to
+            # cursor.description, which may not distinguish padded char types.
+            source = f"({query})"
+            with self.begin() as con:
+                result = con.exec_driver_sql(f"SELECT * FROM {source} t0 LIMIT 0")
+                cursor = result.cursor
+                yield from (column for column in cursor.description)
 
     def is_char_type_padded(self, char_type: Tuple) -> bool:
         """Define this method if the backend supports character/string types that are padded and returns
         padded values, which DVT may want to trim"""
-        return char_type[0] == "CHARACTER"
+        type_code = char_type[0]
+        if isinstance(type_code, str):
+            return type_code.upper() == "CHARACTER"
+        else:
+            # From cursor.description for custom queries, this is a DBAPITypeObject.
+            # It's not possible to distinguish padded char types in this case,
+            # so we default to False to be safe and avoid trimming incorrectly.
+            return False

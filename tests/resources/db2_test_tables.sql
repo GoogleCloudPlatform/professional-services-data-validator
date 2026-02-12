@@ -151,3 +151,15 @@ INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS VARBINARY(
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS VARBINARY(16)), 5, 'Row 5');
 COMMIT;
 
+DROP TABLE db2inst1.dvt_fixed_char_id;
+CREATE TABLE db2inst1.dvt_fixed_char_id
+(   id          CHAR(6) NOT NULL PRIMARY KEY
+,   other_data  CHAR(100)
+);
+COMMENT ON TABLE db2inst1.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant';
+INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
+INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
+INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
+INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
+INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
+COMMIT;
