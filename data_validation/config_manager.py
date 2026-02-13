@@ -712,6 +712,12 @@ class ConfigManager(object):
             type_list,
         )
 
+    def _is_sybase_text(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type."""
+        return self._is_raw_data_type(
+            "sybase", source_column_name, target_column_name, ["TEXT"]
+        )
+
     def _is_raw_data_type(
         self,
         client_name: str,
@@ -1032,8 +1038,11 @@ class ConfigManager(object):
             ):
                 # These data types are aggregated using their lengths, except for count().
                 if agg_type == "count":
-                    # Oracle LOBs need a length before the count().
-                    return self._is_oracle_lob(source_column, target_column)
+                    # Oracle LOBs and Sybase TEXT need length() before the count().
+                    return bool(
+                        self._is_oracle_lob(source_column, target_column)
+                        or self._is_sybase_text(source_column, target_column)
+                    )
                 else:
                     return True
             elif self._is_uuid(column_type, target_column_type):
