@@ -1032,9 +1032,11 @@ class ConfigManager(object):
             ):
                 # These data types are aggregated using their lengths, except for count().
                 if agg_type == "count":
-                    # Oracle LOBs need a length before the count().
+                    # Oracle LOBs & SQL Server TEXT need a length before the count().
                     # TODO As does Sybase TEXT, see issue-1675.
-                    return self._is_oracle_lob(source_column, target_column)
+                    return self._is_oracle_lob(
+                        source_column, target_column
+                    ) or self._is_sql_server_text(source_column, target_column)
                 else:
                     return True
             elif self._is_uuid(column_type, target_column_type):
