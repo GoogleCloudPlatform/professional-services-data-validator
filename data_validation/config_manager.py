@@ -1033,7 +1033,7 @@ class ConfigManager(object):
                 # These data types are aggregated using their lengths, except for count().
                 if agg_type == "count":
                     # Oracle LOBs need a length before the count().
-                    # TODO As does Sybase TEXT, see issue-XXXX.
+                    # TODO As does Sybase TEXT, see issue-1675.
                     return self._is_oracle_lob(source_column, target_column)
                 else:
                     return True
