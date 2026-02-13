@@ -712,12 +712,6 @@ class ConfigManager(object):
             type_list,
         )
 
-    def _is_sybase_text(self, source_column_name: str, target_column_name: str) -> bool:
-        """Returns True when either source or target column is Oracle LOB data type."""
-        return self._is_raw_data_type(
-            "sybase", source_column_name, target_column_name, ["TEXT"]
-        )
-
     def _is_raw_data_type(
         self,
         client_name: str,
@@ -1038,11 +1032,9 @@ class ConfigManager(object):
             ):
                 # These data types are aggregated using their lengths, except for count().
                 if agg_type == "count":
-                    # Oracle LOBs and Sybase TEXT need length() before the count().
-                    return bool(
-                        self._is_oracle_lob(source_column, target_column)
-                        or self._is_sybase_text(source_column, target_column)
-                    )
+                    # Oracle LOBs need a length before the count().
+                    # TODO As does Sybase TEXT, see issue-XXXX.
+                    return self._is_oracle_lob(source_column, target_column)
                 else:
                     return True
             elif self._is_uuid(column_type, target_column_type):
@@ -1052,10 +1044,7 @@ class ConfigManager(object):
                     # Oracle BLOB is invalid for use with SQL COUNT function.
                     # The expression below returns True if client is Oracle which
                     # has the effect of triggering use of byte_length transformation.
-                    return bool(
-                        self.source_client.name == "oracle"
-                        or self.target_client.name == "oracle"
-                    )
+                    return self._is_oracle_lob(source_column, target_column)
                 else:
                     # Convert to length for any min/max/sum on binary columns.
                     return True
