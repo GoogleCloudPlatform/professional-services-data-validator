@@ -674,9 +674,18 @@ class ConfigManager(object):
         )
 
     def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
-        """Returns True when either source or target column is Oracle LOB data type."""
+        """Returns True when either source or target column is Oracle LOB data type.
+
+        Unexpectedly the raw types for for LOB types are:
+            BLOB: LONG_RAW
+            CLOB: LONG
+            NCLOB: LONG_NVARCHAR
+        """
         return self._is_raw_data_type(
-            "oracle", source_column_name, target_column_name, ["CLOB", "NCLOB", "BLOB"]
+            "oracle",
+            source_column_name,
+            target_column_name,
+            ["LONG", "LONG_NVARCHAR", "LONG_RAW"],
         )
 
     def _is_sql_server_text(
