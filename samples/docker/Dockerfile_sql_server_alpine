@@ -55,4 +55,4 @@ RUN \
 RUN pip install ${PIPOPTS} pyodbc
 
 # Entrypoint
-ENTRYPOINT ["python","-m","data_validation"]
+ENTRYPOINT ["./entrypoint.sh"]
