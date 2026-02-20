@@ -208,9 +208,14 @@ def test_schema_validation_reserved_words():
 )
 def test_column_validation_core_types():
     """Sybase dvt_core_types column validation"""
+    # TODO No need for count_cols below once issue-1675 is complete.
+    count_cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+    )
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types",
+        count_cols=count_cols,
         sum_cols="*",
         min_cols="*",
         max_cols="*",
@@ -254,10 +259,14 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_view_core_types_vw():
     """Sybase view dvt_core_types_vw column validation"""
     cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
+    # TODO No need for count_cols below once issue-1675 is complete.
+    count_cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+    )
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types_vw",
-        count_cols=cols,
+        count_cols=count_cols,
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
@@ -652,7 +661,11 @@ def test_row_validation_comp_fields_reserved_words():
 )
 def test_custom_query_column_validation_core_types_to_bigquery():
     """Sybase to BigQuery dvt_core_types custom-query column validation"""
-    custom_query_validation_test(tc="bq-conn", count_cols="*")
+    # TODO Remove col_string from cols below once issue-1675 is complete.
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_string")]
+    )
+    custom_query_validation_test(tc="bq-conn", count_cols=cols)
 
 
 @mock.patch(
