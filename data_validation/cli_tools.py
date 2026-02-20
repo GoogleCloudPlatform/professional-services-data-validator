@@ -75,7 +75,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["project_id", "GCP Project to use for BigQuery"],
         [
             "client_project_id",
-            "(Optional) BigQuery job/billing project (can differ from data project)",
+            "(Optional) BigQuery compute/billing project (can differ from data project)",
         ],
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
