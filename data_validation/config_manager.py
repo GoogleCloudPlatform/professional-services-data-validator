@@ -667,6 +667,33 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 XML data type."""
+        return self._is_raw_data_type(
+            "db2", source_column_name, target_column_name, ["XML"]
+        )
+
+    def _is_db2_zos_blob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 BLOB data type."""
+        return self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["BLOB"]
+        )
+
+    def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type.
+
+        Unexpectedly the raw types for for LOB types are:
+            BLOB: LONG_RAW
+            CLOB: LONG
+            NCLOB: LONG_NVARCHAR
+        """
+        return self._is_raw_data_type(
+            "oracle",
+            source_column_name,
+            target_column_name,
+            ["LONG", "LONG_NVARCHAR", "LONG_RAW"],
+        )
+
     def _is_sql_server_text(
         self, source_column_name: str, target_column_name: str
     ) -> bool:
@@ -693,17 +720,31 @@ class ConfigManager(object):
         self, source_column_name: str, target_column_name: str, type_list: List[str]
     ) -> bool:
         """Returns True when either source or target column is of a SQL Server type listed in type_list."""
+        return self._is_raw_data_type(
+            "mssql",
+            source_column_name,
+            target_column_name,
+            type_list,
+        )
 
+    def _is_raw_data_type(
+        self,
+        client_name: str,
+        source_column_name: str,
+        target_column_name: str,
+        type_list: List[str],
+    ) -> bool:
+        """Returns True when either source or target column is of a client & type."""
         raw_source_types = self.get_source_raw_data_types()
         raw_target_types = self.get_target_raw_data_types()
         return bool(
             (
-                self.source_client.name == "mssql"
+                self.source_client.name == client_name
                 and raw_source_types
                 and raw_source_types.get(source_column_name, [None])[0] in type_list
             )
             or (
-                self.target_client.name == "mssql"
+                self.target_client.name == client_name
                 and raw_target_types
                 and raw_target_types.get(target_column_name, [None])[0] in type_list
             )
@@ -853,6 +894,7 @@ class ConfigManager(object):
             ]
             depth = 1
             calc_func = consts.CALC_FIELD_LENGTH
+
         elif column_type in ["string", "!string"]:
             if self._is_sql_server_text(source_column, target_column):
                 calc_func = consts.CALC_FIELD_BYTE_LENGTH
@@ -992,6 +1034,8 @@ class ConfigManager(object):
         """Return list of aggregate objects of given agg_type."""
 
         def require_pre_agg_calc_field(
+            source_column: str,
+            target_column: str,
             column_type: str,
             target_column_type: str,
             agg_type: str,
@@ -1001,8 +1045,15 @@ class ConfigManager(object):
                 _ in ["string", "!string", "json", "!json"]
                 for _ in [column_type, target_column_type]
             ):
-                # These data types are aggregated using their lengths.
-                return True
+                # These data types are aggregated using their lengths, except for count().
+                if agg_type == "count":
+                    # Oracle LOBs & SQL Server TEXT need a length before the count().
+                    # TODO As does Sybase TEXT, see issue-1675.
+                    return self._is_oracle_lob(
+                        source_column, target_column
+                    ) or self._is_sql_server_text(source_column, target_column)
+                else:
+                    return True
             elif self._is_uuid(column_type, target_column_type):
                 return True
             elif column_type in ["binary", "!binary"]:
@@ -1012,8 +1063,8 @@ class ConfigManager(object):
                     # has the effect of triggering use of byte_length transformation.
                     # Same for Db2 z/OS.
                     return bool(
-                        self.source_client.name in ("oracle", "db2_zos")
-                        or self.target_client.name in ("oracle", "db2_zos")
+                        self._is_oracle_lob(source_column, target_column)
+                        or self._is_db2_zos_blob(source_column, target_column)
                     )
                 else:
                     # Convert to length for any min/max/sum on binary columns.
@@ -1102,9 +1153,19 @@ class ConfigManager(object):
                     f"Skipping {agg_type} on {column} due to SQL Server image data type"
                 )
                 continue
+            elif agg_type != "count" and self._is_db2_xml(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to Db2 XML data type"
+                )
+                continue
 
             if require_pre_agg_calc_field(
-                column_type, target_column_type, agg_type, cast_to_bigint
+                casefold_source_columns[column],
+                casefold_target_columns[column],
+                column_type,
+                target_column_type,
+                agg_type,
+                cast_to_bigint,
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
