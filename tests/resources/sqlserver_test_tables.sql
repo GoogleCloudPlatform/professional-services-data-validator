@@ -64,6 +64,31 @@ CREATE OR ALTER VIEW pso_data_validator.dvt_core_types_vw AS
 SELECT * FROM pso_data_validator.dvt_core_types;
 GO -- Separates the view creation from any subsequent statements
 
+-- Core data types CamelCase table.
+DROP TABLE IF EXISTS pso_data_validator.[DvtCoreTypes];
+CREATE TABLE pso_data_validator.[DvtCoreTypes]
+(   id              int NOT NULL PRIMARY KEY
+,   col_int8        tinyint
+,   col_int16       smallint
+,   col_int32       int
+,   col_int64       bigint
+,   col_dec_20      decimal(20)
+,   col_dec_38      decimal(38)
+,   col_dec_10_2    decimal(10,2)
+,   col_float32     float(24)
+,   col_float64     float(53)
+,   col_varchar_30  varchar(30)
+,   col_char_2      char(2)
+,   col_string      text
+,   col_date        date
+,   col_datetime    datetime2(3)
+,   col_tstz        datetimeoffset(3)
+);
+EXECUTE sp_addextendedproperty 'Comment', 'Copy of dvt_core_types with CamelCase naming.', 'SCHEMA', 'pso_data_validator', 'table', 'DvtCoreTypes';
+INSERT INTO pso_data_validator.[DvtCoreTypes]
+SELECT * FROM pso_data_validator.dvt_core_types;
+
+
 DROP TABLE IF EXISTS pso_data_validator.test_generate_partitions_v2;
 CREATE TABLE pso_data_validator.test_generate_partitions_v2
 (   course_id           VARCHAR(24)
