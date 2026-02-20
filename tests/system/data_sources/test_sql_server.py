@@ -385,6 +385,7 @@ def test_column_validation_core_types():
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types",
+        count_cols="*",
         sum_cols="*",
         min_cols="*",
         max_cols="*",
