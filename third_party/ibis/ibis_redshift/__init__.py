@@ -82,14 +82,16 @@ class Backend(BaseAlchemyBackend):
         return self._filter_with_like(databases, like)
 
     def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
-        raw_name = util.guid()
+        raw_name = util.guid().lower()
         name = self._quote(raw_name)
-        type_info_sql = """\
-    SELECT
-    "column", "type"
-    FROM PG_TABLE_DEF
-    WHERE tablename = :raw_name
-    """
+        type_info_sql = """
+        SELECT 
+            "column_name", 
+            "data_type"
+        FROM SVV_ALL_COLUMNS
+        WHERE table_name = :raw_name
+        ORDER BY ordinal_position
+        """
         if self.inspector.has_table(query):
             query = f"TABLE {query}"
         with self.begin() as con:

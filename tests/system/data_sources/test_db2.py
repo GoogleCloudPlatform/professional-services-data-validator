@@ -302,7 +302,6 @@ def test_row_validation_core_types_to_bigquery():
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
-    # TODO: When issue-1669 is complete remove col_dec_10_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -310,7 +309,6 @@ def test_row_validation_core_types_to_bigquery():
             if _
             not in (
                 "id",
-                "col_dec_10_2",
                 "col_float32",
                 "col_float64",
                 "col_char_2",
@@ -321,6 +319,24 @@ def test_row_validation_core_types_to_bigquery():
     )
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_db2_types_to_bigquery():
+    """Db2 to BigQuery dvt_db2_types row validation"""
+    # Excluded col_clob,col_nclob,col_xml because they are incompatible with hex() function (due to potential length).
+    # TODO Add col_blob to list below once issue-1354 is complete.
+    # TODO Add col_char_2 to list below once issue-1354 is complete.
+    # TODO Add col_char_bit,col_varchar_bit to list below once issue-1655 is complete.
+    cols = "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,col_nvarchar_30"
+    row_validation_test(
+        tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
         hash=cols,
     )
