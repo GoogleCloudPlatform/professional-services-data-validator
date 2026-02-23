@@ -224,25 +224,6 @@ def test_column_validation_db2_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_db2_types_to_bigquery():
-    """DB2 to BigQuery dvt_db2_types column validation"""
-    cols = "*"
-    column_validation_test(
-        tc="bq-conn",
-        tables="pso_data_validator.dvt_db2_types",
-        sum_cols=cols,
-        min_cols=cols,
-        max_cols=cols,
-        avg_cols=cols,
-        std_cols=cols,
-        wildcard_include_timestamp=True,
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_column_validation_large_decimals_to_bigquery():
     """Db2 to BigQuery dvt_large_decimals column validation.
 
