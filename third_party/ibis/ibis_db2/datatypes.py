@@ -44,6 +44,11 @@ DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
 DB2Dialect_ibm_db.ischema_names["VARBINARY"] = sat.BINARY
 
 
+@dt.dtype.register(DB2Dialect_ibm_db, sat.BINARY)
+def sa_sf_binary(_, satype, nullable=True):
+    return dt.Binary(nullable=nullable)
+
+
 def _get_type(typename) -> dt.DataType:
     typ = _type_mapping.get(typename)
     if typ is None:
