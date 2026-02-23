@@ -132,9 +132,6 @@ def test_schema_validation_not_null_vs_nullable():
     null_not_null_assertions(df)
 
 
-##########################
-# SCHEMA VALIDATION TESTS
-##########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -147,6 +144,9 @@ def test_schema_validation_db2_generated_cols():
     )
 
 
+###########################
+# COLUMN VALIDATION TESTS
+###########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -264,9 +264,6 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
-###########################
-# COLUMN VALIDATION TESTS
-###########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
