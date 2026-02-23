@@ -373,7 +373,7 @@ def test_row_validation_binary_pk_to_bigquery():
         [
             "validate",
             "row",
-            "-sc=ora-conn",
+            "-sc=mock-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_binary",
             "--primary-keys=binary_id",
