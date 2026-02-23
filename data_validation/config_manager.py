@@ -23,7 +23,10 @@ from data_validation import clients, consts, gcs_helper, state_manager
 from data_validation.result_handlers.factory import build_result_handler
 from data_validation.validation_builder import ValidationBuilder
 
+from third_party.ibis.ibis_addon.api import db2_type_string_length
+
 if TYPE_CHECKING:
+    from ibis.backends.base import BaseBackend
     import ibis.expr.types.Table
 
 
@@ -664,6 +667,27 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type."""
+        return self._is_raw_data_type(
+            "db2", source_column_name, target_column_name, ["XML"]
+        )
+
+    def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type.
+
+        Unexpectedly the raw types for for LOB types are:
+            BLOB: LONG_RAW
+            CLOB: LONG
+            NCLOB: LONG_NVARCHAR
+        """
+        return self._is_raw_data_type(
+            "oracle",
+            source_column_name,
+            target_column_name,
+            ["LONG", "LONG_NVARCHAR", "LONG_RAW"],
+        )
+
     def _is_sql_server_text(
         self, source_column_name: str, target_column_name: str
     ) -> bool:
@@ -690,17 +714,31 @@ class ConfigManager(object):
         self, source_column_name: str, target_column_name: str, type_list: List[str]
     ) -> bool:
         """Returns True when either source or target column is of a SQL Server type listed in type_list."""
+        return self._is_raw_data_type(
+            "mssql",
+            source_column_name,
+            target_column_name,
+            type_list,
+        )
 
+    def _is_raw_data_type(
+        self,
+        client_name: str,
+        source_column_name: str,
+        target_column_name: str,
+        type_list: List[str],
+    ) -> bool:
+        """Returns True when either source or target column is of a client & type."""
         raw_source_types = self.get_source_raw_data_types()
         raw_target_types = self.get_target_raw_data_types()
         return bool(
             (
-                self.source_client.name == "mssql"
+                self.source_client.name == client_name
                 and raw_source_types
                 and raw_source_types.get(source_column_name, [None])[0] in type_list
             )
             or (
-                self.target_client.name == "mssql"
+                self.target_client.name == client_name
                 and raw_target_types
                 and raw_target_types.get(target_column_name, [None])[0] in type_list
             )
@@ -850,6 +888,7 @@ class ConfigManager(object):
             ]
             depth = 1
             calc_func = consts.CALC_FIELD_LENGTH
+
         elif column_type in ["string", "!string"]:
             if self._is_sql_server_text(source_column, target_column):
                 calc_func = consts.CALC_FIELD_BYTE_LENGTH
@@ -989,6 +1028,8 @@ class ConfigManager(object):
         """Return list of aggregate objects of given agg_type."""
 
         def require_pre_agg_calc_field(
+            source_column: str,
+            target_column: str,
             column_type: str,
             target_column_type: str,
             agg_type: str,
@@ -998,8 +1039,15 @@ class ConfigManager(object):
                 _ in ["string", "!string", "json", "!json"]
                 for _ in [column_type, target_column_type]
             ):
-                # These data types are aggregated using their lengths.
-                return True
+                # These data types are aggregated using their lengths, except for count().
+                if agg_type == "count":
+                    # Oracle LOBs & SQL Server TEXT need a length before the count().
+                    # TODO As does Sybase TEXT, see issue-1675.
+                    return self._is_oracle_lob(
+                        source_column, target_column
+                    ) or self._is_sql_server_text(source_column, target_column)
+                else:
+                    return True
             elif self._is_uuid(column_type, target_column_type):
                 return True
             elif column_type in ["binary", "!binary"]:
@@ -1007,10 +1055,7 @@ class ConfigManager(object):
                     # Oracle BLOB is invalid for use with SQL COUNT function.
                     # The expression below returns True if client is Oracle which
                     # has the effect of triggering use of byte_length transformation.
-                    return bool(
-                        self.source_client.name == "oracle"
-                        or self.target_client.name == "oracle"
-                    )
+                    return self._is_oracle_lob(source_column, target_column)
                 else:
                     # Convert to length for any min/max/sum on binary columns.
                     return True
@@ -1098,9 +1143,19 @@ class ConfigManager(object):
                     f"Skipping {agg_type} on {column} due to SQL Server image data type"
                 )
                 continue
+            elif agg_type != "count" and self._is_db2_xml(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to Db2 XML data type"
+                )
+                continue
 
             if require_pre_agg_calc_field(
-                column_type, target_column_type, agg_type, cast_to_bigint
+                casefold_source_columns[column],
+                casefold_target_columns[column],
+                column_type,
+                target_column_type,
+                agg_type,
+                cast_to_bigint,
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
@@ -1160,6 +1215,8 @@ class ConfigManager(object):
             calculated_config.update(custom_params)
         elif calc_type == consts.CONFIG_CAST and custom_params:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = custom_params
+        elif calc_type == consts.CALC_FIELD_IFNULL and custom_params:
+            calculated_config.update(custom_params)
 
         return calculated_config
 
@@ -1294,7 +1351,45 @@ class ConfigManager(object):
 
         return result_source_columns, result_target_columns
 
-    def build_dependent_aliases(self, calc_type: str, col_list=None) -> List[Dict]:
+    def _string_column_ifnull_limits(
+        self,
+        client: "BaseBackend",
+        casefold_columns: dict,
+        ibis_table: "ibis.expr.types.Table",
+        raw_types: dict,
+        string_column_ifnull_limits: dict,
+    ):
+        """Defines IfNull replacement token length limits (due to Db2 limitations).
+
+        This is because in Db2 a coalesce of a column cannot exceed the length of the initial argument resulting in:
+            String data right truncation. SQLSTATE=22001
+
+        We need to ensure both source and target systems use the same replacement token therefore these limits are used for both.
+
+        Mutates string_column_ifnull_limits to contain a dict of column names with replacement token length limits:
+            {"col1": 10, "col2": 12, "col_unlimited": None}
+        """
+        if not casefold_columns or client.name != "db2":
+            return {}
+        table_schema = {k: v for k, v in ibis_table.schema().items()}
+        for casefold_column, column in casefold_columns.items():
+            ifnull_limit = db2_type_string_length(
+                table_schema[casefold_column], raw_types.get(column, [])
+            )
+            if (
+                not string_column_ifnull_limits.get(casefold_column, None)
+                # If the current limit is shorter than an existing one then overwrite the value.
+                or (
+                    ifnull_limit
+                    and ifnull_limit < string_column_ifnull_limits[casefold_column]
+                )
+            ):
+                string_column_ifnull_limits[casefold_column] = ifnull_limit
+        return string_column_ifnull_limits
+
+    def build_dependent_aliases(
+        self, calc_type: str, col_list: Optional[list] = None
+    ) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
@@ -1318,6 +1413,23 @@ class ConfigManager(object):
 
         column_aliases = {}
         col_names = []
+        # Get any ifnull token limits from either the source or target system.
+        # Most engines have no requirement for limits and will return an empty dict.
+        string_column_ifnull_limits = {}
+        self._string_column_ifnull_limits(
+            self.source_client,
+            casefold_source_columns,
+            source_table,
+            self.get_source_raw_data_types(),
+            string_column_ifnull_limits,
+        )
+        self._string_column_ifnull_limits(
+            self.target_client,
+            casefold_target_columns,
+            target_table,
+            self.get_target_raw_data_types(),
+            string_column_ifnull_limits,
+        )
         for i, calc in enumerate(self._get_order_of_operations(calc_type)):
             if i == 0:
                 previous_level = [x for x in casefold_source_columns.keys()]
@@ -1331,7 +1443,7 @@ class ConfigManager(object):
                 col["calc_type"] = calc
                 col["depth"] = i
                 name = col["name"]
-                # need to capture all aliases at the previous level. probably name concat__all
+                # Need to capture all aliases at the previous level. probably name concat__all
                 column_aliases[name] = i
                 col_names.append(col)
             else:
@@ -1343,6 +1455,16 @@ class ConfigManager(object):
                     col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
+                    if (
+                        calc == consts.CALC_FIELD_IFNULL
+                        and string_column_ifnull_limits.get(column)
+                    ):
+                        # Trim the replacement token to the max length allowed for the column.
+                        col["calc_params"] = {
+                            consts.CALC_FIELD_IFNULL_DEFAULT: consts.CALC_FIELD_IFNULL_DEFAULT_STRING[
+                                0 : string_column_ifnull_limits[column]
+                            ]
+                        }
 
                     if i == 0:
                         # If depth 0, get raw column name with correct casing
@@ -1363,6 +1485,11 @@ class ConfigManager(object):
                     name = col["name"]
                     column_aliases[name] = i
                     col_names.append(col)
+                    if string_column_ifnull_limits.get(column):
+                        # Keep track of column limits as we move through aliased expressions.
+                        string_column_ifnull_limits[name] = string_column_ifnull_limits[
+                            column
+                        ]
         return col_names
 
     def build_comp_fields(self, col_list: list, exclude_cols: bool) -> dict:

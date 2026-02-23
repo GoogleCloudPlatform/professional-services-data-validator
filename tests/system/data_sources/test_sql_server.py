@@ -385,6 +385,7 @@ def test_column_validation_core_types():
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types",
+        count_cols="*",
         sum_cols="*",
         min_cols="*",
         max_cols="*",
@@ -698,10 +699,10 @@ def test_row_validation_comp_fields_binary_values_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 

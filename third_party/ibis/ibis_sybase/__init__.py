@@ -112,7 +112,6 @@ class Backend(BaseAlchemyBackend):
     def _handle_failed_column_type_inference(
         self, table: sa.Table, nulltype_cols: Iterable[str]
     ) -> sa.Table:
-        breakpoint()
         return dvt_handle_failed_column_type_inference(self, table, nulltype_cols)
 
     def _metadata(self, query) -> Iterable[Tuple[str, dt.DataType]]:

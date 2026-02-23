@@ -23,6 +23,7 @@ from tests.system.data_sources.common_functions import (
     find_tables_test,
     schema_validation_test,
     column_validation_test,
+    id_column_row_validation_test,
     run_test_from_cli_args,
     null_not_null_assertions,
     row_validation_test,
@@ -59,6 +60,9 @@ def mock_get_connection_config(*args):
         return BQ_CONN
 
 
+##########################
+# SCHEMA VALIDATION TESTS
+##########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -85,7 +89,7 @@ def test_schema_validation_core_types_to_bigquery():
             "int16:int64,int32:int64,"
             # BigQuery does not have decimal, float32 types.
             "decimal:float64,float32:float64,"
-            # Unable to create col_tstz with time zone on our DB2 database therefore test data is adjusted.
+            # Unable to create col_tstz with time zone on our Db2 database therefore test data is adjusted.
             "timestamp:timestamp('UTC'),"
         ),
     )
@@ -123,13 +127,16 @@ def test_schema_validation_not_null_vs_nullable():
     null_not_null_assertions(df)
 
 
+##########################
+# COLUMN VALIDATION TESTS
+##########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types():
-    """DB2 to DB2 dvt_core_types column validation"""
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    """Db2 to Db2 dvt_core_types column validation"""
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id",)])
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types",
@@ -147,16 +154,71 @@ def test_column_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_column_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types column validation"""
+    """Db2 to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     # Excluded col_tstz since it is not possible to set time zone at this column on Db2
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime"
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_tstz")
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+        wildcard_include_timestamp=True,
+        wildcard_include_string=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_db2_types_to_bigquery():
+    """Db2 to BigQuery dvt_db2_types column validation"""
+    cols = "*"
+    # TODO Add col_char_bit into cols below once issue-1655 is resolved.
+    cols = (
+        "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,col_clob,col_nvarchar_30,col_nchar_2,"
+        "col_nclob,col_dbclob,col_blob,col_varchar_bit,col_graphic,col_vargraphic,col_xml"
+    )
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_db2_types",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+        wildcard_include_timestamp=True,
+        wildcard_include_string=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_large_decimals_to_bigquery():
+    """Db2 to BigQuery dvt_large_decimals column validation.
+
+    Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
+    """
+    cols = "id,col_dec_18"
+    column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
         avg_cols=cols,
         std_cols=cols,
     )
@@ -166,12 +228,36 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_large_decimals_to_bigquery_mismatch():
+    """Db2 to BigQuery dvt_large_decimals column validation on columns we expect to have a mismatch.
+
+    Regression test for:
+      https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1007
+    """
+    cols = "col_dec_18_fail,col_dec_18_1_fail"
+    df = column_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        sum_cols=cols,
+        expected_rows=2,
+    )
+    # The columns below have mismatching data and should be in the Dataframe.
+    assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
+    assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
+
+
+###########################
+# ROW VALIDATION TESTS
+###########################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
-    # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -179,19 +265,8 @@ def test_row_validation_core_types():
             if _
             not in (
                 "id",
-                "col_int8",  # issue-1634
-                "col_int16",  # issue-1634
-                "col_int32",  # issue-1634
-                "col_dec_20",  # issue-1634
-                "col_dec_38",  # issue-1634
-                "col_dec_10_2",  # issue-1634
-                "col_float32",  # issue-1634
-                "col_float64",  # issue-1634
                 "col_char_2",
                 "col_string",
-                "col_date",
-                "col_datetime",
-                "col_tstz",
             )
         ]
     )
@@ -208,7 +283,7 @@ def test_row_validation_core_types():
     new=mock_get_connection_config,
 )
 def test_row_validation_core_types_auto_pks():
-    """Test auto population of -pks from DB2 defined constraint."""
+    """Test auto population of -pks from Db2 defined constraint."""
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
@@ -226,9 +301,8 @@ def test_row_validation_core_types_to_bigquery():
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1296 is complete remove col_date,col_datetime,col_tstz from exclusion list below.
     # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
-    # TODO: When issue-1634 is complete remove columns tagged with issue-1634 from exclusion list below.
+    # TODO: When issue-1669 is complete remove col_dec_10_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -236,18 +310,11 @@ def test_row_validation_core_types_to_bigquery():
             if _
             not in (
                 "id",
-                "col_int8",  # issue-1634
-                "col_int16",  # issue-1634
-                "col_int32",  # issue-1634
-                "col_dec_20",  # issue-1634
-                "col_dec_38",  # issue-1634
-                "col_dec_10_2",  # issue-1634
+                "col_dec_10_2",
                 "col_float32",
-                "col_float64",  # issue-1634
+                "col_float64",
                 "col_char_2",
                 "col_string",
-                "col_date",
-                "col_datetime",
                 "col_tstz",
             )
         ]
@@ -263,8 +330,43 @@ def test_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_large_decimals_to_bigquery():
+    """Db2 to BigQuery dvt_large_decimals row validation.
+    See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
+    This is testing large decimals for the primary key join column plus the hash columns.
+    Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
+    """
+    # Add col_data into hash value below once issue-1634 has been fixed.
+    row_validation_test(
+        tables="pso_data_validator.dvt_large_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_18",
+        use_random_row=True,
+        random_row_batch_size=5,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test(
+        "db2inst1.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id",
+        use_random_row=False,
+    )
+
+
+################################
+# CUSTOM-QUERY VALIDATION TESTS
+################################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_column_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types custom-query column validation"""
+    """Db2 to BigQuery dvt_core_types custom-query column validation"""
     custom_query_validation_test(
         source_query="select * from pso_data_validator.dvt_core_types", count_cols="*"
     )
@@ -275,7 +377,7 @@ def test_custom_query_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_custom_query_row_validation_core_types_to_bigquery():
-    """DB2 to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    """Db2 to BigQuery dvt_core_types custom-query row comparison-fields validation"""
     custom_query_validation_test(
         validation_type="row",
         source_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
@@ -284,6 +386,9 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     )
 
 
+##############################
+# FIND-TABLE VALIDATION TESTS
+##############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -293,6 +398,9 @@ def test_find_tables():
     find_tables_test()
 
 
+##################
+# RAW QUERY TESTS
+##################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,

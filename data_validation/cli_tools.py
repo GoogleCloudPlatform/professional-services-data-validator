@@ -127,6 +127,8 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["account", "Snowflake account to connect to"],
         ["database", "Database in snowflake to connect to"],
+        ["warehouse", "Warehouse in snowflake to connect to"],
+        ["role", "Role in snowflake to connect as"],
         ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
     consts.SOURCE_TYPE_POSTGRES: [
@@ -660,8 +662,8 @@ def _configure_row_parser(
                 defaults, so most users do not need to use this option unless they encounter errors."""
         ),
     )
-    # Generate-table-partitions and custom-query does not support random row
-    if not (is_generate_partitions or is_custom_query):
+    # Generate-table-partitions does not support random row
+    if not is_generate_partitions:
         optional_arguments.add_argument(
             "--use-random-row",
             "-rr",
@@ -673,17 +675,18 @@ def _configure_row_parser(
             "-rbs",
             help="Row batch size used for random row filters (default 10,000).",
         )
-        # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
-        # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
-        # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
-        # a required argument for validate row, validate column and validate schema.
-        required_arguments.add_argument(
-            "--tables-list",
-            "-tbls",
-            default=None,
-            required=True,
-            help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
-        )
+        if not is_custom_query:
+            # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
+            # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
+            # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
+            # a required argument for validate row, validate column and validate schema.
+            required_arguments.add_argument(
+                "--tables-list",
+                "-tbls",
+                default=None,
+                required=True,
+                help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+            )
 
     # Group for mutually exclusive required arguments. Either must be supplied
     mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(

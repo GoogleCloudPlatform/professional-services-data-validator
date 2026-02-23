@@ -27,11 +27,13 @@ import random
 import nox
 
 # Python version used for linting.
-DEFAULT_PYTHON_VERSION = "3.10"
+DEFAULT_PYTHON_VERSION = "3.11"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.9", "3.10", "3.11"]
-PYTHON_VERSIONS_ORACLE = ["3.9", "3.10"]
+# As of 2026-02-06 the only valid Python versions on python-multi image
+# are Python 3.11-3.14. DVT only supports 3.9-3.11 so 3.11 is the only
+# version we can currently test on.
+PYTHON_VERSIONS = ["3.11"]
 
 BLACK_PATHS = (
     "data_validation",
@@ -249,7 +251,7 @@ def integration_state(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS_ORACLE), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
 def integration_oracle(session):
     """Run Oracle integration tests.
     Ensure Oracle validation is running as expected.

@@ -193,12 +193,6 @@ def strftime_impala(t, op):
     return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
 
 
-def strftime_db2(translator, op):
-    """Date, Datetime, Timestamp formatting specific to DB2."""
-    # TODO(issue-1296): third_party/ibis/ibis_db2/registry.py:298 - AttributeError: 'Strftime' object has no attribute 'value'
-    pass
-
-
 def format_hashbytes_hive(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -445,7 +439,7 @@ def string_to_epoch(ts: str) -> int:
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
 def execute_epoch_seconds_new(op, data, **kwargs):
-    convert = getattr(data, "view", data.astype)
+    convert = data.astype
     try:
         series = convert(np.int64)
         # We need int64 below because NaT overflows int32.
@@ -561,7 +555,6 @@ RedShiftExprTranslator._registry[PaddedCharLength] = RedShiftExprTranslator._reg
 if Db2ExprTranslator:
     Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
-    Db2ExprTranslator._registry[ops.Strftime] = strftime_db2
     Db2ExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
     Db2ExprTranslator._registry[PaddedCharLength] = Db2ExprTranslator._registry[
         ops.StringLength

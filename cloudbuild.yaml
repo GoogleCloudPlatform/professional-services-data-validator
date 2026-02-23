@@ -18,31 +18,31 @@ options:
     name: 'projects/pso-kokoro-resources/locations/us-central1/workerPools/private-pool'
 steps:
 - id: lint
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=lint'
   waitFor: ['-']
 - id: unit
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=unit'
   waitFor: ['-']
 - id: unit-alpine
-  name: 'python:3.10-alpine'
+  name: 'python:3.11-alpine'
   script: |
     apk add bash
-    bash ./ci/build.sh python3.10
+    bash ./ci/build.sh python3.11
   env:
   - 'NOX_SESSION=unit_default_python'
   waitFor: ['-']
 - id: proxy-install
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/install_cloud_proxy.sh']
   waitFor: ["-"]
 - id: integration_mysql
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_mysql'
@@ -51,7 +51,7 @@ steps:
   waitFor: ['proxy-install']
   secretEnv: ['MYSQL_PASSWORD']
 - id: integration_postgres
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_postgres'
@@ -60,7 +60,7 @@ steps:
   secretEnv: ['POSTGRES_PASSWORD']
   waitFor: ['proxy-install']
 - id: integration_sql_server
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_sql_server'
@@ -69,21 +69,21 @@ steps:
   secretEnv: ['SQL_SERVER_PASSWORD']
   waitFor: ['proxy-install']
 - id: integration_bigquery
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_bigquery'
   - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
 - id: integration_spanner
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_spanner'
   - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
 - id: integration_teradata
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_teradata'
@@ -92,14 +92,14 @@ steps:
   secretEnv: ['TERADATA_PASSWORD']
   waitFor: ['-']
 - id: integration_state
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_state'
   - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
 - id: integration_oracle
-  name: 'gcr.io/pso-kokoro-resources/python-multi-oracle-21client'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_oracle'
@@ -109,7 +109,7 @@ steps:
   secretEnv: ['ORACLE_PASSWORD', 'POSTGRES_PASSWORD']
   waitFor: ['proxy-install']
 - id: integration_hive
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_hive'
@@ -117,7 +117,7 @@ steps:
   - 'HIVE_HOST=10.128.15.219'
   waitFor: ['-']
 - id: integration_snowflake
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_snowflake'
@@ -125,7 +125,7 @@ steps:
   secretEnv: ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD']
   waitFor: ['-']
 - id: integration_db2
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_db2'
@@ -134,14 +134,14 @@ steps:
   secretEnv: ['DB2_PASSWORD']
   waitFor: ['-']
 - id: integration_filesystem
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_filesystem'
   - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
 - id: integration_impala
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_impala'
@@ -149,7 +149,7 @@ steps:
   - 'IMPALA_HOST=10.128.0.118'
   waitFor: ['-']
 - id: integration_sybase
-  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi:deprecated-public-image-3380185c3bdc0a98ce7d02ac5fbf6908f8da461464b62f32b48f197ca56cf510'
   args: ['bash', './ci/build.sh']
   env:
   - 'NOX_SESSION=integration_sybase'

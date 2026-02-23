@@ -545,7 +545,7 @@ def test_row_validation_core_types_to_bigquery():
     row_validation_test(
         tc="bq-conn",
         hash=cols,
-        use_randow_row=True,
+        use_random_row=True,
         random_row_batch_size=5,
     )
 
@@ -646,7 +646,7 @@ def test_row_validation_large_decimals_to_bigquery():
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
-        # use_randow_row=True,
+        # use_random_row=True,
         # random_row_batch_size=5,
     )
 
@@ -734,10 +734,10 @@ def test_varchar_pk_query_row_validation_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 
@@ -819,6 +819,26 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
         comp_fields="col_int64,col_varchar_30,col_date",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_validation_random_rows():
+    """Oracle to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    df = custom_query_validation_test(
+        validation_type="row",
+        source_query="select * from pso_data_validator.dvt_core_types",
+        target_query="select * from pso_data_validator.dvt_core_types",
+        concat="id,col_varchar_30,col_date",
+        use_random_row=True,
+        random_row_batch_size=2,
+        filter_status=None,
+        assert_df_not_empty=True,
+    )
+    # There should only be 2 rows in the result set due to random row sampling.
+    assert len(df) == 2
 
 
 @mock.patch(
@@ -1200,7 +1220,7 @@ def test_row_validation_uuid_rr_oracle_to_postgres():
         tables="pso_data_validator.dvt_uuid_id",
         tc="pg-conn",
         hash="*",
-        use_randow_row=True,
+        use_random_row=True,
     )
 
 
