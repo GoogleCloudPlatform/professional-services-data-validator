@@ -4,6 +4,14 @@
 
 - BigQuery does not have a 32 bit float data type. Validations of systems containing 32 bit floats (e.g. Oracle BINARY_FLOAT) will likely be problematic when compared to FLOAT64.
 
+## Db2 LUW
+
+- Db2 LUW XML data type is not compatible with the LENGTH function and is excluded from any column validations other than `--count`.
+
+## Db2 z/OS
+
+- Db2 z/OS XML data type is not compatible with aggregation functions or the LENGTH and is excluded from all column validations.
+
 ## Oracle
 
 - Requires the `oracledb` package to be installed as an extra dependency.

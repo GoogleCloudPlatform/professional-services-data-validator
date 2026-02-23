@@ -673,10 +673,18 @@ class ConfigManager(object):
             "db2", source_column_name, target_column_name, ["XML"]
         )
 
-    def _is_db2_zos_blob(self, source_column_name: str, target_column_name: str) -> bool:
-        """Returns True when either source or target column is Db2 BLOB data type."""
+    def _is_db2_zos_blob(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is Db2 z/OS BLOB data type."""
         return self._is_raw_data_type(
             "db2_zos", source_column_name, target_column_name, ["BLOB"]
+        )
+
+    def _is_db2_zos_xml(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 z/OS XML data type."""
+        return self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["XML"]
         )
 
     def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
@@ -1151,6 +1159,11 @@ class ConfigManager(object):
             elif self._is_sql_server_image(column, column):
                 logging.info(
                     f"Skipping {agg_type} on {column} due to SQL Server image data type"
+                )
+                continue
+            elif self._is_db2_zos_xml(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to Db2 z/OS XML data type"
                 )
                 continue
             elif agg_type != "count" and self._is_db2_xml(column, column):
