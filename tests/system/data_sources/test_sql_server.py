@@ -953,6 +953,25 @@ def test_row_validation_uuid_hash_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_camel_case():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
+    table name testing should be part of find-tables testing.
+    Regarding column names: DVT tends to lower case all column names and this test confirms name matching
+    and any recursive SQL is valid.
+    """
+    row_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+        hash="*",
+    )
+
+
 ###############################
 # Custom query validation
 ###############################
