@@ -300,6 +300,9 @@ def test_generate_partitions(cloud_sql, tmp_path: pathlib.Path):
     )
 
 
+###############################
+# Schema validation
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -376,6 +379,51 @@ def test_schema_validation_not_null_vs_nullable():
     null_not_null_assertions(df)
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_camel_case():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
+    table name testing should be part of find-tables testing.
+    Regarding column names: DVT tends to lower case all column names and this test confirms name matching
+    and any recursive SQL is valid.
+    """
+    schema_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_identifiers():
+    """Test schema validation on a table with special characters in table and column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+###############################
+# Column validation
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -529,6 +577,71 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_camel_case():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
+    table name testing should be part of find-tables testing.
+    Regarding column names: DVT tends to lower case all column names and this test confirms name matching
+    and any recursive SQL is valid.
+    """
+    cols = "*"
+    column_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+        count_cols=cols,
+        sum_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_identifiers():
+    """Test column validation on a table with special characters in table and column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt-identifier$_#",
+        count_cols="*",
+        filters="'col#hash' IS NOT NULL",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_uuid_to_bigquery():
+    """Test column validation with UUID column and primary key to BigQuery"""
+    column_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        count_cols="*",
+        sum_cols="*",
+        min_cols="*",
+    )
+
+
+###############################
+# Row validation
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -709,22 +822,6 @@ def test_row_validation_datetime_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions_datetime_pk():
-    """Test generate partitions on datetime primary key"""
-    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
-    partition_table_test(
-        EXPECTED_DATETIME_ID_PARTITION_FILTER,
-        pk="id",
-        tables="pso_data_validator.dvt_datetime_id",
-        filters="other_data IS NOT NULL",
-        partition_num=2,
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_row_validation_pangrams_to_bigquery():
     """SQL Server to BigQuery dvt_pangrams row validation.
     This is testing comparisons across a wider set of characters than standard test data.
@@ -798,6 +895,71 @@ def test_row_validation_tricky_strings_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_many_columns():
+    """SQL Server dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(expected_config_managers=2)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_identifiers():
+    """Test row validation on a table with special characters in table and column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_hash_to_bigquery():
+    """Test row validation with UUID column and primary key to BigQuery"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        hash="*",
+    )
+
+
+###############################
+# Custom query validation
+###############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_column_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types custom-query column validation"""
     custom_query_validation_test(tc="bq-conn", count_cols="*")
@@ -835,26 +997,6 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_find_tables():
-    """SQL Server to BigQuery test of find-tables command."""
-    find_tables_test()
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_many_columns():
-    """SQL Server dvt_many_cols row validation.
-    This is testing many columns logic for --hash, there's a Teradata test for --concat.
-    """
-    row_validation_many_columns_test(expected_config_managers=2)
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_custom_query_row_validation_many_columns():
     """SQL Server dvt_many_cols custom-query row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
@@ -864,122 +1006,40 @@ def test_custom_query_row_validation_many_columns():
     )
 
 
+###############################
+# Generate partitions
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_identifiers():
-    """Test schema validation on a table with special characters in table and column names."""
-    schema_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
-        tc="mock-conn",
+def test_generate_partitions_datetime_pk():
+    """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
+    partition_table_test(
+        EXPECTED_DATETIME_ID_PARTITION_FILTER,
+        pk="id",
+        tables="pso_data_validator.dvt_datetime_id",
+        filters="other_data IS NOT NULL",
+        partition_num=2,
     )
 
 
+###############################
+# Find-tables tests
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_identifiers():
-    """Test column validation on a table with special characters in table and column names."""
-    column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt-identifier$_#",
-        count_cols="*",
-        filters="'col#hash' IS NOT NULL",
-    )
+def test_find_tables():
+    """SQL Server to BigQuery test of find-tables command."""
+    find_tables_test()
 
 
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_identifiers():
-    """Test row validation on a table with special characters in table and column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
-        tc="mock-conn",
-        hash="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_schema_validation_reserved_words():
-    """Test schema validation on a table with reserved words in column names."""
-    schema_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_reserved_words():
-    """Test column validation on a table with reserved words in column names."""
-    column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        count_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-        hash="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_comp_fields_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-        comp_fields="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_uuid_to_bigquery():
-    """Test column validation with UUID column and primary key to BigQuery"""
-    column_validation_test(
-        tables="pso_data_validator.dvt_uuid_id",
-        count_cols="*",
-        sum_cols="*",
-        min_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_uuid_hash_to_bigquery():
-    """Test row validation with UUID column and primary key to BigQuery"""
-    row_validation_test(
-        tables="pso_data_validator.dvt_uuid_id",
-        hash="*",
-    )
-
-
+###############################
+# Raw SQL tests
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
