@@ -153,8 +153,8 @@ def _cast(t, op):
         # Max expected precision 38 plus 2 for minus sign and decimal place.
         return sa.cast(sa_arg, sa.String(40))
     elif arg_dtype.is_floating() and typ.is_string():
-        # Max expected precision 16 plus 2 for minus sign and decimal place.
-        return sa.cast(sa_arg, sa.String(18))
+        # Max expected precision 38 plus 2 for minus sign and decimal place.
+        return sa.cast(sa_arg, sa.String(40))
 
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
