@@ -667,6 +667,14 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_db2_blob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 (LUW and z/OS) BLOB data type."""
+        return self._is_raw_data_type(
+            "db2", source_column_name, target_column_name, ["BLOB"]
+        ) or self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["BLOB"]
+        )
+
     def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
         """Returns True when either source or target column is Oracle LOB data type."""
         return self._is_raw_data_type(
@@ -1345,6 +1353,14 @@ class ConfigManager(object):
             if self._is_sql_server_image(source_column, target_column):
                 logging.info(
                     f"Skipping column {source_column} due to SQL Server image data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+            if self._is_db2_blob(source_column, target_column):
+                # Db2 BLOB is incompatible with Db2s own HEX function.
+                # Users would need to use a custom query to a custom UDF to row validate these.
+                logging.info(
+                    f"Skipping column {source_column} due to Db2 BLOB data type"
                 )
                 result_source_columns.pop(source_column)
                 result_target_columns.pop(target_column)
