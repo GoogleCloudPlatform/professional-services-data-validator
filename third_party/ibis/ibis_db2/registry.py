@@ -156,6 +156,10 @@ def _cast(t, op):
         # Max expected precision 38 plus 2 for minus sign and decimal place.
         return sa.cast(sa_arg, sa.String(40))
 
+    if arg_dtype.is_time() and typ.is_string():
+        # Force colons as time separator with CHAR(column,JIS) expression.
+        return sa.func.char(sa_arg, sa.literal_column("JIS"))
+
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.lower(sa.func.hex(sa_arg))

@@ -164,6 +164,7 @@ INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` VALUES
         ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
         ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5);
 
+-- Comparison table for SQL Server specific test table.
 CREATE OR REPLACE TABLE pso_data_validator.dvt_sql_server_types
 (   id                 INT64 NOT NULL
 ,   col_int1           INT64
@@ -244,7 +245,6 @@ INSERT INTO pso_data_validator.dvt_db2_types VALUES
 ,CAST('Hello BLOB2' AS BYTES),'ABC','DEF','GHI','JKL'
 ,TIME'00:00:02'
 ,'<xml></xml>');
-
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_binary`
 (   binary_id       BYTES(16) NOT NULL

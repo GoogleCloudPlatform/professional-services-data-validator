@@ -99,11 +99,12 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_db2_types():
-    """Db2 to Db2 dvt_db2_types schema validation"""
+def test_schema_validation_db2_types_to_bigquery():
+    """Db2 to BigQuery dvt_db2_types schema validation"""
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",
-        tc="mock-conn",
+        tc="bq-conn",
+        allow_list=("int16:int64,int32:int64," "decimal:decimal(38,9)"),
     )
 
 
@@ -334,7 +335,7 @@ def test_row_validation_db2_types_to_bigquery():
     # TODO Add col_blob to list below once issue-1354 is complete.
     # TODO Add col_char_2 to list below once issue-1354 is complete.
     # TODO Add col_char_bit,col_varchar_bit to list below once issue-1655 is complete.
-    cols = "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,col_nvarchar_30"
+    cols = "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,col_nvarchar_30,col_time"
     row_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
