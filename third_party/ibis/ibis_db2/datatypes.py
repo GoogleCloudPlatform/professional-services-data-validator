@@ -39,8 +39,17 @@ _type_mapping = {
 # TODO Temporarily changed to 300 until issue-1296 is complete.
 ibis_type_to_sqla[dt.String] = sat.String(length=300)
 
+DB2Dialect_ibm_db.ischema_names["BINARY"] = sat.BINARY
 DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
+DB2Dialect_ibm_db.ischema_names["VARBINARY"] = sat.BINARY
+# Db2 z/OS variants.
+DB2Dialect_ibm_db.ischema_names["VARBIN"] = DB2Dialect_ibm_db.ischema_names["VARBINARY"]
 DB2Dialect_ibm_db.ischema_names["VARG"] = DB2Dialect_ibm_db.ischema_names["VARGRAPHIC"]
+
+
+@dt.dtype.register(DB2Dialect_ibm_db, sat.BINARY)
+def sa_sf_binary(_, satype, nullable=True):
+    return dt.Binary(nullable=nullable)
 
 
 def _get_type(typename) -> dt.DataType:
