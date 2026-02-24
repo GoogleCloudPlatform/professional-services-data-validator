@@ -226,8 +226,10 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 ,   col_nclob       STRING
 ,   col_dbclob      STRING
 ,   col_blob        BYTES
-,   col_char_bit    BYTES
-,   col_varchar_bit BYTES
+,   col_char_bit    STRING
+,   col_varchar_bit STRING
+--,   col_char_bit    BYTES
+--,   col_varchar_bit BYTES
 ,   col_graphic     STRING
 ,   col_vargraphic  STRING
 ,   col_date        DATE
