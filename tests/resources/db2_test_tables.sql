@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_types
 ,   col_smallint    SMALLINT
 ,   col_int         INTEGER
 ,   col_bigint      BIGINT
+,   col_dec_10_2    DECIMAL(10,2)
 ,   col_decfloat_16 DECFLOAT(16)
 ,   col_decfloat_32 DECFLOAT(34)
 ,   col_clob        CLOB
@@ -80,10 +81,16 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_types
 COMMENT ON TABLE pso_data_validator.dvt_core_types IS 'Db2 data types integration test table';
 
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
-(1,123,12345,1123456789,123.456,123456.789
-,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB'
+(1,123,12345,1123456789,1.1,123.456,123456.789
+,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
 ,CAST('Hello BLOB' AS BLOB),'ABC','DEF','GHI','JKL'
 ,TIME'00:00:01'
+,'<xml></xml>');
+INSERT INTO pso_data_validator.dvt_db2_types VALUES
+(2,123,12345,1123456789,0,123.456,123456.789
+,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2'
+,CAST('Hello BLOB2' AS BLOB),'ABC','DEF','GHI','JKL'
+,TIME'00:00:02'
 ,'<xml></xml>');
 COMMIT;
 
