@@ -217,6 +217,7 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 ,   col_smallint    INT64
 ,   col_int         INT64
 ,   col_bigint      INT64
+,   col_dec_10_2    NUMERIC
 ,   col_decfloat_16 NUMERIC
 ,   col_decfloat_32 NUMERIC
 ,   col_clob        STRING
@@ -234,10 +235,15 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 ) OPTIONS (description='Db2 data types integration test table (BigQuery target)');
 
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
-(1,123,12345,1123456789,123.456,123456.789
+(1,123,12345,1123456789,1.1,123.456,123456.789
 ,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
 ,CAST('Hello BLOB' AS BYTES),'ABC','DEF','GHI','JKL'
 ,TIME'00:00:01'
+,'<xml></xml>'),
+(2,123,12345,1123456789,0,123.456,123456.789
+,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2'
+,CAST('Hello BLOB2' AS BYTES),'ABC','DEF','GHI','JKL'
+,TIME'00:00:02'
 ,'<xml></xml>');
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_binary`
