@@ -105,7 +105,11 @@ def test_schema_validation_db2_types_to_bigquery():
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
-        allow_list=("int16:int64,int32:int64," "decimal:decimal(38,9)"),
+        allow_list=(
+            "int16:int64,int32:int64,decimal:decimal(38,9)"
+            # TODO Allowing string:binary because FOR BIT DATA is identified as string, see issue-1655.
+            ",string:binary"
+        ),
     )
 
 
@@ -186,10 +190,10 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types column validation"""
     cols = "*"
-    # TODO Add col_char_bit into cols below once issue-1655 is resolved.
+    # TODO Add col_char_bit and col_varchar_bit into cols below once issue-1655 is resolved.
     cols = (
         "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,col_clob,col_nvarchar_30,col_nchar_2,"
-        "col_nclob,col_dbclob,col_blob,col_varchar_bit,col_graphic,col_vargraphic,col_xml"
+        "col_nclob,col_dbclob,col_blob,col_graphic,col_vargraphic,col_xml"
     )
     column_validation_test(
         tc="bq-conn",
