@@ -70,12 +70,18 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_types
 ,   col_nvarchar_30 NVARCHAR(30)
 ,   col_nchar_2     NCHAR(2)
 ,   col_nclob       NCLOB
+,   col_dbclob      DBCLOB
 ,   col_blob        BLOB
 ,   col_char_bit    CHAR(5) FOR BIT DATA
 ,   col_varchar_bit VARCHAR(5) FOR BIT DATA
 ,   col_graphic     GRAPHIC(3)
 ,   col_vargraphic  VARGRAPHIC(3)
+,   col_date        DATE
+,   col_timestamp   TIMESTAMP(6)
 ,   col_time        TIME
+-- TODO Binary columns to be added after issue-1354 is merged.
+--,   col_binary      BINARY(3)
+--,   col_varbinary   VARBINARY(10)
 ,   col_xml         XML
 );
 COMMENT ON TABLE pso_data_validator.dvt_core_types IS 'Db2 data types integration test table';
@@ -84,13 +90,15 @@ INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (1,123,12345,1123456789,1.1,123.456,123456.789
 ,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
 ,CAST('Hello BLOB' AS BLOB),'ABC','DEF','GHI','JKL'
-,TIME'00:00:01'
+,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456',TIME'00:00:01'
+--,CAST('A' AS BINARY(3)),CAST('A' AS VARBINARY(10))
 ,'<xml></xml>');
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (2,123,12345,1123456789,0,123.456,123456.789
 ,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2'
 ,CAST('Hello BLOB2' AS BLOB),'ABC','DEF','GHI','JKL'
-,TIME'00:00:02'
+,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:02.001',TIME'00:00:02'
+--,CAST('B' AS BINARY(3)),CAST('B' AS VARBINARY(10))
 ,'<xml></xml>');
 COMMIT;
 
