@@ -143,9 +143,10 @@ def _cast(t, op):
                 + "0."
                 + ("9" * arg_dtype.scale)
             )
+            # Using sa.literal_column below because z/OS does not support parameterized queries.
             return sa.func.ltrim(
                 sa.func.regexp_replace(
-                    sa.func.to_char(sa_arg, fmt),
+                    sa.func.to_char(sa_arg, sa.literal_column(fmt)),
                     sa.literal_column("'\\.?0+$'"),
                     sa.literal_column("''"),
                 )
