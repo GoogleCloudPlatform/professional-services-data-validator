@@ -117,7 +117,7 @@ def _is_inf(t, op):
     return sa.or_(sa_arg == inf, sa_arg == -inf)
 
 
-def _cast(t, op):
+def db2_luw_cast(t, op):
     arg = op.arg
     typ = op.to
     arg_dtype = arg.output_dtype
@@ -505,7 +505,7 @@ operation_registry.update(
         ops.Literal: _literal,
         ops.TableColumn: _table_column,
         # types
-        ops.Cast: _cast,
+        ops.Cast: db2_luw_cast,
         # Floating
         ops.IsNan: _is_nan,
         ops.IsInf: _is_inf,

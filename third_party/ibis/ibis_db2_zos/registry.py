@@ -17,6 +17,7 @@ import sqlalchemy as sa
 
 from third_party.ibis.ibis_db2.registry import (
     operation_registry as db2_luw_operation_registry,
+    db2_luw_cast,
     db2_luw_strftime,
 )
 
@@ -50,6 +51,43 @@ def _sa_strftime(t, op):
     return db2_luw_strftime(t, op, allow_query_params=False)
 
 
+def db2_zos_cast(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    sa_arg = t.translate(arg)
+
+    if (
+        arg_dtype.is_decimal()
+        and typ.is_string()
+        and arg_dtype.scale is not None
+        and arg_dtype.scale > 0
+    ):
+        # The Db2 LUW regexp_replace technique is not valid for z/OS because regexp_replace is not always available, from the docs:
+        #   "Passthrough-only expression: This function is passthrough-only and cannot run on Db2 for z/OS® without acceleration."
+        #
+        # We use an alternative RTRIM based technique in this z/OS specialization.
+
+        # Db2 always pads fractional part of the number out to length of scale.
+        # We need to remove those insignificant digits.
+        precision = arg_dtype.precision or 31
+        fmt = ("9" * (precision - arg_dtype.scale - 1)) + "0." + ("9" * arg_dtype.scale)
+        # Using sa.literal_column below because z/OS does not support parameterized queries.
+        return sa.func.ltrim(
+            sa.func.rtrim(
+                sa.func.rtrim(
+                    sa.func.to_char(sa_arg, sa.literal_column(fmt)),
+                    sa.literal_column("'0'"),
+                ),
+                sa.literal_column("'.'"),
+            )
+        )
+
+    return db2_luw_cast(t, op)
+
+
+operation_registry[ops.Cast] = db2_zos_cast
 operation_registry[ops.HashBytes] = _sa_format_hashbytes
 operation_registry[ops.IfNull] = _sa_ifnull
 operation_registry[ops.RStrip] = _sa_whitespace_rstrip
