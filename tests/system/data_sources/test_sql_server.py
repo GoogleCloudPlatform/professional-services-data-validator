@@ -980,10 +980,7 @@ def test_row_validation_camel_case_auto_pk():
 def test_row_validation_camel_case_pk_option():
     """Compares a source table with camel case identifiers with a target with lower case identifiers.
 
-    The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
-    table name testing should be part of find-tables testing.
-    Regarding column names: DVT tends to lower case all column names and this test confirms name matching
-    and any recursive SQL is valid.
+    This test is primarily concerned with passing the --primary-keys option for a CamelCase column.
     """
     row_validation_test(
         tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
