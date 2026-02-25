@@ -134,8 +134,31 @@ def _cast(t, op):
                 # Restring target string length to appropriate length for integer size.
                 return sa.cast(sa_arg, sa.String(string_length))
     elif arg_dtype.is_decimal() and typ.is_string():
+        if arg_dtype.scale is not None and arg_dtype.scale > 0:
+            # Db2 always pads fractional part of the number out to length of scale.
+            # We need to remove those insignificant digits.
+            precision = arg_dtype.precision or 31
+            fmt = (
+                ("9" * (precision - arg_dtype.scale - 1))
+                + "0."
+                + ("9" * arg_dtype.scale)
+            )
+            return sa.func.ltrim(
+                sa.func.regexp_replace(
+                    sa.func.to_char(sa_arg, fmt),
+                    sa.literal_column("'\\.?0+$'"),
+                    sa.literal_column("''"),
+                )
+            )
         # Max expected precision 38 plus 2 for minus sign and decimal place.
         return sa.cast(sa_arg, sa.String(40))
+    elif arg_dtype.is_floating() and typ.is_string():
+        # Max expected precision 38 plus 2 for minus sign and decimal place.
+        return sa.cast(sa_arg, sa.String(40))
+
+    if arg_dtype.is_time() and typ.is_string():
+        # Force colons as time separator with CHAR(column,JIS) expression.
+        return sa.func.char(sa_arg, sa.literal_column("JIS"))
 
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
