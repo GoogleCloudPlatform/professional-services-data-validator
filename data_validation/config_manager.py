@@ -731,16 +731,19 @@ class ConfigManager(object):
         """Returns True when either source or target column is of a client & type."""
         raw_source_types = self.get_source_raw_data_types()
         raw_target_types = self.get_target_raw_data_types()
+        # Raw data type map uses casefold column name as the key.
         return bool(
             (
                 self.source_client.name == client_name
                 and raw_source_types
-                and raw_source_types.get(source_column_name, [None])[0] in type_list
+                and raw_source_types.get(source_column_name.casefold(), [None])[0]
+                in type_list
             )
             or (
                 self.target_client.name == client_name
                 and raw_target_types
-                and raw_target_types.get(target_column_name, [None])[0] in type_list
+                and raw_target_types.get(target_column_name.casefold(), [None])[0]
+                in type_list
             )
         )
 
