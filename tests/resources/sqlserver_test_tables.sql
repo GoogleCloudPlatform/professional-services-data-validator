@@ -214,9 +214,6 @@ INSERT INTO pso_data_validator.dvt_large_decimals VALUES
 ,12345678.123456789012345678901234567890
 ,987654321012345678,12345678901234567.1);
 
--- We have to use the exact length for the varbinary column
--- because SQL Server right pads values to the length, not
--- very "var"!
 DROP TABLE pso_data_validator.dvt_binary;
 CREATE TABLE pso_data_validator.dvt_binary
 (   binary_id       varbinary(9) NOT NULL PRIMARY KEY
@@ -225,11 +222,11 @@ CREATE TABLE pso_data_validator.dvt_binary
 );
 CREATE UNIQUE INDEX dvt_binary_int_id_uk ON pso_data_validator.dvt_binary (int_id);
 EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test both binary pk matching and binary hash/concat comparisons', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_binary';
-INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-1' AS binary), 1, 'Row 1');
-INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-2' AS binary), 2, 'Row 2');
-INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-3' AS binary), 3, 'Row 3');
-INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS binary), 4, 'Row 4');
-INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS binary), 5, 'Row 5');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-1' AS varbinary), 1, 'Row 1');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-2' AS varbinary), 2, 'Row 2');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-3' AS varbinary), 3, 'Row 3');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-4' AS varbinary), 4, 'Row 4');
+INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-5' AS varbinary), 5, 'Row 5');
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_fixed_char_id;
 CREATE TABLE pso_data_validator.dvt_fixed_char_id
