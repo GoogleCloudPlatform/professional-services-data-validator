@@ -828,19 +828,19 @@ class ConfigManager(object):
 
     def build_and_append_pre_agg_calc_config(
         self,
-        source_casefold_column: str,
-        target_casefold_column: str,
-        calc_func: str,
-        column_position: int,
+        source_column,
+        target_column,
+        calc_func,
+        column_position,
         cast_type: str = None,
         depth: int = 0,
     ):
         """Create calculated field config used as a pre-aggregation step. Appends to calculated fields if does not already exist and returns created config."""
         calculated_config = {
-            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [source_casefold_column],
-            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [target_casefold_column],
+            consts.CONFIG_CALCULATED_SOURCE_COLUMNS: [source_column],
+            consts.CONFIG_CALCULATED_TARGET_COLUMNS: [target_column],
             consts.CONFIG_FIELD_ALIAS: self._prefix_calc_col_name(
-                source_casefold_column, calc_func, column_position
+                source_column, calc_func, column_position
             ),
             consts.CONFIG_TYPE: calc_func,
             consts.CONFIG_DEPTH: depth,
@@ -849,7 +849,7 @@ class ConfigManager(object):
         if calc_func == consts.CONFIG_CAST and cast_type is not None:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = cast_type
             calculated_config[consts.CONFIG_FIELD_ALIAS] = self._prefix_calc_col_name(
-                source_casefold_column, f"{calc_func}_{cast_type}", column_position
+                source_column, f"{calc_func}_{cast_type}", column_position
             )
 
         existing_calc_fields = [
@@ -862,8 +862,8 @@ class ConfigManager(object):
 
     def append_pre_agg_calc_field(
         self,
-        source_casefold_column: str,
-        target_casefold_column: str,
+        source_column: str,
+        target_column: str,
         agg_type: str,
         column_type: str,
         target_column_type: str,
@@ -876,8 +876,8 @@ class ConfigManager(object):
         if any(_ in ["json", "!json"] for _ in [column_type, target_column_type]):
             # JSON data which needs casting to string before we apply a length function.
             pre_calculated_config = self.build_and_append_pre_agg_calc_config(
-                source_casefold_column,
-                target_casefold_column,
+                source_column,
+                target_column,
                 consts.CONFIG_CAST,
                 column_position,
                 cast_type="string",
@@ -890,7 +890,7 @@ class ConfigManager(object):
             calc_func = consts.CALC_FIELD_LENGTH
 
         elif column_type in ["string", "!string"]:
-            if self._is_sql_server_text(source_casefold_column, target_casefold_column):
+            if self._is_sql_server_text(source_column, target_column):
                 calc_func = consts.CALC_FIELD_BYTE_LENGTH
             else:
                 calc_func = consts.CALC_FIELD_LENGTH
@@ -908,8 +908,8 @@ class ConfigManager(object):
                 or self.target_client.name == "bigquery"
             ):
                 pre_calculated_config = self.build_and_append_pre_agg_calc_config(
-                    source_casefold_column,
-                    target_casefold_column,
+                    source_column,
+                    target_column,
                     consts.CONFIG_CAST,
                     column_position,
                     cast_type="timestamp",
@@ -1028,8 +1028,8 @@ class ConfigManager(object):
         """Return list of aggregate objects of given agg_type."""
 
         def require_pre_agg_calc_field(
-            source_casefold_column: str,
-            target_casefold_column: str,
+            source_column: str,
+            target_column: str,
             column_type: str,
             target_column_type: str,
             agg_type: str,
@@ -1044,10 +1044,8 @@ class ConfigManager(object):
                     # Oracle LOBs & SQL Server TEXT need a length before the count().
                     # TODO As does Sybase TEXT, see issue-1675.
                     return self._is_oracle_lob(
-                        source_casefold_column, target_casefold_column
-                    ) or self._is_sql_server_text(
-                        source_casefold_column, target_casefold_column
-                    )
+                        source_column, target_column
+                    ) or self._is_sql_server_text(source_column, target_column)
                 else:
                     return True
             elif self._is_uuid(column_type, target_column_type):
@@ -1057,9 +1055,7 @@ class ConfigManager(object):
                     # Oracle BLOB is invalid for use with SQL COUNT function.
                     # The expression below returns True if client is Oracle which
                     # has the effect of triggering use of byte_length transformation.
-                    return self._is_oracle_lob(
-                        source_casefold_column, target_casefold_column
-                    )
+                    return self._is_oracle_lob(source_column, target_column)
                 else:
                     # Convert to length for any min/max/sum on binary columns.
                     return True
@@ -1154,16 +1150,16 @@ class ConfigManager(object):
                 continue
 
             if require_pre_agg_calc_field(
-                column,
-                column,
+                casefold_source_columns[column],
+                casefold_target_columns[column],
                 column_type,
                 target_column_type,
                 agg_type,
                 cast_to_bigint,
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
-                    column,
-                    column,
+                    casefold_source_columns[column],
+                    casefold_target_columns[column],
                     agg_type,
                     column_type,
                     target_column_type,
