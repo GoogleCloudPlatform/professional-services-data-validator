@@ -934,8 +934,8 @@ class ConfigManager(object):
             raise ValueError(f"Unsupported column type: {column_type}")
 
         calculated_config = self.build_and_append_pre_agg_calc_config(
-            source_casefold_column,
-            target_casefold_column,
+            source_column,
+            target_column,
             calc_func,
             column_position,
             cast_type=cast_type,
