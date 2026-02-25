@@ -492,10 +492,6 @@ def test_column_validation_ss_types_to_bigquery():
             "col_money",
             "col_smallmoney",
             "col_ntext",
-            # binary columns are excluded below because SQL Server right pads varbinary
-            # values to the length. Not very VARbinary!
-            "col_varbinary",
-            "col_varbinary_max",
         )
     ]
     # TODO Include col_int1 in max_cols when working on issue-1585.
@@ -703,10 +699,6 @@ def test_row_validation_comp_fields_ss_types_to_bigquery():
                 # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
-                # binary columns are excluded below because SQL Server right pads varbinary
-                # values to the length. Not very VARbinary!
-                "col_varbinary",
-                "col_varbinary_max",
             )
         ]
     )
@@ -735,10 +727,6 @@ def test_row_validation_ss_types_to_bigquery():
                 # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
-                # binary columns are excluded below because SQL Server right pads varbinary
-                # values to the length. Not very VARbinary!
-                "col_varbinary",
-                "col_varbinary_max",
             )
         ]
     )

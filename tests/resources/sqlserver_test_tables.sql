@@ -145,7 +145,7 @@ INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
 ,'Hello DVT','A ','Hello DVT','A ','Hello DVT','Hello DVT'
 ,'1970-01-01','1970-01-01 00:00:01','1970-01-01 00:00:01','1970-01-01 01:00:00'
 ,cast('1970-01-01 00:00:01 -01:00' as datetimeoffset(3)),'00:00:01.123'
-,CAST('A' AS binary),CAST('A' AS binary),CAST('A' AS binary),'TRUE',CAST('A' AS binary)
+,CAST('A' AS binary),CAST('A' AS varbinary),CAST('A' AS varbinary),'TRUE',CAST('A' AS varbinary)
 );
 INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
 (2,210,22222,2000000000,223456789012345678
@@ -153,7 +153,7 @@ INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
 ,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
 ,'1970-02-02','1970-02-02 00:00:02','1970-02-02 00:00:02','1970-02-02 02:00:00'
 ,cast('1970-02-02 00:00:01 -02:00' as datetimeoffset(3)),'00:00:02.123'
-,CAST('B' AS binary),CAST('B' AS binary),CAST('B' AS binary),'FALSE',CAST('A' AS binary)
+,CAST('B' AS binary),CAST('B' AS varbinary),CAST('B' AS varbinary),'FALSE',CAST('A' AS varbinary)
 );
 
 DROP TABLE pso_data_validator.dvt_null_not_null;
