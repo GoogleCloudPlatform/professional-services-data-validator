@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sqlalchemy as sa
+
 import re
+from typing import Iterable, Optional, Tuple
+
+import sqlalchemy as sa
 
 import ibis.expr.datatypes as dt
-from typing import Iterable, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
@@ -28,11 +30,11 @@ class Backend(BaseAlchemyBackend):
     def do_connect(
         self,
         host: str = "localhost",
-        user: str = None,
-        password: str = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
         port: int = 50000,
-        database: str = None,
-        url: str = None,
+        database: Optional[str] = None,
+        url: Optional[str] = None,
         driver: str = "ibm_db_sa",
     ) -> None:
         if url is None:
