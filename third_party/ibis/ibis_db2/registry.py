@@ -158,7 +158,7 @@ def db2_luw_cast(t, op):
         return sa.cast(sa_arg, sa.String(40))
 
     if arg_dtype.is_time() and typ.is_string():
-        # Force colons as time separator which CHAR(column,JIS) expression.
+        # Force colons as time separator with CHAR(column,JIS) expression.
         return sa.func.char(sa_arg, sa.literal_column("JIS"))
 
     if arg_dtype.is_binary() and typ.is_string():
@@ -352,10 +352,6 @@ def _reduction(func_name):
         return func(t.translate(arg))
 
     return reduction_compiler
-
-
-def _count_start(sa_func):
-    return sa_func
 
 
 def _reduction_count(sa_func):

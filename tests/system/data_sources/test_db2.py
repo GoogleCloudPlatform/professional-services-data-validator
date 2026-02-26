@@ -103,7 +103,7 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_db2_types():
+def test_schema_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types schema validation"""
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",

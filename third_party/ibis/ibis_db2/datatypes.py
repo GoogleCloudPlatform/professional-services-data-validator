@@ -15,10 +15,10 @@
 import ibm_db_dbi
 
 import ibis.expr.datatypes as dt
-from ibis.backends.base.sql.alchemy.datatypes import ibis_type_to_sqla
 from ibm_db_sa.ibm_db import DB2Dialect_ibm_db
 import sqlalchemy.types as sat
 
+from ibis.backends.base.sql.alchemy import to_sqla_type
 
 # Types from https://github.com/ibmdb/python-ibmdb/blob/master/IBM_DB/ibm_db/ibm_db_dbi.py
 _type_mapping = {
@@ -36,8 +36,13 @@ _type_mapping = {
     ibm_db_dbi.ROWID: dt.String,
 }
 
-# TODO Temporarily changed to 300 until issue-1296 is complete.
-ibis_type_to_sqla[dt.String] = sat.String(length=300)
+
+@to_sqla_type.register(DB2Dialect_ibm_db, dt.String)
+def _string(_, itype):
+    """Include a limit for casts to String due to line size limits supported by Db2 concat()."""
+    # TODO Temporarily changed to 300 until issue-1296 is complete.
+    return sa.sql.sqltypes.String(length=300)
+
 
 DB2Dialect_ibm_db.ischema_names["BINARY"] = sat.BINARY
 DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
