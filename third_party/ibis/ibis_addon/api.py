@@ -174,6 +174,9 @@ def db2_type_string_length(
         return 19
     elif ibis_column.is_integer():
         return ibis_integer_string_length(ibis_column)
+    elif ibis_column.is_binary() and raw_data_type:
+        # Position 1 in raw_types is the data length.
+        return raw_data_type[1]
     else:
         return None
 
