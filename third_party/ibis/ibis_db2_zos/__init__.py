@@ -27,6 +27,8 @@ class Backend(Db2LUWBackend):
 
     char_datatype = "CHAR"
 
+    for_bit_data_codepage = 65535
+
     def do_connect(
         self,
         host: str = "localhost",

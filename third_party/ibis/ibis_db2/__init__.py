@@ -41,6 +41,8 @@ class Backend(BaseAlchemyBackend):
 
     char_datatype = "CHARACTER"
 
+    for_bit_data_codepage = 0
+
     def do_connect(
         self,
         host: str = "localhost",
@@ -157,7 +159,10 @@ class Backend(BaseAlchemyBackend):
 
             for row in rows:
                 colname, typename, col_length, col_scale, nullable, codepage = row
-                if codepage == 0 and typename.upper() in FOR_BIT_DATA_MAP:
+                if (
+                    codepage == self.for_bit_data_codepage
+                    and typename.upper() in FOR_BIT_DATA_MAP
+                ):
                     # Db2 does not expose FOR BIT DATA types so we customize the type name here.
                     typename = FOR_BIT_DATA_MAP[typename.upper()]
 
