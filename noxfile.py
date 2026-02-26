@@ -30,10 +30,7 @@ import nox
 DEFAULT_PYTHON_VERSION = "3.11"
 
 # Python versions used for testing.
-# As of 2026-02-06 the only valid Python versions on python-multi image
-# are Python 3.11-3.14. DVT only supports 3.9-3.11 so 3.11 is the only
-# version we can currently test on.
-PYTHON_VERSIONS = ["3.11"]
+PYTHON_VERSIONS = ["3.10", "3.11"]
 
 BLACK_PATHS = (
     "data_validation",
@@ -65,7 +62,7 @@ def _setup_session_requirements(session, extra_packages=[]):
         session.install(*extra_packages)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=PYTHON_VERSIONS)
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
     _setup_session_requirements(session, extra_packages=UNIT_PACKAGES)
@@ -90,12 +87,12 @@ def unit_small(session):
     unit(session)
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def unit_default_python(session):
     unit(session)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=PYTHON_VERSIONS)
 def samples(session):
     """Run the snippets test suite."""
 
@@ -110,7 +107,7 @@ def samples(session):
     session.run("pytest", "samples", *session.posargs)
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def lint(session):
     """Run linters.
     Returns a failure if the linters find linting errors or sufficiently
@@ -126,7 +123,7 @@ def lint(session):
     session.run("python", "setup.py", "check", "--strict")
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def blacken(session):
     """Run black.
     Format code to uniform standard.
@@ -138,7 +135,7 @@ def blacken(session):
     session.run("black", *BLACK_PATHS)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_mysql(session):
     """Run MySQL integration tests.
     Ensure MySQL validation is running as expected.
@@ -156,7 +153,7 @@ def integration_mysql(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_postgres(session):
     """Run Postgres integration tests.
     Ensure Postgres validation is running as expected.
@@ -174,7 +171,7 @@ def integration_postgres(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_sql_server(session):
     """Run SQL Server integration tests.
     Ensure SQL Server validation is running as expected.
@@ -192,7 +189,7 @@ def integration_sql_server(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_bigquery(session):
     """Run BigQuery integration tests.
     Ensure BigQuery validation is running as expected.
@@ -208,7 +205,7 @@ def integration_bigquery(session):
     session.run("pytest", test_path, env=env_vars, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_spanner(session):
     """Run Spanner integration tests.
     Ensure Spanner validation is running as expected.
@@ -223,7 +220,7 @@ def integration_spanner(session):
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_teradata(session):
     """Run Teradata integration tests.
     Ensure Teradata validation is running as expected.
@@ -240,7 +237,7 @@ def integration_teradata(session):
     )
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_state(session):
     """Run StateManager integration tests.
     Ensure the StateManager is running as expected.
@@ -251,7 +248,7 @@ def integration_state(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_oracle(session):
     """Run Oracle integration tests.
     Ensure Oracle validation is running as expected.
@@ -272,7 +269,7 @@ def integration_oracle(session):
     session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_hive(session):
     """Run Hive integration tests.
     Ensure Hive validation is running as expected.
@@ -287,7 +284,7 @@ def integration_hive(session):
     session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_snowflake(session):
     """Run Snowflake integration tests.
     Ensure Snowflake validation is running as expected.
@@ -313,7 +310,7 @@ def integration_snowflake(session):
     )
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
@@ -335,7 +332,7 @@ def integration_db2(session):
     session.run("pytest", "tests/system/data_sources/test_db2.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_secrets(session):
     """
     Run SecretManager integration tests.
@@ -352,7 +349,7 @@ def integration_secrets(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_filesystem(session):
     """Run Filesystem integration tests.
     Ensure Filesystem validation is running as expected.
@@ -368,7 +365,7 @@ def integration_filesystem(session):
     session.run("pytest", test_path, env=env_vars, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_impala(session):
     """Run Impala integration tests.
     Ensure Impala validation is running as expected.
@@ -383,7 +380,7 @@ def integration_impala(session):
     session.run("pytest", "tests/system/data_sources/test_impala.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_sybase(session):
     """Run Sybase integration tests."""
     _setup_session_requirements(session, extra_packages=["pyodbc", "sqlalchemy_sybase"])

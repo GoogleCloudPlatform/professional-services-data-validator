@@ -2,6 +2,26 @@
 
 ## Untagged
 
+## [8.5.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.1...v8.5.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* Ensure we use casefold column name in raw data type map ([#1684](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1684)) ([dc3b0a0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dc3b0a0250643983f4789ba8dcba4a3c0b3f0cdf))
+* Move global cast to string length limit of 3000 to Db2 specific code path ([#1658](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1658)) ([b043071](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b043071c0aa09c6722d7f7faf7ee7a2499c20ca0))
+
+## [8.5.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.0...v8.5.1) (2026-02-24)
+
+
+### Bug Fixes
+
+* Accurate string length when casting numbers to string in Db2 ([#1670](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1670)) ([bceec8c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/bceec8cdea0162a973fe67ea6cfa4eb76e69b50e))
+* Correct formatting of Db2 TIME columns for row validation ([#1665](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1665)) ([db482e5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/db482e52fdc53cccc5a0d425b5f26f0a526196f8))
+* Db2 fixes for padded char identification and default IfNull replacement token ([#1641](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1641)) ([38841b6](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/38841b6e0f88abf95bb29d789738478ef8c8b821))
+* Fix exceptions when validating Db2 XML columns ([#1674](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1674)) ([13c3512](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/13c351231f44ed470081f04727ad8c83b05bb1f7))
+* Fix formatting of decimal with scale&gt;0 for Db2 row validation ([#1678](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1678)) ([e2dcf47](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e2dcf47e1bf55e73a61ba6b96b6b2d13b6148c2a))
+* revert breaking redshift change ([#1656](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1656)) ([b665387](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b66538769a8bdc722b258d2dbf03eed22d3df653))
+
 ## [8.5.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.4.0...v8.5.0) (2026-02-06)
 
 

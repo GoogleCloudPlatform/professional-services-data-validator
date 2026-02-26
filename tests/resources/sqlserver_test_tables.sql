@@ -760,3 +760,33 @@ CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
 );
 EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test potentially difficult column names', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_reserved_word_columns';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
+
+
+-- CamelCase test table.
+DROP TABLE IF EXISTS pso_data_validator.[DvtCamelCase];
+CREATE TABLE pso_data_validator.[DvtCamelCase]
+(   [Id]           int NOT NULL PRIMARY KEY
+,   [ColInt]       int
+,   [ColDec]       decimal(10,2)
+,   [ColStr]       varchar(30)
+,   [ColDate]      date
+,   [ColText]      text
+);
+EXECUTE sp_addextendedproperty 'Comment', 'SQL Server with CamelCase naming.', 'SCHEMA', 'pso_data_validator', 'table', 'DvtCamelCase';
+INSERT INTO pso_data_validator.[DvtCamelCase] VALUES
+(1,1,1.1,'Hello DVT','1970-01-01');
+INSERT INTO pso_data_validator.[DvtCamelCase] VALUES
+(2,2,2.2,'Hello DVT','1970-01-02');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_camel_case_lower;
+CREATE TABLE pso_data_validator.dvt_camel_case_lower
+(   id           int NOT NULL PRIMARY KEY
+,   colint       int
+,   coldec       decimal(10,2)
+,   colstr       varchar(30)
+,   coldate      date
+,   coltext      text
+);
+EXECUTE sp_addextendedproperty 'Comment', 'SQL Server table to compare with DvtCamelCase.', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_camel_case_lower';
+INSERT INTO pso_data_validator.dvt_camel_case_lower
+SELECT * FROM pso_data_validator.[DvtCamelCase];
