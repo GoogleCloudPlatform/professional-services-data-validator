@@ -332,10 +332,6 @@ def _reduction(func_name):
     return reduction_compiler
 
 
-def _count_start(sa_func):
-    return sa_func
-
-
 def _reduction_count(sa_func):
     def formatter(t, op):
         *args, where = op.args
