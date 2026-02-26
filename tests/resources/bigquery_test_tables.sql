@@ -226,7 +226,6 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 ,   col_nclob       STRING
 ,   col_dbclob      STRING
 ,   col_blob        BYTES
--- TODO Switch the two "_bit" columns to BYTES after issue-1655 is complete.
 ,   col_char_bit    STRING
 ,   col_varchar_bit STRING
 ,   col_graphic     STRING
@@ -242,19 +241,13 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (1,123,12345,1123456789,1.1,123.456,123456.789
 ,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB',CAST('Hello BLOB' AS BYTES)
-,'ABC','DEF'
--- TODO Replace ABC,DEF line above with UUID hex line below once issue-1655 is complete.
---,FROM_HEX('550E8400E29B41D4A716446655440000'),FROM_HEX('550E8400E29B41D4A716446655440000')
-,'GHI','JKL'
+,'ABC','DEF','GHI','JKL'
 ,DATE'1970-01-01',DATETIME'1970-01-01 00:00:01.123456',TIME'00:00:01'
 ,CAST('A' AS BYTES),CAST('A' AS BYTES)
 ,'<xml></xml>'),
 (2,123,12345,1123456789,0,123.456,123456.789
 ,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2',CAST('Hello BLOB2' AS BYTES)
-,'ABC','DEF'
--- TODO Replace ABC,DEF line above with UUID hex line below once issue-1655 is complete.
---,FROM_HEX('F2A79E538CBD4A1E9F03B8D4C731A9F4'),FROM_HEX('F2A79E538CBD4A1E9F03B8D4C731A9F4')
-,'GHI','JKL'
+,'ABC','DEF','GHI','JKL'
 ,DATE'1970-01-02',DATETIME'1970-01-02 00:00:02.001',TIME'00:00:02'
 ,CAST('B' AS BYTES),CAST('B' AS BYTES)
 ,'<xml></xml>'),
