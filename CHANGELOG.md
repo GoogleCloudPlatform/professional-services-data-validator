@@ -2,6 +2,14 @@
 
 ## Untagged
 
+## [8.5.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.1...v8.5.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* Ensure we use casefold column name in raw data type map ([#1684](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1684)) ([dc3b0a0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/dc3b0a0250643983f4789ba8dcba4a3c0b3f0cdf))
+* Move global cast to string length limit of 3000 to Db2 specific code path ([#1658](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1658)) ([b043071](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b043071c0aa09c6722d7f7faf7ee7a2499c20ca0))
+
 ## [8.5.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.0...v8.5.1) (2026-02-24)
 
 
