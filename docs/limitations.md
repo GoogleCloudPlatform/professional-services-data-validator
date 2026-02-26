@@ -16,6 +16,7 @@
 
 - Requires the `pyodbc` package to be installed as an extra dependency plus an OS level ODBC driver manager and client.
 - SQL Server does not have a function to "right trim" all whitespace, only spaces, therefore any validations relying on removal of trailing white space may encounter issues.
+- The `text` and `ntext` data types are incompatible with the `len()` therefore the `datalength()` function ius used in it's place which will give different results for multibyte characters.
 - The `image` data type is not currently supported, these columns are skipped when validated. See (issue-1578)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1578] for details.
 
 ## Sybase ASE
