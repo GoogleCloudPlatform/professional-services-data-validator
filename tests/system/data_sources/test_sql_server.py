@@ -958,7 +958,7 @@ def test_row_validation_uuid_hash_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_camel_case():
+def test_row_validation_camel_case_auto_pk():
     """Compares a source table with camel case identifiers with a target with lower case identifiers.
 
     The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
@@ -970,6 +970,23 @@ def test_row_validation_camel_case():
         tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
         tc="sql-conn",
         hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_camel_case_pk_option():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    This test is primarily concerned with passing the --primary-keys option for a CamelCase column.
+    """
+    row_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+        hash="*",
+        primary_keys="id",
     )
 
 
