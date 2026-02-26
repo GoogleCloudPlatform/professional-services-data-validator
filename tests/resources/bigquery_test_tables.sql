@@ -226,8 +226,8 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 ,   col_nclob       STRING
 ,   col_dbclob      STRING
 ,   col_blob        BYTES
-,   col_char_bit    STRING
-,   col_varchar_bit STRING
+,   col_char_bit    BYTES
+,   col_varchar_bit BYTES
 ,   col_graphic     STRING
 ,   col_vargraphic  STRING
 ,   col_time        TIME
@@ -237,12 +237,15 @@ CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (1,123,12345,1123456789,1.1,123.456,123456.789
 ,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
-,CAST('Hello BLOB' AS BYTES),'ABC','DEF','GHI','JKL'
+,CAST('Hello BLOB' AS BYTES),FROM_HEX('550E8400E29B41D4A716446655440000')
+,FROM_HEX('550E8400E29B41D4A716446655440000'),'GHI','JKL'
 ,TIME'00:00:01'
 ,'<xml></xml>'),
 (2,123,12345,1123456789,0,123.456,123456.789
 ,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2'
-,CAST('Hello BLOB2' AS BYTES),'ABC','DEF','GHI','JKL'
+,CAST('Hello BLOB2' AS BYTES)
+,FROM_HEX('F2A79E538CBD4A1E9F03B8D4C731A9F4'),FROM_HEX('F2A79E538CBD4A1E9F03B8D4C731A9F4')
+,'GHI','JKL'
 ,TIME'00:00:02'
 ,'<xml></xml>');
 

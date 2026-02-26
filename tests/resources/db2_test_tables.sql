@@ -71,25 +71,29 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_types
 ,   col_nchar_2     NCHAR(2)
 ,   col_nclob       NCLOB
 ,   col_blob        BLOB
-,   col_char_bit    CHAR(5) FOR BIT DATA
-,   col_varchar_bit VARCHAR(5) FOR BIT DATA
+,   col_char_bit    CHAR(16) FOR BIT DATA
+,   col_varchar_bit VARCHAR(16) FOR BIT DATA
 ,   col_graphic     GRAPHIC(3)
 ,   col_vargraphic  VARGRAPHIC(3)
 ,   col_time        TIME
 ,   col_xml         XML
 );
-COMMENT ON TABLE pso_data_validator.dvt_core_types IS 'Db2 data types integration test table';
+COMMENT ON TABLE pso_data_validator.dvt_db2_types IS 'Db2 data types integration test table';
 
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (1,123,12345,1123456789,1.1,123.456,123456.789
 ,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
-,CAST('Hello BLOB' AS BLOB),'ABC','DEF','GHI','JKL'
+,CAST('Hello BLOB' AS BLOB)
+,X'550E8400E29B41D4A716446655440000',X'550E8400E29B41D4A716446655440000'
+,'GHI','JKL'
 ,TIME'00:00:01'
 ,'<xml></xml>');
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (2,123,12345,1123456789,0,123.456,123456.789
 ,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2'
-,CAST('Hello BLOB2' AS BLOB),'ABC','DEF','GHI','JKL'
+,CAST('Hello BLOB2' AS BLOB)
+,X'F2A79E538CBD4A1E9F03B8D4C731A9F4',X'F2A79E538CBD4A1E9F03B8D4C731A9F4'
+,'GHI','JKL'
 ,TIME'00:00:02'
 ,'<xml></xml>');
 COMMIT;
