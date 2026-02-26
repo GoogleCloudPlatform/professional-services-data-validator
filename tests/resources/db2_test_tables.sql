@@ -87,15 +87,15 @@ COMMENT ON TABLE pso_data_validator.dvt_core_types IS 'Db2 data types integratio
 
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (1,123,12345,1123456789,1.1,123.456,123456.789
-,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB',CAST('Hello BLOB' AS BLOB)
-,'ABC','DEF','GHI','JKL'
+,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
+,CAST('Hello BLOB' AS BLOB),'ABC','DEF','GHI','JKL'
 ,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456',TIME'00:00:01'
 ,CAST('A' AS BINARY(3)),CAST('A' AS VARBINARY(10))
 ,'<xml></xml>');
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (2,123,12345,1123456789,0,123.456,123456.789
-,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2',CAST('Hello BLOB2' AS BLOB)
-,'ABC','DEF','GHI','JKL'
+,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2'
+,CAST('Hello BLOB2' AS BLOB),'ABC','DEF','GHI','JKL'
 ,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:02.001',TIME'00:00:02'
 ,CAST('B' AS BINARY(3)),CAST('B' AS VARBINARY(10))
 ,'<xml></xml>');
