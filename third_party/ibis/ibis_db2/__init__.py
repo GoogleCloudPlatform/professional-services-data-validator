@@ -13,14 +13,25 @@
 # limitations under the License.
 
 import re
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, TYPE_CHECKING
 
 import sqlalchemy as sa
 
 import ibis.expr.datatypes as dt
+import ibis.expr.schema as sch
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
+
+if TYPE_CHECKING:
+    import ibis.expr.types as ir
+
+
+FOR_BIT_DATA_MAP = {
+    "CHARACTER": "CHARACTER_FOR_BIT_DATA",
+    "CHAR": "CHAR_FOR_BIT_DATA",
+    "VARCHAR": "VARCHAR_FOR_BIT_DATA",
+}
 
 
 class Backend(BaseAlchemyBackend):
@@ -106,7 +117,7 @@ class Backend(BaseAlchemyBackend):
 
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
-    ) -> list:
+    ) -> Iterable[Tuple]:
         """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
         Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
         This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
@@ -122,10 +133,13 @@ class Backend(BaseAlchemyBackend):
         assert (database and table) or query, "We should never receive all args=None"
         if database and table:
             # For table-based validation, query the system catalog to get the true data type.
+            # SYSIBM.SYSCOLUMNS works on both LUW and z/OS. SYSCAT.COLUMNS is only valid on LUW.
+            # FOR BIT DATA is not revealed in the TYPENAME column, we need to check CODEPAGE and
+            # inject our own custom TYPENAME.
             get_column_metadata_sql = """
-                SELECT COLNAME, TYPENAME, LENGTH, SCALE, NULLS
-                FROM SYSCAT.COLUMNS
-                WHERE TABSCHEMA = ? AND TABNAME = ?
+                SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS, CODEPAGE
+                FROM SYSIBM.SYSCOLUMNS
+                WHERE TBCREATOR = ? AND TBNAME = ?
                 ORDER BY COLNO
             """
             with self.begin() as con:
@@ -133,23 +147,23 @@ class Backend(BaseAlchemyBackend):
                     get_column_metadata_sql,
                     parameters=(database.upper(), table.upper()),
                 )
-                # Yield a 7-tuple mimicking cursor.description, with the true typename.
-                for (
+                rows = result.cursor.fetchall()
+
+            for row in rows:
+                colname, typename, col_length, col_scale, nullable, codepage = row
+                if codepage == 0 and typename.upper() in FOR_BIT_DATA_MAP:
+                    # Db2 does not expose FOR BIT DATA types so we customize the type name here.
+                    typename = FOR_BIT_DATA_MAP[typename.upper()]
+
+                yield (
                     colname,
                     typename,
                     col_length,
+                    col_length,
+                    col_length,
                     col_scale,
                     nullable,
-                ) in result.cursor.fetchall():
-                    yield (
-                        colname,
-                        typename,
-                        col_length,
-                        col_length,
-                        col_length,
-                        col_scale,
-                        nullable,
-                    )
+                )
         elif query:
             # For custom queries, the system catalog cannot be used. Fall back to
             # cursor.description, which may not distinguish padded char types.
@@ -170,3 +184,34 @@ class Backend(BaseAlchemyBackend):
             # It's not possible to distinguish padded char types in this case,
             # so we default to False to be safe and avoid trimming incorrectly.
             return False
+
+    def table(
+        self,
+        name: str,
+        database: str | None = None,
+        schema: str | None = None,
+    ) -> "ir.Table":
+        """Intercept Ibis table() call and inject Db2 customizations before returning the table object."""
+        return_table = super().table(name, database, schema)
+
+        # Query raw metadata to find columns that are actually binary (FOR BIT DATA)
+        # but reflected as strings by SQLAlchemy.
+        raw_types = self.raw_column_metadata(schema or database, name) or []
+        for_bit_data_cols = set()
+        for col_name, type_name, *_ in raw_types:
+            if type_name in FOR_BIT_DATA_MAP.values():
+                for_bit_data_cols.add(col_name.lower())
+
+        if for_bit_data_cols:
+            # Create a new table object with FOR BIT DATA columns as binary.
+            old_schema = return_table.schema()
+            new_fields = {
+                name: (dt.binary if name.lower() in for_bit_data_cols else dtype)
+                for name, dtype in old_schema.items()
+            }
+            new_schema = sch.Schema(new_fields)
+            op = return_table.op()
+            new_op = op.copy(schema=new_schema)
+            return_table = new_op.to_expr()
+
+        return return_table
