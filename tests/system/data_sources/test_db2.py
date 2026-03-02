@@ -186,9 +186,10 @@ def test_column_validation_core_types_to_bigquery():
 def test_column_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types column validation"""
     cols = (
-        "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,col_clob,col_nvarchar_30,col_nchar_2,"
-        "col_nclob,col_dbclob,col_blob,col_char_bit,col_varchar_bit,col_graphic,col_vargraphic,col_xml"
-        "col_binary,col_varbinary"
+        "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,"
+        "col_nvarchar_30,col_nchar_2,col_clob,col_nclob,col_dbclob,"
+        "col_blob,col_char_bit,col_varchar_bit,col_graphic,col_vargraphic,"
+        "col_binary,col_varbinary,col_xml"
     )
     column_validation_test(
         tc="bq-conn",
@@ -348,7 +349,10 @@ def test_row_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types row validation"""
     # Excluded col_clob,col_nclob,col_xml because they are incompatible with hex() function (due to potential length).
     # TODO Add col_char_2 to list below once issue-1354 is complete.
-    cols = "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,col_nvarchar_30,col_time,col_char_bit,col_varchar_bit,col_binary,col_varbinary"
+    cols = (
+        "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,"
+        "col_nvarchar_30,col_time,col_char_bit,col_varchar_bit,col_binary,col_varbinary"
+    )
     row_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
