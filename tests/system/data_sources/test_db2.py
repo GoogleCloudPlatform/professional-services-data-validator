@@ -20,6 +20,7 @@ import pytest
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    binary_key_assertions,
     find_tables_test,
     schema_validation_test,
     column_validation_test,
@@ -104,7 +105,7 @@ def test_schema_validation_db2_types_to_bigquery():
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
-        allow_list=("int16:int64,int32:int64," "decimal:decimal(38,9)"),
+        allow_list=("int16:int64,int32:int64,decimal:decimal(38,9)"),
     )
 
 
@@ -187,6 +188,7 @@ def test_column_validation_db2_types_to_bigquery():
     cols = (
         "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,col_clob,col_nvarchar_30,col_nchar_2,"
         "col_nclob,col_dbclob,col_blob,col_char_bit,col_varchar_bit,col_graphic,col_vargraphic,col_xml"
+        "col_binary,col_varbinary"
     )
     column_validation_test(
         tc="bq-conn",
@@ -199,6 +201,21 @@ def test_column_validation_db2_types_to_bigquery():
         std_cols=cols,
         wildcard_include_timestamp=True,
         wildcard_include_string=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_binary_to_bigquery():
+    """Db2 to BigQuery dvt_binary column validation."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        count_cols="binary_id",
+        min_cols="binary_id",
+        sum_cols="binary_id",
     )
 
 
@@ -330,13 +347,53 @@ def test_row_validation_core_types_to_bigquery():
 def test_row_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types row validation"""
     # Excluded col_clob,col_nclob,col_xml because they are incompatible with hex() function (due to potential length).
-    # TODO Add col_blob to list below once issue-1354 is complete.
     # TODO Add col_char_2 to list below once issue-1354 is complete.
-    cols = "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,col_nvarchar_30,col_time,col_char_bit,col_varchar_bit"
+    cols = "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,col_nvarchar_30,col_time,col_char_bit,col_varchar_bit,col_binary,col_varbinary"
     row_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
         hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_binary_pk_to_bigquery():
+    """Db2 to BigQuery dvt_binary row validation.
+    This is testing binary primary key join columns.
+    Includes random row filter test.
+    """
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_binary",
+            "--primary-keys=binary_id",
+            "--hash=binary_id,int_id,other_data",
+            "--use-random-row",
+            "--random-row-batch-size=5",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    binary_key_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
     )
 
 

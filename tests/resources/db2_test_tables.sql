@@ -70,12 +70,17 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_types
 ,   col_nvarchar_30 NVARCHAR(30)
 ,   col_nchar_2     NCHAR(2)
 ,   col_nclob       NCLOB
+,   col_dbclob      DBCLOB
 ,   col_blob        BLOB
 ,   col_char_bit    CHAR(16) FOR BIT DATA
 ,   col_varchar_bit VARCHAR(16) FOR BIT DATA
 ,   col_graphic     GRAPHIC(3)
 ,   col_vargraphic  VARGRAPHIC(3)
+,   col_date        DATE
+,   col_timestamp   TIMESTAMP(6)
 ,   col_time        TIME
+,   col_binary      BINARY(3)
+,   col_varbinary   VARBINARY(10)
 ,   col_xml         XML
 );
 COMMENT ON TABLE pso_data_validator.dvt_db2_types IS 'Db2 data types integration test table';
@@ -86,7 +91,8 @@ INSERT INTO pso_data_validator.dvt_db2_types VALUES
 ,CAST('Hello BLOB' AS BLOB)
 ,X'550E8400E29B41D4A716446655440000',X'550E8400E29B41D4A716446655440000'
 ,'GHI','JKL'
-,TIME'00:00:01'
+,DATE'1970-01-01',TIMESTAMP'1970-01-01 00:00:01.123456',TIME'00:00:01'
+,CAST('A' AS BINARY(3)),CAST('A' AS VARBINARY(10))
 ,'<xml></xml>');
 INSERT INTO pso_data_validator.dvt_db2_types VALUES
 (2,123,12345,1123456789,0,123.456,123456.789
@@ -94,8 +100,14 @@ INSERT INTO pso_data_validator.dvt_db2_types VALUES
 ,CAST('Hello BLOB2' AS BLOB)
 ,X'F2A79E538CBD4A1E9F03B8D4C731A9F4',X'F2A79E538CBD4A1E9F03B8D4C731A9F4'
 ,'GHI','JKL'
-,TIME'00:00:02'
+,DATE'1970-01-02',TIMESTAMP'1970-01-02 00:00:02.001',TIME'00:00:02'
+,CAST('B' AS BINARY(3)),CAST('B' AS VARBINARY(10))
 ,'<xml></xml>');
+INSERT INTO pso_data_validator.dvt_db2_types VALUES
+(3,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL);
 COMMIT;
 
 CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_null_not_null

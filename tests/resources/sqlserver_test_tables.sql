@@ -770,6 +770,7 @@ CREATE TABLE pso_data_validator.[DvtCamelCase]
 ,   [ColDec]       decimal(10,2)
 ,   [ColStr]       varchar(30)
 ,   [ColDate]      date
+,   [ColText]      text
 );
 EXECUTE sp_addextendedproperty 'Comment', 'SQL Server with CamelCase naming.', 'SCHEMA', 'pso_data_validator', 'table', 'DvtCamelCase';
 INSERT INTO pso_data_validator.[DvtCamelCase] VALUES
@@ -784,6 +785,7 @@ CREATE TABLE pso_data_validator.dvt_camel_case_lower
 ,   coldec       decimal(10,2)
 ,   colstr       varchar(30)
 ,   coldate      date
+,   coltext      text
 );
 EXECUTE sp_addextendedproperty 'Comment', 'SQL Server table to compare with DvtCamelCase.', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_camel_case_lower';
 INSERT INTO pso_data_validator.dvt_camel_case_lower
