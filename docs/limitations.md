@@ -6,11 +6,12 @@
 
 ## Db2 LUW
 
+- Db2 LUW BLOB datatype is excluded from row validation due to incompatibility with concatenation/hashing functions.
 - Db2 LUW XML data type is not compatible with the LENGTH function and is excluded from any column validations other than `--count`.
 
 ## Db2 z/OS
 
-- Db2 z/OS XML data type is not compatible with aggregation functions or the LENGTH and is excluded from all column validations.
+- Db2 z/OS XML data type is not compatible with aggregation functions or LENGTH function and is excluded from all column validations.
 
 ## Oracle
 
@@ -24,6 +25,7 @@
 
 - Requires the `pyodbc` package to be installed as an extra dependency plus an OS level ODBC driver manager and client.
 - SQL Server does not have a function to "right trim" all whitespace, only spaces, therefore any validations relying on removal of trailing white space may encounter issues.
+- The `text` and `ntext` data types are incompatible with the `len()` therefore the `datalength()` function ius used in it's place which will give different results for multibyte characters.
 - The `image` data type is not currently supported, these columns are skipped when validated. See (issue-1578)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1578] for details.
 
 ## Sybase ASE

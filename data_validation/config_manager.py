@@ -667,6 +667,14 @@ class ConfigManager(object):
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
 
+    def _is_db2_blob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 (LUW and z/OS) BLOB data type."""
+        return self._is_raw_data_type(
+            "db2", source_column_name, target_column_name, ["BLOB"]
+        ) or self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["BLOB"]
+        )
+
     def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
         """Returns True when either source or target column is Db2 XML data type."""
         return self._is_raw_data_type(
@@ -745,16 +753,19 @@ class ConfigManager(object):
         """Returns True when either source or target column is of a client & type."""
         raw_source_types = self.get_source_raw_data_types()
         raw_target_types = self.get_target_raw_data_types()
+        # Raw data type map uses casefold column name as the key.
         return bool(
             (
                 self.source_client.name == client_name
                 and raw_source_types
-                and raw_source_types.get(source_column_name, [None])[0] in type_list
+                and raw_source_types.get(source_column_name.casefold(), [None])[0]
+                in type_list
             )
             or (
                 self.target_client.name == client_name
                 and raw_target_types
-                and raw_target_types.get(target_column_name, [None])[0] in type_list
+                and raw_target_types.get(target_column_name.casefold(), [None])[0]
+                in type_list
             )
         )
 
@@ -1368,6 +1379,14 @@ class ConfigManager(object):
             if self._is_sql_server_image(source_column, target_column):
                 logging.info(
                     f"Skipping column {source_column} due to SQL Server image data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+            if self._is_db2_blob(source_column, target_column):
+                # Db2 BLOB is incompatible with Db2s own HEX function.
+                # Users would need to use a custom query to a custom UDF to row validate these.
+                logging.info(
+                    f"Skipping column {source_column} due to Db2 BLOB data type"
                 )
                 result_source_columns.pop(source_column)
                 result_target_columns.pop(target_column)
