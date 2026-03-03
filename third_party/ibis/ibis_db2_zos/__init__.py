@@ -27,6 +27,11 @@ class Backend(Db2LUWBackend):
 
     char_datatype = "CHAR"
 
+    raw_column_metadata_sql = """
+        SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS, CCSID
+        FROM SYSIBM.SYSCOLUMNS
+        WHERE TBCREATOR = ? AND TBNAME = ?
+        ORDER BY COLNO"""
     for_bit_data_codepage = 65535
 
     def do_connect(

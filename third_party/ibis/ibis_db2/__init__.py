@@ -41,6 +41,11 @@ class Backend(BaseAlchemyBackend):
 
     char_datatype = "CHARACTER"
 
+    raw_column_metadata_sql = """
+        SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS, CODEPAGE
+        FROM SYSIBM.SYSCOLUMNS
+        WHERE TBCREATOR = ? AND TBNAME = ?
+        ORDER BY COLNO"""
     for_bit_data_codepage = 0
 
     def do_connect(
@@ -141,18 +146,9 @@ class Backend(BaseAlchemyBackend):
         assert (database and table) or query, "We should never receive all args=None"
         if database and table:
             # For table-based validation, query the system catalog to get the true data type.
-            # SYSIBM.SYSCOLUMNS works on both LUW and z/OS. SYSCAT.COLUMNS is only valid on LUW.
-            # FOR BIT DATA is not revealed in the TYPENAME column, we need to check CODEPAGE and
-            # inject our own custom TYPENAME.
-            get_column_metadata_sql = """
-                SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS, CODEPAGE
-                FROM SYSIBM.SYSCOLUMNS
-                WHERE TBCREATOR = ? AND TBNAME = ?
-                ORDER BY COLNO
-            """
             with self.begin() as con:
                 result = con.exec_driver_sql(
-                    get_column_metadata_sql,
+                    self.raw_column_metadata_sql,
                     parameters=(database.upper(), table.upper()),
                 )
                 rows = result.cursor.fetchall()
