@@ -458,36 +458,6 @@ def test_get_labels_err(test_input):
 
 @pytest.mark.parametrize(
     "test_input,expected",
-    [
-        ("s1=t1", {"s1": "t1"}),
-        ("s1=t1,s2=t2", {"s1": "t1", "s2": "t2"}),
-        ("", {}),
-        (None, {}),
-    ],
-)
-def test_get_schema_map(test_input, expected):
-    """Test get schema map."""
-    res = cli_tools.get_schema_map(test_input)
-    assert res == expected
-
-
-@pytest.mark.parametrize(
-    "test_input",
-    [
-        ("s1==t1"),
-        ("s1=t1,s2"),
-        ("s1"),
-        (","),
-    ],
-)
-def test_get_schema_map_err(test_input):
-    """Ensure that Value Error is raised when incorrect schema map argument is provided."""
-    with pytest.raises(ValueError):
-        cli_tools.get_schema_map(test_input)
-
-
-@pytest.mark.parametrize(
-    "test_input,expected",
     [(0, 0.0), (50, 50.0), (100, 100.0)],
 )
 def test_threshold_float(test_input, expected):

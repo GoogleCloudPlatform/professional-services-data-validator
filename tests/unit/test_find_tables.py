@@ -264,3 +264,33 @@ def test__get_table_map_from_obj_list_mixed_case(
     table_configs = module_under_test._get_table_map_from_obj_list(table_list)
 
     assert table_configs == expected_result
+
+
+@mock.patch("data_validation.find_tables.get_mapped_table_configs")
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch("data_validation.state_manager.StateManager.get_connection_config")
+def test_find_tables_using_string_matching_parsing(
+    mock_get_conn_config, mock_get_client, mock_get_configs, module_under_test
+):
+    """Test parsing logic in find_tables_using_string_matching."""
+    mock_args = mock.MagicMock()
+    mock_args.source_conn = "source"
+    mock_args.target_conn = "target"
+    mock_args.allowed_schemas = "s1,s2=t2"
+    mock_args.include_views = False
+    mock_args.score_cutoff = 0.8
+
+    mock_get_conn_config.return_value = {}
+    mock_get_client.return_value = mock.MagicMock()
+    mock_get_configs.return_value = []
+
+    module_under_test.find_tables_using_string_matching(mock_args)
+
+    mock_get_configs.assert_called_once_with(
+        mock.ANY,
+        mock.ANY,
+        allowed_schemas=["s1", "s2"],
+        include_views=False,
+        score_cutoff=0.8,
+        schema_map={"s2": "t2"},
+    )

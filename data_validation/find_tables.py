@@ -127,14 +127,22 @@ def find_tables_using_string_matching(args) -> str:
     source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
     target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
-    allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
+    allowed_schemas_raw = cli_tools.get_arg_list(args.allowed_schemas)
+    allowed_schemas = []
+    schema_map = {}
+    for schema in allowed_schemas_raw:
+        if "=" in schema:
+            schema, target_schema = schema.split("=", 1)
+            schema_map[schema] = target_schema
+        allowed_schemas.append(schema)
+
     table_configs = get_mapped_table_configs(
         source_client,
         target_client,
         allowed_schemas=allowed_schemas,
         include_views=args.include_views,
         score_cutoff=score_cutoff,
-        schema_map=args.schema_map,
+        schema_map=schema_map,
     )
     return json.dumps(table_configs)
 

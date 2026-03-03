@@ -404,7 +404,9 @@ def _configure_find_tables(subparsers):
         "--target-conn", "-tc", help="Target connection name."
     )
     find_tables_parser.add_argument(
-        "--allowed-schemas", "-as", help="List of source schemas to match."
+        "--allowed-schemas",
+        "-as",
+        help="List of source schemas to match. Can include mappings like 'source_schema=target_schema'.",
     )
     find_tables_parser.add_argument(
         "--include-views",
@@ -418,13 +420,6 @@ def _configure_find_tables(subparsers):
         "-score",
         type=float,
         help="The minimum distance score allowed to match tables (0 to 1).",
-    )
-    find_tables_parser.add_argument(
-        "--schema-map",
-        "-sm",
-        type=get_schema_map,
-        default={},
-        help="Mapping of source schema to target schema. 'source_schema=target_schema'",
     )
 
 
@@ -1289,9 +1284,6 @@ def get_labels(arg_labels):
     return _get_kv_pairs(arg_labels, "Labels")
 
 
-def get_schema_map(arg_schema_map):
-    """Return dict representing source to target schema mapping."""
-    return dict(_get_kv_pairs(arg_schema_map, "Schema map"))
 
 
 def get_filters(filter_value: str) -> List[Dict]:
