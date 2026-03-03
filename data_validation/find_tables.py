@@ -28,26 +28,35 @@ if TYPE_CHECKING:
     import ibis
 
 
-def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8) -> list:
+def _compare_match_tables(
+    source_table_map: dict,
+    target_table_map: dict,
+    score_cutoff: float = 0.8,
+    schema_map: dict = None,
+) -> list:
     """Return dict config object from matching tables."""
     # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
     table_configs = []
+    schema_map = schema_map or {}
 
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
+        source_schema = source_table_map[source_key][consts.CONFIG_SCHEMA_NAME]
+        source_table = source_table_map[source_key][consts.CONFIG_TABLE_NAME]
+
+        # Apply schema mapping if it exists
+        lookup_schema = schema_map.get(source_schema, source_schema)
+        lookup_key = f"{lookup_schema}.{source_table}".casefold()
+
         target_key = jellyfish_distance.extract_closest_match(
-            source_key, target_keys, score_cutoff=score_cutoff
+            lookup_key, target_keys, score_cutoff=score_cutoff
         )
         if target_key is None:
             continue
 
         table_config = {
-            consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][
-                consts.CONFIG_SCHEMA_NAME
-            ],
-            consts.CONFIG_TABLE_NAME: source_table_map[source_key][
-                consts.CONFIG_TABLE_NAME
-            ],
+            consts.CONFIG_SCHEMA_NAME: source_schema,
+            consts.CONFIG_TABLE_NAME: source_table,
             consts.CONFIG_TARGET_SCHEMA_NAME: target_table_map[target_key][
                 consts.CONFIG_SCHEMA_NAME
             ],
@@ -95,6 +104,7 @@ def get_mapped_table_configs(
     allowed_schemas: list = None,
     include_views: bool = False,
     score_cutoff: int = 1,
+    schema_map: dict = None,
 ) -> list:
     """Get table list from each client and match them together into a single list of dicts."""
     source_table_map = _get_table_map(
@@ -102,7 +112,10 @@ def get_mapped_table_configs(
     )
     target_table_map = _get_table_map(target_client, include_views=include_views)
     return _compare_match_tables(
-        source_table_map, target_table_map, score_cutoff=score_cutoff
+        source_table_map,
+        target_table_map,
+        score_cutoff=score_cutoff,
+        schema_map=schema_map,
     )
 
 
@@ -121,6 +134,7 @@ def find_tables_using_string_matching(args) -> str:
         allowed_schemas=allowed_schemas,
         include_views=args.include_views,
         score_cutoff=score_cutoff,
+        schema_map=args.schema_map,
     )
     return json.dumps(table_configs)
 

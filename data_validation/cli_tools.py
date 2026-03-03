@@ -419,6 +419,13 @@ def _configure_find_tables(subparsers):
         type=float,
         help="The minimum distance score allowed to match tables (0 to 1).",
     )
+    find_tables_parser.add_argument(
+        "--schema-map",
+        "-sm",
+        type=get_schema_map,
+        default={},
+        help="Mapping of source schema to target schema. 'source_schema=target_schema'",
+    )
 
 
 def _configure_raw_query(subparsers):
@@ -1263,18 +1270,28 @@ def print_validations_in_dir(config_dir="./"):
         logging.info(validation_name)
 
 
-def get_labels(arg_labels):
-    """Return list of tuples representing key-value label pairs."""
-    labels = []
-    if arg_labels:
-        pairs = arg_labels.split(",")
+def _get_kv_pairs(arg_value, arg_name):
+    """Return list of tuples representing key-value pairs."""
+    kv_pairs = []
+    if arg_value:
+        pairs = arg_value.split(",")
         for pair in pairs:
             kv = pair.split("=")
             if len(kv) == 2:
-                labels.append((kv[0], kv[1]))
+                kv_pairs.append((kv[0], kv[1]))
             else:
-                raise ValueError("Labels must be comma-separated key-value pairs.")
-    return labels
+                raise ValueError(f"{arg_name} must be comma-separated key-value pairs.")
+    return kv_pairs
+
+
+def get_labels(arg_labels):
+    """Return list of tuples representing key-value label pairs."""
+    return _get_kv_pairs(arg_labels, "Labels")
+
+
+def get_schema_map(arg_schema_map):
+    """Return dict representing source to target schema mapping."""
+    return dict(_get_kv_pairs(arg_schema_map, "Schema map"))
 
 
 def get_filters(filter_value: str) -> List[Dict]:

@@ -66,6 +66,63 @@ def test__compare_match_tables(module_under_test):
 
 
 @pytest.mark.parametrize(
+    "source_table_map,target_table_map,schema_map,expected",
+    [
+        # Test matching with a valid schema mapping.
+        (
+            {
+                "prod.table1": {
+                    consts.CONFIG_SCHEMA_NAME: "prod",
+                    consts.CONFIG_TABLE_NAME: "table1",
+                }
+            },
+            {
+                "test.table1": {
+                    consts.CONFIG_SCHEMA_NAME: "test",
+                    consts.CONFIG_TABLE_NAME: "table1",
+                }
+            },
+            {"prod": "test"},
+            [
+                {
+                    "schema_name": "prod",
+                    "table_name": "table1",
+                    "target_schema_name": "test",
+                    "target_table_name": "table1",
+                }
+            ],
+        ),
+        # Test that no match is found without a schema mapping.
+        (
+            {
+                "prod.table1": {
+                    consts.CONFIG_SCHEMA_NAME: "prod",
+                    consts.CONFIG_TABLE_NAME: "table1",
+                }
+            },
+            {
+                "test.table1": {
+                    consts.CONFIG_SCHEMA_NAME: "test",
+                    consts.CONFIG_TABLE_NAME: "table1",
+                }
+            },
+            {},
+            [],
+        ),
+    ],
+)
+def test_compare_match_tables_with_mapping(
+    module_under_test, source_table_map, target_table_map, schema_map, expected
+):
+    """Test matching tables from source and target with schema mapping."""
+    table_configs = module_under_test._compare_match_tables(
+        source_table_map, target_table_map, schema_map=schema_map
+    )
+
+    assert table_configs == expected
+
+
+@pytest.mark.parametrize(
     ("tables_list,expected_result"),
     (
         # Test that lone asterisk is expanded.

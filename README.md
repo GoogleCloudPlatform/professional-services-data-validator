@@ -659,14 +659,18 @@ target. The `find-tables` command:
 -   Pulls all tables in the source (applying a supplied `allowed-schemas` filter)
 -   Pulls all tables from the target
 -   Uses Jaro Similarity algorithm to match tables
+-   (Optional) Translates source schema names using a supplied `schema-map` before matching
 -   Finally, it prints a JSON list of tables which can be a reference for the
     validation run config.
 
 Note that our default value for the `score-cutoff` parameter is 1 and it seeks for identical matches. If no matches occur, reduce this value as deemed necessary. By using smaller numbers such as 0.7, 0.65 etc you can get more matches. For reference, we make use of [this jaro_similarity method](https://jamesturk.github.io/jellyfish/functions/#jaro-similarity) for the string comparison.
 
+If your source and target environments have different schema names (e.g., `prod_raw` vs `dwh_raw`), you can use the `--schema-map` flag to provide a mapping. This translates the source schema name to the target schema name before the matching algorithm is run.
+
 ```shell
 data-validation find-tables --source-conn source --target-conn target \
-    --allowed-schemas pso_data_validator \
+    --allowed-schemas prod_raw \
+    --schema-map prod_raw=dwh_raw \
     --score-cutoff 1
 ```
 
