@@ -59,6 +59,9 @@ class Backend(BaseAlchemyBackend):
             alchemy_url,
             connect_args=connect_args,
             poolclass=sa.pool.StaticPool,
+            # Pessimistic disconnect handling
+            pool_pre_ping=True,
+            execution_options={"isolation_level": "AUTOCOMMIT"}
         )
 
         @sa.event.listens_for(engine, "connect")
