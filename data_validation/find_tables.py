@@ -44,7 +44,9 @@ def _compare_match_tables(
         source_schema = source_table_map[source_key][consts.CONFIG_SCHEMA_NAME]
         source_table = source_table_map[source_key][consts.CONFIG_TABLE_NAME]
 
-        # Apply schema mapping if it exists
+        # Apply schema mapping if it exists, when there is a mapping
+        # lookup_key is {mapped_schema}.{source_name} which should then
+        # find a match in target_keys.
         lookup_schema = schema_map.get(source_schema, source_schema)
         lookup_key = f"{lookup_schema}.{source_table}".casefold()
 
