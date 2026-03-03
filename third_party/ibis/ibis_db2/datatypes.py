@@ -44,7 +44,14 @@ def _string(_, itype):
     return sa.sql.sqltypes.String(length=3000)
 
 
+DB2Dialect_ibm_db.ischema_names["BINARY"] = sat.BINARY
 DB2Dialect_ibm_db.ischema_names["DECFLOAT"] = sat.DOUBLE
+DB2Dialect_ibm_db.ischema_names["VARBINARY"] = sat.BINARY
+
+
+@dt.dtype.register(DB2Dialect_ibm_db, sat.BINARY)
+def sa_sf_binary(_, satype, nullable=True):
+    return dt.Binary(nullable=nullable)
 
 
 def _get_type(typename) -> dt.DataType:
