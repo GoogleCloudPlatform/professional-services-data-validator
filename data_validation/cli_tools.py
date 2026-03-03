@@ -1265,25 +1265,18 @@ def print_validations_in_dir(config_dir="./"):
         logging.info(validation_name)
 
 
-def _get_kv_pairs(arg_value, arg_name):
-    """Return list of tuples representing key-value pairs."""
-    kv_pairs = []
-    if arg_value:
-        pairs = arg_value.split(",")
+def get_labels(arg_labels):
+    """Return list of tuples representing key-value label pairs."""
+    labels = []
+    if arg_labels:
+        pairs = arg_labels.split(",")
         for pair in pairs:
             kv = pair.split("=")
             if len(kv) == 2:
-                kv_pairs.append((kv[0], kv[1]))
+                labels.append((kv[0], kv[1]))
             else:
-                raise ValueError(f"{arg_name} must be comma-separated key-value pairs.")
-    return kv_pairs
-
-
-def get_labels(arg_labels):
-    """Return list of tuples representing key-value label pairs."""
-    return _get_kv_pairs(arg_labels, "Labels")
-
-
+                raise ValueError("Labels must be comma-separated key-value pairs.")
+    return labels
 
 
 def get_filters(filter_value: str) -> List[Dict]:
