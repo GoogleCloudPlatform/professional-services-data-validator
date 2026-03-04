@@ -204,17 +204,26 @@ class Backend(BaseAlchemyBackend):
         # Query raw metadata to find columns that are actually binary (FOR BIT DATA)
         # but reflected as strings by SQLAlchemy.
         raw_types = self.raw_column_metadata(schema or database, name) or []
-        for_bit_data_cols = set()
-        for col_name, type_name, *_ in raw_types:
-            if type_name in FOR_BIT_DATA_MAP.values():
-                for_bit_data_cols.add(col_name.lower())
+        for_bit_data_cols = {
+            col_name.lower()
+            for col_name, type_name, *_ in raw_types
+            if type_name in FOR_BIT_DATA_MAP.values()
+        }
+        # The IBM Db2 driver exposes hidden columns that are not visible in the table definition.
+        # We drop these columns from the table object.
+        columns_to_drop = {
+            _.lower()
+            for _ in return_table.columns
+            if _.lower() in DB2_HIDDEN_COLUMNS
+        }
 
-        if for_bit_data_cols:
-            # Create a new table object with FOR BIT DATA columns as binary.
+        if for_bit_data_cols or columns_to_drop:
+            # Create a new table object modifying schema for dropped/binary columns
             old_schema = return_table.schema()
             new_fields = {
                 name: (dt.binary if name.lower() in for_bit_data_cols else dtype)
                 for name, dtype in old_schema.items()
+                if name.lower() not in columns_to_drop
             }
             new_schema = sch.Schema(new_fields)
             op = return_table.op()
@@ -222,7 +231,3 @@ class Backend(BaseAlchemyBackend):
             return_table = new_op.to_expr()
 
         return return_table
-        # Failed attempt at dealing with hidden columns below for reference.
-        # columns_to_drop = [_ for _ in return_table.columns if _ in DB2_HIDDEN_COLUMNS]
-        # if columns_to_drop:
-        #     return_table = return_table.drop(*columns_to_drop)

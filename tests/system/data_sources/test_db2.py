@@ -138,7 +138,7 @@ def test_schema_validation_not_null_vs_nullable():
     new=mock_get_connection_config,
 )
 def test_schema_validation_db2_generated_cols():
-    """Test schema validation for tables with Db2 internal generated columns"""
+    """Test schema validation for tables with Db2 internal generated columns."""
     schema_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
