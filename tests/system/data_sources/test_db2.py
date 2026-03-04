@@ -599,6 +599,7 @@ def test_row_validation_db2_generated_cols():
     row_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+        hash="*",
         primary_keys="id",
         use_random_row=False,
     )
