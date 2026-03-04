@@ -182,17 +182,17 @@ INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-4 ', 'Row 4');
 INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-5', 'Row 5');
 COMMIT;
 
-DROP TABLE db2inst1.dvt_fixed_char_id;
-CREATE TABLE db2inst1.dvt_fixed_char_id
+DROP TABLE pso_data_validator.dvt_fixed_char_id;
+CREATE TABLE pso_data_validator.dvt_fixed_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
 ,   other_data  CHAR(100)
 );
-COMMENT ON TABLE db2inst1.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant';
-INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
-INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
-INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
-INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
-INSERT INTO db2inst1.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
+COMMENT ON TABLE pso_data_validator.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant';
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
 COMMIT;
 
 CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_datetime_id
