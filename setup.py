@@ -51,7 +51,7 @@ extras_require = {
     "apache-airflow": "1.10.11",
     "pyspark": "3.0.0",
     "develop": [
-        "black==22.3.0",
+        "black==26.1.0",
         "flake8",
         "freezegun",
         "pyfakefs",
