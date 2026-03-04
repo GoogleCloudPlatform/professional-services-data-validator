@@ -138,6 +138,9 @@ def db2_luw_cast(t, op):
             # Db2 always pads fractional part of the number out to length of scale.
             # We need to remove those insignificant digits.
             precision = arg_dtype.precision or 31
+            # 31 is the max decimal precision on Db2.
+            if precision > 31:
+                precision = 31
             fmt = (
                 ("9" * (precision - arg_dtype.scale - 1))
                 + "0."
@@ -146,16 +149,16 @@ def db2_luw_cast(t, op):
             # Using sa.literal_column below because z/OS does not support parameterized queries.
             return sa.func.ltrim(
                 sa.func.regexp_replace(
-                    sa.func.to_char(sa_arg, sa.literal_column(fmt)),
+                    sa.func.to_char(sa_arg, sa.literal_column(f"'{fmt}'")),
                     sa.literal_column("'\\.?0+$'"),
                     sa.literal_column("''"),
                 )
             )
-        # Max expected precision 38 plus 2 for minus sign and decimal place.
-        return sa.cast(sa_arg, sa.String(40))
+        # Max expected precision 31 plus 2 for minus sign and decimal place.
+        return sa.cast(sa_arg, sa.String(33))
     elif arg_dtype.is_floating() and typ.is_string():
-        # Max expected precision 38 plus 2 for minus sign and decimal place.
-        return sa.cast(sa_arg, sa.String(40))
+        # Max expected precision 31 plus 2 for minus sign and decimal place.
+        return sa.cast(sa_arg, sa.String(33))
 
     if arg_dtype.is_time() and typ.is_string():
         # Force colons as time separator with CHAR(column,JIS) expression.
