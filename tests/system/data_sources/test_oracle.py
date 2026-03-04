@@ -47,7 +47,6 @@ from tests.system.data_sources.common_functions import (
     partition_query_test,
 )
 
-
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
 ORACLE_PORT = os.getenv("ORACLE_PORT", "1521")
 ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")

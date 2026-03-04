@@ -19,7 +19,6 @@ from typing import List
 from google.cloud import storage
 from data_validation import client_info
 
-
 WRITE_SUCCESS_STRING = "Success! Config output written to"
 DELETE_SUCCESS_STRING = "Successfully deleted"
 

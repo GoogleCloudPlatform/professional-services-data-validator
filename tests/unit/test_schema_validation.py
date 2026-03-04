@@ -25,7 +25,6 @@ from data_validation.schema_validation import (
     DECIMAL_PRECISION_SCALE_RANGE_PATTERN,
 )
 
-
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 

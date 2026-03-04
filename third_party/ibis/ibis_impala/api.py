@@ -28,7 +28,6 @@ import numpy as np
 import fsspec
 import re
 
-
 # Issue-1525: datetime64[ns] overflows datetimes way in the future.
 # Using "object" instead which is what BigQuery implementation results in.
 _DVT_HS2_TTypeId_to_dtype = ibis.backends.impala._HS2_TTypeId_to_dtype.copy()

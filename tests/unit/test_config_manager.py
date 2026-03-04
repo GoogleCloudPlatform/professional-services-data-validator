@@ -19,7 +19,6 @@ import ibis.expr.datatypes as dt
 
 from data_validation import consts
 
-
 SAMPLE_CONFIG = {
     # BigQuery Specific Connection Config
     consts.CONFIG_SOURCE_CONN: {"type": "DNE connection"},

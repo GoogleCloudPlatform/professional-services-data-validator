@@ -17,7 +17,6 @@ from unittest import mock
 
 from data_validation import consts
 
-
 S1_TABLES = [
     ("s1", "t1"),
     ("s1", "t2"),

@@ -17,7 +17,6 @@ import os
 from data_validation import data_validation
 from data_validation.result_handlers import bigquery as bqhandler
 
-
 PROJECT_ID = os.environ["PROJECT_ID"]
 BQ_CONN = {"source_type": "BigQuery", "project_id": PROJECT_ID}
 GROUPED_CONFIG_COUNT_VALID = {

@@ -19,7 +19,6 @@ import pytest
 
 from third_party.ibis.ibis_addon import operations
 
-
 TABLE_DF = pandas.DataFrame([{"column": "value"}])
 CLIENT = ibis.pandas.connect({"table": TABLE_DF})
 WHERE_FILTER = "id > 100"

@@ -22,7 +22,6 @@ import pandas.testing
 
 from data_validation import consts
 
-
 REPO_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 SCHEMA_PATH = REPO_ROOT / "terraform" / "results_schema.json"
 _NAN = float("nan")

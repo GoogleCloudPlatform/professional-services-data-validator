@@ -37,7 +37,6 @@ from tests.system.data_sources.common_functions import (
     partition_query_test,
 )
 
-
 IMPALA_HOST = os.getenv("IMPALA_HOST", "localhost")
 IMPALA_PORT = os.getenv("IMPALA_PORT", "21050")
 IMPALA_DATABASE = os.getenv("IMPALA_DATABASE", "default")

@@ -20,7 +20,6 @@ from sqlalchemy.types import DATETIME, VARBINARY
 from sqlalchemy_sybase.base import ischema_names, BIT, SybaseDialect
 import ibis.expr.datatypes as dt
 
-
 ischema_names["bigdatetime"] = DATETIME
 
 _type_mapping = {

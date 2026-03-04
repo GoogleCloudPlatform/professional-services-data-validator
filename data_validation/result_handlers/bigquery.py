@@ -23,7 +23,6 @@ import google.oauth2.service_account
 from data_validation import clients, consts, exceptions, util
 from data_validation.result_handlers.base_backend import BaseBackendResultHandler
 
-
 BQRH_WRITE_MESSAGE = "Results written to BigQuery"
 BQRH_NO_WRITE_MESSAGE = "No results to write to BigQuery"
 

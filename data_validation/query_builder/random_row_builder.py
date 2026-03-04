@@ -19,7 +19,6 @@ import ibis
 from data_validation import clients
 from data_validation.query_builder.query_builder import QueryBuilder
 
-
 # Adding new data sources should be done by adding the Backend name here
 RANDOM_SORT_SUPPORTS = [
     "bigquery",

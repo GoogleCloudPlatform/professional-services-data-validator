@@ -20,7 +20,6 @@ import re
 
 from data_validation import metadata, consts, clients, exceptions
 
-
 # Check for decimal data type with precision and/or scale. Permits hyphen in p/s for value ranges.
 DECIMAL_PRECISION_SCALE_PATTERN = re.compile(
     r"([!]?decimal)\(([0-9\-]+)(?:,[ ]*([0-9\-]+))?\)", re.I
@@ -187,7 +186,10 @@ def schema_validation_matching(
             )
         else:
             # Target data type mismatch
-            (higher_precision, lower_precision,) = parse_n_validate_datatypes(
+            (
+                higher_precision,
+                lower_precision,
+            ) = parse_n_validate_datatypes(
                 string_val(source_field_type), string_val(target_field_type)
             )
             if higher_precision:

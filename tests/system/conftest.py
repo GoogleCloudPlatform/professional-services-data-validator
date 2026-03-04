@@ -19,7 +19,6 @@ import random
 import google.cloud.bigquery
 import pytest
 
-
 ALPHABET = "abcdefghijklmnopqrstuvwxyz"
 
 

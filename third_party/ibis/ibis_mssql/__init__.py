@@ -22,7 +22,6 @@ from ibis.backends.mssql.datatypes import _type_from_result_set_info
 
 import json
 
-
 DEFAULT_DRIVER_NAME = "ODBC Driver 17 for SQL Server"
 
 

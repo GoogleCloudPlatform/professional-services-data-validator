@@ -14,6 +14,5 @@
 
 from importlib.metadata import version
 
-
 __version__ = version("google-pso-data-validator")
 __all__ = ["__version__"]

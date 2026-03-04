@@ -22,7 +22,6 @@ from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.postgres import PostgresResultHandler
 from data_validation.result_handlers.text import TextResultHandler
 
-
 BQ_CONFIG = {
     consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
     consts.PROJECT_ID: "my_project_id",
