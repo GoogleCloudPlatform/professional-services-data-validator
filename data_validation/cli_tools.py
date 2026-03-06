@@ -404,7 +404,9 @@ def _configure_find_tables(subparsers):
         "--target-conn", "-tc", help="Target connection name."
     )
     find_tables_parser.add_argument(
-        "--allowed-schemas", "-as", help="List of source schemas to match."
+        "--allowed-schemas",
+        "-as",
+        help="List of source schemas to match. Can include mappings like 'source_schema=target_schema'.",
     )
     find_tables_parser.add_argument(
         "--include-views",
