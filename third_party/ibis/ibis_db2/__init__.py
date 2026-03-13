@@ -196,7 +196,10 @@ class Backend(BaseAlchemyBackend):
 
         # Query raw metadata to find columns that are actually binary (FOR BIT DATA)
         # but reflected as strings by SQLAlchemy.
-        raw_types = self.raw_column_metadata(schema or database, name) or []
+        raw_types = []
+        if schema or database:
+            raw_types = self.raw_column_metadata(schema or database, name) or []
+
         for_bit_data_cols = set()
         for col_name, type_name, *_ in raw_types:
             if type_name in FOR_BIT_DATA_MAP.values():
