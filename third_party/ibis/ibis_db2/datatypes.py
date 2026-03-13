@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ibm_db_dbi
-
+from ibis.backends.base.sql.alchemy import to_sqla_type
 import ibis.expr.datatypes as dt
+import ibm_db_dbi
 from ibm_db_sa.ibm_db import DB2Dialect_ibm_db
+import sqlalchemy as sa
 import sqlalchemy.types as sat
 
-from ibis.backends.base.sql.alchemy import to_sqla_type
 
 # Types from https://github.com/ibmdb/python-ibmdb/blob/master/IBM_DB/ibm_db/ibm_db_dbi.py
 _type_mapping = {
