@@ -146,6 +146,7 @@ class Backend(BaseAlchemyBackend):
         assert (database and table) or query, "We should never receive all args=None"
         if database and table:
             # For table-based validation, query the system catalog to get the true data type.
+            # SYSIBM.SYSCOLUMNS works on both LUW and z/OS. SYSCAT.COLUMNS is only valid on LUW.
             with self.begin() as con:
                 result = con.exec_driver_sql(
                     self.raw_column_metadata_sql,
@@ -203,7 +204,9 @@ class Backend(BaseAlchemyBackend):
 
         # Query raw metadata to find columns that are actually binary (FOR BIT DATA)
         # but reflected as strings by SQLAlchemy.
-        raw_types = self.raw_column_metadata(schema or database, name) or []
+        raw_types = []
+        if schema or database:
+            raw_types = self.raw_column_metadata(schema or database, name) or []
         for_bit_data_cols = {
             col_name.lower()
             for col_name, type_name, *_ in raw_types
@@ -212,9 +215,7 @@ class Backend(BaseAlchemyBackend):
         # The IBM Db2 driver exposes hidden columns that are not visible in the table definition.
         # We drop these columns from the table object.
         columns_to_drop = {
-            _.lower()
-            for _ in return_table.columns
-            if _.lower() in DB2_HIDDEN_COLUMNS
+            _.lower() for _ in return_table.columns if _.lower() in DB2_HIDDEN_COLUMNS
         }
 
         if for_bit_data_cols or columns_to_drop:
