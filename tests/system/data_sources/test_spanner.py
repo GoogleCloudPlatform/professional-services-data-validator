@@ -32,7 +32,6 @@ from tests.system.data_sources.common_functions import (
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
-
 PROJECT_ID = os.environ["PROJECT_ID"]
 SPANNER_INSTANCE = os.getenv("SPANNER_INSTANCE", "span1")
 SPANNER_DATABASE = os.getenv("SPANNER_DATABASE", "pso_data_validator")
