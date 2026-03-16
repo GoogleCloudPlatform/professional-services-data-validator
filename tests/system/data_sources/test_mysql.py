@@ -41,7 +41,6 @@ from tests.system.data_sources.common_functions import (
     partition_query_test,
 )
 
-
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "dvt")
 CONN = {

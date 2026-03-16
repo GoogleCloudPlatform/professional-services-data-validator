@@ -20,7 +20,6 @@ import pytest
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
 
-
 COLUMN_VALIDATION_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": None,
