@@ -73,11 +73,6 @@ class Backend(BaseAlchemyBackend):
         self.database_name = database
         self.url = sa_url
 
-        @sa.event.listens_for(engine, "connect")
-        def connect(dbapi_connection, connection_record):
-            with dbapi_connection.cursor() as cur:
-                cur.execute("SET TIMEZONE = UTC")
-
         super().do_connect(engine)
 
     def find_db(self):
@@ -188,8 +183,8 @@ class Backend(BaseAlchemyBackend):
     def table(
         self,
         name: str,
-        database: str | None = None,
-        schema: str | None = None,
+        database: Optional[str] = None,
+        schema: Optional[str] = None,
     ) -> "ir.Table":
         """Intercept Ibis table() call and inject Db2 customizations before returning the table object."""
         return_table = super().table(name, database, schema)
