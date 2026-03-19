@@ -21,10 +21,10 @@ from the validation run.
 
 Output validation report to text-based log
 """
+
 from typing import TYPE_CHECKING
 
 from data_validation import consts, util
-
 
 if TYPE_CHECKING:
     from pandas import DataFrame

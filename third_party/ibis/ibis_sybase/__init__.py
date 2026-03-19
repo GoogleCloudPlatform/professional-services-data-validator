@@ -31,7 +31,6 @@ from third_party.ibis.ibis_addon.api import dvt_handle_failed_column_type_infere
 from third_party.ibis.ibis_sybase.compiler import SybaseCompiler
 from third_party.ibis.ibis_sybase.datatypes import type_from_result_set_info
 
-
 EXTRA_RESERVED_WORDS = set(
     [
         "count",

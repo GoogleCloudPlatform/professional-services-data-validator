@@ -40,7 +40,7 @@ BLACK_PATHS = (
     "noxfile.py",
     "setup.py",
 )
-LINT_PACKAGES = ["flake8", "black==22.3.0"]
+LINT_PACKAGES = ["flake8", "black==26.1.0"]
 UNIT_PACKAGES = ["pyfakefs", "freezegun", "teradatasql"]
 
 
@@ -140,8 +140,6 @@ def integration_mysql(session):
     """Run MySQL integration tests.
     Ensure MySQL validation is running as expected.
     """
-    # Pin a specific version of black, so that the linter doesn't conflict with
-    # contributors.
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_mysql.py"
@@ -158,8 +156,6 @@ def integration_postgres(session):
     """Run Postgres integration tests.
     Ensure Postgres validation is running as expected.
     """
-    # Pin a specific version of black, so that the linter doesn't conflict with
-    # contributors.
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_postgres.py"
@@ -176,8 +172,6 @@ def integration_sql_server(session):
     """Run SQL Server integration tests.
     Ensure SQL Server validation is running as expected.
     """
-    # Pin a specific version of black, so that the linter doesn't conflict with
-    # contributors.
     _setup_session_requirements(session, extra_packages=["pyodbc"])
 
     test_path = "tests/system/data_sources/test_sql_server.py"

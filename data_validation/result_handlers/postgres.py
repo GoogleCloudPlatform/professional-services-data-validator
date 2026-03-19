@@ -28,7 +28,6 @@ from data_validation.result_handlers.base_backend import (
     RH_NO_WRITE_MESSAGE,
 )
 
-
 if TYPE_CHECKING:
     from pandas import DataFrame
     from ibis.backends.base import BaseBackend

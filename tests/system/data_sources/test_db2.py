@@ -20,19 +20,21 @@ import pytest
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
-    find_tables_test,
-    schema_validation_test,
     column_validation_test,
-    id_column_row_validation_test,
-    run_test_from_cli_args,
-    null_not_null_assertions,
-    row_validation_test,
+    column_validation_test_args,
     custom_query_validation_test,
+    find_tables_test,
+    id_column_row_validation_test,
+    id_column_query_row_validation_test,
+    null_not_null_assertions,
     raw_query_test,
+    row_validation_test,
+    run_test_from_cli_args,
+    schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-
 
 # Our Db2 test infra has a habit of failing to connect but then working on retry.
 pytestmark = pytest.mark.flaky(
@@ -42,15 +44,18 @@ pytestmark = pytest.mark.flaky(
 )
 
 DB2_HOST = os.getenv("DB2_HOST", "localhost")
+DB2_USER = os.getenv("DB2_USER", "db2inst1")
 DB2_PASSWORD = os.getenv("DB2_PASSWORD")
+DB2_DATABASE = os.getenv("DB2_DATABASE", "testdb")
+DB2_PORT = os.getenv("DB2_PORT", 50000)
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
     "host": DB2_HOST,
-    "user": "db2inst1",
+    "user": DB2_USER,
     "password": DB2_PASSWORD,
-    "port": 50000,
-    "database": "testdb",
+    "port": DB2_PORT,
+    "database": DB2_DATABASE,
 }
 
 
@@ -185,12 +190,11 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types column validation"""
-    cols = "*"
-    # TODO Add col_char_bit and col_varchar_bit into cols below once issue-1655 is resolved.
-    # TODO Add col_binary and col_varbinary into cols below once issue-1354 is resolved.
     cols = (
-        "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,col_clob,col_nvarchar_30,col_nchar_2,"
-        "col_nclob,col_dbclob,col_blob,col_graphic,col_vargraphic,col_xml"
+        "col_smallint,col_int,col_bigint,col_decfloat_16,col_decfloat_32,"
+        "col_nvarchar_30,col_nchar_2,col_clob,col_nclob,col_dbclob,"
+        "col_blob,col_char_bit,col_varchar_bit,col_graphic,col_vargraphic,"
+        "col_binary,col_varbinary,col_xml"
     )
     column_validation_test(
         tc="bq-conn",
@@ -263,6 +267,47 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     # The columns below have mismatching data and should be in the Dataframe.
     assert "sum__col_dec_18_fail" in df[consts.VALIDATION_NAME].values
     assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly.
+    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
+    which should be removed in SQL otherwise groups will not match Pandas.
+    """
+    args = column_validation_test_args(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        grouped_columns="col_datetime",
+        filter_status=None,
+    )
+    df = run_test_from_cli_args(args)
+    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
+    assert len(df) == 3
+    # All groups should be a successful validation.
+    assert all(
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
+    ), "Not all records are marked as success"
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
+        grouped_columns="id",
+        wildcard_include_timestamp=True,
+    )
 
 
 ###########################
@@ -350,13 +395,27 @@ def test_row_validation_db2_types_to_bigquery():
     """Db2 to BigQuery dvt_db2_types row validation"""
     # Excluded col_clob,col_nclob,col_xml because they are incompatible with hex() function (due to potential length).
     # TODO Add col_char_2 to list below once issue-1354 is complete.
-    # TODO Add col_char_bit,col_varchar_bit to list below once issue-1655 is complete.
-    # TODO Add col_binary and col_varbinary into cols below once issue-1354 is resolved.
-    cols = "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,col_nvarchar_30,col_time,col_blob"
+    cols = (
+        "col_smallint,col_int,col_bigint,col_dec_10_2,col_decfloat_16,col_decfloat_32,"
+        "col_nvarchar_30,col_time,col_char_bit,col_varchar_bit,col_binary,col_varbinary"
+    )
     row_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
         hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_random_row=False,
     )
 
 
@@ -405,6 +464,15 @@ def test_row_validation_comp_fields_binary_values_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_large_decimals_to_bigquery():
     """Db2 to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
@@ -428,8 +496,36 @@ def test_row_validation_large_decimals_to_bigquery():
 def test_fixed_char_pk_row_validation_to_bigquery():
     """Test fixed char primary keys"""
     id_column_row_validation_test(
-        "db2inst1.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id",
+        "pso_data_validator.dvt_fixed_char_id",
         use_random_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -459,6 +555,15 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         target_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
         comp_fields="col_int64,col_varchar_30",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 ##############################

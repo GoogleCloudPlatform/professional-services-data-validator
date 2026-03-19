@@ -26,7 +26,6 @@ import ibis.expr.datatypes as dt
 from data_validation import consts
 from data_validation.result_handlers.bigquery import BQRH_NO_WRITE_MESSAGE
 
-
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 

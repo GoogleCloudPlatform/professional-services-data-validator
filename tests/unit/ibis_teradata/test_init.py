@@ -18,7 +18,6 @@ from unittest import mock
 
 import pytest
 
-
 DVT_CORE_TYPES_CURS = [
     ["id", int, None, 8, None, None, False],
     ["col_int8", int, None, 1, None, None, True],

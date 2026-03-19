@@ -29,7 +29,6 @@ from third_party.ibis.ibis_oracle.compiler import OracleCompiler
 from third_party.ibis.ibis_oracle.datatypes import _get_type
 import oracledb
 
-
 EXTRA_RESERVED_WORDS = set(
     [
         "COLUMN",
