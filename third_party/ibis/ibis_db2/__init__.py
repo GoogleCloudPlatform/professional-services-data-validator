@@ -46,6 +46,7 @@ class Backend(BaseAlchemyBackend):
         FROM SYSIBM.SYSCOLUMNS
         WHERE TBCREATOR = ? AND TBNAME = ?
         ORDER BY COLNO"""
+    for_bit_data_codepage = 0
 
     def do_connect(
         self,
