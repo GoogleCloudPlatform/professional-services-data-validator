@@ -20,7 +20,6 @@ import ibis
 from data_validation import consts, util
 from data_validation.result_handlers import text as text_handler
 
-
 if TYPE_CHECKING:
     from pandas import DataFrame
 

@@ -28,7 +28,6 @@ from data_validation import cli_tools, consts, exceptions
 from data_validation.config_manager import ConfigManager
 from data_validation.partition_builder import PartitionBuilder
 
-
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 

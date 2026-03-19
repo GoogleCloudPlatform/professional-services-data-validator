@@ -22,6 +22,7 @@ extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
+
 import datetime
 import dateutil
 import numpy as np
@@ -545,10 +546,10 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
 if SybaseExprTranslator:
-    SybaseExprTranslator._registry[
-        BinaryLength
-    ] = mssql_registry.sa_format_binary_length
+    SybaseExprTranslator._registry[BinaryLength] = (
+        mssql_registry.sa_format_binary_length
+    )
     SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    SybaseExprTranslator._registry[
-        PaddedCharLength
-    ] = mssql_registry.sa_format_string_length
+    SybaseExprTranslator._registry[PaddedCharLength] = (
+        mssql_registry.sa_format_string_length
+    )

@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_binary
 ,   int_id          INTEGER NOT NULL
 ,   other_data      VARCHAR(100)
 );
-CREATE UNIQUE INDEX pso_data_validator.dvt_binary_int_id_uk ON dvt_binary (int_id);
+CREATE UNIQUE INDEX pso_data_validator.dvt_binary_int_id_uk ON pso_data_validator.dvt_binary (int_id);
 COMMENT ON TABLE pso_data_validator.dvt_binary IS 'Integration test table used to test both binary pk matching and binary hash/concat comparisons.';
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-1' AS VARBINARY(16)), 1, 'Row 1');
 INSERT INTO pso_data_validator.dvt_binary VALUES (CAST('DVT-key-2' AS VARBINARY(16)), 2, 'Row 2');

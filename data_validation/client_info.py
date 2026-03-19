@@ -16,7 +16,6 @@ from google.api_core import client_info as http_client_info
 
 import data_validation
 
-
 APPLICATION_NAME = "google-pso-tool/data-validator"
 USER_AGENT = "{}/{}".format(APPLICATION_NAME, data_validation.__version__)
 

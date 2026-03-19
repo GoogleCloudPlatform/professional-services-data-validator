@@ -21,7 +21,6 @@ import pytest
 from data_validation import cli_tools, exceptions, config_manager, consts
 from data_validation import __main__ as main
 
-
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
     "command": "validate",

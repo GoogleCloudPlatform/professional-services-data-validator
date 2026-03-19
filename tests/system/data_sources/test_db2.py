@@ -37,7 +37,6 @@ from tests.system.data_sources.common_functions import (
 
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
-
 # Our Db2 test infra has a habit of failing to connect but then working on retry.
 pytestmark = pytest.mark.flaky(
     reruns=1,
@@ -46,15 +45,18 @@ pytestmark = pytest.mark.flaky(
 )
 
 DB2_HOST = os.getenv("DB2_HOST", "localhost")
+DB2_USER = os.getenv("DB2_USER", "db2inst1")
 DB2_PASSWORD = os.getenv("DB2_PASSWORD")
+DB2_DATABASE = os.getenv("DB2_DATABASE", "testdb")
+DB2_PORT = os.getenv("DB2_PORT", 50000)
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
     "host": DB2_HOST,
-    "user": "db2inst1",
+    "user": DB2_USER,
     "password": DB2_PASSWORD,
-    "port": 50000,
-    "database": "testdb",
+    "port": DB2_PORT,
+    "database": DB2_DATABASE,
 }
 
 
@@ -517,6 +519,18 @@ def test_row_validation_large_decimals_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_fixed_char_id",
+        use_random_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
     cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
@@ -524,6 +538,20 @@ def test_row_validation_tricky_dates_to_bigquery():
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
         hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -576,18 +604,6 @@ def test_custom_query_row_validation_core_types_to_bigquery():
 def test_varchar_pk_query_row_validation_to_bigquery():
     """Test varchar primary keys on custom query"""
     id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_fixed_char_pk_row_validation_to_bigquery():
-    """Test fixed char primary keys"""
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_fixed_char_id",
-        use_random_row=False,
-    )
 
 
 @mock.patch(

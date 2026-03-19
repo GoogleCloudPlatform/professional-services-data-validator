@@ -35,7 +35,6 @@ from ibis.backends.base.sql.alchemy.registry import variance_reduction
 
 from third_party.ibis.ibis_addon.api import ibis_integer_string_length
 
-
 operation_registry = sqlalchemy_operation_registry.copy()
 operation_registry.update(sqlalchemy_window_functions_registry)
 
