@@ -223,7 +223,8 @@ class Backend(BaseAlchemyBackend):
         if isinstance(type_code, str):
             return type_code.upper() == "CHARACTER"
         else:
-            # From cursor.description for custom queries, this is a DBAPITypeObject.
+            # From cursor.description for custom queries when we don't have
+            # CREATE VIEW privileges. This is a DBAPITypeObject.
             # It's not possible to distinguish padded char types in this case,
             # so we default to False to be safe and avoid trimming incorrectly.
             return False

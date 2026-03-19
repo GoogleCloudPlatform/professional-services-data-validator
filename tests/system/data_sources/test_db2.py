@@ -21,10 +21,11 @@ from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     binary_key_assertions,
-    find_tables_test,
-    schema_validation_test,
     column_validation_test,
+    find_tables_test,
     id_column_row_validation_test,
+    id_column_query_row_validation_test,
+    schema_validation_test,
     run_test_from_cli_args,
     null_not_null_assertions,
     row_validation_test,
@@ -458,6 +459,29 @@ def test_custom_query_row_validation_core_types_to_bigquery():
         target_query="select id,col_int64,col_varchar_30 from pso_data_validator.dvt_core_types",
         comp_fields="col_int64,col_varchar_30",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_custom_query_row_concat_validation_core_types_to_bigquery():
+    """Db2 to BigQuery dvt_core_types custom-query row concat validation"""
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,col_dec_10_2,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        target_query="select id,col_int64,col_dec_10_2,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        concat="col_int64,col_dec_10_2,col_varchar_30,col_date",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query."""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
 
 
 ##############################
