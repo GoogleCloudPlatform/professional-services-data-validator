@@ -14,6 +14,7 @@
 
 from typing import Iterable, Optional
 import functools
+import inspect
 
 from ibis.backends.base.sql.alchemy.datatypes import to_sqla_type
 import ibis.expr.datatypes as dt
@@ -204,14 +205,30 @@ Value.force_cast = force_cast
 
 def cache_generator_results(func):
     """Decorator to cache generator results at the instance level."""
+    # Pre-compute the function signature to avoid doing this on every call
+    sig = inspect.signature(func)
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
+        # Create an instance-level cache if it doesn't already exist.
+        # This prevents instances from sharing cache state and avoids memory leaks.
         if not hasattr(self, "_generator_cache"):
             self._generator_cache = {}
 
-        key = (func.__name__, args, frozenset(kwargs.items()))
+        # Bind the provided args and kwargs to the function's signature.
+        # This creates a unified representation of the arguments, avoiding cache misses
+        # when identical values are passed differently (e.g., positional vs. keyword).
+        bound_args = sig.bind(self, *args, **kwargs)
+        bound_args.apply_defaults()
+
+        # Remove 'self' from the arguments since the cache is already scoped to the instance
+        arguments = bound_args.arguments.copy()
+        arguments.pop('self', None)
+
+        # Generate a unique cache key based on the function name and the canonical arguments
+        key = (func.__name__, frozenset(arguments.items()))
         if key not in self._generator_cache:
+            # Fully evaluate the generator to a list to store it in the cache
             self._generator_cache[key] = list(func(self, *args, **kwargs))
 
         yield from self._generator_cache[key]

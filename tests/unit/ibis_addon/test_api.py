@@ -139,3 +139,31 @@ def test_cache_generator_results_long_query():
     res3 = list(backend.mock_generator("db1", "tbl1", query=long_query_modified))
     assert backend.execution_count == 2
     assert res3 == [("col1", "VARCHAR")]
+
+
+def test_cache_generator_results_mixed_args():
+    class DummyBackend:
+        def __init__(self):
+            self.execution_count = 0
+
+        @api.cache_generator_results
+        def mock_generator(self, database=None, table=None, query=None):
+            self.execution_count += 1
+            yield ("col1", "VARCHAR")
+
+    backend = DummyBackend()
+
+    # First call with positional args
+    res1 = list(backend.mock_generator("pso_db", "dvt_table"))
+    assert backend.execution_count == 1
+    assert res1 == [("col1", "VARCHAR")]
+
+    # Second call with keyword args: should hit cache
+    res2 = list(backend.mock_generator(database="pso_db", table="dvt_table"))
+    assert backend.execution_count == 1
+    assert res1 == res2
+
+    # Third call with kwargs explicitly defining query=None: should hit cache
+    res3 = list(backend.mock_generator(database="pso_db", table="dvt_table", query=None))
+    assert backend.execution_count == 1
+    assert res1 == res3
