@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import re
 from typing import Iterable, Optional, Tuple, Dict, Any, TYPE_CHECKING
 
@@ -22,6 +23,8 @@ import ibis.expr.schema as sch
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
+
+from data_validation import util
 
 if TYPE_CHECKING:
     import ibis.expr.types as ir
@@ -138,42 +141,84 @@ class Backend(BaseAlchemyBackend):
                   https://peps.python.org/pep-0249/#description
         """
         assert (database and table) or query, "We should never receive all args=None"
-        if database and table:
-            # For table-based validation, query the system catalog to get the true data type.
-            # SYSIBM.SYSCOLUMNS works on both LUW and z/OS. SYSCAT.COLUMNS is only valid on LUW.
+        target_schema = None
+        target_table = None
+        temp_view_name = None
+
+        if query:
+            source = f"({query})"
+            temp_view_name = util.dvt_temp_object_name().upper()
+
+            # Step 1: Create a view representing the query schema.
+            try:
+                with self.begin() as con:
+                    con.exec_driver_sql(
+                        f"CREATE VIEW {temp_view_name} AS SELECT * FROM {source} t0"
+                    )
+            except Exception as e:
+                logging.getLogger(__name__).warning(
+                    "Could not create temp view for custom query %s. Falling back to cursor.description. %s",
+                    temp_view_name,
+                    str(e),
+                )
+                # Step 2: Fallback to cursor.description if user lacks permissions.
+                with self.begin() as con:
+                    result = con.exec_driver_sql(f"SELECT * FROM {source} t0 LIMIT 0")
+                    cursor = result.cursor
+                    yield from (column for column in cursor.description)
+                return
+
+            # Step 3: Get current schema and set variables to the view.
+            with self.begin() as con:
+                schema_result = con.exec_driver_sql(
+                    "SELECT CURRENT SCHEMA FROM SYSIBM.SYSDUMMY1"
+                )
+                target_schema = schema_result.cursor.fetchone()[0].strip()
+            target_table = temp_view_name
+
+        elif database and table:
+            # Step 4: Set the variables to the actual database/table names.
+            target_schema = database.upper()
+            target_table = table.upper()
+
+        # Step 5: Run the metadata SQL using names from 3 or 4.
+        try:
             with self.begin() as con:
                 result = con.exec_driver_sql(
                     self.raw_column_metadata_sql,
-                    parameters=(database.upper(), table.upper()),
+                    parameters=(target_schema, target_table),
                 )
                 rows = result.cursor.fetchall()
+        finally:
+            if temp_view_name:
+                try:
+                    with self.begin() as con:
+                        con.exec_driver_sql(f"DROP VIEW {temp_view_name}")
+                except Exception as e:
+                    import logging
 
-            for row in rows:
-                colname, typename, col_length, col_scale, nullable, codepage = row
-                if (
-                    codepage == self.for_bit_data_codepage
-                    and typename.upper() in FOR_BIT_DATA_MAP
-                ):
-                    # Db2 does not expose FOR BIT DATA types so we customize the type name here.
-                    typename = FOR_BIT_DATA_MAP[typename.upper()]
+                    logging.getLogger(__name__).warning(
+                        "Could not drop temp view %s", temp_view_name, exc_info=e
+                    )
 
-                yield (
-                    colname,
-                    typename,
-                    col_length,
-                    col_length,
-                    col_length,
-                    col_scale,
-                    nullable,
-                )
-        elif query:
-            # For custom queries, the system catalog cannot be used. Fall back to
-            # cursor.description, which may not distinguish padded char types.
-            source = f"({query})"
-            with self.begin() as con:
-                result = con.exec_driver_sql(f"SELECT * FROM {source} t0 LIMIT 0")
-                cursor = result.cursor
-                yield from (column for column in cursor.description)
+        for row in rows:
+            colname, typename, col_length, col_scale, nullable, codepage = row
+            if (
+                codepage == self.for_bit_data_codepage
+                and typename.upper() in FOR_BIT_DATA_MAP
+            ):
+                # Db2 does not expose FOR BIT DATA types so we customize the type name here.
+                typename = FOR_BIT_DATA_MAP[typename.upper()]
+
+            yield (
+                colname,
+                typename,
+                col_length,
+                col_length,
+                col_length,
+                col_scale,
+                nullable,
+            )
 
     def is_char_type_padded(self, char_type: Tuple) -> bool:
         """Define this method if the backend supports character/string types that are padded and returns
@@ -190,8 +235,8 @@ class Backend(BaseAlchemyBackend):
     def table(
         self,
         name: str,
-        database: str | None = None,
-        schema: str | None = None,
+        database: Optional[str] = None,
+        schema: Optional[str] = None,
     ) -> "ir.Table":
         """Intercept Ibis table() call and inject Db2 customizations before returning the table object."""
         return_table = super().table(name, database, schema)
