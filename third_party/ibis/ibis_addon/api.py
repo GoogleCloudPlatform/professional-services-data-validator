@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Iterable, Optional
+import functools
 
 from ibis.backends.base.sql.alchemy.datatypes import to_sqla_type
 import ibis.expr.datatypes as dt
@@ -199,3 +200,20 @@ def ibis_integer_string_length(ibis_column: dt.DataType) -> Optional[int]:
 
 
 Value.force_cast = force_cast
+
+
+def cache_generator_results(func):
+    """Decorator to cache generator results at the instance level."""
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if not hasattr(self, "_generator_cache"):
+            self._generator_cache = {}
+
+        key = (func.__name__, args, frozenset(kwargs.items()))
+        if key not in self._generator_cache:
+            self._generator_cache[key] = list(func(self, *args, **kwargs))
+
+        yield from self._generator_cache[key]
+
+    return wrapper

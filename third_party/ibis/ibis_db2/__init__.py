@@ -25,6 +25,7 @@ from third_party.ibis.ibis_db2.compiler import Db2Compiler
 from third_party.ibis.ibis_db2.datatypes import _get_type
 
 from data_validation import util
+from third_party.ibis.ibis_addon.api import cache_generator_results
 
 if TYPE_CHECKING:
     import ibis.expr.types as ir
@@ -125,6 +126,7 @@ class Backend(BaseAlchemyBackend):
             )
             return [_[0] for _ in result.cursor.fetchall()]
 
+    @cache_generator_results
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
     ) -> Iterable[Tuple]:
