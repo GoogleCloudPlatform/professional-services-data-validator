@@ -20,17 +20,19 @@ import pytest
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
+    column_validation_test_args,
+    custom_query_validation_test,
     find_tables_test,
     id_column_row_validation_test,
     id_column_query_row_validation_test,
-    schema_validation_test,
-    run_test_from_cli_args,
     null_not_null_assertions,
-    row_validation_test,
-    custom_query_validation_test,
     raw_query_test,
+    row_validation_test,
+    run_test_from_cli_args,
+    schema_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -264,6 +266,47 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     assert "sum__col_dec_18_1_fail" in df[consts.VALIDATION_NAME].values
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly.
+    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
+    which should be removed in SQL otherwise groups will not match Pandas.
+    """
+    args = column_validation_test_args(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        grouped_columns="col_datetime",
+        filter_status=None,
+    )
+    df = run_test_from_cli_args(args)
+    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
+    assert len(df) == 3
+    # All groups should be a successful validation.
+    assert all(
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
+    ), "Not all records are marked as success"
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
+        grouped_columns="id",
+        wildcard_include_timestamp=True,
+    )
+
+
 ###########################
 # ROW VALIDATION TESTS
 ###########################
@@ -364,6 +407,19 @@ def test_row_validation_db2_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_random_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_binary_pk_to_bigquery():
     """Db2 to BigQuery dvt_binary row validation.
     This is testing binary primary key join columns.
@@ -405,6 +461,15 @@ def test_row_validation_comp_fields_binary_values_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_large_decimals_to_bigquery():
     """Db2 to BigQuery dvt_large_decimals row validation.
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
@@ -428,8 +493,36 @@ def test_row_validation_large_decimals_to_bigquery():
 def test_fixed_char_pk_row_validation_to_bigquery():
     """Test fixed char primary keys"""
     id_column_row_validation_test(
-        "db2inst1.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id",
+        "pso_data_validator.dvt_fixed_char_id",
         use_random_row=False,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -482,6 +575,15 @@ def test_custom_query_row_concat_validation_core_types_to_bigquery():
 def test_fixed_char_pk_query_row_validation_to_bigquery():
     """Test fixed char primary keys on custom query."""
     id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 ##############################
