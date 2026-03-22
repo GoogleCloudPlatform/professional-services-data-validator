@@ -54,8 +54,16 @@ def sa_sf_binary(_, satype, nullable=True):
     return dt.Binary(nullable=nullable)
 
 
-def _get_type(typename) -> dt.DataType:
+def _get_type(col) -> dt.DataType:
+    typename = col[1]
     typ = _type_mapping.get(typename)
     if typ is None:
         raise NotImplementedError(f"DB2 type {typename} is not supported")
+    
+    if typ == dt.Decimal:
+        precision = col[4]
+        scale = col[5]
+        if precision is not None and scale is not None:
+            return dt.Decimal(precision, scale)
+            
     return typ
