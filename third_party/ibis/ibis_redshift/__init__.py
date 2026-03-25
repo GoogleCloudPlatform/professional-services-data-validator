@@ -20,6 +20,7 @@ from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
 from ibis import util
 from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
 
+from third_party.ibis.ibis_addon.api import cache_generator_results
 
 class Backend(BaseAlchemyBackend):
     name = "redshift"
@@ -82,6 +83,7 @@ class Backend(BaseAlchemyBackend):
             ]
         return self._filter_with_like(databases, like)
 
+    @cache_generator_results
     def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
         raw_name = util.guid().lower()
         name = self._quote(raw_name)
