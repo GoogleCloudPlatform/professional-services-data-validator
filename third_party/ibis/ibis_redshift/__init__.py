@@ -22,6 +22,7 @@ from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_ma
 
 from third_party.ibis.ibis_addon.api import cache_generator_results
 
+
 class Backend(BaseAlchemyBackend):
     name = "redshift"
     compiler = RedshiftCompiler
@@ -73,7 +74,7 @@ class Backend(BaseAlchemyBackend):
         super().do_connect(engine)
 
     def list_databases(self, like=None):
-        with self.begin() as con:
+        with self.con.connect() as con:
             # http://dba.stackexchange.com/a/1304/58517
             databases = [
                 row.datname
@@ -97,7 +98,7 @@ class Backend(BaseAlchemyBackend):
         """
         if self.inspector.has_table(query):
             query = f"TABLE {query}"
-        with self.begin() as con:
+        with self.con.connect() as con:
             con.exec_driver_sql(f"CREATE VIEW {name} AS {query} WITH NO SCHEMA BINDING")
             type_info = con.execute(
                 sa.text(type_info_sql).bindparams(raw_name=raw_name)
