@@ -65,5 +65,5 @@ def _get_type(col) -> dt.DataType:
         scale = col[5]
         if precision is not None and scale is not None:
             return dt.Decimal(precision, scale)
-    
+
     return typ
