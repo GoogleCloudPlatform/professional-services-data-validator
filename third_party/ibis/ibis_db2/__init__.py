@@ -131,7 +131,6 @@ class Backend(BaseAlchemyBackend):
                   https://peps.python.org/pep-0249/#description
         """
         assert (database and table) or query, "We should never receive all args=None"
-
         if database and table:
             # For table-based validation, query the system catalog to get the true data type.
             # SYSIBM.SYSCOLUMNS works on both LUW and z/OS. SYSCAT.COLUMNS is only valid on LUW.
@@ -143,7 +142,6 @@ class Backend(BaseAlchemyBackend):
                 WHERE TBCREATOR = ? AND TBNAME = ?
                 ORDER BY COLNO
             """
-
             with self.begin() as con:
                 result = con.exec_driver_sql(
                     get_column_metadata_sql,
@@ -190,8 +188,8 @@ class Backend(BaseAlchemyBackend):
     def table(
         self,
         name: str,
-        database: Optional[str] = None,
-        schema: Optional[str] = None,
+        database: str | None = None,
+        schema: str | None = None,
     ) -> "ir.Table":
         """Intercept Ibis table() call and inject Db2 customizations before returning the table object."""
         return_table = super().table(name, database, schema)
