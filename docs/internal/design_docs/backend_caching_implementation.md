@@ -1,6 +1,6 @@
 # Goal Description
 
-The `raw_column_metadata` method in `third_party/ibis/ibis_db2/__init__.py` executes a `CREATE VIEW` statement and queries Db2's system catalog to retrieve column metadata. For custom queries, this operation is slow and often called multiple times during a single data validation run. The goal is to implement a simple in-memory cache at the `Backend` instance level to store the metadata results, avoiding redundant view creation and system queries.
+The `raw_column_metadata` method in `third_party/ibis/ibis_db2/__init__.py` (and the Redshift equivalent) executes a `CREATE VIEW` statement and queries the system catalog to retrieve column metadata. For custom queries, this operation is slow and often called multiple times during a single data validation run. The goal is to implement a simple in-memory cache at the `Backend` instance level to store the metadata results, avoiding redundant view creation and system queries.
 
 In the interest of making this caching logic reusable across other database backends in the future, we will extract the core mechanism into a generic caching decorator housed in `third_party/ibis/ibis_addon/api.py`.
 
@@ -11,7 +11,7 @@ In the interest of making this caching logic reusable across other database back
 
 ## Proposed Changes
 
-We will create a re-usable caching decorator in `api.py` that manages a dictionary on the `self` object. We will then apply this decorator to the Db2 `raw_column_metadata` method.
+We will create a re-usable caching decorator in `api.py` that manages a dictionary on the `self` object. We will then apply this decorator to the Redshift `raw_column_metadata` method.
 
 ### third_party/ibis/ibis_addon/api.py
 
@@ -26,7 +26,7 @@ We will create a re-usable caching decorator in `api.py` that manages a dictiona
 
 #### [MODIFY] `__init__.py` (file:///usr/local/google/home/neiljohnson/github/professional-services-data-validator2/third_party/ibis/ibis_db2/__init__.py)
 - Import `cache_generator_results` from `third_party.ibis.ibis_addon.api`.
-- Simply apply the `@cache_generator_results` decorator to the `Backend.raw_column_metadata` method. This requires zero internal changes to the Db2-specific custom query/view logic!
+- Simply apply the `@cache_generator_results` decorator to the `Backend.raw_column_metadata` method. This requires zero internal changes to the Backend-specific custom query/view logic!
 
 ## Verification Plan
 
