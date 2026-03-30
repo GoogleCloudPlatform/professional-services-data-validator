@@ -44,15 +44,18 @@ pytestmark = pytest.mark.flaky(
 )
 
 DB2_HOST = os.getenv("DB2_HOST", "localhost")
+DB2_USER = os.getenv("DB2_USER", "db2inst1")
 DB2_PASSWORD = os.getenv("DB2_PASSWORD")
+DB2_DATABASE = os.getenv("DB2_DATABASE", "testdb")
+DB2_PORT = os.getenv("DB2_PORT", 50000)
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
     "host": DB2_HOST,
-    "user": "db2inst1",
+    "user": DB2_USER,
     "password": DB2_PASSWORD,
-    "port": 50000,
-    "database": "testdb",
+    "port": DB2_PORT,
+    "database": DB2_DATABASE,
 }
 
 
