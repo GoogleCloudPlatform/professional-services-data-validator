@@ -17,10 +17,9 @@ import ibis.expr.datatypes as dt
 from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
-from ibis import util
 from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
-
 from third_party.ibis.ibis_addon.api import cache_generator_results
+from data_validation.util import dvt_temp_object_name
 
 
 class Backend(BaseAlchemyBackend):
@@ -86,7 +85,7 @@ class Backend(BaseAlchemyBackend):
 
     @cache_generator_results
     def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
-        raw_name = util.guid().lower()
+        raw_name = dvt_temp_object_name()
         name = self._quote(raw_name)
         type_info_sql = """
         SELECT 
@@ -99,12 +98,16 @@ class Backend(BaseAlchemyBackend):
         if self.inspector.has_table(query):
             query = f"TABLE {query}"
         with self.con.connect() as con:
-            con.exec_driver_sql(f"CREATE VIEW {name} AS {query} WITH NO SCHEMA BINDING")
-            type_info = con.execute(
-                sa.text(type_info_sql).bindparams(raw_name=raw_name)
-            )
-            yield from ((col, _get_type(typestr)) for col, typestr in type_info)
-            con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
+            try:
+                con.exec_driver_sql(
+                    f"CREATE VIEW {name} AS {query} WITH NO SCHEMA BINDING"
+                )
+                type_info = con.execute(
+                    sa.text(type_info_sql).bindparams(raw_name=raw_name)
+                )
+                yield from ((col, _get_type(typestr)) for col, typestr in type_info)
+            finally:
+                con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
 
     def _get_temp_view_definition(
         self, name: str, definition: sa.sql.compiler.Compiled
