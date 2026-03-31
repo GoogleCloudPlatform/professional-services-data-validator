@@ -1080,10 +1080,8 @@ def test_raw_query_dvt_row_types(capsys):
 ####################
 # CONNECTIONS TESTS
 ####################
-def test_connections_add(caplog, fs, monkeypatch):
+def test_connections_add(caplog, tmp_path, monkeypatch):
     """Test data-validation connections add command."""
-    # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.
-    monkeypatch.delenv(consts.ENV_DIRECTORY_VAR, raising=False)
     conn_args = [
         "--host",
         SQL_SERVER_HOST,
@@ -1098,4 +1096,4 @@ def test_connections_add(caplog, fs, monkeypatch):
         "--query",
         '{"TrustServerCertificate": "yes"}',
     ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_MSSQL, conn_args)
+    connections_add_test(caplog, consts.SOURCE_TYPE_MSSQL, conn_args, tmp_path, monkeypatch)

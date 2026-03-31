@@ -826,8 +826,13 @@ def connections_add_test(
     caplog: pytest.LogCaptureFixture,
     conn_type: str,
     conn_args: list,
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Generic 'connections add' test."""
+    # Set PSO_DV_CONN_HOME to tmp_path to bypass GCS and use a local temp directory.
+    # This avoids pyfakefs module loading issues while keeping file creation isolated.
+    monkeypatch.setenv(consts.ENV_DIRECTORY_VAR, str(tmp_path))
     with caplog.at_level(logging.INFO):
         parser = cli_tools.configure_arg_parser()
         cli_arg_list = [
