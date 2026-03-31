@@ -26,6 +26,7 @@ from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
+    connections_add_test,
     find_tables_test,
     id_column_row_validation_test,
     id_type_test_assertions,
@@ -47,16 +48,18 @@ from tests.system.data_sources.test_bigquery import BQ_CONN
 
 # Cloud SQL Proxy listens on localhost
 SQL_SERVER_HOST = os.getenv("SQL_SERVER_HOST", "127.0.0.1")
+SQL_SERVER_PORT = os.getenv("SQL_SERVER_PORT", "1433")
 SQL_SERVER_USER = os.getenv("SQL_SERVER_USER", "sqlserver")
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
+SQL_SERVER_DATABASE = os.getenv("SQL_SERVER_DATABASE", "guestbook")
 PROJECT_ID = os.getenv("PROJECT_ID")
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_MSSQL,
     "host": SQL_SERVER_HOST,
     "user": SQL_SERVER_USER,
     "password": SQL_SERVER_PASSWORD,
-    "port": 1433,
-    "database": "guestbook",
+    "port": int(SQL_SERVER_PORT),
+    "database": SQL_SERVER_DATABASE,
 }
 
 EXPECTED_DATETIME_ID_PARTITION_FILTER = [
@@ -1072,3 +1075,24 @@ def test_find_tables():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+def test_connections_add(caplog, fs, monkeypatch):
+    """Test data-validation connections add command."""
+    # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.
+    monkeypatch.delenv(consts.ENV_DIRECTORY_VAR, raising=False)
+    conn_args = [
+        "--host",
+        SQL_SERVER_HOST,
+        "--user",
+        SQL_SERVER_USER,
+        "--password",
+        SQL_SERVER_PASSWORD,
+        "--port",
+        SQL_SERVER_PORT,
+        "--database",
+        SQL_SERVER_DATABASE,
+        "--query",
+        '{"TrustServerCertificate": "yes"}',
+    ]
+    connections_add_test(caplog, consts.SOURCE_TYPE_MSSQL, conn_args)

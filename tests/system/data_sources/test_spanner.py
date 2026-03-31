@@ -22,13 +22,14 @@ import pytest
 from data_validation import cli_tools, consts, data_validation, find_tables
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    column_validation_test,
+    connections_add_test,
+    custom_query_validation_test,
     raw_query_test,
     row_validation_many_columns_test,
+    row_validation_test,
     run_test_from_cli_args,
     schema_validation_test,
-    column_validation_test,
-    row_validation_test,
-    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
@@ -405,3 +406,18 @@ def test_custom_query_row_validation_many_columns():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="dvt_core_types")
+
+
+def test_connections_add(caplog, fs, monkeypatch):
+    """Test data-validation connections add command."""
+    # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.
+    monkeypatch.delenv(consts.ENV_DIRECTORY_VAR, raising=False)
+    conn_args = [
+        "--project-id",
+        PROJECT_ID,
+        "--instance-id",
+        SPANNER_INSTANCE,
+        "--database-id",
+        SPANNER_DATABASE,
+    ]
+    connections_add_test(caplog, consts.SOURCE_TYPE_SPANNER, conn_args)

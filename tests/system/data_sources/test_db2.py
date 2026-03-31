@@ -24,6 +24,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     column_validation_test,
     column_validation_test_args,
+    connections_add_test,
     custom_query_validation_test,
     find_tables_test,
     id_column_row_validation_test,
@@ -47,14 +48,14 @@ DB2_HOST = os.getenv("DB2_HOST", "localhost")
 DB2_USER = os.getenv("DB2_USER", "db2inst1")
 DB2_PASSWORD = os.getenv("DB2_PASSWORD")
 DB2_DATABASE = os.getenv("DB2_DATABASE", "testdb")
-DB2_PORT = os.getenv("DB2_PORT", 50000)
+DB2_PORT = os.getenv("DB2_PORT", "50000")
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
     "host": DB2_HOST,
     "user": DB2_USER,
     "password": DB2_PASSWORD,
-    "port": DB2_PORT,
+    "port": int(DB2_PORT),
     "database": DB2_DATABASE,
 }
 
@@ -588,3 +589,24 @@ def test_find_tables():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="pso_data_validator.dvt_core_types")
+
+
+def test_connections_add(caplog, fs, monkeypatch):
+    """Test data-validation connections add command."""
+    # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.
+    monkeypatch.delenv(consts.ENV_DIRECTORY_VAR, raising=False)
+    conn_args = [
+        "--host",
+        DB2_HOST,
+        "--user",
+        DB2_USER,
+        "--password",
+        DB2_PASSWORD,
+        "--port",
+        DB2_PORT,
+        "--database",
+        DB2_DATABASE,
+        "--driver",
+        "ibm_db_sa",
+    ]
+    connections_add_test(caplog, consts.SOURCE_TYPE_DB2, conn_args)

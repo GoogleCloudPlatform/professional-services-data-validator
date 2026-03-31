@@ -25,6 +25,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     column_validation_test_args,
     column_validation_test_config_managers,
+    connections_add_test,
     find_tables_test,
     generate_and_run_table_partitions_test,
     id_column_row_validation_test,
@@ -1421,3 +1422,24 @@ def test_raw_column_metadata():
         )
     )
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+def test_connections_add(caplog, fs, monkeypatch):
+    """Test data-validation connections add command."""
+    # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.
+    monkeypatch.delenv(consts.ENV_DIRECTORY_VAR, raising=False)
+    conn_args = [
+        "--host",
+        ORACLE_HOST,
+        "--user",
+        ORACLE_USER,
+        "--password",
+        ORACLE_PASSWORD,
+        "--port",
+        ORACLE_PORT,
+        "--database",
+        ORACLE_DATABASE,
+        "--connect-args",
+        '{ "disable_oob": "true" }',
+    ]
+    connections_add_test(caplog, consts.SOURCE_TYPE_ORACLE, conn_args)
