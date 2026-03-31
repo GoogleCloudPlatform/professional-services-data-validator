@@ -594,9 +594,11 @@ def test_raw_query_dvt_row_types(capsys):
 ####################
 # CONNECTIONS TESTS
 ####################
-def test_connections_add(caplog, fs, monkeypatch):
+def test_connections_add(caplog, tmp_path, monkeypatch):
     """Test data-validation connections add command."""
-    monkeypatch.delenv(consts.ENV_DIRECTORY_VAR, raising=False)
+    # Set PSO_DV_CONN_HOME to tmp_path to bypass GCS and use a local temp directory.
+    # This avoids pyfakefs module loading issues while keeping file creation isolated.
+    monkeypatch.setenv(consts.ENV_DIRECTORY_VAR, str(tmp_path))
     conn_args = [
         "--host",
         DB2_HOST,
