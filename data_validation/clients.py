@@ -150,11 +150,13 @@ def get_bigquery_client(
     credentials=None,
     api_endpoint: Optional[str] = None,
     storage_api_endpoint: Optional[str] = None,
-    client_project_id: Optional[str] = None, # to be deprecated in the future
+    client_project_id: Optional[str] = None,  # to be deprecated in the future
     billing_project_id: Optional[str] = None,
 ):
     if client_project_id:
-        logging.warning("client_project_id is deprecated and will be removed in the future, use --billing-project-id instead")
+        logging.warning(
+            "client_project_id is deprecated and will be removed in the future, use --billing-project-id instead"
+        )
         billing_project_id = client_project_id
     google_client = get_google_bigquery_client(
         project_id,
