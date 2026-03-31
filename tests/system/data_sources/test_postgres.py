@@ -1455,4 +1455,6 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         "--database",
         POSTGRES_DATABASE,
     ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_POSTGRES, conn_args, tmp_path, monkeypatch)
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_POSTGRES, conn_args, tmp_path, monkeypatch
+    )

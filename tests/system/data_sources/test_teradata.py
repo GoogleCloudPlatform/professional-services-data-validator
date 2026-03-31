@@ -1083,4 +1083,6 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         "--port",
         "1025",
     ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_TERADATA, conn_args, tmp_path, monkeypatch)
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_TERADATA, conn_args, tmp_path, monkeypatch
+    )

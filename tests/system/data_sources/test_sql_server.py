@@ -1096,4 +1096,6 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         "--query",
         '{"TrustServerCertificate": "yes"}',
     ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_MSSQL, conn_args, tmp_path, monkeypatch)
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_MSSQL, conn_args, tmp_path, monkeypatch
+    )

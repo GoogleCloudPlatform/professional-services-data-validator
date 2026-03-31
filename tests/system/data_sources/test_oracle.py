@@ -1443,4 +1443,6 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         "--connect-args",
         '{ "disable_oob": "true" }',
     ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_ORACLE, conn_args, tmp_path, monkeypatch)
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_ORACLE, conn_args, tmp_path, monkeypatch
+    )

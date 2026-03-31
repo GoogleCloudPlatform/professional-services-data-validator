@@ -608,4 +608,6 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         "--database",
         DB2_DATABASE,
     ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_DB2, conn_args, tmp_path, monkeypatch)
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_DB2, conn_args, tmp_path, monkeypatch
+    )

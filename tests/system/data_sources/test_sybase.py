@@ -781,4 +781,6 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         "--query",
         '{"autocommit": "True"}',
     ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_SYBASE, conn_args, tmp_path, monkeypatch)
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_SYBASE, conn_args, tmp_path, monkeypatch
+    )
