@@ -1424,6 +1424,9 @@ def test_raw_column_metadata():
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
 
 
+####################
+# CONNECTIONS TESTS
+####################
 def test_connections_add(caplog, fs, monkeypatch):
     """Test data-validation connections add command."""
     # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.

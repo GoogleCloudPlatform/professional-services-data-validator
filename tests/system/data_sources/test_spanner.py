@@ -408,6 +408,9 @@ def test_raw_query_dvt_row_types(capsys):
     raw_query_test(capsys, table="dvt_core_types")
 
 
+####################
+# CONNECTIONS TESTS
+####################
 def test_connections_add(caplog, fs, monkeypatch):
     """Test data-validation connections add command."""
     # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.

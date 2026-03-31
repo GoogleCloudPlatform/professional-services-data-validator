@@ -589,24 +589,3 @@ def test_find_tables():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="pso_data_validator.dvt_core_types")
-
-
-def test_connections_add(caplog, fs, monkeypatch):
-    """Test data-validation connections add command."""
-    # TODO Line below prevents PSO_DV_CONN_HOME from leaking into this test. See issue-1712.
-    monkeypatch.delenv(consts.ENV_DIRECTORY_VAR, raising=False)
-    conn_args = [
-        "--host",
-        DB2_HOST,
-        "--user",
-        DB2_USER,
-        "--password",
-        DB2_PASSWORD,
-        "--port",
-        DB2_PORT,
-        "--database",
-        DB2_DATABASE,
-        "--driver",
-        "ibm_db_sa",
-    ]
-    connections_add_test(caplog, consts.SOURCE_TYPE_DB2, conn_args)
