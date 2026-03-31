@@ -84,11 +84,6 @@ class Backend(BaseAlchemyBackend):
         self.database_name = database
         self.url = sa_url
 
-        @sa.event.listens_for(engine, "connect")
-        def connect(dbapi_connection, connection_record):
-            with dbapi_connection.cursor() as cur:
-                cur.execute("SET TIMEZONE = UTC")
-
         super().do_connect(engine)
 
     def find_db(self):
