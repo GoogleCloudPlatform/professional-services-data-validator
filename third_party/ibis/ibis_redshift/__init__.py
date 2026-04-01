@@ -19,7 +19,7 @@ from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
 from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
 from third_party.ibis.ibis_addon.api import cache_generator_results
-from data_validation.util import dvt_temp_object_name
+from ibis import util
 
 
 class Backend(BaseAlchemyBackend):
@@ -85,7 +85,7 @@ class Backend(BaseAlchemyBackend):
 
     @cache_generator_results
     def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
-        raw_name = dvt_temp_object_name()
+        raw_name = util.guid().lower()
         name = self._quote(raw_name)
         type_info_sql = """
         SELECT 
