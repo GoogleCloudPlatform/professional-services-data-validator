@@ -1082,6 +1082,9 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         TERADATA_PASSWORD,
         "--port",
         "1025",
+        # connect_timeout is a harmless setting we can use to exercise --json-params.
+        "--json-params",
+        '{ "connect_timeout": "1000" }',
     ]
     connections_add_test(
         caplog, consts.SOURCE_TYPE_TERADATA, conn_args, tmp_path, monkeypatch

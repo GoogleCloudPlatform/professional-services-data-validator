@@ -1440,6 +1440,7 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         ORACLE_PORT,
         "--database",
         ORACLE_DATABASE,
+        # disable_oob is a harmless setting we can use to exercise --connect-args.
         "--connect-args",
         '{ "disable_oob": "true" }',
     ]
