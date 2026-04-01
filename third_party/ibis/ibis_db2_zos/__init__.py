@@ -57,6 +57,7 @@ class Backend(Db2LUWBackend):
                 username=user,
                 password=password,
                 database=database,
+                query=connect_args or {},
             )
         else:
             sa_url = sa.engine.url.make_url(url)
@@ -66,7 +67,6 @@ class Backend(Db2LUWBackend):
             poolclass=sa.pool.StaticPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,
-            connect_args=connect_args or {},
         )
         self.database_name = database
         self.url = sa_url

@@ -13,11 +13,14 @@
 # limitations under the License.
 
 import json
+import logging
 import os
 import random
 import string
 from typing import TYPE_CHECKING, Optional, Tuple
 import pathlib
+
+import pytest
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -25,7 +28,9 @@ from data_validation import (
     consts,
     data_validation,
     find_tables,
+    gcs_helper,
     raw_query,
+    state_manager,
 )
 
 from data_validation.partition_builder import PartitionBuilder
@@ -816,3 +821,38 @@ def raw_query_test(
     raw_query.print_raw_query_output(rows)
     captured = capsys.readouterr()
     assert "characters truncated" not in captured.out
+
+
+def connections_add_test(
+    caplog: pytest.LogCaptureFixture,
+    conn_type: str,
+    conn_args: list,
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Generic 'connections add' test."""
+    # Set PSO_DV_CONN_HOME to tmp_path to bypass GCS and use a local temp directory.
+    # This avoids pyfakefs module loading issues while keeping file creation isolated.
+    monkeypatch.setenv(consts.ENV_DIRECTORY_VAR, str(tmp_path))
+    with caplog.at_level(logging.INFO):
+        parser = cli_tools.configure_arg_parser()
+        cli_arg_list = [
+            "connections",
+            "add",
+            "-c=new-conn",
+            conn_type,
+        ] + conn_args
+        cli_arg_list = [_ for _ in cli_arg_list if _]
+        args = parser.parse_args(cli_arg_list)
+
+        main.run_connections(args)
+
+        # Check success message in logging
+        assert any(
+            gcs_helper.WRITE_SUCCESS_STRING in record.msg for record in caplog.records
+        )
+
+        # Check if file exists in the mocked filesystem
+        mgr = state_manager.StateManager()
+        connection_path = mgr._get_connection_path("new-conn")
+        assert os.path.exists(connection_path)
