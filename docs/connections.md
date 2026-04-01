@@ -123,7 +123,6 @@ data-validation connections add
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME BigQuery                Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
-    [--client-project-id CLIENT_PROJECT_ID]             BigQuery compute/billing project
     [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
     [--api-endpoint API_ENDPOINT]                       BigQuery API endpoint (e.g.
                                                         "https://bigquery-mypsc.p.googleapis.com)
