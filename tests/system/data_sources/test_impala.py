@@ -22,6 +22,7 @@ from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
     DVT_TRICKY_DATES_COLUMNS,
     column_validation_test,
+    connections_add_test,
     find_tables_test,
     id_type_test_assertions,
     raw_query_test,
@@ -391,3 +392,25 @@ def test_find_tables():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        IMPALA_HOST,
+        "--port",
+        IMPALA_PORT,
+        "--database",
+        IMPALA_DATABASE,
+        "--auth-mechanism",
+        IMPALA_AUTH_MECH,
+        "--timeout",
+        "1000",
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_IMPALA, conn_args, tmp_path, monkeypatch
+    )
