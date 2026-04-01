@@ -51,7 +51,7 @@ CONFIG_RUNNER_ARGS_2 = {
     "command": "configs",
     "validation_config_cmd": "run",
     "kube_completions": True,
-    "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations",
+    "config_dir": "/tmp/test/unit/test__main/3validations",
 }
 CONFIG_RUNNER_ARGS_3 = {
     "verbose": False,
@@ -69,7 +69,7 @@ CONFIG_RUNNER_ARGS_4 = {
     "command": "configs",
     "kube_completions": False,
     "validation_config_cmd": "run",
-    "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/4partitions",
+    "config_dir": "/tmp/test/unit/test__main/4partitions",
 }
 
 CONFIG_RUNNER_EXCEPTION_TEXT = (
@@ -281,10 +281,14 @@ def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
     return_value=["config dict from one file"],
 )
 @mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["first.yaml", "second.yaml", "third.yaml"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_2),
 )
-def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
+def test_config_runner_2(mock_args, mock_list, mock_build, mock_run, caplog):
     """Second test - run validation on a directory - and provide the -kc argument,
     but not running in a Kubernetes Completion Configuration. Expected result
     1. Multiple (3) config manager created for validation
@@ -337,10 +341,14 @@ def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
     return_value=["config dict from one file"],
 )
 @mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["0000.yaml", "0001.yaml", "0002.yaml", "0003.yaml"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_4),
 )
-def test_config_runner_4(mock_args, mock_build, mock_run, caplog):
+def test_config_runner_4(mock_args, mock_list, mock_build, mock_run, caplog):
     """Third test - run validation on a directory with failures in one validation,
         Running in a non Kube completions environment. Expected Result:
     1. All 4 files are validated, even though one of them raises an exception.
