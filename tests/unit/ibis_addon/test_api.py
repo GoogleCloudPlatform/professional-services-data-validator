@@ -164,6 +164,8 @@ def test_cache_generator_results_mixed_args():
     assert res1 == res2
 
     # Third call with kwargs explicitly defining query=None: should hit cache
-    res3 = list(backend.mock_generator(database="pso_db", table="dvt_table", query=None))
+    res3 = list(
+        backend.mock_generator(database="pso_db", table="dvt_table", query=None)
+    )
     assert backend.execution_count == 1
     assert res1 == res3
