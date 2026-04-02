@@ -40,8 +40,7 @@ _type_mapping = {
 @to_sqla_type.register(DB2Dialect_ibm_db, dt.String)
 def _string(_, itype):
     """Include a limit for casts to String due to line size limits supported by Db2 concat()."""
-    # TODO Temporarily changed to 300 until issue-1296 is complete.
-    return sa.sql.sqltypes.String(length=300)
+    return sa.sql.sqltypes.String(length=3000)
 
 
 DB2Dialect_ibm_db.ischema_names["BINARY"] = sat.BINARY
