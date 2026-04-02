@@ -176,3 +176,16 @@ def test_dvt_temp_object_name(module_under_test):
     assert name.islower()
     assert len(name) == 22  # 'custom_prefix_' (14) + 8 hex chars
     assert re.match(r"^custom_prefix_[a-f0-9]{8}$", name)
+
+    # Test invalid prefixes
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid-prefix")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid prefix")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid!")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name(None)
