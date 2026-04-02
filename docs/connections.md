@@ -123,7 +123,9 @@ data-validation connections add
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME BigQuery                Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
-    [--google-service-account-key-path PATH_TO_SA_KEY]  (Deprecated) Path to SA key, use `gcloud auth application-default --impersonate-service-account` instead.
+    [--google-service-account-key-path PATH_TO_SA_KEY]  (Deprecated) Path to SA key, use
+                                                         gcloud auth application-default --impersonate-service-account <service-account> login
+                                                         instead.
     [--billing-project-id BILLING_PROJECT_ID]           (Optional) BigQuery billing project to override default billing project
     [--api-endpoint API_ENDPOINT]                       BigQuery API endpoint (e.g.
                                                         "https://bigquery-mypsc.p.googleapis.com)
@@ -155,7 +157,9 @@ data-validation connections add
     --project-id MY_PROJECT                             Project ID where BQ data resides
     --instance-id MY_INSTANCE                           Spanner instance to connect to
     --database-id MY-DB                                 Spanner database (schema) to connect to
-    [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
+    [--google-service-account-key-path PATH_TO_SA_KEY]  (Deprecated) Path to SA key, use
+                                                         gcloud auth application-default --impersonate-service-account <service-account> login
+                                                         instead.
     [--api-endpoint API_ENDPOINT]                       Spanner API endpoint (e.g.
                                                         "https://spanner-mypsc.p.googleapis.com")
 ```

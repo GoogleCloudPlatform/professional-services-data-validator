@@ -81,7 +81,7 @@ CONNECTION_SOURCE_FIELDS = {
             "billing_project_id",
             "(Optional) BigQuery billing project to override default billing project",
         ],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
+        ["google_service_account_key_path", "(Deprecated) GCP SA Key Path"],
         [
             "api_endpoint",
             '(Optional) GCP BigQuery API endpoint (e.g. "https://bigquery-mypsc.p.googleapis.com")',
@@ -153,7 +153,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["project_id", "GCP Project to use for Spanner"],
         ["instance_id", "ID of Spanner instance to connect to"],
         ["database_id", "ID of Spanner database (schema) to connect to"],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
+        ["google_service_account_key_path", "(Deprecated) GCP SA Key Path"],
         [
             "api_endpoint",
             '(Optional) GCP Spanner API endpoint (e.g. "https://spanner-mypsc.p.googleapis.com")',
