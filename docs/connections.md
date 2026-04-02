@@ -429,6 +429,9 @@ data-validation connections add
     [--driver DRIVER]                                   DB2 driver, defaults to "ibm_db_sa"
 ```
 
+Db2 permissions required to run DVT custom-query validations:
+- CREATE VIEW. See [Db2 limitations](limitations.md#db2).
+
 ## Snowflake
 
 Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
