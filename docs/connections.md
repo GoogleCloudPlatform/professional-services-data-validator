@@ -430,7 +430,7 @@ data-validation connections add
 ```
 
 Db2 permissions required to run DVT custom-query validations:
-- CREATE VIEW. See [Db2 limitations](limitations.md#db2).
+- CREATE VIEW. See [Db2 limitations](limitations.md#db2-luw).
 
 ## Snowflake
 
@@ -483,4 +483,4 @@ data-validation connections add -c sybase Sybase \
   --connect-args='{"driver": "FreeTDS", "autocommit": "True", "TDS_Version": "5.0"}'
 ```
 
-See also [limitations](https://github.com/GoogleCloudPlatform/professional-services-data-validator2/blob/develop/docs/limitations.md#sybase)
+See also [limitations](limitations.md#sybase-ase)
