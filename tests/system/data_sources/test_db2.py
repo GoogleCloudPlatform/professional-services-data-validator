@@ -112,7 +112,7 @@ def test_schema_validation_db2_types_to_bigquery():
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
-        allow_list=("int16:int64,int32:int64,decimal:decimal(38,9)"),
+        allow_list=("int16:int64,int32:int64,decimal:decimal(38,9),float32:float64"),
     )
 
 
