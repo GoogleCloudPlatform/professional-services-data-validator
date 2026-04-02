@@ -458,6 +458,9 @@ data-validation connections add
     [--connect-args CONNECT_ARGS]                       Additional connection args, JSON String dict, default {}
 ```
 
+Db2 permissions required to run DVT custom-query validations:
+- CREATE VIEW. See [Db2 z/OS limitations](limitations.md#db2-zos).
+
 Example TLS connection:
 ```
 data-validation connections add -c db2conn DB2_zOS \
@@ -517,4 +520,4 @@ data-validation connections add -c sybase Sybase \
   --connect-args='{"driver": "FreeTDS", "autocommit": "True", "TDS_Version": "5.0"}'
 ```
 
-See also [limitations](https://github.com/GoogleCloudPlatform/professional-services-data-validator2/blob/develop/docs/limitations.md#sybase)
+See also [limitations](limitations.md#sybase-ase)

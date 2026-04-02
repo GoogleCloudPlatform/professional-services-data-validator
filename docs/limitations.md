@@ -12,6 +12,9 @@
 ## Db2 z/OS
 
 - Db2 z/OS XML data type is not compatible with aggregation functions or LENGTH function and is excluded from all column validations.
+- Db2 z/OS custom query validations require the creation of temporary views in the database to resolve additional data type information.
+  This requires CREATE VIEW privileges for the connected user. Without it some data types will not be resolved correctly, for
+  example CHARACTER will be interpreted as VARCHAR.
 
 ## Oracle
 
