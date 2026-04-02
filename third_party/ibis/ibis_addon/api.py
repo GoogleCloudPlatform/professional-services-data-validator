@@ -225,6 +225,12 @@ def cache_generator_results(func):
         arguments = bound_args.arguments.copy()
         arguments.pop("self", None)
 
+        # Ensure only supported types are used to prevent frozenset failures on unhashable types
+        for v in arguments.values():
+            assert isinstance(
+                v, (str, int, type(None))
+            ), f"Unsupported argument type in cache_generator_results: {type(v)}"
+
         # Generate a unique cache key based on the function name and the canonical arguments
         key = (func.__name__, frozenset(arguments.items()))
         if key not in self._generator_cache:
