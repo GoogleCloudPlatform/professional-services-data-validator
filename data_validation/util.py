@@ -100,4 +100,3 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
         A lower case random name for when DVT needs to create a temporary object.
     """
     return f"{prefix}_{uuid.uuid4().hex[:8].lower()}"
-
