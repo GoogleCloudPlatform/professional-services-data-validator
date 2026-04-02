@@ -79,3 +79,93 @@ def test_ibis_integer_string_length(dtype, expected):
 def test_ibis_integer_string_length_other():
     dtype = dt.Float64()
     assert api.ibis_integer_string_length(dtype) is None
+
+
+def test_cache_generator_results():
+    class DummyBackend:
+        def __init__(self):
+            self.execution_count = 0
+
+        @api.cache_generator_results
+        def mock_generator(self, db, table, query=None):
+            self.execution_count += 1
+            yield ("col1", "VARCHAR")
+            yield ("col2", "INT")
+
+    backend = DummyBackend()
+
+    # First call: should execute
+    res1 = list(backend.mock_generator("db1", "tbl1"))
+    assert backend.execution_count == 1
+    assert res1 == [("col1", "VARCHAR"), ("col2", "INT")]
+
+    # Second call with same args: should serve from cache
+    res2 = list(backend.mock_generator("db1", "tbl1"))
+    assert backend.execution_count == 1  # Execution count shouldn't increase
+    assert res1 == res2
+
+    # Third call with different args: should execute
+    res3 = list(backend.mock_generator("db2", "tbl2"))
+    assert backend.execution_count == 2
+    assert res3 == [("col1", "VARCHAR"), ("col2", "INT")]
+
+
+def test_cache_generator_results_long_query():
+    class DummyBackend:
+        def __init__(self):
+            self.execution_count = 0
+
+        @api.cache_generator_results
+        def mock_generator(self, db, table, query=None):
+            self.execution_count += 1
+            yield ("col1", "VARCHAR")
+
+    backend = DummyBackend()
+
+    long_query = "A" * 1024
+
+    # First call: should execute
+    res1 = list(backend.mock_generator("db1", "tbl1", query=long_query))
+    assert backend.execution_count == 1
+    assert res1 == [("col1", "VARCHAR")]
+
+    # Second call with same long string: should serve from cache
+    res2 = list(backend.mock_generator("db1", "tbl1", query=long_query))
+    assert backend.execution_count == 1
+    assert res1 == res2
+
+    # Third call with one character added: should execute (cache miss)
+    long_query_modified = long_query + "B"
+    res3 = list(backend.mock_generator("db1", "tbl1", query=long_query_modified))
+    assert backend.execution_count == 2
+    assert res3 == [("col1", "VARCHAR")]
+
+
+def test_cache_generator_results_mixed_args():
+    class DummyBackend:
+        def __init__(self):
+            self.execution_count = 0
+
+        @api.cache_generator_results
+        def mock_generator(self, database=None, table=None, query=None):
+            self.execution_count += 1
+            yield ("col1", "VARCHAR")
+
+    backend = DummyBackend()
+
+    # First call with positional args
+    res1 = list(backend.mock_generator("pso_db", "dvt_table"))
+    assert backend.execution_count == 1
+    assert res1 == [("col1", "VARCHAR")]
+
+    # Second call with keyword args: should hit cache
+    res2 = list(backend.mock_generator(database="pso_db", table="dvt_table"))
+    assert backend.execution_count == 1
+    assert res1 == res2
+
+    # Third call with kwargs explicitly defining query=None: should hit cache
+    res3 = list(
+        backend.mock_generator(database="pso_db", table="dvt_table", query=None)
+    )
+    assert backend.execution_count == 1
+    assert res1 == res3

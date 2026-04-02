@@ -23,6 +23,7 @@ from tests.system.data_sources.common_functions import (
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
+    connections_add_test,
     find_tables_test,
     generate_and_run_table_partitions_test,
     id_column_row_validation_test,
@@ -759,3 +760,27 @@ def test_find_tables():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        SYBASE_HOST,
+        "--user",
+        SYBASE_USER,
+        "--password",
+        SYBASE_PASSWORD,
+        "--database",
+        SYBASE_DATABASE,
+        "--odbc-driver",
+        SYBASE_ODBC_DRIVER,
+        "--query",
+        '{"autocommit": "True"}',
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_SYBASE, conn_args, tmp_path, monkeypatch
+    )
