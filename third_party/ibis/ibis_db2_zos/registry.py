@@ -29,12 +29,12 @@ def _sa_ifnull(t, op):
 
     This override uses sa.literal_column to prevent parameterization.
     """
-    assert all(c.isalnum() or c == '_' for c in str(op.ifnull_expr.value)), \
-        f"Value '{op.ifnull_expr.value}' contains non-alphanumeric or non-underscore characters."
+    assert all(
+        c.isalnum() or c == "_" for c in str(op.ifnull_expr.value)
+    ), f"Value '{op.ifnull_expr.value}' contains non-alphanumeric or non-underscore characters."
 
     sa_arg = t.translate(op.arg)
     return sa.func.coalesce(sa_arg, sa.literal_column(f"'{op.ifnull_expr.value}'"))
-
 
 
 def _sa_format_hashbytes(translator, op):
