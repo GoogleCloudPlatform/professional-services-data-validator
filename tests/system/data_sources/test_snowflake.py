@@ -23,6 +23,7 @@ from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
+    connections_add_test,
     find_tables_test,
     id_column_row_validation_test,
     id_type_test_assertions,
@@ -667,3 +668,23 @@ def test_row_validation_comp_fields_reserved_words():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="PSO_DATA_VALIDATOR.PUBLIC.DVT_CORE_TYPES")
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--account",
+        SNOWFLAKE_ACCOUNT,
+        "--user",
+        SNOWFLAKE_USER,
+        "--password",
+        SNOWFLAKE_PASSWORD,
+        "--database",
+        SNOWFLAKE_DATABASE,
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_SNOWFLAKE, conn_args, tmp_path, monkeypatch
+    )

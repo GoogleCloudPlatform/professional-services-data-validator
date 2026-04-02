@@ -25,6 +25,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     column_validation_test_args,
     column_validation_test_config_managers,
+    connections_add_test,
     find_tables_test,
     generate_and_run_table_partitions_test,
     id_column_row_validation_test,
@@ -1482,3 +1483,28 @@ def test_raw_column_metadata():
         )
     )
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        ORACLE_HOST,
+        "--user",
+        ORACLE_USER,
+        "--password",
+        ORACLE_PASSWORD,
+        "--port",
+        ORACLE_PORT,
+        "--database",
+        ORACLE_DATABASE,
+        # disable_oob is a harmless setting we can use to exercise --connect-args.
+        "--connect-args",
+        '{ "disable_oob": "true" }',
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_ORACLE, conn_args, tmp_path, monkeypatch
+    )
