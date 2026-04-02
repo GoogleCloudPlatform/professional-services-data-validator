@@ -25,6 +25,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     column_validation_test_args,
     column_validation_test_config_managers,
+    connections_add_test,
     find_tables_test,
     generate_and_run_table_partitions_test,
     id_column_row_validation_test,
@@ -369,11 +370,29 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_column_validation_oracle_to_postgres():
-    count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
-    # TODO Change min_cols below to include col_interval_ds when issue-1214 is complete.
-    # TODO Change min_cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change count_cols below to include col_uuid when issue-1716 is complete.
+    # TODO Change min/max_cols below to include col_interval_ds when issue-1214 is complete.
+    # TODO Change min/max_cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change min_cols below to include col_uuid when issue-1716 is complete.
+    count_cols = ",".join(
+        [_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw", "col_uuid")]
+    )
     sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw",)])
     min_cols = ",".join(
+        [
+            _
+            for _ in ORA2PG_COLUMNS
+            if _
+            not in (
+                "col_long_raw",
+                "col_interval_ds",
+                "col_json",
+                "col_jsonb",
+                "col_uuid",
+            )
+        ]
+    )
+    max_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
@@ -392,9 +411,46 @@ def test_column_validation_oracle_to_postgres():
         count_cols=count_cols,
         sum_cols=sum_cols,
         min_cols=min_cols,
-        max_cols=min_cols,
+        max_cols=max_cols,
         avg_cols=sum_cols,
         std_cols=sum_cols,
+        # TODO Remove this filters clause when working on issue-1717.
+        filters="id < 4",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_all_null_oracle_to_postgres():
+    # TODO Change cols below to include col_char_2, col_nchar_2 when issue-1717 is complete.
+    cols = ",".join(
+        [
+            _
+            for _ in ORA2PG_COLUMNS
+            if _
+            not in (
+                "col_long_raw",
+                "col_interval_ds",
+                "col_json",
+                "col_jsonb",
+                "col_uuid",
+                "col_char_2",
+                "col_nchar_2",
+            )
+        ]
+    )
+    column_validation_test(
+        tc="pg-conn",
+        tables="pso_data_validator.dvt_ora2pg_types",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+        filters="id = 4",
     )
 
 
@@ -571,6 +627,7 @@ def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
@@ -590,6 +647,7 @@ def test_row_validation_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
+                "col_uuid",
             )
         ]
     )
@@ -607,6 +665,7 @@ def test_row_validation_oracle_to_postgres():
 def test_row_validation_comp_fields_oracle_to_postgres():
     # TODO Change cols below to include col_num_38 when issue-1454 is complete.
     # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     cols = ",".join(
@@ -621,6 +680,7 @@ def test_row_validation_comp_fields_oracle_to_postgres():
                 "col_num_38",
                 "col_json",
                 "col_jsonb",
+                "col_uuid",
             )
         ]
     )
@@ -885,6 +945,7 @@ def test_custom_query_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
@@ -904,6 +965,7 @@ def test_custom_query_row_validation_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
+                "col_uuid",
             )
         ]
     )
@@ -1421,3 +1483,28 @@ def test_raw_column_metadata():
         )
     )
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        ORACLE_HOST,
+        "--user",
+        ORACLE_USER,
+        "--password",
+        ORACLE_PASSWORD,
+        "--port",
+        ORACLE_PORT,
+        "--database",
+        ORACLE_DATABASE,
+        # disable_oob is a harmless setting we can use to exercise --connect-args.
+        "--connect-args",
+        '{ "disable_oob": "true" }',
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_ORACLE, conn_args, tmp_path, monkeypatch
+    )

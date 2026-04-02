@@ -24,6 +24,7 @@ from tests.system.data_sources.common_functions import (
     DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
+    connections_add_test,
     custom_query_validation_test,
     find_tables_test,
     id_column_row_validation_test,
@@ -1065,3 +1066,26 @@ def test_raw_column_metadata():
     client = clients.get_data_client(CONN)
     raw_types = list(client.raw_column_metadata(database="udf", table="dvt_core_types"))
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        TERADATA_HOST,
+        "--user-name",
+        TERADATA_USER,
+        "--password",
+        TERADATA_PASSWORD,
+        "--port",
+        "1025",
+        # connect_timeout is a harmless setting we can use to exercise --json-params.
+        "--json-params",
+        '{ "connect_timeout": "1000" }',
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_TERADATA, conn_args, tmp_path, monkeypatch
+    )
