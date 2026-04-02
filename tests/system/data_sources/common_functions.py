@@ -32,7 +32,6 @@ from data_validation import (
     raw_query,
     state_manager,
 )
-
 from data_validation.partition_builder import PartitionBuilder
 
 if TYPE_CHECKING:
