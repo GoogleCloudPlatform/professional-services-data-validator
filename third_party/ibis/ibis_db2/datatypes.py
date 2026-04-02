@@ -19,7 +19,6 @@ from ibm_db_sa.ibm_db import DB2Dialect_ibm_db
 import sqlalchemy as sa
 import sqlalchemy.types as sat
 
-
 # Types from https://github.com/ibmdb/python-ibmdb/blob/master/IBM_DB/ibm_db/ibm_db_dbi.py
 _type_mapping = {
     ibm_db_dbi.STRING: dt.String,

@@ -584,6 +584,30 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_custom_query_row_concat_validation_core_types_to_bigquery():
+    """Db2 to BigQuery dvt_core_types custom-query row concat validation"""
+    # TODO Add col_dec_10_2 when working on issue-1706.
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,col_dec_10_2,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        target_query="select id,col_int64,col_dec_10_2,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        concat="col_int64,col_varchar_30,col_date",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query."""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_varchar_pk_query_row_validation_to_bigquery():
     """Test varchar primary keys on custom query"""
     id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")

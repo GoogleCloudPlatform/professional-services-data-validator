@@ -99,4 +99,8 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
     Returns:
         A random name for when DVT needs to create a temporary object.
     """
+    if not isinstance(prefix, str) or not re.match(r"^[a-zA-Z0-9_]+$", prefix):
+        raise exceptions.ValidationException(
+            f"Invalid prefix: '{prefix}'. Only alphanumeric and underscore characters are allowed."
+        )
     return f"{prefix}_{uuid.uuid4().hex[:8].lower()}"

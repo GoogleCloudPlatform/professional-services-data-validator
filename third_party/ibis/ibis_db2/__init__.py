@@ -21,10 +21,11 @@ import sqlalchemy as sa
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
-from third_party.ibis.ibis_db2.compiler import Db2Compiler
-from third_party.ibis.ibis_db2.datatypes import _get_type
 
 from data_validation import util
+from third_party.ibis.ibis_addon.api import cache_generator_results
+from third_party.ibis.ibis_db2.compiler import Db2Compiler
+from third_party.ibis.ibis_db2.datatypes import _get_type
 
 if TYPE_CHECKING:
     import ibis.expr.types as ir
@@ -125,6 +126,7 @@ class Backend(BaseAlchemyBackend):
             )
             return [_[0] for _ in result.cursor.fetchall()]
 
+    @cache_generator_results
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
     ) -> Iterable[Tuple]:
@@ -133,14 +135,12 @@ class Backend(BaseAlchemyBackend):
         This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
         custom query, and fetching the first row. From the cursor we can detect data types of the row's columns.
 
-        NOTE: This only works for table look-ups. For custom queries the raw data types are not available to us
-              due to the IBM Db2 driver hiding the real data types.
-
         Returns:
             list: A list of tuples containing the standard 7 DB API fields:
                   https://peps.python.org/pep-0249/#description
         """
         assert (database and table) or query, "We should never receive all args=None"
+
         target_schema = None
         target_table = None
         temp_view_name = None
@@ -195,8 +195,6 @@ class Backend(BaseAlchemyBackend):
                     with self.begin() as con:
                         con.exec_driver_sql(f"DROP VIEW {temp_view_name}")
                 except Exception as e:
-                    import logging
-
                     logging.getLogger(__name__).warning(
                         "Could not drop temp view %s", temp_view_name, exc_info=e
                     )
@@ -227,7 +225,8 @@ class Backend(BaseAlchemyBackend):
         if isinstance(type_code, str):
             return type_code.upper() == self.char_datatype
         else:
-            # From cursor.description for custom queries, this is a DBAPITypeObject.
+            # From cursor.description for custom queries when we don't have
+            # CREATE VIEW privileges. This is a DBAPITypeObject.
             # It's not possible to distinguish padded char types in this case,
             # so we default to False to be safe and avoid trimming incorrectly.
             return False

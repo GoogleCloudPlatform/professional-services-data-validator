@@ -170,8 +170,21 @@ def test_dvt_temp_object_name(module_under_test):
     assert len(name) == 17  # 'dvt_temp_' (9) + 8 hex chars
     assert re.match(r"^dvt_temp_[a-f0-9]{8}$", name)
 
-    # Test custom prefix with uppercase
+    # Test custom prefix with uppercase, should remain upper case.
     name = module_under_test.dvt_temp_object_name("CUSTOM_Prefix")
     assert name.startswith("CUSTOM_Prefix_")
-    assert len(name) == 22  # 'custom_prefix_' (14) + 8 hex chars
+    assert len(name) == 22  # 'CUSTOM_Prefix_' (14) + 8 hex chars
     assert re.match(r"^CUSTOM_Prefix_[a-f0-9]{8}$", name)
+
+    # Test invalid prefixes
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid-prefix")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid prefix")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid!")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name(None)

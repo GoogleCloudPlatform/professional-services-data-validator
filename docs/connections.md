@@ -469,6 +469,9 @@ data-validation connections add -c db2conn DB2_zOS \
   --connect-args='{"Security": "SSL", "SSLClientKeystoredb": "/path/to/file.kdb", "SSLClientKeystash": "/path/to/file.sth"}'
 ```
 
+Db2 permissions required to run DVT custom-query validations:
+- CREATE VIEW. See [Db2 limitations](limitations.md#db2-luw).
+
 ## Snowflake
 
 Snowflake requires the `snowflake-sqlalchemy` and `snowflake-connector-python` packages.
