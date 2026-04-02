@@ -172,7 +172,6 @@ def test_dvt_temp_object_name(module_under_test):
 
     # Test custom prefix with uppercase
     name = module_under_test.dvt_temp_object_name("CUSTOM_Prefix")
-    assert name.startswith("custom_prefix_")
-    assert name.islower()
+    assert name.startswith("CUSTOM_Prefix_")
     assert len(name) == 22  # 'custom_prefix_' (14) + 8 hex chars
-    assert re.match(r"^custom_prefix_[a-f0-9]{8}$", name)
+    assert re.match(r"^CUSTOM_Prefix_[a-f0-9]{8}$", name)
