@@ -103,4 +103,4 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
         raise exceptions.ValidationException(
             f"Invalid prefix: '{prefix}'. Only alphanumeric and underscore characters are allowed."
         )
-    return f"{prefix}_{uuid.uuid4().hex[:8]}".lower()
+    return f"{prefix}_{uuid.uuid4().hex[:8].lower()}"
