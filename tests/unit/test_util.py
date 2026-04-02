@@ -14,6 +14,7 @@
 
 import logging
 import pytest
+import re
 
 
 @pytest.fixture
@@ -158,3 +159,20 @@ def test_split_not_in_quotes(
 def test_dvt_config_string_to_dict(module_under_test, test_input: str, expected):
     result = module_under_test.dvt_config_string_to_dict(test_input)
     assert result == expected
+
+
+def test_dvt_temp_object_name(module_under_test):
+    """Test generating a random temp object name."""
+    # Test default prefix
+    name = module_under_test.dvt_temp_object_name()
+    assert name.startswith("dvt_temp_")
+    assert name.islower()
+    assert len(name) == 17  # 'dvt_temp_' (9) + 8 hex chars
+    assert re.match(r"^dvt_temp_[a-f0-9]{8}$", name)
+
+    # Test custom prefix with uppercase
+    name = module_under_test.dvt_temp_object_name("CUSTOM_Prefix")
+    assert name.startswith("custom_prefix_")
+    assert name.islower()
+    assert len(name) == 22  # 'custom_prefix_' (14) + 8 hex chars
+    assert re.match(r"^custom_prefix_[a-f0-9]{8}$", name)

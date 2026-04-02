@@ -16,6 +16,7 @@ import json
 import logging
 import re
 import time
+import uuid
 
 from data_validation import clients, exceptions
 
@@ -87,3 +88,15 @@ def ibis_table_to_sql(ibis_table: "IbisTable", alchemy_client: "BaseBackend") ->
     else:
         sql_string = str(ibis_table.compile())
     return sql_string
+
+
+def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
+    """Generate a random name for when DVT needs to create a temporary object.
+
+    Args:
+        prefix: The prefix to use for the temporary object name.
+
+    Returns:
+        A lower case random name for when DVT needs to create a temporary object.
+    """
+    return f"{prefix}_{uuid.uuid4().hex[:8]}".lower()
