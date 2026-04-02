@@ -15,6 +15,7 @@
 - Db2 z/OS custom query validations require the creation of temporary views in the database to resolve additional data type information.
   This requires CREATE VIEW privileges for the connected user. Without it some data types will not be resolved correctly, for
   example CHARACTER will be interpreted as VARCHAR.
+- Db2 Z/OS ROWID data type is not supported.
 
 ## Oracle
 
