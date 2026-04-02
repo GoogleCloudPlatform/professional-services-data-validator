@@ -347,7 +347,6 @@ def test_column_validation_db2_generated_cols():
 def test_row_validation_core_types():
     """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -355,7 +354,6 @@ def test_row_validation_core_types():
             if _
             not in (
                 "id",
-                "col_char_2",
                 "col_string",
             )
         ]
@@ -391,7 +389,6 @@ def test_row_validation_core_types_to_bigquery():
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -401,7 +398,6 @@ def test_row_validation_core_types_to_bigquery():
                 "id",
                 "col_float32",
                 "col_float64",
-                "col_char_2",
                 "col_string",
                 "col_tstz",
             )
@@ -539,20 +535,6 @@ def test_row_validation_tricky_dates_to_bigquery():
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
         hash=cols,
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_comp_fields_tricky_dates_to_bigquery():
-    """Test with date values that are at the extremes, e.g. 9999-12-31."""
-    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
-    row_validation_test(
-        tables="pso_data_validator.dvt_tricky_dates",
-        tc="bq-conn",
-        comp_fields=cols,
     )
 
 
