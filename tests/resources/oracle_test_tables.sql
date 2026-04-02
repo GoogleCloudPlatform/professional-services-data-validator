@@ -212,6 +212,15 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,HEXTORAW('387BDC3B218443B28EC23AC791C5B0F1')
 ,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}'
 );
+INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
+(4,NULL,NULL,NULL,NULL,NULL,NULL
+--,NULL,NULL
+,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL
+);
 COMMIT;
 
 DROP TABLE pso_data_validator.dvt_large_decimals;

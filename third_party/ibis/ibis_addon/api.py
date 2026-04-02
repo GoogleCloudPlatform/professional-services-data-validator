@@ -223,7 +223,7 @@ def cache_generator_results(func):
 
         # Remove 'self' from the arguments since the cache is already scoped to the instance
         arguments = bound_args.arguments.copy()
-        arguments.pop('self', None)
+        arguments.pop("self", None)
 
         # Generate a unique cache key based on the function name and the canonical arguments
         key = (func.__name__, frozenset(arguments.items()))
