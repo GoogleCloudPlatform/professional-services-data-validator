@@ -170,8 +170,14 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA)
 ,CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
 ,uuid('387bdc3b218443b28ec23ac791c5b0f1')
-,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}'
-);
+,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}')
+,(4,NULL,NULL,NULL,NULL,NULL,NULL
+--,NULL,NULL
+,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL);
 
  /* Following table used for validating generating table partitions */
 DROP TABLE IF EXISTS public.test_generate_partitions ;
