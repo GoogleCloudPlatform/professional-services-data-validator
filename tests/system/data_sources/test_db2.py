@@ -24,6 +24,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     column_validation_test,
     column_validation_test_args,
+    connections_add_test,
     custom_query_validation_test,
     find_tables_test,
     id_column_row_validation_test,
@@ -47,14 +48,14 @@ DB2_HOST = os.getenv("DB2_HOST", "localhost")
 DB2_USER = os.getenv("DB2_USER", "db2inst1")
 DB2_PASSWORD = os.getenv("DB2_PASSWORD")
 DB2_DATABASE = os.getenv("DB2_DATABASE", "testdb")
-DB2_PORT = os.getenv("DB2_PORT", 50000)
+DB2_PORT = os.getenv("DB2_PORT", "50000")
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
     "host": DB2_HOST,
     "user": DB2_USER,
     "password": DB2_PASSWORD,
-    "port": DB2_PORT,
+    "port": int(DB2_PORT),
     "database": DB2_DATABASE,
 }
 
@@ -561,6 +562,30 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_custom_query_row_concat_validation_core_types_to_bigquery():
+    """Db2 to BigQuery dvt_core_types custom-query row concat validation"""
+    # TODO Add col_dec_10_2 when working on issue-1706.
+    custom_query_validation_test(
+        validation_type="row",
+        source_query="select id,col_int64,col_dec_10_2,COL_VARCHAR_30,col_date from pso_data_validator.dvt_core_types",
+        target_query="select id,col_int64,col_dec_10_2,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
+        concat="col_int64,col_varchar_30,col_date",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query."""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_varchar_pk_query_row_validation_to_bigquery():
     """Test varchar primary keys on custom query"""
     id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
@@ -588,3 +613,25 @@ def test_find_tables():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="pso_data_validator.dvt_core_types")
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        DB2_HOST,
+        "--user",
+        DB2_USER,
+        "--password",
+        DB2_PASSWORD,
+        "--port",
+        str(DB2_PORT),
+        "--database",
+        DB2_DATABASE,
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_DB2, conn_args, tmp_path, monkeypatch
+    )

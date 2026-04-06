@@ -7,6 +7,9 @@
 ## Db2 LUW
 
 - Db2 LUW BLOB datatype is excluded from row validation due to incompatibility with concatenation/hashing functions.
+- Db2 LUW custom query validations require the creation of temporary views in the database to resolve additional data type information.
+  This requires CREATE VIEW privileges for the connected user. Without it some data types will not be resolved correctly, for
+  example CHARACTER will be interpreted as VARCHAR.
 
 ## Oracle
 

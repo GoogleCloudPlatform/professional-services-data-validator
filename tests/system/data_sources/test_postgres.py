@@ -35,6 +35,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     column_validation_test,
     column_validation_test_args,
+    connections_add_test,
     custom_query_validation_test,
     find_tables_test,
     generate_and_run_table_partitions_test,
@@ -1435,3 +1436,25 @@ def test_raw_column_metadata():
         )
     )
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        POSTGRES_HOST,
+        "--user",
+        "postgres",
+        "--password",
+        POSTGRES_PASSWORD,
+        "--port",
+        str(POSTGRES_PORT),
+        "--database",
+        POSTGRES_DATABASE,
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_POSTGRES, conn_args, tmp_path, monkeypatch
+    )
