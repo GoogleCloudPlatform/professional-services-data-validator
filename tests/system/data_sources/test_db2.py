@@ -576,6 +576,15 @@ def test_custom_query_row_concat_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query."""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_varchar_pk_query_row_validation_to_bigquery():
     """Test varchar primary keys on custom query"""
     id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
