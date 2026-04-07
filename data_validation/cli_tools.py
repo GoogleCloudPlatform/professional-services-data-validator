@@ -154,6 +154,7 @@ CONNECTION_SOURCE_FIELDS = {
             "api_endpoint",
             '(Optional) GCP Spanner API endpoint (e.g. "https://spanner-mypsc.p.googleapis.com")',
         ],
+        ["database_dialect", "(Optional) Spanner database dialect (googlesql or postgresql)"],
     ],
     consts.SOURCE_TYPE_SYBASE: [
         ["host", "Sybase host (default localhost)"],

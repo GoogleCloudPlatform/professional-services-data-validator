@@ -49,6 +49,9 @@ class SpannerExprTranslator(sql_compiler.ExprTranslator):
     @staticmethod
     def _gen_valid_name(name: str) -> str:
         name = "_".join(_NAME_REGEX.findall(name)) or "tmp"
+        from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
+        if getattr(SpannerCompiler, "database_dialect", None) == "postgresql":
+            return f'"{name}"'
         return f"`{name}`"
 
     def name(self, translated: str, name: str):

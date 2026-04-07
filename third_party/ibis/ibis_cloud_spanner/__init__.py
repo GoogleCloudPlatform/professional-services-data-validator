@@ -40,6 +40,7 @@ class Backend(BaseSQLBackend):
         project_id: str = None,
         credentials=None,
         api_endpoint: str = None,
+        database_dialect: str = None,
     ) -> None:
 
         options = None
@@ -51,6 +52,7 @@ class Backend(BaseSQLBackend):
         )
         self.instance = self.client.instance(instance_id)
         self.database_name = self.instance.database(database_id)
+        self.database_dialect = database_dialect
         (
             self.data_instance,
             self.dataset,
@@ -158,6 +160,7 @@ class Backend(BaseSQLBackend):
     ):
         # Overwrite the execute() method to use Spanner to_pandas
         kwargs.pop("timecontext", None)
+        self.compiler.database_dialect = getattr(self, "database_dialect", None)
         query_ast = self.compiler.to_ast_ensure_limit(expr, limit, params=params)
         sql = query_ast.compile()
         self._log(sql)

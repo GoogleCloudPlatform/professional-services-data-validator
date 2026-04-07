@@ -23,6 +23,7 @@ def spanner_connect(
     project_id=None,
     credentials=None,
     api_endpoint=None,
+    database_dialect=None,
 ):
     """Create a Cloud Spanner Backend for use with Ibis.
 
@@ -34,6 +35,8 @@ def spanner_connect(
         A database id inside of the Cloud Spanner Instance
     project_id  : str (Optional)
         The ID of the project which owns the instances, tables and data.
+    database_dialect : str (Optional)
+        The dialect of the Spanner database (e.g. "postgresql").
     """
     backend = SpannerBackend()
     backend.do_connect(
@@ -42,5 +45,6 @@ def spanner_connect(
         project_id=project_id,
         credentials=credentials,
         api_endpoint=api_endpoint,
+        database_dialect=database_dialect,
     )
     return backend
