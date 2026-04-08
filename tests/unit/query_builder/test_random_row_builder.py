@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
 from unittest import mock
 import pytest
-import ibis
 
 import data_validation.query_builder.random_row_builder as random_row_builder
 
