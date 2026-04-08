@@ -100,8 +100,7 @@ class Backend(BaseAlchemyBackend):
             result = con.exec_driver_sql(f"SELECT * FROM {query} t0 LIMIT 1")
             cursor = result.cursor
             yield from (
-                (column[0].lower(), _get_type(column[1]))
-                for column in cursor.description
+                (column[0].lower(), _get_type(column)) for column in cursor.description
             )
 
     def list_primary_key_columns(self, database: str, table: str) -> list:
