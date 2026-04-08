@@ -21,14 +21,25 @@ select cast(cast('12345678.2' as float64) as string);
 ### Db2 LUW
 
 ```sql
-| `$ db2 "select to_char(cast('123456.1' as real)) from sysibm.sysdummy1"
-123456.1015625 $ db2 "select to_char(cast('12345678.2' as double)) from sysibm.sysdummy1" 1 ------------------------------------------ 12345678.199999999
+select to_char(cast('123456.1' as real)) from sysibm.sysdummy1
+
+123456.1015625
+
+select to_char(cast('12345678.2' as double)) from sysibm.sysdummy1"
+
+12345678.199999999
 ```
 
 ### Hive
 
 ```sql
-| `select cast(cast('123456.1' as float) as string) 123456.1 select cast(cast('12345678.2' as double) as string) 1.23456782E7
+select cast(cast('123456.1' as float) as string)
+
+123456.1
+
+select cast(cast('12345678.2' as double) as string)
+
+1.23456782E7
 ```
 
 ### Impala
