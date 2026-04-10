@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
+
 from google.api_core import client_options
 from google.cloud import spanner
 
@@ -38,13 +40,13 @@ class Backend(PostgresBackend):
     def do_connect(
         self,
         instance_id: str,
-        database_id: str = None,
-        project_id: str = None,
+        database_id: Optional[str] = None,
+        project_id: Optional[str] = None,
         credentials=None,
-        api_endpoint: str = None,
+        api_endpoint: Optional[str] = None,
         host: str = "localhost",
         port: int = 5432,
-        url: str | None = None,
+        url: Optional[str] = None,
     ) -> None:
         alchemy_url = self._build_alchemy_url(
             url=url,
