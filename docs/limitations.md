@@ -1,8 +1,12 @@
 # Data Validation Tool Restrictions and Limitations
 
+## General
+
+- Floating-point data types, e.g. Float and Double, are inexact by nature. Validations that involve conversion of floating-point data to string, e.g. `--hash` and `--concat`, can be problematic.
+
 ## BigQuery
 
-- BigQuery does not have a 32 bit float data type. Validations of systems containing 32 bit floats (e.g. Oracle BINARY_FLOAT) will likely be problematic when compared to FLOAT64.
+- BigQuery does not have a 32 bit floating-point data type. Validations of systems containing 32 bit floats (e.g. Oracle BINARY_FLOAT) will likely be problematic when compared to FLOAT64.
 
 ## Db2 LUW
 
