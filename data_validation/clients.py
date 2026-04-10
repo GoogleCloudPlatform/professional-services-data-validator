@@ -231,11 +231,8 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "db2",
         "mssql",
         "redshift",
-<<<<<<< HEAD
         "spanner_postgres",
-=======
         "sybase",
->>>>>>> origin/develop
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif client.name == "pandas":
@@ -434,10 +431,7 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_MSSQL: mssql_connect,
     consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
-<<<<<<< HEAD
     consts.SOURCE_TYPE_SPANNER_POSTGRES: spanner_postgres_connect,
-=======
     consts.SOURCE_TYPE_SYBASE: sybase_connect,
->>>>>>> origin/develop
     consts.SOURCE_TYPE_DB2: db2_connect,
 }
