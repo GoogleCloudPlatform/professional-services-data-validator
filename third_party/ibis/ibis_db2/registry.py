@@ -32,6 +32,7 @@ from ibis.backends.base.sql.alchemy import (
     get_sqla_table,
 )
 from ibis.backends.base.sql.alchemy.registry import variance_reduction
+from ibm_db_sa import DOUBLE
 
 from third_party.ibis.ibis_addon.api import ibis_integer_string_length
 
@@ -132,6 +133,13 @@ def _cast(t, op):
             if string_length:
                 # Restring target string length to appropriate length for integer size.
                 return sa.cast(sa_arg, sa.String(string_length))
+    elif (
+        arg_dtype.is_floating() or isinstance(getattr(sa_arg, "type", None), DOUBLE)
+    ) and typ.is_string():
+        # Db2 DOUBLE is subclassed from NUMERIC which means it is identified as Ibis Decimal.
+        # Above we check the column data type directly to force DOUBLE into floating point expression code.
+        # To prevent scientific notation when casting to string we use TO_CHAR which appears to avoid the problem.
+        return sa.func.to_char(sa_arg)
     elif arg_dtype.is_decimal() and typ.is_string():
         if arg_dtype.scale is not None and arg_dtype.scale > 0:
             # Db2 always pads fractional part of the number out to length of scale.
@@ -149,9 +157,6 @@ def _cast(t, op):
                     sa.literal_column("''"),
                 )
             )
-        # Max expected precision 38 plus 2 for minus sign and decimal place.
-        return sa.cast(sa_arg, sa.String(40))
-    elif arg_dtype.is_floating() and typ.is_string():
         # Max expected precision 38 plus 2 for minus sign and decimal place.
         return sa.cast(sa_arg, sa.String(40))
 
