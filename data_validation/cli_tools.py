@@ -164,6 +164,7 @@ CONNECTION_SOURCE_FIELDS = {
             "api_endpoint",
             '(Optional) GCP Spanner API endpoint (e.g. "https://mycs.p.googleapis.com")',
         ],
+    ],
     consts.SOURCE_TYPE_SYBASE: [
         ["host", "Sybase host (default localhost)"],
         ["port", "Sybase port to connect on (default 5000)"],
