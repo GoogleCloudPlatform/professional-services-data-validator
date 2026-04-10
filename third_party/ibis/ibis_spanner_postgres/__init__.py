@@ -39,13 +39,11 @@ class Backend(PostgresBackend):
 
     def do_connect(
         self,
-        instance_id: str,
-        database_id: Optional[str] = None,
-        project_id: Optional[str] = None,
-        credentials=None,
-        api_endpoint: Optional[str] = None,
         host: str = "localhost",
         port: int = 5432,
+        user: str = "u",
+        password: str = "p",
+        database: str = None,
         url: Optional[str] = None,
     ) -> None:
         alchemy_url = self._build_alchemy_url(
@@ -54,29 +52,13 @@ class Backend(PostgresBackend):
             port=port,
             user=None,
             password=None,
-            database=database_id,
-            driver=f"{self.name}+psycopg2",
+            database=database,
+            driver=f"postgresql+psycopg2",
         )
         self.database_name = alchemy_url.database
 
         engine = sa.create_engine(alchemy_url)
         super(PostgresBackend, self).do_connect(engine)
-
-        return
-
-        options = None
-        if api_endpoint:
-            options = client_options.ClientOptions(api_endpoint=api_endpoint)
-
-        self.client = spanner.Client(
-            project=project_id, credentials=credentials, client_options=options
-        )
-        self.instance = self.client.instance(instance_id)
-        self.database_name = self.instance.database(database_id)
-        (
-            self.data_instance,
-            self.dataset,
-        ) = parse_instance_and_dataset(instance_id, database_id)
 
     @property
     def instance_id(self):

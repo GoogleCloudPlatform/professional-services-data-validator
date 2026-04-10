@@ -16,33 +16,17 @@ from third_party.ibis.ibis_spanner_postgres import Backend as SpannerPostgresBac
 
 
 def spanner_postgres_connect(
-    instance_id,
-    database_id,
-    project_id=None,
-    credentials=None,
-    api_endpoint=None,
     host=None,
     port=None,
+    user="u",
+    password="p",
 ):
-    """Create a Cloud Spanner Backend for use with Ibis.
-
-    Parameters
-    ----------
-    instance_id : str
-        A Cloud Spanner Instance id.
-    database_id : str
-        A database id inside of the Cloud Spanner Instance
-    project_id  : str (Optional)
-        The ID of the project which owns the instances, tables and data.
-    """
+    """TODO: add docstring."""
     backend = SpannerPostgresBackend()
     backend.do_connect(
-        instance_id=instance_id,
-        database_id=database_id,
-        project_id=project_id,
-        credentials=credentials,
-        api_endpoint=api_endpoint,
         host=host,
         port=port,
+        user=user,
+        password=password,
     )
     return backend
