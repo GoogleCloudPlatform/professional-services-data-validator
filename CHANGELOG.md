@@ -2,6 +2,27 @@
 
 ## Untagged
 
+## [8.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.2...v8.6.0) (2026-04-10)
+
+
+### Features
+
+* Add caching mechanism for Backend functions ([#1711](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1711)) ([b9e6f27](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b9e6f27cfaa823b4af0e2fa71b8eabafb03cdc40))
+* Add Db2 binary types to supported types ([#1679](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1679)) ([04ad3a8](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/04ad3a8551e8d55226c0b1de567dad9cd16d8e0b))
+* Add support for differing source/target schema names to find-tables ([#1692](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1692)) ([a9b5377](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a9b537756c9312a2b572b8c3f1d799164ea54e0e))
+* Reduce Redshift queries ([#1687](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1687)) ([b0155ec](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b0155eccb9d9258695b30f09483f02e48467120b))
+
+
+### Bug Fixes
+
+* Add raw datatype support for Db2 custom queries ([#1707](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1707)) ([cc0b62f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/cc0b62f3e875b0c935e1f24cbbd7d0793f943706))
+* custom query row validation on Db2 loses precision and scale ([#1727](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1727)) ([ff3573f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/ff3573f2c9e293ec5bc243f4431e1863dab094ac))
+* Force Db2 FOR BIT DATA columns to Ibis Binary ([#1690](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1690)) ([752170b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/752170b682ab23fb167e020b08e7a8d1bf2c5936))
+* mock list_validations in config_runner tests to remove GCS dependency ([#1708](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1708)) ([2882d50](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2882d50ebe85ba1af2dadf3bac39a23df0d5159a)), closes [#1482](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1482)
+* Prevent scientific notation in row validation for Db2 REAL/DOUBLE columns ([#1723](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1723)) ([e67dccf](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/e67dccfd27746567c05e56e1ffc8d2b095b575be))
+* Protect PostgreSQL padded chars length expression from NULLs ([#1726](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1726)) ([806e30b](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/806e30b6c6a1415a8317030795b728dc8fd48e1c))
+* Replace typehints that are incompatible with Python 3.9 ([#1704](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1704)) ([97e959c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/97e959c0bbe615103b89844b23f7c2a40a9bf8a1))
+
 ## [8.5.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.1...v8.5.2) (2026-02-26)
 
 
