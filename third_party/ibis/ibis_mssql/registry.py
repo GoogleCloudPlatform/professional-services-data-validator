@@ -18,6 +18,7 @@ from ibis.backends.base.sql.alchemy import (
     get_sqla_table,
 )
 from ibis.backends.base.sql.alchemy.registry import get_col
+from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 
 
 def sa_table_column(t, op):
@@ -50,7 +51,7 @@ def sa_table_column(t, op):
 
 
 def strftime(translator, op):
-    """Use MS SQL CONVERT() in place of STRFTIME().
+    """Use SQL Server CONVERT() in place of STRFTIME().
 
     This is pretty restrictive due to the limited styles offered by SQL Server,
     we've just covered off the generic formats used when casting date based columns
@@ -83,9 +84,25 @@ def sa_epoch_seconds(translator, op):
     )
 
 
-def sa_format_binary_length(translator, op):
+def sa_format_string_length(translator, op):
+    """Calculate SQL Server string length in characters, not bytes.
+
+    This uses len() rather than datalength() to give an output compatible with BigQuery.
+    We need to protect trailing spaces due to an odd quirk in SQL Server len()
+    behaviour that ignores them, so this is done by first replacing spaces with
+    underscores before passing the string to len().
+
+    The len expression is cast to BIGINT to prevent int overflow for large tables."""
     arg = translator.translate(op.arg)
-    return sa.func.datalength(arg)
+    return sa.func.cast(sa.func.len(sa.func.replace(arg, " ", "_")), sa.BIGINT)
+
+
+def sa_format_binary_length(translator, op):
+    """Calculate SQL Server bytes/string length in bytes, not characters.
+
+    The len expression is cast to BIGINT to prevent int overflow for large tables."""
+    arg = translator.translate(op.arg)
+    return sa.func.cast(sa.func.datalength(arg), sa.BIGINT)
 
 
 def sa_format_hashbytes(translator, op):
@@ -96,3 +113,66 @@ def sa_format_hashbytes(translator, op):
         sa.sql.literal_column("CHAR(64)"), hash_func, sa.sql.literal_column("2")
     )
     return sa.func.lower(hash_to_string)
+
+
+def sa_cast_mssql(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+
+    sa_arg = t.translate(arg)
+    # Specialize going from a binary float type to a string.
+    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
+        # This prevents output in scientific notation, at least for my tests it did.
+        return sa.func.format(sa_arg, "G")
+    elif arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.lower(
+            sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
+        )
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
+    # Specialize going from DECIMAL(p,s>0) to string
+    elif (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        scale = arg_dtype.scale
+        # Considering any number of fractional digits
+        format_string = f'0.{("#" * scale)}'
+        formatted_value = sa.func.format(sa_arg, format_string)
+        # Replace trailing '.0' with ''
+        return sa.func.replace(formatted_value, ".0", "")
+    elif arg_dtype.is_boolean() and typ.is_string():
+        return sa.case(
+            (sa_arg == 0, sa.literal_column("'false'")),
+            (sa_arg == 1, sa.literal_column("'true'")),
+            else_=sa.null(),
+        )
+
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
+
+
+def sa_format_new_id(t, op):
+    return sa.func.NEWID()
+
+
+def sa_string_join(t, op):
+    if (
+        len(op.arg) == 1
+    ):  # SQL Server CONCAT errs when there is one column being hashed (issue-1202), renaming using type_coerce rather than CONCAT
+        return sa.type_coerce(
+            t.translate(op.arg[0]),
+            sa.types.String,
+        )
+    else:
+        return sa.func.concat(*map(t.translate, op.arg))
+
+
+def sa_whitespace_rstrip(t, op):
+    sa_arg = t.translate(op.arg)
+    return sa.func.rtrim(sa.cast(sa_arg, sa.VARCHAR(length=None)))

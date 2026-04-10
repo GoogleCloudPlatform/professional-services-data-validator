@@ -61,6 +61,49 @@ CREATE TABLE `pso_data_validator`.`dvt_null_not_null`
 ,   col_src_n_trg_nn   timestamp
 ) COMMENT 'Nullable integration test table, Hive is assumed to be a DVT source (not target).';
 
+DROP TABLE `pso_data_validator`.`test_generate_partitions_v2`;
+CREATE TABLE `pso_data_validator`.`test_generate_partitions_v2` (
+        course_id varchar(24),
+        quarter_id INT,
+        recd_timestamp TIMESTAMP,
+        registration_date DATE,
+        approved boolean,
+        grade DECIMAL(10,2)
+        ) COMMENT 'Table for testing generate table partitions, consists of 32 rows with a composite primary key Quoted Strings are handled correctly';
+
+INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` VALUES
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG002  t0.', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG002', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('St. John''s', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('St. John''s', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('St. John''s', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('St. John''s', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('St. Jude''s', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('St. Jude''s', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('St. Edward''s', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('St. Edward''s', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5);
 
 DROP TABLE `pso_data_validator`.`dvt_binary`;
 CREATE TABLE `pso_data_validator`.`dvt_binary`
@@ -510,3 +553,22 @@ CREATE TABLE pso_data_validator.dvt_bool
 ) COMMENT 'Integration test table used to test boolean data type, especially in non-boolean columns.';
 INSERT INTO pso_data_validator.dvt_bool VALUES (1,true,true,true,true);
 INSERT INTO pso_data_validator.dvt_bool VALUES (2,false,false,false,false);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_dates;
+CREATE TABLE pso_data_validator.dvt_tricky_dates (
+  id            bigint NOT NULL
+, col_dt_low    date
+, col_dt_epoch  date
+, col_dt_high   date
+, col_dt_4712   date
+, col_ts_low    timestamp
+, col_ts_epoch  timestamp
+, col_ts_high   timestamp
+, col_ts_4712   timestamp)
+STORED AS ORC
+TBLPROPERTIES ('comment'='Integration test table used to test potentially difficult timestamps.');
+INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
+(1,'1000-01-01','1970-01-01','9999-12-31','4712-12-31'
+,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59','4712-12-31 23:23:59');
+-- NULL in all columns.
+INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);

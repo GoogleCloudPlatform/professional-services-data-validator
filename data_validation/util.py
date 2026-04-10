@@ -16,8 +16,15 @@ import json
 import logging
 import re
 import time
+import uuid
 
-from data_validation import exceptions
+from data_validation import clients, exceptions
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ibis.expr.types.relations import Table as IbisTable
+    from ibis.backends.base import BaseBackend
 
 
 def timed_call(log_txt, fn, *args, **kwargs):
@@ -62,3 +69,38 @@ def dvt_config_string_to_dict(config_string: str) -> dict:
         raise exceptions.ValidationException(
             f"Invalid JSON format in connection parameter dictionary string: {config_string}"
         ) from exc
+
+
+def ibis_table_to_sql(ibis_table: "IbisTable", alchemy_client: "BaseBackend") -> str:
+    """Function to generate the SQL string for the table based on the backend.
+
+    We need the client in order to find the dialect, otherwise we end up with generic literals.
+    """
+    # If the backend uses sqlalchemy, we will need to request sqla to bind variables
+    # for a non sqlalchemy backend, the parameters are already bound
+    if alchemy_client and clients.is_sqlalchemy_backend(alchemy_client):
+        dialect = alchemy_client.con.dialect
+        sql_string = str(
+            ibis_table.compile().compile(
+                dialect=dialect, compile_kwargs={"literal_binds": True}
+            )
+        )
+    else:
+        sql_string = str(ibis_table.compile())
+    return sql_string
+
+
+def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
+    """Generate a random name for when DVT needs to create a temporary object.
+
+    Args:
+        prefix: The prefix to use for the temporary object name.
+
+    Returns:
+        A lower case random name for when DVT needs to create a temporary object.
+    """
+    if not isinstance(prefix, str) or not re.match(r"^[a-zA-Z0-9_]+$", prefix):
+        raise exceptions.ValidationException(
+            f"Invalid prefix: '{prefix}'. Only alphanumeric and underscore characters are allowed."
+        )
+    return f"{prefix}_{uuid.uuid4().hex[:8].lower()}"

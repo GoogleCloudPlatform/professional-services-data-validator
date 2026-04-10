@@ -6,8 +6,24 @@ SELECT
     CAST(2 AS INT64) int_type,
     CAST(2 AS DECIMAL) decimal_type,
     CAST(2 AS STRING) text_type,
-    CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type
+    CAST('2021-01-01 00:00:00' AS TIMESTAMP) timestamp_type;
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions`
+( course_id STRING
+, quarter_id INT64
+, student_id INT64
+, grade FLOAT64
+, registration_timestamp TIMESTAMP
+, registration_date DATE );
+INSERT INTO `pso_data_validator`.`test_generate_partitions`
+(course_id,quarter_id,student_id,grade)
+VALUES ('ALG001',1,5678,3.5), ('TRI001',1,5678,3.5), ('GEO001',1,5678,3.5), ('TRI001',1,9012,2.3),
+('ALG001',1,9012,2.3), ('GEO001',1,9012,2.3), ('ALG001',1,1234,2.1), ('TRI001',1,1234,2.1),
+('GEO001',1,1234,2.1), ('TRI001',2,1234,3.5), ('GEO001',2,9012,3.5), ('GEO001',2,1234,3.5),
+('ALG001',2,9012,3.5), ('ALG001',2,1234,3.5), ('TRI001',2,9012,3.5), ('TRI001',2,5678,2.6),
+('ALG001',2,5678,2.6), ('GEO001',2,5678,2.6), ('GEO001',3,5678,3.5), ('ALG001',3,5678,3.5),
+('TRI001',3,5678,3.5), ('ALG001',3,9012,2.8), ('TRI001',3,9012,2.8), ('GEO001',3,9012,2.8),
+('TRI001',3,1234,2.7), ('ALG001',3,1234,2.7), ('GEO001',3,1234,2.7);
 
 -- Core data types test table, to be kept in sync with same table in other SQL engines
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_core_types`
@@ -52,7 +68,7 @@ INSERT INTO `pso_data_validator`.`dvt_core_types` VALUES
  ,DATE '1970-01-03',DATETIME '1970-01-03 00:00:03'
  ,TIMESTAMP '1970-01-03 00:00:03-03:00');
 
-CREATE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
+CREATE OR REPLACE VIEW `pso_data_validator`.`dvt_core_types_vw` AS
 SELECT * FROM `pso_data_validator`.`dvt_core_types`;
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_null_not_null`
@@ -106,6 +122,142 @@ INSERT INTO `pso_data_validator`.`dvt_large_decimals` VALUES
 ,BIGNUMERIC '12345678.123456789012345678901234567890'
 ,987654321012345670,12345678901234567.0);
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`test_generate_partitions_v2` (
+        course_id STRING(24),
+        quarter_id INTEGER,
+        recd_timestamp TIMESTAMP,
+        registration_date DATE,
+        approved Boolean,
+        grade NUMERIC,
+        ) OPTIONS (description='Table for testing generate table partitions, consists of 32 rows with a composite primary key Quoted Strings are handled correctly');
+INSERT INTO `pso_data_validator`.`test_generate_partitions_v2` VALUES
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG001', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG001', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG003', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG003', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ('ALG002', 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ('ALG002  t0.', 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ('ALG002', 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ('ALG004', 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ('ALG004', 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ("St. John''s", 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ("St. John''s", 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ("St. John''s", 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ("St. John''s", 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ("St. Jude''s", 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ("St. Jude''s", 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ("St. Jude''s", 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ("St. Jude''s", 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5),
+        ("St. Edward''s", 1234, '2023-08-26 16:00:00', '1969-07-20', True, 3.5),
+        ("St. Edward''s", 1234, '2023-08-26 16:00:00', '1969-07-20', False, 2.8),
+        ("St. Edward''s", 5678, '2023-08-26 16:00:00', '2023-08-23', True, 2.1),
+        ("St. Edward''s", 5678, '2023-08-26 16:00:00', '2023-08-23', False, 3.5),
+        ("St. Paul''s", 1234, '2023-08-27 15:00:00', '1969-07-20', True, 3.5),
+        ("St. Paul''s", 1234, '2023-08-27 15:00:00', '1969-07-20', False, 2.8),
+        ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', True, 2.1),
+        ("St. Paul''s", 5678, '2023-08-27 15:00:00', '2023-08-23', False, 3.5);
+
+-- Comparison table for SQL Server specific test table.
+CREATE OR REPLACE TABLE pso_data_validator.dvt_sql_server_types
+(   id                 INT64 NOT NULL
+,   col_int1           INT64
+,   col_int2           INT64
+,   col_int4           INT64
+,   col_int8           INT64
+,   col_dec            NUMERIC
+,   col_dec_10_2       NUMERIC(10,2)
+,   col_float32        FLOAT64
+,   col_float64        FLOAT64
+,   col_money          NUMERIC(19,4)
+,   col_smallmoney     NUMERIC(10,4)
+,   col_varchar_30     STRING
+,   col_char_2         STRING
+,   col_nvarchar_30    STRING
+,   col_nchar_2        STRING
+,   col_text           STRING
+,   col_ntext          STRING
+,   col_date           DATE
+,   col_datetime       DATETIME
+,   col_datetime2      DATETIME
+,   col_smalldatetime  DATETIME
+,   col_datetimeoffset TIMESTAMP
+,   col_time           TIME
+,   col_binary         BYTES
+,   col_varbinary      BYTES(10)
+,   col_varbinary_max  BYTES
+,   col_bit            BOOLEAN
+,   col_image          BYTES
+) OPTIONS (description='SQL Server data types integration test table (BigQuery target)');
+INSERT INTO pso_data_validator.dvt_sql_server_types VALUES
+(1,110,11111,1000000000,123456789012345678
+,NUMERIC'123456789012345678',NUMERIC'123.12',123456.1,12345678.1,NUMERIC'12345678.111',NUMERIC'123456.111'
+,'Hello DVT','A ','Hello DVT','A ','Hello DVT','Hello DVT'
+,DATE'1970-01-01',DATETIME'1970-01-01 00:00:01',DATETIME'1970-01-01 00:00:01',DATETIME'1970-01-01 01:00:00'
+,TIMESTAMP'1970-01-01 00:00:01-01:00',TIME'00:00:01.123'
+,CAST('A' AS BYTES),CAST('A' AS BYTES),CAST('A' AS BYTES),TRUE,CAST('A' AS BYTES)
+),
+(2,210,22222,2000000000,223456789012345678
+,NUMERIC'223456789012345678',NUMERIC'223.12',223456.1,22345678.1,NUMERIC'22345678.111',NUMERIC'123456.222'
+,'Trailing space length 25 ','B ','Trailing space length 25 ','B ','Trailing space length 25 ','Trailing space length 25 '
+,DATE'1970-02-02',DATETIME'1970-02-02 00:00:02',DATETIME'1970-02-02 00:00:02',DATETIME'1970-02-02 02:00:00'
+,TIMESTAMP'1970-02-02 00:00:01-02:00',TIME'00:00:02.123'
+,CAST('B' AS BYTES),CAST('B' AS BYTES),CAST('B' AS BYTES),FALSE,CAST('A' AS BYTES)
+);
+
+-- Comparison table for Db2 specific test table.
+CREATE OR REPLACE TABLE pso_data_validator.dvt_db2_types
+(   id              INT64 NOT NULL
+,   col_smallint    INT64
+,   col_int         INT64
+,   col_bigint      INT64
+,   col_dec_10_2    NUMERIC
+,   col_decfloat_16 NUMERIC
+,   col_decfloat_32 NUMERIC
+,   col_clob        STRING
+,   col_nvarchar_30 STRING
+,   col_nchar_2     STRING
+,   col_nclob       STRING
+,   col_dbclob      STRING
+,   col_blob        BYTES
+,   col_char_bit    BYTES
+,   col_varchar_bit BYTES
+,   col_graphic     STRING
+,   col_vargraphic  STRING
+,   col_date        DATE
+,   col_timestamp   DATETIME
+,   col_time        TIME
+,   col_binary      BYTES
+,   col_varbinary   BYTES
+,   col_xml         STRING
+) OPTIONS (description='Db2 data types integration test table (BigQuery target)');
+
+INSERT INTO pso_data_validator.dvt_db2_types VALUES
+(1,123,12345,1123456789,1.1,123.456,123456.789
+,'Hello CLOB','Hello NVARCHAR','A ','Hello NCLOB','Hello DBCLOB'
+,CAST('Hello BLOB' AS BYTES),FROM_HEX('550E8400E29B41D4A716446655440000')
+,FROM_HEX('550E8400E29B41D4A716446655440000'),'GHI','JKL'
+,DATE'1970-01-01',DATETIME'1970-01-01 00:00:01.123456',TIME'00:00:01'
+,CAST('A' AS BYTES),CAST('A' AS BYTES)
+,'<xml></xml>'),
+(2,123,12345,1123456789,0,123.456,123456.789
+,'Hello CLOB2','Hello NVARCHAR2','B ','Hello NCLOB2','Hello DBCLOB2'
+,CAST('Hello BLOB2' AS BYTES),FROM_HEX('F2A79E538CBD4A1E9F03B8D4C731A9F4')
+,FROM_HEX('F2A79E538CBD4A1E9F03B8D4C731A9F4'),'GHI','JKL'
+,DATE'1970-01-02',DATETIME'1970-01-02 00:00:02.001',TIME'00:00:02'
+,CAST('B' AS BYTES),CAST('B' AS BYTES)
+,'<xml></xml>'),
+(3,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL);
+
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_binary`
 (   binary_id       BYTES(16) NOT NULL
 ,   int_id          INT64 NOT NULL
@@ -118,28 +270,30 @@ INSERT INTO `pso_data_validator`.`dvt_binary` VALUES
 (CAST('DVT-key-4' AS BYTES), 4, 'Row 4'),
 (CAST('DVT-key-5' AS BYTES), 5, 'Row 5');
 
-CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_string_id`
+# BigQuery does not have a fixed char data type and blanks at the end of strings are not removed by the database.
+# Other databases have a fixed char data type and these tables are to allow the comparison of those columns with BQ and each other
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_varchar_id`
 (   id          STRING(15) NOT NULL
 ,   other_data  STRING(100)
-) OPTIONS (description='Integration test table used to test string pk matching.');
-INSERT INTO `pso_data_validator`.`dvt_string_id` VALUES
+) OPTIONS (description='Integration test table used to test variable length string, trailing blanks are significant');
+INSERT INTO `pso_data_validator`.`dvt_varchar_id` VALUES
 ('DVT-key-1', 'Row 1'),
 ('DVT-key-2', 'Row 2'),
 ('DVT-key-3', 'Row 3'),
-('DVT-key-4', 'Row 4'),
+('DVT-key-4 ', 'Row 4'),
 ('DVT-key-5', 'Row 5');
 
 -- BigQuery does not have a specific padded CHAR data type.
-CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_char_id`
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_fixed_char_id`
 (   id          STRING(6) NOT NULL
 ,   other_data  STRING(100)
-) OPTIONS (description='Integration test table used to test CHAR pk matching.');
-INSERT INTO `pso_data_validator`.`dvt_char_id` VALUES
-('DVT1  ', 'Row 1	  '),
-('DVT2  ', 'Row 2  	'),
-('DVT3  ', 'Row 3  '),
-('DVT4  ', 'Row 4  	  '),
-('DVT5  ', 'Row 5');
+) OPTIONS (description='Integration test table used to test fixed char primary key - trailing blanks are not significant');
+INSERT INTO `pso_data_validator`.`dvt_fixed_char_id` VALUES
+('DVT1', 'Row 1	  '),
+('DVT2', 'Row 2  	'),
+('DVT3', 'Row 3  '),
+('DVT4', 'Row 4  	  '),
+('DVT5', 'Row 5');
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_datetime_id`
 (   id          DATETIME
@@ -150,7 +304,7 @@ INSERT INTO `pso_data_validator`.`dvt_datetime_id` VALUES
 (DATETIME'2020-04-01 12:00:00', 'Row 4'), (DATETIME'2020-05-01 12:00:00', 'Row 5');
 
 CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_time_table`
-(   id          INTEGER NOT NULL
+(   id        INTEGER NOT NULL
 ,   col_time  TIME
 ) OPTIONS (description='Integration test table used to test Time data type');
 INSERT INTO `pso_data_validator`.`dvt_time_table` VALUES
@@ -647,13 +801,15 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_tricky_dates` (
 , col_dt_low    DATE
 , col_dt_epoch  DATE
 , col_dt_high   DATE
+, col_dt_4712   DATE
 , col_ts_low    DATETIME
 , col_ts_epoch  DATETIME
 , col_ts_high   DATETIME
+, col_ts_4712   DATETIME
 ) OPTIONS (description='Integration test table used to test potentially difficult Timestamps.');
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` VALUES
-(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59');
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,DATETIME'1000-01-01 00:00:00',DATETIME'1970-01-01 00:00:00',DATETIME'9999-12-31 23:59:59',DATETIME'4712-12-31 23:23:59');
 -- NULL in all columns.
 INSERT INTO `pso_data_validator`.`dvt_tricky_dates` (id) VALUES (2);
 
@@ -680,3 +836,23 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
 , `STRING`   STRING
 ) OPTIONS (description='Integration test table used to test potentially difficult column names.');
 INSERT INTO `pso_data_validator`.`dvt_reserved_word_columns` (id) VALUES (1);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals_no_precision` (
+  id              INT64
+, col_zero        NUMERIC
+, col_trail_zero  NUMERIC
+, col_negative    NUMERIC
+) OPTIONS (description='Integration test table used to test decimals without a precision or scale.');
+INSERT INTO `pso_data_validator`.`dvt_decimals_no_precision` VALUES
+(1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_intervals` (
+  id              INT64
+, col_interval_ds INTERVAL
+, col_interval_ym INTERVAL
+) OPTIONS (description='Integration test table used to test INTERVAL data types.');
+INSERT INTO `pso_data_validator`.`dvt_intervals` VALUES
+(0,INTERVAL '0 02:03:44' DAY TO SECOND,INTERVAL '0-2' YEAR TO MONTH),
+(1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-2' YEAR TO MONTH),
+(2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-2' YEAR TO MONTH),
+(3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);

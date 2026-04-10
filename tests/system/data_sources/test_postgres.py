@@ -31,12 +31,16 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 )
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     column_validation_test_args,
+    connections_add_test,
     custom_query_validation_test,
     find_tables_test,
+    generate_and_run_table_partitions_test,
     id_column_row_validation_test,
+    id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     partition_table_test,
@@ -160,7 +164,7 @@ def test_postgres_count(cloud_sql):
         # Validation Type
         consts.CONFIG_TYPE: "Column",
         # Configuration Required Depending on Validator Type
-        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_AGGREGATES: [
             {
@@ -204,7 +208,7 @@ def test_postgres_row(cloud_sql):
         # Validation Type
         consts.CONFIG_TYPE: "Row",
         # Configuration Required Depending on Validator Type
-        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
         consts.CONFIG_TABLE_NAME: "test_data_types_postgres_row",
         consts.CONFIG_COMPARISON_FIELDS: [
             {
@@ -219,252 +223,252 @@ def test_postgres_row(cloud_sql):
                 "source_calculated_columns": ["serial_col"],
                 "target_calculated_columns": ["serial_col"],
                 "field_alias": "cast__serial_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["int_col"],
                 "target_calculated_columns": ["int_col"],
                 "field_alias": "cast__int_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["text_col"],
                 "target_calculated_columns": ["text_col"],
                 "field_alias": "cast__text_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["char_col"],
                 "target_calculated_columns": ["char_col"],
                 "field_alias": "cast__char_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["varchar_col"],
                 "target_calculated_columns": ["varchar_col"],
                 "field_alias": "cast__varchar_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["float_col"],
                 "target_calculated_columns": ["float_col"],
                 "field_alias": "cast__float_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["numeric_col"],
                 "target_calculated_columns": ["numeric_col"],
                 "field_alias": "cast__numeric_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["timestamp_col"],
                 "target_calculated_columns": ["timestamp_col"],
                 "field_alias": "cast__timestamp_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["date_col"],
                 "target_calculated_columns": ["date_col"],
                 "field_alias": "cast__date_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["cast__serial_col"],
                 "target_calculated_columns": ["cast__serial_col"],
                 "field_alias": "ifnull__cast__serial_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__int_col"],
                 "target_calculated_columns": ["cast__int_col"],
                 "field_alias": "ifnull__cast__int_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__text_col"],
                 "target_calculated_columns": ["cast__text_col"],
                 "field_alias": "ifnull__cast__text_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__char_col"],
                 "target_calculated_columns": ["cast__char_col"],
                 "field_alias": "ifnull__cast__char_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__varchar_col"],
                 "target_calculated_columns": ["cast__varchar_col"],
                 "field_alias": "ifnull__cast__varchar_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__float_col"],
                 "target_calculated_columns": ["cast__float_col"],
                 "field_alias": "ifnull__cast__float_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__numeric_col"],
                 "target_calculated_columns": ["cast__numeric_col"],
                 "field_alias": "ifnull__cast__numeric_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__timestamp_col"],
                 "target_calculated_columns": ["cast__timestamp_col"],
                 "field_alias": "ifnull__cast__timestamp_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__date_col"],
                 "target_calculated_columns": ["cast__date_col"],
                 "field_alias": "ifnull__cast__date_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__serial_col"],
                 "target_calculated_columns": ["ifnull__cast__serial_col"],
                 "field_alias": "rstrip__ifnull__cast__serial_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__int_col"],
                 "target_calculated_columns": ["ifnull__cast__int_col"],
                 "field_alias": "rstrip__ifnull__cast__int_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__text_col"],
                 "target_calculated_columns": ["ifnull__cast__text_col"],
                 "field_alias": "rstrip__ifnull__cast__text_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__char_col"],
                 "target_calculated_columns": ["ifnull__cast__char_col"],
                 "field_alias": "rstrip__ifnull__cast__char_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__varchar_col"],
                 "target_calculated_columns": ["ifnull__cast__varchar_col"],
                 "field_alias": "rstrip__ifnull__cast__varchar_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__float_col"],
                 "target_calculated_columns": ["ifnull__cast__float_col"],
                 "field_alias": "rstrip__ifnull__cast__float_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__numeric_col"],
                 "target_calculated_columns": ["ifnull__cast__numeric_col"],
                 "field_alias": "rstrip__ifnull__cast__numeric_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__timestamp_col"],
                 "target_calculated_columns": ["ifnull__cast__timestamp_col"],
                 "field_alias": "rstrip__ifnull__cast__timestamp_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__date_col"],
                 "target_calculated_columns": ["ifnull__cast__date_col"],
                 "field_alias": "rstrip__ifnull__cast__date_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__serial_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__serial_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__serial_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__int_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__int_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__int_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__text_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__text_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__text_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__char_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__char_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__char_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__varchar_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__varchar_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__varchar_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__float_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__float_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__float_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__numeric_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__numeric_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__numeric_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__timestamp_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__timestamp_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__timestamp_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__date_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__date_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__date_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
@@ -491,14 +495,14 @@ def test_postgres_row(cloud_sql):
                     "upper__rstrip__ifnull__cast__date_col",
                 ],
                 "field_alias": "concat__all",
-                "type": "concat",
+                "type": consts.CALC_FIELD_CONCAT,
                 "depth": 4,
             },
             {
                 "source_calculated_columns": ["concat__all"],
                 "target_calculated_columns": ["concat__all"],
                 "field_alias": "hash__all",
-                "type": "hash",
+                "type": consts.CALC_FIELD_HASH,
                 "depth": 5,
             },
         ],
@@ -535,26 +539,26 @@ def mock_get_connection_config(*args):
 # Expected result from partitioning table into 9 partitions on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false)))) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false))))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG002' OR course_id = 'ALG002' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG002' OR course_id = 'ALG002' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= TRUE ) ) AND ( course_id < 'ALG003' OR course_id = 'ALG003' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG003' OR course_id = 'ALG003' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'ALG004' OR course_id = 'ALG004' AND ( quarter_id < 5678 OR quarter_id = 5678 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG004' OR course_id = 'ALG004' AND ( quarter_id > 5678 OR quarter_id = 5678 AND approved >= FALSE ) ) AND ( course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < TRUE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. John''s' OR course_id = 'St. John''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= TRUE ) ) AND ( course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) ) AND ( course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id < 1234 OR quarter_id = 1234 AND approved < FALSE ) )",
-        " quarter_id <> 1111 AND ( course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND ( quarter_id > 1234 OR quarter_id = 1234 AND approved >= FALSE ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= true)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= false)))) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < true))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= true)))) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false)))) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < false))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= false))))",
     ],
 ]
 
@@ -567,14 +571,10 @@ def test_generate_partitions(cloud_sql, tmp_path: pathlib.Path):
     """Test generate partitions, first on table, then custom query on Postgres"""
     partition_table_test(
         EXPECTED_PARTITION_FILTER,
-        tables="public.test_generate_partitions",
-        pk="course_id,quarter_id,approved",
     )
     partition_query_test(
         EXPECTED_PARTITION_FILTER,
         tmp_path,
-        tables="public.test_generate_partitions",
-        pk="course_id,quarter_id,approved",
     )
 
 
@@ -584,7 +584,7 @@ def test_schema_validation(cloud_sql):
         consts.CONFIG_SOURCE_CONN: CONN,
         consts.CONFIG_TARGET_CONN: CONN,
         consts.CONFIG_TYPE: "Schema",
-        consts.CONFIG_SCHEMA_NAME: "public",
+        consts.CONFIG_SCHEMA_NAME: "pso_data_validator",
         consts.CONFIG_TABLE_NAME: "entries",
         consts.CONFIG_FORMAT: consts.FORMAT_TYPE_TABLE,
         consts.CONFIG_FILTER_STATUS: None,
@@ -693,6 +693,8 @@ def test_column_validation_pg_types():
         sum_cols=sum_cols,
         min_cols=count_cols,
         max_cols=count_cols,
+        avg_cols=sum_cols,
+        std_cols=sum_cols,
     )
 
 
@@ -702,13 +704,8 @@ def test_column_validation_pg_types():
 )
 def test_column_validation_core_types_to_bigquery():
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
     cols = ",".join(
-        [
-            _
-            for _ in DVT_CORE_TYPES_COLUMNS
-            if _ not in ("id", "col_float32", "col_char_2")
-        ]
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
     )
     column_validation_test(
         tc="bq-conn",
@@ -716,6 +713,8 @@ def test_column_validation_core_types_to_bigquery():
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 
@@ -733,6 +732,8 @@ def test_column_validation_large_decimals_to_bigquery():
         count_cols=cols,
         min_cols=cols,
         sum_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 
@@ -764,10 +765,7 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 )
 def test_column_validation_view_core_types_vw():
     """PostgreSQL to PostgreSQL view dvt_core_types_vw column validation"""
-    # TODO Change --sum and --max options to include col_char_2 when issue-842 is complete.
-    cols = ",".join(
-        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_char_2")]
-    )
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id",)])
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types_vw",
@@ -874,11 +872,50 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Test padded char primary key join columns"""
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_char_id",
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 @mock.patch(
@@ -887,10 +924,10 @@ def test_row_validation_char_pk_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 
@@ -907,6 +944,23 @@ def test_generate_partitions_datetime_pk():
         tables="pso_data_validator.dvt_datetime_id",
         filters="other_data IS NOT NULL",
         partition_num=2,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_pangrams_to_bigquery():
+    """PostgreSQL to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
     )
 
 
@@ -978,11 +1032,28 @@ def test_column_validation_many_columns():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_many_columns():
+def test_row_validation_many_columns_standard():
     """dvt_many_cols row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
     """
     row_validation_many_columns_test(expected_config_managers=5)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns_exclude():
+    """dvt_many_cols row validation including --exclude-columns.
+
+    We have this specific test for --exclude-columns as a regression test for issue-1542.
+    The code being tested is not PostgreSQL specific therefore we do not need this in other test files.
+    """
+    row_validation_many_columns_test(
+        expected_config_managers=5,
+        columns="col_004,col_005,col_006",
+        exclude_columns=True,
+    )
 
 
 @mock.patch(
@@ -1062,7 +1133,7 @@ def test_column_validation_high_epoch_seconds():
         expected_rows=3,
     )
     status_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.VALIDATION_STATUS]))
-    value_dict = dict(zip(df[consts.VALIDATION_NAME], df["source_agg_value"]))
+    value_dict = dict(zip(df[consts.VALIDATION_NAME], df[consts.SOURCE_AGG_VALUE]))
     assert (
         status_dict["sum__epoch_seconds__col_datetime"]
         == consts.VALIDATION_STATUS_SUCCESS
@@ -1082,12 +1153,13 @@ def test_column_validation_high_epoch_seconds():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        min_cols="*",
-        max_cols="*",
-        sum_cols="*",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
     )
@@ -1163,10 +1235,25 @@ def test_row_validation_comp_fields_reserved_words():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="*",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -1180,6 +1267,91 @@ def test_row_validation_tricky_strings_to_bigquery():
         tables="pso_data_validator.dvt_tricky_strings",
         tc="bq-conn",
         hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_decimals_no_precision():
+    """Test column validation on a table with decimals columns with no defined precision."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
+        avg_cols="*",
+        std_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_no_precision():
+    """Test row validation on a table with decimals columns with no defined precision."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_intervals():
+    """Test schema validation on a table with columns of type INTERVAL."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_intervals():
+    """Test column validation on a table with columns of type INTERVAL."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_intervals",
+        count_cols="col_interval_ds,col_interval_ym",
+        sum_cols="col_interval_ds,col_interval_ym",
+        min_cols="col_interval_ds,col_interval_ym",
+        max_cols="col_interval_ds,col_interval_ym",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_intervals():
+    """Test row validation on a table with columns of type INTERVAL."""
+    pytest.skip("Skipping test_row_validation_intervals due to issue-1214.")
+    row_validation_test(
+        tables="pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+        hash="col_interval_ds,col_interval_ym",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_and_run_partitions(tmp_path: pathlib.Path):
+    """Test generate and execute partition configs."""
+    pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
+    generate_and_run_table_partitions_test(
+        tmp_path,
+        sc="mock-conn",
+        tc="bq-conn",
     )
 
 
@@ -1205,8 +1377,42 @@ def test_result_handler_postgres(mock_list, caplog):
     run_id = df[consts.CONFIG_RUN_ID][0]
 
     # Hijacking DVT raw query to query the results the table.
+    # Labels columns should be empty.
     rows = raw_query_rows(
-        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}'", conn="mock-conn"
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND labels = '{{}}'",
+        conn="mock-conn",
+    )
+    # Ensure that we added the data to the results table.
+    assert len(df) == rows[0][0]
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+@mock.patch(
+    "data_validation.state_manager.StateManager.list_connections",
+    return_value="mock-conn",
+)
+def test_result_handler_postgres_with_labels(mock_list, caplog):
+    """Test result handler with validation labels using dvt_core_types schema validation."""
+    table_id = "pso_data_validator_results.results_data"
+    caplog.set_level(logging.INFO)
+    df = schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        filter_status=None,
+        result_handler=f"mock-conn.{table_id}",
+        labels="a=1,b=2",
+    )
+    assert any(_ for _ in caplog.records if RH_WRITE_MESSAGE in _.msg)
+    run_id = df[consts.CONFIG_RUN_ID][0]
+
+    # Hijacking DVT raw query to query the results the table.
+    # Labels columns should NOT be empty.
+    rows = raw_query_rows(
+        f"SELECT COUNT(*) FROM {table_id} WHERE run_id = '{run_id}' AND array_length(labels, 1) = 2",
+        conn="mock-conn",
     )
     # Ensure that we added the data to the results table.
     assert len(df) == rows[0][0]
@@ -1230,3 +1436,25 @@ def test_raw_column_metadata():
         )
     )
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        POSTGRES_HOST,
+        "--user",
+        "postgres",
+        "--password",
+        POSTGRES_PASSWORD,
+        "--port",
+        str(POSTGRES_PORT),
+        "--database",
+        POSTGRES_DATABASE,
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_POSTGRES, conn_args, tmp_path, monkeypatch
+    )

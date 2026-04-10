@@ -27,11 +27,10 @@ import random
 import nox
 
 # Python version used for linting.
-DEFAULT_PYTHON_VERSION = "3.10"
+DEFAULT_PYTHON_VERSION = "3.11"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11"]
-PYTHON_VERSIONS_ORACLE = ["3.8", "3.9", "3.10"]
+PYTHON_VERSIONS = ["3.10", "3.11"]
 
 BLACK_PATHS = (
     "data_validation",
@@ -41,7 +40,7 @@ BLACK_PATHS = (
     "noxfile.py",
     "setup.py",
 )
-LINT_PACKAGES = ["flake8", "black==22.3.0"]
+LINT_PACKAGES = ["flake8", "black==26.1.0"]
 UNIT_PACKAGES = ["pyfakefs", "freezegun", "teradatasql"]
 
 
@@ -49,7 +48,13 @@ def _setup_session_requirements(session, extra_packages=[]):
     """Install requirements for nox tests."""
 
     session.install(
-        "--upgrade", "pip", "pytest", "pytest-cov", "pytest-timeout", "wheel"
+        "--upgrade",
+        "pip",
+        "pytest",
+        "pytest-cov",
+        "pytest-rerunfailures",
+        "pytest-timeout",
+        "wheel",
     )
     session.install("--no-cache-dir", "-e", ".")
 
@@ -57,7 +62,7 @@ def _setup_session_requirements(session, extra_packages=[]):
         session.install(*extra_packages)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=PYTHON_VERSIONS)
 def unit(session):
     # Install all test dependencies, then install local packages in-place.
     _setup_session_requirements(session, extra_packages=UNIT_PACKAGES)
@@ -82,7 +87,12 @@ def unit_small(session):
     unit(session)
 
 
-@nox.session(python=PYTHON_VERSIONS, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
+def unit_default_python(session):
+    unit(session)
+
+
+@nox.session(python=PYTHON_VERSIONS)
 def samples(session):
     """Run the snippets test suite."""
 
@@ -97,7 +107,7 @@ def samples(session):
     session.run("pytest", "samples", *session.posargs)
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def lint(session):
     """Run linters.
     Returns a failure if the linters find linting errors or sufficiently
@@ -113,7 +123,7 @@ def lint(session):
     session.run("python", "setup.py", "check", "--strict")
 
 
-@nox.session(python=DEFAULT_PYTHON_VERSION, venv_backend="venv")
+@nox.session(python=DEFAULT_PYTHON_VERSION)
 def blacken(session):
     """Run black.
     Format code to uniform standard.
@@ -125,13 +135,11 @@ def blacken(session):
     session.run("black", *BLACK_PATHS)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_mysql(session):
     """Run MySQL integration tests.
     Ensure MySQL validation is running as expected.
     """
-    # Pin a specific version of black, so that the linter doesn't conflict with
-    # contributors.
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_mysql.py"
@@ -143,13 +151,11 @@ def integration_mysql(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_postgres(session):
     """Run Postgres integration tests.
     Ensure Postgres validation is running as expected.
     """
-    # Pin a specific version of black, so that the linter doesn't conflict with
-    # contributors.
     _setup_session_requirements(session, extra_packages=[])
 
     test_path = "tests/system/data_sources/test_postgres.py"
@@ -161,13 +167,11 @@ def integration_postgres(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_sql_server(session):
     """Run SQL Server integration tests.
     Ensure SQL Server validation is running as expected.
     """
-    # Pin a specific version of black, so that the linter doesn't conflict with
-    # contributors.
     _setup_session_requirements(session, extra_packages=["pyodbc"])
 
     test_path = "tests/system/data_sources/test_sql_server.py"
@@ -179,7 +183,7 @@ def integration_sql_server(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_bigquery(session):
     """Run BigQuery integration tests.
     Ensure BigQuery validation is running as expected.
@@ -195,7 +199,7 @@ def integration_bigquery(session):
     session.run("pytest", test_path, env=env_vars, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_spanner(session):
     """Run Spanner integration tests.
     Ensure Spanner validation is running as expected.
@@ -210,7 +214,7 @@ def integration_spanner(session):
     session.run("pytest", "tests/system/data_sources/test_spanner.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_teradata(session):
     """Run Teradata integration tests.
     Ensure Teradata validation is running as expected.
@@ -227,7 +231,7 @@ def integration_teradata(session):
     )
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_state(session):
     """Run StateManager integration tests.
     Ensure the StateManager is running as expected.
@@ -238,12 +242,12 @@ def integration_state(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS_ORACLE), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_oracle(session):
     """Run Oracle integration tests.
     Ensure Oracle validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["cx_Oracle"])
+    _setup_session_requirements(session, extra_packages=["oracledb"])
 
     expected_env_vars = [
         "PROJECT_ID",
@@ -259,7 +263,7 @@ def integration_oracle(session):
     session.run("pytest", "tests/system/data_sources/test_oracle.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_hive(session):
     """Run Hive integration tests.
     Ensure Hive validation is running as expected.
@@ -274,13 +278,15 @@ def integration_hive(session):
     session.run("pytest", "tests/system/data_sources/test_hive.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_snowflake(session):
     """Run Snowflake integration tests.
     Ensure Snowflake validation is running as expected.
     """
+    # TODO Remove pinned version below when working on issue-1592.
     _setup_session_requirements(
-        session, extra_packages=["snowflake-sqlalchemy", "snowflake-connector-python"]
+        session,
+        extra_packages=["snowflake-sqlalchemy==1.7.6", "snowflake-connector-python"],
     )
 
     expected_env_vars = [
@@ -298,12 +304,15 @@ def integration_snowflake(session):
     )
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    _setup_session_requirements(session, extra_packages=["ibm-db-sa"])
+    # TODO Remove dependency "ibm-db<3.2.7" below when working on issue-1591.
+    _setup_session_requirements(
+        session, extra_packages=["ibm-db-sa<0.4.2", "ibm-db<3.2.7"]
+    )
 
     expected_env_vars = [
         "PROJECT_ID",
@@ -317,7 +326,7 @@ def integration_db2(session):
     session.run("pytest", "tests/system/data_sources/test_db2.py", *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_secrets(session):
     """
     Run SecretManager integration tests.
@@ -334,7 +343,7 @@ def integration_secrets(session):
     session.run("pytest", test_path, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_filesystem(session):
     """Run Filesystem integration tests.
     Ensure Filesystem validation is running as expected.
@@ -350,7 +359,7 @@ def integration_filesystem(session):
     session.run("pytest", test_path, env=env_vars, *session.posargs)
 
 
-@nox.session(python=random.choice(PYTHON_VERSIONS), venv_backend="venv")
+@nox.session(python=random.choice(PYTHON_VERSIONS))
 def integration_impala(session):
     """Run Impala integration tests.
     Ensure Impala validation is running as expected.
@@ -363,3 +372,16 @@ def integration_impala(session):
             raise Exception("Expected Env Var: %s" % env_var)
 
     session.run("pytest", "tests/system/data_sources/test_impala.py", *session.posargs)
+
+
+@nox.session(python=random.choice(PYTHON_VERSIONS))
+def integration_sybase(session):
+    """Run Sybase integration tests."""
+    _setup_session_requirements(session, extra_packages=["pyodbc", "sqlalchemy_sybase"])
+
+    expected_env_vars = ["PROJECT_ID", "SYBASE_HOST", "SYBASE_USER", "SYBASE_PASSWORD"]
+    for env_var in expected_env_vars:
+        if not os.environ.get(env_var, ""):
+            raise Exception("Expected Env Var: %s" % env_var)
+
+    session.run("pytest", "tests/system/data_sources/test_sybase.py", *session.posargs)

@@ -15,13 +15,24 @@
 """Output validation report to BigQuery tables"""
 
 import logging
+from typing import Optional
 
-from data_validation import clients, consts, exceptions
+import google.oauth2.service_account
+
+
+from data_validation import clients, consts, exceptions, util
 from data_validation.result_handlers.base_backend import BaseBackendResultHandler
-
 
 BQRH_WRITE_MESSAGE = "Results written to BigQuery"
 BQRH_NO_WRITE_MESSAGE = "No results to write to BigQuery"
+
+
+def credentials_from_key_path(sa_key_path):
+    if not sa_key_path:
+        return None
+    return google.oauth2.service_account.Credentials.from_service_account_file(
+        sa_key_path
+    )
 
 
 class BigQueryResultHandler(BaseBackendResultHandler):
@@ -38,7 +49,7 @@ class BigQueryResultHandler(BaseBackendResultHandler):
     def __init__(
         self,
         bigquery_client,
-        status_list: list = None,
+        status_list: Optional[list] = None,
         table_id: str = "pso_data_validator.results",
         text_format: str = consts.FORMAT_TYPE_TABLE,
     ):
@@ -50,10 +61,10 @@ class BigQueryResultHandler(BaseBackendResultHandler):
     @staticmethod
     def get_handler_for_project(
         project_id,
-        status_list=None,
+        status_list: Optional[list] = None,
         table_id: str = "pso_data_validator.results",
-        credentials=None,
-        api_endpoint: str = None,
+        sa_key_path: Optional[str] = None,
+        api_endpoint: Optional[str] = None,
         text_format: str = consts.FORMAT_TYPE_TABLE,
     ):
         """Return BigQueryResultHandler instance for given project.
@@ -65,11 +76,13 @@ class BigQueryResultHandler(BaseBackendResultHandler):
                 Explicit credentials to use in case default credentials
                 aren't working properly.
             status_list (list): provided status to filter the results with
-            api_endpoint (str): BigQuery API endpoint (e.g. https://mybq.p.googleapis.com)
+            api_endpoint (str): BigQuery API endpoint (e.g. https://bigquery-mypsc.p.googleapis.com)
             text_format (str, optional):
                 This allows the user to influence the text results written via logger.debug.
                 See: https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/871
         """
+
+        credentials = credentials_from_key_path(sa_key_path)
         client = clients.get_google_bigquery_client(
             project_id, credentials=credentials, api_endpoint=api_endpoint
         )
@@ -80,9 +93,38 @@ class BigQueryResultHandler(BaseBackendResultHandler):
             text_format=text_format,
         )
 
-    def execute(self, result_df):
-        result_df = self._filter_by_status_list(result_df)
+    @staticmethod
+    def get_handler_for_connection(
+        connection_config: dict,
+        status_list: Optional[list] = None,
+        table_id: str = "pso_data_validator.results",
+        text_format: str = consts.FORMAT_TYPE_TABLE,
+    ):
+        """Return BigQueryResultHandler instance for given connection config.
 
+        Args:
+            table_id (str): Table ID used for validation results.
+            status_list (list): provided status to filter the results with
+            text_format (str, optional):
+                This allows the user to influence the text results written via logger.debug.
+                See: https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/871
+        """
+        project_id = connection_config[consts.PROJECT_ID]
+        credentials = credentials_from_key_path(
+            connection_config.get(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
+        )
+        api_endpoint = connection_config.get(consts.API_ENDPOINT)
+        client = clients.get_google_bigquery_client(
+            project_id, credentials=credentials, api_endpoint=api_endpoint
+        )
+        return BigQueryResultHandler(
+            client,
+            status_list=status_list,
+            table_id=table_id,
+            text_format=text_format,
+        )
+
+    def _insert_bigquery(self, result_df):
         table = self._bigquery_client.get_table(self._table_id)
         chunk_errors = self._bigquery_client.insert_rows_from_dataframe(
             table, result_df
@@ -114,6 +156,11 @@ class BigQueryResultHandler(BaseBackendResultHandler):
             logging.info(
                 f"{BQRH_WRITE_MESSAGE}, run id: {result_df.iloc[0][consts.CONFIG_RUN_ID]}"
             )
+
+    def execute(self, result_df):
+        result_df = self._filter_by_status_list(result_df)
+
+        util.timed_call("Write results to BigQuery", self._insert_bigquery, result_df)
 
         self._call_text_handler(result_df)
 

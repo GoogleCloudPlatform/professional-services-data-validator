@@ -21,7 +21,6 @@ import pytest
 from data_validation import cli_tools, exceptions, config_manager, consts
 from data_validation import __main__ as main
 
-
 TEST_CONN = '{"source_type":"Example"}'
 CLI_ARGS = {
     "command": "validate",
@@ -52,7 +51,7 @@ CONFIG_RUNNER_ARGS_2 = {
     "command": "configs",
     "validation_config_cmd": "run",
     "kube_completions": True,
-    "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/3validations",
+    "config_dir": "/tmp/test/unit/test__main/3validations",
 }
 CONFIG_RUNNER_ARGS_3 = {
     "verbose": False,
@@ -70,7 +69,7 @@ CONFIG_RUNNER_ARGS_4 = {
     "command": "configs",
     "kube_completions": False,
     "validation_config_cmd": "run",
-    "config_dir": "gs://pso-kokoro-resources/resources/test/unit/test__main/4partitions",
+    "config_dir": "/tmp/test/unit/test__main/4partitions",
 }
 
 CONFIG_RUNNER_EXCEPTION_TEXT = (
@@ -135,6 +134,18 @@ VALIDATE_CONFIG = {
     "config_dir": None,
     "kube_completions": None,
 }
+VALIDATE_SCHEMA_CONFIG = {
+    "verbose": False,
+    "log_level": "INFO",
+    "command": "validate",
+    "validate_cmd": "schema",
+    "dry_run": False,
+    consts.CONFIG_TYPE: consts.SCHEMA_VALIDATION,
+    consts.CONFIG_SOURCE_CONN: TEST_CONN,
+    consts.CONFIG_TARGET_CONN: TEST_CONN,
+    consts.CONFIG_FILE: None,
+    consts.CONFIG_FILE_JSON: None,
+}
 CONNECTION_LIST_ARGS = {
     "verbose": False,
     "log_level": "INFO",
@@ -152,7 +163,9 @@ CONNECTION_ADD_ARGS = {
     consts.PROJECT_ID: "dummy-gcp-project",
     consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH: None,
     "connection_name": "dummy-bq-connection",
-    "api_endpoint": None,
+    consts.API_ENDPOINT: None,
+    consts.STORAGE_API_ENDPOINT: None,
+    consts.CLIENT_PROJECT_ID: None,
 }
 CONNECTION_DESCRIBE_ARGS = {
     "verbose": False,
@@ -180,7 +193,8 @@ BROKEN_CONNECTION_CONFIG_INCORRECT_COMMAND = {
     consts.PROJECT_ID: "dummy-gcp-project",
     consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH: None,
     "connection_name": "dummy-bq-connection",
-    "api_endpoint": None,
+    consts.API_ENDPOINT: None,
+    consts.CLIENT_PROJECT_ID: None,
 }  # same as CONNECTION_ADD_ARGS but with the command item replaced
 FIND_TABLES_ARGS = {
     "verbose": False,
@@ -266,10 +280,14 @@ def test_config_runner_1(mock_args, mock_build, mock_run, caplog):
     return_value=["config dict from one file"],
 )
 @mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["first.yaml", "second.yaml", "third.yaml"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_2),
 )
-def test_config_runner_2(mock_args, mock_build, mock_run, caplog):
+def test_config_runner_2(mock_args, mock_list, mock_build, mock_run, caplog):
     """Second test - run validation on a directory - and provide the -kc argument,
     but not running in a Kubernetes Completion Configuration. Expected result
     1. Multiple (3) config manager created for validation
@@ -322,10 +340,14 @@ def test_config_runner_3(mock_args, mock_build, mock_run, caplog):
     return_value=["config dict from one file"],
 )
 @mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["0000.yaml", "0001.yaml", "0002.yaml", "0003.yaml"],
+)
+@mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_4),
 )
-def test_config_runner_4(mock_args, mock_build, mock_run, caplog):
+def test_config_runner_4(mock_args, mock_list, mock_build, mock_run, caplog):
     """Third test - run validation on a directory with failures in one validation,
         Running in a non Kube completions environment. Expected Result:
     1. All 4 files are validated, even though one of them raises an exception.
@@ -521,12 +543,35 @@ def test_successful_find_tables_with_mock(mock_args, mock_run):
     main.main()
 
 
-@mock.patch("data_validation.app.app.run")
+@mock.patch("data_validation.__main__.run_validation")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_args",
+    return_value=[
+        config_manager.ConfigManager(
+            VALIDATE_SCHEMA_CONFIG,
+            MockIbisClient(),
+            MockIbisClient(),
+            verbose=False,
+        )
+    ],
+)
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**DEPLOY_ARGS),
+    return_value=argparse.Namespace(**VALIDATE_SCHEMA_CONFIG),
 )
-def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
+def test_successful_schema_validation_with_mocked_run_validation(
+    mock_args, mock_build, mock_run
+):
+    """Test schema validation with mocked dependencies."""
+    main.main()
+
+
+@mock.patch("data_validation.clients.get_data_client")
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**QUERY_CONFIG),
+)
+def test_successful_query_with_mocked_get_data_client(mock_args, mock_get_data_client):
     main.main()
 
 
@@ -552,10 +597,10 @@ def test_successful_generate_partitions_with_mocked_partition_builder(
     main.main()
 
 
-@mock.patch("data_validation.clients.get_data_client")
+@mock.patch("data_validation.app.app.run")
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
-    return_value=argparse.Namespace(**QUERY_CONFIG),
+    return_value=argparse.Namespace(**DEPLOY_ARGS),
 )
-def test_successful_query_with_mocked_get_data_client(mock_args, mock_run):
+def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
     main.main()

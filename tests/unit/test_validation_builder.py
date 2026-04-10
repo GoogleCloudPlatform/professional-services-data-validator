@@ -20,7 +20,6 @@ import pytest
 from data_validation import consts
 from data_validation.config_manager import ConfigManager
 
-
 COLUMN_VALIDATION_CONFIG = {
     # BigQuery Specific Connection Config
     "source_conn": None,
@@ -90,7 +89,7 @@ CALCULATED_MULTIPLE_TEST = [
             "start_station_name",
             "end_station_name",
         ],
-        consts.CONFIG_TYPE: "concat",
+        consts.CONFIG_TYPE: consts.CALC_FIELD_CONCAT,
     },
     {
         consts.CONFIG_FIELD_ALIAS: "concat_calcs",
@@ -104,32 +103,32 @@ CALCULATED_MULTIPLE_TEST = [
             "rstrip_start_station_name",
             "upper_start_station_name",
         ],
-        consts.CONFIG_TYPE: "concat",
+        consts.CONFIG_TYPE: consts.CALC_FIELD_CONCAT,
         "depth": 1,
     },
     {
         consts.CONFIG_FIELD_ALIAS: "ifnull_start_station_name",
         consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
         consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-        consts.CONFIG_TYPE: "ifnull",
+        consts.CONFIG_TYPE: consts.CALC_FIELD_IFNULL,
     },
     {
         consts.CONFIG_FIELD_ALIAS: "length_start_station_name",
         consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
         consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-        consts.CONFIG_TYPE: "length",
+        consts.CONFIG_TYPE: consts.CALC_FIELD_LENGTH,
     },
     {
         consts.CONFIG_FIELD_ALIAS: "rstrip_start_station_name",
         consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
         consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-        consts.CONFIG_TYPE: "rstrip",
+        consts.CONFIG_TYPE: consts.CALC_FIELD_RSTRIP,
     },
     {
         consts.CONFIG_FIELD_ALIAS: "upper_start_station_name",
         consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_station_name"],
         consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_station_name"],
-        consts.CONFIG_TYPE: "upper",
+        consts.CONFIG_TYPE: consts.CALC_FIELD_UPPER,
     },
 ]
 
@@ -185,6 +184,38 @@ def test_validation_add_groups(module_under_test):
     builder.add_config_query_groups()
 
     assert list(builder.get_group_aliases()) == ["start_alias"]
+
+
+def test_custom_query_validation_add_groups(module_under_test):
+    mock_config_manager = ConfigManager(
+        CUSTOM_QUERY_VALIDATION_CONFIG,
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+
+    custom_query_groups = [
+        {
+            consts.CONFIG_FIELD_ALIAS: "col1",
+            consts.CONFIG_SOURCE_COLUMN: "col1",
+            consts.CONFIG_TARGET_COLUMN: "col1",
+            consts.CONFIG_CAST: None,
+        },
+        {
+            consts.CONFIG_FIELD_ALIAS: "col2",
+            consts.CONFIG_SOURCE_COLUMN: "col2",
+            consts.CONFIG_TARGET_COLUMN: "col2",
+            consts.CONFIG_CAST: None,
+        },
+    ]
+
+    builder = module_under_test.ValidationBuilder(mock_config_manager)
+    mock_config_manager.append_query_groups(custom_query_groups)
+    builder.add_config_query_groups()
+
+    assert list(builder.get_group_aliases()) == ["col1", "col2"]
+    assert builder.get_grouped_alias_source_column("col1") == "col1"
+    assert builder.get_grouped_alias_target_column("col2") == "col2"
 
 
 def test_column_validation_calculate(module_under_test):

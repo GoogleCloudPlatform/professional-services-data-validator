@@ -21,11 +21,14 @@ import pathlib
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
+    connections_add_test,
     custom_query_validation_test,
     find_tables_test,
     id_column_row_validation_test,
+    id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     partition_table_test,
@@ -127,28 +130,28 @@ TERADATA_ROW_CONFIG = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["cast__calendar_date"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["cast__calendar_date"],
             consts.CONFIG_FIELD_ALIAS: "ifnull__cast__calendar_date",
-            consts.CONFIG_TYPE: "ifnull",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_IFNULL,
             consts.CONFIG_DEPTH: 1,
         },
         {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["cast__day_of_week"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["cast__day_of_week"],
             consts.CONFIG_FIELD_ALIAS: "ifnull__cast__day_of_week",
-            consts.CONFIG_TYPE: "ifnull",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_IFNULL,
             consts.CONFIG_DEPTH: 1,
         },
         {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["ifnull__cast__calendar_date"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["ifnull__cast__calendar_date"],
             consts.CONFIG_FIELD_ALIAS: "rstrip__ifnull__cast__calendar_date",
-            consts.CONFIG_TYPE: "rstrip",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_RSTRIP,
             consts.CONFIG_DEPTH: 2,
         },
         {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["ifnull__cast__day_of_week"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["ifnull__cast__day_of_week"],
             consts.CONFIG_FIELD_ALIAS: "rstrip__ifnull__cast__day_of_week",
-            consts.CONFIG_TYPE: "rstrip",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_RSTRIP,
             consts.CONFIG_DEPTH: 2,
         },
         {
@@ -159,7 +162,7 @@ TERADATA_ROW_CONFIG = {
                 "rstrip__ifnull__cast__calendar_date"
             ],
             consts.CONFIG_FIELD_ALIAS: "upper__rstrip__ifnull__cast__calendar_date",
-            consts.CONFIG_TYPE: "upper",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_UPPER,
             consts.CONFIG_DEPTH: 3,
         },
         {
@@ -170,7 +173,7 @@ TERADATA_ROW_CONFIG = {
                 "rstrip__ifnull__cast__day_of_week"
             ],
             consts.CONFIG_FIELD_ALIAS: "upper__rstrip__ifnull__cast__day_of_week",
-            consts.CONFIG_TYPE: "upper",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_UPPER,
             consts.CONFIG_DEPTH: 3,
         },
         {
@@ -183,7 +186,7 @@ TERADATA_ROW_CONFIG = {
                 "upper__rstrip__ifnull__cast__day_of_week",
             ],
             consts.CONFIG_FIELD_ALIAS: "concat__all",
-            consts.CONFIG_TYPE: "concat",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_CONCAT,
             consts.CONFIG_DEPTH: 4,
         },
     ],
@@ -311,6 +314,8 @@ def test_column_validation_core_types():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
     )
 
 
@@ -320,6 +325,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """Teradata to BigQuery dvt_core_types column validation"""
+    # TODO Remove col_tstz from exclusion list below when issue-916 is complete.
     cols = ",".join(
         [
             _
@@ -332,13 +338,29 @@ def test_column_validation_core_types_to_bigquery():
             )
         ]
     )
+    # Excluded col_float64 from std_cols due to STDDEV_SAMP inconsistent results. See issue-1540.
+    # Teradata stddev_samp returns REAL. This is incompatible with stddev_samp from other engines
+    # when the inputs have precision > float64 therefore excluded col_dec_20/38 from std_cols.
+    std_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _
+            not in (
+                "col_float64",
+                "col_dec_20",
+                "col_dec_38",
+            )
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="udf.dvt_core_types=pso_data_validator.dvt_core_types",
-        # TODO Change --sum/min/max to '*' when issue-916 is complete (support for col_tstz)
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=std_cols,
     )
 
 
@@ -364,12 +386,16 @@ def test_column_validation_large_decimals_to_bigquery():
     """Teradata to BigQuery dvt_large_decimals column validation."""
     # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
     cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
+    # Teradata stddev_samp returns REAL. This is incompatible with stddev_samp
+    # from other engines when the inputs have precision > float64. Therefore
+    # we have excluded std_cols from the test below.
     column_validation_test(
         tables="udf.dvt_large_decimals=pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         count_cols=cols,
         min_cols=cols,
         sum_cols=cols,
+        avg_cols=cols,
     )
 
 
@@ -425,7 +451,7 @@ def test_column_validation_tricky_dates_to_bigquery():
     # Excluded col_ts_high below because I'm unable to correctly insert desired literal.
     #   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
     """
-    cols = "col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch"
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_ts_high")
     column_validation_test(
         tc="bq-conn",
         tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
@@ -479,26 +505,26 @@ def test_row_validation_core_types_auto_pks():
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) )',
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" < 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0))))))))) AND ((\"course_id\" < 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0))))))))) AND ((\"course_id\" < 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0))))))))) AND ((\"course_id\" < 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0)))))))))",
     ],
     [
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG001\' ) OR ( ( "course_id" = \'ALG001\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 4.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG002\' ) OR ( ( "course_id" = \'ALG002\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-26T16:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-26T16:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 4.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG003\' ) OR ( ( "course_id" = \'ALG003\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" < 3.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 1234 ) OR ( ( "quarter_id" = 1234 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'1969-07-20\' ) OR ( ( "registration_date" = \'1969-07-20\' ) AND ( "grade" >= 3.0 ) ) ) ) ) ) ) ) ) AND ( ( "course_id" < \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" < 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" < \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" < \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" < 2.0 ) ) ) ) ) ) ) ) )',
-        ' ( course_id LIKE \'ALG%\' ) AND ( ( "course_id" > \'ALG004\' ) OR ( ( "course_id" = \'ALG004\' ) AND ( ( "quarter_id" > 5678 ) OR ( ( "quarter_id" = 5678 ) AND ( ( "recd_timestamp" > \'2023-08-27T15:00:00\' ) OR ( ( "recd_timestamp" = \'2023-08-27T15:00:00\' ) AND ( ( "registration_date" > \'2023-08-23\' ) OR ( ( "registration_date" = \'2023-08-23\' ) AND ( "grade" >= 2.0 ) ) ) ) ) ) ) ) )',
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" < 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Edward''s') OR ((\"course_id\" = 'St. Edward''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" < '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" < 1)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. John''s') OR ((\"course_id\" = 'St. John''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-26T16:00:00') OR ((\"recd_timestamp\" = '2023-08-26T16:00:00') AND ((\"registration_date\" > '2023-08-23') OR ((\"registration_date\" = '2023-08-23') AND (\"approved\" >= 1))))))))) AND ((\"course_id\" < 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0))))))))) AND ((\"course_id\" < 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Jude''s') OR ((\"course_id\" = 'St. Jude''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0))))))))) AND ((\"course_id\" < 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" < 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" > 1234) OR ((\"quarter_id\" = 1234) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0))))))))) AND ((\"course_id\" < 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" < 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" < '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" < '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" < 0)))))))))",
+        "(course_id LIKE 'St. %''s') AND ((\"course_id\" > 'St. Paul''s') OR ((\"course_id\" = 'St. Paul''s') AND ((\"quarter_id\" > 5678) OR ((\"quarter_id\" = 5678) AND ((\"recd_timestamp\" > '2023-08-27T15:00:00') OR ((\"recd_timestamp\" = '2023-08-27T15:00:00') AND ((\"registration_date\" > '1969-07-20') OR ((\"registration_date\" = '1969-07-20') AND (\"approved\" >= 0)))))))))",
     ],
 ]
 
@@ -508,19 +534,17 @@ EXPECTED_PARTITION_FILTER = [
     new=mock_get_connection_config,
 )
 def test_generate_partitions(tmp_path: pathlib.Path):
-    """Test generate partitions, first on table, then custom query on Teradata"""
+    """Test generate partitions, first on table, then custom query on Teradata."""
     partition_table_test(
         EXPECTED_PARTITION_FILTER,
-        tables="udf.test_generate_partitions",
-        pk="course_id,quarter_id,recd_timestamp,registration_date,grade",
-        filters="course_id LIKE 'ALG%'",
+        tables="udf.test_generate_partitions_v2",
+        filters="course_id LIKE 'St. %''s'",
     )
     partition_query_test(
         EXPECTED_PARTITION_FILTER,
         tmp_path,
-        tables="udf.test_generate_partitions",
-        pk="course_id,quarter_id,recd_timestamp,registration_date,grade",
-        filters="course_id LIKE 'ALG%'",
+        tables="udf.test_generate_partitions_v2",
+        filters="course_id LIKE 'St. %''s'",
     )
 
 
@@ -604,10 +628,13 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_string_pk_to_bigquery():
-    """Test string primary key join columns"""
-    id_column_row_validation_test(
-        "udf.dvt_string_id=pso_data_validator.dvt_string_id",
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="udf.dvt_binary=pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
     )
 
 
@@ -615,13 +642,43 @@ def test_row_validation_string_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Test padded char primary key join columns"""
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
     id_column_row_validation_test(
-        "udf.dvt_char_id=pso_data_validator.dvt_char_id",
-        use_randow_row=False,
-        # We need to trim padded string PKs due to a Teradata client "quirk".
-        trim_string_pks=True,
+        "udf.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test(
+        "udf.dvt_varchar_id=pso_data_validator.dvt_varchar_id"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test(
+        "udf.dvt_fixed_char_id=pso_data_validator.dvt_fixed_char_id"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test(
+        "udf.dvt_varchar_id=pso_data_validator.dvt_varchar_id"
     )
 
 
@@ -631,10 +688,10 @@ def test_row_validation_char_pk_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "udf.dvt_datetime_id=pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 
@@ -884,10 +941,30 @@ def test_row_validation_tricky_dates_to_bigquery():
     Excluded col_ts_high below because I'm unable to correctly insert desired literal.
       https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
     """
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_ts_high")
     row_validation_test(
         tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="col_dt_low,col_dt_epoch,col_dt_high,col_ts_low,col_ts_epoch",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """
+    Test with date values that are at the extremes, e.g. 9999-12-31.
+
+    Excluded col_ts_high below because I'm unable to correctly insert desired literal.
+      https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
+    """
+    cols = ",".join(_ for _ in DVT_TRICKY_DATES_COLUMNS if _ != "col_ts_high")
+    row_validation_test(
+        tables="udf.dvt_tricky_dates=pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -934,6 +1011,49 @@ def test_row_validation_comp_fields_bool_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_intervals():
+    """Test schema validation on a table with columns of type INTERVAL."""
+    schema_validation_test(
+        tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_intervals():
+    """Test column validation on a table with columns of type INTERVAL."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
+        count_cols="col_interval_ds,col_interval_ym",
+        sum_cols="col_interval_ds,col_interval_ym",
+        min_cols="col_interval_ds,col_interval_ym",
+        max_cols="col_interval_ds,col_interval_ym",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_intervals():
+    """Test row validation on a table with columns of type INTERVAL."""
+    pytest.skip("Skipping test_row_validation_intervals due to issue-1214.")
+    row_validation_test(
+        tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+        hash="col_interval_ds,col_interval_ym",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="udf.dvt_core_types")
@@ -946,3 +1066,26 @@ def test_raw_column_metadata():
     client = clients.get_data_client(CONN)
     raw_types = list(client.raw_column_metadata(database="udf", table="dvt_core_types"))
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        TERADATA_HOST,
+        "--user-name",
+        TERADATA_USER,
+        "--password",
+        TERADATA_PASSWORD,
+        "--port",
+        "1025",
+        # connect_timeout is a harmless setting we can use to exercise --json-params.
+        "--json-params",
+        '{ "connect_timeout": "1000" }',
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_TERADATA, conn_args, tmp_path, monkeypatch
+    )

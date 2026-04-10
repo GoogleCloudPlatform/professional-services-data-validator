@@ -12,11 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Iterable, Optional
+import functools
+import inspect
+
+from ibis.backends.base.sql.alchemy.datatypes import to_sqla_type
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
-import parsy
-
 from ibis.expr.types.generic import Value
+import parsy
+import sqlalchemy as sa
 
 from data_validation import consts
 
@@ -116,4 +121,122 @@ def force_cast(self, target_type: str) -> Value:
     return op.to_expr()
 
 
+def dvt_handle_failed_column_type_inference(
+    self, table: sa.Table, nulltype_cols: Iterable[str]
+) -> sa.Table:
+    """Handle cases where SQLAlchemy cannot infer the column types of `table`.
+
+    This DVT duplication of Ibis code is so we can prefix the table name with
+    a schema name when required. To minimize risk we've not done this globally,
+    this function is imported by specific Backends as and when needed."""
+
+    self.inspector.reflect_table(table, table.columns)
+    dialect = self.con.dialect
+    quoted_name = dialect.identifier_preparer.quote(table.name)
+    # Start of custom DVT code
+    if table.schema:
+        quoted_schema = dialect.identifier_preparer.quote(table.schema)
+        quoted_name = quoted_schema + "." + quoted_name
+    # End of custom DVT code
+
+    for colname, type in self._metadata(quoted_name):
+        if colname.lower() in nulltype_cols:
+            # replace null types discovered by sqlalchemy with non null
+            # types
+            table.append_column(
+                sa.Column(
+                    colname.lower(),
+                    to_sqla_type(dialect, type),
+                    nullable=type.nullable,
+                    quote=self.compiler.translator_class._quote_column_names,
+                ),
+                replace_existing=True,
+            )
+    return table
+
+
+def db2_type_string_length(
+    ibis_column: dt.DataType, raw_data_type: list
+) -> Optional[int]:
+    """Returns minimum length of the column after case to string."""
+    if ibis_column.is_string() and raw_data_type:
+        # Position 1 in raw_types is the data length.
+        return raw_data_type[1]
+    elif ibis_column.is_decimal():
+        # Position 2 in raw_types is the precision.
+        return raw_data_type[2] if raw_data_type else 38
+    elif ibis_column.is_time():
+        # Time when converted to string will be at least 8 characters (HH:MI:SS).
+        return 8
+    elif ibis_column.is_date():
+        # Date when converted to string will be at least 10 characters (YYYY-MM-DD).
+        return 10
+    elif ibis_column.is_timestamp():
+        # Timestamp when converted to string will be at least 19 characters (YYYY-MM-DD HH:MI:SS).
+        return 19
+    elif ibis_column.is_integer():
+        return ibis_integer_string_length(ibis_column)
+    elif ibis_column.is_binary() and raw_data_type:
+        # Position 1 in raw_types is the data length.
+        return raw_data_type[1]
+    else:
+        return None
+
+
+def ibis_integer_string_length(ibis_column: dt.DataType) -> Optional[int]:
+    """Return the maximum string length of an integer column, including minus sign."""
+    if ibis_column.is_integer():
+        if isinstance(ibis_column, dt.Int64):
+            return 20
+        elif isinstance(ibis_column, dt.Int32):
+            return 11
+        elif isinstance(ibis_column, dt.Int16):
+            return 6
+        elif isinstance(ibis_column, dt.Int8):
+            return 4
+        # Safe catch all length.
+        return 38
+    else:
+        return None
+
+
 Value.force_cast = force_cast
+
+
+def cache_generator_results(func):
+    """Decorator to cache generator results at the instance level."""
+    # Pre-compute the function signature to avoid doing this on every call
+    sig = inspect.signature(func)
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # Create an instance-level cache if it doesn't already exist.
+        # This prevents instances from sharing cache state and avoids memory leaks.
+        if not hasattr(self, "_generator_cache"):
+            self._generator_cache = {}
+
+        # Bind the provided args and kwargs to the function's signature.
+        # This creates a unified representation of the arguments, avoiding cache misses
+        # when identical values are passed differently (e.g., positional vs. keyword).
+        bound_args = sig.bind(self, *args, **kwargs)
+        bound_args.apply_defaults()
+
+        # Remove 'self' from the arguments since the cache is already scoped to the instance
+        arguments = bound_args.arguments.copy()
+        arguments.pop("self", None)
+
+        # Ensure only supported types are used to prevent frozenset failures on unhashable types
+        for v in arguments.values():
+            assert isinstance(
+                v, (str, int, type(None))
+            ), f"Unsupported argument type in cache_generator_results: {type(v)}"
+
+        # Generate a unique cache key based on the function name and the canonical arguments
+        key = (func.__name__, frozenset(arguments.items()))
+        if key not in self._generator_cache:
+            # Fully evaluate the generator to a list to store it in the cache
+            self._generator_cache[key] = list(func(self, *args, **kwargs))
+
+        yield from self._generator_cache[key]
+
+    return wrapper

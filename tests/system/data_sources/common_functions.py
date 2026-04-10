@@ -13,9 +13,14 @@
 # limitations under the License.
 
 import json
+import logging
+import os
+import random
 import string
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Tuple
 import pathlib
+
+import pytest
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -23,9 +28,10 @@ from data_validation import (
     consts,
     data_validation,
     find_tables,
+    gcs_helper,
     raw_query,
+    state_manager,
 )
-
 from data_validation.partition_builder import PartitionBuilder
 
 if TYPE_CHECKING:
@@ -51,6 +57,25 @@ DVT_CORE_TYPES_COLUMNS = [
     "col_datetime",
     "col_tstz",
 ]
+
+DVT_TRICKY_DATES_COLUMNS = [
+    "id",
+    "col_dt_low",
+    "col_dt_epoch",
+    "col_dt_high",
+    "col_dt_4712",
+    "col_ts_low",
+    "col_ts_epoch",
+    "col_ts_high",
+    "col_ts_4712",
+]
+
+
+def get_random_string(length=5):
+    """Returns random string
+    Args:
+        length (int): Desired length of random string"""
+    return "".join(random.choice(string.ascii_lowercase) for i in range(length))
 
 
 def id_type_test_assertions(df, expected_rows=5):
@@ -132,45 +157,81 @@ def row_validation_many_columns_test(
     concat_arg: str = "hash",
     expected_config_managers: int = 1,
     target_conn: str = "mock-conn",
+    columns: str = "*",
+    exclude_columns: bool = None,
 ):
     """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
     parser = cli_tools.configure_arg_parser()
     schema_prefix = f"{schema}." if schema else ""
     if validation_type == "row":
-        args = parser.parse_args(
-            [
-                "validate",
-                "row",
-                "-sc=mock-conn",
-                f"-tc={target_conn}",
-                f"-tbls={schema_prefix}{table}",
-                "--primary-keys=id",
-                f"--{concat_arg}=*",
-                "--filter-status=fail",
-            ]
-        )
+        cli_arg_list = [
+            "validate",
+            "row",
+            "-sc=mock-conn",
+            f"-tc={target_conn}",
+            f"-tbls={schema_prefix}{table}",
+            "--primary-keys=id",
+            f"--{concat_arg}={columns}",
+            "--filter-status=fail",
+            "--exclude-columns" if exclude_columns else None,
+        ]
     else:
         query = f"SELECT * FROM {schema_prefix}{table}"
-        args = parser.parse_args(
-            [
-                "validate",
-                "custom-query",
-                "row",
-                "-sc=mock-conn",
-                "-tc=mock-conn",
-                f"--source-query={query}",
-                f"--target-query={query}",
-                "--primary-keys=id",
-                f"--{concat_arg}=*",
-                "--filter-status=fail",
-            ]
-        )
+        cli_arg_list = [
+            "validate",
+            "custom-query",
+            "row",
+            "-sc=mock-conn",
+            "-tc=mock-conn",
+            f"--source-query={query}",
+            f"--target-query={query}",
+            "--primary-keys=id",
+            f"--{concat_arg}={columns}",
+            "--filter-status=fail",
+            "--exclude-columns" if exclude_columns else None,
+        ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
     # We expect the validation to be split into multiple config managers.
     for df in run_tests_from_cli_args(
         args, expected_config_managers=expected_config_managers
     ):
         # With filter on failures the data frame should be empty.
         assert len(df) == 0
+
+
+def exclude_columns_test(
+    capsys,
+    tables="pso_data_validator.dvt_core_types",
+    tc="mock-conn",
+    validation_type: str = "row",
+    column_arg: str = "hash",
+    columns: str = "col_string,col_float64",
+    expected_column: str = "col_float32",
+):
+    """Runs a dvt_many_cols validation (standard or custom-query) based on input parameters and tests results."""
+    parser = cli_tools.configure_arg_parser()
+    cli_arg_list = [
+        "validate",
+        validation_type,
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        "--primary-keys=id" if validation_type == "row" else None,
+        f"--{column_arg}={columns}",
+        "--filter-status=fail",
+        "--exclude-columns",
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    config_managers = main.build_config_managers_from_args(args)
+    main.run_validation(config_managers[0], dry_run=True)
+    out, err = capsys.readouterr()
+    assert err == ""
+    dry_run = json.loads(out)
+    for col in columns.lower().split(","):
+        assert col not in dry_run["source_query"].lower()
+    assert expected_column.lower() in dry_run["source_query"].lower()
 
 
 def find_tables_assertions(
@@ -245,9 +306,10 @@ def schema_validation_test(
     tc: str = "bq-conn",
     filter_status: str = "fail",
     exclusion_columns: str = "id",
-    allow_list: str = None,
-    allow_list_file: str = None,
-    result_handler: str = None,
+    allow_list: Optional[str] = None,
+    allow_list_file: Optional[str] = None,
+    result_handler: Optional[str] = None,
+    labels: Optional[str] = None,
 ) -> "DataFrame":
     """Generic schema validation test.
 
@@ -265,6 +327,7 @@ def schema_validation_test(
         f"--allow-list={allow_list}" if allow_list else None,
         f"--allow-list-file={allow_list_file}" if allow_list_file else None,
         f"--result-handler={result_handler}" if result_handler else None,
+        f"--labels={labels}" if labels else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
@@ -278,15 +341,19 @@ def schema_validation_test(
 def column_validation_test_args(
     tables: str = "pso_data_validator.dvt_core_types",
     tc: str = "bq-conn",
-    count_cols: str = None,
-    sum_cols: str = None,
-    min_cols: str = None,
-    max_cols: str = None,
-    filters: str = None,
-    grouped_columns: str = None,
+    count_cols: Optional[str] = None,
+    sum_cols: Optional[str] = None,
+    min_cols: Optional[str] = None,
+    max_cols: Optional[str] = None,
+    avg_cols: Optional[str] = None,
+    std_cols: Optional[str] = None,
+    filters: Optional[str] = None,
+    grouped_columns: Optional[str] = None,
     filter_status: str = "fail",
+    wildcard_include_string: bool = False,
     wildcard_include_timestamp: bool = False,
-    result_handler: str = None,
+    result_handler: Optional[str] = None,
+    cast_to_bigint: Optional[bool] = False,
 ):
     parser = cli_tools.configure_arg_parser()
     cli_arg_list = [
@@ -300,10 +367,14 @@ def column_validation_test_args(
         f"--sum={sum_cols}" if sum_cols else None,
         f"--min={min_cols}" if min_cols else None,
         f"--max={max_cols}" if max_cols else None,
+        f"--avg={avg_cols}" if avg_cols else None,
+        f"--std={std_cols}" if std_cols else None,
         f"--filters={filters}" if filters else None,
         f"--grouped-columns={grouped_columns}" if grouped_columns else None,
+        "--wildcard-include-string" if wildcard_include_string else None,
         "--wildcard-include-timestamp" if wildcard_include_timestamp else None,
         f"--result-handler={result_handler}" if result_handler else None,
+        "--cast-to-bigint" if cast_to_bigint else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     return parser.parse_args(cli_arg_list)
@@ -312,16 +383,20 @@ def column_validation_test_args(
 def column_validation_test(
     tables="pso_data_validator.dvt_core_types",
     tc="bq-conn",
-    count_cols=None,
-    sum_cols=None,
-    min_cols=None,
-    max_cols=None,
+    count_cols: Optional[str] = None,
+    sum_cols: Optional[str] = None,
+    min_cols: Optional[str] = None,
+    max_cols: Optional[str] = None,
+    avg_cols: Optional[str] = None,
+    std_cols: Optional[str] = None,
     filters=None,
-    grouped_columns=None,
+    grouped_columns: Optional[str] = None,
+    wildcard_include_string: bool = False,
     wildcard_include_timestamp: bool = False,
-    filter_status: str = "fail",
+    filter_status: Optional[str] = "fail",
     expected_rows=0,
-    result_handler: str = None,
+    result_handler: Optional[str] = None,
+    cast_to_bigint: Optional[bool] = False,
 ):
     """Generic column validation test.
 
@@ -334,14 +409,20 @@ def column_validation_test(
         sum_cols=sum_cols,
         min_cols=min_cols,
         max_cols=max_cols,
+        avg_cols=avg_cols,
+        std_cols=std_cols,
         filters=filters,
         grouped_columns=grouped_columns,
+        wildcard_include_string=wildcard_include_string,
         wildcard_include_timestamp=wildcard_include_timestamp,
         filter_status=filter_status,
         result_handler=result_handler,
+        cast_to_bigint=cast_to_bigint,
     )
     df = run_test_from_cli_args(args)
-    assert len(df) == expected_rows
+    assert (
+        len(df) == expected_rows
+    ), f"len(df) != expected_rows: {len(df)} != {expected_rows}"
     return df
 
 
@@ -374,12 +455,12 @@ def row_validation_test(
     hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
     filters="1=1",
     filter_status: str = "fail",
-    primary_keys="id",
-    comp_fields=None,
-    concat=None,
-    use_randow_row=False,
+    primary_keys: Optional[str] = "id",
+    comp_fields: Optional[str] = None,
+    concat: Optional[str] = None,
+    use_random_row=False,
     random_row_batch_size=None,
-    result_handler: str = None,
+    result_handler: Optional[str] = None,
 ):
     """Generic row validation test. All row validation tests expect an empty dataframe as the assertion"""
     parser = cli_tools.configure_arg_parser()
@@ -399,7 +480,7 @@ def row_validation_test(
         f"--primary-keys={primary_keys}" if primary_keys else None,
         col_option,
         f"--filter-status={filter_status}" if filter_status else None,
-        "--use-random-row" if use_randow_row else None,
+        "--use-random-row" if use_random_row else None,
         (
             f"--random-row-batch-size={random_row_batch_size}"
             if random_row_batch_size
@@ -420,14 +501,16 @@ def id_column_row_validation_test(
     tables: str,
     tc: str = "bq-conn",
     hash: str = "id,other_data",
-    comp_fields: str = None,
-    use_randow_row: bool = True,
-    trim_string_pks: bool = False,
+    comp_fields: Optional[str] = None,
+    concat: Optional[str] = None,
+    use_random_row: bool = True,
 ):
     """Specific row validation test for primary key data type tests"""
     parser = cli_tools.configure_arg_parser()
     if comp_fields:
         col_option = f"--comparison-fields={comp_fields}"
+    elif concat:
+        col_option = f"--concat={concat}"
     else:
         col_option = f"--hash={hash}"
     cli_arg_list = [
@@ -438,9 +521,8 @@ def id_column_row_validation_test(
         f"-tbls={tables}",
         "--primary-keys=id",
         col_option,
-        "--use-random-row" if use_randow_row else None,
-        "--random-row-batch-size=5" if use_randow_row else None,
-        "--trim-string-pks" if trim_string_pks else None,
+        "--use-random-row" if use_random_row else None,
+        "--random-row-batch-size=5" if use_random_row else None,
     ]
     cli_arg_list = [_ for _ in cli_arg_list if _]
     args = parser.parse_args(cli_arg_list)
@@ -448,10 +530,60 @@ def id_column_row_validation_test(
     id_type_test_assertions(df)
 
 
+def id_column_query_row_validation_test(
+    tables: str,
+    tc: str = "bq-conn",
+    hash: str = "id,other_data",
+    comp_fields: Optional[str] = None,
+):
+    """Specific custom query row validation test for primary key data type tests"""
+    parser = cli_tools.configure_arg_parser()
+    if comp_fields:
+        col_option = f"--comparison-fields={comp_fields}"
+    else:
+        col_option = f"--hash={hash}"
+    cli_arg_list = [
+        "validate",
+        "custom-query",
+        "row",
+        "-sc=mock-conn",
+        f"-tc={tc}",
+        f"-sq=SELECT * FROM {tables.split('=')[0]}",
+        f"-tq=SELECT * FROM {tables.split('=')[1] if '=' in tables else tables.split('=')[0]}",
+        "--primary-keys=id",
+        col_option,
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    df = run_test_from_cli_args(args)
+    id_type_test_assertions(df)
+
+
+def fixed_char_varchar_test(
+    tables: Tuple[str, str] = (
+        "pso_data_validator.dvt_fixed_char_id",
+        "pso_data_validator.dvt_varchar_id",
+    ),
+):
+    """Row validation test for fixed and variable length character types as primary keys"""
+    id_column_row_validation_test(
+        tables[0],
+    )
+    id_column_row_validation_test(
+        tables[1],
+    )
+    id_column_query_row_validation_test(
+        tables[0],
+    )
+    id_column_query_row_validation_test(
+        tables[1],
+    )
+
+
 def partition_table_test(
     expected_filter: str,
-    pk="course_id,quarter_id,student_id",
-    tables="pso_data_validator.test_generate_partitions",
+    pk="course_id,quarter_id,recd_timestamp,registration_date,approved",
+    tables="pso_data_validator.test_generate_partitions_v2",
     filters="quarter_id != 1111",
     partition_num=9,
     parts_per_file=5,
@@ -491,8 +623,8 @@ def partition_table_test(
 def partition_query_test(
     expected_filter: str,
     tmp_path: pathlib.Path,
-    pk="course_id,quarter_id,student_id",
-    tables="pso_data_validator.test_generate_partitions",
+    pk="course_id,quarter_id,recd_timestamp,registration_date,approved",
+    tables="pso_data_validator.test_generate_partitions_v2",
     filters="quarter_id != 1111",
 ):
     """Test generate table partitions for custom queries. Usually only the partition_filter is different
@@ -536,12 +668,64 @@ def partition_query_test(
     assert partition_filters[0] == expected_filter
 
 
+def generate_and_run_table_partitions_test(
+    config_path: pathlib.Path,
+    sc="bq-conn",
+    tc="bq-conn",
+    tables="pso_data_validator.test_generate_partitions_v2",
+    pk="course_id,quarter_id,recd_timestamp,registration_date,approved",
+    hash: str = "*",
+    concat: Optional[str] = None,
+    partition_num: int = 2,
+):
+    # cdir = f"/tmp/yaml/{get_random_string()}"
+    # Generate partition configs:
+    parser = cli_tools.configure_arg_parser()
+    if concat:
+        col_option = f"--concat={concat}"
+    else:
+        col_option = f"--hash={hash}"
+    cli_arg_list = [
+        "generate-table-partitions",
+        f"-sc={sc}",
+        f"-tc={tc}",
+        f"-tbls={tables}",
+        f"-pk={pk}",
+        col_option,
+        f"-cdir={config_path}",
+        f"-pn={partition_num}",
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    config_managers = main.build_config_managers_from_args(args, consts.ROW_VALIDATION)
+    partition_builder = PartitionBuilder(config_managers, args)
+    partition_builder.partition_configs()
+
+    config_dir = config_path / tables
+    assert (
+        len(os.listdir(config_dir)) == partition_num
+    ), f"{len(os.listdir(config_dir))} != {partition_num=}"
+
+    # Run the validations:
+    cli_arg_list = [
+        "configs",
+        "run",
+        f"-cdir={config_dir}",
+    ]
+    cli_arg_list = [_ for _ in cli_arg_list if _]
+    args = parser.parse_args(cli_arg_list)
+    # It is not trivial to access the results Dataframe due to how config_runner() is structured.
+    # Here we just ensure the command completes without throwing an exception.
+    main.config_runner(args)
+
+
 def custom_query_validation_test(
     validation_type="column",
     tc="bq-conn",
     source_query="select * from pso_data_validator.dvt_core_types",
     target_query="select * from pso_data_validator.dvt_core_types",
     filters=None,
+    filter_status: str = "fail",
     count_cols=None,
     min_cols=None,
     max_cols=None,
@@ -549,7 +733,10 @@ def custom_query_validation_test(
     grouped_columns=None,
     comp_fields=None,
     hash="*",
+    concat=None,
     assert_df_not_empty=False,
+    use_random_row=False,
+    random_row_batch_size=None,
 ):
     """Generic custom-query validation test.
 
@@ -564,7 +751,7 @@ def custom_query_validation_test(
         f"-tc={tc}",
         f"--source-query={source_query}",
         f"--target-query={target_query}",
-        "--filter-status=fail",
+        f"--filter-status={filter_status}" if filter_status else None,
         f"--filters={filters}" if filters else None,
         # Column validation parameters
         f"--count={count_cols}" if count_cols else None,
@@ -581,8 +768,15 @@ def custom_query_validation_test(
 
         if comp_fields:
             cli_arg_list.append(f"--comparison-fields={comp_fields}")
+        elif concat:
+            cli_arg_list.append(f"--concat={concat}")
         else:
             cli_arg_list.append(f"--hash={hash}")
+
+        if use_random_row:
+            cli_arg_list.append("--use-random-row")
+            if random_row_batch_size:
+                cli_arg_list.append(f"--random-row-batch-size={random_row_batch_size}")
 
     args = parser.parse_args(cli_arg_list)
     df = run_test_from_cli_args(args)
@@ -592,6 +786,7 @@ def custom_query_validation_test(
     else:
         # With filter on failures the data frame should be empty
         assert len(df) == 0
+    return df
 
 
 def raw_query_rows(
@@ -613,7 +808,7 @@ def raw_query_test(
     capsys,
     conn: str = "mock-conn",
     query: str = "select * from pso_data_validator.dvt_core_types",
-    table: str = None,
+    table: Optional[str] = None,
     expected_rows: int = 3,
 ):
     """Raw query test."""
@@ -625,3 +820,38 @@ def raw_query_test(
     raw_query.print_raw_query_output(rows)
     captured = capsys.readouterr()
     assert "characters truncated" not in captured.out
+
+
+def connections_add_test(
+    caplog: pytest.LogCaptureFixture,
+    conn_type: str,
+    conn_args: list,
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Generic 'connections add' test."""
+    # Set PSO_DV_CONN_HOME to tmp_path to bypass GCS and use a local temp directory.
+    # This avoids pyfakefs module loading issues while keeping file creation isolated.
+    monkeypatch.setenv(consts.ENV_DIRECTORY_VAR, str(tmp_path))
+    with caplog.at_level(logging.INFO):
+        parser = cli_tools.configure_arg_parser()
+        cli_arg_list = [
+            "connections",
+            "add",
+            "-c=new-conn",
+            conn_type,
+        ] + conn_args
+        cli_arg_list = [_ for _ in cli_arg_list if _]
+        args = parser.parse_args(cli_arg_list)
+
+        main.run_connections(args)
+
+        # Check success message in logging
+        assert any(
+            gcs_helper.WRITE_SUCCESS_STRING in record.msg for record in caplog.records
+        )
+
+        # Check if file exists in the mocked filesystem
+        mgr = state_manager.StateManager()
+        connection_path = mgr._get_connection_path("new-conn")
+        assert os.path.exists(connection_path)

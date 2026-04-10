@@ -26,7 +26,6 @@ import ibis.expr.datatypes as dt
 from data_validation import consts
 from data_validation.result_handlers.bigquery import BQRH_NO_WRITE_MESSAGE
 
-
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
 
@@ -233,14 +232,14 @@ SAMPLE_GC_CALC_CONFIG = {
             "source_calculated_columns": ["text_constant"],
             "target_calculated_columns": ["text_constant"],
             "field_alias": "length_text_constant",
-            "type": "length",
+            "type": consts.CALC_FIELD_LENGTH,
             "depth": 0,
         },
         {
             "source_calculated_columns": ["text_constant"],
             "target_calculated_columns": ["text_constant"],
             "field_alias": "upper_text_constant",
-            "type": "upper",
+            "type": consts.CALC_FIELD_UPPER,
             "depth": 0,
         },
         {
@@ -253,14 +252,14 @@ SAMPLE_GC_CALC_CONFIG = {
                 "upper_text_constant",
             ],
             "field_alias": "concat_multi",
-            "type": "concat",
+            "type": consts.CALC_FIELD_CONCAT,
             "depth": 1,
         },
         {
             "source_calculated_columns": ["concat_multi"],
             "target_calculated_columns": ["concat_multi"],
             "field_alias": "concat_length",
-            "type": "length",
+            "type": consts.CALC_FIELD_LENGTH,
             "depth": 2,
         },
     ],

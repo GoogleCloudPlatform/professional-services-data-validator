@@ -15,10 +15,10 @@
 import json
 import logging
 import os
+import pathlib
 from unittest import mock
 
 import pytest
-import pathlib
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -33,6 +33,7 @@ from data_validation.query_builder import random_row_builder
 from data_validation.query_builder.query_builder import QueryBuilder
 from data_validation.result_handlers.bigquery import BQRH_WRITE_MESSAGE
 from tests.system.data_sources.common_functions import (
+    generate_and_run_table_partitions_test,
     partition_table_test,
     partition_query_test,
     row_validation_many_columns_test,
@@ -41,12 +42,13 @@ from tests.system.data_sources.common_functions import (
     raw_query_test,
     row_validation_test,
     custom_query_validation_test,
+    exclude_columns_test,
 )
 from tests.system.result_handlers.test_bigquery import create_bigquery_results_table
 
-
 PROJECT_ID = os.environ["PROJECT_ID"]
-os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{PROJECT_ID}/integration_tests/"
+TEST_BUCKET = os.environ.get("TEST_BUCKET", PROJECT_ID)
+os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{TEST_BUCKET}/integration_tests/"
 BQ_CONN = {consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY, "project_id": PROJECT_ID}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
@@ -60,37 +62,37 @@ CONFIG_COUNT_VALID = {
     consts.CONFIG_GROUPED_COLUMNS: [],
     consts.CONFIG_AGGREGATES: [
         {
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
             consts.CONFIG_SOURCE_COLUMN: None,
             consts.CONFIG_TARGET_COLUMN: None,
             consts.CONFIG_FIELD_ALIAS: "count",
         },
         {
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "count_tripduration",
         },
         {
-            consts.CONFIG_TYPE: "avg",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "avg_tripduration",
         },
         {
-            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "max_birth_year",
         },
         {
-            consts.CONFIG_TYPE: "min",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
             consts.CONFIG_SOURCE_COLUMN: "birth_year",
             consts.CONFIG_TARGET_COLUMN: "birth_year",
             consts.CONFIG_FIELD_ALIAS: "min_birth_year",
         },
         {
-            consts.CONFIG_TYPE: "std",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_STD,
             consts.CONFIG_SOURCE_COLUMN: "tripduration",
             consts.CONFIG_TARGET_COLUMN: "tripduration",
             consts.CONFIG_FIELD_ALIAS: "std_tripduration",
@@ -156,7 +158,7 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["start_date"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["start_date"],
             consts.CONFIG_FIELD_ALIAS: "cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "cast",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_CAST,
             consts.CONFIG_DEFAULT_CAST: "timestamp",
             consts.CONFIG_DEPTH: 0,
         },
@@ -164,7 +166,7 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_CALCULATED_SOURCE_COLUMNS: ["cast_timestamp__start_date"],
             consts.CONFIG_CALCULATED_TARGET_COLUMNS: ["cast_timestamp__start_date"],
             consts.CONFIG_FIELD_ALIAS: "epoch_seconds__cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "epoch_seconds",
+            consts.CONFIG_TYPE: consts.CALC_FIELD_EPOCH_SECONDS,
             consts.CONFIG_DEPTH: 1,
         },
     ],
@@ -173,19 +175,19 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_SOURCE_COLUMN: None,
             consts.CONFIG_TARGET_COLUMN: None,
             consts.CONFIG_FIELD_ALIAS: "count",
-            consts.CONFIG_TYPE: "count",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_FIELD_ALIAS: "sum__epoch_seconds__cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "sum",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_SUM,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_TARGET_COLUMN: "epoch_seconds__cast_timestamp__start_date",
             consts.CONFIG_FIELD_ALIAS: "avg__epoch_seconds__cast_timestamp__start_date",
-            consts.CONFIG_TYPE: "avg",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "epoch_seconds__cast_timestamp__start_date",
@@ -197,13 +199,13 @@ CONFIG_TIMESTAMP_AGGS = {
             consts.CONFIG_SOURCE_COLUMN: "start_date",
             consts.CONFIG_TARGET_COLUMN: "start_date",
             consts.CONFIG_FIELD_ALIAS: "min__start_date",
-            consts.CONFIG_TYPE: "min",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
         },
         {
             consts.CONFIG_SOURCE_COLUMN: "start_date",
             consts.CONFIG_TARGET_COLUMN: "start_date",
             consts.CONFIG_FIELD_ALIAS: "max__start_date",
-            consts.CONFIG_TYPE: "max",
+            consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
         },
     ],
 }
@@ -246,7 +248,7 @@ CONFIG_NUMERIC_AGG_VALID = {
 
 BQ_CONN_NAME = "bq-integration-test"
 CLI_CONFIG_FILE = "example_test.yaml"
-CLI_CONFIG_FILE_GCS = "gs://" + PROJECT_ID + "/system_test/example_test.yaml"
+CLI_CONFIG_FILE_GCS = f"gs://{TEST_BUCKET}/system_test/example_test.yaml"
 
 BQ_CONN_ARGS = [
     "connections",
@@ -282,7 +284,7 @@ CLI_STORE_COLUMN_ARGS_GCS = [
     CLI_CONFIG_FILE_GCS,
 ]
 
-EXPECTED_NUM_YAML_LINES = 26  # Expected number of lines for validation config generated by CLI_STORE_COLUMN_ARGS
+EXPECTED_NUM_YAML_LINES = 25  # Expected number of lines for validation config generated by CLI_STORE_COLUMN_ARGS
 CLI_CONFIGS_RUN_ARGS_LOCAL = ["configs", "run", "--config-file", CLI_CONFIG_FILE]
 CLI_CONFIGS_RUN_ARGS_GCS = ["configs", "run", "--config-file", CLI_CONFIG_FILE_GCS]
 
@@ -302,7 +304,7 @@ CLI_WILDCARD_COLUMN_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_WILDCARD = 163
+EXPECTED_NUM_YAML_LINES_WILDCARD = 162
 
 CLI_TIMESTAMP_MIN_MAX_ARGS = [
     "validate",
@@ -320,7 +322,7 @@ CLI_TIMESTAMP_MIN_MAX_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_TIMESTAMP_MIN_MAX = 34
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_MIN_MAX = 33
 
 CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS = [
     "validate",
@@ -340,7 +342,7 @@ CLI_TIMESTAMP_SUM_AVG_BITXOR_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 55
+EXPECTED_NUM_YAML_LINES_TIMESTAMP_SUM_AVG_BITXOR = 54
 
 CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS = [
     "validate",
@@ -360,7 +362,7 @@ CLI_BQ_DATETIME_SUM_AVG_BITXOR_ARGS = [
     "--config-file",
     CLI_CONFIG_FILE,
 ]
-EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR = 55
+EXPECTED_NUM_YAML_LINES_BQ_DATETIME_SUM_AVG_BITXOR = 54
 
 CLI_FIND_TABLES_ARGS = [
     "find-tables",
@@ -411,7 +413,6 @@ TEST_JSON_VALIDATION_CONFIG = {
     ],
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
     consts.CONFIG_TARGET_CONN: BQ_CONN,
-    consts.CONFIG_TRIM_STRING_PKS: False,
     consts.CONFIG_CASE_INSENSITIVE_MATCH: False,
     consts.CONFIG_ROW_CONCAT: None,
     consts.CONFIG_ROW_HASH: None,
@@ -539,7 +540,7 @@ def test_cli_store_yaml_then_run_local():
 )
 def test_cli_store_yaml_then_run_directory_gcs(mock_conn):
     """Test storing, retrieving, and executing two validation YAMLs in a provided GCS directory path."""
-    bucket_name = f"gs://{PROJECT_ID}"
+    bucket_name = f"gs://{TEST_BUCKET}"
     yaml_file_name1 = "system_test/test_dir/example_dir1.yaml"
     yaml_file_name2 = "system_test/test_dir/example_dir2.yaml"
 
@@ -576,7 +577,7 @@ def test_cli_store_yaml_then_run_directory_gcs(mock_conn):
             "configs",
             "run",
             "--config-dir",
-            "gs://pso-kokoro-resources/system_test/test_dir",
+            f"gs://{TEST_BUCKET}/system_test/test_dir",
         ]
     )
     main.config_runner(run_config_args)
@@ -768,196 +769,196 @@ def test_bigquery_row():
                 "source_calculated_columns": ["string_col"],
                 "target_calculated_columns": ["string_col"],
                 "field_alias": "cast__string_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["integer_col"],
                 "target_calculated_columns": ["integer_col"],
                 "field_alias": "cast__integer_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["float_col"],
                 "target_calculated_columns": ["float_col"],
                 "field_alias": "cast__float_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["numeric_col"],
                 "target_calculated_columns": ["numeric_col"],
                 "field_alias": "cast__numeric_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["big_numeric_col"],
                 "target_calculated_columns": ["big_numeric_col"],
                 "field_alias": "cast__big_numeric_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["timestamp_col"],
                 "target_calculated_columns": ["timestamp_col"],
                 "field_alias": "cast__timestamp_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["date_col"],
                 "target_calculated_columns": ["date_col"],
                 "field_alias": "cast__date_col",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["cast__string_col"],
                 "target_calculated_columns": ["cast__string_col"],
                 "field_alias": "ifnull__cast__string_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__integer_col"],
                 "target_calculated_columns": ["cast__integer_col"],
                 "field_alias": "ifnull__cast__integer_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__float_col"],
                 "target_calculated_columns": ["cast__float_col"],
                 "field_alias": "ifnull__cast__float_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__numeric_col"],
                 "target_calculated_columns": ["cast__numeric_col"],
                 "field_alias": "ifnull__cast__numeric_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__big_numeric_col"],
                 "target_calculated_columns": ["cast__big_numeric_col"],
                 "field_alias": "ifnull__cast__big_numeric_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__timestamp_col"],
                 "target_calculated_columns": ["cast__timestamp_col"],
                 "field_alias": "ifnull__cast__timestamp_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__date_col"],
                 "target_calculated_columns": ["cast__date_col"],
                 "field_alias": "ifnull__cast__date_col",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__string_col"],
                 "target_calculated_columns": ["ifnull__cast__string_col"],
                 "field_alias": "rstrip__ifnull__cast__string_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__integer_col"],
                 "target_calculated_columns": ["ifnull__cast__integer_col"],
                 "field_alias": "rstrip__ifnull__cast__integer_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__float_col"],
                 "target_calculated_columns": ["ifnull__cast__float_col"],
                 "field_alias": "rstrip__ifnull__cast__float_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__numeric_col"],
                 "target_calculated_columns": ["ifnull__cast__numeric_col"],
                 "field_alias": "rstrip__ifnull__cast__numeric_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__big_numeric_col"],
                 "target_calculated_columns": ["ifnull__cast__big_numeric_col"],
                 "field_alias": "rstrip__ifnull__cast__big_numeric_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__timestamp_col"],
                 "target_calculated_columns": ["ifnull__cast__timestamp_col"],
                 "field_alias": "rstrip__ifnull__cast__timestamp_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__date_col"],
                 "target_calculated_columns": ["ifnull__cast__date_col"],
                 "field_alias": "rstrip__ifnull__cast__date_col",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__string_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__string_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__string_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__integer_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__integer_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__integer_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__float_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__float_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__float_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__numeric_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__numeric_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__numeric_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__big_numeric_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__big_numeric_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__big_numeric_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__timestamp_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__timestamp_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__timestamp_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__date_col"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__date_col"],
                 "field_alias": "upper__rstrip__ifnull__cast__date_col",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
@@ -980,14 +981,14 @@ def test_bigquery_row():
                     "upper__rstrip__ifnull__cast__date_col",
                 ],
                 "field_alias": "concat__all",
-                "type": "concat",
+                "type": consts.CALC_FIELD_CONCAT,
                 "depth": 4,
             },
             {
                 "source_calculated_columns": ["concat__all"],
                 "target_calculated_columns": ["concat__all"],
                 "field_alias": "hash__all",
-                "type": "hash",
+                "type": consts.CALC_FIELD_HASH,
                 "depth": 5,
             },
         ],
@@ -1045,56 +1046,56 @@ def test_custom_query():
                 "source_calculated_columns": ["object_id"],
                 "target_calculated_columns": ["object_id"],
                 "field_alias": "cast__object_id",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["faa_identifier"],
                 "target_calculated_columns": ["faa_identifier"],
                 "field_alias": "cast__faa_identifier",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["cast__object_id"],
                 "target_calculated_columns": ["cast__object_id"],
                 "field_alias": "ifnull__cast__object_id",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["cast__faa_identifier"],
                 "target_calculated_columns": ["cast__faa_identifier"],
                 "field_alias": "ifnull__cast__faa_identifier",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__object_id"],
                 "target_calculated_columns": ["ifnull__cast__object_id"],
                 "field_alias": "rstrip__ifnull__cast__object_id",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__faa_identifier"],
                 "target_calculated_columns": ["ifnull__cast__faa_identifier"],
                 "field_alias": "rstrip__ifnull__cast__faa_identifier",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__object_id"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__object_id"],
                 "field_alias": "upper__rstrip__ifnull__cast__object_id",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__faa_identifier"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__faa_identifier"],
                 "field_alias": "upper__rstrip__ifnull__cast__faa_identifier",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
@@ -1107,14 +1108,14 @@ def test_custom_query():
                     "upper__rstrip__ifnull__cast__faa_identifier",
                 ],
                 "field_alias": "concat__all",
-                "type": "concat",
+                "type": consts.CALC_FIELD_CONCAT,
                 "depth": 4,
             },
             {
                 "source_calculated_columns": ["concat__all"],
                 "target_calculated_columns": ["concat__all"],
                 "field_alias": "hash__all",
-                "type": "hash",
+                "type": consts.CALC_FIELD_HASH,
                 "depth": 5,
             },
         ],
@@ -1136,26 +1137,26 @@ def test_custom_query():
 # Expected result from partitioning table on 3 keys, 9 partitions
 EXPECTED_PARTITION_FILTER = [
     [
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )",
+        "(quarter_id != 1111) AND ((`course_id` < 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE)))))))))",
     ],
     [
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )",
+        "(quarter_id != 1111) AND ((`course_id` < 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '2023-08-23') OR ((`registration_date` = DATE '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Edward\\'\\'s') OR ((`course_id` = 'St. Edward\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. John\\'\\'s') OR ((`course_id` = 'St. John\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-26 16:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-26 16:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Jude\\'\\'s') OR ((`course_id` = 'St. Jude\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` < DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Paul\\'\\'s') OR ((`course_id` = 'St. Paul\\'\\'s') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > TIMESTAMP '2023-08-27 15:00:00+00:00') OR ((`recd_timestamp` = TIMESTAMP '2023-08-27 15:00:00+00:00') AND ((`registration_date` > DATE '1969-07-20') OR ((`registration_date` = DATE '1969-07-20') AND (`approved` >= FALSE)))))))))",
     ],
 ]
 
@@ -1166,8 +1167,13 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_generate_partitions(mock_conn, tmp_path: pathlib.Path):
     """Test generate partitions on BigQuery, first on table, then on custom query"""
-    partition_table_test(EXPECTED_PARTITION_FILTER)
-    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
+    partition_table_test(
+        EXPECTED_PARTITION_FILTER,
+    )
+    partition_query_test(
+        EXPECTED_PARTITION_FILTER,
+        tmp_path,
+    )
 
 
 @mock.patch(
@@ -1198,6 +1204,66 @@ def test_bigquery_dry_run(mock_conn, capsys):
         dry_run["source_query"]
         == f"WITH t0 AS (\n  SELECT t5.*, t5.`col_string` AS `cast__col_string`\n  FROM `{PROJECT_ID}.pso_data_validator.dvt_core_types` t5\n),\nt1 AS (\n  SELECT t0.*,\n         IFNULL(t0.`cast__col_string`, 'DEFAULT_REPLACEMENT_STRING') AS `ifnull__cast__col_string`\n  FROM t0\n),\nt2 AS (\n  SELECT t1.*,\n         rtrim(t1.`ifnull__cast__col_string`) AS `rstrip__ifnull__cast__col_string`\n  FROM t1\n),\nt3 AS (\n  SELECT t2.*,\n         ARRAY_TO_STRING([t2.`rstrip__ifnull__cast__col_string`], '') AS `concat__all`\n  FROM t2\n)\nSELECT t4.`hash__all`, t4.`id`\nFROM (\n  SELECT t3.*, TO_HEX(SHA256(t3.`concat__all`)) AS `hash__all`\n  FROM t3\n) t4"
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_hash_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_concat_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, column_arg="concat")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_row_comp_fields_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, column_arg="comparison-fields")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_column_count_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, validation_type="column", column_arg="count")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_bigquery_exclude_columns_column_sum_dry_run(mock_conn, capsys):
+    """Test BigQuery dry run mode with --exclude-columns and validate the generated SQL.
+
+    The code being tested is not BigQuery specific therefore we do not need this in other test files.
+    """
+    exclude_columns_test(capsys, validation_type="column", column_arg="sum")
 
 
 @mock.patch(
@@ -1235,6 +1301,8 @@ def test_column_validation_core_types(mock_conn):
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 
@@ -1275,7 +1343,9 @@ def test_row_validation_core_types_auto_pks(mock_conn):
 )
 def test_custom_query_validation_core_types(mock_conn):
     """BigQuery to BigQuery dvt_core_types custom-query validation"""
-    custom_query_validation_test(tc="mock-conn", count_cols="*")
+    custom_query_validation_test(
+        tc="mock-conn", count_cols="*", grouped_columns="col_varchar_30"
+    )
 
 
 @mock.patch(
@@ -1415,6 +1485,19 @@ def test_row_validation_comp_fields_reserved_words(mock_conn):
         tables="pso_data_validator.dvt_reserved_word_columns",
         tc="mock-conn",
         comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_generate_and_run_partitions(mock_conn, tmp_path: pathlib.Path):
+    """Test generate and execute partition configs."""
+    generate_and_run_table_partitions_test(
+        tmp_path,
+        sc="mock-conn",
+        tc="mock-conn",
     )
 
 

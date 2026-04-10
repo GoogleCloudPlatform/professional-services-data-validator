@@ -341,7 +341,10 @@ class CalculatedField(object):
     @staticmethod
     def ifnull(config, fields):
         default_null_string = ibis.literal(
-            config.get("default_null_string", "DEFAULT_REPLACEMENT_STRING")
+            config.get(
+                consts.CALC_FIELD_IFNULL_DEFAULT,
+                consts.CALC_FIELD_IFNULL_DEFAULT_STRING,
+            )
         )
         fields = [fields[0], default_null_string]
         return CalculatedField(
@@ -354,6 +357,14 @@ class CalculatedField(object):
     def length(config, fields):
         return CalculatedField(
             ibis.expr.types.StringValue.length,
+            config,
+            fields,
+        )
+
+    @staticmethod
+    def padded_char_length(config, fields):
+        return CalculatedField(
+            ibis.expr.types.StringValue.padded_char_length,
             config,
             fields,
         )
@@ -403,7 +414,7 @@ class CalculatedField(object):
     @staticmethod
     def custom(config, fields):
         """Returns a CalculatedField instance built for any custom ibis expression
-        i.e. 'ibis.expr.api.StringValue.replace'. For a list of supported functions,
+        e.g. 'ibis.expr.api.StringValue.replace'. For a list of supported functions,
         see https://github.com/ibis-project/ibis/blob/1.4.0/ibis/expr/api.py
         Args:
             expr (Str): A custom ibis expression to be used as a calc field

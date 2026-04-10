@@ -19,7 +19,6 @@ from ibis.backends.bigquery import compiler as bigquery_compiler
 from ibis.backends.bigquery import rewrites
 from third_party.ibis.ibis_cloud_spanner import registry
 
-
 _NAME_REGEX = re.compile(r"[_A-Za-z][A-Za-z_0-9]*")
 
 

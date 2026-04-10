@@ -20,7 +20,9 @@ import pytest
 
 from data_validation import cli_tools, consts
 from tests.system.data_sources.common_functions import (
+    DVT_TRICKY_DATES_COLUMNS,
     column_validation_test,
+    connections_add_test,
     find_tables_test,
     id_type_test_assertions,
     raw_query_test,
@@ -35,7 +37,6 @@ from tests.system.data_sources.common_functions import (
     partition_table_test,
     partition_query_test,
 )
-
 
 IMPALA_HOST = os.getenv("IMPALA_HOST", "localhost")
 IMPALA_PORT = os.getenv("IMPALA_PORT", "21050")
@@ -54,26 +55,26 @@ CONN = {
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )",
+        "(quarter_id != 1111) AND ((`course_id` < 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Edward') OR ((`course_id` = 'St. Edward') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Edward') OR ((`course_id` = 'St. Edward') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. John') OR ((`course_id` = 'St. John') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. John') OR ((`course_id` = 'St. John') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. Jude') OR ((`course_id` = 'St. Jude') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Jude') OR ((`course_id` = 'St. Jude') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Paul') OR ((`course_id` = 'St. Paul') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Paul') OR ((`course_id` = 'St. Paul') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= FALSE)))))))))",
     ],
     [
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'ALG001' ) OR ( ( `course_id` = 'ALG001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'GEO001' ) OR ( ( `course_id` = 'GEO001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 1 ) OR ( ( `quarter_id` = 1 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 2 ) OR ( ( `quarter_id` = 2 ) AND ( `student_id` >= 1234 ) ) ) ) ) AND ( ( `course_id` < 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` < 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` < 1234 ) ) ) ) )",
-        " ( quarter_id <> 1111 ) AND ( ( `course_id` > 'TRI001' ) OR ( ( `course_id` = 'TRI001' ) AND ( ( `quarter_id` > 3 ) OR ( ( `quarter_id` = 3 ) AND ( `student_id` >= 1234 ) ) ) ) )",
+        "(quarter_id != 1111) AND ((`course_id` < 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG001') OR ((`course_id` = 'ALG001') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG002  t0.') OR ((`course_id` = 'ALG002  t0.') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG003') OR ((`course_id` = 'ALG003') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` < 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'ALG004') OR ((`course_id` = 'ALG004') AND ((`quarter_id` > 5678) OR ((`quarter_id` = 5678) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '2023-08-23') OR ((`registration_date` = '2023-08-23') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Edward') OR ((`course_id` = 'St. Edward') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Edward') OR ((`course_id` = 'St. Edward') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. John') OR ((`course_id` = 'St. John') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < TRUE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. John') OR ((`course_id` = 'St. John') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= TRUE))))))))) AND ((`course_id` < 'St. Jude') OR ((`course_id` = 'St. Jude') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Jude') OR ((`course_id` = 'St. Jude') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= FALSE))))))))) AND ((`course_id` < 'St. Paul') OR ((`course_id` = 'St. Paul') AND ((`quarter_id` < 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` < 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` < '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` < FALSE)))))))))",
+        "(quarter_id != 1111) AND ((`course_id` > 'St. Paul') OR ((`course_id` = 'St. Paul') AND ((`quarter_id` > 1234) OR ((`quarter_id` = 1234) AND ((`recd_timestamp` > 'NaT') OR ((`recd_timestamp` = 'NaT') AND ((`registration_date` > '1969-07-20') OR ((`registration_date` = '1969-07-20') AND (`approved` >= FALSE)))))))))",
     ],
 ]
 
@@ -144,8 +145,13 @@ def test_schema_validation_bool():
 )
 def test_generate_partitions(tmp_path: pathlib.Path):
     """Test generate partitions on Impala, first on table, then on custom query"""
-    partition_table_test(EXPECTED_PARTITION_FILTER)
-    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
+    partition_table_test(
+        EXPECTED_PARTITION_FILTER,
+    )
+    partition_query_test(
+        EXPECTED_PARTITION_FILTER,
+        tmp_path,
+    )
 
 
 @mock.patch(
@@ -172,7 +178,7 @@ def test_column_validation_core_types_to_bigquery():
     """Impala to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
-    # TODO Change cols to include col_char_2 when issue-842 is complete.
+    # TODO Change cols to include col_char_2 when issue-1514 is complete.
     cols = ",".join(
         [
             _
@@ -186,6 +192,8 @@ def test_column_validation_core_types_to_bigquery():
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 
@@ -313,6 +321,64 @@ def test_row_validation_bool_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    # We cannot test col_dt_low and col_ts_low because the low value of Impala timestamps
+    # is incompatible with other engines.
+    cols = ",".join(
+        _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
+    )
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_tricky_dates",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
+        grouped_columns="id",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    # We cannot test col_dt_low and col_ts_low because the low value of Impala timestamps
+    # is incompatible with other engines.
+    cols = ",".join(
+        _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        concat=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    # We cannot test col_dt_low and col_ts_low because the low value of Impala timestamps
+    # is incompatible with other engines.
+    cols = ",".join(
+        _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_find_tables():
     """Impala to BigQuery test of find-tables command."""
     # check_for_view=False because there is no practical way to exclude views on Impala.
@@ -326,3 +392,26 @@ def test_find_tables():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        IMPALA_HOST,
+        "--port",
+        IMPALA_PORT,
+        "--database",
+        IMPALA_DATABASE,
+        "--auth-mechanism",
+        IMPALA_AUTH_MECH,
+        # TODO Add options below back in once issue-1720 is complete.
+        # "--timeout",
+        # "1000",
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_IMPALA, conn_args, tmp_path, monkeypatch
+    )

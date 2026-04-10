@@ -20,7 +20,7 @@ import re
 import datetime
 from typing import List, Dict, TYPE_CHECKING
 
-from data_validation import cli_tools, consts
+from data_validation import cli_tools, consts, exceptions, util
 from data_validation.config_manager import ConfigManager
 from data_validation.query_builder.partition_row_builder import PartitionRowBuilder
 from data_validation.validation_builder import ValidationBuilder
@@ -28,6 +28,8 @@ from data_validation.validation_builder import list_to_sublists
 
 if TYPE_CHECKING:
     from argparse import Namespace
+    from ibis.backends.base import BaseBackend
+    from ibis.expr.types.relations import Table as IbisTable
 
 
 class PartitionBuilder:
@@ -36,6 +38,12 @@ class PartitionBuilder:
         self.table_count = len(config_managers)
         self.args = args
         self.config_dir = self._get_arg_config_dir()
+
+    @staticmethod
+    def _definitely_no_time_part(value: datetime.datetime) -> bool:
+        """Oracle date has a time portion - this function ensures we don't truncate the time when we really want it."""
+        # The function name is a bit of a misnomer, it's checking if there is a time part.
+        return value.hour + value.minute + value.second + value.microsecond == 0
 
     def _get_arg_config_dir(self) -> str:
         """Return String yaml config folder path."""
@@ -97,25 +105,43 @@ class PartitionBuilder:
         yaml_configs_list = self._add_partition_filters(partition_filters)
         self._store_partitions(yaml_configs_list)
 
+    def check_partition_configs(self) -> None:
+        for config_manager in self.config_managers:
+            source_type = config_manager.get_source_connection()[consts.SOURCE_TYPE]
+            if source_type in consts.NO_WINDOW_FUNCTION_SUPPORT:
+                raise exceptions.PartitionBuilderException(
+                    f"Source client {source_type} does not support window functions, "
+                    "please use this connection as a target connection for generate-table-partitions."
+                )
+
     @staticmethod
-    def _extract_where(table_expr, client) -> str:
-        """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the where clause
-        in plain text
+    def _extract_where(table_expr: "IbisTable", client: "BaseBackend") -> str:
+        """Given a ibis table expression with a filter (i.e. WHERE) clause, this function extracts the
+           where clause in plain text.
 
         Returns:
             String with the where condition
         """
-        if client.name == "spanner":
-            # As per Issue #1059, use the BQ dialect for Spanner as they have the same query syntax
-            return re.sub(
-                r"\s\s+",
-                " ",
-                ibis.to_sql(table_expr, dialect="bigquery").sql.split("WHERE")[1],
-            ).replace("t0.", "")
+        # This extraction of the where clause is a bit of a hack. To extract it correctly, the SQL table
+        # expression should be correctly parsed and the where clause extracted. Perhaps use something like Sqlglot.
+        sql_where_expr = re.split(
+            r"\sWHERE\s", util.ibis_table_to_sql(table_expr, client), flags=re.I
+        )[-1]
 
-        return re.sub(
-            r"\s\s+", " ", ibis.to_sql(table_expr).sql.split("WHERE")[1]
-        ).replace("t0.", "")
+        sql_string_re = re.compile(r"'(?:''|\\'|[^'])*'")
+        sql_not_string_re = re.compile(r"[^']+")
+        sql_where_less_ws = ""
+        # Remove references to t0 and extra whitespace, but only outside quoted strings.
+        while sql_where_expr:
+            if match_obj := sql_not_string_re.match(
+                sql_where_expr
+            ):  # Not a quoted string
+                repl_str = re.sub(r"\s\s+", r" ", match_obj.group(0)).replace("t0.", "")
+            else:  # quoted strings should not be substituted
+                repl_str = (match_obj := sql_string_re.match(sql_where_expr)).group(0)
+            sql_where_less_ws += repl_str
+            sql_where_expr = sql_where_expr[match_obj.end() :]
+        return sql_where_less_ws
 
     def _get_partition_key_filters(self) -> List[List[List[str]]]:
         """The PartitionBuilder object contains the configuration of the table pairs (source and target)
@@ -131,7 +157,6 @@ class PartitionBuilder:
         master_filter_list = []
         for config_manager in self.config_managers:  # For each pair of tables
             validation_builder = ValidationBuilder(config_manager)
-
             source_pks, target_pks = [], []
             for pk in config_manager.primary_keys:
                 source_pks.append(pk["source_column"])
@@ -186,16 +211,19 @@ class PartitionBuilder:
             window1 = ibis.window(order_by=source_pks)
             row_number = (ibis.row_number().over(window1) + 1).name(consts.DVT_POS_COL)
 
-            if config_manager.trim_string_pks():
-                dvt_keys = []
-                for key in source_pks.copy():
-                    if source_table[key].type().is_string():
-                        rstrip_key = source_table[key].rstrip().name(key)
-                        dvt_keys.append(rstrip_key)
-                    else:
-                        dvt_keys.append(key)
-            else:
-                dvt_keys = source_pks.copy()
+            # If any of the keys are padded strings, we need to rstrip them so the values come out right
+            dvt_keys = []
+            for key in source_pks.copy():
+                if source_table[
+                    key
+                ].type().is_string() and ValidationBuilder.is_padded_char(
+                    config_manager.source_client,
+                    config_manager.get_source_raw_data_types(),
+                    key,
+                ):
+                    dvt_keys.append(source_table[key].rstrip().name(key))
+                else:
+                    dvt_keys.append(key)
 
             dvt_keys.append(row_number)
             rownum_table = source_table.select(dvt_keys)
@@ -240,11 +268,18 @@ class PartitionBuilder:
             # Up until this point, we have built the table expression, have not executed the query yet.
             # The query is now executed to find the first element of each partition
             first_elements = first_keys_table.execute().to_numpy()
+            # The objective is to generate the SQL expression string that is saved in the yaml file as a
+            # filters property. This SQL expression is used as a filter during validation to ensure
+            # that the yaml file is only validating the specific partition. This string is backend specific as
+            # the SQL syntax varies slightly across backends. We get Ibis to generate the string for
+            # a table expression with the filter (where) clause and then extract the SQL expression string.
+            # The function _extract_where extracts the expression string from the Ibis SQL table expression.
 
             # Once we have the first element of each partition, we can generate the where clause
             # i.e. greater than or equal to first element and less than first element of next partition
             # The first and the last partitions have special where clauses - less than first element of second
             # partition and greater than or equal to the first element of the last partition respectively
+
             source_where_list = []
             target_where_list = []
 
@@ -259,13 +294,14 @@ class PartitionBuilder:
                     values[0].date()
                     if key_column.type().is_date()
                     and isinstance(values[0], datetime.datetime)
+                    and self._definitely_no_time_part(values[0])
                     else values[0]
                 )
                 if len(keys) == 1:
-                    return key_column < value
+                    return key_column < ibis.literal(value)
                 else:
-                    return (key_column < value) | (
-                        (key_column == value)
+                    return (key_column < ibis.literal(value)) | (
+                        (key_column == ibis.literal(value))
                         & less_than_value(table, keys[1:], values[1:])
                     )
 
@@ -276,14 +312,16 @@ class PartitionBuilder:
                     values[0].date()
                     if key_column.type().is_date()
                     and isinstance(values[0], datetime.datetime)
+                    and self._definitely_no_time_part(values[0])
                     else values[0]
                 )
 
                 if len(keys) == 1:
-                    return key_column >= value
+                    return key_column >= ibis.literal(value)
                 else:
-                    return (key_column > value) | (
-                        (key_column == value) & geq_value(table, keys[1:], values[1:])
+                    return (key_column > ibis.literal(value)) | (
+                        (key_column == ibis.literal(value))
+                        & geq_value(table, keys[1:], values[1:])
                     )
 
             filter_source_clause = less_than_value(
@@ -382,14 +420,35 @@ class PartitionBuilder:
         Returns:
             yaml_configs_list (List[Dict]): List of YAML dicts (folder), one folder for each table pair being validated.
         """
-        yaml_configs_list = [None] * len(self.config_managers)
+        # Since we store yaml configs in directories by schema.source_table_name, there can be
+        # only one yaml config per schema.source_table_name, even if shows up in multiple table
+        # pairs. In the case of custom query validation, we need to generate a "reasonably" unique name for the directory
+        # based on the source query. As mentioned in issue 1428, this not friendly, so something we should change.
+        # We store the configs in a list and a dict mapping source table name, or directory name in case of custom-query to list index
+        yaml_configs_list = []
+        src_config_dict = {}
+
         for ind, config_manager in enumerate(self.config_managers):
+            if config_manager.source_table:
+                dir_name = config_manager.full_source_table
+            else:
+                dir_name = ""
             filter_list = partition_filters[ind]
 
-            yaml_configs_list[ind] = {
-                "target_folder_name": config_manager.full_source_table,
-                "yaml_files": [],
-            }
+            if src_config_dict.get(dir_name) is None:
+                # First time encountering this source table or source query
+                source_table_repeat = False
+                yaml_configs_list.append(
+                    {
+                        "target_folder_name": dir_name,
+                        "yaml_files": [],
+                    }
+                )
+                src_config_dict[dir_name] = len(yaml_configs_list) - 1
+
+            else:
+                source_table_repeat = True
+            yaml_ind = src_config_dict[dir_name]
 
             # Create a list of lists chunked by partitions per file
             # Both source and target table are divided into the same number of partitions, so we are
@@ -405,9 +464,16 @@ class PartitionBuilder:
                 yaml_config = self._add_filters_get_yaml_file(
                     config_manager, source_filters_list[i], target_filters_list[i]
                 )
-                yaml_configs_list[ind]["yaml_files"].append(
-                    {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
-                )
+                if (
+                    source_table_repeat
+                ):  # Same source table, yaml configs exist, add these validations by extending existing ones.
+                    yaml_configs_list[yaml_ind]["yaml_files"][i]["yaml_config"][
+                        "validations"
+                    ].extend(yaml_config["validations"])
+                else:  # New yaml files, append these validations as yaml_config
+                    yaml_configs_list[yaml_ind]["yaml_files"].append(
+                        {"target_file_name": f"{i:04}.yaml", "yaml_config": yaml_config}
+                    )
         return yaml_configs_list
 
     def _store_partitions(self, yaml_configs_list: List[Dict]) -> None:

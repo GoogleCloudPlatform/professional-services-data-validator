@@ -113,11 +113,11 @@ def generate_report(
     # Get the first validation metadata object to fill source and/or target empty table names.
     first = run_metadata.validations[next(iter(run_metadata.validations))]
     if first.validation_type != consts.CUSTOM_QUERY:
-        result_df.source_table_name.fillna(
-            first.get_table_name(consts.RESULT_TYPE_SOURCE), inplace=True
+        result_df["source_table_name"] = result_df["source_table_name"].fillna(
+            first.get_table_name(consts.RESULT_TYPE_SOURCE)
         )
-        result_df.target_table_name.fillna(
-            first.get_table_name(consts.RESULT_TYPE_TARGET), inplace=True
+        result_df["target_table_name"] = result_df["target_table_name"].fillna(
+            first.get_table_name(consts.RESULT_TYPE_TARGET)
         )
 
     _get_summary(run_metadata, result_df, source_df, target_df)
@@ -194,7 +194,9 @@ def _generate_report_slice(
         logging.debug(documented.compile())
 
     result_df = client.execute(documented)
-    result_df.validation_status.fillna(consts.VALIDATION_STATUS_FAIL, inplace=True)
+    result_df["validation_status"] = result_df["validation_status"].fillna(
+        consts.VALIDATION_STATUS_FAIL
+    )
     return result_df
 
 
@@ -406,18 +408,18 @@ def _pivot_result(
                             consts.AGGREGATION_TYPE
                         ),
                         ibis.literal(validation.get_table_name(result_type)).name(
-                            "table_name"
+                            consts.COMBINER_TABLE_NAME
                         ),
                         # Cast to string to ensure types match, even when column
                         # name is NULL (such as for count aggregations).
                         ibis.literal(validation.get_column_name(result_type))
                         .cast("string")
-                        .name("column_name"),
+                        .name(consts.COMBINER_COLUMN_NAME),
                         primary_keys,
                         ibis.literal(validation.num_random_rows).name(
                             consts.NUM_RANDOM_ROWS
                         ),
-                        result[field].cast("string").name("agg_value"),
+                        result[field].cast("string").name(consts.COMBINER_AGG_VALUE),
                     )
                     + join_on_fields
                 )
@@ -469,11 +471,11 @@ def _join_pivots(
         + [
             source[consts.VALIDATION_TYPE],
             source[consts.AGGREGATION_TYPE],
-            source[consts.CONFIG_TABLE_NAME],
-            source["column_name"],
+            source[consts.COMBINER_TABLE_NAME],
+            source[consts.COMBINER_COLUMN_NAME],
             source[consts.CONFIG_PRIMARY_KEYS],
             source[consts.NUM_RANDOM_ROWS],
-            source["agg_value"],
+            source[consts.COMBINER_AGG_VALUE],
             differences[consts.VALIDATION_DIFFERENCE],
             differences[consts.VALIDATION_PCT_DIFFERENCE],
             differences[consts.VALIDATION_PCT_THRESHOLD],
@@ -488,12 +490,12 @@ def _join_pivots(
         source_difference[consts.AGGREGATION_TYPE]
         .fillna(target[consts.AGGREGATION_TYPE])
         .name(consts.AGGREGATION_TYPE),
-        source_difference["table_name"].name(consts.SOURCE_TABLE_NAME),
-        source_difference["column_name"].name(consts.SOURCE_COLUMN_NAME),
-        source_difference["agg_value"].name(consts.SOURCE_AGG_VALUE),
-        target["table_name"].name(consts.TARGET_TABLE_NAME),
-        target["column_name"].name(consts.TARGET_COLUMN_NAME),
-        target["agg_value"].name(consts.TARGET_AGG_VALUE),
+        source_difference[consts.COMBINER_TABLE_NAME].name(consts.SOURCE_TABLE_NAME),
+        source_difference[consts.COMBINER_COLUMN_NAME].name(consts.SOURCE_COLUMN_NAME),
+        source_difference[consts.COMBINER_AGG_VALUE].name(consts.SOURCE_AGG_VALUE),
+        target[consts.COMBINER_TABLE_NAME].name(consts.TARGET_TABLE_NAME),
+        target[consts.COMBINER_COLUMN_NAME].name(consts.TARGET_COLUMN_NAME),
+        target[consts.COMBINER_AGG_VALUE].name(consts.TARGET_AGG_VALUE),
         group_by_columns,
         source_difference[consts.CONFIG_PRIMARY_KEYS],
         source_difference[consts.NUM_RANDOM_ROWS],

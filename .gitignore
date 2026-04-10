@@ -31,7 +31,6 @@ pip-log.txt
 .cache
 .pytest_cache
 
-
 # Mac
 .DS_Store
 
@@ -43,6 +42,9 @@ pip-log.txt
 
 # emacs
 *~
+
+# Gemini
+GEMINI.md
 
 # Built documentation
 docs/_build

@@ -14,11 +14,9 @@
 
 """Build a result handler object."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-import google.oauth2.service_account
-
-from data_validation import consts, exceptions
+from data_validation import consts, exceptions, state_manager
 from data_validation.result_handlers.bigquery import BigQueryResultHandler
 from data_validation.result_handlers.postgres import PostgresResultHandler
 from data_validation.result_handlers.text import TextResultHandler
@@ -31,7 +29,7 @@ def build_result_handler(
     result_handler_config: dict,
     validation_type: str,
     filter_status: list,
-    text_format: str = None,
+    text_format: Optional[str] = None,
 ) -> "BaseBackendResultHandler":
     """Return a result handler object based on supplied args."""
     text_format = text_format or consts.FORMAT_TYPE_TABLE
@@ -48,33 +46,40 @@ def build_result_handler(
         )
 
     result_type = result_handler_config[consts.RH_TYPE]
-    if result_type == consts.SOURCE_TYPE_BIGQUERY:
-        project_id = result_handler_config[consts.PROJECT_ID]
-        table_id = result_handler_config[consts.TABLE_ID]
-        key_path = result_handler_config.get(consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)
-        if key_path:
-            credentials = (
-                google.oauth2.service_account.Credentials.from_service_account_file(
-                    key_path
-                )
-            )
-        else:
-            credentials = None
-        api_endpoint = result_handler_config.get(consts.API_ENDPOINT)
-        return BigQueryResultHandler.get_handler_for_project(
-            project_id,
-            filter_status,
-            table_id=table_id,
-            credentials=credentials,
-            api_endpoint=api_endpoint,
-            text_format=text_format,
+    table_id = result_handler_config[consts.TABLE_ID]
+
+    if consts.RH_CONN in result_handler_config and result_type in [
+        consts.SOURCE_TYPE_BIGQUERY,
+        consts.SOURCE_TYPE_POSTGRES,
+    ]:
+        mgr = state_manager.StateManager()
+        conn_from_file = mgr.get_connection_config(
+            result_handler_config[consts.RH_CONN]
         )
-    elif result_type == consts.SOURCE_TYPE_POSTGRES:
-        table_id = result_handler_config[consts.TABLE_ID]
-        return PostgresResultHandler.get_handler_for_connection(
-            result_handler_config[consts.RH_CONN],
-            filter_status,
+        if result_type == consts.SOURCE_TYPE_BIGQUERY:
+            return BigQueryResultHandler.get_handler_for_connection(
+                conn_from_file,
+                status_list=filter_status,
+                table_id=table_id,
+                text_format=text_format,
+            )
+        elif result_type == consts.SOURCE_TYPE_POSTGRES:
+            return PostgresResultHandler.get_handler_for_connection(
+                conn_from_file,
+                status_list=filter_status,
+                table_id=table_id,
+                text_format=text_format,
+            )
+    elif result_type == consts.SOURCE_TYPE_BIGQUERY:
+        # Legacy BigQuery format.
+        return BigQueryResultHandler.get_handler_for_project(
+            result_handler_config[consts.PROJECT_ID],
+            status_list=filter_status,
             table_id=table_id,
+            sa_key_path=result_handler_config.get(
+                consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
+            ),
+            api_endpoint=result_handler_config.get(consts.API_ENDPOINT),
             text_format=text_format,
         )
     else:

@@ -73,14 +73,22 @@ if TYPE_CHECKING:
 CONNECTION_SOURCE_FIELDS = {
     consts.SOURCE_TYPE_BIGQUERY: [
         ["project_id", "GCP Project to use for BigQuery"],
+        [
+            "client_project_id",
+            "(Optional) BigQuery job/billing project (can differ from data project)",
+        ],
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
             "api_endpoint",
-            '(Optional) GCP BigQuery API endpoint (e.g. "https://mybq.p.googleapis.com")',
+            '(Optional) GCP BigQuery API endpoint (e.g. "https://bigquery-mypsc.p.googleapis.com")',
+        ],
+        [
+            "storage_api_endpoint",
+            '(Optional) GCP BigQuery Storage API endpoint (e.g. "https://bigquerystorage-mypsc.p.googleapis.com")',
         ],
     ],
     consts.SOURCE_TYPE_TERADATA: [
-        ["host", "Desired Teradata host"],
+        ["host", "Teradata host"],
         ["port", "Teradata port to connect on"],
         ["user_name", "User used to connect"],
         ["password", "Password for supplied user"],
@@ -89,15 +97,17 @@ CONNECTION_SOURCE_FIELDS = {
         ["json_params", "(Optional) Additional teradatasql JSON string parameters"],
     ],
     consts.SOURCE_TYPE_ORACLE: [
-        ["host", "Desired Oracle host"],
+        ["host", "Oracle host"],
         ["port", "Oracle port to connect on"],
         ["user", "User used to connect"],
+        ["thick_mode", "Flag indicating thick_mode"],
         ["password", "Password for supplied user"],
         ["database", "Database to connect to"],
-        ["url", "Oracle SQLAlchemy connection URL"],
+        ["protocol", "Oracle networking protocol (default TPC)"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
     consts.SOURCE_TYPE_MSSQL: [
-        ["host", "Desired SQL Server host (default localhost)"],
+        ["host", "SQL Server host (default localhost)"],
         ["port", "SQL Server port to connect on (default 1433)"],
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
@@ -106,7 +116,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["url", "SQL Server SQLAlchemy connection URL"],
     ],
     consts.SOURCE_TYPE_MYSQL: [
-        ["host", "Desired MySQL host (default localhost)"],
+        ["host", "MySQL host (default localhost)"],
         ["port", "MySQL port to connect on (default 3306)"],
         ["user", "User used to connect"],
         ["password", "Password for supplied user"],
@@ -117,17 +127,19 @@ CONNECTION_SOURCE_FIELDS = {
         ["password", "Password for authentication of user"],
         ["account", "Snowflake account to connect to"],
         ["database", "Database in snowflake to connect to"],
-        ["connect_args", "(Optional) Additional connection arg mapping"],
+        ["warehouse", "Warehouse in snowflake to connect to"],
+        ["role", "Role in snowflake to connect as"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
     consts.SOURCE_TYPE_POSTGRES: [
-        ["host", "Desired PostgreSQL host."],
+        ["host", "PostgreSQL host."],
         ["port", "PostgreSQL port to connect on (e.g. 5432)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
         ["database", "Database in PostgreSQL to connect to (default postgres)"],
     ],
     consts.SOURCE_TYPE_REDSHIFT: [
-        ["host", "Desired Redshift host."],
+        ["host", "Redshift host."],
         ["port", "Redshift port to connect on (e.g. 5439)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
@@ -140,7 +152,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
         [
             "api_endpoint",
-            '(Optional) GCP Spanner API endpoint (e.g. "https://mycs.p.googleapis.com")',
+            '(Optional) GCP Spanner API endpoint (e.g. "https://spanner-mypsc.p.googleapis.com")',
         ],
     ],
     consts.SOURCE_TYPE_SPANNER_POSTGRES: [
@@ -152,6 +164,15 @@ CONNECTION_SOURCE_FIELDS = {
             "api_endpoint",
             '(Optional) GCP Spanner API endpoint (e.g. "https://mycs.p.googleapis.com")',
         ],
+    consts.SOURCE_TYPE_SYBASE: [
+        ["host", "Sybase host (default localhost)"],
+        ["port", "Sybase port to connect on (default 5000)"],
+        ["user", "User used to connect"],
+        ["password", "Password for supplied user"],
+        ["database", "Database to connect to (default master)"],
+        ["odbc_driver", "ODBC driver name"],
+        ["query", "Connection query parameters"],
+        ["url", "Sybase SQLAlchemy connection URL"],
     ],
     consts.SOURCE_TYPE_FILESYSTEM: [
         ["table_name", "Table name to use as reference for file data"],
@@ -159,10 +180,10 @@ CONNECTION_SOURCE_FIELDS = {
         ["file_type", "The file type of the file. 'csv', 'orc', 'parquet' or 'json'"],
     ],
     consts.SOURCE_TYPE_IMPALA: [
-        ["host", "Desired Impala host"],
-        ["port", "Desired Impala port (10000 if not provided)"],
-        ["database", "Desired Impala database (default if not provided)"],
-        ["auth_mechanism", "Desired Impala auth mechanism (PLAIN if not provided)"],
+        ["host", "Impala host"],
+        ["port", "Impala port (10000 if not provided)"],
+        ["database", "Impala database (default if not provided)"],
+        ["auth_mechanism", "Impala auth mechanism (PLAIN if not provided)"],
         [
             "kerberos_service_name",
             "Desired Kerberos service name ('impala' if not provided)",
@@ -187,8 +208,8 @@ CONNECTION_SOURCE_FIELDS = {
         ["http_path", "URL path of HTTP proxy"],
     ],
     consts.SOURCE_TYPE_DB2: [
-        ["host", "Desired DB2 host"],
-        ["port", "Desired DB2 port (50000 if not provided)"],
+        ["host", "DB2 host"],
+        ["port", "DB2 port (50000 if not provided)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
         ["database", "Database in DB2 to connect to"],
@@ -202,6 +223,16 @@ VALIDATE_COLUMN_HELP_TEXT = "Run a column validation"
 VALIDATE_ROW_HELP_TEXT = "Run a row validation"
 VALIDATE_SCHEMA_HELP_TEXT = "Run a schema validation"
 VALIDATE_CUSTOM_QUERY_HELP_TEXT = "Run a custom query validation"
+
+
+class deprecate_action(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        super().__init__(option_strings, dest, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        logging.warning(
+            f"Argument {option_string} is deprecated and may be removed in a future release"
+        )
 
 
 def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: "Namespace"):
@@ -382,7 +413,9 @@ def _configure_find_tables(subparsers):
         "--target-conn", "-tc", help="Target connection name."
     )
     find_tables_parser.add_argument(
-        "--allowed-schemas", "-as", help="List of source schemas to match."
+        "--allowed-schemas",
+        "-as",
+        help="List of source schemas to match. Can include mappings like 'source_schema=target_schema'.",
     )
     find_tables_parser.add_argument(
         "--include-views",
@@ -535,7 +568,12 @@ def _configure_database_specific_parsers(parser):
         for field_obj in CONNECTION_SOURCE_FIELDS[database]:
             arg_field = "--" + field_obj[0].replace("_", "-")
             help_txt = field_obj[1]
-            db_parser.add_argument(arg_field, help=help_txt)
+            if (
+                field_obj[0] == "thick_mode" and database == consts.SOURCE_TYPE_ORACLE
+            ):  # flag
+                db_parser.add_argument(arg_field, help=help_txt, action="store_true")
+            else:
+                db_parser.add_argument(arg_field, help=help_txt)
 
 
 def _configure_validate_parser(subparsers):
@@ -613,11 +651,9 @@ def _configure_row_parser(
     optional_arguments.add_argument(
         "--trim-string-pks",
         "-tsp",
-        action="store_true",
-        help=(
-            "Trims string based primary key values, intended for use when one engine uses "
-            "padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n))."
-        ),
+        action=deprecate_action,
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
     )
     optional_arguments.add_argument(
         "--case-insensitive-match",
@@ -632,13 +668,13 @@ def _configure_row_parser(
         "-mcc",
         type=int,
         help=(
-            "The maximum number of columns accepted by a --hash or --concat validation. When there are "
-            "more columns than this the validation will implicitly be split into multiple validations. "
-            "This option has engine specific defaults."
+            """Maximum number of columns used in one --hash or --concat validation. When there are more columns
+                in the validation, the validation will be split into multiple validations. There are engine specific
+                defaults, so most users do not need to use this option unless they encounter errors."""
         ),
     )
-    # Generate-table-partitions and custom-query does not support random row
-    if not (is_generate_partitions or is_custom_query):
+    # Generate-table-partitions does not support random row
+    if not is_generate_partitions:
         optional_arguments.add_argument(
             "--use-random-row",
             "-rr",
@@ -650,17 +686,18 @@ def _configure_row_parser(
             "-rbs",
             help="Row batch size used for random row filters (default 10,000).",
         )
-        # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
-        # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
-        # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
-        # a required argument for validate row, validate column and validate schema.
-        required_arguments.add_argument(
-            "--tables-list",
-            "-tbls",
-            default=None,
-            required=True,
-            help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
-        )
+        if not is_custom_query:
+            # Generate table partitions follows a new argument spec where either the table names or queries can be provided, but not both.
+            # that is specified in configure_partition_parser. If we use the same spec for row and column validation, the custom query commands
+            # may get subsumed by validate and validate commands by specifying tables name or queries. Until this -tbls will be
+            # a required argument for validate row, validate column and validate schema.
+            required_arguments.add_argument(
+                "--tables-list",
+                "-tbls",
+                default=None,
+                required=True,
+                help="Comma separated tables list in the form 'schema.table=target_schema.target_table'",
+            )
 
     # Group for mutually exclusive required arguments. Either must be supplied
     mutually_exclusive_arguments = required_arguments.add_mutually_exclusive_group(
@@ -735,7 +772,10 @@ def _configure_column_parser(column_parser):
     optional_arguments.add_argument(
         "--std",
         "-std",
-        help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+        help="""Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns.
+                Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific
+                equivalent) that are comparable across all other supported SQL engines. This option may produce
+                unreliable results.""",
     )
     optional_arguments.add_argument(
         "--grouped-columns",
@@ -931,7 +971,15 @@ def _configure_custom_query_column_parser(custom_query_column_parser):
     optional_arguments.add_argument(
         "--std",
         "-std",
-        help="Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns",
+        help="""Comma separated list of columns for standard deviation 'col_a,col_b' or * for all columns.
+                Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific
+                equivalent) that are comparable across all other supported SQL engines. This option may produce
+                unreliable results.""",
+    )
+    optional_arguments.add_argument(
+        "--grouped-columns",
+        "-gc",
+        help="Comma separated list of columns to group results by, e.g. 'col_a,col_b'. Applies to column validations, including custom-query column.",
     )
     optional_arguments.add_argument(
         "--exclude-columns",
@@ -1288,18 +1336,16 @@ def _get_result_handler(rc_value: str, sa_file=None) -> dict:
     if config[0] in connections:
         # We received connection_name.results_table.
         conn_from_file = get_connection(config[0])
-        if conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_BIGQUERY:
-            result_handler = {
-                consts.RH_TYPE: conn_from_file[consts.SOURCE_TYPE],
-                consts.PROJECT_ID: conn_from_file["project_id"],
-                consts.TABLE_ID: config[1],
-                consts.API_ENDPOINT: conn_from_file.get("api_endpoint", None),
-            }
-        elif conn_from_file[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_POSTGRES:
+        if conn_from_file[consts.SOURCE_TYPE] in [
+            consts.SOURCE_TYPE_BIGQUERY,
+            consts.SOURCE_TYPE_POSTGRES,
+        ]:
             result_handler = {
                 consts.RH_TYPE: conn_from_file[consts.SOURCE_TYPE],
                 consts.TABLE_ID: config[1],
-                consts.RH_CONN: conn_from_file,
+                # Only store the connection name in the result handler to avoid accidentally
+                # storing credentials in config files.
+                consts.RH_CONN: config[0],
             }
         # TODO Add filesytem handler too.
         else:
@@ -1493,25 +1539,48 @@ def _concat_column_count_configs(
     return return_list
 
 
+def _get_pre_build_configs_base_columns(
+    client, table_obj: dict, query_str: str
+) -> list:
+    """Return a list of base columns for the table/custom query, used for both columns="*" and --exclude-columns."""
+    if table_obj:
+        full_col_list = clients.get_ibis_table_schema(
+            client,
+            table_obj["schema_name"],
+            table_obj["table_name"],
+        ).names
+    else:
+        full_col_list = clients.get_ibis_query_schema(
+            client,
+            query_str,
+        ).names
+    return [_.casefold() for _ in full_col_list]
+
+
+def _get_pre_build_configs_cols_from_arg(
+    column_csv_arg: str, casefold_columns: list, exclude_columns: bool
+) -> Optional[list]:
+    if column_csv_arg is None:
+        return None
+
+    column_arg_list = [_.casefold() for _ in get_arg_list(column_csv_arg)]
+    if column_csv_arg == "*" and exclude_columns:
+        raise ValueError(
+            "Exclude columns flag cannot be present with '*' column specification"
+        )
+    elif column_csv_arg == "*" or exclude_columns:
+        # If validating with "*" or need to invert the list then we need to expand to count the columns.
+        if column_csv_arg == "*":
+            return casefold_columns
+
+        if exclude_columns:
+            return [col for col in casefold_columns if col not in column_arg_list]
+    else:
+        return column_arg_list
+
+
 def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
     """Return a dict of configurations to build ConfigManager object"""
-
-    def cols_from_arg(concat_arg: str, client, table_obj: dict, query_str: str) -> list:
-        if concat_arg == "*":
-            # If validating with "*" then we need to expand to count the columns.
-            if table_obj:
-                return clients.get_ibis_table_schema(
-                    client,
-                    table_obj["schema_name"],
-                    table_obj["table_name"],
-                ).names
-            else:
-                return clients.get_ibis_query_schema(
-                    client,
-                    query_str,
-                ).names
-        else:
-            return get_arg_list(concat_arg)
 
     # validate_cmd will be set to 'row`, or 'Custom-query' if invoked by generate-table-partitions depending
     # on what is being partitioned. Otherwise validate_cmd will be set to None
@@ -1592,6 +1661,10 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             tables_list, source_client, target_client
         )
     for table_obj in tables_list:
+        casefold_source_columns = _get_pre_build_configs_base_columns(
+            source_client, table_obj, query_str
+        )
+
         pre_build_configs = {
             "config_type": config_type,
             consts.CONFIG_SOURCE_CONN_NAME: args.source_conn,
@@ -1607,9 +1680,6 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             "result_handler_config": result_handler_config,
             "filter_config": filter_config,
             consts.CONFIG_FILTER_STATUS: filter_status,
-            consts.CONFIG_TRIM_STRING_PKS: getattr(
-                args, consts.CONFIG_TRIM_STRING_PKS, False
-            ),
             consts.CONFIG_CASE_INSENSITIVE_MATCH: getattr(
                 args, consts.CONFIG_CASE_INSENSITIVE_MATCH, False
             ),
@@ -1618,18 +1688,25 @@ def get_pre_build_configs(args: "Namespace", validate_cmd: str) -> List[Dict]:
             consts.CONFIG_RUN_ID: getattr(args, consts.CONFIG_RUN_ID, None),
             "verbose": args.verbose,
         }
+
         if (
             pre_build_configs[consts.CONFIG_ROW_CONCAT]
             or pre_build_configs[consts.CONFIG_ROW_HASH]
         ):
             # Ensure we don't have too many columns for the engines involved.
-            cols = cols_from_arg(
+            cols = _get_pre_build_configs_cols_from_arg(
                 pre_build_configs[consts.CONFIG_ROW_HASH]
                 or pre_build_configs[consts.CONFIG_ROW_CONCAT],
-                source_client,
-                table_obj,
-                query_str,
+                casefold_source_columns,
+                args.exclude_columns,
             )
+            if args.exclude_columns:
+                # Put the column csv back into pre_build_configs because it has been inverted.
+                if pre_build_configs[consts.CONFIG_ROW_HASH]:
+                    pre_build_configs[consts.CONFIG_ROW_HASH] = ",".join(cols)
+                elif pre_build_configs[consts.CONFIG_ROW_CONCAT]:
+                    pre_build_configs[consts.CONFIG_ROW_CONCAT] = ",".join(cols)
+
             new_pre_build_configs = _concat_column_count_configs(
                 cols,
                 pre_build_configs,

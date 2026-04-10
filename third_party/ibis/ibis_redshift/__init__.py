@@ -17,8 +17,9 @@ import ibis.expr.datatypes as dt
 from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
-from ibis import util
 from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
+from third_party.ibis.ibis_addon.api import cache_generator_results
+from ibis import util
 
 
 class Backend(BaseAlchemyBackend):
@@ -61,6 +62,7 @@ class Backend(BaseAlchemyBackend):
             poolclass=sa.pool.StaticPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,
+            execution_options={"isolation_level": "AUTOCOMMIT"},
         )
 
         @sa.event.listens_for(engine, "connect")
@@ -71,7 +73,7 @@ class Backend(BaseAlchemyBackend):
         super().do_connect(engine)
 
     def list_databases(self, like=None):
-        with self.begin() as con:
+        with self.con.connect() as con:
             # http://dba.stackexchange.com/a/1304/58517
             databases = [
                 row.datname
@@ -81,24 +83,31 @@ class Backend(BaseAlchemyBackend):
             ]
         return self._filter_with_like(databases, like)
 
+    @cache_generator_results
     def _metadata(self, query: str) -> Iterable[Tuple[str, dt.DataType]]:
-        raw_name = util.guid()
+        raw_name = util.guid().lower()
         name = self._quote(raw_name)
-        type_info_sql = """\
-    SELECT
-    "column", "type"
-    FROM PG_TABLE_DEF
-    WHERE tablename = :raw_name
-    """
+        type_info_sql = """
+        SELECT 
+            "column_name", 
+            "data_type"
+        FROM SVV_ALL_COLUMNS
+        WHERE table_name = :raw_name
+        ORDER BY ordinal_position
+        """
         if self.inspector.has_table(query):
             query = f"TABLE {query}"
-        with self.begin() as con:
-            con.exec_driver_sql(f"CREATE VIEW {name} AS {query}")
-            type_info = con.execute(
-                sa.text(type_info_sql).bindparams(raw_name=raw_name)
-            )
-            yield from ((col, _get_type(typestr)) for col, typestr in type_info)
-            con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
+        with self.con.connect() as con:
+            try:
+                con.exec_driver_sql(
+                    f"CREATE VIEW {name} AS {query} WITH NO SCHEMA BINDING"
+                )
+                type_info = con.execute(
+                    sa.text(type_info_sql).bindparams(raw_name=raw_name)
+                )
+                yield from ((col, _get_type(typestr)) for col, typestr in type_info)
+            finally:
+                con.exec_driver_sql(f"DROP VIEW IF EXISTS {name}")
 
     def _get_temp_view_definition(
         self, name: str, definition: sa.sql.compiler.Compiled

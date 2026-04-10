@@ -23,7 +23,10 @@ from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import 
 )
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_CORE_TYPES_COLUMNS,
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
+    connections_add_test,
     find_tables_test,
     id_column_row_validation_test,
     id_type_test_assertions,
@@ -45,16 +48,18 @@ from tests.system.data_sources.test_bigquery import BQ_CONN
 
 # Cloud SQL Proxy listens on localhost
 SQL_SERVER_HOST = os.getenv("SQL_SERVER_HOST", "127.0.0.1")
+SQL_SERVER_PORT = os.getenv("SQL_SERVER_PORT", "1433")
 SQL_SERVER_USER = os.getenv("SQL_SERVER_USER", "sqlserver")
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
+SQL_SERVER_DATABASE = os.getenv("SQL_SERVER_DATABASE", "guestbook")
 PROJECT_ID = os.getenv("PROJECT_ID")
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_MSSQL,
     "host": SQL_SERVER_HOST,
     "user": SQL_SERVER_USER,
     "password": SQL_SERVER_PASSWORD,
-    "port": 1433,
-    "database": "guestbook",
+    "port": int(SQL_SERVER_PORT),
+    "database": SQL_SERVER_DATABASE,
 }
 
 EXPECTED_DATETIME_ID_PARTITION_FILTER = [
@@ -66,6 +71,37 @@ EXPECTED_DATETIME_ID_PARTITION_FILTER = [
         " ( NOT other_data IS NULL ) AND ( \"id\" < '2020-03-01T12:00:00' )",
         " ( NOT other_data IS NULL ) AND ( \"id\" >= '2020-03-01T12:00:00' )",
     ],
+]
+
+DVT_SS2BQ_COLUMNS = [
+    "id",
+    "col_int1",
+    "col_int2",
+    "col_int4",
+    "col_int8",
+    "col_dec",
+    "col_dec_10_2",
+    "col_float32",
+    "col_float64",
+    "col_money",
+    "col_smallmoney",
+    "col_varchar_30",
+    "col_char_2",
+    "col_nvarchar_30",
+    "col_nchar_2",
+    "col_text",
+    "col_ntext",
+    "col_date",
+    "col_datetime",
+    "col_datetime2",
+    "col_smalldatetime",
+    "col_datetimeoffset",
+    "col_time",
+    "col_binary",
+    "col_varbinary",
+    "col_varbinary_max",
+    "col_bit",
+    "col_image",
 ]
 
 
@@ -145,35 +181,35 @@ def test_sql_server_row(cloud_sql):
                 "source_calculated_columns": ["content"],
                 "target_calculated_columns": ["content"],
                 "field_alias": "cast__content",
-                "type": "cast",
+                "type": consts.CALC_FIELD_CAST,
                 "depth": 0,
             },
             {
                 "source_calculated_columns": ["cast__content"],
                 "target_calculated_columns": ["cast__content"],
                 "field_alias": "ifnull__cast__content",
-                "type": "ifnull",
+                "type": consts.CALC_FIELD_IFNULL,
                 "depth": 1,
             },
             {
                 "source_calculated_columns": ["ifnull__cast__content"],
                 "target_calculated_columns": ["ifnull__cast__content"],
                 "field_alias": "rstrip__ifnull__cast__content",
-                "type": "rstrip",
+                "type": consts.CALC_FIELD_RSTRIP,
                 "depth": 2,
             },
             {
                 "source_calculated_columns": ["rstrip__ifnull__cast__content"],
                 "target_calculated_columns": ["rstrip__ifnull__cast__content"],
                 "field_alias": "upper__rstrip__ifnull__cast__content",
-                "type": "upper",
+                "type": consts.CALC_FIELD_UPPER,
                 "depth": 3,
             },
             {
                 "source_calculated_columns": ["upper__rstrip__ifnull__cast__content"],
                 "target_calculated_columns": ["upper__rstrip__ifnull__cast__content"],
                 "field_alias": "hash__all",
-                "type": "hash",
+                "type": consts.CALC_FIELD_HASH,
                 "depth": 4,
             },
         ],
@@ -228,26 +264,26 @@ def mock_get_connection_config(*args):
 # Expected result from partitioning table on 3 keys, 9 partitions
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'ALG001' OR course_id = N'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'ALG001' OR course_id = N'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'GEO001' OR course_id = N'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'GEO001' OR course_id = N'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < N'TRI001' OR course_id = N'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > N'TRI001' OR course_id = N'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00' OR recd_timestamp = '2023-08-26 16:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00' OR recd_timestamp = '2023-08-27 15:00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
     ],
 ]
 
@@ -259,13 +295,17 @@ EXPECTED_PARTITION_FILTER = [
 def test_generate_partitions(cloud_sql, tmp_path: pathlib.Path):
     """Test generate partitions on SQL Server, first on table, then on custom query"""
     partition_table_test(
-        EXPECTED_PARTITION_FILTER, tables="dbo.test_generate_partitions"
+        EXPECTED_PARTITION_FILTER,
     )
     partition_query_test(
-        EXPECTED_PARTITION_FILTER, tmp_path, tables="dbo.test_generate_partitions"
+        EXPECTED_PARTITION_FILTER,
+        tmp_path,
     )
 
 
+###############################
+# Schema validation
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -289,10 +329,34 @@ def test_schema_validation_core_types_to_bigquery():
         tc="bq-conn",
         allow_list=(
             # All SQL Server integers go to BigQuery INT64.
-            "int8:int64,int16:int64,int32:int64,"
+            "int8:int64,int16:int64,int32:int64,!int32:!int64,"
             # BigQuery does not have a float32 type.
-            "float32:float64"
+            "float32:float64,"
+            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
+            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),"
         ),
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_ss_types_to_bigquery():
+    """Test schema validation on most SQL Server scalar data types."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
+        allow_list=(
+            # All SQL Server integers go to BigQuery INT64.
+            "int8:int64,int16:int64,int32:int64,!int32:!int64,"
+            # BigQuery does not have a float32 type.
+            "float32:float64,"
+            # SQL Server datetime scales are picked up.
+            "timestamp(7):timestamp,timestamp(7, 'UTC'):timestamp('UTC')"
+        ),
+        # TODO money types are being identified as integers - issue-1582
+        exclusion_columns="col_money,col_smallmoney",
     )
 
 
@@ -310,6 +374,8 @@ def test_schema_validation_not_null_vs_nullable():
             "-sc=sql-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
+            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
+            "--allow-list=timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -320,14 +386,62 @@ def test_schema_validation_not_null_vs_nullable():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_schema_validation_camel_case():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
+    table name testing should be part of find-tables testing.
+    Regarding column names: DVT tends to lower case all column names and this test confirms name matching
+    and any recursive SQL is valid.
+    """
+    schema_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_identifiers():
+    """Test schema validation on a table with special characters in table and column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+###############################
+# Column validation
+###############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_core_types():
     """SQL Server to SQL Server dvt_core_types column validation"""
     column_validation_test(
         tc="mock-conn",
         tables="pso_data_validator.dvt_core_types",
+        count_cols="*",
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
         filters="id>0 AND col_int8>0",
         grouped_columns="col_varchar_30",
     )
@@ -340,13 +454,60 @@ def test_column_validation_core_types():
 def test_column_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have a float32 type.
-    cols = "col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_dec_10_2,col_float64,col_varchar_30,col_char_2,col_string,col_date,col_datetime,col_tstz"
+    cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
+    )
+    # Excluded col_float64 from std_cols due to STDDEV_SAMP inconsistent results. See issue-1540.
+    std_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_float64")
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=std_cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type column validation test"""
+    # col_ntext is excluded below because we have no way to get a character length from SQL Server.
+    cols = [
+        _
+        for _ in DVT_SS2BQ_COLUMNS
+        if _
+        not in (
+            "id",
+            # Excluded col_float32 because BigQuery does not have a float32 type.
+            "col_float32",
+            # TODO Remove money types from exclude list below when working on - issue-1582
+            "col_money",
+            "col_smallmoney",
+            "col_ntext",
+        )
+    ]
+    # TODO Include col_int1 in max_cols when working on issue-1585.
+    max_cols = [_ for _ in cols if _ not in ("col_int1",)]
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_sql_server_types",
+        count_cols=",".join(cols),
+        sum_cols=",".join(cols),
+        min_cols=",".join(cols),
+        max_cols=",".join(max_cols),
+        # SQL Server requires cast_to_bigint for summing tinyint/smallint/int.
+        cast_to_bigint=True,
     )
 
 
@@ -356,12 +517,13 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_column_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        min_cols="*",
-        max_cols="*",
-        sum_cols="*",
+        min_cols=cols,
+        max_cols=cols,
+        sum_cols=cols,
         wildcard_include_timestamp=True,
     )
 
@@ -372,14 +534,24 @@ def test_column_validation_tricky_dates_to_bigquery():
 )
 def test_column_validation_large_decimals_to_bigquery():
     """SQL Server to BigQuery dvt_large_decimals column validation."""
-    # TODO When issue-1079 is complete add col_dec_38_30 to --hash string below.
-    cols = "col_dec_18,col_dec_38,col_dec_38_9"
+    cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    # SQL Server stdev returns Float32. This is incompatible with stddev_samp
+    # from most other engines when the inputs have precision > float64.
+    # Therefore we have excluded std_cols from the test below.
+
+    # Excluding col_dec_38 from avg_cols due to:
+    # 1> SELECT avg(t0.col_dec_38) FROM pso_data_validator.dvt_large_decimals AS t0;
+    # 2> go
+    # Msg 8115, Level 16, State 2, Server 969116d95f4d397, Line 1
+    # Arithmetic overflow error converting expression to data type numeric.
+    avg_cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
     column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         count_cols=cols,
         min_cols=cols,
         sum_cols=cols,
+        avg_cols=avg_cols,
     )
 
 
@@ -409,12 +581,77 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_camel_case():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
+    table name testing should be part of find-tables testing.
+    Regarding column names: DVT tends to lower case all column names and this test confirms name matching
+    and any recursive SQL is valid.
+    """
+    cols = "*"
+    column_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+        count_cols=cols,
+        sum_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_identifiers():
+    """Test column validation on a table with special characters in table and column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt-identifier$_#",
+        count_cols="*",
+        filters="'col#hash' IS NOT NULL",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_uuid_to_bigquery():
+    """Test column validation with UUID column and primary key to BigQuery"""
+    column_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        count_cols="*",
+        sum_cols="*",
+        min_cols="*",
+    )
+
+
+###############################
+# Row validation
+###############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """SQL Server to SQL Server dvt_core_types row validation"""
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
     row_validation_test(
         tc="mock-conn",
-        # TODO When issue-834 is complete add col_string to --hash string below.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_10_2,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz,col_dec_20,col_dec_38",
+        hash=cols,
         filters="id>0 AND col_int8>0",
     )
 
@@ -438,11 +675,68 @@ def test_row_validation_core_types_auto_pks():
 )
 def test_row_validation_core_types_to_bigquery():
     """SQL Server to BigQuery dvt_core_types row validation"""
+    cols = ",".join([_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id")])
     row_validation_test(
         tc="bq-conn",
-        # TODO When issue-834 is complete add col_string to --hash string below.
-        # TODO When issue-1111 is complete add col_dec_10_2 to --hash string below.
-        hash="col_int8,col_int16,col_int32,col_int64,col_dec_20,col_dec_38,col_float32,col_float64,col_varchar_30,col_char_2,col_date,col_datetime,col_tstz",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type row validation using comparison fields"""
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_SS2BQ_COLUMNS
+            if _
+            not in (
+                "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
+                # TODO Include col_int1 in max_cols when working on issue-1585.
+                "col_int1",
+                # TODO Remove money types from exclude list when working on - issue-1582
+                "col_money",
+                "col_smallmoney",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
+        comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_ss_types_to_bigquery():
+    """SQL Server to BigQuery extended data type row validation"""
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_SS2BQ_COLUMNS
+            if _
+            not in (
+                "id",
+                # Excluded col_float32 because BigQuery does not have a float32 type.
+                "col_float32",
+                # TODO Remove money types from exclude list when working on - issue-1582
+                "col_money",
+                "col_smallmoney",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_sql_server_types",
+        tc="bq-conn",
+        hash=cols,
     )
 
 
@@ -458,8 +752,7 @@ def test_row_validation_large_decimals_to_bigquery():
     row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
-        # TODO When issue-1079 is complete add col_dec_38_30 to --hash string below.
-        hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9",
+        hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
     )
 
 
@@ -494,12 +787,13 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_datetime_pk_to_bigquery():
-    """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
     )
 
 
@@ -507,15 +801,12 @@ def test_row_validation_datetime_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions_datetime_pk():
-    """Test generate partitions on datetime primary key"""
-    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
-    partition_table_test(
-        EXPECTED_DATETIME_ID_PARTITION_FILTER,
-        pk="id",
-        tables="pso_data_validator.dvt_datetime_id",
-        filters="other_data IS NOT NULL",
-        partition_num=2,
+def test_row_validation_datetime_pk_to_bigquery():
+    """Test datetime primary key join columns"""
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_datetime_id",
+        use_random_row=False,
     )
 
 
@@ -554,10 +845,25 @@ def test_row_validation_pangrams_to_bigquery():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="*",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -568,7 +874,7 @@ def test_row_validation_tricky_dates_to_bigquery():
 def test_row_validation_tricky_strings_to_bigquery():
     """Test with string values containing special characters."""
     pytest.skip(
-        "Skipping test_row_validation_tricky_dates_to_bigquery because the version of SQL Server we have does not support rtrim of all whitespace."
+        "Skipping test_row_validation_tricky_strings_to_bigquery because the version of SQL Server we have does not support rtrim of all whitespace."
     )
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_strings",
@@ -577,6 +883,107 @@ def test_row_validation_tricky_strings_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """SQL Server dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(expected_config_managers=2)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_identifiers():
+    """Test row validation on a table with special characters in table and column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt-identifier$_#",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_uuid_hash_to_bigquery():
+    """Test row validation with UUID column and primary key to BigQuery"""
+    row_validation_test(
+        tables="pso_data_validator.dvt_uuid_id",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_camel_case_auto_pk():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    The table name part of this test is a bit disingenuous because we just tell DVT the two names. Really
+    table name testing should be part of find-tables testing.
+    Regarding column names: DVT tends to lower case all column names and this test confirms name matching
+    and any recursive SQL is valid.
+    """
+    row_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_camel_case_pk_option():
+    """Compares a source table with camel case identifiers with a target with lower case identifiers.
+
+    This test is primarily concerned with passing the --primary-keys option for a CamelCase column.
+    """
+    row_validation_test(
+        tables="pso_data_validator.DvtCamelCase=pso_data_validator.dvt_camel_case_lower",
+        tc="sql-conn",
+        hash="*",
+        primary_keys="id",
+    )
+
+
+###############################
+# Custom query validation
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -618,27 +1025,6 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_find_tables():
-    """SQL Server to BigQuery test of find-tables command."""
-    pytest.skip("Skipping test_find_tables until issue 1198 has been resolved.")
-    find_tables_test()
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_many_columns():
-    """SQL Server dvt_many_cols row validation.
-    This is testing many columns logic for --hash, there's a Teradata test for --concat.
-    """
-    row_validation_many_columns_test(expected_config_managers=2)
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_custom_query_row_validation_many_columns():
     """SQL Server dvt_many_cols custom-query row validation.
     This is testing many columns logic for --hash, there's a Teradata test for --concat.
@@ -648,122 +1034,40 @@ def test_custom_query_row_validation_many_columns():
     )
 
 
+###############################
+# Generate partitions
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_identifiers():
-    """Test schema validation on a table with special characters in table and column names."""
-    schema_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
-        tc="mock-conn",
+def test_generate_partitions_datetime_pk():
+    """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
+    partition_table_test(
+        EXPECTED_DATETIME_ID_PARTITION_FILTER,
+        pk="id",
+        tables="pso_data_validator.dvt_datetime_id",
+        filters="other_data IS NOT NULL",
+        partition_num=2,
     )
 
 
+###############################
+# Find-tables tests
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_identifiers():
-    """Test column validation on a table with special characters in table and column names."""
-    column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt-identifier$_#",
-        count_cols="*",
-        filters="'col#hash' IS NOT NULL",
-    )
+def test_find_tables():
+    """SQL Server to BigQuery test of find-tables command."""
+    find_tables_test()
 
 
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_identifiers():
-    """Test row validation on a table with special characters in table and column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
-        tc="mock-conn",
-        hash="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_schema_validation_reserved_words():
-    """Test schema validation on a table with reserved words in column names."""
-    schema_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_reserved_words():
-    """Test column validation on a table with reserved words in column names."""
-    column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        count_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-        hash="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_comp_fields_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-        comp_fields="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_uuid_to_bigquery():
-    """Test column validation with UUID column and primary key to BigQuery"""
-    column_validation_test(
-        tables="pso_data_validator.dvt_uuid_id",
-        count_cols="*",
-        sum_cols="*",
-        min_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_uuid_hash_to_bigquery():
-    """Test row validation with UUID column and primary key to BigQuery"""
-    row_validation_test(
-        tables="pso_data_validator.dvt_uuid_id",
-        hash="*",
-    )
-
-
+###############################
+# Raw SQL tests
+###############################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -771,3 +1075,27 @@ def test_row_validation_uuid_hash_to_bigquery():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        SQL_SERVER_HOST,
+        "--user",
+        SQL_SERVER_USER,
+        "--password",
+        SQL_SERVER_PASSWORD,
+        "--port",
+        SQL_SERVER_PORT,
+        "--database",
+        SQL_SERVER_DATABASE,
+        "--query",
+        '{"TrustServerCertificate": "yes"}',
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_MSSQL, conn_args, tmp_path, monkeypatch
+    )

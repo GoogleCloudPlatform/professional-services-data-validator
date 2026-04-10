@@ -83,7 +83,9 @@ CLI_ADD_BQ_CONNECTION_ARGS = [
     "--project-id",
     "example-project",
     "--api-endpoint",
-    "https://mybq.p.googleapis.com",
+    "https://bigquery-mypsc.p.googleapis.com",
+    "--storage-api-endpoint",
+    "https://bigquerystorage-mypsc.p.googleapis.com",
 ]
 
 
@@ -152,7 +154,8 @@ CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
     "--connection-name",
     "ora_wal_test",
     "Oracle",
-    "--url=oracle+cx_oracle://@dvt_user_db",
+    """--connect-args='{"dsn": "@dvt_user_db", "config_dir": "/opt/oracle/client_files", "disable_oob": true}'""",
+    "--thick-mode",
 ]
 
 TEST_VALIDATION_CONFIG = {
@@ -309,7 +312,7 @@ def test_create_bq_connection(caplog, fs):
     assert bq_conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_BIGQUERY
 
     conn_from_file = cli_tools.get_connection(args.connection_name)
-    assert conn_from_file["api_endpoint"] == "https://mybq.p.googleapis.com"
+    assert conn_from_file["api_endpoint"] == "https://bigquery-mypsc.p.googleapis.com"
 
 
 @mock.patch(
@@ -327,7 +330,9 @@ def test_create_connections_oracle(mock_write_file):
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS)
     conn = cli_tools.get_connection_config_from_args(args)
-    assert "url" in conn
+    assert "connect_args" in conn
+    assert "config_dir" in conn["connect_args"]
+    assert "thick_mode" in conn
     cli_tools.store_connection(args.connection_name, conn)
 
 
@@ -622,17 +627,19 @@ def test_get_result_handler_by_conn_file(fs):
     res = cli_tools._get_result_handler(f"{args.connection_name}.dataset.table")
     assert res == {
         consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
-        consts.PROJECT_ID: args.project_id,
         consts.TABLE_ID: "dataset.table",
-        consts.API_ENDPOINT: args.api_endpoint,
+        consts.RH_CONN: args.connection_name,
     }
 
     # Plus check standard format still works.
-    res = cli_tools._get_result_handler("project.dataset.table")
+    res = cli_tools._get_result_handler(
+        "project.dataset.table", sa_file="/tmp/some-key.json"
+    )
     assert res == {
         consts.RH_TYPE: consts.SOURCE_TYPE_BIGQUERY,
         consts.PROJECT_ID: "project",
         consts.TABLE_ID: "dataset.table",
+        consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH: "/tmp/some-key.json",
     }
 
 
@@ -886,6 +893,78 @@ def test_concat_column_count_configs(
         assert result == [pre_build_config]
 
 
+class MockIbisSchema:
+    def __init__(self, names):
+        self.names = names
+
+
+@pytest.mark.parametrize(
+    "concat_arg,exclude_columns,base_columns,expected_result,expected_exception",
+    [
+        # Scenario 1: wildcard with exclude_columns raises ValueError
+        (
+            "*",
+            True,
+            ["col1", "col2"],
+            None,
+            ValueError,
+        ),
+        # Scenario 2a: wildcard with table_obj
+        (
+            "*",
+            False,
+            ["col1", "col2", "col3"],
+            ["col1", "col2", "col3"],
+            None,
+        ),
+        # Scenario 2b: wildcard with query_str
+        (
+            "*",
+            False,
+            ["col_a", "col_b"],
+            ["col_a", "col_b"],
+            None,
+        ),
+        # Scenario 3a: exclude_columns with table_obj
+        (
+            "col1,col3",
+            True,
+            ["col1", "col2", "col3", "col4"],
+            ["col2", "col4"],
+            None,
+        ),
+        # Scenario 3b: exclude_columns with query_str
+        (
+            "col_a",
+            True,
+            ["col_a", "col_b", "col_c"],
+            ["col_b", "col_c"],
+            None,
+        ),
+        # Scenario 4: simple column list
+        ("col1,col2", False, [], ["col1", "col2"], None),
+    ],
+)
+def test__get_pre_build_configs_cols_from_arg(
+    concat_arg,
+    exclude_columns,
+    base_columns,
+    expected_result,
+    expected_exception,
+):
+    """Test _get_pre_build_configs_cols_from_arg."""
+    if expected_exception:
+        with pytest.raises(expected_exception):
+            cli_tools._get_pre_build_configs_cols_from_arg(
+                concat_arg, base_columns, exclude_columns
+            )
+    else:
+        result = cli_tools._get_pre_build_configs_cols_from_arg(
+            concat_arg, base_columns, exclude_columns
+        )
+        assert result == expected_result
+
+
 @pytest.mark.parametrize(
     "test_input",
     ["tests/resources/custom-query.sql"],
@@ -979,6 +1058,15 @@ def test_arg_parser_validate_custom_query_row_help(capsys):
     assert "--hash" in captured.out
     assert "--source-query" in captured.out
     assert "--primary-keys" in captured.out
+
+
+def test_arg_parser_validate_custom_query_column_help(capsys):
+    """Test validate custom-query column --help arg."""
+    parser = cli_tools.configure_arg_parser()
+    with pytest.raises(SystemExit):
+        _ = parser.parse_args(["validate", "custom-query", "column", "--help"])
+    captured = capsys.readouterr()
+    assert "--grouped-columns" in captured.out
 
 
 def test_arg_parser_generate_table_partitions_help(capsys):

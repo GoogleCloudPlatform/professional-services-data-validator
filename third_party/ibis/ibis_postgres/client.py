@@ -161,7 +161,8 @@ def _list_primary_key_columns(self, database: str, table: str) -> list:
 def _raw_column_metadata(
     self, database: str = None, table: str = None, query: str = None
 ) -> Iterable[Tuple]:
-    """Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
+    """Define this method to allow DVT to test if backend specific transformations may be needed for comparison.
+    Partner method to _metadata that retains raw data type information instead of converting to Ibis types.
     This works in the same way as _metadata by running a query over the DVT source, either schema.table or a
     custom query, and fetching the first row. From the cursor we can detect data types of the row's columns.
 
@@ -207,8 +208,15 @@ def _raw_column_metadata(
         )
 
 
+def _is_char_type_padded(self, char_type: Tuple) -> bool:
+    """Define this method if the backend supports character/string types that are padded and returns
+    padded values, which DVT may want to trim"""
+    return char_type[0] == "character"
+
+
 PostgresBackend._metadata = _metadata
 PostgresBackend.list_databases = list_schemas
 PostgresBackend.do_connect = do_connect
 PostgresBackend.list_primary_key_columns = _list_primary_key_columns
 PostgresBackend.raw_column_metadata = _raw_column_metadata
+PostgresBackend.is_char_type_padded = _is_char_type_padded

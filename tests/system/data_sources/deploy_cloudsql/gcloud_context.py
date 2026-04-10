@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Context manager for gcloud which redirects config directory to temp location """
+"""Context manager for gcloud which redirects config directory to temp location"""
 
 import os
 import subprocess

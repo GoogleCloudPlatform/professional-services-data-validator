@@ -12,13 +12,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 import logging
-from typing import Any, Mapping
 
 import ibis
 
-# Fail fast with imports
-import snowflake.connector
-import snowflake.sqlalchemy
+import snowflake.connector  # NOQA fail early if the driver is missing
+import snowflake.sqlalchemy  # NOQA fail early if the driver is missing
 
 logging.getLogger("snowflake.connector").setLevel(logging.WARNING)
 
@@ -31,14 +29,23 @@ def snowflake_connect(
     password: str,
     account: str,
     database: str,
+    warehouse: str = None,
+    role: str = None,
     connect_args: str = None,
 ):
     if connect_args:
         connect_args = dvt_config_string_to_dict(connect_args)
-    return ibis.snowflake.connect(
-        user=user,
-        password=password,
-        account=account,
-        database=database,
-        connect_args=connect_args,
-    )
+
+    client_args = {
+        "user": user,
+        "password": password,
+        "account": account,
+        "database": database,
+        "connect_args": connect_args,
+    }
+    if role:
+        client_args["role"] = role
+    if warehouse:
+        client_args["warehouse"] = warehouse
+
+    return ibis.snowflake.connect(**client_args)

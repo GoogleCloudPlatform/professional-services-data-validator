@@ -23,6 +23,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     find_tables_test,
     id_column_row_validation_test,
+    id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
     raw_query_test,
@@ -39,7 +40,6 @@ from tests.system.data_sources.common_functions import (
     partition_table_test,
     partition_query_test,
 )
-
 
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "dvt")
@@ -108,26 +108,26 @@ def test_mysql_count_invalid_host():
 # Expected result from partitioning table on 3 keys, 9 partitions
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 1)))) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '2023-08-23' OR registration_date = '2023-08-23' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '2023-08-23' OR registration_date = '2023-08-23' AND approved >= 0)))) AND (course_id < 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''''s' OR course_id = 'St. Edward''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 1))))",
+        "quarter_id != 1111 AND (course_id > 'St. John''''s' OR course_id = 'St. John''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-26 16:00:00+00:00' OR recd_timestamp = '2023-08-26 16:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 1)))) AND (course_id < 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''''s' OR course_id = 'St. Jude''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0)))) AND (course_id < 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND (recd_timestamp < '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date < '1969-07-20' OR registration_date = '1969-07-20' AND approved < 0))))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''''s' OR course_id = 'St. Paul''''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND (recd_timestamp > '2023-08-27 15:00:00+00:00' OR recd_timestamp = '2023-08-27 15:00:00+00:00' AND (registration_date > '1969-07-20' OR registration_date = '1969-07-20' AND approved >= 0))))",
     ],
 ]
 
@@ -138,10 +138,16 @@ EXPECTED_PARTITION_FILTER = [
 )
 def test_generate_partitions(tmp_path: pathlib.Path):
     """Test generate partitions on MySQL, first on table, then on custom query"""
-    partition_table_test(EXPECTED_PARTITION_FILTER)
-    partition_query_test(EXPECTED_PARTITION_FILTER, tmp_path)
+    partition_table_test(
+        EXPECTED_PARTITION_FILTER,
+    )
+    partition_query_test(
+        EXPECTED_PARTITION_FILTER,
+        tmp_path,
+    )
 
 
+OLD_DRY_RUN = "SELECT t0.hash__all, t0.id \nFROM (SELECT t1.id AS id, t1.col_int8 AS col_int8, t1.col_int16 AS col_int16, t1.col_int32 AS col_int32, t1.col_int64 AS col_int64, t1.col_dec_20 AS col_dec_20, t1.col_dec_38 AS col_dec_38, t1.col_dec_10_2 AS col_dec_10_2, t1.col_float32 AS col_float32, t1.col_float64 AS col_float64, t1.col_varchar_30 AS col_varchar_30, t1.col_char_2 AS col_char_2, t1.col_string AS col_string, t1.col_date AS col_date, t1.col_datetime AS col_datetime, t1.col_tstz AS col_tstz, t1.cast__col_string AS cast__col_string, t1.ifnull__cast__col_string AS ifnull__cast__col_string, t1.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, t1.concat__all AS concat__all, sha2(t1.concat__all, '256') AS hash__all \nFROM (SELECT t2.id AS id, t2.col_int8 AS col_int8, t2.col_int16 AS col_int16, t2.col_int32 AS col_int32, t2.col_int64 AS col_int64, t2.col_dec_20 AS col_dec_20, t2.col_dec_38 AS col_dec_38, t2.col_dec_10_2 AS col_dec_10_2, t2.col_float32 AS col_float32, t2.col_float64 AS col_float64, t2.col_varchar_30 AS col_varchar_30, t2.col_char_2 AS col_char_2, t2.col_string AS col_string, t2.col_date AS col_date, t2.col_datetime AS col_datetime, t2.col_tstz AS col_tstz, t2.cast__col_string AS cast__col_string, t2.ifnull__cast__col_string AS ifnull__cast__col_string, t2.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, concat_ws('', t2.rstrip__ifnull__cast__col_string) AS concat__all \nFROM (SELECT t3.id AS id, t3.col_int8 AS col_int8, t3.col_int16 AS col_int16, t3.col_int32 AS col_int32, t3.col_int64 AS col_int64, t3.col_dec_20 AS col_dec_20, t3.col_dec_38 AS col_dec_38, t3.col_dec_10_2 AS col_dec_10_2, t3.col_float32 AS col_float32, t3.col_float64 AS col_float64, t3.col_varchar_30 AS col_varchar_30, t3.col_char_2 AS col_char_2, t3.col_string AS col_string, t3.col_date AS col_date, t3.col_datetime AS col_datetime, t3.col_tstz AS col_tstz, t3.cast__col_string AS cast__col_string, t3.ifnull__cast__col_string AS ifnull__cast__col_string, TRIM(TRAILING '\x0c' FROM TRIM(TRAILING '\x0b' FROM TRIM(TRAILING '\r' FROM TRIM(TRAILING '\n' FROM TRIM(TRAILING '\t' FROM TRIM(TRAILING ' ' FROM (t3.ifnull__cast__col_string))))))) AS rstrip__ifnull__cast__col_string \nFROM (SELECT t4.id AS id, t4.col_int8 AS col_int8, t4.col_int16 AS col_int16, t4.col_int32 AS col_int32, t4.col_int64 AS col_int64, t4.col_dec_20 AS col_dec_20, t4.col_dec_38 AS col_dec_38, t4.col_dec_10_2 AS col_dec_10_2, t4.col_float32 AS col_float32, t4.col_float64 AS col_float64, t4.col_varchar_30 AS col_varchar_30, t4.col_char_2 AS col_char_2, t4.col_string AS col_string, t4.col_date AS col_date, t4.col_datetime AS col_datetime, t4.col_tstz AS col_tstz, t4.cast__col_string AS cast__col_string, coalesce(t4.cast__col_string, 'DEFAULT_REPLACEMENT_STRING') AS ifnull__cast__col_string \nFROM (SELECT t5.id AS id, t5.col_int8 AS col_int8, t5.col_int16 AS col_int16, t5.col_int32 AS col_int32, t5.col_int64 AS col_int64, t5.col_dec_20 AS col_dec_20, t5.col_dec_38 AS col_dec_38, t5.col_dec_10_2 AS col_dec_10_2, t5.col_float32 AS col_float32, t5.col_float64 AS col_float64, t5.col_varchar_30 AS col_varchar_30, t5.col_char_2 AS col_char_2, t5.col_string AS col_string, t5.col_date AS col_date, t5.col_datetime AS col_datetime, t5.col_tstz AS col_tstz, t5.col_string AS cast__col_string \nFROM dvt_core_types AS t5) AS t4) AS t3) AS t2) AS t1) AS t0"
 EXPECTED_DRY_RUN = "SELECT t0.hash__all, t0.id \nFROM (SELECT t1.id AS id, t1.col_int8 AS col_int8, t1.col_int16 AS col_int16, t1.col_int32 AS col_int32, t1.col_int64 AS col_int64, t1.col_dec_20 AS col_dec_20, t1.col_dec_38 AS col_dec_38, t1.col_dec_10_2 AS col_dec_10_2, t1.col_float32 AS col_float32, t1.col_float64 AS col_float64, t1.col_varchar_30 AS col_varchar_30, t1.col_char_2 AS col_char_2, t1.col_string AS col_string, t1.col_date AS col_date, t1.col_datetime AS col_datetime, t1.col_tstz AS col_tstz, t1.cast__col_string AS cast__col_string, t1.ifnull__cast__col_string AS ifnull__cast__col_string, t1.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, t1.concat__all AS concat__all, sha2(t1.concat__all, '256') AS hash__all \nFROM (SELECT t2.id AS id, t2.col_int8 AS col_int8, t2.col_int16 AS col_int16, t2.col_int32 AS col_int32, t2.col_int64 AS col_int64, t2.col_dec_20 AS col_dec_20, t2.col_dec_38 AS col_dec_38, t2.col_dec_10_2 AS col_dec_10_2, t2.col_float32 AS col_float32, t2.col_float64 AS col_float64, t2.col_varchar_30 AS col_varchar_30, t2.col_char_2 AS col_char_2, t2.col_string AS col_string, t2.col_date AS col_date, t2.col_datetime AS col_datetime, t2.col_tstz AS col_tstz, t2.cast__col_string AS cast__col_string, t2.ifnull__cast__col_string AS ifnull__cast__col_string, t2.rstrip__ifnull__cast__col_string AS rstrip__ifnull__cast__col_string, concat_ws('', t2.rstrip__ifnull__cast__col_string) AS concat__all \nFROM (SELECT t3.id AS id, t3.col_int8 AS col_int8, t3.col_int16 AS col_int16, t3.col_int32 AS col_int32, t3.col_int64 AS col_int64, t3.col_dec_20 AS col_dec_20, t3.col_dec_38 AS col_dec_38, t3.col_dec_10_2 AS col_dec_10_2, t3.col_float32 AS col_float32, t3.col_float64 AS col_float64, t3.col_varchar_30 AS col_varchar_30, t3.col_char_2 AS col_char_2, t3.col_string AS col_string, t3.col_date AS col_date, t3.col_datetime AS col_datetime, t3.col_tstz AS col_tstz, t3.cast__col_string AS cast__col_string, t3.ifnull__cast__col_string AS ifnull__cast__col_string, TRIM(TRAILING '\x0c' FROM TRIM(TRAILING '\x0b' FROM TRIM(TRAILING '\r' FROM TRIM(TRAILING '\n' FROM TRIM(TRAILING '\t' FROM TRIM(TRAILING ' ' FROM (t3.ifnull__cast__col_string))))))) AS rstrip__ifnull__cast__col_string \nFROM (SELECT t4.id AS id, t4.col_int8 AS col_int8, t4.col_int16 AS col_int16, t4.col_int32 AS col_int32, t4.col_int64 AS col_int64, t4.col_dec_20 AS col_dec_20, t4.col_dec_38 AS col_dec_38, t4.col_dec_10_2 AS col_dec_10_2, t4.col_float32 AS col_float32, t4.col_float64 AS col_float64, t4.col_varchar_30 AS col_varchar_30, t4.col_char_2 AS col_char_2, t4.col_string AS col_string, t4.col_date AS col_date, t4.col_datetime AS col_datetime, t4.col_tstz AS col_tstz, t4.cast__col_string AS cast__col_string, coalesce(t4.cast__col_string, 'DEFAULT_REPLACEMENT_STRING') AS ifnull__cast__col_string \nFROM (SELECT t5.id AS id, t5.col_int8 AS col_int8, t5.col_int16 AS col_int16, t5.col_int32 AS col_int32, t5.col_int64 AS col_int64, t5.col_dec_20 AS col_dec_20, t5.col_dec_38 AS col_dec_38, t5.col_dec_10_2 AS col_dec_10_2, t5.col_float32 AS col_float32, t5.col_float64 AS col_float64, t5.col_varchar_30 AS col_varchar_30, t5.col_char_2 AS col_char_2, t5.col_string AS col_string, t5.col_date AS col_date, t5.col_datetime AS col_datetime, t5.col_tstz AS col_tstz, t5.col_string AS cast__col_string \nFROM dvt_core_types AS t5) AS t4) AS t3) AS t2) AS t1) AS t0"
 
 
@@ -259,7 +265,7 @@ def test_column_validation_core_types():
 )
 def test_column_validation_core_types_to_bigquery():
     """MySQL to BigQuery dvt_core_types column validation"""
-    # TODO Change --sum, --min and --max options to include col_char_2 when issue-842 is complete.
+    # TODO Change --sum, --min and --max options to include col_char_2 when issue-1514 is complete.
     # We've excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     cols = ",".join(
         [
@@ -275,6 +281,8 @@ def test_column_validation_core_types_to_bigquery():
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
     )
 
 
@@ -393,17 +401,50 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Test padded char primary key join columns.
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
+    )
 
-    Note that this test will fail unless PAD_CHAR_TO_FULL_LENGTH SQL mode is enabled.
-    """
-    pytest.skip(
-        "Skipping test_row_validation_char_pk_to_bigquery because PAD_CHAR_TO_FULL_LENGTH SQL mode needs to be enabled."
-    )
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_char_id",
-    )
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 @mock.patch(
@@ -412,10 +453,10 @@ def test_row_validation_char_pk_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 

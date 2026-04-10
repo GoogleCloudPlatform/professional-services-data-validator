@@ -16,7 +16,7 @@
 from contextlib import contextmanager
 import copy
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import warnings
 
 import google.oauth2.service_account
@@ -27,6 +27,8 @@ import pandas
 
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
+
+from third_party.ibis.ibis_bigquery.api import bigquery_connect
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_mssql.api import mssql_connect
@@ -56,6 +58,7 @@ IBIS_ALCHEMY_BACKENDS = [
     "redshift",
     "snowflake",
     "spanner_postgres",
+    "sybase",
 ]
 
 
@@ -69,20 +72,20 @@ def _raise_missing_client_error(msg):
 # Teradata requires teradatasql and licensing
 try:
     from third_party.ibis.ibis_teradata.api import teradata_connect
-except Exception:
+except ImportError:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
 
-# Oracle requires cx_Oracle driver
+# Oracle requires python-oracldb driver
 try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
-except Exception:
-    oracle_connect = _raise_missing_client_error("pip install cx_Oracle")
+except ImportError:
+    oracle_connect = _raise_missing_client_error("pip install oracledb")
 
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
     from third_party.ibis.ibis_snowflake.api import snowflake_connect
-except Exception:
+except ImportError:
     snowflake_connect = _raise_missing_client_error(
         "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
     )
@@ -90,22 +93,35 @@ except Exception:
 # DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
-except Exception:
+except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+
+# Sybase requires sqlalchemy_sybase package.
+try:
+    from third_party.ibis.ibis_sybase.api import sybase_connect
+except ImportError:
+    sybase_connect = _raise_missing_client_error("pip install sqlalchemy_sybase")
 
 
 def get_google_bigquery_client(
-    project_id: str, credentials=None, api_endpoint: str = None
+    project_id: str,
+    credentials=None,
+    api_endpoint: Optional[str] = None,
+    quota_project_id: Optional[str] = None,
 ):
     info = client_info.get_http_client_info()
     job_config = bigquery.QueryJobConfig(
         connection_properties=[bigquery.ConnectionProperty("time_zone", "UTC")]
     )
+    effective_project = quota_project_id or project_id
     options = None
-    if api_endpoint:
-        options = client_options.ClientOptions(api_endpoint=api_endpoint)
+    if api_endpoint or quota_project_id:
+        options = client_options.ClientOptions(
+            api_endpoint=api_endpoint,
+            quota_project_id=quota_project_id if quota_project_id else None,
+        )
     return bigquery.Client(
-        project=project_id,
+        project=effective_project,
         client_info=info,
         credentials=credentials,
         default_query_job_config=job_config,
@@ -113,23 +129,54 @@ def get_google_bigquery_client(
     )
 
 
+def _get_google_bqstorage_client(
+    credentials=None,
+    api_endpoint: Optional[str] = None,
+    quota_project_id: Optional[str] = None,
+):
+    options = None
+    if api_endpoint or quota_project_id:
+        options = client_options.ClientOptions(
+            api_endpoint=api_endpoint,
+            quota_project_id=quota_project_id if quota_project_id else None,
+        )
+    from google.cloud import bigquery_storage_v1 as bigquery_storage
+
+    return bigquery_storage.BigQueryReadClient(
+        credentials=credentials,
+        client_options=options,
+    )
+
+
 def get_bigquery_client(
-    project_id: str, dataset_id: str = "", credentials=None, api_endpoint: str = None
+    project_id: str,
+    dataset_id: str = "",
+    credentials=None,
+    api_endpoint: Optional[str] = None,
+    storage_api_endpoint: Optional[str] = None,
+    client_project_id: Optional[str] = None,
 ):
     google_client = get_google_bigquery_client(
-        project_id, credentials=credentials, api_endpoint=api_endpoint
+        project_id,
+        credentials=credentials,
+        api_endpoint=api_endpoint,
+        quota_project_id=client_project_id,
     )
+    bqstorage_client = None
+    if storage_api_endpoint:
+        bqstorage_client = _get_google_bqstorage_client(
+            credentials=credentials,
+            api_endpoint=storage_api_endpoint,
+            quota_project_id=client_project_id,
+        )
 
-    ibis_client = ibis.bigquery.connect(
-        project_id=project_id,
+    return bigquery_connect(
+        project_id=project_id or client_project_id,
         dataset_id=dataset_id,
         credentials=credentials,
+        bigquery_client=google_client,
+        bqstorage_client=bqstorage_client,
     )
-
-    # Override the BigQuery client object to ensure the correct user agent is
-    # included and any api_endpoint is used.
-    ibis_client.client = google_client
-    return ibis_client
 
 
 def get_pandas_client(table_name, file_path, file_type):
@@ -184,7 +231,11 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "db2",
         "mssql",
         "redshift",
+<<<<<<< HEAD
         "spanner_postgres",
+=======
+        "sybase",
+>>>>>>> origin/develop
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
     elif client.name == "pandas":
@@ -244,7 +295,7 @@ def list_tables(client, schema_name, tables_only=True):
         if tables_only and client.name != "pandas"
         else client.list_tables
     )
-    if client.name in ["db2", "mssql", "redshift", "snowflake", "pandas"]:
+    if client.name in ["redshift", "snowflake", "pandas"]:
         return fn()
     return fn(database=schema_name)
 
@@ -297,10 +348,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
-            decrypted_connection_config[
-                "credentials"
-            ] = google.oauth2.service_account.Credentials.from_service_account_file(
-                key_path
+            decrypted_connection_config["credentials"] = (
+                google.oauth2.service_account.Credentials.from_service_account_file(
+                    key_path
+                )
             )
 
     if source_type not in CLIENT_LOOKUP:
@@ -383,6 +434,10 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_MSSQL: mssql_connect,
     consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
+<<<<<<< HEAD
     consts.SOURCE_TYPE_SPANNER_POSTGRES: spanner_postgres_connect,
+=======
+    consts.SOURCE_TYPE_SYBASE: sybase_connect,
+>>>>>>> origin/develop
     consts.SOURCE_TYPE_DB2: db2_connect,
 }

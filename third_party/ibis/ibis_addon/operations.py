@@ -22,6 +22,7 @@ extended its own registry.  Eventually this can potentially be pushed to
 Ibis as an override, though it would not apply for Pandas and other
 non-textual languages.
 """
+
 import datetime
 import dateutil
 import numpy as np
@@ -48,20 +49,18 @@ from ibis.backends.bigquery.client import (
     _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD,
 )
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
-from ibis.backends.bigquery.registry import (
-    STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS,
-    bigquery_cast,
-)
+from ibis.backends.bigquery.registry import bigquery_cast
 from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from ibis.expr.types import BinaryValue, NumericValue, TemporalValue
+from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValue
 
 # Do not remove these lines, they trigger patching of Ibis code.
-import third_party.ibis.ibis_biquery.api  # noqa
+import third_party.ibis.ibis_bigquery.api  # noqa
+from third_party.ibis.ibis_bigquery import registry as bigquery_registry
 import third_party.ibis.ibis_mysql.compiler  # noqa
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
@@ -76,7 +75,7 @@ try:
 except Exception:
     Db2ExprTranslator = None
 
-# Oracle requires cx_Oracle
+# Oracle requires oracledb
 try:
     from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
 except Exception:
@@ -94,6 +93,12 @@ try:
 except Exception:
     SnowflakeExprTranslator = None
 
+# Sybase requires sqlalchemy_sybase package.
+try:
+    from third_party.ibis.ibis_sybase.compiler import SybaseExprTranslator
+except Exception:
+    SybaseExprTranslator = None
+
 
 # Cast of datetime64 NaT to int64 and then in seconds results in the value below.
 # We need to use this value in the datetime.date simulation of the datetime64 behaviour.
@@ -101,7 +106,13 @@ NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
 
 
 class BinaryLength(ops.Value):
-    arg = rlz.one_of([rlz.value(dt.Binary)])
+    arg = rlz.one_of([rlz.value(dt.Binary), rlz.value(dt.String)])
+    output_dtype = dt.int32
+    output_shape = rlz.shape_like("arg")
+
+
+class PaddedCharLength(ops.Value):
+    arg = rlz.one_of([rlz.value(dt.String)])
     output_dtype = dt.int32
     output_shape = rlz.shape_like("arg")
 
@@ -128,6 +139,10 @@ def compile_binary_length(binary_value):
     return BinaryLength(binary_value).to_expr()
 
 
+def compile_padded_char_length(char_value):
+    return PaddedCharLength(char_value).to_expr()
+
+
 def compile_to_char(numeric_value, fmt):
     return ToChar(numeric_value, fmt=fmt).to_expr()
 
@@ -144,24 +159,6 @@ def bigquery_cast_to_binary_generate(compiled_arg, from_, to):
     return f"FROM_HEX({compiled_arg})"
 
 
-def format_hash_bigquery(translator, op):
-    arg = translator.translate(op.arg)
-    if op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({arg})"
-    else:
-        raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
-def format_hashbytes_bigquery(translator, op):
-    arg = translator.translate(op.arg)
-    if op.how == "sha256":
-        return f"TO_HEX(SHA256({arg}))"
-    elif op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({arg})"
-    else:
-        raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
 def format_hashbytes_teradata(translator, op):
     arg = translator.translate(op.arg)
     if op.how == "sha256":
@@ -172,30 +169,6 @@ def format_hashbytes_teradata(translator, op):
         return f"rtrim(hash_md5({arg}))"
     else:
         raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
-def strftime_bigquery(translator, op):
-    """Timestamp formatting."""
-    arg = op.arg
-    format_str = op.format_str
-    arg_type = arg.output_dtype
-    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
-    fmt_string = translator.translate(format_str)
-    # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types
-    if format_str.value.startswith("%Y"):
-        fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
-    arg_formatted = translator.translate(arg)
-    if isinstance(arg_type, dt.Timestamp):
-        return "FORMAT_{}({}, {}({}), {!r})".format(
-            strftime_format_func_name,
-            fmt_string,
-            strftime_format_func_name,
-            arg_formatted,
-            arg_type.timezone if arg_type.timezone is not None else "UTC",
-        )
-    return "FORMAT_{}({}, {})".format(
-        strftime_format_func_name, fmt_string, arg_formatted
-    )
 
 
 def strftime_mysql(translator, op):
@@ -219,12 +192,6 @@ def strftime_impala(t, op):
     format_str = sg.time.format_time(op.format_str.value, reverse_hive_mapping)
     targ = t.translate(ops.Cast(op.arg, to=dt.string))
     return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
-
-
-def strftime_db2(translator, op):
-    """Date, Datetime, Timestamp formatting specific to DB2."""
-    # TODO(issue-1296): third_party/ibis/ibis_db2/registry.py:298 - AttributeError: 'Strftime' object has no attribute 'value'
-    pass
 
 
 def format_hashbytes_hive(translator, op):
@@ -280,14 +247,6 @@ def sa_format_hashbytes_mysql(translator, op):
     return hash_func
 
 
-def sa_format_hashbytes_db2(translator, op):
-    compiled_arg = translator.translate(op.arg)
-    hash_func = sa.func.hash(compiled_arg, sa.sql.literal_column("2"))
-    # OBS: SYSIBM.HEX function accepts a max length of 16336 bytes (https://www.ibm.com/docs/en/db2/11.5?topic=functions-hex)
-    hex_func = sa.func.hex(hash_func)
-    return sa.func.lower(hex_func)
-
-
 def sa_format_hashbytes_redshift(translator, op):
     arg = translator.translate(op.arg)
     return sa.sql.literal_column(f"sha2({arg}, 256)")
@@ -319,40 +278,6 @@ def sa_format_binary_length_oracle(translator, op):
     return sa.func.dbms_lob.getlength(arg)
 
 
-def sa_cast_decimal_when_scale_padded_fmt_fm(t, op):
-    """Caters for engines that fully pad scale with 0s when casting decimal to string and support FM format."""
-    # Add cast from numeric to string
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    # Specialize going from numeric(p,s>0) to string
-    if (
-        arg_dtype.is_decimal()
-        and arg_dtype.scale
-        and arg_dtype.scale > 0
-        and typ.is_string()
-    ):
-        sa_arg = t.translate(arg)
-        # When casting a number to string PostgreSQL and Snowflake include the full scale, e.g.:
-        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
-        #     100.00
-        # This doesn't match most engines which would return "100".
-        # Using to_char() function instead of cast to return a more typical value.
-        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
-        # Would have liked to use trim_scale but this is only available in PostgreSQL 13+
-        #     return (sa.cast(sa.func.trim_scale(arg), typ))
-        precision = arg_dtype.precision or 38
-        fmt = (
-            "FM"
-            + ("9" * (precision - arg_dtype.scale - 1))
-            + "0."
-            + ("9" * arg_dtype.scale)
-        )
-        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
-    return None
-
-
 def sa_cast_hive(t, op):
     arg = op.arg
     typ = op.to
@@ -375,50 +300,6 @@ def sa_cast_hive(t, op):
         return f"LOWER({cast_expr})"
     else:
         return cast_expr
-
-
-def sa_cast_postgres(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
-    if custom_cast is not None:
-        return custom_cast
-
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.encode(sa_arg, sa.literal("hex"))
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.decode(sa_arg, sa.literal("hex"))
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
-
-
-def sa_cast_mssql(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.output_dtype
-
-    sa_arg = t.translate(arg)
-    # Specialize going from a binary float type to a string.
-    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
-        # This prevents output in scientific notation, at least for my tests it did.
-        return sa.func.format(sa_arg, "G")
-    elif arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.lower(
-            sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
-        )
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
 
 
 def sa_cast_mysql(t, op):
@@ -454,15 +335,33 @@ def sa_cast_mysql(t, op):
 
 
 def sa_cast_snowflake(t, op):
-    custom_cast = sa_cast_decimal_when_scale_padded_fmt_fm(t, op)
-    if custom_cast is not None:
-        return custom_cast
-
     arg = op.arg
     typ = op.to
     arg_dtype = arg.output_dtype
-
     sa_arg = t.translate(arg)
+
+    # Specialize going from numeric(p,s>0) to string
+    if (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        # When casting a number to string Snowflake includes the full scale, e.g.:
+        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
+        #     100.00
+        # This doesn't match most engines which would return "100".
+        # Using to_char() function instead of cast to return a more typical value.
+        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
+        precision = arg_dtype.precision or 38
+        fmt = (
+            "FM"
+            + ("9" * (precision - arg_dtype.scale - 1))
+            + "0."
+            + ("9" * arg_dtype.scale)
+        )
+        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
         return sa.func.hex_encode(sa_arg, sa.literal(0))
@@ -472,22 +371,6 @@ def sa_cast_snowflake(t, op):
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
-
-
-def _sa_string_join(t, op):
-    if (
-        len(op.arg) == 1
-    ):  # SQL Server CONCAT errs when there is one column being hashed (issue #1202), renaming using type_coerce rather than CONCAT
-        return sa.type_coerce(
-            t.translate(op.arg[0]),
-            sa.types.String,
-        )
-    else:
-        return sa.func.concat(*map(t.translate, op.arg))
-
-
-def sa_format_new_id(t, op):
-    return sa.func.NEWID()
 
 
 def sa_format_random(t, op):
@@ -557,7 +440,7 @@ def string_to_epoch(ts: str) -> int:
 
 @execute_node.register(ops.ExtractEpochSeconds, (datetime.datetime, pd.Series))
 def execute_epoch_seconds_new(op, data, **kwargs):
-    convert = getattr(data, "view", data.astype)
+    convert = data.astype
     try:
         series = convert(np.int64)
         # We need int64 below because NaT overflows int32.
@@ -585,6 +468,8 @@ execute_epoch_seconds = execute_epoch_seconds_new
 
 BinaryValue.byte_length = compile_binary_length
 
+StringValue.padded_char_length = compile_padded_char_length
+
 NumericValue.to_char = compile_to_char
 TemporalValue.to_char = compile_to_char
 
@@ -592,15 +477,20 @@ TemporalValue.to_char = compile_to_char
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
 
-BigQueryExprTranslator._registry[ops.HashBytes] = format_hashbytes_bigquery
+BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
-BigQueryExprTranslator._registry[ops.Strftime] = strftime_bigquery
-BigQueryExprTranslator._registry[BinaryLength] = sa_format_binary_length
+BigQueryExprTranslator._registry[ops.Strftime] = bigquery_registry.strftime
+BigQueryExprTranslator._registry[BinaryLength] = bigquery_registry.format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
+AlchemyExprTranslator._registry[PaddedCharLength] = AlchemyExprTranslator._registry[
+    ops.StringLength
+]
 ExprTranslator._registry[RawSQL] = format_raw_sql
 ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
+# Base length of padded string is the same as for a standard string.
+ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
 ImpalaExprTranslator._registry[ops.Cast] = sa_cast_hive
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
@@ -615,30 +505,40 @@ if OracleExprTranslator:
     OracleExprTranslator._registry[ToChar] = sa_format_to_char
     OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
     OracleExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+    OracleExprTranslator._registry[PaddedCharLength] = OracleExprTranslator._registry[
+        ops.StringLength
+    ]
 
-PostgreSQLExprTranslator._registry[
-    ops.HashBytes
-] = postgres_registry.sa_format_hashbytes
+PostgreSQLExprTranslator._registry[ops.HashBytes] = (
+    postgres_registry.sa_format_hashbytes
+)
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
-PostgreSQLExprTranslator._registry[ops.Cast] = sa_cast_postgres
+PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[
-    ops.ExtractEpochSeconds
-] = postgres_registry.sa_epoch_seconds
+PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = (
+    postgres_registry.sa_epoch_seconds
+)
+PostgreSQLExprTranslator._registry[PaddedCharLength] = (
+    postgres_registry.sa_format_postgres_padded_char_length
+)
+
 
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
 MsSqlExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.isnull, 2)
-MsSqlExprTranslator._registry[ops.StringJoin] = _sa_string_join
-MsSqlExprTranslator._registry[ops.RandomScalar] = sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
+MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringLength] = mssql_registry.sa_format_string_length
 MsSqlExprTranslator._registry[ops.Strftime] = mssql_registry.strftime
-MsSqlExprTranslator._registry[ops.Cast] = sa_cast_mssql
+MsSqlExprTranslator._registry[ops.Cast] = mssql_registry.sa_cast_mssql
 MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
 MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
 MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
-# TODO Uncomment the line below when working on issue-1419.
-# MsSqlExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+MsSqlExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
+MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
+    ops.StringLength
+]
 
 MySQLExprTranslator._registry[ops.Cast] = sa_cast_mysql
 MySQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -649,22 +549,29 @@ MySQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 RedShiftExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_redshift
 RedShiftExprTranslator._registry[RawSQL] = sa_format_raw_sql
 RedShiftExprTranslator._registry[BinaryLength] = sa_format_binary_length
+RedShiftExprTranslator._registry[PaddedCharLength] = RedShiftExprTranslator._registry[
+    ops.StringLength
+]
 
 if Db2ExprTranslator:
-    Db2ExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_db2
     Db2ExprTranslator._registry[RawSQL] = sa_format_raw_sql
     Db2ExprTranslator._registry[BinaryLength] = sa_format_binary_length
-    Db2ExprTranslator._registry[ops.Strftime] = strftime_db2
     Db2ExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+    Db2ExprTranslator._registry[PaddedCharLength] = Db2ExprTranslator._registry[
+        ops.StringLength
+    ]
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
-SpannerExprTranslator._registry[ops.HashBytes] = format_hashbytes_bigquery
+SpannerExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
     TeradataExprTranslator._registry[ops.HashBytes] = format_hashbytes_teradata
     TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    TeradataExprTranslator._registry[PaddedCharLength] = (
+        TeradataExprTranslator._registry[ops.StringLength]
+    )
 
 if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake
@@ -675,3 +582,12 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RandomScalar] = sa_format_random
     SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
+
+if SybaseExprTranslator:
+    SybaseExprTranslator._registry[BinaryLength] = (
+        mssql_registry.sa_format_binary_length
+    )
+    SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
+    SybaseExprTranslator._registry[PaddedCharLength] = (
+        mssql_registry.sa_format_string_length
+    )

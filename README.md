@@ -33,8 +33,9 @@ DVT supports the following connection types:
 *   [Postgres](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#postgres)
 *   [Redshift](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#redshift)
 *   [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner)
-*   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
 *   [Snowflake](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#snowflake)
+*   [Sybase ASE](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#sybase)
+*   [Teradata](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#teradata)
 
 The [Connections](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md) page provides details about how to create
 and list connections for the validation tool.
@@ -66,8 +67,10 @@ please review the [Connections](https://github.com/GoogleCloudPlatform/professio
 ### Running Validations
 
 The CLI is the main interface to use this tool and it has several different
-commands which can be used to create and run validations. Below are the command
-syntax and options for running validations.
+commands which can be used to create and run validations. DVT is designed to run in
+an environment connected to GCP services, specifically, BigQuery, GCS and Secret manager.
+If DVT is being run on-premises or in an environment with restricted access to GCP services, see
+[running DVT  at on-prem](#running-dvt-at-on-prem). Below are the command syntax and options for running validations.
 
 Alternatives to running DVT in the CLI include deploying DVT to Cloud Run, Cloud Functions, or Airflow
 ([Examples Here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/tree/develop/samples)). See the [Validation Logic](https://github.com/GoogleCloudPlatform/professional-services-data-validator#validation-logic) section
@@ -110,7 +113,9 @@ data-validation
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
-  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric.
+                        Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific equivalent) that
+                        are comparable across all other supported SQL engines. This option may produce unreliable results.
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
   [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
@@ -195,6 +200,8 @@ data-validation
                         See: *Calculated Fields* section for details
   --hash COLUMNS        Comma separated list of columns to hash or * for all columns
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns (use if a common hash function is not available between databases)
+  --max-concat-columns INT, -mcc INT
+                        Maximum number of columns used in one --hash or --concat validation. When there are more columns in the validation, the validation will be split into multiple validations. There are engine specific defaults, so most users do not need to use this option unless they encounter errors.
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                         Comma separated list of primary key columns, when not specified the value will be inferred
                         from the source or target table if available.  See *Primary Keys* section
@@ -227,8 +234,6 @@ data-validation
                         Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
-  [--trim-string-pks, -tsp]
-                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
@@ -277,7 +282,7 @@ data-validation
                         Directory Path to store YAML Config Files
                         GCS: Provide a full gs:// path of the target directory. Eg: `gs://<BUCKET>/partitions_dir`
                         Local: Provide a relative path of the target directory. Eg: `partitions_dir`
-                        If invoked with -tbls parameter, the validations are stored in a directory named <schema>.<table>, otherwise the directory is named `custom.<random_string>`
+                        For custom queries, the yaml files are stored in CONFIG_DIR and, for tables the yamls are stored in a directory named <source_schema>.<table> within CONFIG_DIR.
   --partition-num INT, -pn INT
                         Number of partitions into which the table should be split, e.g. 1000 or 10000
                         In case this value exceeds the row count of the source/target table, it will be decreased to max(source_row_count, target_row_count)
@@ -304,8 +309,6 @@ data-validation
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
-  [--trim-string-pks, -tsp]
-                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
@@ -388,12 +391,16 @@ data-validation
                         Either --target-query or --target-query-file must be provided
   --target-query-file TARGET_QUERY_FILE, -tqf TARGET_QUERY_FILE
                         File containing the target sql command. Supports GCS and local paths.
+  [--grouped-columns or -gc GROUPED_COLUMNS]
+                        Comma separated list of columns for Group By i.e col_a,col_b
   [--count COLUMNS]     Comma separated list of columns for count or * for all columns
   [--sum COLUMNS]       Comma separated list of columns for sum or * for all numeric
   [--min COLUMNS]       Comma separated list of columns for min or * for all numeric
   [--max COLUMNS]       Comma separated list of columns for max or * for all numeric
   [--avg COLUMNS]       Comma separated list of columns for avg or * for all numeric
-  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric
+  [--std COLUMNS]       Comma separated list of columns for stddev_samp or * for all numeric.
+                        Please note that not all supported SQL engines give results from STDDV_SAMP (or engine specific equivalent) that
+                        are comparable across all other supported SQL engines. This option may produce unreliable results.
   [--exclude-columns or -ec]
                         Flag to indicate the list of columns provided should be excluded and not included.
   [--result-handler or -rh CONNECTION_NAME.SCHEMA.TABLE or BQ_PROJECT_ID.DATASET.TABLE]
@@ -464,6 +471,8 @@ data-validation
   --hash '*'            '*' to hash all columns.
   --concat COLUMNS      Comma separated list of columns to concatenate or * for all columns
                         (use if a common hash function is not available between databases)
+  --max-concat-columns INT, -mcc INT
+                        Maximum number of columns used in one --hash or --concat validation. When there are more columns in the validation, the validation will be split into multiple validations. There are engine specific defaults, so most users do not need to use this option unless they encounter errors.
   [--primary-keys PRIMARY_KEYS, -pk PRIMARY_KEYS]
                        Common column between source and target queries for join
   [--exclude-columns or -ec]
@@ -485,10 +494,12 @@ data-validation
                         Comma-separated key value pair labels for the run.
   [--format or -fmt FORMAT]
                         Format for stdout output. Supported formats are (text, csv, json, table). Defaults to table.
+  [--use-random-row or -rr]
+                        Finds a set of random rows of the first primary key supplied.
+  [--random-row-batch-size or -rbs]
+                        Row batch size used for random row filters (default 10,000).
   [--filter-status or -fs STATUSES_LIST]
                         Comma separated list of statuses to filter the validation results. Supported statuses are (success, fail). If no list is provided, all statuses are returned.
-  [--trim-string-pks, -tsp]
-                        Trims string based primary key values, intended for use when one engine uses padded string semantics (e.g. CHAR(n)) and the other does not (e.g. VARCHAR(n)).
   [--case-insensitive-match, -cim]
                         Performs a case insensitive match by adding an UPPER() before comparison.
 ```
@@ -525,6 +536,11 @@ For example, this flag can be used as follows:
     "target_query": "SELECT `hash__all`, `station_id`\nFROM ..."
 }
 ```
+#### Running DVT at on-prem
+On-premises environments can have limited access to GCP services. DVT supports using BigQuery for storing validation results, GCS for storage and
+the Secret Manager for secrets. You may also use BigQuery and Spanner as a source or target for validation. Service
+APIs (i.e. bigquery.googleapis.com) may not always be accessible due to firewall restrictions. Work with your network
+adminstrator to identify the way to access these services. They may set up a [Private Service Connect Endpoint](https://cloud.google.com/vpc/docs/about-accessing-google-apis-endpoints). DVT supports accessing source and target tables in Spanner and BigQuery via endpoints set up in your network. Connection Parameters for [Spanner](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-spanner) and [BigQuery](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/connections.md#google-bigquery) outline regarding how to specify endpoints.
 
 ### Running DVT with YAML Configuration Files
 
@@ -583,9 +599,8 @@ The `--config-dir` flag will specify the directory with the YAML files to be exe
 
 ### Validation Reports
 
-The result handlers tell DVT where to store the results of each validation. The
-tool can write the results of a validation run to Google BigQuery, PostgreSQL
-or print to stdout (default). View the schema of the results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+The result handlers tell DVT where to store the results of each validation. The tool can write the results of a validation run to Google BigQuery, PostgreSQL or print to stdout (default). See [result handler setup](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#result-handler-setup) for pre-requisites. View the schema of the BigQuery results table [here](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/terraform/results_schema.json).
+
 
 To output to BigQuery or PostgreSQL, simply include the `-rh` flag during a validation run including
 the schema and table name for the results.
@@ -644,14 +659,24 @@ target. The `find-tables` command:
 -   Pulls all tables in the source (applying a supplied `allowed-schemas` filter)
 -   Pulls all tables from the target
 -   Uses Jaro Similarity algorithm to match tables
+-   Optionally translates source schema names using mappings supplied in `allowed-schemas` before matching
 -   Finally, it prints a JSON list of tables which can be a reference for the
     validation run config.
 
 Note that our default value for the `score-cutoff` parameter is 1 and it seeks for identical matches. If no matches occur, reduce this value as deemed necessary. By using smaller numbers such as 0.7, 0.65 etc you can get more matches. For reference, we make use of [this jaro_similarity method](https://jamesturk.github.io/jellyfish/functions/#jaro-similarity) for the string comparison.
 
+
 ```shell
 data-validation find-tables --source-conn source --target-conn target \
     --allowed-schemas pso_data_validator \
+    --score-cutoff 1
+```
+
+If your source and target environments have different schema names (e.g., `prod_raw` vs `dwh_raw`), you can provide a mapping directly in the `--allowed-schemas` flag using the `source_schema=target_schema` syntax.
+
+```shell
+data-validation find-tables --source-conn source --target-conn target \
+    --allowed-schemas prod=dwh \
     --score-cutoff 1
 ```
 

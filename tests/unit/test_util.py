@@ -14,6 +14,7 @@
 
 import logging
 import pytest
+import re
 
 
 @pytest.fixture
@@ -158,3 +159,32 @@ def test_split_not_in_quotes(
 def test_dvt_config_string_to_dict(module_under_test, test_input: str, expected):
     result = module_under_test.dvt_config_string_to_dict(test_input)
     assert result == expected
+
+
+def test_dvt_temp_object_name(module_under_test):
+    """Test generating a random temp object name."""
+    # Test default prefix
+    name = module_under_test.dvt_temp_object_name()
+    assert name.startswith("dvt_temp_")
+    assert name.islower()
+    assert len(name) == 17  # 'dvt_temp_' (9) + 8 hex chars
+    assert re.match(r"^dvt_temp_[a-f0-9]{8}$", name)
+
+    # Test custom prefix with uppercase, should remain upper case.
+    name = module_under_test.dvt_temp_object_name("CUSTOM_Prefix")
+    assert name.startswith("CUSTOM_Prefix_")
+    assert len(name) == 22  # 'CUSTOM_Prefix_' (14) + 8 hex chars
+    assert re.match(r"^CUSTOM_Prefix_[a-f0-9]{8}$", name)
+
+    # Test invalid prefixes
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid-prefix")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid prefix")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name("invalid!")
+
+    with pytest.raises(module_under_test.exceptions.ValidationException):
+        module_under_test.dvt_temp_object_name(None)

@@ -28,26 +28,37 @@ if TYPE_CHECKING:
     import ibis
 
 
-def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8) -> list:
+def _compare_match_tables(
+    source_table_map: dict,
+    target_table_map: dict,
+    score_cutoff: float = 0.8,
+    schema_map: dict = None,
+) -> list:
     """Return dict config object from matching tables."""
     # TODO(dhercher): evaluate if improved comparison and score cutoffs should be used.
     table_configs = []
+    schema_map = schema_map or {}
 
     target_keys = target_table_map.keys()
     for source_key in source_table_map:
+        source_schema = source_table_map[source_key][consts.CONFIG_SCHEMA_NAME]
+        source_table = source_table_map[source_key][consts.CONFIG_TABLE_NAME]
+
+        # Apply schema mapping if it exists, when there is a mapping
+        # lookup_key is {mapped_schema}.{source_name} which should then
+        # find a match in target_keys.
+        lookup_schema = schema_map.get(source_schema, source_schema)
+        lookup_key = f"{lookup_schema}.{source_table}".casefold()
+
         target_key = jellyfish_distance.extract_closest_match(
-            source_key, target_keys, score_cutoff=score_cutoff
+            lookup_key, target_keys, score_cutoff=score_cutoff
         )
         if target_key is None:
             continue
 
         table_config = {
-            consts.CONFIG_SCHEMA_NAME: source_table_map[source_key][
-                consts.CONFIG_SCHEMA_NAME
-            ],
-            consts.CONFIG_TABLE_NAME: source_table_map[source_key][
-                consts.CONFIG_TABLE_NAME
-            ],
+            consts.CONFIG_SCHEMA_NAME: source_schema,
+            consts.CONFIG_TABLE_NAME: source_table,
             consts.CONFIG_TARGET_SCHEMA_NAME: target_table_map[target_key][
                 consts.CONFIG_SCHEMA_NAME
             ],
@@ -60,15 +71,9 @@ def _compare_match_tables(source_table_map, target_table_map, score_cutoff=0.8) 
     return table_configs
 
 
-def _get_table_map(
-    client: "ibis.backends.base.BaseBackend", allowed_schemas=None, include_views=False
-):
-    """Return dict with searchable keys for table matching."""
+def _get_table_map_from_obj_list(table_objs: list) -> dict:
+    """Convert list of schema, table tuples into dict with searchable keys for table matching."""
     table_map = {}
-    table_objs = clients.get_all_tables(
-        client, allowed_schemas=allowed_schemas, tables_only=(not include_views)
-    )
-
     for table_obj in table_objs:
         table_key = ".".join([t for t in table_obj if t])
         table_map[table_key] = {
@@ -76,7 +81,23 @@ def _get_table_map(
             consts.CONFIG_TABLE_NAME: table_obj[1],
         }
 
+    # Post process table_map and lower case table_keys, if possible.
+    for table_key in [_ for _ in table_map if _ != _.casefold()]:
+        if table_key.casefold() not in table_map:
+            # Only lower case the key if there isn't one already.
+            table_map[table_key.casefold()] = table_map.pop(table_key)
+
     return table_map
+
+
+def _get_table_map(
+    client: "ibis.backends.base.BaseBackend", allowed_schemas=None, include_views=False
+) -> dict:
+    """Return dict with searchable keys for table matching."""
+    table_objs = clients.get_all_tables(
+        client, allowed_schemas=allowed_schemas, tables_only=(not include_views)
+    )
+    return _get_table_map_from_obj_list(table_objs)
 
 
 def get_mapped_table_configs(
@@ -85,6 +106,7 @@ def get_mapped_table_configs(
     allowed_schemas: list = None,
     include_views: bool = False,
     score_cutoff: int = 1,
+    schema_map: dict = None,
 ) -> list:
     """Get table list from each client and match them together into a single list of dicts."""
     source_table_map = _get_table_map(
@@ -92,7 +114,10 @@ def get_mapped_table_configs(
     )
     target_table_map = _get_table_map(target_client, include_views=include_views)
     return _compare_match_tables(
-        source_table_map, target_table_map, score_cutoff=score_cutoff
+        source_table_map,
+        target_table_map,
+        score_cutoff=score_cutoff,
+        schema_map=schema_map,
     )
 
 
@@ -104,13 +129,22 @@ def find_tables_using_string_matching(args) -> str:
     source_client = clients.get_data_client(mgr.get_connection_config(args.source_conn))
     target_client = clients.get_data_client(mgr.get_connection_config(args.target_conn))
 
-    allowed_schemas = cli_tools.get_arg_list(args.allowed_schemas)
+    allowed_schemas_raw = cli_tools.get_arg_list(args.allowed_schemas) or []
+    allowed_schemas = []
+    schema_map = {}
+    for schema in allowed_schemas_raw:
+        if "=" in schema:
+            schema, target_schema = schema.split("=", 1)
+            schema_map[schema] = target_schema
+        allowed_schemas.append(schema)
+
     table_configs = get_mapped_table_configs(
         source_client,
         target_client,
         allowed_schemas=allowed_schemas,
         include_views=args.include_views,
         score_cutoff=score_cutoff,
+        schema_map=schema_map,
     )
     return json.dumps(table_configs)
 

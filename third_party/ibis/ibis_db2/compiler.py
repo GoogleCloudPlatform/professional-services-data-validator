@@ -29,3 +29,4 @@ rewrites = Db2ExprTranslator.rewrites
 
 class Db2Compiler(AlchemyCompiler):
     translator_class = Db2ExprTranslator
+    supports_indexed_grouping_keys = False

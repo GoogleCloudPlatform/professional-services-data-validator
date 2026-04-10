@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import ibis.expr.datatypes as dt
+from ibis.backends.postgres.datatypes import sa_postgres_interval
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql.base import PGDialect, ischema_names
@@ -23,6 +24,15 @@ class XML(sqltypes.TypeEngine):
 
 
 ischema_names["xml"] = XML
+
+
+@dt.dtype.register(PGDialect, postgresql.INTERVAL)
+def dvt_sa_postgres_interval(_, satype, nullable=True):
+    """DVT override of ibis/backends/postgres/datatypes/sa_postgres_interval to support INTERVAL with no fields."""
+    if satype.fields is None:
+        return dt.Interval(nullable=nullable)
+
+    return sa_postgres_interval(_, satype, nullable)
 
 
 @dt.dtype.register(PGDialect, postgresql.OID)

@@ -19,10 +19,14 @@ import json
 import random
 import math
 from datetime import datetime, timedelta
+from unittest import mock
 
-from data_validation import cli_tools
-from data_validation import consts
+import ibis
+import pandas
+
+from data_validation import cli_tools, consts, exceptions
 from data_validation.config_manager import ConfigManager
+from data_validation.partition_builder import PartitionBuilder
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 TARGET_TABLE_FILE_PATH = "target_table_data.json"
@@ -133,6 +137,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -171,6 +176,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -209,6 +215,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -247,6 +254,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -285,6 +293,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -333,6 +342,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -371,6 +381,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -409,6 +420,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -447,6 +459,7 @@ YAML_CONFIGS_LIST = [
                             "table_name": "test_table",
                             "target_schema_name": None,
                             "target_table_name": "test_table",
+                            "source_query": None,
                             "primary_keys": [
                                 {
                                     "field_alias": "id",
@@ -501,6 +514,13 @@ def teardown_module(module):
         shutil.rmtree(folder_path)
 
 
+def _get_pandas_client():
+    df = pandas.DataFrame([{"a": 1, "b": 2}])
+    pandas_client = ibis.pandas.connect({"my_table": df})
+
+    return pandas_client
+
+
 def _generate_fake_data(
     rows=10, initial_id=0, second_range=60 * 60 * 24, int_range=100, random_strings=None
 ):
@@ -535,12 +555,17 @@ def _generate_fake_data(
     return data
 
 
-def _generate_config_manager(table_name: str = "my_table") -> ConfigManager:
-    """Returns a Dummy ConfigManager Object"""
+def _generate_config_manager(
+    table_name: str = "test_table", query: str = None, source_conn_override=None
+) -> ConfigManager:
+    """Returns a Dummy ConfigManager Object
+    If query keyword parameter is provided, then query validation is assumed"""
 
+    if query:
+        table_name = None
     row_config = {
         # BigQuery Specific Connection Config
-        "source_conn": SOURCE_CONN_CONFIG,
+        "source_conn": source_conn_override or SOURCE_CONN_CONFIG,
         "target_conn": TARGET_CONN_CONFIG,
         # Validation Type
         consts.CONFIG_TYPE: consts.ROW_VALIDATION,
@@ -549,6 +574,7 @@ def _generate_config_manager(table_name: str = "my_table") -> ConfigManager:
         "table_name": table_name,
         "target_schema_name": None,
         "target_table_name": table_name,
+        consts.CONFIG_SOURCE_QUERY: query,
         consts.CONFIG_PRIMARY_KEYS: [
             {
                 consts.CONFIG_FIELD_ALIAS: "id",
@@ -608,7 +634,7 @@ def test_class_object_creation(module_under_test):
     3. single primary_key value (is this already tested in row validation?)
     4. multiple primary keys (is this already tested in row validation?)
     """
-    mock_config_manager = _generate_config_manager("test_table")
+    mock_config_manager = _generate_config_manager()
     config_managers = [mock_config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -627,12 +653,46 @@ def test_class_object_creation(module_under_test):
     assert builder.args.target_query_file == TARGET_QUERY_FILE
 
 
+@pytest.mark.parametrize(
+    "ibis_table_str,where_exp",
+    [
+        (
+            "SELECT t0.*\nFROM `pso-kokoro-resources.pso_data_validator.dvt_core_types` t0\nWHERE t0.`id` < 2",
+            "`id` < 2",
+        ),
+        (
+            'SELECT t0.*\nFROM udf.test_generate_partitions_v2 t0\nWHERE ((t0."course_id" < \'ALG002\') OR ((t0."course_id" = \'ALG002\') AND (t0."quarter_id" < 1234)))',
+            '(("course_id" < \'ALG002\') OR (("course_id" = \'ALG002\') AND ("quarter_id" < 1234)))',
+        ),
+        (
+            'SELECT t0."course_id", t0."quarter_id", t0."recd_timestamp",\n       t0."registration_date", t0."approved", t0."grade"\nFROM (\n  select * from udf.test_generate_partitions_v2 where course_id < \'ALG003\'\n) t0\nWHERE (t0."course_id" < \'ALG002\') OR ((t0."course_id" = \'ALG002\') AND (t0."quarter_id" < 1234))',
+            '("course_id" < \'ALG002\') OR (("course_id" = \'ALG002\') AND ("quarter_id" < 1234))',
+        ),
+        ("SELECT t0.a FROM sch.tbl t0\nWHERE t0.a < ' WHERE '", "t0.a < ' WHERE '"),
+        ('SELECT t0."at0.b" FROM sch.tbl t0\nWHERE t0."at0.b" < 2', '"at0.b" < 2'),
+    ],
+)
+@mock.patch("data_validation.util.ibis_table_to_sql")
+def test_extract_where(mocked_to_sql, ibis_table_str, where_exp):
+    failed_cases = [
+        "SELECT t0.a FROM sch.tbl t0\nWHERE t0.a < ' WHERE '",
+        'SELECT t0."at0.b" FROM sch.tbl t0\nWHERE t0."at0.b" < 2',
+    ]
+    if ibis_table_str in failed_cases:
+        pytest.skip("Skipping test_extract_where due to issue 1503")
+    mocked_to_sql.return_value = ibis_table_str
+    assert (
+        PartitionBuilder._extract_where("dummy ibis table", _get_pandas_client())
+        == where_exp
+    )
+
+
 def test_add_partition_filters_to_config(module_under_test):
     """Add partition filters to ConfigManager object, build YAML config list
     and assert YAML configs
     """
     # Generate dummy YAML configs list
-    config_manager = _generate_config_manager("test_table")
+    config_manager = _generate_config_manager()
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -656,6 +716,41 @@ def test_add_partition_filters_to_config(module_under_test):
     assert yaml_configs_list == expected_yaml_configs_list
 
 
+def test_add_partition_filters_to_multiple_configs(module_under_test):
+    """Add partition filters to 2 ConfigManager objects, build YAML config list
+    and assert number of validations twice as in single config. Generally we don't expect users to invoke generate-table-partitions with
+    multiple table pairs from command line, where both pairs have the same primary key, columns to validate,
+    number of partitions and partitions per file. DVT can add the same partition_filters to multiple configs
+    because the validation for a table with numerous columns had to be split into multiple validations performed serially.
+    Each validation has its own config with fewer columns which can be successfully validated.
+    This test addresses issue 1549.
+    """
+    # Generate dummy YAML configs list
+    config_manager = _generate_config_manager()
+    config_managers = [config_manager, config_manager]
+
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(TABLE_PART_ARGS)
+
+    # two partition filters are needed, one for source and one for target
+    # have to add a pair for each config_manager object
+    master_filter_list = []
+    for i in range(len(config_managers)):
+        master_filter_list.append([PARTITION_FILTERS_LIST, PARTITION_FILTERS_LIST])
+
+    # Create PartitionBuilder object and get YAML configs list
+    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
+    yaml_configs_list = builder._add_partition_filters(master_filter_list)
+
+    # There were nine validations with one table in
+    # test_add_partition_filters_to_config, there should be 18 now.
+    num_val = 0
+    for yaml_config in yaml_configs_list:
+        for yaml_file in yaml_config["yaml_files"]:
+            num_val = num_val + len(yaml_file["yaml_config"]["validations"])
+    assert num_val == 18
+
+
 def test_store_yaml_partitions(module_under_test, tmp_path):
     """Store all the Partition YAMLs for a table to specified local directory"""
 
@@ -665,7 +760,7 @@ def test_store_yaml_partitions(module_under_test, tmp_path):
     TABLE_PART_ARGS[TABLE_PART_ARGS.index("-cdir") + 1] = str(folder_path)
 
     # Generate dummy YAML configs list
-    config_manager = _generate_config_manager("test_table")
+    config_manager = _generate_config_manager()
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -691,7 +786,7 @@ def test_create_partition_query_yaml(module_under_test):
     and assert that the folder name, number of files and number of validations are what we would expect.
     """
     # Generate dummy YAML configs list
-    config_manager = _generate_config_manager(None)
+    config_manager = _generate_config_manager(query="Select 1")
     config_managers = [config_manager]
 
     parser = cli_tools.configure_arg_parser()
@@ -705,9 +800,42 @@ def test_create_partition_query_yaml(module_under_test):
     builder = module_under_test.PartitionBuilder(config_managers, mock_args)
     yaml_configs_list = builder._add_partition_filters(master_filter_list)
 
-    assert yaml_configs_list[0]["target_folder_name"].startswith("custom.")
+    assert yaml_configs_list[0]["target_folder_name"] == ""
     assert len(yaml_configs_list[0]["yaml_files"]) == 2
     # 5 validations in the first file
     assert len(yaml_configs_list[0]["yaml_files"][0]["yaml_config"]["validations"]) == 5
     # 4 validations in the second file
     assert len(yaml_configs_list[0]["yaml_files"][1]["yaml_config"]["validations"]) == 4
+
+
+@mock.patch("data_validation.clients.get_data_client")
+def test_check_partition_configs_sybase(mock_get_data_client, module_under_test):
+    """Ensure check_partition_filters raises exception for Sybase source connection"""
+    # Generate dummy YAML configs list
+    sybase_conn_config = {
+        consts.SOURCE_TYPE: consts.SOURCE_TYPE_SYBASE,
+    }
+    config_managers = [
+        _generate_config_manager(source_conn_override=sybase_conn_config)
+    ]
+
+    parser = cli_tools.configure_arg_parser()
+    mock_args = parser.parse_args(TABLE_PART_ARGS)
+
+    # Create PartitionBuilder object and get YAML configs list
+    builder = module_under_test.PartitionBuilder(config_managers, mock_args)
+    with pytest.raises(exceptions.PartitionBuilderException) as excinfo:
+        builder.check_partition_configs()
+    assert "window" in str(excinfo.value)
+
+
+def test_definitely_no_time_part_true():
+    """Test _definitely_no_time_part returns True when no time part is present."""
+    dt = datetime(2023, 10, 27, 0, 0, 0, 0)
+    assert PartitionBuilder._definitely_no_time_part(dt) is True
+
+
+def test_definitely_no_time_part_false_hour():
+    """Test _definitely_no_time_part returns False when hour is present."""
+    dt = datetime(2023, 10, 27, 1, 0, 0, 0)
+    assert PartitionBuilder._definitely_no_time_part(dt) is False

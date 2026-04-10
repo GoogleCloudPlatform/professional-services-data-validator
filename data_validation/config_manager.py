@@ -14,8 +14,6 @@
 
 import copy
 import logging
-import string
-import random
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Tuple
 
 import ibis.expr.datatypes as dt
@@ -25,8 +23,11 @@ from data_validation import clients, consts, gcs_helper, state_manager
 from data_validation.result_handlers.factory import build_result_handler
 from data_validation.validation_builder import ValidationBuilder
 
+from third_party.ibis.ibis_addon.api import db2_type_string_length
+
 if TYPE_CHECKING:
-    import ibis.expr.types.TableExpr
+    from ibis.backends.base import BaseBackend
+    import ibis.expr.types.Table
 
 
 class ConfigManager(object):
@@ -73,7 +74,7 @@ class ConfigManager(object):
         """Return config object."""
         return self._config
 
-    def get_source_connection(self):
+    def get_source_connection(self) -> dict:
         """Return source connection object."""
         if not self._source_conn:
             if self._config.get(consts.CONFIG_SOURCE_CONN):
@@ -84,7 +85,7 @@ class ConfigManager(object):
 
         return self._source_conn
 
-    def get_target_connection(self):
+    def get_target_connection(self) -> dict:
         """Return target connection object."""
         if not self._target_conn:
             if self._config.get(consts.CONFIG_TARGET_CONN):
@@ -101,7 +102,7 @@ class ConfigManager(object):
         The raw data type is the source/target engine type, for example it might
         be "NCLOB" or "char" when the Ibis type simply states "string".
         The data is cached in state when fetched for the first time.
-        The retuen value is keyed on the casefolded column name and the tuple is
+        The return value is keyed on the casefolded column name and the tuple is
         the remaining 6 elements of the DB API cursor description specification."""
         if self._source_raw_data_types is None:
             if hasattr(self.source_client, "raw_column_metadata"):
@@ -123,7 +124,7 @@ class ConfigManager(object):
         The raw data type is the source/target engine type, for example it might
         be "NCLOB" or "char" when the Ibis type simply states "string".
         The data is cached in state when fetched for the first time.
-        The retuen value is keyed on the casefolded column name and the tuple is
+        The return value is keyed on the casefolded column name and the tuple is
         the remaining 6 elements of the DB API cursor description specification."""
         if self._target_raw_data_types is None:
             if hasattr(self.target_client, "raw_column_metadata"):
@@ -176,8 +177,9 @@ class ConfigManager(object):
         return self.random_row_batch_size() if self.use_random_rows() else None
 
     def trim_string_pks(self):
-        """Return if the validation should trim string primary keys."""
-        return self._config.get(consts.CONFIG_TRIM_STRING_PKS) or False
+        # Even though trim_string_pks has been deprecated, some yaml files may have that config.
+        """Return if the validation should trim string primary keys, now deprecated"""
+        return self._config.get(consts.CONFIG_TRIM_STRING_PKS, False)
 
     def case_insensitive_match(self):
         """Return if the validation should perform a case insensitive match."""
@@ -332,13 +334,11 @@ class ConfigManager(object):
 
     @property
     def full_source_table(self):
-        """Return string value of target table."""
+        """Return string value of fully qualified source table."""
         if self.source_table and self.source_schema:
             return self.source_schema + "." + self.source_table
-        elif self.source_table:
-            return self.source_table
         else:
-            return f"custom.{''.join(random.choice(string.ascii_lowercase) for _ in range(5))}"
+            return self.source_table
 
     @property
     def labels(self):
@@ -518,7 +518,6 @@ class ConfigManager(object):
         result_handler_config=None,
         filter_config=None,
         filter_status=None,
-        trim_string_pks=None,
         case_insensitive_match=None,
         concat=None,
         hash=None,
@@ -551,7 +550,6 @@ class ConfigManager(object):
             consts.CONFIG_USE_RANDOM_ROWS: use_random_rows,
             consts.CONFIG_RANDOM_ROW_BATCH_SIZE: random_row_batch_size,
             consts.CONFIG_FILTER_STATUS: filter_status,
-            consts.CONFIG_TRIM_STRING_PKS: trim_string_pks,
             consts.CONFIG_CASE_INSENSITIVE_MATCH: case_insensitive_match,
             consts.CONFIG_ROW_CONCAT: concat,
             consts.CONFIG_ROW_HASH: hash,
@@ -611,7 +609,7 @@ class ConfigManager(object):
                     self.build_config_calculated_fields(
                         [casefold_source_columns[field.casefold()]],
                         [casefold_target_columns[field.casefold()]],
-                        "rstrip",
+                        consts.CALC_FIELD_RSTRIP,
                         alias,
                         0,
                     )
@@ -668,6 +666,94 @@ class ConfigManager(object):
             return bool(
                 isinstance(source_type, dt.UUID) or isinstance(target_type, dt.UUID)
             )
+
+    def _is_db2_blob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 (LUW and z/OS) BLOB data type."""
+        return self._is_raw_data_type(
+            "db2", source_column_name, target_column_name, ["BLOB"]
+        ) or self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["BLOB"]
+        )
+
+    def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type."""
+        return self._is_raw_data_type(
+            "db2", source_column_name, target_column_name, ["XML"]
+        )
+
+    def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Oracle LOB data type.
+
+        Unexpectedly the raw types for for LOB types are:
+            BLOB: LONG_RAW
+            CLOB: LONG
+            NCLOB: LONG_NVARCHAR
+        """
+        return self._is_raw_data_type(
+            "oracle",
+            source_column_name,
+            target_column_name,
+            ["LONG", "LONG_NVARCHAR", "LONG_RAW"],
+        )
+
+    def _is_sql_server_text(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is of SQL Server text data type.
+
+        This is because SQL Server text does not support the len() function to get the length in characters.
+        Instead we must fall back to using ByteLength."""
+        return self._is_sql_server_type(
+            source_column_name, target_column_name, ["text", "ntext"]
+        )
+
+    def _is_sql_server_image(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is of SQL Server image data type.
+
+        This is because SQL Server image is deprecated and not supported by a number of SQL functions.
+        """
+        return self._is_sql_server_type(
+            source_column_name, target_column_name, ["image"]
+        )
+
+    def _is_sql_server_type(
+        self, source_column_name: str, target_column_name: str, type_list: List[str]
+    ) -> bool:
+        """Returns True when either source or target column is of a SQL Server type listed in type_list."""
+        return self._is_raw_data_type(
+            "mssql",
+            source_column_name,
+            target_column_name,
+            type_list,
+        )
+
+    def _is_raw_data_type(
+        self,
+        client_name: str,
+        source_column_name: str,
+        target_column_name: str,
+        type_list: List[str],
+    ) -> bool:
+        """Returns True when either source or target column is of a client & type."""
+        raw_source_types = self.get_source_raw_data_types()
+        raw_target_types = self.get_target_raw_data_types()
+        # Raw data type map uses casefold column name as the key.
+        return bool(
+            (
+                self.source_client.name == client_name
+                and raw_source_types
+                and raw_source_types.get(source_column_name.casefold(), [None])[0]
+                in type_list
+            )
+            or (
+                self.target_client.name == client_name
+                and raw_target_types
+                and raw_target_types.get(target_column_name.casefold(), [None])[0]
+                in type_list
+            )
+        )
 
     def build_config_comparison_fields(self, fields, depth=None):
         """Return list of field config objects."""
@@ -812,16 +898,20 @@ class ConfigManager(object):
                 consts.CONFIG_FIELD_ALIAS
             ]
             depth = 1
-            calc_func = "length"
+            calc_func = consts.CALC_FIELD_LENGTH
+
         elif column_type in ["string", "!string"]:
-            calc_func = "length"
+            if self._is_sql_server_text(source_column, target_column):
+                calc_func = consts.CALC_FIELD_BYTE_LENGTH
+            else:
+                calc_func = consts.CALC_FIELD_LENGTH
 
         elif self._is_uuid(column_type, target_column_type):
             calc_func = consts.CONFIG_CAST
             cast_type = consts.CONFIG_CAST_UUID_STRING
 
         elif column_type in ["binary", "!binary"]:
-            calc_func = "byte_length"
+            calc_func = consts.CALC_FIELD_BYTE_LENGTH
 
         elif column_type in ["timestamp", "!timestamp", "date", "!date"]:
             if (
@@ -841,7 +931,7 @@ class ConfigManager(object):
                 ]
                 depth = 1
 
-            calc_func = "epoch_seconds"
+            calc_func = consts.CALC_FIELD_EPOCH_SECONDS
             if agg_type == consts.CONFIG_TYPE_SUM:
                 # It is possible to exceed int64 when summing epoch_seconds therefore cast to string.
                 # See issue 1391 for details.
@@ -949,6 +1039,8 @@ class ConfigManager(object):
         """Return list of aggregate objects of given agg_type."""
 
         def require_pre_agg_calc_field(
+            source_column: str,
+            target_column: str,
             column_type: str,
             target_column_type: str,
             agg_type: str,
@@ -958,8 +1050,15 @@ class ConfigManager(object):
                 _ in ["string", "!string", "json", "!json"]
                 for _ in [column_type, target_column_type]
             ):
-                # These data types are aggregated using their lengths.
-                return True
+                # These data types are aggregated using their lengths, except for count().
+                if agg_type == "count":
+                    # Oracle LOBs & SQL Server TEXT need a length before the count().
+                    # TODO As does Sybase TEXT, see issue-1675.
+                    return self._is_oracle_lob(
+                        source_column, target_column
+                    ) or self._is_sql_server_text(source_column, target_column)
+                else:
+                    return True
             elif self._is_uuid(column_type, target_column_type):
                 return True
             elif column_type in ["binary", "!binary"]:
@@ -967,10 +1066,7 @@ class ConfigManager(object):
                     # Oracle BLOB is invalid for use with SQL COUNT function.
                     # The expression below returns True if client is Oracle which
                     # has the effect of triggering use of byte_length transformation.
-                    return bool(
-                        self.source_client.name == "oracle"
-                        or self.target_client.name == "oracle"
-                    )
+                    return self._is_oracle_lob(source_column, target_column)
                 else:
                     # Convert to length for any min/max/sum on binary columns.
                     return True
@@ -982,9 +1078,10 @@ class ConfigManager(object):
                 "date",
                 "!date",
             ] and agg_type in (
-                "sum",
-                "avg",
-                "bit_xor",
+                consts.CONFIG_TYPE_AVG,
+                consts.CONFIG_TYPE_BIT_XOR,
+                consts.CONFIG_TYPE_STD,
+                consts.CONFIG_TYPE_SUM,
             ):
                 # For timestamps: do not convert to epoch seconds for min/max
                 return True
@@ -1052,9 +1149,24 @@ class ConfigManager(object):
                         f"Skipping {agg_type} on {column} due to data type: {column_type}"
                     )
                 continue
+            elif self._is_sql_server_image(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to SQL Server image data type"
+                )
+                continue
+            elif agg_type != "count" and self._is_db2_xml(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to Db2 XML data type"
+                )
+                continue
 
             if require_pre_agg_calc_field(
-                column_type, target_column_type, agg_type, cast_to_bigint
+                casefold_source_columns[column],
+                casefold_target_columns[column],
+                column_type,
+                target_column_type,
+                agg_type,
+                cast_to_bigint,
             ):
                 aggregate_config = self.append_pre_agg_calc_field(
                     casefold_source_columns[column],
@@ -1078,7 +1190,15 @@ class ConfigManager(object):
                     target_column_ibis_type,
                     margin=(2 if agg_type == consts.CONFIG_TYPE_SUM else 0),
                 ):
-                    aggregate_config[consts.CONFIG_CAST] = "string"
+                    if agg_type in (consts.CONFIG_TYPE_STD, consts.CONFIG_TYPE_AVG):
+                        # std and avg change the shape of the column result and we
+                        # can't know how to format them reliably, float64 is our best bet.
+                        # This may be lossy and generate false success validations.
+                        aggregate_config[consts.CONFIG_CAST] = "float64"
+                    else:
+                        # Other agg types should retain the shape of the results and can be
+                        # reliably formated as strings when the Pandas native types will overflow.
+                        aggregate_config[consts.CONFIG_CAST] = "string"
 
             aggregate_configs.append(aggregate_config)
 
@@ -1106,6 +1226,8 @@ class ConfigManager(object):
             calculated_config.update(custom_params)
         elif calc_type == consts.CONFIG_CAST and custom_params:
             calculated_config[consts.CONFIG_DEFAULT_CAST] = custom_params
+        elif calc_type == consts.CALC_FIELD_IFNULL and custom_params:
+            calculated_config.update(custom_params)
 
         return calculated_config
 
@@ -1134,11 +1256,11 @@ class ConfigManager(object):
         source_column: str,
         target_column: str,
         col_config: dict,
-        source_table: "ibis.expr.types.TableExpr",
-        target_table: "ibis.expr.types.TableExpr",
+        source_table: "ibis.expr.types.Table",
+        target_table: "ibis.expr.types.Table",
     ) -> dict:
         """Mutates col_config to contain any overrides. Also returns col_config for convenience."""
-        if col_config["calc_type"] != "cast":
+        if col_config["calc_type"] != consts.CALC_FIELD_CAST:
             return col_config
 
         source_table_schema = {k: v for k, v in source_table.schema().items()}
@@ -1186,19 +1308,25 @@ class ConfigManager(object):
 
     def _get_order_of_operations(self, calc_type: str) -> List[str]:
         """Return order of operations for row validation."""
-        order_of_operations = ["cast", "ifnull", "rstrip"]
+        order_of_operations = [
+            consts.CALC_FIELD_CAST,
+            consts.CALC_FIELD_IFNULL,
+            consts.CALC_FIELD_RSTRIP,
+        ]
         if self.case_insensitive_match():
-            order_of_operations.append("upper")
-        if calc_type == "hash":
-            order_of_operations.extend(["concat", "hash"])
-        elif calc_type == "concat":
-            order_of_operations.append("concat")
+            order_of_operations.append(consts.CALC_FIELD_UPPER)
+        if calc_type == consts.CALC_FIELD_HASH:
+            order_of_operations.extend(
+                [consts.CALC_FIELD_CONCAT, consts.CALC_FIELD_HASH]
+            )
+        elif calc_type == consts.CALC_FIELD_CONCAT:
+            order_of_operations.append(consts.CALC_FIELD_CONCAT)
 
         return order_of_operations
 
     def _filter_columns_by_column_list(
-        self, casefold_columns: list, col_list: list, exclude_cols: bool
-    ) -> list:
+        self, casefold_columns: dict, col_list: list, exclude_cols: bool = False
+    ) -> dict:
         if col_list:
             filter_list = [_.casefold() for _ in col_list]
             if exclude_cols:
@@ -1215,10 +1343,71 @@ class ConfigManager(object):
             raise ValueError(
                 "Exclude columns flag cannot be present with column list '*'"
             )
+
         return casefold_columns
 
+    def _filter_columns_by_data_type(
+        self, source_columns: dict, target_columns: dict
+    ) -> tuple:
+        """Filter out columns with a data type that is incompatible with DVT."""
+        result_source_columns = source_columns.copy()
+        result_target_columns = target_columns.copy()
+        for source_column, target_column in zip(source_columns, target_columns):
+            if self._is_sql_server_image(source_column, target_column):
+                logging.info(
+                    f"Skipping column {source_column} due to SQL Server image data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+            if self._is_db2_blob(source_column, target_column):
+                # Db2 BLOB is incompatible with Db2s own HEX function.
+                # Users would need to use a custom query to a custom UDF to row validate these.
+                logging.info(
+                    f"Skipping column {source_column} due to Db2 BLOB data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+
+        return result_source_columns, result_target_columns
+
+    def _string_column_ifnull_limits(
+        self,
+        client: "BaseBackend",
+        casefold_columns: dict,
+        ibis_table: "ibis.expr.types.Table",
+        raw_types: dict,
+        string_column_ifnull_limits: dict,
+    ):
+        """Defines IfNull replacement token length limits (due to Db2 limitations).
+
+        This is because in Db2 a coalesce of a column cannot exceed the length of the initial argument resulting in:
+            String data right truncation. SQLSTATE=22001
+
+        We need to ensure both source and target systems use the same replacement token therefore these limits are used for both.
+
+        Mutates string_column_ifnull_limits to contain a dict of column names with replacement token length limits:
+            {"col1": 10, "col2": 12, "col_unlimited": None}
+        """
+        if not casefold_columns or client.name != "db2":
+            return {}
+        table_schema = {k: v for k, v in ibis_table.schema().items()}
+        for casefold_column, column in casefold_columns.items():
+            ifnull_limit = db2_type_string_length(
+                table_schema[casefold_column], raw_types.get(column, [])
+            )
+            if (
+                not string_column_ifnull_limits.get(casefold_column, None)
+                # If the current limit is shorter than an existing one then overwrite the value.
+                or (
+                    ifnull_limit
+                    and ifnull_limit < string_column_ifnull_limits[casefold_column]
+                )
+            ):
+                string_column_ifnull_limits[casefold_column] = ifnull_limit
+        return string_column_ifnull_limits
+
     def build_dependent_aliases(
-        self, calc_type: str, col_list=None, exclude_cols=False
+        self, calc_type: str, col_list: Optional[list] = None
     ) -> List[Dict]:
         """This is a utility function for determining the required depth of all fields"""
         source_table = self.get_source_ibis_calculated_table()
@@ -1228,20 +1417,44 @@ class ConfigManager(object):
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
         casefold_source_columns = self._filter_columns_by_column_list(
-            casefold_source_columns, col_list, exclude_cols
+            casefold_source_columns, col_list
         )
         casefold_target_columns = self._filter_columns_by_column_list(
-            casefold_target_columns, col_list, exclude_cols
+            casefold_target_columns, col_list
+        )
+
+        (
+            casefold_source_columns,
+            casefold_target_columns,
+        ) = self._filter_columns_by_data_type(
+            casefold_source_columns, casefold_target_columns
         )
 
         column_aliases = {}
         col_names = []
+        # Get any ifnull token limits from either the source or target system.
+        # Most engines have no requirement for limits and will return an empty dict.
+        string_column_ifnull_limits = {}
+        self._string_column_ifnull_limits(
+            self.source_client,
+            casefold_source_columns,
+            source_table,
+            self.get_source_raw_data_types(),
+            string_column_ifnull_limits,
+        )
+        self._string_column_ifnull_limits(
+            self.target_client,
+            casefold_target_columns,
+            target_table,
+            self.get_target_raw_data_types(),
+            string_column_ifnull_limits,
+        )
         for i, calc in enumerate(self._get_order_of_operations(calc_type)):
             if i == 0:
                 previous_level = [x for x in casefold_source_columns.keys()]
             else:
                 previous_level = [k for k, v in column_aliases.items() if v == i - 1]
-            if calc in ["concat", "hash"]:
+            if calc in [consts.CALC_FIELD_CONCAT, consts.CALC_FIELD_HASH]:
                 col = {}
                 col["source_reference"] = previous_level
                 col["target_reference"] = previous_level
@@ -1249,7 +1462,7 @@ class ConfigManager(object):
                 col["calc_type"] = calc
                 col["depth"] = i
                 name = col["name"]
-                # need to capture all aliases at the previous level. probably name concat__all
+                # Need to capture all aliases at the previous level. probably name concat__all
                 column_aliases[name] = i
                 col_names.append(col)
             else:
@@ -1261,6 +1474,16 @@ class ConfigManager(object):
                     col["name"] = self._prefix_calc_col_name(column, calc, j)
                     col["calc_type"] = calc
                     col["depth"] = i
+                    if (
+                        calc == consts.CALC_FIELD_IFNULL
+                        and string_column_ifnull_limits.get(column)
+                    ):
+                        # Trim the replacement token to the max length allowed for the column.
+                        col["calc_params"] = {
+                            consts.CALC_FIELD_IFNULL_DEFAULT: consts.CALC_FIELD_IFNULL_DEFAULT_STRING[
+                                0 : string_column_ifnull_limits[column]
+                            ]
+                        }
 
                     if i == 0:
                         # If depth 0, get raw column name with correct casing
@@ -1281,17 +1504,23 @@ class ConfigManager(object):
                     name = col["name"]
                     column_aliases[name] = i
                     col_names.append(col)
+                    if string_column_ifnull_limits.get(column):
+                        # Keep track of column limits as we move through aliased expressions.
+                        string_column_ifnull_limits[name] = string_column_ifnull_limits[
+                            column
+                        ]
         return col_names
 
-    def build_comp_fields(self, col_list: list, exclude_cols: bool = False) -> dict:
+    def build_comp_fields(self, col_list: list, exclude_cols: bool) -> dict:
         """This is a utility function processing comp-fields values like we do for hash/concat."""
         source_table = self.get_source_ibis_calculated_table()
         casefold_source_columns = {_.casefold(): str(_) for _ in source_table.columns}
-
         casefold_source_columns = self._filter_columns_by_column_list(
-            casefold_source_columns, col_list, exclude_cols
+            casefold_source_columns, col_list, exclude_cols=exclude_cols
         )
-
+        casefold_source_columns, _ = self._filter_columns_by_data_type(
+            casefold_source_columns, casefold_source_columns
+        )
         return casefold_source_columns
 
     def auto_list_primary_keys(self) -> list:

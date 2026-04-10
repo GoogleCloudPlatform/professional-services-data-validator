@@ -17,7 +17,7 @@ import pytest
 from data_validation import consts, gcs_helper, state_manager
 
 PROJECT_ID = os.getenv("PROJECT_ID")
-GCS_STATE_PATH = f"gs://{PROJECT_ID}/state/"
+GCS_STATE_PATH = f"gs://{PROJECT_ID}/state/connections/"
 TEST_CONN_NAME = "example"
 TEST_CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,

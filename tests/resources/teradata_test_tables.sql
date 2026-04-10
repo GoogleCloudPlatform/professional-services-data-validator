@@ -128,18 +128,6 @@ INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-3','ascii'), 3, 'Row 3');
 INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-4','ascii'), 4, 'Row 4');
 INSERT INTO udf.dvt_binary VALUES (TO_BYTES('DVT-key-5','ascii'), 5, 'Row 5');
 
-DROP TABLE udf.dvt_string_id;
-CREATE TABLE udf.dvt_string_id
-(   id          VARCHAR(15) NOT NULL PRIMARY KEY
-,   other_data  VARCHAR(100)
-);
-COMMENT ON TABLE udf.dvt_string_id IS 'Integration test table used to test string pk matching.';
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-1', 'Row 1');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-2', 'Row 2');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-3', 'Row 3');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-4', 'Row 4');
-INSERT INTO udf.dvt_string_id VALUES ('DVT-key-5', 'Row 5');
-
 DROP TABLE udf.dvt_time_table;
 CREATE TABLE udf.dvt_time_table
 (   id          INTEGER NOT NULL PRIMARY KEY
@@ -150,17 +138,29 @@ INSERT INTO udf.dvt_time_table VALUES (1, '01:01:44+01:00');
 INSERT INTO udf.dvt_time_table VALUES (2, '04:02:00+00:00');
 INSERT INTO udf.dvt_time_Table VALUES (3, '04:01:07-04:00');
 
-DROP TABLE udf.dvt_char_id;
-CREATE TABLE udf.dvt_char_id
+DROP TABLE udf.dvt_fixed_char_id;
+CREATE TABLE udf.dvt_fixed_char_id
 (   id          CHAR(6) NOT NULL PRIMARY KEY
 ,   other_data  CHAR(100)
 );
-COMMENT ON TABLE udf.dvt_char_id IS 'Integration test table used to test CHAR pk matching.';
-INSERT INTO udf.dvt_char_id VALUES ('DVT1', 'Row 1	  ');
-INSERT INTO udf.dvt_char_id VALUES ('DVT2', 'Row 2  	');
-INSERT INTO udf.dvt_char_id VALUES ('DVT3', 'Row 3  ');
-INSERT INTO udf.dvt_char_id VALUES ('DVT4', 'Row 4  	  ');
-INSERT INTO udf.dvt_char_id VALUES ('DVT5', 'Row 5');
+COMMENT ON TABLE udf.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant';
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
+INSERT INTO udf.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
+
+DROP TABLE udf.dvt_varchar_id;
+CREATE TABLE udf.dvt_varchar_id
+(   id          VARCHAR(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE udf.dvt_varchar_id IS 'Integration test table used to test varchar pk matching. Trailing blanks are significant';
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-4 ', 'Row 4');
+INSERT INTO udf.dvt_varchar_id VALUES ('DVT-key-5', 'Row 5');
 
 DROP TABLE udf.dvt_datetime_id;
 CREATE TABLE udf.dvt_datetime_id
@@ -173,6 +173,7 @@ INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-02-01 12:00:00', 'Row 2')
 INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-03-01 12:00:00', 'Row 3');
 INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-04-01 12:00:00', 'Row 4');
 INSERT INTO udf.dvt_datetime_id VALUES (TIMESTAMP'2020-05-01 12:00:00', 'Row 5');
+
 
 DROP TABLE udf.test_generate_partitions;
 CREATE TABLE udf.test_generate_partitions(
@@ -215,6 +216,49 @@ INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 1234, TIMESTAMP 
 INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 2.8);
 INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 2.1);
 INSERT INTO udf.test_generate_partitions VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 3.5);
+
+DROP TABLE udf.test_generate_partitions_v2;
+CREATE TABLE udf.test_generate_partitions_v2(
+    course_id VARCHAR(24),
+    quarter_id INTEGER,
+    recd_timestamp TIMESTAMP,
+    registration_date DATE,
+    approved BYTEINT,
+    grade Numeric)
+UNIQUE PRIMARY INDEX (course_id,quarter_id,recd_timestamp, registration_date, approved);
+
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0, 3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1, 2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG001', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG003', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG002  t0.', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('ALG004', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. John''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Jude''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 1234, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Edward''s', 5678, TIMESTAMP '2023-08-26 16:00:00', DATE '2023-08-23', 1,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  3.5);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 1234, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  2.8);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '1969-07-20', 0,  2.1);
+INSERT INTO udf.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, TIMESTAMP '2023-08-27 15:00:00', DATE '2023-08-23', 1,  3.5);
 
 DROP TABLE udf.dvt_latin;
 CREATE TABLE udf.dvt_latin (
@@ -699,12 +743,14 @@ CREATE TABLE udf.dvt_tricky_dates (
 , col_dt_low    DATE
 , col_dt_epoch  DATE
 , col_dt_high   DATE
+, col_dt_4712   DATE
 , col_ts_low    TIMESTAMP(0)
 , col_ts_epoch  TIMESTAMP(0)
-, col_ts_high   TIMESTAMP(0));
+, col_ts_high   TIMESTAMP(0)
+, col_ts_4712   TIMESTAMP(0));
 INSERT INTO udf.dvt_tricky_dates VALUES
-(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00');
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59+00:00',TIMESTAMP'4712-12-31 23:23:59');
 -- col_ts_high value above forced to UTC based on article below, but we still get wrong answer from the test:
 --   https://support.teradata.com/knowledge?id=kb_article_view&sys_kb_id=0e81918ac36da9103eb2d88f05013138
 INSERT INTO udf.dvt_tricky_dates (id) VALUES (2);
@@ -737,3 +783,18 @@ CREATE TABLE udf.dvt_reserved_word_columns (
 );
 COMMENT ON TABLE udf.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
 INSERT INTO udf.dvt_reserved_word_columns (id) VALUES (1);
+
+DROP TABLE udf.dvt_intervals;
+CREATE TABLE udf.dvt_intervals
+( id              INTEGER NOT NULL PRIMARY KEY
+, col_interval_ds INTERVAL DAY TO SECOND(3)
+, col_interval_ym INTERVAL YEAR TO MONTH);
+COMMENT ON TABLE udf.dvt_intervals IS 'Integration test table used to test INTERVAL data types.';
+INSERT INTO udf.dvt_intervals VALUES
+(0,INTERVAL '0 02:03:44' DAY TO SECOND,INTERVAL '0-02' YEAR TO MONTH);
+INSERT INTO udf.dvt_intervals VALUES
+(1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-02' YEAR TO MONTH);
+INSERT INTO udf.dvt_intervals VALUES
+(2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-02' YEAR TO MONTH);
+INSERT INTO udf.dvt_intervals VALUES
+(3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);

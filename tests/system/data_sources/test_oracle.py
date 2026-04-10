@@ -13,21 +13,26 @@
 # limitations under the License.
 
 import os
+import pathlib
 from unittest import mock
 
 import pytest
-import pathlib
 
 from data_validation import cli_tools, data_validation, consts
 from tests.system.data_sources.common_functions import (
+    DVT_TRICKY_DATES_COLUMNS,
     binary_key_assertions,
     column_validation_test,
     column_validation_test_args,
     column_validation_test_config_managers,
+    connections_add_test,
     find_tables_test,
+    generate_and_run_table_partitions_test,
     id_column_row_validation_test,
+    id_column_query_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
+    raw_query_rows,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -43,19 +48,25 @@ from tests.system.data_sources.common_functions import (
     partition_query_test,
 )
 
-
 ORACLE_HOST = os.getenv("ORACLE_HOST", "localhost")
 ORACLE_PORT = os.getenv("ORACLE_PORT", "1521")
 ORACLE_PASSWORD = os.getenv("ORACLE_PASSWORD")
 ORACLE_DATABASE = os.getenv("ORACLE_DATABASE", "XEPDB1")
+ORACLE_USER = "SYSTEM"
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
     "host": ORACLE_HOST,
-    "user": "SYSTEM",
+    "user": ORACLE_USER,
     "password": ORACLE_PASSWORD,
     "port": int(ORACLE_PORT),
     "database": ORACLE_DATABASE,
+}
+CONN_BY_URL = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_ORACLE,
+    consts.SECRET_MANAGER_TYPE: None,
+    consts.SECRET_MANAGER_PROJECT_ID: None,
+    "url": f"oracle+oracledb://{ORACLE_USER}:{ORACLE_PASSWORD}@{ORACLE_HOST}:{ORACLE_PORT}/?service_name={ORACLE_DATABASE}",
 }
 
 
@@ -125,7 +136,7 @@ DVT_CORE_TYPES_RAW_DATA_TYPES = [
     ("COL_STRING", "VARCHAR", 4000, 4000, None, None, 1),
     ("COL_DATE", "DATE", 23, None, None, None, 1),
     ("COL_DATETIME", "TIMESTAMP", 23, None, 0, 3, 1),
-    ("COL_TSTZ", "TIMESTAMP_TZ", None, None, 0, 3, 1),
+    ("COL_TSTZ", "TIMESTAMP_TZ", 23, None, 0, 3, 1),
 ]
 
 EXPECTED_DATETIME_ID_PARTITION_FILTER = [
@@ -150,6 +161,8 @@ def test_count_validator():
 def mock_get_connection_config(*args):
     if args[1] in ("ora-conn", "mock-conn"):
         return CONN
+    elif args[1] == "ora-url-conn":
+        return CONN_BY_URL
     elif args[1] == "bq-conn":
         return BQ_CONN
     elif args[1] == "pg-conn":
@@ -159,51 +172,52 @@ def mock_get_connection_config(*args):
 # Expected result from partitioning table on 3 keys
 EXPECTED_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1 OR quarter_id = 1 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1 OR quarter_id = 1 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2 OR quarter_id = 2 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2 OR quarter_id = 2 AND student_id >= 1234 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3 OR quarter_id = 3 AND student_id < 1234 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3 OR quarter_id = 3 AND student_id >= 1234 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678 OR quarter_id = 5678 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678 OR quarter_id = 5678 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234 OR quarter_id = 1234 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234 OR quarter_id = 1234 AND approved >= 'N'))",
     ],
 ]
 
+# For some reason integers from subqueries are converted to decimals
 QUERY_PARTITION_FILTER = [
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
     ],
     [
-        " quarter_id <> 1111 AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'ALG001' OR course_id = 'ALG001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'ALG001' OR course_id = 'ALG001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'GEO001' OR course_id = 'GEO001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'GEO001' OR course_id = 'GEO001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 1.0 OR quarter_id = 1.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 1.0 OR quarter_id = 1.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 2.0 OR quarter_id = 2.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 2.0 OR quarter_id = 2.0 AND student_id >= 1234.0 ) ) AND ( course_id < 'TRI001' OR course_id = 'TRI001' AND ( quarter_id < 3.0 OR quarter_id = 3.0 AND student_id < 1234.0 ) )",
-        " quarter_id <> 1111 AND ( course_id > 'TRI001' OR course_id = 'TRI001' AND ( quarter_id > 3.0 OR quarter_id = 3.0 AND student_id >= 1234.0 ) )",
+        "quarter_id != 1111 AND (course_id < 'ALG001' OR course_id = 'ALG001' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG001' OR course_id = 'ALG001' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'ALG002  t0.' OR course_id = 'ALG002  t0.' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'Y')) AND (course_id < 'ALG003' OR course_id = 'ALG003' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG003' OR course_id = 'ALG003' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'ALG004' OR course_id = 'ALG004' AND (quarter_id < 5678.0 OR quarter_id = 5678.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'ALG004' OR course_id = 'ALG004' AND (quarter_id > 5678.0 OR quarter_id = 5678.0 AND approved >= 'N')) AND (course_id < 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. Edward''s' OR course_id = 'St. Edward''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'Y'))",
+        "quarter_id != 1111 AND (course_id > 'St. John''s' OR course_id = 'St. John''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'Y')) AND (course_id < 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Jude''s' OR course_id = 'St. Jude''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N')) AND (course_id < 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id < 1234.0 OR quarter_id = 1234.0 AND approved < 'N'))",
+        "quarter_id != 1111 AND (course_id > 'St. Paul''s' OR course_id = 'St. Paul''s' AND (quarter_id > 1234.0 OR quarter_id = 1234.0 AND approved >= 'N'))",
     ],
 ]
 
@@ -214,8 +228,15 @@ QUERY_PARTITION_FILTER = [
 )
 def test_generate_partitions(tmp_path: pathlib.Path):
     """Test generate partitions on Oracle, first on table, then on custom query"""
-    partition_table_test(EXPECTED_PARTITION_FILTER)
-    partition_query_test(QUERY_PARTITION_FILTER, tmp_path)
+    partition_table_test(
+        EXPECTED_PARTITION_FILTER,
+        pk="course_id,quarter_id,approved",
+    )
+    partition_query_test(
+        QUERY_PARTITION_FILTER,
+        tmp_path,
+        pk="course_id,quarter_id,approved",
+    )
 
 
 @mock.patch(
@@ -307,6 +328,8 @@ def test_column_validation_core_types():
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
         filters="id>0 AND col_int8>0",
         grouped_columns="col_varchar_30",
     )
@@ -323,12 +346,22 @@ def test_column_validation_core_types_to_bigquery():
     cols = ",".join(
         [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
     )
+    # Excluded col_float64 from std_cols due to stddev_samp inconsistent results. See issue-1540.
+    std_cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _ not in ("id", "col_float32", "col_float64")
+        ]
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
         sum_cols=cols,
         min_cols=cols,
         max_cols=cols,
+        avg_cols=cols,
+        std_cols=std_cols,
     )
 
 
@@ -337,25 +370,34 @@ def test_column_validation_core_types_to_bigquery():
     new=mock_get_connection_config,
 )
 def test_column_validation_oracle_to_postgres():
-    count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw")])
-    # TODO Change sum_cols and min_cols to include col_char_2,col_nchar_2 when issue-842 is complete.
-    # TODO Change min_cols below to include col_interval_ds when issue-1214 is complete.
-    # TODO Change min_cols below to include col_json/col_jsonb when issue-1338 is complete.
-    sum_cols = ",".join(
-        [
-            _
-            for _ in ORA2PG_COLUMNS
-            if _ not in ("col_char_2", "col_nchar_2", "col_long_raw")
-        ]
+    # TODO Change count_cols below to include col_uuid when issue-1716 is complete.
+    # TODO Change min/max_cols below to include col_interval_ds when issue-1214 is complete.
+    # TODO Change min/max_cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change min_cols below to include col_uuid when issue-1716 is complete.
+    count_cols = ",".join(
+        [_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw", "col_uuid")]
     )
+    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw",)])
     min_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
             if _
             not in (
-                "col_char_2",
-                "col_nchar_2",
+                "col_long_raw",
+                "col_interval_ds",
+                "col_json",
+                "col_jsonb",
+                "col_uuid",
+            )
+        ]
+    )
+    max_cols = ",".join(
+        [
+            _
+            for _ in ORA2PG_COLUMNS
+            if _
+            not in (
                 "col_long_raw",
                 "col_interval_ds",
                 "col_json",
@@ -369,7 +411,56 @@ def test_column_validation_oracle_to_postgres():
         count_cols=count_cols,
         sum_cols=sum_cols,
         min_cols=min_cols,
-        max_cols=min_cols,
+        max_cols=max_cols,
+        avg_cols=sum_cols,
+        std_cols=sum_cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_all_null_oracle_to_postgres():
+    cols = ",".join(
+        [
+            _
+            for _ in ORA2PG_COLUMNS
+            if _
+            not in (
+                "col_long_raw",
+                "col_interval_ds",
+                "col_json",
+                "col_jsonb",
+                "col_uuid",
+            )
+        ]
+    )
+    column_validation_test(
+        tc="pg-conn",
+        tables="pso_data_validator.dvt_ora2pg_types",
+        count_cols=cols,
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        std_cols=cols,
+        filters="id = 4",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_binary_to_bigquery():
+    """Oracle to BigQuery dvt_binary column validation."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        count_cols="binary_id",
+        min_cols="binary_id",
+        sum_cols="binary_id",
     )
 
 
@@ -380,12 +471,18 @@ def test_column_validation_oracle_to_postgres():
 def test_column_validation_large_decimals_to_bigquery():
     """Oracle to BigQuery dvt_large_decimals column validation."""
     cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
+    # Excluded col_dec_38 from std_cols due to stddev_samp inconsistent results. See issue-1540.
+    std_cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
+    # TODO Add col_dec_38 to avg_cols below when issue-1551 is complete.
+    avg_cols = "col_dec_18,col_dec_38_9,col_dec_38_30"
     column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         count_cols=cols,
         min_cols=cols,
         sum_cols=cols,
+        avg_cols=avg_cols,
+        std_cols=std_cols,
     )
 
 
@@ -440,12 +537,15 @@ def test_column_validation_tricky_dates_to_bigquery():
     # We cannot test sum(col_dt_low) and sum(col_ts_low) on Oracle because there are days
     # missing from October 1582 in the Gregorian calendar which are not reflected in BigQuery
     # or PostgreSQL calendars. This gap is discussed on Wikipedia page for 1582.
-    sum_cols = "col_dt_epoch,col_dt_high,col_ts_epoch,col_ts_high"
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    sum_cols = ",".join(
+        _ for _ in DVT_TRICKY_DATES_COLUMNS if _ not in ("col_dt_low", "col_ts_low")
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_tricky_dates",
-        min_cols="*",
-        max_cols="*",
+        min_cols=cols,
+        max_cols=cols,
         sum_cols=sum_cols,
         grouped_columns="id",
         wildcard_include_timestamp=True,
@@ -495,7 +595,7 @@ def test_row_validation_core_types_to_bigquery():
     row_validation_test(
         tc="bq-conn",
         hash=cols,
-        use_randow_row=True,
+        use_random_row=True,
         random_row_batch_size=5,
     )
 
@@ -522,6 +622,7 @@ def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
@@ -541,6 +642,7 @@ def test_row_validation_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
+                "col_uuid",
             )
         ]
     )
@@ -558,6 +660,7 @@ def test_row_validation_oracle_to_postgres():
 def test_row_validation_comp_fields_oracle_to_postgres():
     # TODO Change cols below to include col_num_38 when issue-1454 is complete.
     # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     cols = ",".join(
@@ -572,6 +675,7 @@ def test_row_validation_comp_fields_oracle_to_postgres():
                 "col_num_38",
                 "col_json",
                 "col_jsonb",
+                "col_uuid",
             )
         ]
     )
@@ -596,7 +700,7 @@ def test_row_validation_large_decimals_to_bigquery():
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
         hash="id,col_data,col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30",
-        # use_randow_row=True,
+        # use_random_row=True,
         # random_row_batch_size=5,
     )
 
@@ -632,10 +736,13 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_string_pk_to_bigquery():
-    """Test string primary key join columns"""
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_string_id",
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
     )
 
 
@@ -643,11 +750,36 @@ def test_row_validation_string_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_char_pk_to_bigquery():
-    """Test padded char primary key join columns"""
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_char_id",
-    )
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 @mock.patch(
@@ -656,10 +788,10 @@ def test_row_validation_char_pk_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_randow_row option below when issue-1445 is actioned.
+    # TODO Remove use_random_row option below when issue-1445 is actioned.
     id_column_row_validation_test(
         "pso_data_validator.dvt_datetime_id",
-        use_randow_row=False,
+        use_random_row=False,
     )
 
 
@@ -676,6 +808,23 @@ def test_generate_partitions_datetime_pk():
         tables="pso_data_validator.dvt_datetime_id",
         filters="other_data IS NOT NULL",
         partition_num=2,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_pangrams_to_bigquery():
+    """Oracle to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
     )
 
 
@@ -730,6 +879,26 @@ def test_custom_query_row_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_custom_query_row_validation_random_rows():
+    """Oracle to BigQuery dvt_core_types custom-query row comparison-fields validation"""
+    df = custom_query_validation_test(
+        validation_type="row",
+        source_query="select * from pso_data_validator.dvt_core_types",
+        target_query="select * from pso_data_validator.dvt_core_types",
+        concat="id,col_varchar_30,col_date",
+        use_random_row=True,
+        random_row_batch_size=2,
+        filter_status=None,
+        assert_df_not_empty=True,
+    )
+    # There should only be 2 rows in the result set due to random row sampling.
+    assert len(df) == 2
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_row_hash_validation_core_types_to_bigquery():
     """Oracle to BigQuery dvt_core_types custom-query row hash validation"""
     custom_query_validation_test(
@@ -771,6 +940,7 @@ def test_custom_query_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change hash_cols below to include col_clob/col_nclob/col_blob when issue-1364 is complete.
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
+    # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
     # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
@@ -790,6 +960,7 @@ def test_custom_query_row_validation_oracle_to_postgres():
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
+                "col_uuid",
             )
         ]
     )
@@ -918,7 +1089,7 @@ def test_column_multi_table_all_config_managers():
 def test_schema_validation_identifiers():
     """Test schema validation on a table with special characters in table and column names."""
     schema_validation_test(
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         tc="mock-conn",
     )
 
@@ -931,7 +1102,7 @@ def test_column_validation_identifiers():
     """Test column validation on a table with special characters in table and column names."""
     column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt-identifier$_#",
+        tables="PSO_DATA_VALIDATOR.DVT-IDENTIFIER$_#",
         count_cols="*",
         filters="COL#HASH IS NOT NULL",
     )
@@ -1035,6 +1206,28 @@ def test_row_validation_comp_fields_bool_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_hash_bool_oracle():
+    """Test row validation --hash on a table with bool data types in the target, Oracle does not have a bool type."""
+    rows = raw_query_rows(
+        "SELECT version FROM PRODUCT_COMPONENT_VERSION WHERE product LIKE 'Oracle Database%'",
+        conn="mock-conn",
+    )
+    version = rows[0][0].split(".")[0] if rows else "0"
+    if version < "23":
+        pytest.skip(
+            f"Skipping test_row_validation_hash_bool_oracle due to version {version} < 23."
+        )
+    row_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_bool=pso_data_validator.dvt_bool_native",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_uuid_oracle_to_postgres():
     """Test column validation with UUID columns to PostgreSQL"""
     column_validation_test(
@@ -1083,7 +1276,7 @@ def test_row_validation_uuid_rr_oracle_to_postgres():
         tables="pso_data_validator.dvt_uuid_id",
         tc="pg-conn",
         hash="*",
-        use_randow_row=True,
+        use_random_row=True,
     )
 
 
@@ -1093,10 +1286,25 @@ def test_row_validation_uuid_rr_oracle_to_postgres():
 )
 def test_row_validation_tricky_dates_to_bigquery():
     """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
     row_validation_test(
         tables="pso_data_validator.dvt_tricky_dates",
         tc="bq-conn",
-        hash="*",
+        hash=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_tricky_dates_to_bigquery():
+    """Test with date values that are at the extremes, e.g. 9999-12-31."""
+    cols = ",".join(DVT_TRICKY_DATES_COLUMNS)
+    row_validation_test(
+        tables="pso_data_validator.dvt_tricky_dates",
+        tc="bq-conn",
+        comp_fields=cols,
     )
 
 
@@ -1141,6 +1349,103 @@ def test_column_validation_group_by_timestamp():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_decimals_no_precision():
+    """Test column validation on a table with decimals columns with no defined precision."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
+        avg_cols="*",
+        std_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_no_precision():
+    """Test row validation on a table with decimals columns with no defined precision."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_intervals():
+    """Test schema validation on a table with columns of type INTERVAL."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_intervals():
+    """Test column validation on a table with columns of type INTERVAL."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_intervals",
+        count_cols="col_interval_ds,col_interval_ym",
+        sum_cols="col_interval_ds,col_interval_ym",
+        min_cols="col_interval_ds,col_interval_ym",
+        max_cols="col_interval_ds,col_interval_ym",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_intervals():
+    """Test row validation on a table with columns of type INTERVAL."""
+    pytest.skip("Skipping test_row_validation_intervals due to issue-1214.")
+    row_validation_test(
+        tables="pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+        hash="col_interval_ds,col_interval_ym",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_by_url():
+    """Oracle to Oracle validation testing connection by URL string works."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="ora-url-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_and_run_partitions(tmp_path: pathlib.Path):
+    """Test generate and execute partition configs."""
+    pytest.skip("Skipping test_generate_and_run_partitions due to issue-1613.")
+    generate_and_run_table_partitions_test(
+        tmp_path,
+        sc="mock-conn",
+        tc="bq-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys)
@@ -1173,3 +1478,28 @@ def test_raw_column_metadata():
         )
     )
     assert raw_types == DVT_CORE_TYPES_RAW_DATA_TYPES
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        ORACLE_HOST,
+        "--user",
+        ORACLE_USER,
+        "--password",
+        ORACLE_PASSWORD,
+        "--port",
+        ORACLE_PORT,
+        "--database",
+        ORACLE_DATABASE,
+        # disable_oob is a harmless setting we can use to exercise --connect-args.
+        "--connect-args",
+        '{ "disable_oob": "true" }',
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_ORACLE, conn_args, tmp_path, monkeypatch
+    )

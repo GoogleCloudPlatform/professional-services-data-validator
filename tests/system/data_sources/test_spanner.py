@@ -22,16 +22,16 @@ import pytest
 from data_validation import cli_tools, consts, data_validation, find_tables
 from tests.system.data_sources.common_functions import (
     binary_key_assertions,
+    column_validation_test,
+    connections_add_test,
+    custom_query_validation_test,
     raw_query_test,
     row_validation_many_columns_test,
+    row_validation_test,
     run_test_from_cli_args,
     schema_validation_test,
-    column_validation_test,
-    row_validation_test,
-    custom_query_validation_test,
 )
 from tests.system.data_sources.test_bigquery import BQ_CONN
-
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 SPANNER_INSTANCE = os.getenv("SPANNER_INSTANCE", "span1")
@@ -74,31 +74,31 @@ def count_config():
         consts.CONFIG_GROUPED_COLUMNS: [],
         consts.CONFIG_AGGREGATES: [
             {
-                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
                 consts.CONFIG_SOURCE_COLUMN: None,
                 consts.CONFIG_TARGET_COLUMN: None,
                 consts.CONFIG_FIELD_ALIAS: "count",
             },
             {
-                consts.CONFIG_TYPE: "count",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_COUNT,
                 consts.CONFIG_SOURCE_COLUMN: "string_col",
                 consts.CONFIG_TARGET_COLUMN: "string_col",
                 consts.CONFIG_FIELD_ALIAS: "count_string_col",
             },
             {
-                consts.CONFIG_TYPE: "avg",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_AVG,
                 consts.CONFIG_SOURCE_COLUMN: "float_col",
                 consts.CONFIG_TARGET_COLUMN: "float_col",
                 consts.CONFIG_FIELD_ALIAS: "avg_float_col",
             },
             {
-                consts.CONFIG_TYPE: "max",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_MAX,
                 consts.CONFIG_SOURCE_COLUMN: "timestamp_col",
                 consts.CONFIG_TARGET_COLUMN: "timestamp_col",
                 consts.CONFIG_FIELD_ALIAS: "max_timestamp_col",
             },
             {
-                consts.CONFIG_TYPE: "min",
+                consts.CONFIG_TYPE: consts.CONFIG_TYPE_MIN,
                 consts.CONFIG_SOURCE_COLUMN: "int_col",
                 consts.CONFIG_TARGET_COLUMN: "int_col",
                 consts.CONFIG_FIELD_ALIAS: "min_int_col",
@@ -278,6 +278,8 @@ def test_column_validation_core_types_to_bigquery():
         sum_cols="*",
         min_cols="*",
         max_cols="*",
+        avg_cols="*",
+        std_cols="*",
     )
 
 
@@ -338,6 +340,20 @@ def test_row_validation_binary_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_row_validation_comp_fields_binary_values_to_bigquery():
+    """dvt_binary row validation with comparison fields."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_binary",
+        tc="bq-conn",
+        primary_keys="int_id",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_custom_query_validation_core_types():
     """Spanner to Spanner dvt_core_types custom-query validation"""
     custom_query_validation_test(
@@ -390,3 +406,21 @@ def test_custom_query_row_validation_many_columns():
 def test_raw_query_dvt_row_types(capsys):
     """Test data-validation query command."""
     raw_query_test(capsys, table="dvt_core_types")
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--project-id",
+        PROJECT_ID,
+        "--instance-id",
+        SPANNER_INSTANCE,
+        "--database-id",
+        SPANNER_DATABASE,
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_SPANNER, conn_args, tmp_path, monkeypatch
+    )

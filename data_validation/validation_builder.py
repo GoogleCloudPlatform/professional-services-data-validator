@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 from copy import deepcopy
+import logging
+from typing import TYPE_CHECKING
 
 from data_validation import consts, metadata
 from data_validation.clients import get_max_in_list_size
@@ -24,6 +25,9 @@ from data_validation.query_builder.query_builder import (
     GroupedField,
     QueryBuilder,
 )
+
+if TYPE_CHECKING:
+    import ibis
 
 
 def list_to_sublists(id_list: list, max_size: int) -> list:
@@ -86,6 +90,28 @@ class ValidationBuilder(object):
 
         else:
             return FilterField.isin(column_name, in_list)
+
+    @staticmethod
+    def is_padded_char(
+        client: "ibis.backends.base.BaseBackend",
+        raw_column_metadata: dict,
+        column_name: str,
+    ) -> bool:
+        """Returns true if the string column provided needs to be trimmed based on the backend.
+        Some databases automatically pad fixed length chars when storing them and returning the value, these
+        will need to be trimmed before comparison. Some databases - do not support
+        fixed length character strings (BQ, Spanner) or trim them before returning the value (mysql)
+        """
+        # Clients only need to implement _is_char_type_padded method if they pad strings
+        return (
+            (
+                client.is_char_type_padded(raw_column_metadata[column_name])
+                if raw_column_metadata.get(column_name)
+                else False
+            )
+            if hasattr(client, "is_char_type_padded") and raw_column_metadata
+            else False
+        )
 
     def clone(self):
         cloned_builder = ValidationBuilder(self.config_manager)
@@ -263,14 +289,43 @@ class ValidationBuilder(object):
         # grab calc field metadata
         alias = primary_key.get(consts.CONFIG_FIELD_ALIAS)
         cast = primary_key.get(consts.CONFIG_CAST)
-        trim = self.config_manager.trim_string_pks()
-        # check if valid calc field and return correct object
+        config_manager = self.config_manager
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.config_manager.get_source_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_source_ibis_table()
+        # If a string is padded, it will need to be trimmed
+        trim = (
+            self.is_padded_char(
+                config_manager.source_client,
+                config_manager.get_source_raw_data_types(),
+                source_field_name,
+            )
+            if table[source_field_name].type().is_string()
+            else False
+        )
         source_field = ComparisonField(
             field_name=source_field_name, alias=alias, cast=cast, trim=trim
+        )
+
+        if self.validation_type == consts.CUSTOM_QUERY:
+            table = self.config_manager.get_target_ibis_table_from_query()
+        else:
+            table = self.config_manager.get_target_ibis_table()
+        # If a string is padded, it will need to be trimmed
+        trim = (
+            self.is_padded_char(
+                config_manager.target_client,
+                config_manager.get_target_raw_data_types(),
+                target_field_name,
+            )
+            if table[target_field_name].type().is_string()
+            else False
         )
         target_field = ComparisonField(
             field_name=target_field_name, alias=alias, cast=cast, trim=trim
         )
+        # check if valid calc field and return correct object
         self.source_builder.add_comparison_field(source_field)
         self.target_builder.add_comparison_field(target_field)
         self.primary_keys[alias] = primary_key
@@ -347,32 +402,63 @@ class ValidationBuilder(object):
             threshold=self.config_manager.threshold,
         )
 
-    def add_calc(self, calc_field):
+    def _get_calc_type(
+        self,
+        calc_field: dict,
+        column_name: str,
+        client: "ibis.backends.base.BaseBackend",
+        raw_data_types: dict,
+    ) -> str:
+        if calc_field[
+            consts.CONFIG_TYPE
+        ] == consts.CALC_FIELD_LENGTH and self.is_padded_char(
+            client,
+            raw_data_types,
+            column_name,
+        ):
+            calc_type = consts.CALC_FIELD_PADDED_CHAR_LENGTH
+        else:
+            calc_type = calc_field[consts.CONFIG_TYPE]
+        # Check if valid calc field and return correct object.
+        if not hasattr(CalculatedField, calc_type):
+            raise Exception("Unknown Calculation Type: {}".format(calc_type))
+        return calc_type
+
+    def add_calc(self, calc_field: dict):
         """Add CalculatedField to Queries
 
         Args:
             calc_field (Dict): An object with source, target, and cast info
         """
-        # prepare source and target payloads
+        # Prepare source and target payloads
         source_config = deepcopy(calc_field)
         source_fields = calc_field[consts.CONFIG_CALCULATED_SOURCE_COLUMNS]
         target_config = deepcopy(calc_field)
         target_fields = calc_field[consts.CONFIG_CALCULATED_TARGET_COLUMNS]
-        # grab calc field metadata
+        # Grab calc field metadata
         alias = calc_field[consts.CONFIG_FIELD_ALIAS]
-        calc_type = calc_field[consts.CONFIG_TYPE]
-        # check if valid calc field and return correct object
-        if not hasattr(CalculatedField, calc_type):
-            raise Exception("Unknown Calculation Type: {}".format(calc_type))
-        source_field = getattr(CalculatedField, calc_type)(
+        source_calc_type = self._get_calc_type(
+            calc_field,
+            source_fields[0],
+            self.source_client,
+            self.config_manager.get_source_raw_data_types(),
+        )
+        target_calc_type = self._get_calc_type(
+            calc_field,
+            target_fields[0],
+            self.target_client,
+            self.config_manager.get_target_raw_data_types(),
+        )
+
+        source_field = getattr(CalculatedField, source_calc_type)(
             config=source_config, fields=source_fields
         )
-        target_field = getattr(CalculatedField, calc_type)(
+        target_field = getattr(CalculatedField, target_calc_type)(
             config=target_config, fields=target_fields
         )
         self.source_builder.add_calculated_field(source_field)
         self.target_builder.add_calculated_field(target_field)
-        # register calc field under alias
+        # Register calc field under alias
         self.calculated_aliases[alias] = calc_field
 
     def get_source_query(self):

@@ -13,10 +13,49 @@
 -- limitations under the License.
 
 -- Schema for storing results handler data.
-CREATE SCHEMA pso_data_validator_results;
+CREATE SCHEMA IF NOT EXISTS pso_data_validator_results;
 -- Schema containing ONLY integration test tables.
-CREATE SCHEMA pso_data_validator;
-DROP TABLE IF EXISTS pso_data_validator.dvt_core_types;
+CREATE SCHEMA IF NOT EXISTS pso_data_validator;
+
+DROP TABLE IF EXISTS pso_data_validator.entries CASCADE;
+CREATE TABLE pso_data_validator.entries
+( guestname character varying(255)
+, content   character varying(255)
+, entryid   integer NOT NULL);
+INSERT INTO pso_data_validator.entries VALUES
+ ('Madeline','Arrived',1)
+,('Annie','Me too!',2)
+,('Bob','More data coming',3)
+,('Joe','Me too!',4)
+,('John','Here!',5)
+,('Alex','Me too!',6)
+,('Zoe','Same!',7);
+
+DROP TABLE IF EXISTS pso_data_validator.test_data_types_postgres_row;
+CREATE TABLE pso_data_validator.test_data_types_postgres_row
+( serial_col    serial PRIMARY KEY
+, int_col       integer
+, text_col      text
+, char_col      character(1)
+, varchar_col   character varying
+, float_col     double precision
+, numeric_col   numeric(5,2)
+, timestamp_col timestamp without time zone
+, date_col      date);
+
+INSERT INTO pso_data_validator.test_data_types_postgres_row VALUES
+(1,10,'row1_text',1,'row1_varchar',10.1,10.10,'2016-06-22 19:10:25','2020-01-01'),
+(2,20,'row2_text',2,'row2_varchar',20.2,20.20,'2016-06-22 19:20:25','2020-02-02'),
+(3,30,'row3_text',3,'row3_varchar',30.2,30.20,'2016-06-22 19:30:25','2020-03-03'),
+(4,40,'row4_text',4,'row4_varchar',40.2,40.40,'2016-06-22 19:30:45','2020-04-04'),
+(5,50,'row5_text',5,'row5_varchar',50.2,50.40,'2016-06-22 19:50:44','2020-05-05'),
+(6,60,'row6_text',6,'row6_varchar',60.2,60.40,'2016-01-22 19:51:44','2020-06-06'),
+(7,70,'row7_text',7,'row7_varchar',70.2,70.40,'2017-01-22 19:51:44','2020-06-07'),
+(8,80,'row8_text',8,'row8_varchar',80.2,80.40,'2018-01-22 19:51:44','2020-06-08'),
+(9,90,'row9_text',9,'row9_varchar',90.2,90.40,'2019-01-22 19:51:44','2020-06-09'),
+(10,100,'row10_text',1,'row10_varchar',100.2,100.40,'2020-01-22 19:51:44','2021-06-09');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_core_types CASCADE;
 CREATE TABLE pso_data_validator.dvt_core_types
 (   id              int NOT NULL PRIMARY KEY
 ,   col_int8        smallint
@@ -131,11 +170,17 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA)
 ,CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
 ,uuid('387bdc3b218443b28ec23ac791c5b0f1')
-,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}'
-);
+,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}')
+,(4,NULL,NULL,NULL,NULL,NULL,NULL
+--,NULL,NULL
+,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL);
 
  /* Following table used for validating generating table partitions */
-drop table if exists public.test_generate_partitions ;
+DROP TABLE IF EXISTS public.test_generate_partitions ;
 CREATE TABLE public.test_generate_partitions (
         course_id VARCHAR(12),
         quarter_id INTEGER,
@@ -158,6 +203,54 @@ INSERT INTO public.test_generate_partitions (course_id, quarter_id, recd_timesta
         ('ALG002', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
         ('ALG002', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
         ('ALG002', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('ALG002', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('ALG004', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('ALG004', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('ALG004', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('ALG004', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5),
+        ('St. John''s', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('St. John''s', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('St. John''s', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('St. John''s', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('St. Jude''s', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('St. Jude''s', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('St. Jude''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('St. Edward''s', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('St. Edward''s', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('St. Edward''s', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('St. Paul''s', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('St. Paul''s', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5);
+
+ /* Following table used for validating generating table partitions  version 2*/
+DROP TABLE IF EXISTS pso_data_validator.test_generate_partitions_v2 ;
+CREATE TABLE pso_data_validator.test_generate_partitions_v2 (
+        course_id VARCHAR(12),
+        quarter_id INTEGER,
+        recd_timestamp TIMESTAMP,
+        registration_date DATE,
+        approved Boolean,
+        grade NUMERIC,
+        PRIMARY KEY (course_id, quarter_id, recd_timestamp, registration_date, approved));
+COMMENT ON TABLE pso_data_validator.test_generate_partitions_v2 IS 'Table for testing generate table partitions,
+  consists of 32 rows with a composite primary key
+  Quoted Strings are handled correctly';
+
+INSERT INTO pso_data_validator.test_generate_partitions_v2 (course_id, quarter_id, recd_timestamp, registration_date, approved, grade) VALUES
+        ('ALG001', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('ALG001', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('ALG001', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
+        ('ALG001', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
+        ('ALG003', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
+        ('ALG003', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
+        ('ALG003', 5678, '2023-08-27 3:00pm', '2023-08-23', True, 2.1),
+        ('ALG003', 5678, '2023-08-27 3:00pm', '2023-08-23', False, 3.5),
+        ('ALG002', 1234, '2023-08-26 4:00pm', '1969-07-20', True, 3.5),
+        ('ALG002', 1234, '2023-08-26 4:00pm', '1969-07-20', False, 2.8),
+        ('ALG002  t0.', 5678, '2023-08-26 4:00pm', '2023-08-23', True, 2.1),
         ('ALG002', 5678, '2023-08-26 4:00pm', '2023-08-23', False, 3.5),
         ('ALG004', 1234, '2023-08-27 3:00pm', '1969-07-20', True, 3.5),
         ('ALG004', 1234, '2023-08-27 3:00pm', '1969-07-20', False, 2.8),
@@ -218,7 +311,7 @@ CREATE TABLE pso_data_validator.dvt_pg_types
 );
 COMMENT ON TABLE pso_data_validator.dvt_pg_types IS 'PostgreSQL data types integration test table';
 
-CREATE EXTENSION pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 INSERT INTO pso_data_validator.dvt_pg_types
 (col_int2,col_int4,col_int8,col_dec,col_dec_10_2
 --,col_money
@@ -314,18 +407,30 @@ INSERT INTO pso_data_validator.dvt_binary VALUES
 (CAST('DVT-key-4' AS bytea), 4, 'Row 4'),
 (CAST('DVT-key-5' AS bytea), 5, 'Row 5');
 
-DROP TABLE IF EXISTS pso_data_validator.dvt_char_id;
-CREATE TABLE pso_data_validator.dvt_char_id
-(   id          char(6) NOT NULL PRIMARY KEY
-,   other_data  varchar(100)
+DROP TABLE IF EXISTS pso_data_validator.dvt_fixed_char_id;
+CREATE TABLE pso_data_validator.dvt_fixed_char_id
+(   id          CHAR(6) NOT NULL PRIMARY KEY
+,   other_data  CHAR(100)
 );
-COMMENT ON TABLE pso_data_validator.dvt_char_id IS 'Integration test table used to test CHAR pk matching.';
-INSERT INTO pso_data_validator.dvt_char_id VALUES
-('DVT1', 'Row 1'),
-('DVT2', 'Row 2'),
-('DVT3', 'Row 3'),
-('DVT4', 'Row 4'),
-('DVT5', 'Row 5');
+
+COMMENT ON TABLE pso_data_validator.dvt_fixed_char_id IS 'Integration test table used to test fixed char pk matching. Trailing blanks are not significant';
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT1', 'Row 1	  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT2', 'Row 2  	');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
+INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_varchar_id;
+CREATE TABLE pso_data_validator.dvt_varchar_id
+(   id          VARCHAR(15) NOT NULL PRIMARY KEY
+,   other_data  VARCHAR(100)
+);
+COMMENT ON TABLE pso_data_validator.dvt_varchar_id IS 'Integration test table used to test varchar pk matching. Trailing blanks are significant';
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-1', 'Row 1');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-2', 'Row 2');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-3', 'Row 3');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-4 ', 'Row 4');
+INSERT INTO pso_data_validator.dvt_varchar_id VALUES ('DVT-key-5', 'Row 5');
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_datetime_id;
 CREATE TABLE pso_data_validator.dvt_datetime_id
@@ -856,13 +961,15 @@ CREATE TABLE pso_data_validator.dvt_tricky_dates (
 , col_dt_low    date
 , col_dt_epoch  date
 , col_dt_high   date
+, col_dt_4712   date
 , col_ts_low    timestamp(0)
 , col_ts_epoch  timestamp(0)
-, col_ts_high   timestamp(0));
+, col_ts_high   timestamp(0)
+, col_ts_4712   timestamp(0));
 COMMENT ON TABLE pso_data_validator.dvt_tricky_dates IS 'Integration test table used to test potentially difficult Timestamps.';
 INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
-(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31'
-,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59');
+(1,DATE'1000-01-01',DATE'1970-01-01',DATE'9999-12-31',DATE'4712-12-31'
+,TIMESTAMP'1000-01-01 00:00:00',TIMESTAMP'1970-01-01 00:00:00',TIMESTAMP'9999-12-31 23:59:59',TIMESTAMP'4712-12-31 23:23:59');
 INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_tricky_strings;
@@ -891,3 +998,26 @@ CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
 );
 COMMENT ON TABLE pso_data_validator.dvt_reserved_word_columns IS 'Integration test table used to test potentially difficult column names.';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_decimals_no_precision;
+CREATE TABLE pso_data_validator.dvt_decimals_no_precision (
+  id              bigint NOT NULL PRIMARY KEY
+, col_zero        decimal
+, col_trail_zero  decimal
+, col_negative    decimal
+);
+COMMENT ON TABLE pso_data_validator.dvt_decimals_no_precision IS 'Integration test table used to test decimals without a precision or scale.';
+INSERT INTO pso_data_validator.dvt_decimals_no_precision VALUES
+(1,0,99.785,-1.01), (2,0,98.015,-1.01), (3,0,92.25,-1.01), (4,0,92.75,-1.01);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_intervals;
+CREATE TABLE pso_data_validator.dvt_intervals
+( id              int NOT NULL PRIMARY KEY
+, col_interval_ds interval
+, col_interval_ym interval);
+COMMENT ON TABLE pso_data_validator.dvt_intervals IS 'Integration test table used to test INTERVAL data types.';
+INSERT INTO pso_data_validator.dvt_intervals VALUES
+(0,INTERVAL '0 day 2 hours 3 minutes 44 seconds',INTERVAL '0 year 2 months'),
+(1,INTERVAL '1 day 2 hours 3 minutes 44 seconds',INTERVAL '1 year 2 months'),
+(2,INTERVAL '2 days 2 hours 3 minutes 44.123 seconds',INTERVAL '2 years 2 months'),
+(3,INTERVAL '30 days 22 hours 33 minutes 44 seconds',INTERVAL '30 years 11 months');

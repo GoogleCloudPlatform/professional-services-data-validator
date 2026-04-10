@@ -51,7 +51,7 @@ CONFIG_CALCULATED_TARGET_COLUMNS = "target_calculated_columns"
 CONFIG_USE_RANDOM_ROWS = "use_random_rows"
 CONFIG_RANDOM_ROW_BATCH_SIZE = "random_row_batch_size"
 CONFIG_PRIMARY_KEYS = "primary_keys"
-CONFIG_TRIM_STRING_PKS = "trim_string_pks"
+CONFIG_TRIM_STRING_PKS = "trim_string_pks"  # now deprecated
 CONFIG_CASE_INSENSITIVE_MATCH = "case_insensitive_match"
 CONFIG_ROW_CONCAT = "concat"
 CONFIG_ROW_HASH = "hash"
@@ -86,7 +86,12 @@ CONFIG_FILTER_STATUS = "filter_status"
 
 CONFIG_RESULT_HANDLER = "result_handler"
 
+CONFIG_TYPE_AVG = "avg"
+CONFIG_TYPE_BIT_XOR = "bit_xor"
 CONFIG_TYPE_COUNT = "count"
+CONFIG_TYPE_MAX = "max"
+CONFIG_TYPE_MIN = "min"
+CONFIG_TYPE_STD = "std"
 CONFIG_TYPE_SUM = "sum"
 
 # Default values
@@ -135,6 +140,7 @@ SOURCE_TYPE_REDSHIFT = "Redshift"
 SOURCE_TYPE_SNOWFLAKE = "Snowflake"
 SOURCE_TYPE_SPANNER = "Spanner"
 SOURCE_TYPE_SPANNER_POSTGRES = "SpannerPostgres"
+SOURCE_TYPE_SYBASE = "Sybase"
 SOURCE_TYPE_TERADATA = "Teradata"
 
 # BigQuery Result Handler Configs
@@ -144,6 +150,8 @@ PROJECT_ID = "project_id"
 TABLE_ID = "table_id"
 GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
 API_ENDPOINT = "api_endpoint"
+STORAGE_API_ENDPOINT = "storage_api_endpoint"
+CLIENT_PROJECT_ID = "client_project_id"
 
 # Result Handler Output Table Fields
 VALIDATION_TYPE = "validation_type"
@@ -181,6 +189,11 @@ TOTAL_ROWS_FAIL = "total_rows_fail_validation_status"
 FAILED_SOURCE_NOT_IN_TARGET = "failed_rows_present_in_source_not_in_target"
 FAILED_TARGET_NOT_IN_SOURCE = "failed_rows_present_in_target_not_in_source"
 FAILED_PRESENT_IN_BOTH_TABLES = "failed_rows_present_in_both_source_and_target"
+
+# Combiner only constants
+COMBINER_TABLE_NAME = "dvt_table_name"
+COMBINER_COLUMN_NAME = "dvt_column_name"
+COMBINER_AGG_VALUE = "dvt_agg_value"
 
 # SQL Template Formatting
 # TODO: should this be managed in query_builder if that is the only place its used?
@@ -240,3 +253,20 @@ MAX_CONCAT_COLUMNS_DEFAULTS = {
     # Minimizing risk of: [Error 3556] Too many columns defined for this table.
     "teradata": 500,
 }
+
+# CalculatedField expression constants.
+CALC_FIELD_CAST = "cast"
+CALC_FIELD_CONCAT = "concat"
+CALC_FIELD_BYTE_LENGTH = "byte_length"
+CALC_FIELD_EPOCH_SECONDS = "epoch_seconds"
+CALC_FIELD_HASH = "hash"
+CALC_FIELD_IFNULL = "ifnull"
+CALC_FIELD_IFNULL_DEFAULT = "default_null_string"
+CALC_FIELD_IFNULL_DEFAULT_STRING = "DEFAULT_REPLACEMENT_STRING"
+CALC_FIELD_LENGTH = "length"
+CALC_FIELD_PADDED_CHAR_LENGTH = "padded_char_length"
+CALC_FIELD_RSTRIP = "rstrip"
+CALC_FIELD_UPPER = "upper"
+
+# Backends that do not support window functions.
+NO_WINDOW_FUNCTION_SUPPORT = [SOURCE_TYPE_SYBASE]
