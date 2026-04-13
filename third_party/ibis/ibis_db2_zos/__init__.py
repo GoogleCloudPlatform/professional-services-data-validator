@@ -39,7 +39,7 @@ class Backend(Db2LUWBackend):
         host: str = "localhost",
         user: Optional[str] = None,
         password: Optional[str] = None,
-        port: int = 50000,
+        port: Optional[int] = None,
         database: Optional[str] = None,
         url: Optional[str] = None,
         driver: str = "ibm_db_sa",
