@@ -83,4 +83,9 @@ def sa_format_postgres_padded_char_length(translator, op):
     Without this workaround the bpchar value is implicitly cast to varchar and loses trailing spaces.
     """
     arg = translator.translate(op.arg)
-    return sa.func.char_length(sa.func.concat(arg, sa.text("''")))
+    return sa.func.char_length(
+        sa.case(
+            (arg.is_(None), sa.literal_column("NULL")),
+            else_=sa.func.concat(arg, sa.text("''")),
+        )
+    )

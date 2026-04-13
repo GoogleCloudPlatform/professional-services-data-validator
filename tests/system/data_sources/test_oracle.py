@@ -414,8 +414,6 @@ def test_column_validation_oracle_to_postgres():
         max_cols=max_cols,
         avg_cols=sum_cols,
         std_cols=sum_cols,
-        # TODO Remove this filters clause when working on issue-1717.
-        filters="id < 4",
     )
 
 
@@ -424,7 +422,6 @@ def test_column_validation_oracle_to_postgres():
     new=mock_get_connection_config,
 )
 def test_column_validation_all_null_oracle_to_postgres():
-    # TODO Change cols below to include col_char_2, col_nchar_2 when issue-1717 is complete.
     cols = ",".join(
         [
             _
@@ -436,8 +433,6 @@ def test_column_validation_all_null_oracle_to_postgres():
                 "col_json",
                 "col_jsonb",
                 "col_uuid",
-                "col_char_2",
-                "col_nchar_2",
             )
         ]
     )
