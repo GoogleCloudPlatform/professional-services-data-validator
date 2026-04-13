@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
 from typing import Optional
 
 from google.api_core import client_options
@@ -58,6 +59,13 @@ class Backend(PostgresBackend):
 
         engine = sa.create_engine(alchemy_url)
         super(PostgresBackend, self).do_connect(engine)
+
+    @contextlib.contextmanager
+    def _safe_raw_sql(self, *args, **kwargs):
+        # Use self.con.connect() below to avoid creating a transaction.
+        # The SQLAlchemy default self.begin() creates an unnecessary transaction
+        with self.con.connect() as con:
+            yield con.execute(*args, **kwargs)
 
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
