@@ -25,7 +25,6 @@ from third_party.ibis.ibis_cloud_spanner import parse_instance_and_dataset
 
 from third_party.ibis.ibis_spanner_postgres.compiler import SpannerPostgresCompiler
 
-
 sa_registry.register(
     "spanner_postgres.psycopg2",
     "third_party.ibis.ibis_spanner_postgres.dialect",
@@ -53,7 +52,7 @@ class Backend(PostgresBackend):
             user=None,
             password=None,
             database=database,
-            driver=f"postgresql+psycopg2",
+            driver=f"spanner_postgres+psycopg2",
         )
         self.database_name = alchemy_url.database
 
