@@ -59,6 +59,46 @@ class Backend(PostgresBackend):
         engine = sa.create_engine(alchemy_url)
         super(PostgresBackend, self).do_connect(engine)
 
+    def raw_column_metadata(
+        self, database: str = None, table: str = None, query: str = None
+    ):
+        assert (database and table) or query, "We should never receive all args=None"
+        if database and table:
+            source = f'"{database}"."{table}"'
+        elif query:
+            source = f"({query})"
+
+        oid_to_type = {
+            16: "boolean",
+            17: "bytea",
+            20: "bigint",
+            21: "smallint",
+            23: "integer",
+            25: "text",
+            700: "real",
+            701: "double precision",
+            1043: "character varying",
+            1082: "date",
+            1114: "timestamp without time zone",
+            1184: "timestamp with time zone",
+            1700: "numeric",
+            3802: "jsonb",
+        }
+
+        with self.con.connect() as con:
+            cur = con.exec_driver_sql(f"SELECT * FROM {source} t0 LIMIT 0")
+            for column in cur.cursor.description:
+                data_type = oid_to_type.get(column.type_code, f"unknown_{column.type_code}")
+                yield (
+                    column.name,
+                    data_type,
+                    column.display_size,
+                    column.internal_size,
+                    column.precision,
+                    column.scale,
+                    column.null_ok,
+                )
+
     @property
     def instance_id(self):
         return self.data_instance
