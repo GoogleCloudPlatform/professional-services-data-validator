@@ -21,19 +21,16 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql.base import BYTEA
 
 from third_party.ibis.ibis_postgres import registry as postgres_registry
+from third_party.ibis.ibis_bigquery.registry import (
+    format_hashbytes as bq_format_hashbytes,
+)
 
 
 operation_registry = base_pg_operation_registry.copy()
 
 
 def _format_hashbytes(translator, op):
-    arg = translator.translate(op.arg)
-    hash_func = sa.func.sha256(sa.func.cast(arg, BYTEA))
-    # TODO How to convert the bytea sha256 output back to a string.
-    #      An attempt to cast it fails:
-    #        cast(sha256(t3.concat__all::bytea) as text) AS hash__all
-    #        Statement failed: Invalid cast of bytes to UTF8 string
-    return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
+    return bq_format_hashbytes(translator, op)
 
 
 def _string_join(t, op):
