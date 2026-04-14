@@ -45,6 +45,12 @@ Unsurprisingly there are quite a few differences between standard PostgreSQL and
 
 I needed to implement a new Ibis dialect `SpannerPostgresDialect_psycopg2` to override how we get data types for a given table.
 
+## Add a connection
+
+```shell
+data-validation connections add -c spangres SpannerPostgres --host=localhost --port=5432
+```
+
 ## Tests
 
 I created our standard `dvt_core_types` table and ran validations with BigQuery.

@@ -20,6 +20,7 @@ from sqlalchemy.engine import reflection
 from sqlalchemy.engine.default import DefaultDialect
 
 PG_TYPE_MAP = {
+    "bool": "boolean",
     "int8": "bigint",
     "float4": "real",
     "float8": "double precision",
