@@ -1,17 +1,29 @@
+# Copyright 2026 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from sqlalchemy import sql, select, bindparam
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
 from sqlalchemy.dialects.postgresql import pg_catalog
-from sqlalchemy.engine import reflection, ObjectKind
+from sqlalchemy.engine import reflection
 from sqlalchemy.engine.default import DefaultDialect
 
 PG_TYPE_MAP = {
     "int8": "bigint",
-    "numeric": "numeric",
     "float4": "real",
     "float8": "double precision",
     "varchar": "character varying",
-    "date": "date",
     "timestamptz": "timestamp with time zone",
 }
 
@@ -29,7 +41,7 @@ class SpannerPostgresDialectMixin(DefaultDialect):
 
     def _format_type(self, pg_type_str, pg_type_mod) -> str:
         """In Spanner the format_type() UDF is not present, this method converts pg_type values to something "similar" to format_type() output."""
-        type_str = PG_TYPE_MAP[pg_type_str]
+        type_str = PG_TYPE_MAP.get(pg_type_str, pg_type_str)
         if pg_type_mod != -1:
             type_str = f"{type_str}({pg_type_mod})"
         elif type_str == "numeric":

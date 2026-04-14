@@ -47,3 +47,52 @@ INSERT INTO pso_data_validator.dvt_core_types VALUES
  ,'Hello DVT','C ','Hello DVT'
  ,DATE'1970-01-03',TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 +00:00'
  ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03 -03:00');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_spg_types;
+CREATE TABLE pso_data_validator.dvt_spg_types
+(   id              bigint NOT NULL PRIMARY KEY
+,   col_int8        bigint
+,   col_dec         decimal
+,   col_dec_10_2    decimal
+,   col_float32     real
+,   col_float64     double precision
+,   col_varchar_30  varchar(30)
+,   col_text        text
+,   col_date        date
+,   col_ts          timestamptz
+,   col_tstz        timestamptz
+,   col_binary      bytea
+,   col_bool        boolean
+,   col_uuid        uuid
+);
+
+INSERT INTO pso_data_validator.dvt_spg_types
+(id,col_int8,col_dec,col_dec_10_2,col_float32,col_float64
+,col_varchar_30,col_text,col_date,col_ts,col_tstz
+,col_binary,col_bool,col_uuid)
+VALUES
+(1,123456789012345678,12345678901234567890.12345,123.12
+,123456.1,12345678.1
+,'Hello DVT','Hello DVT'
+,DATE'1970-01-01',TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456'
+,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
+,CAST('DVT' AS BYTEA),TRUE
+,gen_random_uuid())
+,(2,223456789012345678,22345678901234567890.12345,223.12
+,223456.1,22345678.1
+,'Hello DVT','Hello DVT'
+,DATE'1970-01-02',TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456'
+,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 +00:00'
+,CAST('DVT' AS BYTEA),FALSE
+,gen_random_uuid())
+,(3,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_null_not_null;
+CREATE TABLE pso_data_validator.dvt_null_not_null
+(   col_nn             timestamptz NOT NULL PRIMARY KEY
+,   col_nullable       timestamptz
+,   col_src_nn_trg_n   timestamptz NOT NULL
+,   col_src_n_trg_nn   timestamptz
+);
