@@ -121,3 +121,45 @@ def test_column_validation_core_types_to_bigquery():
         wildcard_include_timestamp=True,
         wildcard_include_string=True,
     )
+
+
+###########################
+# ROW VALIDATION TESTS
+###########################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_auto_pks():
+    """Test auto population of -pks."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="mock-conn",
+        hash="col_string",
+        primary_keys=None,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_core_types_to_bigquery():
+    """Spanner PostgreSQL to BigQuery dvt_core_types row validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and float32 is lossy.
+    cols = ",".join(
+        [
+            _
+            for _ in DVT_CORE_TYPES_COLUMNS
+            if _
+            not in (
+                "id",
+                "col_float32",
+            )
+        ]
+    )
+    row_validation_test(
+        tables="pso_data_validator.dvt_core_types",
+        tc="bq-conn",
+        concat=cols,
+    )
