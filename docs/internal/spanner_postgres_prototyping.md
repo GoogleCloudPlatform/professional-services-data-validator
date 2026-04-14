@@ -213,8 +213,10 @@ FROM t3) AS t4'
 
 I cannot currently find a way to convert the bytea output of `sha256()` into a hex string.
 
+This also prevents row validation of BYTEA columns because we validate these using the hex representation.
 
 ## Not prototyped
+
 - Data type fetch for custom queries, I imagine this will be a similar `_metadata()` call to the existing PostgreSQL one but perhaps with some data type conversion
 - Generate table partitions
 - Find tables

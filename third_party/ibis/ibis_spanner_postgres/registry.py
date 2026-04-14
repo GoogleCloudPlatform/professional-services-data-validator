@@ -22,7 +22,6 @@ from ibis.backends.postgres.registry import (
     operation_registry as base_pg_operation_registry,
 )
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql.base import BYTEA
 
 from third_party.ibis.ibis_postgres import registry as postgres_registry
 
@@ -68,12 +67,15 @@ def _sa_cast(t, op):
     arg_dtype = arg.output_dtype
     sa_arg = t.translate(arg)
 
+    # TO/FROM_HEX Spanner function are not exposed to PostgreSQL dialect.
+    # Also PostgreSQL equivalent encode/decode are not included in Spanner PostgreSQL dialect.
+    # Both lines below will fail but are included for reference.
     if arg_dtype.is_binary() and typ.is_string():
         # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.encode(sa_arg, sa.literal("hex"))
+        return sa.func.to_hex(sa_arg)
     elif arg_dtype.is_string() and typ.is_binary():
         # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.decode(sa_arg, sa.literal("hex"))
+        return sa.func.from_hex(sa_arg)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
