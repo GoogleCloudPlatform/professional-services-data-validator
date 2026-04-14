@@ -89,6 +89,8 @@ def test_schema_validation_core_types_to_bigquery():
         allow_list=(
             # BigQuery does not have a float32 type.
             "float32:float64"
+            # Spanner PostgreSQL does not support timezone-unaware timestamps.
+            "timestamp('UTC'):timestamp"
         ),
     )
 
