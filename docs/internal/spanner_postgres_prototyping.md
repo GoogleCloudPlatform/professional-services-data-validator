@@ -10,8 +10,9 @@ https://cloud.google.com/spanner/docs/pgadapter
 
 I initially tried to use the standard Spanner client but this was causing me some confusion in managing Ibis code. Our current Spanner code does not use SQLAlchemy tables, the PostgreSQL code does. I was finding it hard to hook in the PostgreSQL compiler/backend.
 
-So I switched to trying PGAdapter.
+So I switched to trying PGAdapter (https://docs.cloud.google.com/spanner/docs/pgadapter-start#standalone).
 
+`java` example:
 ```shell
 mkdir pgadapter
 cd pgadapter
@@ -20,8 +21,18 @@ wget https://storage.googleapis.com/pgadapter-jar-releases/pgadapter.tar.gz \
 
 
 java -jar pgadapter.jar -p ${PROJECT} \
- -i dvt-spanner -d pso_data_validator \
+ -i dvt-spanner -d pso_data_validator_pg \
  -s 6432
+```
+
+Docker example:
+```shell
+sudo docker run -d -p 5432:5432 \
+  gcr.io/cloud-spanner-pg-adapter/pgadapter:latest \
+    -p ${PROJECT} \
+    -i dvt-spanner \
+    -d pso_data_validator_pg \
+    -x
 ```
 
 This then let me connect using the same driver as standard PostgreSQL and build the code from the PostgreSQL Ibis code.
@@ -33,7 +44,6 @@ https://cloud.google.com/spanner/docs/pg-psycopg2-connect
 Unsurprisingly there are quite a few differences between standard PostgreSQL and Spanner PostgreSQL.
 
 I needed to implement a new Ibis dialect `SpannerPostgresDialect_psycopg2` to override how we get data types for a given table.
-
 
 ## Tests
 
@@ -83,6 +93,7 @@ $ data-validation validate schema -sc=spanner_pg -tc=bq -tbls=pso_data_validator
 ### Column validation
 
 #### Count
+
 Count has its problems:
 ```
 $data-validation validate column -sc=spanner_pg -tc=spanner_pg -tbls=pso_data_validator.dvt_core_types --count="*"
@@ -119,6 +130,7 @@ $ data-validation validate column -sc=spanner_pg -tc=spanner_pg -tbls=pso_data_v
 ```
 
 #### Min
+
 ```
 $ data-validation validate column -sc=spanner_pg -tc=spanner_pg -tbls=pso_data_validator.dvt_core_types --min="*"
 
@@ -150,6 +162,7 @@ $ data-validation validate column -sc=spanner_pg -tc=spanner_pg -tbls=pso_data_v
 ```
 
 #### Sum
+
 ```
 $ data-validation validate column -sc=spanner_pg -tc=spanner_pg -tbls=pso_data_validator.dvt_core_types --sum="*"
 
@@ -196,7 +209,7 @@ I cannot currently find a way to convert the bytea output of `sha256()` into a h
 
 
 ## Not prototyped
-- Data type fetch for custom queries, I imagine this will be a similar `_metadata()` call to the existoing PostgreSQL one but perhaps with some data type conversion
+- Data type fetch for custom queries, I imagine this will be a similar `_metadata()` call to the existing PostgreSQL one but perhaps with some data type conversion
 - Generate table partitions
 - Find tables
 - Any additional options for column/row validation

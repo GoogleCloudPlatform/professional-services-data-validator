@@ -156,14 +156,8 @@ CONNECTION_SOURCE_FIELDS = {
         ],
     ],
     consts.SOURCE_TYPE_SPANNER_POSTGRES: [
-        ["project_id", "GCP Project to use for Spanner"],
-        ["instance_id", "ID of Spanner instance to connect to"],
-        ["database_id", "ID of Spanner database (schema) to connect to"],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
-        [
-            "api_endpoint",
-            '(Optional) GCP Spanner API endpoint (e.g. "https://mycs.p.googleapis.com")',
-        ],
+        ["host", "Spanner PGAdapter host (e.g. localhost)"],
+        ["port", "Spanner PGAdapter port (e.g. 5432)"],
     ],
     consts.SOURCE_TYPE_SYBASE: [
         ["host", "Sybase host (default localhost)"],
