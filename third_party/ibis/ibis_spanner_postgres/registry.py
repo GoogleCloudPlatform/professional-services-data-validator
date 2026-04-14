@@ -13,7 +13,11 @@
 # limitations under the License.
 
 import ibis.expr.operations as ops
-from ibis.backends.base.sql.alchemy.registry import get_col, get_sqla_table
+from ibis.backends.base.sql.alchemy.registry import (
+    get_col,
+    get_sqla_table,
+    _cast as sa_fixed_cast,
+)
 from ibis.backends.postgres.registry import (
     operation_registry as base_pg_operation_registry,
 )
@@ -21,16 +25,13 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql.base import BYTEA
 
 from third_party.ibis.ibis_postgres import registry as postgres_registry
-from third_party.ibis.ibis_bigquery.registry import (
-    format_hashbytes as bq_format_hashbytes,
-)
 
 
 operation_registry = base_pg_operation_registry.copy()
 
 
 def _format_hashbytes(translator, op):
-    return bq_format_hashbytes(translator, op)
+    raise ValueError("Spanner does not support a HASH function")
 
 
 def _string_join(t, op):
@@ -61,8 +62,26 @@ def _table_column(t, op):
     return out_expr
 
 
+def _sa_cast(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+    sa_arg = t.translate(arg)
+
+    if arg_dtype.is_binary() and typ.is_string():
+        # Binary to string cast is a "to hex" conversion for DVT.
+        return sa.func.encode(sa_arg, sa.literal("hex"))
+    elif arg_dtype.is_string() and typ.is_binary():
+        # Binary from string cast is a "from hex" conversion for DVT.
+        return sa.func.decode(sa_arg, sa.literal("hex"))
+
+    # Follow the original Ibis code path.
+    return sa_fixed_cast(t, op)
+
+
 operation_registry.update(
     {
+        ops.Cast: _sa_cast,
         ops.ExtractEpochSeconds: postgres_registry.sa_epoch_seconds,
         ops.HashBytes: _format_hashbytes,
         ops.StringJoin: _string_join,

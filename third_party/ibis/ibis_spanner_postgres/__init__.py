@@ -34,6 +34,7 @@ sa_registry.register(
 class Backend(PostgresBackend):
     name = "spanner_postgres"
     compiler = SpannerPostgresCompiler
+    # _compiler_class = SpannerPostgresCompiler
 
     def do_connect(
         self,
