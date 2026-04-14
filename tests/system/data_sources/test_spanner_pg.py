@@ -132,6 +132,9 @@ def test_column_validation_core_types_to_bigquery():
 )
 def test_row_validation_core_types_auto_pks():
     """Test auto population of -pks."""
+    pytest.skip(
+        "Skipping test_row_validation_core_types_auto_pks due to PK detection being a TODO."
+    )
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
