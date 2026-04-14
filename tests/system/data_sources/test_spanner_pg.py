@@ -26,9 +26,6 @@ from data_validation import (
     data_validation,
 )
 from data_validation.result_handlers.base_backend import RH_WRITE_MESSAGE
-from tests.system.data_sources.deploy_cloudsql.cloudsql_resource_manager import (
-    CloudSQLResourceManager,
-)
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     DVT_TRICKY_DATES_COLUMNS,
@@ -64,7 +61,7 @@ POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 CONN = {
-    consts.SOURCE_TYPE: consts.SOURCE_TYPE_POSTGRES,
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_SPANNER_POSTGRES,
     "host": POSTGRES_HOST,
     "port": POSTGRES_PORT,
 }
