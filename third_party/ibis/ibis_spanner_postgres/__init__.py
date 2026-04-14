@@ -13,17 +13,15 @@
 # limitations under the License.
 
 import contextlib
-from typing import Optional
+from typing import Iterable, Optional
 
-from google.api_core import client_options
 from google.cloud import spanner
 
 from ibis.backends.postgres import Backend as PostgresBackend
 import sqlalchemy as sa
 from sqlalchemy.dialects import registry as sa_registry
 
-from third_party.ibis.ibis_cloud_spanner import parse_instance_and_dataset
-
+from third_party.ibis.ibis_addon.api import dvt_handle_failed_column_type_inference
 from third_party.ibis.ibis_spanner_postgres.compiler import SpannerPostgresCompiler
 
 sa_registry.register(
@@ -67,6 +65,11 @@ class Backend(PostgresBackend):
         with self.con.connect() as con:
             yield con.execute(*args, **kwargs)
 
+    def _handle_failed_column_type_inference(
+        self, table: sa.Table, nulltype_cols: Iterable[str]
+    ) -> sa.Table:
+        return dvt_handle_failed_column_type_inference(self, table, nulltype_cols)
+
     def raw_column_metadata(
         self, database: str = None, table: str = None, query: str = None
     ):
@@ -96,7 +99,9 @@ class Backend(PostgresBackend):
         with self.con.connect() as con:
             cur = con.exec_driver_sql(f"SELECT * FROM {source} t0 LIMIT 0")
             for column in cur.cursor.description:
-                data_type = oid_to_type.get(column.type_code, f"unknown_{column.type_code}")
+                data_type = oid_to_type.get(
+                    column.type_code, f"unknown_{column.type_code}"
+                )
                 yield (
                     column.name,
                     data_type,
