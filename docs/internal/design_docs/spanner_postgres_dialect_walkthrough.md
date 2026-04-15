@@ -24,3 +24,4 @@ Standard PostgreSQL expressions from Ibis must be filtered or altered to suit Sp
     - `cast(binary, string)`: rewrites to "from hex" conversion for DVT. This will fail in practice because Spanner PostgreSQL doesn't support `to_hex()` or `encode(arg, 'hex')`.
     - `cast(string, binary)`: rewrites to "from hex" conversion for DVT. This will fail in practice because Spanner PostgreSQL doesn't support `from_hex()`or `decode(arg, 'hex')`.
     - `cast(any type, timestamp)`: rewrites to `TIMESTAMP WITH TIME ZONE` since Spanner PostgreSQL lacks support for `timestamp without time zone`.
+- **`RawSQL`:** Compiles straightforward custom SQL expressions inserted through `--filters`.

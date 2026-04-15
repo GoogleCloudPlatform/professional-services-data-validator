@@ -135,7 +135,7 @@ def test_row_validation_core_types_auto_pks():
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",
-        hash="col_string",
+        concat="col_string",
         primary_keys=None,
     )
 

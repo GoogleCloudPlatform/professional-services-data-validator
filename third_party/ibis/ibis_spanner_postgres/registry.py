@@ -24,7 +24,7 @@ from ibis.backends.postgres.registry import (
 import sqlalchemy as sa
 
 from third_party.ibis.ibis_postgres import registry as postgres_registry
-
+from third_party.ibis.ibis_addon.operations import RawSQL
 
 operation_registry = base_pg_operation_registry.copy()
 
@@ -105,6 +105,11 @@ def _count(t, op):
     return base_pg_operation_registry[ops.Count](t, op)
 
 
+def _raw_sql(t, op):
+    rand_col, raw_sql = op.args
+    return sa.text(raw_sql.args[0])
+
+
 operation_registry.update(
     {
         ops.Cast: _cast,
@@ -113,5 +118,6 @@ operation_registry.update(
         ops.HashBytes: _format_hashbytes,
         ops.StringJoin: _string_join,
         ops.TableColumn: _table_column,
+        RawSQL: _raw_sql,
     }
 )
