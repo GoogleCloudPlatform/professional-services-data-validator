@@ -57,6 +57,12 @@ class Backend(PostgresBackend):
         self.database_name = alchemy_url.database
 
         engine = sa.create_engine(alchemy_url)
+
+        @sa.event.listens_for(engine, "connect")
+        def connect(dbapi_connection, connection_record):
+            with dbapi_connection.cursor() as cur:
+                cur.execute("SET TIMEZONE = UTC")
+
         super(PostgresBackend, self).do_connect(engine)
 
     @contextlib.contextmanager
