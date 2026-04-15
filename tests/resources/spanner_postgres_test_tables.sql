@@ -66,13 +66,14 @@ CREATE TABLE pso_data_validator.dvt_spg_types
 ,   col_tstz        timestamptz
 ,   col_binary      bytea
 ,   col_bool        boolean
+,   col_jsonb       jsonb
 ,   col_uuid        uuid
 );
 
 INSERT INTO pso_data_validator.dvt_spg_types
 (id,col_int8,col_dec,col_dec_10_2,col_float32,col_float64
 ,col_varchar_30,col_text,col_date,col_ts,col_tstz
-,col_binary,col_bool,col_uuid)
+,col_binary,col_bool,col_jsonb,col_uuid)
 VALUES
 (1,123456789012345678,12345678901234567890.12345,123.12
 ,123456.1,12345678.1
@@ -80,17 +81,17 @@ VALUES
 ,DATE'1970-01-01',TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 ,CAST('DVT' AS BYTEA),TRUE
-,gen_random_uuid())
+,JSONB'[1,2,3]',gen_random_uuid())
 ,(2,223456789012345678,22345678901234567890.12345,223.12
 ,223456.1,22345678.1
 ,'Hello DVT','Hello DVT'
 ,DATE'1970-01-02',TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 +00:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 +00:00'
 ,CAST('DVT' AS BYTEA),FALSE
-,gen_random_uuid())
+,JSONB'[1,2,3]',gen_random_uuid())
 ,(3,NULL,NULL,NULL,NULL,NULL
 ,NULL,NULL,NULL,NULL,NULL
-,NULL,NULL,NULL);
+,NULL,NULL,NULL,NULL);
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_null_not_null;
 CREATE TABLE pso_data_validator.dvt_null_not_null

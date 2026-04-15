@@ -66,6 +66,24 @@ CONN = {
     "port": PGADAPTER_PORT,
 }
 
+DVT_SPG_TYPES_COLUMNS = [
+    "id",
+    "col_int8",
+    "col_dec",
+    "col_dec_10_2",
+    "col_float32",
+    "col_float64",
+    "col_varchar_30",
+    "col_text",
+    "col_date",
+    "col_ts",
+    "col_tstz",
+    "col_binary",
+    "col_bool",
+    "col_jsonb",
+    "col_uuid",
+]
+
 
 def mock_get_connection_config(*args):
     if args[1] in ("pg-conn", "mock-conn"):
@@ -124,6 +142,28 @@ def test_column_validation_core_types_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_spg_types_to_bigquery():
+    """Spanner PostgreSQL dvt_spg_types column validation"""
+    # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
+    cols = ",".join(
+        [_ for _ in DVT_SPG_TYPES_COLUMNS if _ not in ("id", "col_float32")]
+    )
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_spg_types",
+        sum_cols=cols,
+        min_cols=cols,
+        max_cols=cols,
+        avg_cols=cols,
+        wildcard_include_timestamp=True,
+        wildcard_include_string=True,
+    )
+
+
 ###########################
 # ROW VALIDATION TESTS
 ###########################
@@ -164,6 +204,7 @@ def test_row_validation_core_types_to_bigquery():
         tc="bq-conn",
         concat=cols,
     )
+
 
 ##############################
 # FIND-TABLE VALIDATION TESTS
