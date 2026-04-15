@@ -14,20 +14,34 @@ python3 test.py
 ### Build Docker Image
 
 You will need to build a Docker image to be used by Cloud Run. In order to add
-Teradata or Oracle, you will need to customize the Dockerfile and add your
+Teradata or SQL Server, you will need to customize the Dockerfile and add your
 licensed utilities.
 
 ```
-export PROJECT_ID=<PROJECT-ID>
-gcloud builds submit --tag gcr.io/${PROJECT_ID}/data-validation \
-    --project=${PROJECT_ID}
+PROJECT_ID=<PROJECT-ID>
+REGION=<REGION e.g. us-central1>
+SA=<SERVICE ACCOUNT _NAME>@${PROJECT}.iam.gserviceaccount.com
+REPO="dvt"
+TAG="dvt:latest"
+
+gcloud builds submit \
+  --project=${PROJECT_ID} \
+  --tag=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${TAG} \
+  --default-buckets-behavior=regional-user-owned-bucket \
+  --service-account=projects/${PROJECT_ID}/serviceAccounts/${SA}
 ```
 
 ### Deploy to Cloud Run
 
 ```
-gcloud run deploy --image gcr.io/${PROJECT_ID}/data-validation \
-    --project=${PROJECT_ID}
+PROJECT_ID=<PROJECT-ID>
+REGION=<REGION> # e.g. us-central1
+REPO=<ARTIFACT-REGISTRY-REPOSITORY-NAME>
+SA=<SERVICE_ACCOUNT_NAME>@${PROJECT_ID}.iam.gserviceaccount.com
+gcloud run deploy dvt \
+  --image ${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/dvt:${DVT_VERSION} \
+  --project=${PROJECT_ID} --region=${REGION} \
+  --service-account=${SA}
 ```
 
 ### Test Cloud Run Endpoint
@@ -75,7 +89,7 @@ def get_cloud_run_url(service_name, project_id):
 
   return re.findall("URL:.*\n", description)[0].split()[1].strip()
 
-# You can get the JSON content specific for your scenario by using our CLI and providing the argument to generate the JSON config file [`--config-file-json` or `-cj <filepath>.json`]. 
+# You can get the JSON content specific for your scenario by using our CLI and providing the argument to generate the JSON config file [`--config-file-json` or `-cj <filepath>.json`].
 # IMPORTANT: do not forget to make the necessary adjustments between JSON and Python objects, check this link as a reference: https://python-course.eu/applications-python/json-and-python.php.
 data = {
     "source_conn": {
@@ -115,7 +129,7 @@ If you intend to execute custom query validations, you will need to declare each
 
 ```python
 query = """
-SELECT start_station_id, 
+SELECT start_station_id,
        SUM(CASE WHEN bikeid = 18104 THEN 1 END ) AS bike_18104
 FROM `bigquery-public-data.new_york_citibike.citibike_trips`
 WHERE bikeid = 18104
@@ -148,18 +162,3 @@ data = {
     ],
 }
 ```
-
-
-### Oracle Setup
-
-If you would like to use Data Validation against an Oracle DB you will need to
-supply your own license files.  To do so:
-
-1) Create an `oracle` directory and add your .rpm files into it.
-
-- oracle/oracle-instantclient12.2-basiclite-12.2.0.1.0-1.x86_64.rpm
-- oracle/oracle-instantclient12.2-devel-12.2.0.1.0-1.x86_64.rpm
-- oracle/oracle-instantclient12.2-odbc-12.2.0.1.0-2.x86_64.rpm
-
-2) Uncomment all logic in the Dockerfile under the Oracle Dependencies comments
-
