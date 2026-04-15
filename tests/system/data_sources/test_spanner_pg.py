@@ -115,6 +115,18 @@ def test_schema_validation_core_types_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_spg_types_to_bigquery():
+    """Spanner PostgreSQL dvt_spg_types schema validation"""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_spg_types",
+        tc="mock-conn",
+    )
+
+
 ##########################
 # COLUMN VALIDATION TESTS
 ##########################
