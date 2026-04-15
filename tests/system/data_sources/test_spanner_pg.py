@@ -119,7 +119,7 @@ def test_schema_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_schema_validation_spg_types_to_bigquery():
+def test_schema_validation_spg_types():
     """Spanner PostgreSQL dvt_spg_types schema validation"""
     schema_validation_test(
         tables="pso_data_validator.dvt_spg_types",
@@ -158,7 +158,7 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_spg_types_to_bigquery():
+def test_column_validation_spg_types():
     """Spanner PostgreSQL dvt_spg_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
     cols = ",".join(

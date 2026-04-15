@@ -24,7 +24,7 @@ from ibis.backends.postgres.registry import (
 import sqlalchemy as sa
 
 from third_party.ibis.ibis_postgres import registry as postgres_registry
-from third_party.ibis.ibis_addon.operations import RawSQL
+from third_party.ibis.ibis_addon.operations import RawSQL, BinaryLength, PaddedCharLength
 
 operation_registry = base_pg_operation_registry.copy()
 
@@ -112,6 +112,11 @@ def _raw_sql(t, op):
     return sa.text(raw_sql.args[0])
 
 
+def _binary_length(t, op):
+    arg = t.translate(op.arg)
+    return sa.func.length(arg)
+
+
 operation_registry.update(
     {
         ops.Cast: _cast,
@@ -121,5 +126,7 @@ operation_registry.update(
         ops.StringJoin: _string_join,
         ops.TableColumn: _table_column,
         RawSQL: _raw_sql,
+        BinaryLength: _binary_length,
+        PaddedCharLength: postgres_registry.sa_format_postgres_padded_char_length,
     }
 )
