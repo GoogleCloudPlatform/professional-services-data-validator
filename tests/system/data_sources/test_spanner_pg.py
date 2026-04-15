@@ -117,7 +117,8 @@ def test_column_validation_core_types_to_bigquery():
         min_cols=cols,
         max_cols=cols,
         avg_cols=cols,
-        std_cols=cols,
+        # TODO: Spanner error: Postgres function stddev_samp(bigint) is not supported
+        # std_cols=cols,
         wildcard_include_timestamp=True,
         wildcard_include_string=True,
     )
