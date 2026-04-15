@@ -13,12 +13,12 @@ RUN apt-get update
 RUN pip install --upgrade pip
 RUN pip install Flask gunicorn google_pso_data_validator
 
-# Hive/Impala Dependencies 
+# Hive/Impala Dependencies
 # RUN pip install hdfs
 # RUN pip install thrift-sasl
 
 # Oracle dependency
-RUN pip install oracledb
+# RUN pip install oracledb
 # RUN apt-get -y install --fix-missing --upgrade vim alien unixodbc-dev wget libaio1 libaio-dev
 
 # Run the web service on container startup. Here we use the gunicorn

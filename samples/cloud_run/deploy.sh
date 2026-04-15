@@ -17,4 +17,5 @@ echo "Deploying to Cloud Run..."
 gcloud run deploy data-validation \
     --image "$IMAGE" \
     --region="${REGION}" \
-    --project="${PROJECT_ID}"
+    --project="${PROJECT_ID}" \
+    --no-allow-unauthenticated
