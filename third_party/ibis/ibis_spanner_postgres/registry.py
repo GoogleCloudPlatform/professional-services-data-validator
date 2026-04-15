@@ -61,7 +61,7 @@ def _table_column(t, op):
     return out_expr
 
 
-def _sa_cast(t, op):
+def _cast(t, op):
     arg = op.arg
     typ = op.to
     arg_dtype = arg.output_dtype
@@ -81,9 +81,30 @@ def _sa_cast(t, op):
     return sa_fixed_cast(t, op)
 
 
+def _count(t, op):
+    arg = op.arg
+    where = getattr(op, "where", None)
+
+    # In Spanner PostgreSQL, count(numeric) is unsupported.
+    # We must cast Decimal columns to strings first.
+    if hasattr(arg, "output_dtype") and arg.output_dtype.is_decimal():
+        sa_arg = t.translate(arg)
+        sa_arg = sa.cast(sa_arg, sa.String)
+
+        if where is not None:
+            sa_where = t.translate(where)
+            sa_arg = sa.case([(sa_where, sa_arg)], else_=None)
+
+        return sa.func.count(sa_arg)
+
+    # Fallback to original implementation
+    return base_pg_operation_registry[ops.Count](t, op)
+
+
 operation_registry.update(
     {
-        ops.Cast: _sa_cast,
+        ops.Cast: _cast,
+        ops.Count: _count,
         ops.ExtractEpochSeconds: postgres_registry.sa_epoch_seconds,
         ops.HashBytes: _format_hashbytes,
         ops.StringJoin: _string_join,
