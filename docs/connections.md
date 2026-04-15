@@ -80,6 +80,7 @@ The data validation tool supports the following connection types.
 * [Raw](#raw)
 * [BigQuery](#google-bigquery)
 * [Spanner](#google-spanner)
+* [Spanner PostgreSQL](#google-spanner-postgresql)
 * [Teradata](#teradata)
 * [Oracle](#oracle)
 * [MSSQL](#mssql-server)
@@ -162,6 +163,19 @@ data-validation connections add
 ### User/Service account needs following Spanner role to run DVT
 
 * roles/spanner.databaseReader
+
+## Google Spanner PostgreSQL
+
+DVT's Spanner PostgreSQL dialect support depends on the sidecar application PGAdapter (https://docs.cloud.google.com/spanner/docs/pgadapter).
+
+```
+data-validation connections add
+    [--secret-manager-type <None|GCP>]                  Secret Manager type (None, GCP)
+    [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
+    --connection-name CONN_NAME SpannerPostgres         Connection name
+    --host HOST                                         PGAdapter host
+    --port PORT                                         PGAdapter port
+```
 
 ## Teradata
 

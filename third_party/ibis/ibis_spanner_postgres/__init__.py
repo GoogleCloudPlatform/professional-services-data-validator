@@ -141,6 +141,28 @@ class Backend(PostgresBackend):
     def drop_view(self):
         raise NotImplementedError("Method unimplemented for DVT")
 
+    def list_primary_key_columns(self, database: str, table: str) -> list:
+        """Return a list of primary key column names."""
+        schema = database or "public"
+        query = """
+            SELECT ic.column_name
+            FROM information_schema.indexes i
+            JOIN information_schema.index_columns ic
+              ON i.table_catalog = ic.table_catalog
+             AND i.table_schema = ic.table_schema
+             AND i.table_name = ic.table_name
+             AND i.index_name = ic.index_name
+            WHERE i.index_type = 'PRIMARY_KEY'
+              AND i.table_name = :table_name
+              AND i.table_schema = :table_schema
+            ORDER BY ic.ordinal_position
+        """
+        with self.con.connect() as con:
+            result = con.execute(
+                sa.text(query).bindparams(table_name=table, table_schema=schema)
+            )
+            return [row[0] for row in result.fetchall()]
+
     def list_tables(self, like=None, database=None):
         raise NotImplementedError("Method unimplemented for DVT")
 
