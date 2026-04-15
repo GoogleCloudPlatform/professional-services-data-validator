@@ -134,7 +134,6 @@ def _get_google_bqstorage_client(
     if api_endpoint or quota_project_id:
         options = client_options.ClientOptions(
             api_endpoint=api_endpoint,
-            quota_project_id=quota_project_id if quota_project_id else None,
         )
     from google.cloud import bigquery_storage_v1 as bigquery_storage
 
