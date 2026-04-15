@@ -20,7 +20,7 @@ Standard PostgreSQL expressions from Ibis must be filtered or altered to suit Sp
 - **`ops.StringJoin`:** Employs string concatenation (`||`) since `concat_ws()` operates differently.
 - **`ops.TableColumn`:** Strips explicit timezone coercion (`AT TIME ZONE`) that doesn't translate elegantly.
 - **`ops.HashBytes`:** Trapped with a `ValueError` alerting that Spanner currently lacks raw byte hashing utilities standard to standard PostgreSQL.
-- **`ops.Count`:** Wraps Decimal (numeric) columns in `CAST(col AS String)` before counting, since Spanner PostgreSQL lacks native `count(numeric)` aggregates.
+- **`ops.Count`:** Wraps Decimal (`numeric`) and `jsonb` columns in `CAST(col AS String)` before counting, since Spanner PostgreSQL lacks native aggregates for these specific types.
 - **`ops.Cast`:** Intercepts conversions adding Spanner PostgreSQL overrides:
     - `cast(binary, string)`: rewrites to "from hex" conversion for DVT. This will fail in practice because Spanner PostgreSQL doesn't support `to_hex()` or `encode(arg, 'hex')`.
     - `cast(string, binary)`: rewrites to "from hex" conversion for DVT. This will fail in practice because Spanner PostgreSQL doesn't support `from_hex()`or `decode(arg, 'hex')`.

@@ -89,9 +89,11 @@ def _count(t, op):
     arg = op.arg
     where = getattr(op, "where", None)
 
-    # In Spanner PostgreSQL, count(numeric) is unsupported.
-    # We must cast Decimal columns to strings first.
-    if hasattr(arg, "output_dtype") and arg.output_dtype.is_decimal():
+    # In Spanner PostgreSQL, count(numeric) and count(jsonb) are unsupported.
+    # We must cast these columns to strings first.
+    if hasattr(arg, "output_dtype") and (
+        arg.output_dtype.is_decimal() or arg.output_dtype.is_json()
+    ):
         sa_arg = t.translate(arg)
         sa_arg = sa.cast(sa_arg, sa.String)
 
