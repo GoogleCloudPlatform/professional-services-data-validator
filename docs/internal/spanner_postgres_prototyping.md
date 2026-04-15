@@ -219,8 +219,6 @@ This also prevents row validation of BYTEA columns because we validate these usi
 
 - Data type fetch for custom queries, I imagine this will be a similar `_metadata()` call to the existing PostgreSQL one but perhaps with some data type conversion
 - Generate table partitions
-- Find tables
 - Any additional options for column/row validation
-- Auto primary key fetching for row validation
 - Comparison fields
 - Epoch seconds

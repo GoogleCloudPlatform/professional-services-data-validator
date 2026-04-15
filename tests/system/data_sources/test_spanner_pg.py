@@ -137,18 +137,23 @@ def test_schema_validation_spg_types():
 def test_column_validation_core_types_to_bigquery():
     """Spanner PostgreSQL to BigQuery dvt_core_types column validation"""
     # Excluded col_float32 because BigQuery does not have an exact same type and float32/64 are lossy and cannot be compared.
-    cols = ",".join(
+    count_cols = ",".join(
         [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32")]
+    )
+    # Spanner has no padded char type, so we exclude it from the aggregated columns.
+    agg_cols = ",".join(
+        [_ for _ in DVT_CORE_TYPES_COLUMNS if _ not in ("id", "col_float32", "col_char_2")]
     )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_core_types",
-        sum_cols=cols,
-        min_cols=cols,
-        max_cols=cols,
-        avg_cols=cols,
+        count_cols=count_cols,
+        sum_cols=agg_cols,
+        min_cols=agg_cols,
+        max_cols=agg_cols,
+        avg_cols=agg_cols,
         # TODO: Spanner error: Postgres function stddev_samp(bigint) is not supported
-        # std_cols=cols,
+        # std_cols=agg_cols,
         wildcard_include_timestamp=True,
         wildcard_include_string=True,
     )
