@@ -76,6 +76,10 @@ def _cast(t, op):
     elif arg_dtype.is_string() and typ.is_binary():
         # Binary from string cast is a "from hex" conversion for DVT.
         return sa.func.from_hex(sa_arg)
+    elif typ.is_timestamp():
+        # Spanner PostgreSQL does not support TIMESTAMP WITHOUT TIME ZONE.
+        # We force all timestamp casts to be WITH TIME ZONE.
+        return sa.cast(sa_arg, sa.TIMESTAMP(timezone=True))
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
