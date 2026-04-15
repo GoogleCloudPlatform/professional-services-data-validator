@@ -56,14 +56,14 @@ from tests.system.data_sources.test_bigquery import BQ_CONN
 # https://docs.cloud.google.com/spanner/docs/pgadapter-start#sidecar-proxy
 
 # PGAdapter listens to localhost
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
+PGADAPTER_HOST = os.getenv("PGADAPTER_HOST", "localhost")
+PGADAPTER_PORT = int(os.getenv("PGADAPTER_PORT", "5432"))
 PROJECT_ID = os.getenv("PROJECT_ID")
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_SPANNER_POSTGRES,
-    "host": POSTGRES_HOST,
-    "port": POSTGRES_PORT,
+    "host": PGADAPTER_HOST,
+    "port": PGADAPTER_PORT,
 }
 
 
@@ -163,4 +163,43 @@ def test_row_validation_core_types_to_bigquery():
         tables="pso_data_validator.dvt_core_types",
         tc="bq-conn",
         concat=cols,
+    )
+
+##############################
+# FIND-TABLE VALIDATION TESTS
+##############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Spanner to BigQuery test of find-tables command."""
+    find_tables_test()
+
+
+##################
+# RAW QUERY TESTS
+##################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_raw_query_dvt_row_types(capsys):
+    """Test data-validation query command."""
+    raw_query_test(capsys, table="pso_data_validator.dvt_core_types")
+
+
+####################
+# CONNECTIONS TESTS
+####################
+def test_connections_add(caplog, tmp_path, monkeypatch):
+    """Test data-validation connections add command."""
+    conn_args = [
+        "--host",
+        PGADAPTER_HOST,
+        "--port",
+        str(PGADAPTER_PORT),
+    ]
+    connections_add_test(
+        caplog, consts.SOURCE_TYPE_SPANNER_POSTGRES, conn_args, tmp_path, monkeypatch
     )
