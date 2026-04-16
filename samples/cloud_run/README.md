@@ -20,7 +20,7 @@ licensed utilities.
 ```bash
 PROJECT_ID=<PROJECT-ID>
 REGION=<REGION e.g. us-central1>
-SA=<SERVICE ACCOUNT _NAME>@${PROJECT}.iam.gserviceaccount.com
+BUILD_SA=<SERVICE ACCOUNT _NAME>@${PROJECT}.iam.gserviceaccount.com
 REPO="dvt"
 TAG="dvt:latest"
 
@@ -28,22 +28,32 @@ gcloud builds submit \
   --project=${PROJECT_ID} \
   --tag=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${TAG} \
   --default-buckets-behavior=regional-user-owned-bucket \
-  --service-account=projects/${PROJECT_ID}/serviceAccounts/${SA}
+  --service-account=projects/${PROJECT_ID}/serviceAccounts/${BUILD_SA}
 ```
 
 ### Deploy to Cloud Run
 
+If calls to the Cloud Run service will be from within the VPC then you
+may prefer to include `--ingress=internal` to restrict access to the service.
+
+Setting `$PSO_DV_CONN_HOME` will make connections stored in Cloud Storage
+available to DVT.
+
 ```bash
 PROJECT_ID=<PROJECT-ID>
 REGION=<REGION> # e.g. us-central1
+NETWORK=<NETWORK>
 REPO=<ARTIFACT-REGISTRY-REPOSITORY-NAME>
 SA=<SERVICE_ACCOUNT_NAME>@${PROJECT_ID}.iam.gserviceaccount.com
 TAG="dvt:latest"
+PSO_DV_CONN_HOME=gs://<BUCKET>/connections/
 gcloud run deploy dvt \
   --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${TAG} \
   --project=${PROJECT_ID} --region=${REGION} \
   --service-account=${SA} \
-  --no-allow-unauthenticated
+  --no-allow-unauthenticated \
+  --network=${NETWORK} \
+  --set-env-vars=PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME}
 ```
 
 ### IAM Permissions
