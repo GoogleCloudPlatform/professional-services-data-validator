@@ -5,7 +5,7 @@
 The deployment logic is discussed in more detail below; however, to quickly
 deploy DVT, follow this simple script:
 
-```
+```bash
 export PROJECT_ID=<PROJECT-ID>
 ./deploy.sh
 python3 test.py
@@ -17,7 +17,7 @@ You will need to build a Docker image to be used by Cloud Run. In order to add
 Teradata or SQL Server, you will need to customize the Dockerfile and add your
 licensed utilities.
 
-```
+```bash
 PROJECT_ID=<PROJECT-ID>
 REGION=<REGION e.g. us-central1>
 SA=<SERVICE ACCOUNT _NAME>@${PROJECT}.iam.gserviceaccount.com
@@ -33,7 +33,7 @@ gcloud builds submit \
 
 ### Deploy to Cloud Run
 
-```
+```bash
 PROJECT_ID=<PROJECT-ID>
 REGION=<REGION> # e.g. us-central1
 REPO=<ARTIFACT-REGISTRY-REPOSITORY-NAME>
@@ -44,6 +44,21 @@ gcloud run deploy dvt \
   --project=${PROJECT_ID} --region=${REGION} \
   --service-account=${SA} \
   --no-allow-unauthenticated
+```
+
+### IAM Permissions
+
+To interact with the Cloud Run endpoint, you, or the service account that will be
+used to call the endpoint, needs to have the Cloud Run Invoker role. For example:
+
+```bash
+PROJECT_ID=<PROJECT-ID>
+REGION=<REGION> # e.g. us-central1
+SA=<SERVICE_ACCOUNT_NAME>@${PROJECT_ID}.iam.gserviceaccount.com
+gcloud run services add-iam-policy-binding dvt \
+  --project=${PROJECT_ID} --region=${REGION} \
+  --member="serviceAccount:${SA}" \
+  --role="roles/run.invoker"
 ```
 
 ### Test Cloud Run Endpoint
