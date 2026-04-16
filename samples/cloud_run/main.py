@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import logging
 import os
 from data_validation import data_validation
 import flask
@@ -43,9 +44,11 @@ def run():
         config = _get_request_content(flask.request)
         result = validate(config)
         return flask.Response(result, mimetype="application/json")
-    except Exception as e:
-        print(e)
-        return flask.Response("Found Error: {}".format(e), status=500, mimetype="text/plain")
+    except Exception:
+        logging.exception("An error occurred during validation")
+        return flask.Response(
+            "An internal server error occurred.", status=500, mimetype="text/plain"
+        )
 
 
 @app.route("/test", methods=["POST"])
