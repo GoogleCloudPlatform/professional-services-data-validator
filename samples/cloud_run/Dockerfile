@@ -8,18 +8,18 @@ ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY . ./
 
-# Install production dependencies.
-RUN apt-get update
-RUN pip install --upgrade pip
-RUN pip install Flask gunicorn google_pso_data_validator
+ENV PIPOPTS="--root-user-action=ignore"
 
-# Hive/Impala Dependencies
-# RUN pip install hdfs
-# RUN pip install thrift-sasl
+# Install dependencies.
+RUN pip install ${PIPOPTS} --upgrade pip
+RUN pip install ${PIPOPTS} Flask gunicorn google_pso_data_validator
 
-# Oracle dependency
-# RUN pip install oracledb
-# RUN apt-get -y install --fix-missing --upgrade vim alien unixodbc-dev wget libaio1 libaio-dev
+# Optional: Uncomment the following lines to install additional drivers.
+# RUN pip install ${PIPOPTS} 'ibis-framework[impala]'
+# RUN pip install ${PIPOPTS} oracledb
+# RUN pip install ${PIPOPTS} pyodbc
+# RUN pip install ${PIPOPTS} snowflake-sqlalchemy snowflake-connector-python
+# RUN pip install ${PIPOPTS} teradatasql
 
 # Run the web service on container startup. Here we use the gunicorn
 # webserver, with one worker process and 8 threads.
