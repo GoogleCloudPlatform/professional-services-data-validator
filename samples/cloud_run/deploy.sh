@@ -8,13 +8,13 @@ fi
 
 REGION="${REGION:-us-central1}"
 REPO="${REPO:-dvt}"
-IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/data-validation:latest"
+IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/dvt:latest"
 
 echo "Building image: $IMAGE"
 gcloud builds submit --tag "$IMAGE" --project="${PROJECT_ID}"
 
 echo "Deploying to Cloud Run..."
-gcloud run deploy data-validation \
+gcloud run deploy dvt \
     --image "$IMAGE" \
     --region="${REGION}" \
     --project="${PROJECT_ID}" \
