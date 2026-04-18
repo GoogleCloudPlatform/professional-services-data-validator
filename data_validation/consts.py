@@ -151,6 +151,7 @@ GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
 API_ENDPOINT = "api_endpoint"
 STORAGE_API_ENDPOINT = "storage_api_endpoint"
 CLIENT_PROJECT_ID = "client_project_id"
+BILLING_PROJECT_ID = "billing_project_id"
 
 # Result Handler Output Table Fields
 VALIDATION_TYPE = "validation_type"
