@@ -124,7 +124,10 @@ data-validation connections add
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME BigQuery                Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
-    [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
+    [--google-service-account-key-path PATH_TO_SA_KEY]  (Deprecated) Path to SA key, use
+                                                         gcloud auth application-default --impersonate-service-account <service-account> login
+                                                         instead.
+    [--billing-project-id BILLING_PROJECT_ID]           (Optional) BigQuery billing project to override default billing project
     [--api-endpoint API_ENDPOINT]                       BigQuery API endpoint (e.g.
                                                         "https://bigquery-mypsc.p.googleapis.com)
     [--storage-api-endpoint STORAGE_API_ENDPOINT]       BigQuery Storage API endpoint (e.g.
@@ -132,13 +135,13 @@ data-validation connections add
                                                         Note this is a GRPC endpoint and does not
                                                         include a URI scheme.
 ```
-
+BigQuery is a [Client based API](https://docs.cloud.google.com/docs/quotas/quota-project#project-client-based). If the connection is being made by the user who has authenticated using gcloud CLI, the billing project is set by the user's gcloud configuration. Users can change the billing project by using `gcloud config set project <billing-project-id>`. If the connection is being made by a Service Account, the default billing project is the project where the Service Account resides. The option `--billing-project-id` can be used to override the default billing project.
 ### User/Service account needs following BigQuery permissions to run DVT
 
-* bigquery.jobs.create (BigQuery JobUser role)
-* bigquery.readsessions.create (BigQuery Read Session User)
-* bigquery.tables.get (BigQuery Data Viewer)
-* bigquery.tables.getData (BigQuery Data Viewer)
+* bigquery.jobs.create (BigQuery JobUser role) in the billing project.
+* bigquery.readsessions.create (BigQuery Read Session User) in the billing project.
+* bigquery.tables.get (BigQuery Data Viewer) on the table.
+* bigquery.tables.getData (BigQuery Data Viewer) on the table.
 
 ### If you plan to store validation results in BigQuery
 
@@ -155,7 +158,9 @@ data-validation connections add
     --project-id MY_PROJECT                             Project ID where BQ data resides
     --instance-id MY_INSTANCE                           Spanner instance to connect to
     --database-id MY-DB                                 Spanner database (schema) to connect to
-    [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
+    [--google-service-account-key-path PATH_TO_SA_KEY]  (Deprecated) Path to SA key, use
+                                                         gcloud auth application-default --impersonate-service-account <service-account> login
+                                                         instead.
     [--api-endpoint API_ENDPOINT]                       Spanner API endpoint (e.g.
                                                         "https://spanner-mypsc.p.googleapis.com")
 ```
