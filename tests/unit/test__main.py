@@ -166,6 +166,7 @@ CONNECTION_ADD_ARGS = {
     consts.API_ENDPOINT: None,
     consts.STORAGE_API_ENDPOINT: None,
     consts.CLIENT_PROJECT_ID: None,
+    consts.BILLING_PROJECT_ID: None,
 }
 CONNECTION_DESCRIBE_ARGS = {
     "verbose": False,

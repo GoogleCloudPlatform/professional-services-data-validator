@@ -82,7 +82,7 @@ The data validation tool supports the following connection types.
 * [Spanner](#google-spanner)
 * [Teradata](#teradata)
 * [Oracle](#oracle)
-* [MSSQL](#mssql-server)
+* [SQL Server](#sql-server)
 * [Postgres](#postgres)
 * [MySQL](#mysql)
 * [Redshift](#redshift)
@@ -123,7 +123,10 @@ data-validation connections add
     [--secret-manager-project-id SECRET_PROJECT_ID]     Secret Manager project ID
     --connection-name CONN_NAME BigQuery                Connection name
     --project-id MY_PROJECT                             Project ID where BQ data resides
-    [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
+    [--google-service-account-key-path PATH_TO_SA_KEY]  (Deprecated) Path to SA key, use
+                                                         gcloud auth application-default --impersonate-service-account <service-account> login
+                                                         instead.
+    [--billing-project-id BILLING_PROJECT_ID]           (Optional) BigQuery billing project to override default billing project
     [--api-endpoint API_ENDPOINT]                       BigQuery API endpoint (e.g.
                                                         "https://bigquery-mypsc.p.googleapis.com)
     [--storage-api-endpoint STORAGE_API_ENDPOINT]       BigQuery Storage API endpoint (e.g.
@@ -131,13 +134,13 @@ data-validation connections add
                                                         Note this is a GRPC endpoint and does not
                                                         include a URI scheme.
 ```
-
+BigQuery is a [Client based API](https://docs.cloud.google.com/docs/quotas/quota-project#project-client-based). If the connection is being made by the user who has authenticated using gcloud CLI, the billing project is set by the user's gcloud configuration. Users can change the billing project by using `gcloud config set project <billing-project-id>`. If the connection is being made by a Service Account, the default billing project is the project where the Service Account resides. The option `--billing-project-id` can be used to override the default billing project.
 ### User/Service account needs following BigQuery permissions to run DVT
 
-* bigquery.jobs.create (BigQuery JobUser role)
-* bigquery.readsessions.create (BigQuery Read Session User)
-* bigquery.tables.get (BigQuery Data Viewer)
-* bigquery.tables.getData (BigQuery Data Viewer)
+* bigquery.jobs.create (BigQuery JobUser role) in the billing project.
+* bigquery.readsessions.create (BigQuery Read Session User) in the billing project.
+* bigquery.tables.get (BigQuery Data Viewer) on the table.
+* bigquery.tables.getData (BigQuery Data Viewer) on the table.
 
 ### If you plan to store validation results in BigQuery
 
@@ -154,7 +157,9 @@ data-validation connections add
     --project-id MY_PROJECT                             Project ID where BQ data resides
     --instance-id MY_INSTANCE                           Spanner instance to connect to
     --database-id MY-DB                                 Spanner database (schema) to connect to
-    [--google-service-account-key-path PATH_TO_SA_KEY]  Path to SA key
+    [--google-service-account-key-path PATH_TO_SA_KEY]  (Deprecated) Path to SA key, use
+                                                         gcloud auth application-default --impersonate-service-account <service-account> login
+                                                         instead.
     [--api-endpoint API_ENDPOINT]                       Spanner API endpoint (e.g.
                                                         "https://spanner-mypsc.p.googleapis.com")
 ```
@@ -222,6 +227,7 @@ See [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/20/dialects/oracle
 * Optional - Read on SYS.V_$TRANSACTION (required to get isolation level, if privilege is not given then will default to Read Committed, [more_details](https://docs.sqlalchemy.org/en/14/dialects/oracle.html#transaction-isolation-level-autocommit))
 
 ### Additional Connect parameters, using TLS, mTLS connections and running DVT within a container
+
 oracledb supports a large number of connection parameters documented as [ConnectParams](https://python-oracledb.readthedocs.io/en/latest/api_manual/connect_params.html#ConnectParams.set). Any of these params can be set by providing the `--connect-args` as a python dict.
 
 For setting up a TLS connection, specify the configuration directory where `tnsnames.ora` is located, the wallet directory where `ewallet.pem` is located and the distinguished name of the server used when creating the certificate. The protocol, host, port and service_name are best specified in `tnsnames.ora` as they take precedence. For example, the `--connect-args` parameter can be specified as follows:
@@ -234,6 +240,7 @@ data-validation connections add \
 When DVT is running in a container, you may need to specify  `"disable_oob": True,` as one of the key value pairs in the `connect-args` dictionary to connect to Oracle.
 
 ### Using credentials from a wallet
+
 When a user name is not specified, credentials (user name and password) are assumed to be in a wallet. Thick mode is automatically used, so Oracle client libraries are required. Only [the name of the credential created with the `mkstore createCredential` command](https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/using-the-orapki-utility-to-manage-pki-elements.html#GUID-25509071-ABC0-4A0E-A3DB-4D4F61024F25), the `dsn`, is required. `config_dir` indicating location of `tnsnames.ora` and `sqlnet.ora` if not provided, is assumed from the environment variable `TNS_ADMIN`. Other connection parameters must be specified in `tnsnames.ora`. For example, the following is sufficient
 ```
 data-validation connections add \
@@ -261,6 +268,7 @@ data-validation connections add
 ```
 
 Example with a specific ODBC driver name:
+
 ```sh
 data-validation connections add --connection-name sql_server_mydb MSSQL \
 --host=127.0.0.1 --database=mydb --user=usersecret --password=pwdsecret \
@@ -452,6 +460,7 @@ data-validation connections add
 ```
 
 To connect to Snowflake using key-pair authentication you will need to use the `--connect-args` options. Example content from a connection file is included below for reference:
+
 ```
 {"source_type": "Snowflake", "user": USER_NAME, "password": "", "account": ACCOUNT, "database": DATABASE, "connect_args": '{"private_key_file": PATH_TO_RSA_KEY/RSA_KEY.p8, "private_key_file_pwd": PASSPHRASE}'}
 ```
