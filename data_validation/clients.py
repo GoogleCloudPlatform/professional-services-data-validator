@@ -53,6 +53,7 @@ IBIS_ALCHEMY_BACKENDS = [
     "oracle",
     "postgres",
     "db2",
+    "db2_zos",
     "mssql",
     "redshift",
     "snowflake",
@@ -91,8 +92,10 @@ except ImportError:
 # DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
+    from third_party.ibis.ibis_db2_zos.api import db2_zos_connect
 except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+    db2_zos_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
 # Sybase requires sqlalchemy_sybase package.
 try:
@@ -230,6 +233,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "oracle",
         "postgres",
         "db2",
+        "db2_zos",
         "mssql",
         "redshift",
         "sybase",
@@ -437,4 +441,5 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
     consts.SOURCE_TYPE_SYBASE: sybase_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,
+    consts.SOURCE_TYPE_DB2_ZOS: db2_zos_connect,
 }

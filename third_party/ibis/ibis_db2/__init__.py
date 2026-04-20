@@ -14,23 +14,24 @@
 
 import logging
 import re
-from typing import Iterable, Optional, Tuple, TYPE_CHECKING
+from typing import Iterable, Optional, Tuple, Dict, Any, TYPE_CHECKING
 
 import sqlalchemy as sa
 
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
-from third_party.ibis.ibis_db2.compiler import Db2Compiler
-from third_party.ibis.ibis_db2.datatypes import _get_type
 
 from data_validation import util
 from third_party.ibis.ibis_addon.api import cache_generator_results
+from third_party.ibis.ibis_db2.compiler import Db2Compiler
+from third_party.ibis.ibis_db2.datatypes import _get_type
 
 if TYPE_CHECKING:
     import ibis.expr.types as ir
 
 
+DB2_HIDDEN_COLUMNS = ["db2_generated_docid_for_xml", "db2_generated_rowid_for_lob"]
 FOR_BIT_DATA_MAP = {
     "CHARACTER": "CHARACTER_FOR_BIT_DATA",
     "CHAR": "CHAR_FOR_BIT_DATA",
@@ -41,6 +42,8 @@ FOR_BIT_DATA_MAP = {
 class Backend(BaseAlchemyBackend):
     name = "db2"
     compiler = Db2Compiler
+
+    char_datatype = "CHARACTER"
 
     raw_column_metadata_sql = """
         SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS, CODEPAGE
@@ -54,10 +57,11 @@ class Backend(BaseAlchemyBackend):
         host: str = "localhost",
         user: Optional[str] = None,
         password: Optional[str] = None,
-        port: int = 50000,
+        port: Optional[int] = None,
         database: Optional[str] = None,
         url: Optional[str] = None,
         driver: str = "ibm_db_sa",
+        connect_args: Dict[str, Any] = None,
     ) -> None:
         if url is None:
             if driver != "ibm_db_sa":
@@ -71,6 +75,7 @@ class Backend(BaseAlchemyBackend):
                 username=user,
                 password=password,
                 database=database,
+                query=connect_args or {},
             )
         else:
             sa_url = sa.engine.url.make_url(url)
@@ -217,7 +222,7 @@ class Backend(BaseAlchemyBackend):
         padded values, which DVT may want to trim"""
         type_code = char_type[0]
         if isinstance(type_code, str):
-            return type_code.upper() == "CHARACTER"
+            return type_code.upper() == self.char_datatype
         else:
             # From cursor.description for custom queries when we don't have
             # CREATE VIEW privileges. This is a DBAPITypeObject.
@@ -239,18 +244,24 @@ class Backend(BaseAlchemyBackend):
         raw_types = []
         if schema or database:
             raw_types = self.raw_column_metadata(schema or database, name) or []
+        for_bit_data_cols = {
+            col_name.lower()
+            for col_name, type_name, *_ in raw_types
+            if type_name in FOR_BIT_DATA_MAP.values()
+        }
+        # The IBM Db2 driver exposes hidden columns that are not visible in the table definition.
+        # We drop these columns from the table object.
+        columns_to_drop = {
+            _.lower() for _ in return_table.columns if _.lower() in DB2_HIDDEN_COLUMNS
+        }
 
-        for_bit_data_cols = set()
-        for col_name, type_name, *_ in raw_types:
-            if type_name in FOR_BIT_DATA_MAP.values():
-                for_bit_data_cols.add(col_name.lower())
-
-        if for_bit_data_cols:
-            # Create a new table object with FOR BIT DATA columns as binary.
+        if for_bit_data_cols or columns_to_drop:
+            # Create a new table object modifying schema for dropped/binary columns
             old_schema = return_table.schema()
             new_fields = {
                 name: (dt.binary if name.lower() in for_bit_data_cols else dtype)
                 for name, dtype in old_schema.items()
+                if name.lower() not in columns_to_drop
             }
             new_schema = sch.Schema(new_fields)
             op = return_table.op()

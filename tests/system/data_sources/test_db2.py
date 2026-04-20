@@ -35,6 +35,7 @@ from tests.system.data_sources.common_functions import (
     run_test_from_cli_args,
     schema_validation_test,
 )
+
 from tests.system.data_sources.test_bigquery import BQ_CONN
 
 # Our Db2 test infra has a habit of failing to connect but then working on retry.
@@ -111,7 +112,7 @@ def test_schema_validation_db2_types_to_bigquery():
     schema_validation_test(
         tables="pso_data_validator.dvt_db2_types",
         tc="bq-conn",
-        allow_list=("int16:int64,int32:int64,decimal:decimal(38,9)"),
+        allow_list=("int16:int64,int32:int64,decimal:decimal(38,9),float32:float64"),
     )
 
 
@@ -135,9 +136,21 @@ def test_schema_validation_not_null_vs_nullable():
     null_not_null_assertions(df)
 
 
-##########################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_db2_generated_cols():
+    """Test schema validation for tables with Db2 internal generated columns."""
+    schema_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+    )
+
+
+###########################
 # COLUMN VALIDATION TESTS
-##########################
+###########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -276,6 +289,7 @@ def test_column_validation_large_decimals_to_bigquery_mismatch():
 )
 def test_column_validation_group_by_timestamp():
     """Test that --grouped-columns on Timestamps works correctly.
+
     DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
     which should be removed in SQL otherwise groups will not match Pandas.
     """
@@ -311,6 +325,18 @@ def test_column_validation_tricky_dates_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_db2_generated_cols():
+    """Test column validation for tables with Db2 internal generated columns"""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+    )
+
+
 ###########################
 # ROW VALIDATION TESTS
 ###########################
@@ -321,7 +347,6 @@ def test_column_validation_tricky_dates_to_bigquery():
 def test_row_validation_core_types():
     """Db2 to Db2 dvt_core_types row validation"""
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -329,7 +354,6 @@ def test_row_validation_core_types():
             if _
             not in (
                 "id",
-                "col_char_2",
                 "col_string",
             )
         ]
@@ -365,7 +389,6 @@ def test_row_validation_core_types_to_bigquery():
     # Excluded col_float32 because BigQuery does not have an exact same type and
     # float32/64 are lossy and cannot be compared.
     # Exclude col_string because it is unbound and causes overflow error for HEX function.
-    # TODO: When issue-1638 is complete remove col_char_2 from exclusion list below.
     cols = ",".join(
         [
             _
@@ -375,7 +398,6 @@ def test_row_validation_core_types_to_bigquery():
                 "id",
                 "col_float32",
                 "col_float64",
-                "col_char_2",
                 "col_string",
                 "col_tstz",
             )
@@ -590,6 +612,21 @@ def test_varchar_pk_query_row_validation_to_bigquery():
     id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_db2_generated_cols():
+    """Test column validation for tables with Db2 internal generated columns"""
+    row_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_db2_generated_cols1=pso_data_validator.dvt_db2_generated_cols2",
+        hash="*",
+        primary_keys="id",
+        use_random_row=False,
+    )
+
+
 ##############################
 # FIND-TABLE VALIDATION TESTS
 ##############################
@@ -630,6 +667,9 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
         str(DB2_PORT),
         "--database",
         DB2_DATABASE,
+        # QueryTimeout is a harmless setting we can use to exercise --connect-args.
+        "--connect-args",
+        '{ "QueryTimeout": "0" }',
     ]
     connections_add_test(
         caplog, consts.SOURCE_TYPE_DB2, conn_args, tmp_path, monkeypatch

@@ -97,7 +97,7 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
         prefix: The prefix to use for the temporary object name.
 
     Returns:
-        A lower case random name for when DVT needs to create a temporary object.
+        A random name for when DVT needs to create a temporary object.
     """
     if not isinstance(prefix, str) or not re.match(r"^[a-zA-Z0-9_]+$", prefix):
         raise exceptions.ValidationException(
