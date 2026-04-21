@@ -1,0 +1,63 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This Dockerfile example is only required if a "thick" Oracle client is required,
+# for example when using an Oracle wallet for authentication.
+# Otherwise, use the generic Dockerfile.
+
+FROM python:3.12.1-slim
+
+# App version is passed as a build argument.
+# If not provided, the latest version will be installed.
+ARG _APP_VERSION=""
+
+# Set working directory
+WORKDIR /app
+
+# Oracle client
+RUN apt-get update
+RUN apt-get -y install libaio1 libaio-dev unzip wget
+ENV OTN_URL=https://download.oracle.com/otn_software/linux/instantclient
+RUN wget -q ${OTN_URL}/instantclient-sdk-linuxx64.zip && \
+    wget -q ${OTN_URL}/instantclient-basic-linuxx64.zip && \
+    wget -q ${OTN_URL}/instantclient-tools-linuxx64.zip && \
+    mkdir -p /opt/oracle && \
+    unzip -o instantclient-sdk-linuxx64.zip -d /opt/oracle/ && \
+    unzip -o instantclient-basic-linuxx64.zip -d /opt/oracle/ && \
+    unzip -o instantclient-tools-linuxx64.zip -d /opt/oracle/
+# Copy the version specific client path to a known name.
+RUN cp -r /opt/oracle/instantclient_* /opt/oracle/instantclient
+
+ENV ORACLE_HOME=/opt/oracle/instantclient
+ENV LD_LIBRARY_PATH=/opt/oracle/instantclient
+
+# Copy and set up the entrypoint script
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+# Install the Data Validator from PyPI
+RUN pip install --upgrade pip
+RUN \
+  if [ -z "$_APP_VERSION" ]; then \
+    echo "Installing latest version of google-pso-data-validator"; \
+    pip install google-pso-data-validator; \
+  else \
+    echo "Installing google-pso-data-validator version ${_APP_VERSION}"; \
+    pip install google-pso-data-validator==${_APP_VERSION}; \
+  fi
+
+RUN pip install oracledb
+
+# The entrypoint script will handle connections and run the application
+ENTRYPOINT ["./entrypoint.sh"]
