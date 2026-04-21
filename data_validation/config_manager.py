@@ -676,9 +676,23 @@ class ConfigManager(object):
         )
 
     def _is_db2_xml(self, source_column_name: str, target_column_name: str) -> bool:
-        """Returns True when either source or target column is Oracle LOB data type."""
+        """Returns True when either source or target column is Db2 XML data type."""
         return self._is_raw_data_type(
             "db2", source_column_name, target_column_name, ["XML"]
+        )
+
+    def _is_db2_zos_blob(
+        self, source_column_name: str, target_column_name: str
+    ) -> bool:
+        """Returns True when either source or target column is Db2 z/OS BLOB data type."""
+        return self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["BLOB"]
+        )
+
+    def _is_db2_zos_xml(self, source_column_name: str, target_column_name: str) -> bool:
+        """Returns True when either source or target column is Db2 z/OS XML data type."""
+        return self._is_raw_data_type(
+            "db2_zos", source_column_name, target_column_name, ["XML"]
         )
 
     def _is_oracle_lob(self, source_column_name: str, target_column_name: str) -> bool:
@@ -1066,7 +1080,11 @@ class ConfigManager(object):
                     # Oracle BLOB is invalid for use with SQL COUNT function.
                     # The expression below returns True if client is Oracle which
                     # has the effect of triggering use of byte_length transformation.
-                    return self._is_oracle_lob(source_column, target_column)
+                    # Same for Db2 z/OS.
+                    return bool(
+                        self._is_oracle_lob(source_column, target_column)
+                        or self._is_db2_zos_blob(source_column, target_column)
+                    )
                 else:
                     # Convert to length for any min/max/sum on binary columns.
                     return True
@@ -1152,6 +1170,11 @@ class ConfigManager(object):
             elif self._is_sql_server_image(column, column):
                 logging.info(
                     f"Skipping {agg_type} on {column} due to SQL Server image data type"
+                )
+                continue
+            elif self._is_db2_zos_xml(column, column):
+                logging.info(
+                    f"Skipping {agg_type} on {column} due to Db2 z/OS XML data type"
                 )
                 continue
             elif agg_type != "count" and self._is_db2_xml(column, column):

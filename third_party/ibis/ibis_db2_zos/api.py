@@ -1,4 +1,4 @@
-# Copyright 2020 Google Inc.
+# Copyright 2025 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
 
 from typing import Optional
 
-from third_party.ibis.ibis_db2 import Backend as DB2Backend
+from third_party.ibis.ibis_db2_zos import Backend
 import ibm_db_sa  # NOQA fail early if driver is missing
 
 from data_validation.util import dvt_config_string_to_dict
 
 
-def db2_connect(
+def db2_zos_connect(
     host: str = "localhost",
     user: Optional[str] = None,
     password: Optional[str] = None,
@@ -31,7 +31,7 @@ def db2_connect(
     connect_args: Optional[str] = None,
 ):
     connect_args_dict = dvt_config_string_to_dict(connect_args) if connect_args else {}
-    backend = DB2Backend()
+    backend = Backend()
     backend.do_connect(
         host=host,
         user=user,

@@ -2,6 +2,23 @@
 
 ## Untagged
 
+## [8.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.6.0...v8.7.0) (2026-04-20)
+
+
+### Features
+
+* Add Db2 z/OS support ([#1721](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1721)) ([62cef8c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/62cef8cfc42282993ebd909c8477d76defcac3bc))
+
+
+### Bug Fixes
+
+* Modify BQ connection to use the correct project id for billing. ([#1715](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1715)) ([c9ccb0c](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/c9ccb0c05830420cf561ec21dc0720b2d5c8e5d2))
+
+
+### Documentation
+
+* Documentation and samples updates ([#1677](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1677)) ([0c0c557](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0c0c557ccc84d5d0e4e589d6fb5f8e1c3d36067f))
+
 ## [8.6.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.5.2...v8.6.0) (2026-04-10)
 
 
