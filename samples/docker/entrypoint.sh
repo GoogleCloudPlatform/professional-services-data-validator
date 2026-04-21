@@ -32,4 +32,16 @@ if [ -n "$DVT_TGT_CONN" ]; then
 fi
 
 # Execute the main data validation command, passing all arguments (`$@`)
-exec python -m data_validation "$@"
+if  [ -n "$DVT_GCS_PREFIX" ]; then
+  data-validation "$@" > /tmp/output
+  val_status=$?
+  if [ $val_status -ne 0 ] ; then
+    exit $val_status
+  else
+    sed -i -e '/^$/,+1d' /tmp/output
+    gsutil cp /tmp/output ${DVT_GCS_PREFIX}${CLOUD_RUN_EXECUTION}${CLOUD_RUN_TASK_INDEX}.csv
+  fi
+else
+  data-validation "$@"
+fi
+
