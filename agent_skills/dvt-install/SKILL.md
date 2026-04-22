@@ -1,5 +1,5 @@
 ---
-title: DVT Installation Skill
+name: DVT Installation Skill
 description: Instructions and commands for installing the Data Validation Tool (DVT) and its connection-specific dependencies.
 ---
 
@@ -11,11 +11,11 @@ This skill provides instructions and commands for installing the Data Validation
 
 To install DVT in a local virtual environment, first verify your environment:
 
-### Check Python Version
+### Check Python Version 3.9.0-3.12.1
 ```bash
 python3 --version
 ```
-Ensure it is 3.9 or higher.
+Ensure it is 3.9.0-3.12.1 (no higher/lower versions supported).
 
 ### Check if DVT is Installed
 ```bash
@@ -25,27 +25,23 @@ Or via Python module:
 ```bash
 python3 -m data_validation -h
 ```
-If these commands fail or show a "command not found" error, proceed with installation.
+If data_validation is already installed then ask the user if they want to upgrade it.
 
-Then follow these steps:
+### Proceed with Installation
 
 1.  **Create a Virtual Environment:**
     ```bash
-    python3 -m venv venv
+    python3 -m venv .venv
     ```
-2.  **Activate the Environment:**
+2.  **Upgrade Pip:**
     ```bash
-    source venv/bin/activate
-    ```
-3.  **Upgrade Pip:**
-    ```bash
-    pip install --upgrade pip
+    .venv/bin/pip install --upgrade pip
     ```
 4.  **Install DVT:**
     ```bash
-    pip install google-pso-data-validator
+    .venv/bin/pip install google-pso-data-validator
     ```
-    *Note: For local development installation from source, use `pip install .` from the root directory.*
+    *Note: For local development installation from source, use `.venv/bin/pip install .[dev]` from the repository root directory.*
 
 ---
 
