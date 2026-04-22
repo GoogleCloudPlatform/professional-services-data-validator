@@ -1,3 +1,8 @@
+---
+title: DVT Installation Skill
+description: Instructions and commands for installing the Data Validation Tool (DVT) and its connection-specific dependencies.
+---
+
 # DVT Installation Skill
 
 This skill provides instructions and commands for installing the Data Validation Tool (DVT) and its connection-specific dependencies.

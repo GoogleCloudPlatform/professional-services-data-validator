@@ -45,17 +45,18 @@ agent_skills/dvt-install/
 
 ### SKILL.md Structure
 
-1.  **Local Installation Workflow:** Includes environment verification (Python version, DVT check) and core installation steps.
-2.  **Containerized Installation Workflow:** References to build scripts.
-3.  **Database-Specific Setup:** Links to reference files for complex drivers/UDFs and simple `pip` commands for others.
-4.  **Result Handler Setup:** Link to reference file for BigQuery and PostgreSQL setup.
-5.  **Permissions & Configuration Best Practices:**
+1.  **YAML Frontmatter:** The skill file should include a YAML frontmatter block at the top to provide metadata for the agent.
+2.  **Local Installation Workflow:** Includes environment verification (Python version, DVT check) and core installation steps.
+3.  **Containerized Installation Workflow:** References to build scripts.
+4.  **Database-Specific Setup:** Links to reference files for complex drivers/UDFs and simple `pip` commands for others.
+5.  **Result Handler Setup:** Link to reference file for BigQuery and PostgreSQL setup.
+6.  **Permissions & Configuration Best Practices:**
     - **IAM Roles:** Verification of BigQuery JobUser, Read Session User, and Data Viewer roles.
     - **Secret Manager:** Using GCP Secret Manager for secure installations.
     - **Environment Variables:** Usage of `PSO_DV_CONN_HOME` (this is required for containerized installations to enable GCS paths for connection files).
     - **Least Privilege:** Best practices for using read-only users for source/target data sources.
-6.  **Common Issues:** Troubleshooting missing headers and auth failures.
-7.  **Verification:** Commands to prove the installation worked (e.g., `data-validation --version`).
+7.  **Common Issues:** Troubleshooting missing headers and auth failures.
+8.  **Verification:** Commands to prove the installation worked (e.g., `data-validation --version`).
 
 ### references/oracle_client.md
 - Instructions for installing Oracle Instant Client (relevant for Thick mode).
