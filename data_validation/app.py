@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+import logging
 import json
 import os
 from data_validation import data_validation, state_manager
@@ -21,7 +22,6 @@ from data_validation.__main__ import (
     convert_config_to_json,
 )
 import flask
-import logging
 
 app = flask.Flask(__name__)
 

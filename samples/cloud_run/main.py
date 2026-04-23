@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+import logging
 import json
 import os
 from data_validation import data_validation, state_manager
