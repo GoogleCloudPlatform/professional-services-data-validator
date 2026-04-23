@@ -15,7 +15,7 @@
 import argparse
 import json
 import os
-from data_validation import data_validation
+from data_validation import data_validation, state_manager
 from data_validation.__main__ import (
     build_config_managers_from_args,
     convert_config_to_json,
@@ -100,6 +100,19 @@ def generate_column_config():
         return flask.Response(f"Bad Request: {ve}", status=400, mimetype="text/plain")
     except Exception as e:
         logging.exception("An error occurred during configuration. generation")
+        return flask.Response(
+            "An internal server error occurred.", status=500, mimetype="text/plain"
+        )
+
+
+@app.route("/get_connections", methods=["POST"])
+def get_connections():
+    try:
+        mgr = state_manager.StateManager()
+        connections = mgr.list_connections()
+        return flask.Response(json.dumps(connections), mimetype="application/json")
+    except Exception:
+        logging.exception("An error occurred while listing connections")
         return flask.Response(
             "An internal server error occurred.", status=500, mimetype="text/plain"
         )
