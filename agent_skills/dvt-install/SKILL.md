@@ -35,11 +35,11 @@ If data_validation is already installed then ask the user if they want to upgrad
     ```
 2.  **Upgrade Pip:**
     ```bash
-    .venv/bin/pip install --upgrade pip
+    .venv/bin/python3 -m pip install --upgrade pip
     ```
-4.  **Install DVT:**
+3.  **Install DVT:**
     ```bash
-    .venv/bin/pip install google-pso-data-validator
+    .venv/bin/python3 -m pip install google-pso-data-validator
     ```
     *Note: For local development installation from source, use `.venv/bin/pip install .[dev]` from the repository root directory.*
 
