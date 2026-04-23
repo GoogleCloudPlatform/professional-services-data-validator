@@ -17,7 +17,6 @@ import logging
 import os
 from data_validation import data_validation
 import flask
-import pandas
 
 app = flask.Flask(__name__)
 
@@ -40,6 +39,10 @@ def validate(config):
 
 @app.route("/", methods=["POST"])
 def run():
+    """Handle incoming Data Validation requests.
+
+    request (flask.Request): HTTP request object.
+    """
     try:
         config = _get_request_content(flask.request)
         result = validate(config)
