@@ -195,6 +195,9 @@ def _chunks_to_pandas_array(chunks):
     return target
 
 
+# TODO The rewrite below is rewriting across all engines, not just Impala.
+#      It should be moved to operations.py or removed and implement system
+#      specific overrides. See issue-1728.
 @rewrites(ops.IfNull)
 def _if_null(op):
     return ops.Coalesce((op.arg, op.ifnull_expr))

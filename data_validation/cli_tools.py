@@ -75,9 +75,13 @@ CONNECTION_SOURCE_FIELDS = {
         ["project_id", "GCP Project to use for BigQuery"],
         [
             "client_project_id",
-            "(Optional) BigQuery job/billing project (can differ from data project)",
+            "(Deprecated) BigQuery job/billing project (can differ from data project)",
         ],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
+        [
+            "billing_project_id",
+            "(Optional) BigQuery billing project to override default billing project",
+        ],
+        ["google_service_account_key_path", "(Deprecated) GCP SA Key Path"],
         [
             "api_endpoint",
             '(Optional) GCP BigQuery API endpoint (e.g. "https://bigquery-mypsc.p.googleapis.com")',
@@ -149,7 +153,7 @@ CONNECTION_SOURCE_FIELDS = {
         ["project_id", "GCP Project to use for Spanner"],
         ["instance_id", "ID of Spanner instance to connect to"],
         ["database_id", "ID of Spanner database (schema) to connect to"],
-        ["google_service_account_key_path", "(Optional) GCP SA Key Path"],
+        ["google_service_account_key_path", "(Deprecated) GCP SA Key Path"],
         [
             "api_endpoint",
             '(Optional) GCP Spanner API endpoint (e.g. "https://spanner-mypsc.p.googleapis.com")',
@@ -199,13 +203,24 @@ CONNECTION_SOURCE_FIELDS = {
         ["http_path", "URL path of HTTP proxy"],
     ],
     consts.SOURCE_TYPE_DB2: [
-        ["host", "DB2 host"],
-        ["port", "DB2 port (50000 if not provided)"],
+        ["host", "Db2 host"],
+        ["port", "Db2 port (50000 if not provided)"],
         ["user", "Username to connect to"],
         ["password", "Password for authentication of user"],
-        ["database", "Database in DB2 to connect to"],
-        ["url", "URL link in DB2 to connect to"],
-        ["driver", "Driver link in DB2 to connect to (default ibm_db_sa)"],
+        ["database", "Database in Db2 to connect to"],
+        ["url", "URL link in Db2 to connect to"],
+        ["driver", "Driver link in Db2 to connect to (default ibm_db_sa)"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
+    ],
+    consts.SOURCE_TYPE_DB2_ZOS: [
+        ["host", "Db2 host"],
+        ["port", "Db2 port (50000 if not provided)"],
+        ["user", "Username to connect to"],
+        ["password", "Password for authentication of user"],
+        ["database", "Database in Db2 to connect to"],
+        ["url", "URL link in Db2 to connect to"],
+        ["driver", "Driver link in Db2 to connect to (default ibm_db_sa)"],
+        ["connect_args", "(Optional) Additional connection argument mapping"],
     ],
 }
 

@@ -105,7 +105,7 @@ CLI_ADD_SNOWFLAKE_CONNECTION_ARGS = [
     f"--connect-args={SNOWFLAKE_CONNECTION_ARGS_DICT_STR}",
 ]
 
-TERADATA_CONNECTION_ARGS_DICT_STR = '{"a": "1", "b": 2}'
+CONNECTION_ARGS_DICT_STR = '{"a": "1", "b": 2}'
 CLI_ADD_TERADATA_CONNECTION_ARGS = [
     "connections",
     "add",
@@ -116,7 +116,7 @@ CLI_ADD_TERADATA_CONNECTION_ARGS = [
     "--port=123",
     "--user-name=dvt_user",
     "--password=dvt_pass",
-    f"--json-params={TERADATA_CONNECTION_ARGS_DICT_STR}",
+    f"--json-params={CONNECTION_ARGS_DICT_STR}",
 ]
 
 CLI_ADD_ORACLE_STD_CONNECTION_ARGS = [
@@ -156,6 +156,24 @@ CLI_ADD_ORACLE_WALLET_CONNECTION_ARGS = [
     "Oracle",
     """--connect-args='{"dsn": "@dvt_user_db", "config_dir": "/opt/oracle/client_files", "disable_oob": true}'""",
     "--thick-mode",
+]
+
+CLI_ADD_DB2_CONNECTION_ARGS = [
+    "connections",
+    "add",
+    "--connection-name",
+    "db2_conn",
+    "DB2",
+    "--host=host_name",
+    "--port=123",
+    "--user=dvt_user",
+    "--password=dvt_pass",
+    "--database=db",
+    f"--connect-args={CONNECTION_ARGS_DICT_STR}",
+]
+
+CLI_ADD_DB2_ZOS_CONNECTION_ARGS = [
+    "DB2_ZOS" if _ == "DB2" else _ for _ in CLI_ADD_DB2_CONNECTION_ARGS
 ]
 
 TEST_VALIDATION_CONFIG = {
@@ -374,7 +392,51 @@ def test_create_teradata_connection(caplog, fs):
     assert conn["password"] == args.password
 
     conn_from_file = cli_tools.get_connection(args.connection_name)
-    assert conn_from_file["json_params"] == TERADATA_CONNECTION_ARGS_DICT_STR
+    assert conn_from_file["json_params"] == CONNECTION_ARGS_DICT_STR
+
+
+def test_create_db2_connection(caplog, fs):
+    caplog.set_level(logging.INFO)
+    # Create Connection
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_ADD_DB2_CONNECTION_ARGS)
+    conn = cli_tools.get_connection_config_from_args(args)
+    cli_tools.store_connection(args.connection_name, conn)
+
+    assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
+
+    conn = cli_tools.get_connection(args.connection_name)
+    assert conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_DB2
+    assert conn["host"] == args.host
+    assert conn["port"] == args.port
+    assert conn["user"] == args.user
+    assert conn["password"] == args.password
+    assert conn["database"] == args.database
+
+    conn_from_file = cli_tools.get_connection(args.connection_name)
+    assert conn_from_file["connect_args"] == CONNECTION_ARGS_DICT_STR
+
+
+def test_create_db2_zos_connection(caplog, fs):
+    caplog.set_level(logging.INFO)
+    # Create Connection
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_ADD_DB2_ZOS_CONNECTION_ARGS)
+    conn = cli_tools.get_connection_config_from_args(args)
+    cli_tools.store_connection(args.connection_name, conn)
+
+    assert gcs_helper.WRITE_SUCCESS_STRING in caplog.records[0].msg
+
+    conn = cli_tools.get_connection(args.connection_name)
+    assert conn[consts.SOURCE_TYPE] == consts.SOURCE_TYPE_DB2_ZOS
+    assert conn["host"] == args.host
+    assert conn["port"] == args.port
+    assert conn["user"] == args.user
+    assert conn["password"] == args.password
+    assert conn["database"] == args.database
+
+    conn_from_file = cli_tools.get_connection(args.connection_name)
+    assert conn_from_file["connect_args"] == CONNECTION_ARGS_DICT_STR
 
 
 def test_configure_arg_parser_list_and_run_validation_configs():

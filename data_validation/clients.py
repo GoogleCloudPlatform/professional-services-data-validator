@@ -53,6 +53,7 @@ IBIS_ALCHEMY_BACKENDS = [
     "oracle",
     "postgres",
     "db2",
+    "db2_zos",
     "mssql",
     "redshift",
     "snowflake",
@@ -91,8 +92,10 @@ except ImportError:
 # DB2 requires ibm_db_sa
 try:
     from third_party.ibis.ibis_db2.api import db2_connect
+    from third_party.ibis.ibis_db2_zos.api import db2_zos_connect
 except ImportError:
     db2_connect = _raise_missing_client_error("pip install ibm_db_sa")
+    db2_zos_connect = _raise_missing_client_error("pip install ibm_db_sa")
 
 # Sybase requires sqlalchemy_sybase package.
 try:
@@ -111,15 +114,13 @@ def get_google_bigquery_client(
     job_config = bigquery.QueryJobConfig(
         connection_properties=[bigquery.ConnectionProperty("time_zone", "UTC")]
     )
-    effective_project = quota_project_id or project_id
     options = None
     if api_endpoint or quota_project_id:
         options = client_options.ClientOptions(
             api_endpoint=api_endpoint,
-            quota_project_id=quota_project_id if quota_project_id else None,
         )
     return bigquery.Client(
-        project=effective_project,
+        project=quota_project_id,
         client_info=info,
         credentials=credentials,
         default_query_job_config=job_config,
@@ -136,7 +137,6 @@ def _get_google_bqstorage_client(
     if api_endpoint or quota_project_id:
         options = client_options.ClientOptions(
             api_endpoint=api_endpoint,
-            quota_project_id=quota_project_id if quota_project_id else None,
         )
     from google.cloud import bigquery_storage_v1 as bigquery_storage
 
@@ -152,20 +152,26 @@ def get_bigquery_client(
     credentials=None,
     api_endpoint: Optional[str] = None,
     storage_api_endpoint: Optional[str] = None,
-    client_project_id: Optional[str] = None,
+    client_project_id: Optional[str] = None,  # to be deprecated in the future
+    billing_project_id: Optional[str] = None,
 ):
+    if client_project_id:
+        logging.warning(
+            "client_project_id is deprecated and will be removed in the future, use --billing-project-id instead"
+        )
+        billing_project_id = client_project_id
     google_client = get_google_bigquery_client(
         project_id,
         credentials=credentials,
         api_endpoint=api_endpoint,
-        quota_project_id=client_project_id,
+        quota_project_id=billing_project_id,
     )
     bqstorage_client = None
     if storage_api_endpoint:
         bqstorage_client = _get_google_bqstorage_client(
             credentials=credentials,
             api_endpoint=storage_api_endpoint,
-            quota_project_id=client_project_id,
+            quota_project_id=billing_project_id,
         )
 
     return bigquery_connect(
@@ -227,6 +233,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "oracle",
         "postgres",
         "db2",
+        "db2_zos",
         "mssql",
         "redshift",
         "sybase",
@@ -342,6 +349,10 @@ def get_data_client(connection_config):
             consts.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
         )
         if key_path:
+            logging.warning(
+                """"Use of Service Account Keys is strongly discouraged. This option is deprecated and may be removed.
+                Run DVT with the service account identity by using application-default-credentials with --impersonate-service-account"""
+            )
             decrypted_connection_config["credentials"] = (
                 google.oauth2.service_account.Credentials.from_service_account_file(
                     key_path
@@ -430,4 +441,5 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
     consts.SOURCE_TYPE_SYBASE: sybase_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,
+    consts.SOURCE_TYPE_DB2_ZOS: db2_zos_connect,
 }
