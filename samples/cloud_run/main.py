@@ -21,19 +21,12 @@ from data_validation.__main__ import (
     convert_config_to_json,
 )
 import flask
-import pandas
 
 app = flask.Flask(__name__)
 
 
 def _clean_dataframe(df):
-    rows = df.to_dict(orient="record")
-    for row in rows:
-        for key in row:
-            if type(row[key]) in [pandas.Timestamp]:
-                row[key] = str(row[key])
-
-    return json.dumps(rows)
+    return df.to_json(orient="records", date_format="iso")
 
 
 def _get_request_content(request):
