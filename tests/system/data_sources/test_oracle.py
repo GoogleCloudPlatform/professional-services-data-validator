@@ -239,6 +239,9 @@ def test_generate_partitions(tmp_path: pathlib.Path):
     )
 
 
+##########################
+# SCHEMA VALIDATION TESTS
+##########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -314,6 +317,33 @@ def test_schema_validation_oracle_to_postgres():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_intervals():
+    """Test schema validation on a table with columns of type INTERVAL."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_reserved_words():
+    """Test schema validation on a table with reserved words in column names."""
+    schema_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+    )
+
+
+##########################
+# COLUMN VALIDATION TESTS
+##########################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -556,6 +586,96 @@ def test_column_validation_tricky_dates_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_pangrams_to_bigquery():
+    """Oracle to BigQuery dvt_pangrams column validation.
+    This is testing comparisons across a wider set of characters than standard test data.
+    """
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_pangrams",
+        sum_cols="words",
+        min_cols="words",
+        max_cols="words",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_intervals():
+    """Test column validation on a table with columns of type INTERVAL."""
+    column_validation_test(
+        tc="bq-conn",
+        tables="pso_data_validator.dvt_intervals",
+        count_cols="col_interval_ds,col_interval_ym",
+        sum_cols="col_interval_ds,col_interval_ym",
+        min_cols="col_interval_ds,col_interval_ym",
+        max_cols="col_interval_ds,col_interval_ym",
+        wildcard_include_timestamp=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_group_by_timestamp():
+    """Test that --grouped-columns on Timestamps works correctly.
+
+    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
+    which should be removed in SQL otherwise groups will not match Pandas.
+    """
+    args = column_validation_test_args(
+        tables="pso_data_validator.dvt_group_by_timestamp",
+        grouped_columns="col_datetime",
+        filter_status=None,
+    )
+    df = run_test_from_cli_args(args)
+    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
+    assert len(df) == 3
+    # All groups should be a successful validation.
+    assert all(
+        _ == "success" for _ in df[consts.VALIDATION_STATUS]
+    ), "Not all records are marked as success"
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_decimals_no_precision():
+    """Test column validation on a table with decimals columns with no defined precision."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        sum_cols="*",
+        min_cols="*",
+        max_cols="*",
+        avg_cols="*",
+        std_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_reserved_words():
+    """Test column validation on a table with reserved words in column names."""
+    column_validation_test(
+        tc="mock-conn",
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        count_cols="*",
+    )
+
+
+##########################
+# ROW VALIDATION TESTS
+##########################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_core_types():
     """Oracle to Oracle dvt_core_types row validation"""
     row_validation_test(
@@ -695,7 +815,7 @@ def test_row_validation_large_decimals_to_bigquery():
     See https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/956
     This is testing large decimals for the primary key join column plus the hash columns.
     """
-    # TODO Uncomment randow row args below when working on issue-1455.
+    # TODO Uncomment random row args below when working on issue-1455.
     row_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",
@@ -768,24 +888,6 @@ def test_varchar_pk_row_validation_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_fixed_char_pk_query_row_validation_to_bigquery():
-    """Test fixed char primary keys on custom query"""
-    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_varchar_pk_query_row_validation_to_bigquery():
-    """Test varchar primary keys on custom query"""
-    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
     # TODO Remove use_random_row option below when issue-1445 is actioned.
@@ -799,32 +901,12 @@ def test_row_validation_datetime_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_generate_partitions_datetime_pk():
-    """Test generate partitions on datetime primary key"""
-    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
-    partition_table_test(
-        EXPECTED_DATETIME_ID_PARTITION_FILTER,
-        pk="id",
-        tables="pso_data_validator.dvt_datetime_id",
-        filters="other_data IS NOT NULL",
-        partition_num=2,
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_pangrams_to_bigquery():
-    """Oracle to BigQuery dvt_pangrams column validation.
-    This is testing comparisons across a wider set of characters than standard test data.
-    """
+def test_column_validation_many_columns():
+    """dvt_many_cols column validation."""
     column_validation_test(
         tc="mock-conn",
-        tables="pso_data_validator.dvt_pangrams",
-        sum_cols="words",
-        min_cols="words",
-        max_cols="words",
+        tables="pso_data_validator.dvt_many_cols",
+        count_cols="*",
     )
 
 
@@ -850,6 +932,135 @@ def test_row_validation_pangrams_to_bigquery():
     )
     df = run_test_from_cli_args(args)
     id_type_test_assertions(df)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_many_columns():
+    """dvt_many_cols row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(expected_config_managers=4)
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_many_columns():
+    """dvt_many_cols row validation using comparison fields"""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_many_cols",
+        tc="mock-conn",
+        comp_fields="*",
+        filter_status=None,
+    )
+    # There should be a result per column per row = 399 for this table.
+    assert len(df) == 399
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_intervals():
+    """Test row validation on a table with columns of type INTERVAL."""
+    pytest.skip("Skipping test_row_validation_intervals due to issue-1214.")
+    row_validation_test(
+        tables="pso_data_validator.dvt_intervals",
+        tc="bq-conn",
+        hash="col_interval_ds,col_interval_ym",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_no_precision():
+    """Test row validation on a table with decimals columns with no defined precision."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals_no_precision",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_comp_fields_reserved_words():
+    """Test row validation on a table with reserved words in column names."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_reserved_word_columns",
+        tc="mock-conn",
+        comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_hash_bool_to_postgres():
+    """Test row validation --hash on a table with bool data types in the target, Oracle does not have a bool type."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_bool",
+        tc="pg-conn",
+        hash="*",
+    )
+
+
+################################
+# CUSTOM-QUERY VALIDATION TESTS
+################################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_generate_partitions_datetime_pk():
+    """Test generate partitions on datetime primary key"""
+    pytest.skip("Skipping test_generate_partitions_datetime_pk due to issue-1443.")
+    partition_table_test(
+        EXPECTED_DATETIME_ID_PARTITION_FILTER,
+        pk="id",
+        tables="pso_data_validator.dvt_datetime_id",
+        filters="other_data IS NOT NULL",
+        partition_num=2,
+    )
 
 
 @mock.patch(
@@ -977,6 +1188,22 @@ def test_custom_query_row_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_custom_query_row_validation_many_columns():
+    """Oracle dvt_many_cols custom-query row validation.
+    This is testing many columns logic for --hash, there's a Teradata test for --concat.
+    """
+    row_validation_many_columns_test(
+        validation_type="custom-query", expected_config_managers=4
+    )
+
+
+##############################
+# FIND-TABLE VALIDATION TESTS
+##############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_find_tables():
     """Oracle to BigQuery test of find-tables command."""
     find_tables_test()
@@ -989,59 +1216,6 @@ def test_find_tables():
 def test_find_views_and_tables():
     """Oracle to BigQuery test of find-tables command."""
     find_tables_test(include_views=True)
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_many_columns():
-    """dvt_many_cols column validation."""
-    column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt_many_cols",
-        count_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_many_columns():
-    """dvt_many_cols row validation.
-    This is testing many columns logic for --hash, there's a Teradata test for --concat.
-    """
-    row_validation_many_columns_test(expected_config_managers=4)
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_comp_fields_many_columns():
-    """dvt_many_cols row validation using comparison fields"""
-    df = row_validation_test(
-        tables="pso_data_validator.dvt_many_cols",
-        tc="mock-conn",
-        comp_fields="*",
-        filter_status=None,
-    )
-    # There should be a result per column per row = 399 for this table.
-    assert len(df) == 399
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_custom_query_row_validation_many_columns():
-    """Oracle dvt_many_cols custom-query row validation.
-    This is testing many columns logic for --hash, there's a Teradata test for --concat.
-    """
-    row_validation_many_columns_test(
-        validation_type="custom-query", expected_config_managers=4
-    )
 
 
 @mock.patch(
@@ -1122,70 +1296,6 @@ def test_row_validation_identifiers():
         tc="mock-conn",
         hash="*",
         filters="id>0 AND col_int8>0",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_schema_validation_reserved_words():
-    """Test schema validation on a table with reserved words in column names."""
-    schema_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_reserved_words():
-    """Test column validation on a table with reserved words in column names."""
-    column_validation_test(
-        tc="mock-conn",
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        count_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-        hash="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_comp_fields_reserved_words():
-    """Test row validation on a table with reserved words in column names."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_reserved_word_columns",
-        tc="mock-conn",
-        comp_fields="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_hash_bool_to_postgres():
-    """Test row validation --hash on a table with bool data types in the target, Oracle does not have a bool type."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_bool",
-        tc="pg-conn",
-        hash="*",
     )
 
 
@@ -1325,101 +1435,6 @@ def test_row_validation_tricky_strings_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_column_validation_group_by_timestamp():
-    """Test that --grouped-columns on Timestamps works correctly.
-
-    DVT casts TIMESTAMP grouped columns to DATE, Oracle DATE includes a time element
-    which should be removed in SQL otherwise groups will not match Pandas.
-    """
-    args = column_validation_test_args(
-        tables="pso_data_validator.dvt_group_by_timestamp",
-        grouped_columns="col_datetime",
-        filter_status=None,
-    )
-    df = run_test_from_cli_args(args)
-    # We expect 3 groups in the data set even though there are 6 records, due to Timestamp to Date cast.
-    assert len(df) == 3
-    # All groups should be a successful validation.
-    assert all(
-        _ == "success" for _ in df[consts.VALIDATION_STATUS]
-    ), "Not all records are marked as success"
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_decimals_no_precision():
-    """Test column validation on a table with decimals columns with no defined precision."""
-    column_validation_test(
-        tables="pso_data_validator.dvt_decimals_no_precision",
-        sum_cols="*",
-        min_cols="*",
-        max_cols="*",
-        avg_cols="*",
-        std_cols="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_decimals_no_precision():
-    """Test row validation on a table with decimals columns with no defined precision."""
-    row_validation_test(
-        tables="pso_data_validator.dvt_decimals_no_precision",
-        hash="*",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_schema_validation_intervals():
-    """Test schema validation on a table with columns of type INTERVAL."""
-    schema_validation_test(
-        tables="pso_data_validator.dvt_intervals",
-        tc="bq-conn",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_column_validation_intervals():
-    """Test column validation on a table with columns of type INTERVAL."""
-    column_validation_test(
-        tc="bq-conn",
-        tables="pso_data_validator.dvt_intervals",
-        count_cols="col_interval_ds,col_interval_ym",
-        sum_cols="col_interval_ds,col_interval_ym",
-        min_cols="col_interval_ds,col_interval_ym",
-        max_cols="col_interval_ds,col_interval_ym",
-        wildcard_include_timestamp=True,
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_row_validation_intervals():
-    """Test row validation on a table with columns of type INTERVAL."""
-    pytest.skip("Skipping test_row_validation_intervals due to issue-1214.")
-    row_validation_test(
-        tables="pso_data_validator.dvt_intervals",
-        tc="bq-conn",
-        hash="col_interval_ds,col_interval_ym",
-    )
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_schema_validation_by_url():
     """Oracle to Oracle validation testing connection by URL string works."""
     schema_validation_test(
@@ -1442,6 +1457,9 @@ def test_generate_and_run_partitions(tmp_path: pathlib.Path):
     )
 
 
+##################
+# RAW QUERY TESTS
+##################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
