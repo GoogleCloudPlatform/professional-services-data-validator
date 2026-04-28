@@ -341,6 +341,31 @@ def test_schema_validation_reserved_words():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_camel_case():
+    """Test schema validation on a table with camel case identifiers."""
+    schema_validation_test(
+        tables="pso_data_validator.DvtCaseCamel=pso_data_validator.dvt_case_upper",
+        tc="mock-conn",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_schema_validation_lower_case():
+    """Test schema validation on a table with lower case identifiers."""
+    pytest.skip("Skipping test_schema_validation_lower_case due to issue-1733.")
+    schema_validation_test(
+        tables="pso_data_validator.dvt_case_lower=pso_data_validator.dvt_case_upper",
+        tc="mock-conn",
+    )
+
+
 ##########################
 # COLUMN VALIDATION TESTS
 ##########################
@@ -666,6 +691,36 @@ def test_column_validation_reserved_words():
         tc="mock-conn",
         tables="pso_data_validator.dvt_reserved_word_columns",
         count_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_camel_case():
+    """Test column validation on a table with camel case identifiers."""
+    pytest.skip("Skipping test_column_validation_camel_case due to issue-1733.")
+    column_validation_test(
+        tables="pso_data_validator.DvtCaseCamel=pso_data_validator.dvt_case_upper",
+        tc="mock-conn",
+        count_cols="*",
+        sum_cols="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_lower_case():
+    """Test column validation on a table with lower case identifiers."""
+    pytest.skip("Skipping test_column_validation_lower_case due to issue-1733.")
+    column_validation_test(
+        tables="pso_data_validator.dvt_case_lower=pso_data_validator.dvt_case_upper",
+        tc="mock-conn",
+        count_cols="*",
+        sum_cols="*",
     )
 
 
@@ -1022,6 +1077,34 @@ def test_row_validation_hash_bool_to_postgres():
     row_validation_test(
         tables="pso_data_validator.dvt_bool",
         tc="pg-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_camel_case():
+    """Test row validation on a table with camel case identifiers."""
+    pytest.skip("Skipping test_row_validation_camel_case due to issue-1733.")
+    row_validation_test(
+        tables="pso_data_validator.DvtCaseCamel=pso_data_validator.dvt_case_upper",
+        tc="mock-conn",
+        hash="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_lower_case():
+    """Test row validation on a table with lower case identifiers."""
+    pytest.skip("Skipping test_row_validation_lower_case due to issue-1733.")
+    row_validation_test(
+        tables="pso_data_validator.dvt_case_lower=pso_data_validator.dvt_case_upper",
+        tc="mock-conn",
         hash="*",
     )
 

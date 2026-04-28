@@ -918,3 +918,48 @@ INSERT INTO pso_data_validator.dvt_intervals VALUES
 INSERT INTO pso_data_validator.dvt_intervals VALUES
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
 COMMIT;
+
+-- CamelCase test table.
+DROP TABLE pso_data_validator."DvtCaseCamel";
+CREATE TABLE pso_data_validator."DvtCaseCamel"
+(   "Id"           number(5) NOT NULL PRIMARY KEY
+,   "ColInt"       number(5)
+,   "ColDec"       number(10,2)
+,   "ColStr"       varchar2(30)
+,   "ColDate"      date
+,   "ColText"      clob
+);
+COMMENT ON TABLE pso_data_validator."DvtCaseCamel" IS 'Oracle table with CamelCase identifiers.';
+INSERT INTO pso_data_validator."DvtCaseCamel" VALUES
+(1,1,1.1,'Hello DVT',DATE'1970-01-01','Hello DVT');
+INSERT INTO pso_data_validator."DvtCaseCamel" VALUES
+(2,2,2.2,'Hello DVT',DATE'1970-01-02','Hello DVT');
+COMMIT;
+
+DROP TABLE pso_data_validator.DVT_CASE_UPPER;
+CREATE TABLE pso_data_validator.DVT_CASE_UPPER
+(   ID           number(5) NOT NULL PRIMARY KEY
+,   COLINT       number(5)
+,   COLDEC       number(10,2)
+,   COLSTR       varchar2(30)
+,   COLDATE      date
+,   COLTEXT      clob
+);
+COMMENT ON TABLE pso_data_validator.DVT_CASE_UPPER IS 'Oracle table to compare with DvtCaseCamel.';
+INSERT INTO pso_data_validator.DVT_CASE_UPPER
+SELECT * FROM pso_data_validator."DvtCaseCamel";
+COMMIT;
+
+DROP TABLE pso_data_validator."dvt_case_lower";
+CREATE TABLE pso_data_validator."dvt_case_lower"
+(   "id"         number(5) NOT NULL PRIMARY KEY
+,   "colint"     number(5)
+,   "coldec"     number(10,2)
+,   "colstr"     varchar2(30)
+,   "coldate"    date
+,   "coltext"    clob
+);
+COMMENT ON TABLE pso_data_validator."dvt_case_lower" IS 'Oracle table with lower case identifiers.';
+INSERT INTO pso_data_validator."dvt_case_lower"
+SELECT * FROM pso_data_validator."DvtCaseCamel";
+COMMIT;
