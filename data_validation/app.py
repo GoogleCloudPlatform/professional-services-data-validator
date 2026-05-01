@@ -212,17 +212,16 @@ def get_connections():
         )
 
 
-@app.route("/get_table_metadata", methods=["POST"])
-def get_table_metadata():
+@app.route("/bulk_table_metadata", methods=["POST"])
+def bulk_table_metadata():
     try:
         payload = _get_request_content(flask.request)
         connection_name = payload.get("connection_name")
-        schema_name = payload.get("schema_name")
-        table_name = payload.get("table_name")
+        tables = payload.get("tables")
 
-        if not all([connection_name, schema_name, table_name]):
+        if not connection_name or not isinstance(tables, list):
             return flask.Response(
-                "Bad Request: connection_name, schema_name, and table_name are required parameters",
+                "Bad Request: connection_name and a 'tables' list are required parameters",
                 status=400,
                 mimetype="text/plain",
             )
@@ -231,30 +230,67 @@ def get_table_metadata():
         connection_config = mgr.get_connection_config(connection_name)
 
         from data_validation import clients
-
         client = clients.get_data_client(connection_config)
 
-        primary_keys = []
-        if hasattr(client, "list_primary_key_columns"):
-            primary_keys = client.list_primary_key_columns(schema_name, table_name)
+        results = []
+        for table_spec in tables:
+            schema_name = table_spec.get("schema_name")
+            table_name = table_spec.get("table_name")
 
-        raw_metadata = []
-        if hasattr(client, "raw_column_metadata"):
-            raw_metadata_iter = client.raw_column_metadata(schema_name, table_name)
-            raw_metadata = list(raw_metadata_iter)
+            if not schema_name or not table_name:
+                results.append(
+                    {
+                        "schema_name": schema_name,
+                        "table_name": table_name,
+                        "error": "Bad Request: schema_name and table_name are required",
+                    }
+                )
+                continue
 
-        estimated_row_count = None
-        if hasattr(client, "estimated_row_count"):
-            estimated_row_count = client.estimated_row_count(schema_name, table_name)
+            try:
+                primary_keys = []
+                if hasattr(client, "list_primary_key_columns"):
+                    primary_keys = client.list_primary_key_columns(
+                        schema_name, table_name
+                    )
 
-        result = {
-            "primary_keys": primary_keys,
-            "raw_column_metadata": raw_metadata,
-            "estimated_row_count": estimated_row_count,
-        }
-        return flask.Response(json.dumps(result), mimetype="application/json")
+                raw_metadata = []
+                if hasattr(client, "raw_column_metadata"):
+                    raw_metadata_iter = client.raw_column_metadata(
+                        schema_name, table_name
+                    )
+                    raw_metadata = list(raw_metadata_iter)
+
+                estimated_row_count = None
+                if hasattr(client, "estimated_row_count"):
+                    estimated_row_count = client.estimated_row_count(
+                        schema_name, table_name
+                    )
+
+                results.append(
+                    {
+                        "schema_name": schema_name,
+                        "table_name": table_name,
+                        "primary_keys": primary_keys,
+                        "raw_column_metadata": raw_metadata,
+                        "estimated_row_count": estimated_row_count,
+                    }
+                )
+            except Exception as table_exc:
+                logging.exception(
+                    f"Error fetching metadata for {schema_name}.{table_name}"
+                )
+                results.append(
+                    {
+                        "schema_name": schema_name,
+                        "table_name": table_name,
+                        "error": str(table_exc),
+                    }
+                )
+
+        return flask.Response(json.dumps(results), mimetype="application/json")
     except Exception as e:
-        logging.exception("An error occurred during get_table_metadata")
+        logging.exception("An error occurred during bulk_table_metadata")
         return flask.Response(
             f"An internal server error occurred: {e}",
             status=500,
