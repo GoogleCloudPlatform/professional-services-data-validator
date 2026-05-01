@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Iterable, Literal, Tuple
+from typing import Iterable, Literal, Tuple, Optional
 
 import ibis.expr.datatypes as dt
 import ibis.expr.schema as sch
@@ -214,9 +214,34 @@ def _is_char_type_padded(self, char_type: Tuple) -> bool:
     return char_type[0] == "character"
 
 
+def _estimated_row_count(self, database: str, table: str) -> Optional[int]:
+    """Return estimated row count using system metadata."""
+    sql = """
+        WITH RECURSIVE inheritance_tree AS (
+            SELECT c.oid, c.relkind, c.reltuples
+            FROM pg_catalog.pg_class c
+            JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = :schema AND c.relname = :table
+            UNION ALL
+            SELECT c.oid, c.relkind, c.reltuples
+            FROM pg_catalog.pg_inherits i
+            JOIN pg_catalog.pg_class c ON c.oid = i.inhrelid
+            JOIN inheritance_tree t ON t.oid = i.inhparent
+        )
+        SELECT COALESCE(SUM(reltuples), 0)::bigint
+        FROM inheritance_tree
+        WHERE relkind != 'p'
+    """
+    with self.begin() as con:
+        result = con.execute(sa.text(sql).bindparams(schema=database, table=table))
+        row = result.cursor.fetchone()
+        return int(row[0]) if row and row[0] is not None else None
+
+
 PostgresBackend._metadata = _metadata
 PostgresBackend.list_databases = list_schemas
 PostgresBackend.do_connect = do_connect
 PostgresBackend.list_primary_key_columns = _list_primary_key_columns
 PostgresBackend.raw_column_metadata = _raw_column_metadata
 PostgresBackend.is_char_type_padded = _is_char_type_padded
+PostgresBackend.estimated_row_count = _estimated_row_count

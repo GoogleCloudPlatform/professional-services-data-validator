@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import google.auth.credentials
 import google.cloud.bigquery as bq
@@ -150,3 +150,10 @@ class Backend(BigQueryBackend):
 
     def dvt_list_tables(self, like=None, database=None):
         return self.list_tables(like=like, database=database)
+
+    def estimated_row_count(self, database: str, table: str) -> Optional[int]:
+        """Return estimated row count using BigQuery API."""
+        project, dataset = self._parse_project_and_dataset(database)
+        table_ref = f"{project}.{dataset}.{table}"
+        bq_table = self.client.get_table(table_ref)
+        return bq_table.num_rows if bq_table.num_rows is not None else None

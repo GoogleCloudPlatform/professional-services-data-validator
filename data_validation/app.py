@@ -212,5 +212,55 @@ def get_connections():
         )
 
 
+@app.route("/get_table_metadata", methods=["POST"])
+def get_table_metadata():
+    try:
+        payload = _get_request_content(flask.request)
+        connection_name = payload.get("connection_name")
+        schema_name = payload.get("schema_name")
+        table_name = payload.get("table_name")
+
+        if not all([connection_name, schema_name, table_name]):
+            return flask.Response(
+                "Bad Request: connection_name, schema_name, and table_name are required parameters",
+                status=400,
+                mimetype="text/plain",
+            )
+
+        mgr = state_manager.StateManager()
+        connection_config = mgr.get_connection_config(connection_name)
+
+        from data_validation import clients
+
+        client = clients.get_data_client(connection_config)
+
+        primary_keys = []
+        if hasattr(client, "list_primary_key_columns"):
+            primary_keys = client.list_primary_key_columns(schema_name, table_name)
+
+        raw_metadata = []
+        if hasattr(client, "raw_column_metadata"):
+            raw_metadata_iter = client.raw_column_metadata(schema_name, table_name)
+            raw_metadata = list(raw_metadata_iter)
+
+        estimated_row_count = None
+        if hasattr(client, "estimated_row_count"):
+            estimated_row_count = client.estimated_row_count(schema_name, table_name)
+
+        result = {
+            "primary_keys": primary_keys,
+            "raw_column_metadata": raw_metadata,
+            "estimated_row_count": estimated_row_count,
+        }
+        return flask.Response(json.dumps(result), mimetype="application/json")
+    except Exception as e:
+        logging.exception("An error occurred during get_table_metadata")
+        return flask.Response(
+            f"An internal server error occurred: {e}",
+            status=500,
+            mimetype="text/plain",
+        )
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

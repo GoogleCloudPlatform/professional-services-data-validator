@@ -245,3 +245,17 @@ class Backend(BaseAlchemyBackend):
         """Define this method if the backend supports character/string types that are padded and returns
         padded values, which DVT may want to trim"""
         return char_type[0] in ["CHAR", "NCHAR"]
+
+    def estimated_row_count(self, database: str, table: str) -> Optional[int]:
+        """Return estimated row count using system metadata."""
+        sql = """
+            SELECT num_rows
+            FROM all_tables
+            WHERE owner = :1 AND table_name = :2
+        """
+        with self.begin() as con:
+            result = con.exec_driver_sql(
+                sql, parameters=(database.upper(), table.upper())
+            )
+            row = result.cursor.fetchone()
+            return int(row[0]) if row and row[0] is not None else None

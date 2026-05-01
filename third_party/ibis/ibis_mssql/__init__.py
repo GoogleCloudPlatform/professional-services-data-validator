@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Literal, Tuple, Iterable
+from typing import Literal, Tuple, Iterable, Optional
 
 import sqlalchemy as sa
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
@@ -195,3 +195,19 @@ class Backend(BaseAlchemyBackend):
     def dvt_list_tables(self, like=None, database=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""
         return self.list_tables(table=like, schema=database, type_like="BASE TABLE")
+
+    def estimated_row_count(self, database: str, table: str) -> Optional[int]:
+        """Return estimated row count using system metadata."""
+        sql = """
+            SELECT SUM(p.rows)
+            FROM sys.tables t
+            INNER JOIN sys.partitions p ON t.object_id = p.object_id
+            INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+            WHERE s.name = ? AND t.name = ?
+            AND p.index_id IN (0, 1)
+            GROUP BY p.object_id
+        """
+        with self.begin() as con:
+            result = con.exec_driver_sql(sql, parameters=(database, table))
+            row = result.cursor.fetchone()
+            return int(row[0]) if row and row[0] is not None else None
