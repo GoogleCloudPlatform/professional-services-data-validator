@@ -35,7 +35,7 @@ def _get_request_content(request):
     return request.json
 
 
-def _get_args_from_payload(payload, parser):
+def _get_args_from_payload(payload, parser, **kwargs):
     # Dynamically pull all defaults from registered actions
     defaults = {
         action.dest: action.default
@@ -45,7 +45,17 @@ def _get_args_from_payload(payload, parser):
     # Map hyphens to underscores in payload for argparse compatibility
     processed_payload = {k.replace("-", "_"): v for k, v in payload.items()}
     defaults.update(processed_payload)
-    return argparse.Namespace(**defaults)
+    args = argparse.Namespace(**defaults)
+
+    for key, value in kwargs.items():
+        setattr(args, key, value)
+
+    if not hasattr(args, "verbose"):
+        args.verbose = False
+    if not hasattr(args, "log_level"):
+        args.log_level = "INFO"
+
+    return args
 
 
 def validate(config):
@@ -93,14 +103,9 @@ def generate_column_config():
         dummy_parser = argparse.ArgumentParser()
         _configure_column_parser(dummy_parser)
 
-        args = _get_args_from_payload(payload, dummy_parser)
-        # Inject the sub-command routing defaults
-        args.command = "validate"
-        args.validate_cmd = "column"
-        if not hasattr(args, "verbose"):
-            args.verbose = False
-        if not hasattr(args, "log_level"):
-            args.log_level = "INFO"
+        args = _get_args_from_payload(
+            payload, dummy_parser, command="validate", validate_cmd="column"
+        )
 
         if not getattr(args, "config_file", None):
             return flask.Response(
@@ -138,14 +143,9 @@ def generate_row_config():
         required_arguments = dummy_parser.add_argument_group("required arguments")
         _configure_row_parser(dummy_parser, optional_arguments, required_arguments)
 
-        args = _get_args_from_payload(payload, dummy_parser)
-        # Inject the sub-command routing defaults
-        args.command = "validate"
-        args.validate_cmd = "row"
-        if not hasattr(args, "verbose"):
-            args.verbose = False
-        if not hasattr(args, "log_level"):
-            args.log_level = "INFO"
+        args = _get_args_from_payload(
+            payload, dummy_parser, command="validate", validate_cmd="row"
+        )
 
         if not getattr(args, "config_file", None):
             return flask.Response(
@@ -184,9 +184,9 @@ def find_tables():
         _configure_find_tables(subparsers)
         find_tables_parser = subparsers.choices["find-tables"]
 
-        args = _get_args_from_payload(payload, find_tables_parser)
-        # Inject the sub-command routing defaults
-        args.command = "find-tables"
+        args = _get_args_from_payload(
+            payload, find_tables_parser, command="find-tables"
+        )
 
         result = find_tables_using_string_matching(args)
         return flask.Response(result, mimetype="application/json")
