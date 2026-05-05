@@ -29,5 +29,6 @@ The service account associated with the docker container will need access to GCP
 
 Sample Dockerfiles including specific pre-requisites are included for reference:
 
-- [Dockerfile_sql_server_alpine](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/Dockerfile_sql_server_alpine)
-- [Dockerfile_sql_server_debian](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/Dockerfile_sql_server_debian)
+- [Dockerfile_sql_server_alpine](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/Dockerfile_sql_server_alpine) - Use this image if your Docker container's OS is Alpine Linux.
+- [Dockerfile_sql_server_debian](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/Dockerfile_sql_server_debian) - Use this image if your Docker container's OS is Debian Linux.
+- [Dockerfile_oracle_debian](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/samples/docker/Dockerfile_oracle_debian) - Use this image if you are connecting to an Oracle database and require a "thick" client, for example when using an Oracle wallet for **authentication**.

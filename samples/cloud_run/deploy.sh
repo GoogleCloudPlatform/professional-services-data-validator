@@ -1,6 +1,21 @@
 #!/bin/bash
+set -e
 
-gcloud builds submit --tag gcr.io/${PROJECT_ID}/data-validation \
-    --project=${PROJECT_ID}
-gcloud run deploy data-validation --image gcr.io/${PROJECT_ID}/data-validation \
-    --region=us-central1 --project=${PROJECT_ID}
+if [ -z "$PROJECT_ID" ]; then
+    echo "Error: PROJECT_ID environment variable is not set."
+    exit 1
+fi
+
+REGION="${REGION:-us-central1}"
+REPO="${REPO:-dvt}"
+IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/dvt:latest"
+
+echo "Building image: $IMAGE"
+gcloud builds submit --tag "$IMAGE" --project="${PROJECT_ID}"
+
+echo "Deploying to Cloud Run..."
+gcloud run deploy dvt \
+    --image "$IMAGE" \
+    --region="${REGION}" \
+    --project="${PROJECT_ID}" \
+    --no-allow-unauthenticated
