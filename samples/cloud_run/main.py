@@ -12,23 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+import logging
 import os
 from data_validation import data_validation
 import flask
-import pandas
 
 app = flask.Flask(__name__)
 
 
 def _clean_dataframe(df):
-    rows = df.to_dict(orient="record")
-    for row in rows:
-        for key in row:
-            if type(row[key]) in [pandas.Timestamp]:
-                row[key] = str(row[key])
-
-    return json.dumps(rows)
+    return df.to_json(orient="records", date_format="iso")
 
 
 def _get_request_content(request):
@@ -43,27 +36,21 @@ def validate(config):
     return _clean_dataframe(df)
 
 
-def main(request):
+@app.route("/", methods=["POST"])
+def run():
     """Handle incoming Data Validation requests.
 
     request (flask.Request): HTTP request object.
     """
     try:
-        config = _get_request_content(request)["config"]
-        return validate(config)
-    except Exception as e:
-        return "Unknown Error: {}".format(e)
-
-
-@app.route("/", methods=["POST"])
-def run():
-    try:
         config = _get_request_content(flask.request)
         result = validate(config)
-        return str(result)
-    except Exception as e:
-        print(e)
-        return "Found Error: {}".format(e)
+        return flask.Response(result, mimetype="application/json")
+    except Exception:
+        logging.exception("An error occurred during validation")
+        return flask.Response(
+            "An internal server error occurred.", status=500, mimetype="text/plain"
+        )
 
 
 @app.route("/test", methods=["POST"])
