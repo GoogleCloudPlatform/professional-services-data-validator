@@ -18,7 +18,7 @@ import re
 import time
 import uuid
 
-from data_validation import clients, exceptions
+from data_validation import exceptions
 
 from typing import TYPE_CHECKING
 
@@ -72,6 +72,7 @@ def dvt_config_string_to_dict(config_string: str) -> dict:
 
 
 def ibis_table_to_sql(ibis_table: "IbisTable", alchemy_client: "BaseBackend") -> str:
+    from data_validation import clients
     """Function to generate the SQL string for the table based on the backend.
 
     We need the client in order to find the dialect, otherwise we end up with generic literals.
