@@ -259,7 +259,8 @@ def bulk_table_metadata():
                     raw_metadata_iter = client.raw_column_metadata(
                         schema_name, table_name
                     )
-                    raw_metadata = list(raw_metadata_iter)
+                    # Compress metadata to include only column name and data type
+                    raw_metadata = [(col[0], col[1]) for col in raw_metadata_iter]
 
                 estimated_row_count = None
                 if hasattr(client, "estimated_row_count"):
