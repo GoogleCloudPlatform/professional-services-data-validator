@@ -1,4 +1,22 @@
-FROM python:3.9-slim
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This script builds the Docker image for the Data Validator.
+# It can optionally build a specific version of the tool if the `_APP_VERSION`
+# argument is provided.
+
+FROM python:3.11-slim
 
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
@@ -8,35 +26,18 @@ ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY . ./
 
-# Install production dependencies.
-RUN apt-get update \
-    && apt-get install gcc -y \
-    && apt-get clean
-RUN pip install --upgrade pip
-RUN pip install Flask gunicorn google_pso_data_validator
+ENV PIPOPTS="--root-user-action=ignore"
 
-# Hive/Impala Dependencies 
-# RUN pip install hdfs
-# RUN pip install thrift-sasl
+# Install dependencies.
+RUN pip install ${PIPOPTS} --upgrade pip
+RUN pip install ${PIPOPTS} Flask gunicorn google_pso_data_validator
 
-# Oracle Dependencies
-# if you are using Oracle you should add .rpm files
-# under your license to a directory called oracle/
-# and then uncomment the setup below.
-
-# ENV ORACLE_SID oracle
-# ENV ORACLE_ODBC_VERSION 12.2
-# ENV ORACLE_HOME /usr/lib/oracle/${ORACLE_ODBC_VERSION}/client64
-
-# RUN pip install cx_Oracle
-# RUN apt-get -y install --fix-missing --upgrade vim alien unixodbc-dev wget libaio1 libaio-dev
-
-# COPY oracle/*.rpm ./
-# RUN alien -i *.rpm && rm *.rpm \
-#     && echo "/usr/lib/oracle/${ORACLE_ODBC_VERSION}/client64/lib/" > /etc/ld.so.conf.d/oracle.conf \
-#     && ln -s /usr/include/oracle/${ORACLE_ODBC_VERSION}/client64 $ORACLE_HOME/include \
-#     && ldconfig -v
-
+# Optional: Uncomment the following lines to install additional drivers.
+# RUN pip install ${PIPOPTS} 'ibis-framework[impala]'
+# RUN pip install ${PIPOPTS} oracledb
+# RUN pip install ${PIPOPTS} pyodbc
+# RUN pip install ${PIPOPTS} snowflake-sqlalchemy snowflake-connector-python
+# RUN pip install ${PIPOPTS} teradatasql
 
 # Run the web service on container startup. Here we use the gunicorn
 # webserver, with one worker process and 8 threads.

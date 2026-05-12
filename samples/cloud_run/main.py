@@ -16,13 +16,15 @@ import argparse
 import logging
 import json
 import os
+
+import flask
+
 from data_validation import data_validation, state_manager
 from data_validation.__main__ import (
     build_config_managers_from_args,
     convert_config_to_json,
     store_yaml_config_file,
 )
-import flask
 
 app = flask.Flask(__name__)
 
@@ -66,27 +68,28 @@ def validate(config):
     return _clean_dataframe(df)
 
 
-def main(request):
+@app.route("/", methods=["POST"])
+def run():
     """Handle incoming Data Validation requests.
 
     request (flask.Request): HTTP request object.
     """
     try:
-        config = _get_request_content(request)["config"]
-        return validate(config)
-    except Exception as e:
-        return "Unknown Error: {}".format(e)
-
-
-@app.route("/", methods=["POST"])
-def run():
-    try:
         config = _get_request_content(flask.request)
         result = validate(config)
+<<<<<<< HEAD
         return str(result)
     except Exception as e:
         logging.exception(e)
         return "Found Error: {}".format(e)
+=======
+        return flask.Response(result, mimetype="application/json")
+    except Exception:
+        logging.exception("An error occurred during validation")
+        return flask.Response(
+            "An internal server error occurred.", status=500, mimetype="text/plain"
+        )
+>>>>>>> origin/develop
 
 
 @app.route("/test", methods=["POST"])
