@@ -90,13 +90,13 @@ def other():
     return _get_request_content(flask.request)
 
 
-@app.route("/ping", methods=["GET"])
+@app.route("/ping", methods=["GET", "POST"])
 def ping():
     """Lightweight health check endpoint for load balancers and uptime probes."""
     return flask.Response("OK", status=200, mimetype="text/plain")
 
 
-@app.route("/version", methods=["GET"])
+@app.route("/version", methods=["GET", "POST"])
 def version():
     """Returns the running Data Validation Tool version."""
     from data_validation import __version__
