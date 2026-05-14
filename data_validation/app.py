@@ -102,6 +102,21 @@ def other():
     return _get_request_content(flask.request)
 
 
+@app.route("/ping", methods=["GET"])
+def ping():
+    """Lightweight health check endpoint for load balancers and uptime probes."""
+    return flask.Response("OK", status=200, mimetype="text/plain")
+
+
+@app.route("/version", methods=["GET"])
+def version():
+    """Returns the running Data Validation Tool version."""
+    from data_validation import __version__
+    return flask.Response(
+        json.dumps({"version": __version__}), status=200, mimetype="application/json"
+    )
+
+
 @app.route("/generate_column_config", methods=["POST"])
 def generate_column_config():
     try:
