@@ -699,8 +699,8 @@ class ConfigManager(object):
         """Returns True when either source or target column is Oracle LOB data type.
 
         Unexpectedly the raw types for for LOB types are:
-            BLOB: LONG_RAW
-            CLOB: LONG
+            BLOB: LONG_RAW (this covers Oracle LONG_RAW too)
+            CLOB: LONG (this covers Oracle LONG too)
             NCLOB: LONG_NVARCHAR
         """
         return self._is_raw_data_type(
