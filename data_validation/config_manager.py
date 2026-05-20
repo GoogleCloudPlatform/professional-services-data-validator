@@ -1382,6 +1382,12 @@ class ConfigManager(object):
                 )
                 result_source_columns.pop(source_column)
                 result_target_columns.pop(target_column)
+            if self._is_oracle_lob(source_column, target_column):
+                logging.info(
+                    f"Skipping column {source_column} due to Oracle LOB data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
             if self._is_db2_blob(source_column, target_column):
                 # Db2 BLOB is incompatible with Db2s own HEX function.
                 # Users would need to use a custom query to a custom UDF to row validate these.
