@@ -49,7 +49,11 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 PROJECT_ID = os.environ["PROJECT_ID"]
 TEST_BUCKET = os.environ.get("TEST_BUCKET", PROJECT_ID)
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{TEST_BUCKET}/integration_tests/"
-BQ_CONN = {consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY, "project_id": PROJECT_ID}
+BQ_CONN = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+    consts.PROJECT_ID: PROJECT_ID,
+    consts.BILLING_PROJECT_ID: PROJECT_ID,
+}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -411,8 +415,6 @@ TEST_JSON_VALIDATION_CONFIG = {
             consts.CONFIG_TYPE: "count",
         },
     ],
-    consts.CONFIG_SOURCE_CONN: BQ_CONN,
-    consts.CONFIG_TARGET_CONN: BQ_CONN,
     consts.CONFIG_CASE_INSENSITIVE_MATCH: False,
     consts.CONFIG_ROW_CONCAT: None,
     consts.CONFIG_ROW_HASH: None,
@@ -1370,8 +1372,15 @@ def test_column_validation_convert_config_to_json(mock_conn):
     assert len(config_managers) == 1
 
     json_config = main.convert_config_to_json(config_managers)
-    # assert structure
+    # Assert structure
     assert json_config == TEST_JSON_VALIDATION_CONFIG
+    # Ensure that raw connection info is not in the JSON anywhere.
+    assert consts.SOURCE_TYPE not in str(json_config)
+
+    # Ensure that the final validation executes successfully using the converted JSON config
+    data_validator = data_validation.DataValidation(json_config, verbose=False)
+    _ = data_validator.execute()
+    # If we get to here then there was no exception, meaning the JSON was valid.
 
 
 @mock.patch(
