@@ -605,3 +605,76 @@ def test_successful_generate_partitions_with_mocked_partition_builder(
 )
 def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
     main.main()
+
+
+@mock.patch("data_validation.cli_tools.store_validation")
+@mock.patch("data_validation.gcs_helper.list_gcs_directory", return_value=[])
+@mock.patch("data_validation.gcs_helper._is_gcs_path", return_value=False)
+@mock.patch("os.path.exists", return_value=True)
+@mock.patch("os.listdir", return_value=[])
+def test_store_config_dir_yaml_success(
+    mock_listdir, mock_exists, mock_is_gcs, mock_list_gcs, mock_store_validation
+):
+    """Test storing validation configs inside a directory succeeds and handles naming collisions with suffixes."""
+    config_mgr_1 = config_manager.ConfigManager(
+        {"type": "Column", "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    config_mgr_2 = config_manager.ConfigManager(
+        {"type": "Column", "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+
+    args = argparse.Namespace(config_dir="my_dir", source_conn="src", target_conn="tgt")
+
+    main.store_config_dir(args, [config_mgr_1, config_mgr_2], is_json=False)
+
+    # Assert store_validation was called twice
+    assert mock_store_validation.call_count == 2
+
+    # First call: s_t_column.yaml
+    call_1 = mock_store_validation.call_args_list[0]
+    assert call_1.args[0] == "my_dir/s_t_column.yaml"
+
+    # Second call: s_t_column_1.yaml (collision handled)
+    call_2 = mock_store_validation.call_args_list[1]
+    assert call_2.args[0] == "my_dir/s_t_column_1.yaml"
+
+
+@mock.patch("os.path.exists", return_value=True)
+@mock.patch("os.listdir", return_value=["existing_file.yaml"])
+@mock.patch("data_validation.gcs_helper._is_gcs_path", return_value=False)
+def test_store_config_dir_not_empty_raises(mock_is_gcs, mock_listdir, mock_exists):
+    """Test storing validations in a non-empty directory raises ValueError to prevent accidental overrides."""
+    config_mgr = config_manager.ConfigManager(
+        {"type": "Column", "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    args = argparse.Namespace(config_dir="my_dir")
+
+    with pytest.raises(ValueError) as exc_info:
+        main.store_config_dir(args, [config_mgr], is_json=False)
+
+    assert "is not empty. Aborting." in str(exc_info.value)
+
+
+def test_store_config_dir_custom_query_raises():
+    """Test that attempting to save custom-query validations to a config directory raises ValueError."""
+    config_mgr = config_manager.ConfigManager(
+        {"type": consts.CUSTOM_QUERY, "schema_name": "s", "table_name": "t"},
+        MockIbisClient(),
+        MockIbisClient(),
+        verbose=False,
+    )
+    args = argparse.Namespace(config_dir="my_dir")
+
+    with pytest.raises(ValueError) as exc_info:
+        main.store_config_dir(args, [config_mgr], is_json=False)
+
+    assert main.CUSTOM_QUERY_DIR_SUPPORT_ERROR in str(exc_info.value)
