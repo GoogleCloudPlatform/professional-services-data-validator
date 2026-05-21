@@ -1109,6 +1109,11 @@ class ConfigManager(object):
         source_table = self.get_source_ibis_calculated_table()
         target_table = self.get_target_ibis_calculated_table()
 
+        logging.debug(
+            f"Building aggregates for validation of {self.source_schema}.{self.source_table} "
+            f"against {self.target_schema}.{self.target_table}"
+        )
+
         casefold_source_columns = {x.casefold(): str(x) for x in source_table.columns}
         casefold_target_columns = {x.casefold(): str(x) for x in target_table.columns}
 
@@ -1142,6 +1147,14 @@ class ConfigManager(object):
 
         allowlist_columns = arg_value or casefold_source_columns
         for column_position, column in enumerate(casefold_source_columns):
+            if column not in allowlist_columns:
+                continue
+            elif column not in casefold_target_columns:
+                logging.warning(
+                    f"Skipping {agg_type} on {column} as column is not present in target table"
+                )
+                continue
+
             # Get column type and remove precision/scale attributes
             source_column_ibis_type = source_table[
                 casefold_source_columns[column]
@@ -1152,14 +1165,7 @@ class ConfigManager(object):
             ].type()
             target_column_type = str(target_column_ibis_type).split("(")[0]
 
-            if column not in allowlist_columns:
-                continue
-            elif column not in casefold_target_columns:
-                logging.warning(
-                    f"Skipping {agg_type} on {column} as column is not present in target table"
-                )
-                continue
-            elif supported_types and not self._type_is_supported_for_agg_validation(
+            if supported_types and not self._type_is_supported_for_agg_validation(
                 column_type, target_column_type, supported_types
             ):
                 if self.verbose:
