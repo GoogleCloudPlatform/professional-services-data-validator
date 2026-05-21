@@ -1379,7 +1379,7 @@ def test_column_validation_convert_config_to_json(mock_conn):
 
     # Ensure that the final validation executes successfully using the converted JSON config
     data_validator = data_validation.DataValidation(json_config, verbose=False)
-    df = data_validator.execute()
+    _ = data_validator.execute()
     # If we get to here then there was no exception, meaning the JSON was valid.
 
 
