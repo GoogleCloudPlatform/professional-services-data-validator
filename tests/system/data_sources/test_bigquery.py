@@ -49,7 +49,11 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 PROJECT_ID = os.environ["PROJECT_ID"]
 TEST_BUCKET = os.environ.get("TEST_BUCKET", PROJECT_ID)
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{TEST_BUCKET}/integration_tests/"
-BQ_CONN = {consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY, consts.PROJECT_ID: PROJECT_ID, consts.BILLING_PROJECT_ID: PROJECT_ID}
+BQ_CONN = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+    consts.PROJECT_ID: PROJECT_ID,
+    consts.BILLING_PROJECT_ID: PROJECT_ID,
+}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
