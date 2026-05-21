@@ -146,9 +146,11 @@ SOURCE_TYPE_TERADATA = "Teradata"
 # BigQuery Result Handler Configs
 RH_TYPE = "type"
 RH_CONN = "connection"
-PROJECT_ID = "project_id"
 TABLE_ID = "table_id"
 GOOGLE_SERVICE_ACCOUNT_KEY_PATH = "google_service_account_key_path"
+
+# BigQuery connection attributes
+PROJECT_ID = "project_id"
 API_ENDPOINT = "api_endpoint"
 STORAGE_API_ENDPOINT = "storage_api_endpoint"
 CLIENT_PROJECT_ID = "client_project_id"
