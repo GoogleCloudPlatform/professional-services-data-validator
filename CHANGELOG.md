@@ -2,6 +2,14 @@
 
 ## Untagged
 
+## [8.7.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.7.0...v8.7.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* Remove source/target conn from JSON config file ([#1739](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1739)) ([76d797d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/76d797dd1176bb8c2a1baeed5dde4639aa833b76))
+* Review and update samples/cloud_run files ([#1730](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1730)) ([b62e238](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b62e238bb63104588a471b3e1e56e6b1c09bae26))
+
 ## [8.7.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.6.0...v8.7.0) (2026-04-20)
 
 
