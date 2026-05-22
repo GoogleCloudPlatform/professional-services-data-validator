@@ -100,3 +100,12 @@ To maintain backward compatibility, several inconsistencies currently exist in D
 2.  **JSON Execution Support**:
     *   *Current*: DVT can write JSON directories, but cannot execute them via `configs run`.
     *   *Goal*: Allow `configs run` to optionally parse and execute JSON-based configuration directories.
+3.  **Unified File Grouping (`--configs-per-file` / `--parts-per-file` Deprecation)**:
+    *   *Proposal*: Deprecate `--parts-per-file` (currently exclusive to `generate-table-partitions`) and replace it with a unified, global CLI option: `--configs-per-file` (or `-cpf`).
+    *   *Scope*: Support this option in both partition generation and standard validations (`validate column/row/schema`).
+    *   *Behavior for Standard Validations (`--config-dir`)*:
+        *   If `--configs-per-file` is **omitted** or set to **1** (default): DVT maintains backward compatibility, using **descriptive naming** (`dbo_customers_column.yaml`) and writing 1 validation per file.
+        *   If `--configs-per-file` is **strictly greater than 1**: DVT groups up to `N` table validations per file and switches to **sequential naming** (`0000.yaml`, `0001.yaml`...) directly under the flat target directory.
+    *   *Behavior for Partitions (`generate-table-partitions`)*:
+        *   `--configs-per-file` acts as a direct replacement for `--parts-per-file` (with the latter kept as a deprecated alias). It always uses sequential naming inside the nested subdirectory, matching current behavior.
+    *   *Orchestration Benefit*: This enables standard validations across many tables to be batched sequentially in a flat directory, allowing the use of `--kube-completions` for standard migrations (e.g., running 10 parallel Kubernetes workers to validate 100 tables, 10 tables per worker).
