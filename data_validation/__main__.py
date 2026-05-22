@@ -615,10 +615,7 @@ def store_config_dir(args, config_managers, is_json=False):
         source_table = config_manager.source_table
         validation_type = config_manager.validation_type.lower()
 
-        if source_schema:
-            base_name = f"{source_schema}_{source_table}_{validation_type}"
-        else:
-            base_name = f"{source_table}_{validation_type}"
+        base_name = f"{source_schema}.{source_table}" if source_schema else source_table
 
         # Prevent internal collisions within the same execution list
         if base_name not in seen_names:
