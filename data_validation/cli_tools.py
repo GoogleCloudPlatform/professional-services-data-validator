@@ -244,6 +244,17 @@ class deprecate_action(argparse.Action):
 def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: "Namespace"):
     # This is where we make additional checks if the arguments provided are what we expect
     # For example, only one of -tbls and custom query options can be provided
+    if (
+        getattr(parsed_args, "command", None) == "validate"
+        and getattr(parsed_args, "validate_cmd", None) == "custom-query"
+    ):
+        if getattr(parsed_args, "config_dir", None) or getattr(
+            parsed_args, "config_dir_json", None
+        ):
+            parser.error(
+                "validate custom-query: directory-based validation storage (--config-dir / --config-dir-json) is not supported for custom-query validations"
+            )
+
     if hasattr(parsed_args, "tables_list") and hasattr(
         parsed_args, "source_query"
     ):  # New Format
@@ -1096,15 +1107,26 @@ def _add_common_arguments(
         help="Path to SA key file for result handler output",
     )
     if not is_generate_partitions:
-        optional_arguments.add_argument(
+        config_group = optional_arguments.add_mutually_exclusive_group()
+        config_group.add_argument(
             "--config-file",
             "-c",
             help="Store the validation config in the YAML File Path specified",
         )
-        optional_arguments.add_argument(
+        config_group.add_argument(
             "--config-file-json",
             "-cj",
             help="Store the validation config in the JSON File Path specified to be used for application use cases",
+        )
+        config_group.add_argument(
+            "--config-dir",
+            "-cdir",
+            help="Store the validation configs as individual YAML files in the specified directory path (GCS or local)",
+        )
+        config_group.add_argument(
+            "--config-dir-json",
+            "-cdirj",
+            help="Store the validation configs as individual JSON files in the specified directory path (GCS or local)",
         )
 
     optional_arguments.add_argument(

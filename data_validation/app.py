@@ -112,6 +112,7 @@ def ping():
 def version():
     """Returns the running Data Validation Tool version."""
     from data_validation import __version__
+
     return flask.Response(
         json.dumps({"version": __version__}), status=200, mimetype="application/json"
     )
@@ -253,6 +254,7 @@ def bulk_table_metadata():
         connection_config = mgr.get_connection_config(connection_name)
 
         from data_validation import clients
+
         client = clients.get_data_client(connection_config)
 
         results = []
