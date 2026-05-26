@@ -612,7 +612,6 @@ def store_config_dir(args, config_managers, is_json=False):
     for config_manager in config_managers:
         source_schema = config_manager.source_schema
         source_table = config_manager.source_table
-        validation_type = config_manager.validation_type.lower()
 
         base_name = f"{source_schema}.{source_table}" if source_schema else source_table
 

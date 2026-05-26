@@ -636,13 +636,13 @@ def test_store_config_dir_yaml_success(
     # Assert store_validation was called twice
     assert mock_store_validation.call_count == 2
 
-    # First call: s_t_column.yaml
+    # First call: s_t.yaml
     call_1 = mock_store_validation.call_args_list[0]
-    assert call_1.args[0] == "my_dir/s_t_column.yaml"
+    assert call_1.args[0] == "my_dir/s.t.yaml"
 
-    # Second call: s_t_column_1.yaml (collision handled)
+    # Second call: s_t_1.yaml (collision handled)
     call_2 = mock_store_validation.call_args_list[1]
-    assert call_2.args[0] == "my_dir/s_t_column_1.yaml"
+    assert call_2.args[0] == "my_dir/s.t_1.yaml"
 
 
 @mock.patch("os.path.exists", return_value=True)
