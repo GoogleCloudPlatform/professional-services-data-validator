@@ -28,11 +28,12 @@ import pandas
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
 
-from third_party.ibis.ibis_bigquery.api import bigquery_connect
+# TODO: Tier 1 Upgrade: Remove custom wrapper imports. Use native backends (ibis.bigquery.connect, ibis.postgres.connect, etc.) directly.
+# from third_party.ibis.ibis_bigquery.api import bigquery_connect
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
-from third_party.ibis.ibis_impala.api import impala_connect
-from third_party.ibis.ibis_mssql.api import mssql_connect
-from third_party.ibis.ibis_redshift.api import redshift_connect
+# from third_party.ibis.ibis_impala.api import impala_connect
+# from third_party.ibis.ibis_mssql.api import mssql_connect
+# from third_party.ibis.ibis_redshift.api import redshift_connect
 
 if TYPE_CHECKING:
     import ibis.expr.schema as sch
@@ -168,12 +169,12 @@ def get_bigquery_client(
             quota_project_id=client_project_id,
         )
 
-    return bigquery_connect(
+    # print(f"Connecting to BigQuery with native Ibis: {project_id or client_project_id}, {dataset_id}")
+    return ibis.bigquery.connect(
         project_id=project_id or client_project_id,
         dataset_id=dataset_id,
-        credentials=credentials,
-        bigquery_client=google_client,
-        bqstorage_client=bqstorage_client,
+        client=google_client,
+        storage_client=bqstorage_client,
     )
 
 
@@ -418,15 +419,15 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
 
 CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_BIGQUERY: get_bigquery_client,
-    consts.SOURCE_TYPE_IMPALA: impala_connect,
+    consts.SOURCE_TYPE_IMPALA: ibis.impala.connect,
     consts.SOURCE_TYPE_MYSQL: ibis.mysql.connect,
-    consts.SOURCE_TYPE_ORACLE: oracle_connect,
+    consts.SOURCE_TYPE_ORACLE: ibis.oracle.connect,
     consts.SOURCE_TYPE_FILESYSTEM: get_pandas_client,
     consts.SOURCE_TYPE_POSTGRES: ibis.postgres.connect,
-    consts.SOURCE_TYPE_REDSHIFT: redshift_connect,
+    consts.SOURCE_TYPE_REDSHIFT: ibis.redshift.connect,
     consts.SOURCE_TYPE_TERADATA: teradata_connect,
-    consts.SOURCE_TYPE_MSSQL: mssql_connect,
-    consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
+    consts.SOURCE_TYPE_MSSQL: ibis.mssql.connect,
+    consts.SOURCE_TYPE_SNOWFLAKE: ibis.snowflake.connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
     consts.SOURCE_TYPE_SYBASE: sybase_connect,
     consts.SOURCE_TYPE_DB2: db2_connect,

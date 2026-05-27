@@ -477,6 +477,14 @@ TemporalValue.to_char = compile_to_char
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
 
+# TODO: Tier 1 Upgrade: In Ibis 9.0.0 (SQLGlot), older ExprTranslator._registry mappings must be migrated to
+# visit_<OperationName> methods dynamically injected onto SQLGlotCompiler and backend-specific compilers:
+#
+# from ibis.backends.sql.compilers.base import SQLGlotCompiler
+# def visit_RawSQL(self, op, *, arg, sql):
+#     return sqlglot.parse_one(sql.this)
+# SQLGlotCompiler.visit_RawSQL = visit_RawSQL
+
 BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[ops.Strftime] = bigquery_registry.strftime

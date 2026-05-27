@@ -22,7 +22,7 @@ import ibis.expr.datatypes as dt
 import ibis.expr.types as ir
 from typing import Mapping, Any
 import ibis.expr.schema as sch
-from ibis.backends.base.sql import BaseSQLBackend
+from ibis.backends.sql import SQLBackend
 
 from third_party.ibis.ibis_teradata.compiler import TeradataCompiler
 from third_party.ibis.ibis_teradata.datatypes import (
@@ -31,7 +31,7 @@ from third_party.ibis.ibis_teradata.datatypes import (
 )
 
 
-class Backend(BaseSQLBackend):
+class Backend(SQLBackend):
     name = "teradata"
     compiler = TeradataCompiler
     NO_LOCK_SQL = "LOCKING ROW FOR ACCESS "

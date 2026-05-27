@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ibis.backends.base.sql.alchemy import (
-    AlchemyCompiler,
-    AlchemyExprTranslator,
-)
+# TODO: Tier 1 Upgrade: Modernize Db2Compiler to inherit from SQLGlotCompiler.
+# The older AlchemyCompiler and AlchemyExprTranslator classes are removed.
+# Define visit_RStrip, visit_RawSQL, etc. as visit_<OperationName> methods directly on Db2Compiler.
+from ibis.backends.sql.compiler import SQLGlotCompiler
 from third_party.ibis.ibis_db2.registry import operation_registry
 
 

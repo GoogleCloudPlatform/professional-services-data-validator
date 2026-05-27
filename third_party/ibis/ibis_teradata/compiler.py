@@ -11,13 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ibis.backends.base.sql.compiler import (
-    Compiler,
-    ExprTranslator,
-    TableSetFormatter,
-    Select,
-)
-from ibis.backends.base.sql.registry import identifiers
+# TODO: Tier 1 Upgrade: Modernize TeradataCompiler to inherit from SQLGlotCompiler.
+# The older ExprTranslator, TableSetFormatter and Select classes are removed.
+# Define visit_RStrip, visit_RawSQL, etc. as visit_<OperationName> methods directly on TeradataCompiler.
+from ibis.backends.sql.compiler import SQLGlotCompiler
 from third_party.ibis.ibis_teradata.registry import _operation_registry
 
 

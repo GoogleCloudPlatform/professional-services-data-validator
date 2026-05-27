@@ -18,7 +18,7 @@ from google.api_core import client_options
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
 from google.cloud import spanner
-from ibis.backends.base.sql import BaseSQLBackend
+from ibis.backends.sql import SQLBackend
 
 from third_party.ibis.ibis_cloud_spanner.datatypes import (
     dtype_from_spanner_field,
@@ -29,7 +29,7 @@ from third_party.ibis.ibis_cloud_spanner.client import SpannerCursor
 from third_party.ibis.ibis_cloud_spanner.to_pandas import pandas_df
 
 
-class Backend(BaseSQLBackend):
+class Backend(SQLBackend):
     name = "spanner"
     compiler = SpannerCompiler
 

@@ -33,7 +33,8 @@ dependencies = [
     "google-cloud-secret-manager>=2.20.2",
     "google-cloud-spanner>=3.49.1",
     "google-cloud-storage>=2.18.2",
-    "ibis-framework==5.1.0",  # Pinned to 5.1.0, significant work to bump to 7.1.0
+    # TODO: Tier 1 Modernization: Upgrade Ibis to 9.0.0 (minimum target)
+    "ibis-framework==9.0.0",
     "impyla>=0.19.0",
     "jellyfish>=1.1.0",
     "pandas",
@@ -85,12 +86,11 @@ setuptools.setup(
         release_status,
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     install_requires=dependencies,
     extras_require=extras_require,
     entry_points={

@@ -14,9 +14,10 @@
 import re
 
 import ibis.expr.operations as ops
-from ibis.backends.base.sql import compiler as sql_compiler
-from ibis.backends.bigquery import compiler as bigquery_compiler
-from ibis.backends.bigquery import rewrites
+# TODO: Tier 1 Upgrade: Modernize SpannerCompiler to inherit from SQLGlotCompiler.
+# The older ExprTranslator and Select classes are removed.
+# Define visit_RStrip, visit_RawSQL, etc., as visit_<OperationName> methods directly on SpannerCompiler.
+from ibis.backends.sql.compiler import SQLGlotCompiler
 from third_party.ibis.ibis_cloud_spanner import registry
 
 _NAME_REGEX = re.compile(r"[_A-Za-z][A-Za-z_0-9]*")

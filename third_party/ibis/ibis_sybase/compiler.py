@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.backends.base.sql.alchemy import AlchemyCompiler, AlchemyExprTranslator
-from ibis.backends.base.sql.alchemy.query_builder import AlchemySelect
+# TODO: Tier 1 Upgrade: Modernize SybaseCompiler to inherit from SQLGlotCompiler.
+# The older AlchemyCompiler, AlchemyExprTranslator and AlchemySelect classes are removed.
+# Define visit_RStrip, visit_RawSQL, etc. as visit_<OperationName> methods directly on SybaseCompiler.
+from ibis.backends.sql.compiler import SQLGlotCompiler
 from sqlalchemy_sybase import DATETIME
 from sqlalchemy_sybase.base import (
     SybaseSQLCompiler,
