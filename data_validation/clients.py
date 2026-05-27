@@ -196,6 +196,13 @@ def get_pandas_client(table_name, file_path, file_type):
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
+    # TODO: Tier 1 Upgrade (Issue #1702): The ibis.pandas backend is deprecated/removed in Ibis 9.0+.
+    # We must migrate to the DuckDB backend to load and access local dataframes/files:
+    #
+    #     pandas_client = ibis.duckdb.connect()
+    #     pandas_client.register(df, name=table_name)
+    #
+    # This resolves both the deprecation and preserves catalog-based table lookup compatibility.
     pandas_client = ibis.pandas.connect({table_name: df})
 
     return pandas_client
