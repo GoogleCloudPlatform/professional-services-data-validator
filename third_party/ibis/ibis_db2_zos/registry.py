@@ -24,17 +24,18 @@ from third_party.ibis.ibis_db2.registry import (
 operation_registry = db2_luw_operation_registry.copy()
 
 
-def _sa_ifnull(t, op):
+def _sa_coalesce(t, op):
     """Db2 z/OS does not support query parameters in this context.
 
     This override uses sa.literal_column to prevent parameterization.
     """
+    expr, default_val = op.arg[0], op.arg[1]
     assert all(
-        c.isalnum() or c == "_" for c in str(op.ifnull_expr.value)
-    ), f"Value '{op.ifnull_expr.value}' contains non-alphanumeric or non-underscore characters."
+        c.isalnum() or c == "_" for c in str(default_val.value)
+    ), f"Value '{default_val.value}' contains non-alphanumeric or non-underscore characters."
 
-    sa_arg = t.translate(op.arg)
-    return sa.func.coalesce(sa_arg, sa.literal_column(f"'{op.ifnull_expr.value}'"))
+    sa_arg = t.translate(expr)
+    return sa.func.coalesce(sa_arg, sa.literal_column(f"'{default_val.value}'"))
 
 
 def _sa_format_hashbytes(translator, op):
@@ -100,6 +101,6 @@ def db2_zos_cast(t, op):
 
 operation_registry[ops.Cast] = db2_zos_cast
 operation_registry[ops.HashBytes] = _sa_format_hashbytes
-operation_registry[ops.IfNull] = _sa_ifnull
+operation_registry[ops.Coalesce] = _sa_coalesce
 operation_registry[ops.RStrip] = _sa_whitespace_rstrip
 operation_registry[ops.Strftime] = _sa_strftime

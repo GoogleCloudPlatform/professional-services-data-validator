@@ -17,7 +17,7 @@ import ibis.expr.datatypes as dt
 from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
-from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
+from ibis.backends.postgres.datatypes import PostgresType
 from third_party.ibis.ibis_addon.api import cache_generator_results
 from ibis import util
 
@@ -121,16 +121,4 @@ class Backend(BaseAlchemyBackend):
 
 
 def _get_type(typestr: str) -> dt.DataType:
-    is_array = typestr.endswith(_BRACKETS)
-    typestr_wob = typestr.replace(_BRACKETS, "")
-    if "(" in typestr_wob:
-        typestr_wo_length = (
-            typestr_wob[: typestr_wob.index("(")]
-            + typestr_wob[typestr_wob.index(")") + 1 :]
-        )
-    else:
-        typestr_wo_length = typestr_wob
-    typ = _type_mapping.get(typestr_wo_length)
-    if typ is not None:
-        return dt.Array(typ) if is_array else typ
-    return _parse_numeric(typestr)
+    return PostgresType.from_string(typestr)

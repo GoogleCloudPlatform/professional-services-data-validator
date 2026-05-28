@@ -41,10 +41,7 @@ from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arit
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
-from ibis.backends.bigquery.client import (
-    _DTYPE_TO_IBIS_TYPE as _BQ_DTYPE_TO_IBIS_TYPE,
-    _LEGACY_TO_STANDARD as _BQ_LEGACY_TO_STANDARD,
-)
+# In Ibis 7.1.0, BigQueryType handles type conversion natively.
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import bigquery_cast
 from ibis.backends.impala.compiler import ImpalaExprTranslator
@@ -53,16 +50,11 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from ibis.expr.types import BinaryValue, NumericValue, StringValue, TemporalValue
+from ibis.expr.types import BinaryValue, NumericValue, StringValue, DateValue, TimeValue, TimestampValue
 
 # Do not remove these lines, they trigger patching of Ibis code.
-import third_party.ibis.ibis_bigquery.api  # noqa
-from third_party.ibis.ibis_bigquery import registry as bigquery_registry
-from third_party.ibis.ibis_impala import registry as impala_registry
+# We patch Ibis native compilers/backends directly.
 import third_party.ibis.ibis_mysql.compiler  # noqa
-from third_party.ibis.ibis_mssql import registry as mssql_registry
-from third_party.ibis.ibis_postgres import registry as postgres_registry
-import third_party.ibis.ibis_postgres.client  # noqa
 
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
@@ -106,33 +98,28 @@ NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
 
 
 class BinaryLength(ops.Value):
-    arg = rlz.one_of([rlz.value(dt.Binary), rlz.value(dt.String)])
-    output_dtype = dt.int32
-    output_shape = rlz.shape_like("arg")
+    arg: ops.Value[dt.Binary | dt.String]
+    dtype = dt.int32
+    shape = rlz.shape_like("arg")
 
 
 class PaddedCharLength(ops.Value):
-    arg = rlz.one_of([rlz.value(dt.String)])
-    output_dtype = dt.int32
-    output_shape = rlz.shape_like("arg")
+    arg: ops.Value[dt.String]
+    dtype = dt.int32
+    shape = rlz.shape_like("arg")
 
 
 class ToChar(ops.Value):
-    arg = rlz.one_of(
-        [
-            rlz.value(dt.Decimal),
-            rlz.value(dt.float64),
-            rlz.value(dt.Date),
-            rlz.value(dt.Time),
-            rlz.value(dt.Timestamp),
-        ]
-    )
-    fmt = rlz.string
-    output_type = rlz.shape_like("arg")
+    arg: ops.Value[dt.Decimal | dt.Float64 | dt.Date | dt.Time | dt.Timestamp]
+    fmt: ops.Value[dt.String]
+    dtype = dt.string
+    shape = rlz.shape_like("arg")
 
 
 class RawSQL(ops.Comparison):
-    pass
+    left: ops.Value[dt.String]
+    right: ops.Value[dt.String]
+
 
 
 def compile_binary_length(binary_value):
@@ -331,47 +318,244 @@ def sa_format_random(t, op):
     return sa.func.RANDOM()
 
 
-_BQ_DTYPE_TO_IBIS_TYPE["TIMESTAMP"] = dt.Timestamp(timezone="UTC")
+# --- BigQuery Custom Handlers ---
+def bigquery_format_hashbytes(translator, op):
+    arg = translator.translate(op.arg)
+    if op.how == "sha256":
+        return f"TO_HEX(SHA256({arg}))"
+    elif op.how == "farm_fingerprint":
+        return f"FARM_FINGERPRINT({arg})"
+    else:
+        raise ValueError(f"unexpected value for 'how': {op.how}")
 
-
-@dt.dtype.register(bq.schema.SchemaField)
-def _bigquery_field_to_ibis_dtype(field):
-    """Convert BigQuery `field` to an ibis type.
-    Taken from ibis.backends.bigquery.client.py for issue:
-        https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/926
-    """
-    typ = field.field_type
-    if typ == "RECORD":
-        fields = field.fields
-        assert fields, "RECORD fields are empty"
-        names = [el.name for el in fields]
-        ibis_types = list(map(dt.dtype, fields))
-        ibis_type = dt.Struct(dict(zip(names, ibis_types)))
-    elif typ == "NUMERIC":
-        if not field.precision and not field.scale:
-            return dt.Decimal(precision=38, scale=9, nullable=field.is_nullable)
-        return dt.Decimal(
-            precision=field.precision,
-            scale=field.scale or 0,
-            nullable=field.is_nullable,
+def bigquery_strftime(translator, op):
+    from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
+    arg = op.arg
+    format_str = op.format_str
+    arg_type = arg.output_dtype
+    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
+    fmt_string = translator.translate(format_str)
+    if format_str.value.startswith("%Y"):
+        fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
+    arg_formatted = translator.translate(arg)
+    if isinstance(arg_type, dt.Timestamp):
+        return "FORMAT_{}({}, {}({}), {!r})".format(
+            strftime_format_func_name,
+            fmt_string,
+            strftime_format_func_name,
+            arg_formatted,
+            arg_type.timezone if arg_type.timezone is not None else "UTC",
         )
-    elif typ == "BIGNUMERIC":
-        if not field.precision and not field.scale:
-            return dt.Decimal(precision=76, scale=38, nullable=field.is_nullable)
-        return dt.Decimal(
-            precision=field.precision,
-            scale=field.scale or 0,
-            nullable=field.is_nullable,
+    return "FORMAT_{}({}, {})".format(
+        strftime_format_func_name, fmt_string, arg_formatted
+    )
+
+def bigquery_format_binary_length(translator, op):
+    arg = translator.translate(op.arg)
+    return f"LENGTH({arg})"
+
+
+# --- Impala Custom Handlers ---
+def impala_sa_cast(t, op):
+    from ibis.backends.base.sql.registry import type_to_sql_string as base_type_to_sql_string
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+    arg_formatted = t.translate(arg)
+    if arg_dtype.is_binary() and typ.is_string():
+        return f"lower(hex({arg_formatted}))"
+    elif arg_dtype.is_string() and typ.is_binary():
+        return f"unhex({arg_formatted})"
+    sql_type = base_type_to_sql_string(typ)
+    cast_expr = "CAST({} AS {})".format(arg_formatted, sql_type)
+    if arg_dtype.is_boolean() and typ.is_string():
+        return f"LOWER({cast_expr})"
+    else:
+        return cast_expr
+
+def impala_sa_ifnull(t, op):
+    arg_formatted = t.translate(op.arg)
+    return f"coalesce({arg_formatted},'{op.ifnull_expr.value}')"
+
+def impala_sa_format_hashbytes(translator, op):
+    arg = translator.translate(op.arg)
+    if op.how == "sha256":
+        return f"sha2({arg}, 256)"
+    elif op.how == "md5":
+        return f"md5({arg})"
+    else:
+        raise ValueError(f"unexpected value for 'how': {op.how}")
+
+def impala_sa_strftime(t, op):
+    import sqlglot as sg
+    hive_dialect = sg.dialects.hive.Hive
+    if (time_mapping := getattr(hive_dialect, "TIME_MAPPING", None)) is None:
+        time_mapping = hive_dialect.time_mapping
+    reverse_hive_mapping = {v: k for k, v in time_mapping.items()}
+    format_str = sg.time.format_time(op.format_str.value, reverse_hive_mapping)
+    targ = t.translate(ops.Cast(op.arg, to=dt.string))
+    return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
+
+
+# --- Postgres Custom Handlers ---
+def postgres_sa_format_hashbytes(translator, op):
+    arg = translator.translate(op.arg)
+    convert = sa.func.convert_to(arg, sa.sql.literal_column("'UTF8'"))
+    hash_func = sa.func.sha256(convert)
+    return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
+
+def postgres_sa_epoch_seconds(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.cast(
+        sa.extract("epoch", sa.func.date_trunc(sa.sql.literal_column("'second'"), arg)),
+        sa.BIGINT,
+    )
+
+def postgres_sa_cast(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+    sa_arg = t.translate(arg)
+    if arg_dtype.is_decimal() and typ.is_string():
+        if arg_dtype.scale is None:
+            return sa.cast(sa.func.trim_scale(sa_arg), t.get_sqla_type(typ))
+        elif arg_dtype.scale > 0:
+            precision = arg_dtype.precision or 38
+            fmt = (
+                "FM"
+                + ("9" * (precision - arg_dtype.scale - 1))
+                + "0."
+                + ("9" * arg_dtype.scale)
+            )
+            return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
+    elif arg_dtype.is_binary() and typ.is_string():
+        return sa.func.encode(sa_arg, sa.literal("hex"))
+    elif arg_dtype.is_string() and typ.is_binary():
+        return sa.func.decode(sa_arg, sa.literal("hex"))
+    return sa_fixed_cast(t, op)
+
+def postgres_sa_format_padded_char_length(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.char_length(
+        sa.case(
+            (arg.is_(None), sa.literal_column("NULL")),
+            else_=sa.func.concat(arg, sa.text("''")),
+        )
+    )
+
+
+# --- MSSQL Custom Handlers ---
+def mssql_sa_table_column(t, op):
+    from ibis.backends.base.sql.alchemy.registry import get_col
+    ctx = t.context
+    table = op.table
+    sa_table = get_sqla_table(ctx, table)
+    out_expr = get_col(sa_table, op)
+    out_expr.quote = t._quote_column_names
+    if op.output_dtype.is_timestamp():
+        timezone = op.output_dtype.timezone
+        if timezone is not None:
+            out_expr = sa.literal_column(
+                f"{out_expr.name} AT TIME ZONE '{timezone}'"
+            ).label(op.name)
+    if t.permit_subquery and ctx.is_foreign_expr(table):
+        try:
+            subq = sa_table.subquery()
+        except AttributeError:
+            subq = sa_table
+        return sa.select(subq.c[out_expr.name])
+    return out_expr
+
+def mssql_strftime(translator, op):
+    arg, pattern = map(translator.translate, op.args)
+    supported_convert_styles = {
+        "%Y-%m-%d": 23,
+        "%Y-%m-%d %H:%M:%S": 20,
+        "%Y-%m-%d %H:%M:%S.%f": 21,
+    }
+    try:
+        convert_style = supported_convert_styles[pattern.value]
+    except KeyError:
+        raise NotImplementedError(
+            f"strftime format {pattern.value} not supported for SQL Server."
+        )
+    arg_type = op.args[0].output_dtype
+    if hasattr(arg_type, "timezone") and arg_type.timezone:
+        arg = sa.cast(arg, sa.types.DateTime)
+    return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
+
+def mssql_sa_epoch_seconds(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.cast(
+        sa.func.datediff_big(sa.text("s"), "1970-01-01 00:00:00", arg), sa.BIGINT
+    )
+
+def mssql_sa_format_string_length(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.cast(sa.func.len(sa.func.replace(arg, " ", "_")), sa.BIGINT)
+
+def mssql_sa_format_binary_length(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.cast(sa.func.datalength(arg), sa.BIGINT)
+
+def mssql_sa_format_hashbytes(translator, op):
+    arg = translator.translate(op.arg)
+    cast_arg = sa.func.convert(sa.sql.literal_column("VARCHAR(MAX)"), arg)
+    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), cast_arg)
+    hash_to_string = sa.func.convert(
+        sa.sql.literal_column("CHAR(64)"), hash_func, sa.sql.literal_column("2")
+    )
+    return sa.func.lower(hash_to_string)
+
+def mssql_sa_cast(t, op):
+    arg = op.arg
+    typ = op.to
+    arg_dtype = arg.output_dtype
+    sa_arg = t.translate(arg)
+    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
+        return sa.func.format(sa_arg, "G")
+    elif arg_dtype.is_binary() and typ.is_string():
+        return sa.func.lower(
+            sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
+        )
+    elif arg_dtype.is_string() and typ.is_binary():
+        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
+    elif (
+        arg_dtype.is_decimal()
+        and arg_dtype.scale
+        and arg_dtype.scale > 0
+        and typ.is_string()
+    ):
+        scale = arg_dtype.scale
+        format_string = f'0.{("#" * scale)}'
+        formatted_value = sa.func.format(sa_arg, format_string)
+        return sa.func.replace(formatted_value, ".0", "")
+    elif arg_dtype.is_boolean() and typ.is_string():
+        return sa.case(
+            (sa_arg == 0, sa.literal_column("'false'")),
+            (sa_arg == 1, sa.literal_column("'true'")),
+            else_=sa.null(),
+        )
+    return sa_fixed_cast(t, op)
+
+def mssql_sa_format_new_id(t, op):
+    return sa.func.NEWID()
+
+def mssql_sa_string_join(t, op):
+    if len(op.arg) == 1:
+        return sa.type_coerce(
+            t.translate(op.arg[0]),
+            sa.types.String,
         )
     else:
-        ibis_type = _BQ_LEGACY_TO_STANDARD.get(typ, typ)
-        if ibis_type in _BQ_DTYPE_TO_IBIS_TYPE:
-            ibis_type = _BQ_DTYPE_TO_IBIS_TYPE[ibis_type](nullable=field.is_nullable)
-        else:
-            ibis_type = ibis_type
-    if field.mode == "REPEATED":
-        ibis_type = dt.Array(ibis_type)
-    return ibis_type
+        return sa.func.concat(*map(t.translate, op.arg))
+
+def mssql_sa_whitespace_rstrip(t, op):
+    sa_arg = t.translate(op.arg)
+    return sa.func.rtrim(sa.cast(sa_arg, sa.VARCHAR(length=None)))
+
+
+# Native BigQueryType/BigQuerySchema mapping is used in Ibis 7.1.0
 
 
 def string_to_epoch(ts: str) -> int:
@@ -425,16 +609,18 @@ BinaryValue.byte_length = compile_binary_length
 StringValue.padded_char_length = compile_padded_char_length
 
 NumericValue.to_char = compile_to_char
-TemporalValue.to_char = compile_to_char
+DateValue.to_char = compile_to_char
+TimeValue.to_char = compile_to_char
+TimestampValue.to_char = compile_to_char
 
 # This is an additional DVT only method. We tag this onto BaseAlchemyBackend
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
 
-BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
+BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_format_hashbytes
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
-BigQueryExprTranslator._registry[ops.Strftime] = bigquery_registry.strftime
-BigQueryExprTranslator._registry[BinaryLength] = bigquery_registry.format_binary_length
+BigQueryExprTranslator._registry[ops.Strftime] = bigquery_strftime
+BigQueryExprTranslator._registry[BinaryLength] = bigquery_format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
@@ -446,12 +632,12 @@ ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
 # Base length of padded string is the same as for a standard string.
 ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
-ImpalaExprTranslator._registry[ops.Cast] = impala_registry.sa_cast
-ImpalaExprTranslator._registry[ops.IfNull] = impala_registry.sa_ifnull
+ImpalaExprTranslator._registry[ops.Cast] = impala_sa_cast
+ImpalaExprTranslator._registry[ops.Coalesce] = impala_sa_ifnull
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
-ImpalaExprTranslator._registry[ops.HashBytes] = impala_registry.sa_format_hashbytes
+ImpalaExprTranslator._registry[ops.HashBytes] = impala_sa_format_hashbytes
 ImpalaExprTranslator._registry[ops.RandomScalar] = fixed_arity("RAND", 0)
-ImpalaExprTranslator._registry[ops.Strftime] = impala_registry.sa_strftime
+ImpalaExprTranslator._registry[ops.Strftime] = impala_sa_strftime
 ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if OracleExprTranslator:
@@ -465,32 +651,32 @@ if OracleExprTranslator:
     ]
 
 PostgreSQLExprTranslator._registry[ops.HashBytes] = (
-    postgres_registry.sa_format_hashbytes
+    postgres_sa_format_hashbytes
 )
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
-PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
+PostgreSQLExprTranslator._registry[ops.Cast] = postgres_sa_cast
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
 PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = (
-    postgres_registry.sa_epoch_seconds
+    postgres_sa_epoch_seconds
 )
 PostgreSQLExprTranslator._registry[PaddedCharLength] = (
-    postgres_registry.sa_format_postgres_padded_char_length
+    postgres_sa_format_padded_char_length
 )
 
 
-MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
+MsSqlExprTranslator._registry[ops.HashBytes] = mssql_sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
-MsSqlExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.isnull, 2)
-MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
-MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
-MsSqlExprTranslator._registry[ops.StringLength] = mssql_registry.sa_format_string_length
-MsSqlExprTranslator._registry[ops.Strftime] = mssql_registry.strftime
-MsSqlExprTranslator._registry[ops.Cast] = mssql_registry.sa_cast_mssql
-MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
-MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
-MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
-MsSqlExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
+MsSqlExprTranslator._registry[ops.Coalesce] = sa_fixed_arity(sa.func.isnull, 2)
+MsSqlExprTranslator._registry[ops.StringJoin] = mssql_sa_string_join
+MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringLength] = mssql_sa_format_string_length
+MsSqlExprTranslator._registry[ops.Strftime] = mssql_strftime
+MsSqlExprTranslator._registry[ops.Cast] = mssql_sa_cast
+MsSqlExprTranslator._registry[BinaryLength] = mssql_sa_format_binary_length
+MsSqlExprTranslator._registry[ops.TableColumn] = mssql_sa_table_column
+MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_sa_epoch_seconds
+MsSqlExprTranslator._registry[ops.RStrip] = mssql_sa_whitespace_rstrip
 MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
     ops.StringLength
 ]
@@ -524,7 +710,7 @@ if Db2zOSExprTranslator:
     ]
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
-SpannerExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
+SpannerExprTranslator._registry[ops.HashBytes] = bigquery_format_hashbytes
 SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
 
 if TeradataExprTranslator:
@@ -539,7 +725,7 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake
     SnowflakeExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_snowflake
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    SnowflakeExprTranslator._registry[ops.IfNull] = sa_fixed_arity(sa.func.ifnull, 2)
+    SnowflakeExprTranslator._registry[ops.Coalesce] = sa_fixed_arity(sa.func.ifnull, 2)
     SnowflakeExprTranslator._registry[ops.ExtractEpochSeconds] = sa_epoch_time_snowflake
     SnowflakeExprTranslator._registry[ops.RandomScalar] = sa_format_random
     SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length
@@ -547,9 +733,9 @@ if SnowflakeExprTranslator:
 
 if SybaseExprTranslator:
     SybaseExprTranslator._registry[BinaryLength] = (
-        mssql_registry.sa_format_binary_length
+        mssql_sa_format_binary_length
     )
     SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
     SybaseExprTranslator._registry[PaddedCharLength] = (
-        mssql_registry.sa_format_string_length
+        mssql_sa_format_string_length
     )

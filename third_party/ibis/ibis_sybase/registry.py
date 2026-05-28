@@ -22,7 +22,25 @@ from ibis.backends.base.sql.alchemy import (
 )
 from ibis.backends.base.sql.alchemy.registry import _literal as base_literal
 
-from third_party.ibis.ibis_mssql import registry as mssql_registry
+from ibis.backends.base.sql.alchemy import get_sqla_table
+from ibis.backends.base.sql.alchemy.registry import get_col
+
+def sa_format_new_id(t, op):
+    return sa.func.NEWID()
+
+def sa_table_column(t, op):
+    ctx = t.context
+    table = op.table
+    sa_table = get_sqla_table(ctx, table)
+    out_expr = get_col(sa_table, op)
+    out_expr.quote = t._quote_column_names
+    if t.permit_subquery and ctx.is_foreign_expr(table):
+        try:
+            subq = sa_table.subquery()
+        except AttributeError:
+            subq = sa_table
+        return sa.select(subq.c[out_expr.name])
+    return out_expr
 
 
 def sa_cast_sybase(t, op):
@@ -199,11 +217,11 @@ operation_registry.update(sqlalchemy_window_functions_registry)
 operation_registry[ops.Cast] = sa_cast_sybase
 operation_registry[ops.ExtractEpochSeconds] = sa_epoch_seconds
 operation_registry[ops.HashBytes] = sa_format_hashbytes
-operation_registry[ops.IfNull] = fixed_arity(sa.func.isnull, 2)
+operation_registry[ops.Coalesce] = fixed_arity(sa.func.isnull, 2)
 operation_registry[ops.Literal] = sa_literal
-operation_registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+operation_registry[ops.RandomScalar] = sa_format_new_id
 operation_registry[ops.RStrip] = sa_whitespace_rstrip
 operation_registry[ops.Strftime] = strftime
 operation_registry[ops.StringJoin] = sa_string_join
 operation_registry[ops.StringLength] = sa_format_string_length
-operation_registry[ops.TableColumn] = mssql_registry.sa_table_column
+operation_registry[ops.TableColumn] = sa_table_column
