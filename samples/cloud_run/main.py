@@ -118,9 +118,9 @@ def generate_column_config():
             payload, dummy_parser, command="validate", validate_cmd="column"
         )
 
-        if not getattr(args, "config_file", None):
+        if not getattr(args, "config_file", None) and not getattr(args, "config_dir", None):
             return flask.Response(
-                "Bad Request: config_file is a mandatory parameter",
+                "Bad Request: either config_file or config_dir is a mandatory parameter",
                 status=400,
                 mimetype="text/plain",
             )
@@ -128,8 +128,9 @@ def generate_column_config():
         config_managers = build_config_managers_from_args(args)
 
         store_yaml_config_file(args, config_managers)
+        target_path = getattr(args, "config_file", None) or getattr(args, "config_dir", None)
         return flask.Response(
-            f"Success! Config output written to {args.config_file}",
+            f"Success! Config output written to {target_path}",
             mimetype="text/plain",
         )
     except ValueError as ve:
@@ -158,9 +159,9 @@ def generate_row_config():
             payload, dummy_parser, command="validate", validate_cmd="row"
         )
 
-        if not getattr(args, "config_file", None):
+        if not getattr(args, "config_file", None) and not getattr(args, "config_dir", None):
             return flask.Response(
-                "Bad Request: config_file is a mandatory parameter",
+                "Bad Request: either config_file or config_dir is a mandatory parameter",
                 status=400,
                 mimetype="text/plain",
             )
@@ -168,8 +169,9 @@ def generate_row_config():
         config_managers = build_config_managers_from_args(args)
 
         store_yaml_config_file(args, config_managers)
+        target_path = getattr(args, "config_file", None) or getattr(args, "config_dir", None)
         return flask.Response(
-            f"Success! Config output written to {args.config_file}",
+            f"Success! Config output written to {target_path}",
             mimetype="text/plain",
         )
     except ValueError as ve:
