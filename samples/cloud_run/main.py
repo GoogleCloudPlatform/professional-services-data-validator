@@ -22,8 +22,8 @@ import flask
 from data_validation import data_validation, state_manager
 from data_validation.__main__ import (
     build_config_managers_from_args,
-    convert_config_to_json,
     store_yaml_config_file,
+    store_config_dir,
 )
 
 app = flask.Flask(__name__)
@@ -100,6 +100,7 @@ def ping():
 def version():
     """Returns the running Data Validation Tool version."""
     from data_validation import __version__
+
     return flask.Response(
         json.dumps({"version": __version__}), status=200, mimetype="application/json"
     )
@@ -118,7 +119,9 @@ def generate_column_config():
             payload, dummy_parser, command="validate", validate_cmd="column"
         )
 
-        if not getattr(args, "config_file", None) and not getattr(args, "config_dir", None):
+        if not getattr(args, "config_file", None) and not getattr(
+            args, "config_dir", None
+        ):
             return flask.Response(
                 "Bad Request: either config_file or config_dir is a mandatory parameter",
                 status=400,
@@ -127,8 +130,14 @@ def generate_column_config():
 
         config_managers = build_config_managers_from_args(args)
 
-        store_yaml_config_file(args, config_managers)
-        target_path = getattr(args, "config_file", None) or getattr(args, "config_dir", None)
+        if args.config_file:
+            store_yaml_config_file(args, config_managers)
+        elif getattr(args, "config_dir", None):
+            store_config_dir(args, config_managers, is_json=False)
+        target_path = getattr(args, "config_file", None) or getattr(
+            args, "config_dir", None
+        )
+
         return flask.Response(
             f"Success! Config output written to {target_path}",
             mimetype="text/plain",
@@ -159,7 +168,9 @@ def generate_row_config():
             payload, dummy_parser, command="validate", validate_cmd="row"
         )
 
-        if not getattr(args, "config_file", None) and not getattr(args, "config_dir", None):
+        if not getattr(args, "config_file", None) and not getattr(
+            args, "config_dir", None
+        ):
             return flask.Response(
                 "Bad Request: either config_file or config_dir is a mandatory parameter",
                 status=400,
@@ -168,8 +179,13 @@ def generate_row_config():
 
         config_managers = build_config_managers_from_args(args)
 
-        store_yaml_config_file(args, config_managers)
-        target_path = getattr(args, "config_file", None) or getattr(args, "config_dir", None)
+        if args.config_file:
+            store_yaml_config_file(args, config_managers)
+        elif getattr(args, "config_dir", None):
+            store_config_dir(args, config_managers, is_json=False)
+        target_path = getattr(args, "config_file", None) or getattr(
+            args, "config_dir", None
+        )
         return flask.Response(
             f"Success! Config output written to {target_path}",
             mimetype="text/plain",
@@ -243,6 +259,7 @@ def bulk_table_metadata():
         connection_config = mgr.get_connection_config(connection_name)
 
         from data_validation import clients
+
         client = clients.get_data_client(connection_config)
 
         results = []
