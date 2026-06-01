@@ -14,5 +14,5 @@
 # limitations under the License.
 
 # Install Cloud SQL proxy
-wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+wget https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.22.0/cloud-sql-proxy.linux.amd64 -O cloud_sql_proxy
 chmod +x cloud_sql_proxy

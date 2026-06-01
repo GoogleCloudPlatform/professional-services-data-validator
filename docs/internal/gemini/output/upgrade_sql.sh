@@ -5,12 +5,12 @@ set -e
 PROJECT_ID="pso-kokoro-resources"
 REGION="us-central1"
 NETWORK="default"
-BUCKET_NAME="[YOUR_GCS_BUCKET_NAME]" # Replace with your bucket
+BUCKET_NAME="pso-kokoro-mudupalli" # Replace with your bucket
 
 # New Instance Names
-NEW_MYSQL_INSTANCE="data-validator-mysql-v8"
-NEW_POSTGRES_INSTANCE="data-validator-postgres-v16"
-NEW_MSSQL_INSTANCE="data-validator-mssql-v2022"
+NEW_MYSQL_INSTANCE="data-validator-mysql-v8-4"
+NEW_POSTGRES_INSTANCE="data-validator-postgres-v18"
+NEW_MSSQL_INSTANCE="data-validator-mssql-v2025"
 
 # Old Instance Names
 OLD_MYSQL_INSTANCE="data-validator-mysql"
@@ -23,9 +23,9 @@ POSTGRES_DB="guestbook"
 MSSQL_DB="guestbook"
 
 # Versions
-MYSQL_VERSION="MYSQL_8_0"
-POSTGRES_VERSION="POSTGRES_16"
-MSSQL_VERSION="SQLSERVER_2022_STANDARD"
+MYSQL_VERSION="MYSQL_8_4"
+POSTGRES_VERSION="POSTGRES_18"
+MSSQL_VERSION="SQLSERVER_2025_ENTERPRISE"
 
 echo "Creating new Cloud SQL instances..."
 
@@ -33,6 +33,7 @@ echo "Creating new Cloud SQL instances..."
 gcloud sql instances create $NEW_MYSQL_INSTANCE \
     --database-version=$MYSQL_VERSION \
     --tier=db-n1-standard-1 \
+    --edition=ENTERPRISE \
     --region=$REGION \
     --project=$PROJECT_ID \
     --no-assign-ip \
@@ -41,7 +42,8 @@ gcloud sql instances create $NEW_MYSQL_INSTANCE \
 # Create Postgres
 gcloud sql instances create $NEW_POSTGRES_INSTANCE \
     --database-version=$POSTGRES_VERSION \
-    --tier=db-custom-1-3840 \
+    --tier=db-custom-N4-2-16384\
+    --edition=ENTERPRISE \
     --region=$REGION \
     --project=$PROJECT_ID \
     --no-assign-ip \
@@ -56,7 +58,9 @@ gcloud sql instances create $NEW_MSSQL_INSTANCE \
     --region=$REGION \
     --project=$PROJECT_ID \
     --no-assign-ip \
+#    --root-password=XXXXX \ Un comment this line before running
     --network=$NETWORK
+
 
 echo "Instances created. Now backing up existing databases..."
 
@@ -77,16 +81,13 @@ echo "New MySQL SA: $NEW_MYSQL_SA"
 echo "New Postgres SA: $NEW_POSTGRES_SA"
 echo "New MSSQL SA: $NEW_MSSQL_SA"
 
-echo "You can grant access with:"
-echo "gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$OLD_MYSQL_SA --role=roles/storage.objectAdmin"
-echo "gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$OLD_POSTGRES_SA --role=roles/storage.objectAdmin"
-echo "gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$OLD_MSSQL_SA --role=roles/storage.objectAdmin"
-echo "gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$NEW_MYSQL_SA --role=roles/storage.objectAdmin"
-echo "gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$NEW_POSTGRES_SA --role=roles/storage.objectAdmin"
-echo "gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$NEW_MSSQL_SA --role=roles/storage.objectAdmin"
-
-echo "Press enter to continue after granting permissions..."
-read
+echo "Granting Access to buckets to store the backups"
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$OLD_MYSQL_SA --role=roles/storage.objectAdmin
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$OLD_POSTGRES_SA --role=roles/storage.objectAdmin
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$OLD_MSSQL_SA --role=roles/storage.objectAdmin
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$NEW_MYSQL_SA --role=roles/storage.objectAdmin
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$NEW_POSTGRES_SA --role=roles/storage.objectAdmin
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=serviceAccount:$NEW_MSSQL_SA --role=roles/storage.objectAdmin
 
 # Export
 echo "Exporting databases..."
@@ -124,8 +125,8 @@ gcloud sql import bak $NEW_MSSQL_INSTANCE gs://$BUCKET_NAME/mssql_backup.bak \
 echo "Databases restored."
 
 echo "Updating cloudbuild.yaml..."
-sed -i "s/data-validator-mysql/data-validator-mysql-v8/g" cloudbuild.yaml
-sed -i "s/data-validator-postgres12/data-validator-postgres-v16/g" cloudbuild.yaml
-sed -i "s/data-validator-mssql2017/data-validator-mssql-v2022/g" cloudbuild.yaml
+sed -i "s/us-central1:data-validator-mysql/us-central1:data-validator-mysql-v8-4/g" cloudbuild.yaml
+sed -i "s/us-central1:data-validator-postgres12/us-central1:data-validator-postgres-v16/g" cloudbuild.yaml
+sed -i "s/us-central1:data-validator-mssql2017/us-central1:data-validator-mssql-v2025/g" cloudbuild.yaml
 
 echo "Done. Please review cloudbuild.yaml changes."
