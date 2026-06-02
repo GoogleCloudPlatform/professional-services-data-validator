@@ -451,6 +451,23 @@ def build_config_managers_from_yaml(args, config_file_path):
             config, source_client, target_client, verbose=args.verbose
         )
         config_manager.config[consts.CONFIG_FILE] = config_file_path
+
+        # Expand hash/concat wildcards for hand-authored YAML configs.
+        # The CLI path calls _get_calculated_config() which expands `hash: '*'` into
+        # per-column calculated_fields entries. The YAML path skips that step, leaving
+        # the literal '*' in place and causing a downstream reduce() on an empty list.
+        # Guard on calculated_fields being empty so regenerated YAML (which already
+        # contains materialized fields) is not double-expanded.
+        is_row_validation = config_manager.validation_type == consts.ROW_VALIDATION
+        is_custom_row = (
+            config_manager.validation_type == consts.CUSTOM_QUERY
+            and config_manager.custom_query_type == consts.ROW_VALIDATION.lower()
+        )
+        if (is_row_validation or is_custom_row) and not config_manager.calculated_fields:
+            config_manager.append_calculated_fields(
+                _get_calculated_config(args, config_manager)
+            )
+
         config_managers.append(config_manager)
 
     return config_managers

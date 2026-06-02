@@ -605,3 +605,59 @@ def test_successful_generate_partitions_with_mocked_partition_builder(
 )
 def test_successful_deploy_with_mocked_app_run(mock_args, mock_run):
     main.main()
+
+
+# Regression test for https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1743
+# YAML configs with `hash: '*'` crashed because build_config_managers_from_yaml() never
+# called _get_calculated_config(), leaving the wildcard unexpanded.
+ROW_YAML_HASH_WILDCARD_CONFIG = {
+    consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+    consts.CONFIG_SCHEMA_NAME: "my_schema",
+    consts.CONFIG_TABLE_NAME: "my_table",
+    consts.CONFIG_PRIMARY_KEYS: [],
+    consts.CONFIG_ROW_HASH: "*",
+}
+
+ROW_YAML_VALIDATIONS = {
+    consts.YAML_SOURCE: "my_source",
+    consts.YAML_TARGET: "my_target",
+    consts.YAML_RESULT_HANDLER: None,
+    consts.YAML_VALIDATIONS: [ROW_YAML_HASH_WILDCARD_CONFIG],
+}
+
+
+DUMMY_CALCULATED_FIELD = {"name": "hash__all", "calc_type": "hash"}
+
+
+@mock.patch("data_validation.clients.get_data_client", return_value=MockIbisClient())
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=TEST_CONN,
+)
+@mock.patch(
+    "data_validation.cli_tools.get_validation",
+    return_value=ROW_YAML_VALIDATIONS,
+)
+@mock.patch(
+    "data_validation.__main__._get_calculated_config",
+    return_value=[DUMMY_CALCULATED_FIELD],
+)
+def test_build_config_managers_from_yaml_expands_hash_wildcard(
+    mock_calc, mock_get_validation, mock_get_conn, mock_get_client
+):
+    """build_config_managers_from_yaml must call _get_calculated_config for hash: '*'.
+
+    Before the fix, the YAML path never called _get_calculated_config(), so the
+    literal '*' was left unexpanded, causing a downstream crash when the validator
+    tried to reduce an empty list of fields.
+    """
+    args = argparse.Namespace(
+        config_dir=None,
+        verbose=False,
+    )
+    managers = main.build_config_managers_from_yaml(args, "dummy.yaml")
+    assert len(managers) == 1
+    mock_calc.assert_called_once()
+    assert managers[0].calculated_fields == [DUMMY_CALCULATED_FIELD], (
+        "calculated_fields must be populated after expanding hash: '*'"
+    )
