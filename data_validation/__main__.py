@@ -451,6 +451,16 @@ def build_config_managers_from_yaml(args, config_file_path):
             config, source_client, target_client, verbose=args.verbose
         )
         config_manager.config[consts.CONFIG_FILE] = config_file_path
+        if (
+            config_manager.validation_type == consts.ROW_VALIDATION
+            or (
+                config_manager.validation_type == consts.CUSTOM_QUERY
+                and config_manager.custom_query_type == consts.ROW_VALIDATION.lower()
+            )
+        ) and not config_manager.calculated_fields:
+            config_manager.append_calculated_fields(
+                _get_calculated_config(args, config_manager)
+            )
         config_managers.append(config_manager)
 
     return config_managers

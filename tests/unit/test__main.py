@@ -231,6 +231,127 @@ class MockIbisClient(object):
     name = "bigquery"
 
 
+class MockYamlConfigManager(object):
+    instances = []
+
+    def __init__(self, config, source_client, target_client, verbose=False):
+        self.config = config
+        self.source_client = source_client
+        self.target_client = target_client
+        self.verbose = verbose
+        self.appended_calculated_fields = []
+        MockYamlConfigManager.instances.append(self)
+
+    @property
+    def validation_type(self):
+        return self.config[consts.CONFIG_TYPE]
+
+    @property
+    def custom_query_type(self):
+        return self.config.get(consts.CONFIG_CUSTOM_QUERY_TYPE, "")
+
+    @property
+    def calculated_fields(self):
+        return self.config.get(consts.CONFIG_CALCULATED_FIELDS, [])
+
+    def append_calculated_fields(self, calculated_configs):
+        self.appended_calculated_fields.extend(calculated_configs)
+        self.config[consts.CONFIG_CALCULATED_FIELDS] = (
+            self.calculated_fields + calculated_configs
+        )
+
+
+@mock.patch(
+    "data_validation.__main__._get_calculated_config",
+    return_value=[{"name": "hash__all"}],
+)
+@mock.patch("data_validation.__main__.ConfigManager", MockYamlConfigManager)
+@mock.patch("data_validation.clients.get_data_client", return_value=MockIbisClient())
+@mock.patch(
+    "data_validation.__main__.state_manager.StateManager.get_connection_config",
+    return_value=TEST_CONN,
+)
+@mock.patch(
+    "data_validation.cli_tools.get_validation",
+    return_value={
+        consts.YAML_SOURCE: "my_source",
+        consts.YAML_TARGET: "my_target",
+        consts.YAML_RESULT_HANDLER: {},
+        consts.YAML_VALIDATIONS: [
+            {
+                consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+                consts.CONFIG_SCHEMA_NAME: "mydataset",
+                consts.CONFIG_TABLE_NAME: "mytable",
+                consts.CONFIG_TARGET_SCHEMA_NAME: "mydataset",
+                consts.CONFIG_TARGET_TABLE_NAME: "mytable",
+                consts.CONFIG_PRIMARY_KEYS: [
+                    {
+                        consts.CONFIG_SOURCE_COLUMN: "id",
+                        consts.CONFIG_TARGET_COLUMN: "id",
+                        consts.CONFIG_FIELD_ALIAS: "id",
+                    }
+                ],
+                consts.CONFIG_ROW_HASH: "*",
+            }
+        ],
+    },
+)
+def test_build_config_managers_from_yaml_expands_unmaterialized_row_hash(
+    mock_get_validation,
+    mock_get_connection_config,
+    mock_get_data_client,
+    mock_get_calculated_config,
+):
+    MockYamlConfigManager.instances = []
+    args = argparse.Namespace(verbose=False, config_dir=None)
+
+    config_managers = main.build_config_managers_from_yaml(args, "test.yaml")
+
+    assert len(config_managers) == 1
+    assert mock_get_calculated_config.call_count == 1
+    assert config_managers[0].calculated_fields == [{"name": "hash__all"}]
+
+
+@mock.patch(
+    "data_validation.__main__._get_calculated_config",
+    return_value=[{"name": "hash__all"}],
+)
+@mock.patch("data_validation.__main__.ConfigManager", MockYamlConfigManager)
+@mock.patch("data_validation.clients.get_data_client", return_value=MockIbisClient())
+@mock.patch(
+    "data_validation.__main__.state_manager.StateManager.get_connection_config",
+    return_value=TEST_CONN,
+)
+@mock.patch(
+    "data_validation.cli_tools.get_validation",
+    return_value={
+        consts.YAML_SOURCE: "my_source",
+        consts.YAML_TARGET: "my_target",
+        consts.YAML_RESULT_HANDLER: {},
+        consts.YAML_VALIDATIONS: [
+            {
+                consts.CONFIG_TYPE: consts.ROW_VALIDATION,
+                consts.CONFIG_CALCULATED_FIELDS: [{"name": "existing_hash"}],
+                consts.CONFIG_ROW_HASH: "*",
+            }
+        ],
+    },
+)
+def test_build_config_managers_from_yaml_preserves_materialized_hash_fields(
+    mock_get_validation,
+    mock_get_connection_config,
+    mock_get_data_client,
+    mock_get_calculated_config,
+):
+    MockYamlConfigManager.instances = []
+    args = argparse.Namespace(verbose=False, config_dir=None)
+
+    config_managers = main.build_config_managers_from_yaml(args, "test.yaml")
+
+    assert mock_get_calculated_config.call_count == 0
+    assert config_managers[0].calculated_fields == [{"name": "existing_hash"}]
+
+
 @mock.patch(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CLI_ARGS),
