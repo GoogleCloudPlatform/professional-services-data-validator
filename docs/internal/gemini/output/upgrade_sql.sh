@@ -8,7 +8,7 @@ NETWORK="default"
 BUCKET_NAME="pso-kokoro-mudupalli" # Replace with your bucket
 
 # New Instance Names
-NEW_MYSQL_INSTANCE="data-validator-mysql-v8-4"
+NEW_MYSQL_INSTANCE="data-validator-mysql-v8"
 NEW_POSTGRES_INSTANCE="data-validator-postgres-v18"
 NEW_MSSQL_INSTANCE="data-validator-mssql-v2025"
 
@@ -23,7 +23,7 @@ POSTGRES_DB="guestbook"
 MSSQL_DB="guestbook"
 
 # Versions
-MYSQL_VERSION="MYSQL_8_4"
+MYSQL_VERSION="MYSQL_8_0"
 POSTGRES_VERSION="POSTGRES_18"
 MSSQL_VERSION="SQLSERVER_2025_ENTERPRISE"
 
@@ -108,6 +108,10 @@ echo "Creating databases in new instances..."
 gcloud sql databases create $MYSQL_DB --instance=$NEW_MYSQL_INSTANCE --project=$PROJECT_ID
 gcloud sql databases create $POSTGRES_DB --instance=$NEW_POSTGRES_INSTANCE --project=$PROJECT_ID
 
+# Additional ToDos
+# Create users and grant privileges - specifically required for MySQL
+# Update passwords for super users on Postgres and MySQL
+
 # Import
 echo "Importing databases..."
 gcloud sql import sql $NEW_MYSQL_INSTANCE gs://$BUCKET_NAME/mysql_backup.sql \
@@ -126,7 +130,7 @@ echo "Databases restored."
 
 echo "Updating cloudbuild.yaml..."
 sed -i "s/us-central1:data-validator-mysql/us-central1:data-validator-mysql-v8-4/g" cloudbuild.yaml
-sed -i "s/us-central1:data-validator-postgres12/us-central1:data-validator-postgres-v16/g" cloudbuild.yaml
+sed -i "s/us-central1:data-validator-postgres12/us-central1:data-validator-postgres-v18/g" cloudbuild.yaml
 sed -i "s/us-central1:data-validator-mssql2017/us-central1:data-validator-mssql-v2025/g" cloudbuild.yaml
 
 echo "Done. Please review cloudbuild.yaml changes."
