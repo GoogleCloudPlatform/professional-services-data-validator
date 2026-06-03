@@ -43,7 +43,7 @@ dependencies = [
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
-    "SQLAlchemy>=2.0.49",  # Fixes warning when using MS SQL 2025 
+    "SQLAlchemy>=2.0.49",  # Fixes warning when using MS SQL 2025
     "tabulate>=0.9.0",
 ]
 
