@@ -699,8 +699,8 @@ class ConfigManager(object):
         """Returns True when either source or target column is Oracle LOB data type.
 
         Unexpectedly the raw types for for LOB types are:
-            BLOB: LONG_RAW
-            CLOB: LONG
+            BLOB: LONG_RAW (this covers Oracle LONG_RAW too)
+            CLOB: LONG (this covers Oracle LONG too)
             NCLOB: LONG_NVARCHAR
         """
         return self._is_raw_data_type(
@@ -1379,6 +1379,12 @@ class ConfigManager(object):
             if self._is_sql_server_image(source_column, target_column):
                 logging.info(
                     f"Skipping column {source_column} due to SQL Server image data type"
+                )
+                result_source_columns.pop(source_column)
+                result_target_columns.pop(target_column)
+            if self._is_oracle_lob(source_column, target_column):
+                logging.info(
+                    f"Skipping column {source_column} due to Oracle LOB data type"
                 )
                 result_source_columns.pop(source_column)
                 result_target_columns.pop(target_column)
