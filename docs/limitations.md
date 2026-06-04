@@ -29,6 +29,8 @@
 - Requires the `oracledb` package to be installed as an extra dependency.
 - Tables with lower case/mixed case identifiers are not currently supported. See (issue-1773)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1773] for details.
 - Random row validation does not work with GUID/UUID primary keys. See (issue-1366)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1366] for details.
+- Oracle LONG and LONG RAW data types are not supported.
+- Oracle BLOB, CLOB, and NCLOB data types are not supported for row validation (except when used as part of a custom query).
 
 ## Snowflake
 
