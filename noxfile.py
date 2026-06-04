@@ -309,9 +309,9 @@ def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    # TODO Remove dependency "ibm-db<3.2.7" below when working on issue-1591.
+    # Dependency "ibm-db>=3.2.8" because 3.2.7 causes an exception in DVT (issue-1591).
     _setup_session_requirements(
-        session, extra_packages=["ibm-db-sa<0.4.2", "ibm-db<3.2.7"]
+        session, extra_packages=["ibm-db-sa<0.4.2", "ibm-db>=3.2.8"]
     )
 
     expected_env_vars = [
