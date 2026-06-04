@@ -111,7 +111,6 @@ ORA2PG_COLUMNS = [
     "col_tstz",
     "col_interval_ds",
     "col_raw",
-    "col_long_raw",
     "col_blob",
     "col_clob",
     "col_nclob",
@@ -374,17 +373,14 @@ def test_column_validation_oracle_to_postgres():
     # TODO Change min/max_cols below to include col_interval_ds when issue-1214 is complete.
     # TODO Change min/max_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # TODO Change min_cols below to include col_uuid when issue-1716 is complete.
-    count_cols = ",".join(
-        [_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw", "col_uuid")]
-    )
-    sum_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_long_raw",)])
+    count_cols = ",".join([_ for _ in ORA2PG_COLUMNS if _ not in ("col_uuid",)])
+    sum_cols = ",".join(ORA2PG_COLUMNS)
     min_cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
             if _
             not in (
-                "col_long_raw",
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
@@ -398,7 +394,6 @@ def test_column_validation_oracle_to_postgres():
             for _ in ORA2PG_COLUMNS
             if _
             not in (
-                "col_long_raw",
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
@@ -428,7 +423,6 @@ def test_column_validation_all_null_oracle_to_postgres():
             for _ in ORA2PG_COLUMNS
             if _
             not in (
-                "col_long_raw",
                 "col_interval_ds",
                 "col_json",
                 "col_jsonb",
@@ -624,7 +618,6 @@ def test_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
-    # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
         [
             _
@@ -634,7 +627,6 @@ def test_row_validation_oracle_to_postgres():
                 "col_blob",
                 "col_clob",
                 "col_nclob",
-                "col_long_raw",
                 "col_float32",
                 "col_float64",
                 "col_nvarchar_30",
@@ -662,14 +654,12 @@ def test_row_validation_comp_fields_oracle_to_postgres():
     # TODO Change cols below to include col_json/col_jsonb when issue-1338 is complete.
     # TODO Change cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
-    # Excluded col_long_raw because LONG types are not supported.
     cols = ",".join(
         [
             _
             for _ in ORA2PG_COLUMNS
             if _
             not in (
-                "col_long_raw",
                 "col_float32",
                 "col_float64",
                 "col_num_38",
@@ -942,7 +932,6 @@ def test_custom_query_row_validation_oracle_to_postgres():
     # TODO Change hash_cols below to include col_json/col_jsonb when issue-1338 is complete.
     # TODO Change hash_cols below to include col_uuid when issue-1716 is complete.
     # Excluded col_float32,col_float64 due to the lossy nature of BINARY_FLOAT/DOUBLE.
-    # Excluded col_long_raw because LONG types are not supported.
     hash_cols = ",".join(
         [
             _
@@ -952,7 +941,6 @@ def test_custom_query_row_validation_oracle_to_postgres():
                 "col_blob",
                 "col_clob",
                 "col_nclob",
-                "col_long_raw",
                 "col_float32",
                 "col_float64",
                 "col_nvarchar_30",
