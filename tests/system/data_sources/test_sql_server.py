@@ -333,7 +333,7 @@ def test_schema_validation_core_types_to_bigquery():
             # BigQuery does not have a float32 type.
             "float32:float64,"
             # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
-            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),"
+            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp('UTC', 7):timestamp('UTC'),"
         ),
     )
 
@@ -353,7 +353,7 @@ def test_schema_validation_ss_types_to_bigquery():
             # BigQuery does not have a float32 type.
             "float32:float64,"
             # SQL Server datetime scales are picked up.
-            "timestamp(7):timestamp,timestamp(7, 'UTC'):timestamp('UTC')"
+            "timestamp(7):timestamp,timestamp('UTC', 7):timestamp('UTC')"
         ),
         # TODO money types are being identified as integers - issue-1582
         exclusion_columns="col_money,col_smallmoney",

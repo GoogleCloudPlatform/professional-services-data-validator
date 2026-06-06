@@ -49,16 +49,17 @@ class Backend(BigQueryBackend):
         auth_cache: str = "default",
         partition_column: str = "PARTITIONTIME",
         # Custom DVT arguments:
-        bigquery_client: bq.Client = None,
-        bqstorage_client: "google.cloud.bigquery_storage_v1.BigQueryReadClient" = None,
+        client: bq.Client = None,
+        storage_client: "google.cloud.bigquery_storage_v1.BigQueryReadClient" = None,
+        location: str = None,
     ):
         """Copy of Ibis v5 BigQuery do_connect() customized for DVT, see original method for docs."""
         client_project_id = (
-            bigquery_client.project if bigquery_client is not None else None
+            client.project if client is not None else None
         )
         default_project_id = None
 
-        if bigquery_client is None and credentials is None:
+        if client is None and credentials is None:
             scopes = SCOPES
             if auth_external_data:
                 scopes = EXTERNAL_DATA_SCOPES
@@ -92,16 +93,17 @@ class Backend(BigQueryBackend):
         self.data_project = project_id or self.billing_project
         self.dataset = None
 
-        if bigquery_client is None:
+        if client is None:
             self.client = bq.Client(
                 project=self.billing_project,
                 credentials=credentials,
                 client_info=_create_client_info(application_name),
             )
         else:
-            self.client = bigquery_client
+            self.client = client
         self.partition_column = partition_column
-        self.storage_client = bqstorage_client
+        self.storage_client = storage_client
+
 
     def _cursor_to_arrow(
         self,

@@ -99,6 +99,13 @@ except ImportError:
     sybase_connect = _raise_missing_client_error("pip install sqlalchemy_sybase")
 
 
+# MSSQL requires pyodbc package.
+try:
+    from third_party.ibis.ibis_mssql.api import mssql_connect
+except ImportError:
+    mssql_connect = _raise_missing_client_error("pip install pyodbc")
+
+
 def get_google_bigquery_client(
     project_id: str,
     credentials=None,
@@ -431,7 +438,7 @@ CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_POSTGRES: ibis.postgres.connect,
     consts.SOURCE_TYPE_REDSHIFT: redshift_connect,
     consts.SOURCE_TYPE_TERADATA: teradata_connect,
-    consts.SOURCE_TYPE_MSSQL: ibis.mssql.connect,
+    consts.SOURCE_TYPE_MSSQL: mssql_connect,
     consts.SOURCE_TYPE_SNOWFLAKE: snowflake_connect,
     consts.SOURCE_TYPE_SPANNER: spanner_connect,
     consts.SOURCE_TYPE_SYBASE: sybase_connect,

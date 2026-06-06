@@ -35,7 +35,7 @@ import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
 import pandas as pd
 import sqlalchemy as sa
-from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
+from ibis.backends.base.sql.alchemy import BaseAlchemyBackend, get_sqla_table
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
 from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
@@ -55,6 +55,7 @@ from ibis.expr.types import BinaryValue, NumericValue, StringValue, DateValue, T
 # Do not remove these lines, they trigger patching of Ibis code.
 # We patch Ibis native compilers/backends directly.
 import third_party.ibis.ibis_mysql.compiler  # noqa
+import third_party.ibis.ibis_postgres  # noqa
 
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
@@ -329,26 +330,35 @@ def bigquery_format_hashbytes(translator, op):
         raise ValueError(f"unexpected value for 'how': {op.how}")
 
 def bigquery_strftime(translator, op):
-    from ibis.backends.bigquery.registry import STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS
     arg = op.arg
     format_str = op.format_str
-    arg_type = arg.output_dtype
-    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
+    arg_type = arg.dtype
+    if arg_type.is_date():
+        strftime_format_func_name = "DATE"
+    elif arg_type.is_time():
+        strftime_format_func_name = "TIME"
+    elif arg_type.is_timestamp():
+        if arg_type.timezone is None:
+            strftime_format_func_name = "DATETIME"
+        else:
+            strftime_format_func_name = "TIMESTAMP"
+    else:
+        raise TypeError(f"Unsupported strftime argument type: {arg_type}")
+
     fmt_string = translator.translate(format_str)
     if format_str.value.startswith("%Y"):
         fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
     arg_formatted = translator.translate(arg)
-    if isinstance(arg_type, dt.Timestamp):
-        return "FORMAT_{}({}, {}({}), {!r})".format(
-            strftime_format_func_name,
+    if strftime_format_func_name == "TIMESTAMP":
+        return "FORMAT_TIMESTAMP({}, {}, {!r})".format(
             fmt_string,
-            strftime_format_func_name,
             arg_formatted,
             arg_type.timezone if arg_type.timezone is not None else "UTC",
         )
     return "FORMAT_{}({}, {})".format(
         strftime_format_func_name, fmt_string, arg_formatted
     )
+
 
 def bigquery_format_binary_length(translator, op):
     arg = translator.translate(op.arg)
@@ -633,7 +643,6 @@ ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
 ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
 ImpalaExprTranslator._registry[ops.Cast] = impala_sa_cast
-ImpalaExprTranslator._registry[ops.Coalesce] = impala_sa_ifnull
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[ops.HashBytes] = impala_sa_format_hashbytes
 ImpalaExprTranslator._registry[ops.RandomScalar] = fixed_arity("RAND", 0)
@@ -667,7 +676,6 @@ PostgreSQLExprTranslator._registry[PaddedCharLength] = (
 
 MsSqlExprTranslator._registry[ops.HashBytes] = mssql_sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
-MsSqlExprTranslator._registry[ops.Coalesce] = sa_fixed_arity(sa.func.isnull, 2)
 MsSqlExprTranslator._registry[ops.StringJoin] = mssql_sa_string_join
 MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_sa_format_new_id
 MsSqlExprTranslator._registry[ops.StringLength] = mssql_sa_format_string_length
@@ -725,7 +733,6 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake
     SnowflakeExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_snowflake
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    SnowflakeExprTranslator._registry[ops.Coalesce] = sa_fixed_arity(sa.func.ifnull, 2)
     SnowflakeExprTranslator._registry[ops.ExtractEpochSeconds] = sa_epoch_time_snowflake
     SnowflakeExprTranslator._registry[ops.RandomScalar] = sa_format_random
     SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length
@@ -739,3 +746,121 @@ if SybaseExprTranslator:
     SybaseExprTranslator._registry[PaddedCharLength] = (
         mssql_sa_format_string_length
     )
+
+# Patch TemporalValue to support strftime in custom calculations
+import ibis.expr.types as et
+
+class TemporalValue:
+    @staticmethod
+    def strftime(expr, format_str):
+        return expr.strftime(format_str)
+
+et.TemporalValue = TemporalValue
+
+
+# Monkey-patch pandas backend compute_row_reduction to handle string/bytes/dict scalars correctly
+try:
+    import ibis.backends.pandas.execution.generic as gp
+    from collections.abc import Sized
+    import pandas as pd
+    import numpy as np
+
+    orig_compute_row_reduction = gp.compute_row_reduction
+
+    def dvt_compute_row_reduction(func, values, **kwargs):
+        final_sizes = {
+            len(x) for x in values
+            if isinstance(x, Sized) and not isinstance(x, (str, bytes, dict))
+        }
+        if not final_sizes:
+            return func(values)
+        (final_size,) = final_sizes
+        raw = func(list(map(gp.promote_to_sequence(final_size), values)), **kwargs)
+        return pd.Series(raw).squeeze()
+
+    gp.compute_row_reduction = dvt_compute_row_reduction
+except Exception:
+    pass
+
+
+# Monkey-patch BigQuery backend to support converting INTERVAL columns to Ibis types
+try:
+    from ibis.backends.bigquery.datatypes import BigQueryType
+
+    orig_bq_to_ibis = BigQueryType.to_ibis
+
+    @classmethod
+    def dvt_bq_to_ibis(cls, typ: str, nullable: bool = True) -> dt.DataType:
+        if typ == "INTERVAL":
+            return dt.Interval(unit="s", nullable=nullable)
+        return orig_bq_to_ibis(typ, nullable=nullable)
+
+    BigQueryType.to_ibis = dvt_bq_to_ibis
+except Exception:
+    pass
+
+
+# Patch BigQuery translation of ExtractEpochSeconds to handle DATETIME and DATE correctly
+def bq_extract_epoch_seconds(translator, op):
+    arg = op.arg
+    arg_formatted = translator.translate(arg)
+    if arg.dtype.is_date() or (arg.dtype.is_timestamp() and arg.dtype.timezone is None):
+        return f"UNIX_SECONDS(CAST({arg_formatted} AS TIMESTAMP))"
+    return f"UNIX_SECONDS({arg_formatted})"
+
+BigQueryExprTranslator._registry[ops.ExtractEpochSeconds] = bq_extract_epoch_seconds
+
+
+# Monkey-patch PandasData.convert_Date to handle out-of-bounds / tricky dates safely
+try:
+    import ibis.formats.pandas as fp
+    import pandas as pd
+    from datetime import date
+
+    orig_convert_Date = fp.PandasData.convert_Date
+
+    def dvt_convert_Date(s, dtype, pandas_type):
+        if isinstance(s.dtype, pd.DatetimeTZDtype):
+            s = s.dt.tz_convert("UTC").dt.tz_localize(None)
+        try:
+            return s.astype(pandas_type).dt.normalize()
+        except Exception:
+            def to_date_safe(x):
+                if isinstance(x, date):
+                    return x
+                elif isinstance(x, str):
+                    try:
+                        parts = list(map(int, x.split("-")))
+                        return date(*parts)
+                    except Exception:
+                        try:
+                            import dateutil.parser
+                            return dateutil.parser.parse(x).date()
+                        except Exception:
+                            return x
+                return x
+            return s.map(to_date_safe)
+
+    fp.PandasData.convert_Date = dvt_convert_Date
+except Exception:
+    pass
+
+
+# Monkey-patch BigQueryBackend to load custom DVT methods
+try:
+    from ibis.backends.bigquery import Backend as BigQueryBackend
+    import third_party.ibis.ibis_bigquery as ibq
+    
+    BigQueryBackend.do_connect = ibq.Backend.do_connect
+    BigQueryBackend._cursor_to_arrow = ibq.Backend._cursor_to_arrow
+    BigQueryBackend._parse_project_and_dataset = ibq.Backend._parse_project_and_dataset
+    BigQueryBackend.list_primary_key_columns = ibq.Backend.list_primary_key_columns
+    BigQueryBackend.dvt_list_tables = ibq.Backend.dvt_list_tables
+except Exception:
+    pass
+
+
+
+
+
+

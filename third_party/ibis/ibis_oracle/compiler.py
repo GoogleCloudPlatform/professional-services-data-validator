@@ -15,6 +15,7 @@ from ibis.backends.base.sql.alchemy import (
     AlchemyCompiler,
     AlchemyExprTranslator,
 )
+from third_party.ibis.ibis_oracle.datatypes import OracleType
 from third_party.ibis.ibis_oracle.registry import operation_registry
 
 
@@ -22,6 +23,7 @@ class OracleExprTranslator(AlchemyExprTranslator):
     _registry = operation_registry.copy()
     _rewrites = AlchemyExprTranslator._rewrites.copy()
     _dialect_name = "oracle"
+    type_mapper = OracleType
 
 
 rewrites = OracleExprTranslator.rewrites
