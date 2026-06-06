@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from unittest import mock
 
 
@@ -23,6 +24,10 @@ from data_validation import (
 from tests.system.data_sources.common_functions import (
     schema_validation_test,
 )
+
+TEST_BUCKET = os.getenv("TEST_BUCKET") or os.getenv("PROJECT_ID")
+FILE_CONNECTION_BUCKET = TEST_BUCKET or "pso-kokoro-resources"
+FILE_CONNECTION_PREFIX = f"gs://{FILE_CONNECTION_BUCKET}/file_connection"
 
 
 def mock_get_connection_config(*args):
@@ -41,28 +46,28 @@ def mock_get_connection_config(*args):
 CSV_CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
-    "file_path": "gs://pso-kokoro-resources/file_connection/csv/entries.csv",
+    "file_path": f"{FILE_CONNECTION_PREFIX}/csv/entries.csv",
     "file_type": "csv",
 }
 
 JSON_CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
-    "file_path": "gs://pso-kokoro-resources/file_connection/json/entries.json",
+    "file_path": f"{FILE_CONNECTION_PREFIX}/json/entries.json",
     "file_type": "json",
 }
 
 ORC_CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
-    "file_path": "gs://pso-kokoro-resources/file_connection/orc/entries.orc",
+    "file_path": f"{FILE_CONNECTION_PREFIX}/orc/entries.orc",
     "file_type": "orc",
 }
 
 PARQUET_CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_FILESYSTEM,
     "table_name": "entries",
-    "file_path": "gs://pso-kokoro-resources/file_connection/parquet/entries.parquet",
+    "file_path": f"{FILE_CONNECTION_PREFIX}/parquet/entries.parquet",
     "file_type": "parquet",
 }
 
