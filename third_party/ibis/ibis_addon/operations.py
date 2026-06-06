@@ -93,6 +93,43 @@ except Exception:
     SybaseExprTranslator = None
 
 
+import ibis.backends.pandas.execution.constants as pandas_constants
+
+class PandasTypeMapping(dict):
+    def __getitem__(self, key):
+        if isinstance(key, dt.Decimal):
+            return object
+        if isinstance(key, dt.Date):
+            return object
+        try:
+            return super().__getitem__(key)
+        except KeyError:
+            if isinstance(key, dt.DataType):
+                for k, v in self.items():
+                    if isinstance(key, type(k)) or key == k:
+                        return v
+            raise
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __contains__(self, key):
+        if isinstance(key, (dt.Decimal, dt.Date)):
+            return True
+        if super().__contains__(key):
+            return True
+        if isinstance(key, dt.DataType):
+            for k in self.keys():
+                if isinstance(key, type(k)) or key == k:
+                    return True
+        return False
+
+pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE = PandasTypeMapping(pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE)
+
+
 # Cast of datetime64 NaT to int64 and then in seconds results in the value below.
 # We need to use this value in the datetime.date simulation of the datetime64 behaviour.
 NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000

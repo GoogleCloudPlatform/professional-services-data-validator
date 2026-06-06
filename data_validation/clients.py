@@ -231,7 +231,11 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if client.name in [
+    if client.name == "bigquery":
+        if schema_name and "." in schema_name:
+            database_name, schema_name = schema_name.split(".", 1)
+        return client.table(table_name, database=database_name, schema=schema_name)
+    elif client.name in [
         "oracle",
         "postgres",
         "db2",
@@ -266,10 +270,13 @@ def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Sch
     """
     if is_sqlalchemy_backend(client):
         return client.table(table_name, schema=schema_name).schema()
+    elif client.name == "bigquery":
+        database_name = None
+        if schema_name and "." in schema_name:
+            database_name, schema_name = schema_name.split(".", 1)
+        return client.get_schema(table_name, schema=schema_name, database=database_name)
     else:
         return client.get_schema(table_name, schema_name)
-
-
 def get_ibis_query_schema(client, query_str) -> "sch.Schema":
     if is_sqlalchemy_backend(client):
         ibis_query = get_ibis_query(client, query_str)
