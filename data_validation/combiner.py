@@ -46,6 +46,22 @@ COMBINER_GET_SUMMARY_EXC_TEXT = (
 )
 
 
+def _convert_large_ints_to_decimals(df: "DataFrame") -> "DataFrame":
+    import decimal
+    df_copied = False
+    for col in df.columns:
+        if df[col].dtype == object:
+            is_int_col = df[col].apply(lambda x: isinstance(x, int) and not isinstance(x, bool)).any()
+            if is_int_col:
+                large_ints = df[col].apply(lambda x: isinstance(x, int) and (x > 9223372036854775807 or x < -9223372036854775808))
+                if large_ints.any():
+                    if not df_copied:
+                        df = df.copy()
+                        df_copied = True
+                    df[col] = df[col].apply(lambda x: decimal.Decimal(str(x)) if isinstance(x, int) and (x > 9223372036854775807 or x < -9223372036854775808) else x)
+    return df
+
+
 def generate_report(
     run_metadata: "RunMetadata",
     source_df: "DataFrame",
@@ -72,6 +88,9 @@ def generate_report(
             A pandas DataFrame with the results of the validation in the same
             schema as the report table.
     """
+    source_df = _convert_large_ints_to_decimals(source_df)
+    target_df = _convert_large_ints_to_decimals(target_df)
+
     _check_schema_names(source_df, target_df)
 
     join_on_fields = tuple(join_on_fields)

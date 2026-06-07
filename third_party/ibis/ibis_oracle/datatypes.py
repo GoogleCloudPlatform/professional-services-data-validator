@@ -58,7 +58,7 @@ class OracleType(AlchemyType):
             else:
                 return dt.Timestamp(nullable=nullable)
         elif isinstance(typ, (oracle.INTERVAL, sat.Interval)):
-            return dt.Interval(nullable=nullable)
+            return dt.Interval(unit="s", nullable=nullable)
         elif isinstance(typ, oracle.BINARY_FLOAT):
             return dt.Float32(nullable=nullable)
         elif isinstance(typ, oracle.BINARY_DOUBLE):
@@ -114,8 +114,8 @@ _type_mapping = {
     oracledb.DB_TYPE_BLOB: dt.Binary,
     oracledb.DB_TYPE_BINARY_FLOAT: dt.Float32,
     oracledb.DB_TYPE_BINARY_DOUBLE: dt.Float64,
-    oracledb.DB_TYPE_INTERVAL_DS: dt.Interval,
-    oracledb.DB_TYPE_INTERVAL_YM: dt.Interval,
+    oracledb.DB_TYPE_INTERVAL_DS: partial(dt.Interval, unit="s"),
+    oracledb.DB_TYPE_INTERVAL_YM: partial(dt.Interval, unit="s"),
     oracledb.DB_TYPE_BOOLEAN: dt.Boolean,
 }
 

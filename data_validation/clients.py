@@ -71,13 +71,11 @@ try:
 except ImportError:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
-
-def oracle_connect(*args, **kwargs):
-    try:
-        return ibis.oracle.connect(*args, **kwargs)
-    except ImportError:
-        raise Exception("pip install oracledb")
-
+# Oracle requires python-oracldb driver
+try:
+    from third_party.ibis.ibis_oracle.api import oracle_connect
+except ImportError:
+    oracle_connect = _raise_missing_client_error("pip install oracledb")
 def snowflake_connect(*args, **kwargs):
     try:
         return ibis.snowflake.connect(*args, **kwargs)

@@ -1072,7 +1072,7 @@ def test_column_multi_table_all_config_managers():
     No need to actually execute the validations to confirm we get the correct number of config managers.
     """
     config_managers = column_validation_test_config_managers(
-        tc="pg-conn",
+        tc="mock-conn",
         tables="pso_data_validator.*",
         count_cols="*",
     )
