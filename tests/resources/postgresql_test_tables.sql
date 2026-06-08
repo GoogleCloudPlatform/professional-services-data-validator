@@ -120,7 +120,6 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_tsltz       timestamp(6) with time zone
 ,   col_interval_ds interval day to second (3)
 ,   col_raw         bytea
-,   col_long_raw    bytea
 ,   col_blob        bytea
 ,   col_clob        text
 ,   col_nclob       text
@@ -141,8 +140,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-01 00:00:01.123456 +00:00'
 ,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
-,CAST('DVT' AS BYTEA),CAST('DVT' AS BYTEA)
-,CAST('DVT' AS BYTEA),'DVT A','DVT A'
+,CAST('DVT' AS BYTEA),CAST('DVT' AS BYTEA),'DVT A','DVT A'
 ,uuid('187bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 123, "status": "abc"}','{"dvt": 123, "status": "abc"}')
 ,(2,2222,123456789,123456789012345678,1234567890123456789012345
@@ -154,8 +152,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-02 00:00:02.123456 -02:00'
 ,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
-,CAST('DVT' AS BYTEA),CAST('DVT DVT' AS BYTEA)
-,CAST('DVT DVT' AS BYTEA),'DVT B','DVT B'
+,CAST('DVT' AS BYTEA),CAST('DVT DVT' AS BYTEA),'DVT B','DVT B'
 ,uuid('287bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 234, "status": "def"}','{"dvt": 234, "status": "def"}')
 ,(3,3333,123456789,123456789012345678,1234567890123456789012345
@@ -167,8 +164,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.654321 -03:00'
 ,TIMESTAMP WITH TIME ZONE'1970-01-03 00:00:03.654321 -03:00'
 ,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
-,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA)
-,CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
+,CAST('DVT' AS BYTEA),CAST('DVT DVT DVT' AS BYTEA),'DVT C','DVT C'
 ,uuid('387bdc3b218443b28ec23ac791c5b0f1')
 ,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}')
 ,(4,NULL,NULL,NULL,NULL,NULL,NULL
@@ -176,7 +172,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,NULL,NULL,NULL
 ,NULL,NULL,NULL,NULL
 ,NULL,NULL,NULL,NULL,NULL
-,NULL,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL,NULL
 ,NULL,NULL);
 
  /* Following table used for validating generating table partitions */
