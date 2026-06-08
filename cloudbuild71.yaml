@@ -86,23 +86,9 @@ steps:
 
 availableSecrets:
   secretManager:
-  - versionName: projects/$PROJECT_ID/secrets/mysql_password/versions/latest
-    env: 'MYSQL_PASSWORD'
   - versionName: projects/$PROJECT_ID/secrets/postgres_password/versions/latest
     env: 'POSTGRES_PASSWORD'
   - versionName: projects/$PROJECT_ID/secrets/sql_server_password/versions/latest
     env: 'SQL_SERVER_PASSWORD'
-  - versionName: projects/$PROJECT_ID/secrets/teradata_password/versions/latest
-    env: 'TERADATA_PASSWORD'
   - versionName: projects/$PROJECT_ID/secrets/oracle_password/versions/latest
     env: 'ORACLE_PASSWORD'
-  - versionName: projects/$PROJECT_ID/secrets/snowflake_account/versions/latest
-    env: 'SNOWFLAKE_ACCOUNT'
-  - versionName: projects/$PROJECT_ID/secrets/snowflake_user/versions/latest
-    env: 'SNOWFLAKE_USER'
-  - versionName: projects/$PROJECT_ID/secrets/snowflake_password/versions/latest
-    env: 'SNOWFLAKE_PASSWORD'
-  - versionName: projects/$PROJECT_ID/secrets/db2_password/versions/latest
-    env: 'DB2_PASSWORD'
-  - versionName: projects/$PROJECT_ID/secrets/sybase_password/versions/latest
-    env: 'SYBASE_PASSWORD'
