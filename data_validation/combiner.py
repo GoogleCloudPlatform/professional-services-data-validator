@@ -48,17 +48,32 @@ COMBINER_GET_SUMMARY_EXC_TEXT = (
 
 def _convert_large_ints_to_decimals(df: "DataFrame") -> "DataFrame":
     import decimal
+
     df_copied = False
     for col in df.columns:
         if df[col].dtype == object:
-            is_int_col = df[col].apply(lambda x: isinstance(x, int) and not isinstance(x, bool)).any()
+            is_int_col = (
+                df[col]
+                .apply(lambda x: isinstance(x, int) and not isinstance(x, bool))
+                .any()
+            )
             if is_int_col:
-                large_ints = df[col].apply(lambda x: isinstance(x, int) and (x > 9223372036854775807 or x < -9223372036854775808))
+                large_ints = df[col].apply(
+                    lambda x: isinstance(x, int)
+                    and (x > 9223372036854775807 or x < -9223372036854775808)
+                )
                 if large_ints.any():
                     if not df_copied:
                         df = df.copy()
                         df_copied = True
-                    df[col] = df[col].apply(lambda x: decimal.Decimal(str(x)) if isinstance(x, int) and (x > 9223372036854775807 or x < -9223372036854775808) else x)
+                    df[col] = df[col].apply(
+                        lambda x: (
+                            decimal.Decimal(str(x))
+                            if isinstance(x, int)
+                            and (x > 9223372036854775807 or x < -9223372036854775808)
+                            else x
+                        )
+                    )
     return df
 
 

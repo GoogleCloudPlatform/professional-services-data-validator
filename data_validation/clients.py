@@ -76,11 +76,16 @@ try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
 except ImportError:
     oracle_connect = _raise_missing_client_error("pip install oracledb")
+
+
 def snowflake_connect(*args, **kwargs):
     try:
         return ibis.snowflake.connect(*args, **kwargs)
     except ImportError:
-        raise Exception("pip install snowflake-connector-python && pip install snowflake-sqlalchemy")
+        raise Exception(
+            "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
+        )
+
 
 # DB2 requires ibm_db_sa
 try:
@@ -275,6 +280,8 @@ def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Sch
         return client.get_schema(table_name, schema=schema_name, database=database_name)
     else:
         return client.get_schema(table_name, schema_name)
+
+
 def get_ibis_query_schema(client, query_str) -> "sch.Schema":
     if is_sqlalchemy_backend(client):
         ibis_query = get_ibis_query(client, query_str)
