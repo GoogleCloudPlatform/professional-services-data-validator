@@ -144,7 +144,7 @@ def db2_luw_cast(t, op):
         if arg_dtype.scale is not None and arg_dtype.scale > 0:
             # Db2 always pads fractional part of the number out to length of scale.
             # We need to remove those insignificant digits.
-            precision = arg_dtype.precision or 31
+            precision = min(arg_dtype.precision or 31, 31)
             fmt = (
                 ("9" * (precision - arg_dtype.scale - 1))
                 + "0."
