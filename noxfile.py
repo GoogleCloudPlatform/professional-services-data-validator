@@ -309,8 +309,7 @@ def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    # TODO Remove dependency "ibm-db<3.2.7" below when working on issue-1591.
-    _setup_session_requirements(session, extra_packages=["ibm-db-sa", "ibm-db<3.2.7"])
+    _setup_session_requirements(session, extra_packages=["ibm-db-sa", "ibm-db>=3.2.8"])
 
     expected_env_vars = [
         "PROJECT_ID",
