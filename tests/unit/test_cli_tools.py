@@ -1177,3 +1177,55 @@ def test_check_gt_one_fail(test_input: int):
     """Test _check_positive."""
     with pytest.raises(argparse.ArgumentTypeError):
         _ = cli_tools._check_gt_one(test_input)
+
+
+def test_config_mutually_exclusive_args():
+    parser = cli_tools.configure_arg_parser()
+    base_args = [
+        "validate",
+        "column",
+        "-sc",
+        "source",
+        "-tc",
+        "target",
+        "-tbls",
+        "s.t=s.t",
+    ]
+
+    for arg1, arg2 in [
+        ("-c", "-cj"),
+        ("-c", "-cdir"),
+        ("-c", "-cdirj"),
+        ("-cj", "-cdir"),
+        ("-cj", "-cdirj"),
+        ("-cdir", "-cdirj"),
+    ]:
+        with pytest.raises(SystemExit):
+            parser.parse_args(base_args + [arg1, "path1", arg2, "path2"])
+
+
+def test_custom_query_with_config_dir_errors():
+    parser = cli_tools.configure_arg_parser()
+    base_args = [
+        "validate",
+        "custom-query",
+        "row",
+        "-sc",
+        "source",
+        "-tc",
+        "target",
+        "-sq",
+        "SELECT 1",
+        "-tq",
+        "SELECT 1",
+    ]
+
+    with pytest.raises(SystemExit):
+        cli_tools._check_custom_query_args(
+            parser, parser.parse_args(base_args + ["--config-dir", "dir_path"])
+        )
+
+    with pytest.raises(SystemExit):
+        cli_tools._check_custom_query_args(
+            parser, parser.parse_args(base_args + ["--config-dir-json", "dir_path"])
+        )
