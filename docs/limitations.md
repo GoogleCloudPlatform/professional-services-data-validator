@@ -27,6 +27,8 @@
 ## Oracle
 
 - Requires the `oracledb` package to be installed as an extra dependency.
+- Oracle LONG and LONG RAW data types are not supported.
+- Oracle BLOB, CLOB, and NCLOB data types are not supported for row validation (except when used as part of a custom query).
 
 ## Snowflake
 
