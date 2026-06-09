@@ -24,12 +24,14 @@ import sqlalchemy as sa
 import ibis
 import ibis.common.exceptions as com
 import ibis.expr.operations as ops
+import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy import (
     fixed_arity,
     sqlalchemy_operation_registry,
     sqlalchemy_window_functions_registry,
     unary,
     get_sqla_table,
+    varargs,
 )
 from ibis.backends.base.sql.alchemy.registry import variance_reduction
 from ibm_db_sa import DOUBLE
@@ -472,7 +474,7 @@ def _literal(t, op):
 
     if dtype.is_interval():
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
-    elif dtype.is_set():
+    elif isinstance(dtype, dt.Set):
         return list(map(sa.literal, value))
     else:
         return sa.literal(value)
@@ -510,7 +512,7 @@ operation_registry.update(
         ops.IsNan: _is_nan,
         ops.IsInf: _is_inf,
         # null handling
-        ops.Coalesce: fixed_arity(sa.func.coalesce, 2),
+        ops.Coalesce: varargs(sa.func.coalesce),
         # boolean reductions
         ops.Any: unary(sa.func.bool_or),
         ops.All: unary(sa.func.bool_and),

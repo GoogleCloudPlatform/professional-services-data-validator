@@ -29,13 +29,23 @@ def _sa_coalesce(t, op):
 
     This override uses sa.literal_column to prevent parameterization.
     """
-    expr, default_val = op.arg[0], op.arg[1]
-    assert all(
-        c.isalnum() or c == "_" for c in str(default_val.value)
-    ), f"Value '{default_val.value}' contains non-alphanumeric or non-underscore characters."
+    if len(op.arg) == 1:
+        return sa.func.coalesce(t.translate(op.arg[0]))
 
-    sa_arg = t.translate(expr)
-    return sa.func.coalesce(sa_arg, sa.literal_column(f"'{default_val.value}'"))
+    exprs = op.arg[:-1]
+    default_val = op.arg[-1]
+
+    sa_exprs = [t.translate(x) for x in exprs]
+
+    if isinstance(default_val, ops.Literal):
+        assert all(
+            c.isalnum() or c == "_" for c in str(default_val.value)
+        ), f"Value '{default_val.value}' contains non-alphanumeric or non-underscore characters."
+        sa_default = sa.literal_column(f"'{default_val.value}'")
+    else:
+        sa_default = t.translate(default_val)
+
+    return sa.func.coalesce(*sa_exprs, sa_default)
 
 
 def _sa_format_hashbytes(translator, op):
