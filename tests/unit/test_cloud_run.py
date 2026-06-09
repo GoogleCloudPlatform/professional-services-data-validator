@@ -88,3 +88,37 @@ def test_generate_custom_query_row_config_missing_file(
     response = client.post("/generate_custom_query_row_config", json=payload)
     assert response.status_code == 400
     assert b"Bad Request: config_file is a mandatory parameter" in response.data
+
+
+@mock.patch("main.build_config_managers_from_args")
+@mock.patch("main.store_yaml_config_file")
+def test_generate_custom_query_row_config_missing_source_query(
+    mock_store, mock_build, client
+):
+    payload = {
+        "source-conn": "my_source",
+        "target-conn": "my_target",
+        "target-query": "SELECT * FROM target_table",
+        "config-file": "test_config.yaml",
+    }
+
+    response = client.post("/generate_custom_query_row_config", json=payload)
+    assert response.status_code == 400
+    assert b"Bad Request: source_query is a mandatory parameter" in response.data
+
+
+@mock.patch("main.build_config_managers_from_args")
+@mock.patch("main.store_yaml_config_file")
+def test_generate_custom_query_row_config_missing_target_query(
+    mock_store, mock_build, client
+):
+    payload = {
+        "source-conn": "my_source",
+        "target-conn": "my_target",
+        "source-query": "SELECT * FROM my_table",
+        "config-file": "test_config.yaml",
+    }
+
+    response = client.post("/generate_custom_query_row_config", json=payload)
+    assert response.status_code == 400
+    assert b"Bad Request: target_query is a mandatory parameter" in response.data

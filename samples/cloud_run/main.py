@@ -225,6 +225,20 @@ def generate_custom_query_row_config():
                 mimetype="text/plain",
             )
 
+        if not getattr(args, "source_query", None):
+            return flask.Response(
+                "Bad Request: source_query is a mandatory parameter",
+                status=400,
+                mimetype="text/plain",
+            )
+
+        if not getattr(args, "target_query", None):
+            return flask.Response(
+                "Bad Request: target_query is a mandatory parameter",
+                status=400,
+                mimetype="text/plain",
+            )
+
         config_managers = build_config_managers_from_args(args)
 
         if args.config_file:
