@@ -18,7 +18,7 @@ import re
 import time
 import uuid
 
-from data_validation import clients, exceptions
+from data_validation import exceptions
 
 from typing import TYPE_CHECKING
 
@@ -76,6 +76,8 @@ def ibis_table_to_sql(ibis_table: "IbisTable", alchemy_client: "BaseBackend") ->
 
     We need the client in order to find the dialect, otherwise we end up with generic literals.
     """
+    from data_validation import clients
+
     # If the backend uses sqlalchemy, we will need to request sqla to bind variables
     # for a non sqlalchemy backend, the parameters are already bound
     if alchemy_client and clients.is_sqlalchemy_backend(alchemy_client):
