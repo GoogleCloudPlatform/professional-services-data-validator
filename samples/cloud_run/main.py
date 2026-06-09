@@ -201,6 +201,52 @@ def generate_row_config():
         )
 
 
+@app.route("/generate_custom_query_row_config", methods=["POST"])
+def generate_custom_query_row_config():
+    try:
+        payload = _get_request_content(flask.request)
+        from data_validation.cli_tools import _configure_custom_query_row_parser
+
+        dummy_parser = argparse.ArgumentParser()
+        _configure_custom_query_row_parser(dummy_parser)
+
+        args = _get_args_from_payload(
+            payload,
+            dummy_parser,
+            command="validate",
+            validate_cmd="custom-query",
+            custom_query_type="row",
+        )
+
+        if not getattr(args, "config_file", None):
+            return flask.Response(
+                "Bad Request: config_file is a mandatory parameter",
+                status=400,
+                mimetype="text/plain",
+            )
+
+        config_managers = build_config_managers_from_args(args)
+
+        if args.config_file:
+            store_yaml_config_file(args, config_managers)
+        target_path = getattr(args, "config_file", None)
+        return flask.Response(
+            f"Success! Config output written to {target_path}",
+            mimetype="text/plain",
+        )
+    except ValueError as ve:
+        return flask.Response(f"Bad Request: {ve}", status=400, mimetype="text/plain")
+    except Exception as e:
+        logging.exception(
+            "An error occurred during custom query row configuration generation"
+        )
+        return flask.Response(
+            f"An internal server error occurred: {e}",
+            status=500,
+            mimetype="text/plain",
+        )
+
+
 @app.route("/find_tables", methods=["POST"])
 def find_tables():
     try:
