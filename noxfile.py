@@ -310,7 +310,7 @@ def integration_db2(session):
     Ensure DB2 validation is running as expected.
     """
     _setup_session_requirements(session, extra_packages=["ibm-db-sa", "ibm-db>=3.2.8"])
-    
+
     expected_env_vars = [
         "PROJECT_ID",
         "DB2_HOST",
