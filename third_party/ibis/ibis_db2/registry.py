@@ -69,6 +69,10 @@ def _extract(fmt: str):
     return translator
 
 
+def _extract_epoch(t, op):
+    return sa.cast(sa.extract("epoch", t.translate(op.arg)), sa.BIGINT)
+
+
 def _second(t, op):
     # extracting the second gives us the fractional part as well, so smash that
     # with a cast to SMALLINT
@@ -550,7 +554,7 @@ operation_registry.update(
         ops.ExtractDay: _extract("day"),
         ops.ExtractDayOfYear: _extract("doy"),
         ops.ExtractQuarter: _extract("quarter"),
-        ops.ExtractEpochSeconds: _extract("epoch"),
+        ops.ExtractEpochSeconds: _extract_epoch,
         ops.ExtractHour: _extract("hour"),
         ops.ExtractMinute: _extract("minute"),
         ops.ExtractSecond: _second,
