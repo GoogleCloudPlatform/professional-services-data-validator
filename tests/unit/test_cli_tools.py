@@ -468,6 +468,11 @@ def test_create_and_list_and_get_validations(caplog, fs):
 
 
 def test_get_validation_unsafe_yaml(fs):
+    """Test that get_validation safely rejects unsafe YAML payloads.
+
+    This regression test ensures that !!python/object/apply and other unsafe
+    tags are rejected with a ConstructorError.
+    """
     unsafe_yaml = "!!python/object/apply:eval ['print(\"hello\")']"
     validation_path = gcs_helper.get_validation_path("unsafe_validation.yaml")
     fs.create_file(validation_path, contents=unsafe_yaml)
