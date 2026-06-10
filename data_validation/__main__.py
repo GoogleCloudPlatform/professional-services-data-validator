@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 import logging
 import os
@@ -49,6 +50,10 @@ LOG_LEVEL_MAP = {
     "ERROR": logging.ERROR,
     "CRITICAL": logging.CRITICAL,
 }
+
+CUSTOM_QUERY_DIR_SUPPORT_ERROR = (
+    "Saving custom-query validations to directory configs is not supported."
+)
 
 
 CUSTOM_QUERY_DIR_SUPPORT_ERROR = (
@@ -495,9 +500,7 @@ def convert_config_to_json(config_managers: list) -> dict:
             "JSON configs can only be created for single table validations."
         )
     config_manager = config_managers[0]
-    json_config = config_manager.config
-    json_config[consts.CONFIG_SOURCE_CONN] = config_manager.get_source_connection()
-    json_config[consts.CONFIG_TARGET_CONN] = config_manager.get_target_connection()
+    json_config = copy.deepcopy(config_manager.config)
     return json_config
 
 

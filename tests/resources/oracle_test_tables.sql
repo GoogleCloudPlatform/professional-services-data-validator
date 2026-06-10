@@ -152,7 +152,6 @@ CREATE TABLE pso_data_validator.dvt_ora2pg_types
 ,   col_tsltz       TIMESTAMP(6) WITH LOCAL TIME ZONE
 ,   col_interval_ds INTERVAL DAY(2) TO SECOND (3)
 ,   col_raw         RAW(16)
-,   col_long_raw    LONG RAW
 ,   col_blob        BLOB
 ,   col_clob        CLOB
 ,   col_nclob       NCLOB
@@ -177,8 +176,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 ,to_timestamp_tz('1970-01-01 00:00:01.123456 00:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 ,INTERVAL '1 2:03:44.0' DAY TO SECOND(3)
-,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT')
-,UTL_RAW.CAST_TO_RAW('DVT'),'DVT A','DVT A'
+,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT'),'DVT A','DVT A'
 ,HEXTORAW('187BDC3B218443B28EC23AC791C5B0F1')
 ,'{"dvt": 123, "status": "abc"}','{"dvt": 123, "status": "abc"}'
 );
@@ -192,8 +190,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 ,to_timestamp_tz('1970-01-02 00:00:02.123456 -02:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 ,INTERVAL '2 3:04:55.666' DAY TO SECOND(3)
-,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT')
-,UTL_RAW.CAST_TO_RAW('DVT DVT'),'DVT B','DVT B'
+,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT'),'DVT B','DVT B'
 ,HEXTORAW('287BDC3B218443B28EC23AC791C5B0F1')
 ,'{"dvt": 234, "status": "def"}','{"dvt": 234, "status": "def"}'
 );
@@ -207,8 +204,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 ,to_timestamp_tz('1970-01-03 00:00:03.654321 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 ,to_timestamp_tz('1970-01-03 00:00:03.654321 -03:00','YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')
 ,INTERVAL '3 4:05:06.7' DAY TO SECOND(3)
-,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT DVT')
-,UTL_RAW.CAST_TO_RAW('DVT DVT DVT'),'DVT C','DVT C'
+,UTL_RAW.CAST_TO_RAW('DVT'),UTL_RAW.CAST_TO_RAW('DVT DVT DVT'),'DVT C','DVT C'
 ,HEXTORAW('387BDC3B218443B28EC23AC791C5B0F1')
 ,'{"dvt": 345, "status": "ghi"}','{"dvt": 345, "status": "ghi"}'
 );
@@ -217,7 +213,7 @@ INSERT INTO pso_data_validator.dvt_ora2pg_types VALUES
 --,NULL,NULL
 ,NULL,NULL,NULL
 ,NULL,NULL,NULL,NULL
-,NULL,NULL,NULL,NULL,NULL
+,NULL,NULL,NULL,NULL
 ,NULL,NULL,NULL,NULL,NULL,NULL
 ,NULL,NULL
 );
@@ -917,4 +913,49 @@ INSERT INTO pso_data_validator.dvt_intervals VALUES
 (2,INTERVAL '2 2:03:44.123' DAY TO SECOND,INTERVAL '2-2' YEAR TO MONTH);
 INSERT INTO pso_data_validator.dvt_intervals VALUES
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
+COMMIT;
+
+-- CamelCase test table.
+DROP TABLE pso_data_validator."DvtCaseCamel";
+CREATE TABLE pso_data_validator."DvtCaseCamel"
+(   "Id"           number(5) NOT NULL PRIMARY KEY
+,   "ColInt"       number(5)
+,   "ColDec"       number(10,2)
+,   "ColStr"       varchar2(30)
+,   "ColDate"      date
+,   "ColText"      clob
+);
+COMMENT ON TABLE pso_data_validator."DvtCaseCamel" IS 'Oracle table with CamelCase identifiers.';
+INSERT INTO pso_data_validator."DvtCaseCamel" VALUES
+(1,1,1.1,'Hello DVT',DATE'1970-01-01','Hello DVT');
+INSERT INTO pso_data_validator."DvtCaseCamel" VALUES
+(2,2,2.2,'Hello DVT',DATE'1970-01-02','Hello DVT');
+COMMIT;
+
+DROP TABLE pso_data_validator.DVT_CASE_UPPER;
+CREATE TABLE pso_data_validator.DVT_CASE_UPPER
+(   ID           number(5) NOT NULL PRIMARY KEY
+,   COLINT       number(5)
+,   COLDEC       number(10,2)
+,   COLSTR       varchar2(30)
+,   COLDATE      date
+,   COLTEXT      clob
+);
+COMMENT ON TABLE pso_data_validator.DVT_CASE_UPPER IS 'Oracle table to compare with DvtCaseCamel.';
+INSERT INTO pso_data_validator.DVT_CASE_UPPER
+SELECT * FROM pso_data_validator."DvtCaseCamel";
+COMMIT;
+
+DROP TABLE pso_data_validator."dvt_case_lower";
+CREATE TABLE pso_data_validator."dvt_case_lower"
+(   "id"         number(5) NOT NULL PRIMARY KEY
+,   "colint"     number(5)
+,   "coldec"     number(10,2)
+,   "colstr"     varchar2(30)
+,   "coldate"    date
+,   "coltext"    clob
+);
+COMMENT ON TABLE pso_data_validator."dvt_case_lower" IS 'Oracle table with lower case identifiers.';
+INSERT INTO pso_data_validator."dvt_case_lower"
+SELECT * FROM pso_data_validator."DvtCaseCamel";
 COMMIT;

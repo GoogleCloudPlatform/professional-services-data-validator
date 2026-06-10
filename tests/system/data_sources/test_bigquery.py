@@ -49,7 +49,11 @@ from tests.system.result_handlers.test_bigquery import create_bigquery_results_t
 PROJECT_ID = os.environ["PROJECT_ID"]
 TEST_BUCKET = os.environ.get("TEST_BUCKET", PROJECT_ID)
 os.environ[consts.ENV_DIRECTORY_VAR] = f"gs://{TEST_BUCKET}/integration_tests/"
-BQ_CONN = {consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY, "project_id": PROJECT_ID}
+BQ_CONN = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_BIGQUERY,
+    consts.PROJECT_ID: PROJECT_ID,
+    consts.BILLING_PROJECT_ID: PROJECT_ID,
+}
 CONFIG_COUNT_VALID = {
     # BigQuery Specific Connection Name
     consts.CONFIG_SOURCE_CONN: BQ_CONN,
@@ -411,8 +415,6 @@ TEST_JSON_VALIDATION_CONFIG = {
             consts.CONFIG_TYPE: "count",
         },
     ],
-    consts.CONFIG_SOURCE_CONN: BQ_CONN,
-    consts.CONFIG_TARGET_CONN: BQ_CONN,
     consts.CONFIG_CASE_INSENSITIVE_MATCH: False,
     consts.CONFIG_ROW_CONCAT: None,
     consts.CONFIG_ROW_HASH: None,
@@ -480,7 +482,11 @@ def test_numeric_types():
         )
 
 
-def test_cli_store_yaml_then_run_gcs():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_cli_store_yaml_then_run_gcs(mock_conn):
     """Test storing and retrieving validation YAMLs in GCS."""
     # Store BQ Connection
     _store_bq_conn()
@@ -506,7 +512,11 @@ def test_cli_store_yaml_then_run_gcs():
     main.run_validations(run_config_args, config_managers)
 
 
-def test_cli_store_yaml_then_run_local():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_cli_store_yaml_then_run_local(mock_conn):
     """Test storing and retrieving validation YAML locally."""
     # Store BQ Connection
     _store_bq_conn()
@@ -1012,12 +1022,16 @@ def test_bigquery_row():
     assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
-def test_custom_query():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_custom_query(mock_conn):
     """Test custom query validation config with row-level comparison."""
     SAMPLE_CUSTOMQUERY_CONFIG = {
         "type": "Custom-query",
-        "source_conn_name": BQ_CONN_NAME,
-        "target_conn_name": BQ_CONN_NAME,
+        "source_conn_name": "mock-conn",
+        "target_conn_name": "mock-conn",
         "table_name": None,
         "schema_name": None,
         "target_schema_name": None,
@@ -1370,8 +1384,15 @@ def test_column_validation_convert_config_to_json(mock_conn):
     assert len(config_managers) == 1
 
     json_config = main.convert_config_to_json(config_managers)
-    # assert structure
+    # Assert structure
     assert json_config == TEST_JSON_VALIDATION_CONFIG
+    # Ensure that raw connection info is not in the JSON anywhere.
+    assert consts.SOURCE_TYPE not in str(json_config)
+
+    # Ensure that the final validation executes successfully using the converted JSON config
+    data_validator = data_validation.DataValidation(json_config, verbose=False)
+    _ = data_validator.execute()
+    # If we get to here then there was no exception, meaning the JSON was valid.
 
 
 @mock.patch(
