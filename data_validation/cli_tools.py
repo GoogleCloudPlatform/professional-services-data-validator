@@ -53,7 +53,7 @@ import uuid
 import os
 import math
 from typing import Dict, List, Optional, TYPE_CHECKING
-from yaml import Dumper, Loader, dump, load
+from yaml import Dumper, dump, safe_load
 
 from data_validation import (
     clients,
@@ -1279,7 +1279,7 @@ def get_validation(name: str, config_dir: str = None):
         validation_path = gcs_helper.get_validation_path(name)
 
     validation_bytes = gcs_helper.read_file(validation_path)
-    return load(validation_bytes, Loader=Loader)
+    return safe_load(validation_bytes)
 
 
 def list_validations(config_dir="./"):

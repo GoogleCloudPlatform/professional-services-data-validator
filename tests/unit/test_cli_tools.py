@@ -467,6 +467,15 @@ def test_create_and_list_and_get_validations(caplog, fs):
     assert yaml_config == TEST_VALIDATION_CONFIG
 
 
+def test_get_validation_unsafe_yaml(fs):
+    unsafe_yaml = "!!python/object/apply:eval ['print(\"hello\")']"
+    validation_path = gcs_helper.get_validation_path("unsafe_validation.yaml")
+    fs.create_file(validation_path, contents=unsafe_yaml)
+
+    with pytest.raises(yaml.constructor.ConstructorError):
+        cli_tools.get_validation("unsafe_validation.yaml")
+
+
 def test_find_tables_config():
     parser = cli_tools.configure_arg_parser()
     args = parser.parse_args(CLI_FIND_TABLES_ARGS)
