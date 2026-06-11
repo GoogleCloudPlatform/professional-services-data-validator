@@ -187,7 +187,7 @@ TEST_VALIDATION_CONFIG = {
             "schema_name": "bigquery-public-data.new_york_citibike",
             "target_schema_name": "bigquery-public-data.new_york_citibike",
             "target_table_name": "citibike_trips",
-            "labels": [],
+            "labels": [("name", "test_run")],
             "threshold": 0.0,
             "format": consts.FORMAT_TYPE_TABLE,
             "filters": [],

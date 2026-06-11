@@ -53,7 +53,15 @@ import uuid
 import os
 import math
 from typing import Dict, List, Optional, TYPE_CHECKING
+import yaml
 from yaml import Dumper, dump, safe_load
+
+
+def _construct_yaml_tuple(loader, node):
+    return tuple(loader.construct_sequence(node))
+
+
+yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/tuple", _construct_yaml_tuple)
 
 from data_validation import (
     clients,
