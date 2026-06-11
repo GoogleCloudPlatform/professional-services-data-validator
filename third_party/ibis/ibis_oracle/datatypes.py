@@ -23,6 +23,7 @@ import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy.datatypes import AlchemyType
 import oracledb
 
+
 class OracleType(AlchemyType):
     dialect = "oracle"
 
@@ -31,18 +32,28 @@ class OracleType(AlchemyType):
         if isinstance(dtype, dt.String):
             return sa.sql.sqltypes.String(length=4000)
         elif isinstance(dtype, dt.Float32):
-            return sat.Float(precision=23).with_variant(
-                oracle.FLOAT(), "oracle"
-            )
+            return sat.Float(precision=23).with_variant(oracle.FLOAT(), "oracle")
         elif isinstance(dtype, dt.Float64):
-            return sat.Float(precision=53).with_variant(
-                oracle.FLOAT(), "oracle"
-            )
+            return sat.Float(precision=53).with_variant(oracle.FLOAT(), "oracle")
         return super().from_ibis(dtype)
 
     @classmethod
     def to_ibis(cls, typ: sat.TypeEngine, nullable: bool = True) -> dt.DataType:
-        if isinstance(typ, (oracle.CLOB, oracle.NCLOB, oracle.LONG, oracle.ROWID, oracle.VARCHAR2, oracle.VARCHAR, oracle.NVARCHAR, oracle.NVARCHAR2, oracle.CHAR, oracle.NCHAR)):
+        if isinstance(
+            typ,
+            (
+                oracle.CLOB,
+                oracle.NCLOB,
+                oracle.LONG,
+                oracle.ROWID,
+                oracle.VARCHAR2,
+                oracle.VARCHAR,
+                oracle.NVARCHAR,
+                oracle.NVARCHAR2,
+                oracle.CHAR,
+                oracle.NCHAR,
+            ),
+        ):
             return dt.String(nullable=nullable)
         elif isinstance(typ, oracle.NUMBER):
             return dt.Decimal(typ.precision, typ.scale, nullable=nullable)

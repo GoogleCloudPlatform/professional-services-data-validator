@@ -41,6 +41,7 @@ from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arit
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
+
 # In Ibis 7.1.0, BigQueryType handles type conversion natively.
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
 from ibis.backends.bigquery.registry import bigquery_cast
@@ -50,7 +51,14 @@ from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
 from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
-from ibis.expr.types import BinaryValue, NumericValue, StringValue, DateValue, TimeValue, TimestampValue
+from ibis.expr.types import (
+    BinaryValue,
+    NumericValue,
+    StringValue,
+    DateValue,
+    TimeValue,
+    TimestampValue,
+)
 
 # Do not remove these lines, they trigger patching of Ibis code.
 # We patch Ibis native compilers/backends directly.
@@ -95,6 +103,7 @@ except Exception:
 
 import ibis.backends.pandas.execution.constants as pandas_constants
 
+
 class PandasTypeMapping(dict):
     def __getitem__(self, key):
         if isinstance(key, dt.Decimal):
@@ -127,7 +136,10 @@ class PandasTypeMapping(dict):
                     return True
         return False
 
-pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE = PandasTypeMapping(pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE)
+
+pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE = PandasTypeMapping(
+    pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE
+)
 
 
 # Cast of datetime64 NaT to int64 and then in seconds results in the value below.
@@ -157,7 +169,6 @@ class ToChar(ops.Value):
 class RawSQL(ops.Comparison):
     left: ops.Value[dt.String]
     right: ops.Value[dt.String]
-
 
 
 def compile_binary_length(binary_value):
@@ -366,6 +377,7 @@ def bigquery_format_hashbytes(translator, op):
     else:
         raise ValueError(f"unexpected value for 'how': {op.how}")
 
+
 def bigquery_strftime(translator, op):
     arg = op.arg
     format_str = op.format_str
@@ -404,7 +416,10 @@ def bigquery_format_binary_length(translator, op):
 
 # --- Impala Custom Handlers ---
 def impala_sa_cast(t, op):
-    from ibis.backends.base.sql.registry import type_to_sql_string as base_type_to_sql_string
+    from ibis.backends.base.sql.registry import (
+        type_to_sql_string as base_type_to_sql_string,
+    )
+
     arg = op.arg
     typ = op.to
     arg_dtype = arg.output_dtype
@@ -420,9 +435,11 @@ def impala_sa_cast(t, op):
     else:
         return cast_expr
 
+
 def impala_sa_ifnull(t, op):
     arg_formatted = t.translate(op.arg)
     return f"coalesce({arg_formatted},'{op.ifnull_expr.value}')"
+
 
 def impala_sa_format_hashbytes(translator, op):
     arg = translator.translate(op.arg)
@@ -433,8 +450,10 @@ def impala_sa_format_hashbytes(translator, op):
     else:
         raise ValueError(f"unexpected value for 'how': {op.how}")
 
+
 def impala_sa_strftime(t, op):
     import sqlglot as sg
+
     hive_dialect = sg.dialects.hive.Hive
     if (time_mapping := getattr(hive_dialect, "TIME_MAPPING", None)) is None:
         time_mapping = hive_dialect.time_mapping
@@ -451,12 +470,14 @@ def postgres_sa_format_hashbytes(translator, op):
     hash_func = sa.func.sha256(convert)
     return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
 
+
 def postgres_sa_epoch_seconds(translator, op):
     arg = translator.translate(op.arg)
     return sa.cast(
         sa.extract("epoch", sa.func.date_trunc(sa.sql.literal_column("'second'"), arg)),
         sa.BIGINT,
     )
+
 
 def postgres_sa_cast(t, op):
     arg = op.arg
@@ -481,6 +502,7 @@ def postgres_sa_cast(t, op):
         return sa.func.decode(sa_arg, sa.literal("hex"))
     return sa_fixed_cast(t, op)
 
+
 def postgres_sa_format_padded_char_length(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.char_length(
@@ -494,6 +516,7 @@ def postgres_sa_format_padded_char_length(translator, op):
 # --- MSSQL Custom Handlers ---
 def mssql_sa_table_column(t, op):
     from ibis.backends.base.sql.alchemy.registry import get_col
+
     ctx = t.context
     table = op.table
     sa_table = get_sqla_table(ctx, table)
@@ -513,6 +536,7 @@ def mssql_sa_table_column(t, op):
         return sa.select(subq.c[out_expr.name])
     return out_expr
 
+
 def mssql_strftime(translator, op):
     arg, pattern = map(translator.translate, op.args)
     supported_convert_styles = {
@@ -531,19 +555,23 @@ def mssql_strftime(translator, op):
         arg = sa.cast(arg, sa.types.DateTime)
     return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
 
+
 def mssql_sa_epoch_seconds(translator, op):
     arg = translator.translate(op.arg)
     return sa.cast(
         sa.func.datediff_big(sa.text("s"), "1970-01-01 00:00:00", arg), sa.BIGINT
     )
 
+
 def mssql_sa_format_string_length(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.cast(sa.func.len(sa.func.replace(arg, " ", "_")), sa.BIGINT)
 
+
 def mssql_sa_format_binary_length(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.cast(sa.func.datalength(arg), sa.BIGINT)
+
 
 def mssql_sa_format_hashbytes(translator, op):
     arg = translator.translate(op.arg)
@@ -553,6 +581,7 @@ def mssql_sa_format_hashbytes(translator, op):
         sa.sql.literal_column("CHAR(64)"), hash_func, sa.sql.literal_column("2")
     )
     return sa.func.lower(hash_to_string)
+
 
 def mssql_sa_cast(t, op):
     arg = op.arg
@@ -585,8 +614,10 @@ def mssql_sa_cast(t, op):
         )
     return sa_fixed_cast(t, op)
 
+
 def mssql_sa_format_new_id(t, op):
     return sa.func.NEWID()
+
 
 def mssql_sa_string_join(t, op):
     if len(op.arg) == 1:
@@ -596,6 +627,7 @@ def mssql_sa_string_join(t, op):
         )
     else:
         return sa.func.concat(*map(t.translate, op.arg))
+
 
 def mssql_sa_whitespace_rstrip(t, op):
     sa_arg = t.translate(op.arg)
@@ -696,16 +728,12 @@ if OracleExprTranslator:
         ops.StringLength
     ]
 
-PostgreSQLExprTranslator._registry[ops.HashBytes] = (
-    postgres_sa_format_hashbytes
-)
+PostgreSQLExprTranslator._registry[ops.HashBytes] = postgres_sa_format_hashbytes
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[ops.Cast] = postgres_sa_cast
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = (
-    postgres_sa_epoch_seconds
-)
+PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = postgres_sa_epoch_seconds
 PostgreSQLExprTranslator._registry[PaddedCharLength] = (
     postgres_sa_format_padded_char_length
 )
@@ -776,21 +804,19 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
 if SybaseExprTranslator:
-    SybaseExprTranslator._registry[BinaryLength] = (
-        mssql_sa_format_binary_length
-    )
+    SybaseExprTranslator._registry[BinaryLength] = mssql_sa_format_binary_length
     SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    SybaseExprTranslator._registry[PaddedCharLength] = (
-        mssql_sa_format_string_length
-    )
+    SybaseExprTranslator._registry[PaddedCharLength] = mssql_sa_format_string_length
 
 # Patch TemporalValue to support strftime in custom calculations
 import ibis.expr.types as et
+
 
 class TemporalValue:
     @staticmethod
     def strftime(expr, format_str):
         return expr.strftime(format_str)
+
 
 et.TemporalValue = TemporalValue
 
@@ -806,7 +832,8 @@ try:
 
     def dvt_compute_row_reduction(func, values, **kwargs):
         final_sizes = {
-            len(x) for x in values
+            len(x)
+            for x in values
             if isinstance(x, Sized) and not isinstance(x, (str, bytes, dict))
         }
         if not final_sizes:
@@ -845,6 +872,7 @@ def bq_extract_epoch_seconds(translator, op):
         return f"UNIX_SECONDS(CAST({arg_formatted} AS TIMESTAMP))"
     return f"UNIX_SECONDS({arg_formatted})"
 
+
 BigQueryExprTranslator._registry[ops.ExtractEpochSeconds] = bq_extract_epoch_seconds
 
 
@@ -862,6 +890,7 @@ try:
         try:
             return s.astype(pandas_type).dt.normalize()
         except Exception:
+
             def to_date_safe(x):
                 if isinstance(x, date):
                     return x
@@ -872,10 +901,12 @@ try:
                     except Exception:
                         try:
                             import dateutil.parser
+
                             return dateutil.parser.parse(x).date()
                         except Exception:
                             return x
                 return x
+
             return s.map(to_date_safe)
 
     fp.PandasData.convert_Date = dvt_convert_Date
@@ -887,7 +918,7 @@ except Exception:
 try:
     from ibis.backends.bigquery import Backend as BigQueryBackend
     import third_party.ibis.ibis_bigquery as ibq
-    
+
     BigQueryBackend.do_connect = ibq.Backend.do_connect
     BigQueryBackend._cursor_to_arrow = ibq.Backend._cursor_to_arrow
     BigQueryBackend._parse_project_and_dataset = ibq.Backend._parse_project_and_dataset
@@ -895,9 +926,3 @@ try:
     BigQueryBackend.dvt_list_tables = ibq.Backend.dvt_list_tables
 except Exception:
     pass
-
-
-
-
-
-

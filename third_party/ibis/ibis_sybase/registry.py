@@ -25,8 +25,10 @@ from ibis.backends.base.sql.alchemy.registry import _literal as base_literal
 from ibis.backends.base.sql.alchemy import get_sqla_table
 from ibis.backends.base.sql.alchemy.registry import get_col
 
+
 def sa_format_new_id(t, op):
     return sa.func.NEWID()
+
 
 def sa_table_column(t, op):
     ctx = t.context

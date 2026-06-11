@@ -195,7 +195,6 @@ def _chunks_to_pandas_array(chunks):
     return target
 
 
-
 def update_query_with_limit(query):
     limit_pattern = re.compile(r"LIMIT\s+\d+(\s+OFFSET\s+\d+)?\s*;?\s*$", re.IGNORECASE)
     last_limit_match = limit_pattern.search(query)

@@ -54,9 +54,7 @@ class Backend(BigQueryBackend):
         location: str = None,
     ):
         """Copy of Ibis v5 BigQuery do_connect() customized for DVT, see original method for docs."""
-        client_project_id = (
-            client.project if client is not None else None
-        )
+        client_project_id = client.project if client is not None else None
         default_project_id = None
 
         if client is None and credentials is None:
@@ -103,7 +101,6 @@ class Backend(BigQueryBackend):
             self.client = client
         self.partition_column = partition_column
         self.storage_client = storage_client
-
 
     def _cursor_to_arrow(
         self,

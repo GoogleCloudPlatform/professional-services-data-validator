@@ -230,7 +230,9 @@ class Backend(BaseAlchemyBackend):
         assert (database and table) or query, "We should never receive all args=None"
         if database and table:
             db_tables = self.list_tables(database=database)
-            matched_table = next((t for t in db_tables if t.lower() == table.lower()), table.upper())
+            matched_table = next(
+                (t for t in db_tables if t.lower() == table.lower()), table.upper()
+            )
             dialect = self.con.dialect
             preparer = dialect.identifier_preparer
             source = f"{preparer.quote(database, None)}.{preparer.quote(matched_table, None)}"
