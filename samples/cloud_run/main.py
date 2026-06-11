@@ -128,6 +128,13 @@ def generate_column_config():
                 mimetype="text/plain",
             )
 
+        if not getattr(args, "result_handler", None):
+            return flask.Response(
+                "Bad Request: result_handler is a mandatory parameter",
+                status=400,
+                mimetype="text/plain",
+            )
+
         config_managers = build_config_managers_from_args(args)
 
         if args.config_file:
@@ -173,6 +180,13 @@ def generate_row_config():
         ):
             return flask.Response(
                 "Bad Request: either config_file or config_dir is a mandatory parameter",
+                status=400,
+                mimetype="text/plain",
+            )
+
+        if not getattr(args, "result_handler", None):
+            return flask.Response(
+                "Bad Request: result_handler is a mandatory parameter",
                 status=400,
                 mimetype="text/plain",
             )
@@ -235,6 +249,13 @@ def generate_custom_query_row_config():
         if not getattr(args, "target_query", None):
             return flask.Response(
                 "Bad Request: target_query is a mandatory parameter",
+                status=400,
+                mimetype="text/plain",
+            )
+
+        if not getattr(args, "result_handler", None):
+            return flask.Response(
+                "Bad Request: result_handler is a mandatory parameter",
                 status=400,
                 mimetype="text/plain",
             )
