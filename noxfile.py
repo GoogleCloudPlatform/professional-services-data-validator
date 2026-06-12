@@ -40,7 +40,7 @@ BLACK_PATHS = (
     "noxfile.py",
     "setup.py",
 )
-LINT_PACKAGES = ["flake8", "black==26.1.0"]
+LINT_PACKAGES = ["flake8", "black==26.5.1"]
 UNIT_PACKAGES = ["pyfakefs", "freezegun", "teradatasql"]
 
 
@@ -309,10 +309,7 @@ def integration_db2(session):
     """Run DB2 integration tests.
     Ensure DB2 validation is running as expected.
     """
-    # TODO Remove dependency "ibm-db<3.2.7" below when working on issue-1591.
-    _setup_session_requirements(
-        session, extra_packages=["ibm-db-sa<0.4.2", "ibm-db<3.2.7"]
-    )
+    _setup_session_requirements(session, extra_packages=["ibm-db-sa", "ibm-db>=3.2.8"])
 
     expected_env_vars = [
         "PROJECT_ID",
