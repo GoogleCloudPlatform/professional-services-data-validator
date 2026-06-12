@@ -56,11 +56,6 @@ CUSTOM_QUERY_DIR_SUPPORT_ERROR = (
 )
 
 
-CUSTOM_QUERY_DIR_SUPPORT_ERROR = (
-    "Saving custom-query validations to directory configs is not supported."
-)
-
-
 def _get_arg_config_file(args):
     """Return String YAML config file path."""
     if not args.config_file:
