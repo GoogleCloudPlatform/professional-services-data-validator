@@ -53,7 +53,7 @@ import uuid
 import os
 import math
 from typing import Dict, List, Optional, TYPE_CHECKING
-from yaml import Dumper, Loader, dump, load
+import yaml
 
 from data_validation import (
     clients,
@@ -68,6 +68,13 @@ from data_validation.validation_builder import list_to_sublists
 
 if TYPE_CHECKING:
     from argparse import Namespace
+
+
+def _construct_yaml_tuple(loader, node):
+    return tuple(loader.construct_sequence(node))
+
+
+yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/tuple", _construct_yaml_tuple)
 
 
 CONNECTION_SOURCE_FIELDS = {
@@ -1262,7 +1269,7 @@ def store_validation(validation_file_name, config, include_log=True):
     validation_path = gcs_helper.get_validation_path(validation_file_name)
 
     if validation_file_name.endswith(".yaml"):
-        config_str = dump(config, Dumper=Dumper)
+        config_str = yaml.dump(config, Dumper=yaml.Dumper)
     elif validation_file_name.endswith("json"):
         config_str = json.dumps(config)
     else:
@@ -1279,7 +1286,7 @@ def get_validation(name: str, config_dir: str = None):
         validation_path = gcs_helper.get_validation_path(name)
 
     validation_bytes = gcs_helper.read_file(validation_path)
-    return load(validation_bytes, Loader=Loader)
+    return yaml.safe_load(validation_bytes)
 
 
 def list_validations(config_dir="./"):
