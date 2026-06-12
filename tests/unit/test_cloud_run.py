@@ -56,6 +56,7 @@ def test_generate_custom_query_row_config(mock_store, mock_build, client):
         "source-query": "SELECT * FROM my_table",
         "target-query": "SELECT * FROM target_table",
         "config-file": "test_config.yaml",
+        "result-handler": "my_conn.my_dataset.my_table",
     }
 
     response = client.post("/generate_custom_query_row_config", json=payload)
@@ -75,9 +76,7 @@ def test_generate_custom_query_row_config(mock_store, mock_build, client):
 
 @mock.patch("main.build_config_managers_from_args")
 @mock.patch("main.store_yaml_config_file")
-def test_generate_custom_query_row_config_missing_file(
-    mock_store, mock_build, client
-):
+def test_generate_custom_query_row_config_missing_file(mock_store, mock_build, client):
     payload = {
         "source-conn": "my_source",
         "target-conn": "my_target",
@@ -122,3 +121,66 @@ def test_generate_custom_query_row_config_missing_target_query(
     response = client.post("/generate_custom_query_row_config", json=payload)
     assert response.status_code == 400
     assert b"Bad Request: target_query is a mandatory parameter" in response.data
+
+
+@mock.patch("data_validation.state_manager.StateManager")
+@mock.patch("data_validation.clients.get_data_client_ctx")
+def test_oracle_check_dbms_crypto_success(
+    mock_get_client_ctx, mock_state_manager, client
+):
+    # Mock StateManager
+    mock_mgr = mock.MagicMock()
+    mock_state_manager.return_value = mock_mgr
+    mock_mgr.get_connection_config.return_value = {"source_type": "Oracle"}
+
+    # Mock client and cursor
+    mock_client = mock.MagicMock()
+    mock_cursor = mock.MagicMock()
+    mock_client.raw_sql.return_value = mock_cursor
+
+    # Mock context manager
+    mock_get_client_ctx.return_value.__enter__.return_value = mock_client
+
+    payload = {"connection_name": "my_oracle_conn"}
+    response = client.post("/oracle_check_dbms_crypto", json=payload)
+
+    assert response.status_code == 200
+    assert response.data == b"OK"
+    mock_client.raw_sql.assert_called_once_with(
+        "SELECT DBMS_CRYPTO.HASH(TO_CLOB('DVT'),4) FROM dual"
+    )
+    mock_cursor.fetchone.assert_called_once()
+    mock_cursor.close.assert_called_once()
+
+
+@mock.patch("data_validation.state_manager.StateManager")
+@mock.patch("data_validation.clients.get_data_client_ctx")
+def test_oracle_check_dbms_crypto_failure(
+    mock_get_client_ctx, mock_state_manager, client
+):
+    # Mock StateManager
+    mock_mgr = mock.MagicMock()
+    mock_state_manager.return_value = mock_mgr
+    mock_mgr.get_connection_config.return_value = {"source_type": "Oracle"}
+
+    # Mock client to raise exception on raw_sql
+    mock_client = mock.MagicMock()
+    mock_client.raw_sql.side_effect = Exception(
+        'ORA-00904: "SYS"."DBMS_CRYPTO": invalid identifier'
+    )
+
+    # Mock context manager
+    mock_get_client_ctx.return_value.__enter__.return_value = mock_client
+
+    payload = {"connection_name": "my_oracle_conn"}
+    response = client.post("/oracle_check_dbms_crypto", json=payload)
+
+    assert response.status_code == 500
+    assert b'ORA-00904: "SYS"."DBMS_CRYPTO": invalid identifier' in response.data
+
+
+def test_oracle_check_dbms_crypto_missing_connection_name(client):
+    payload = {}
+    response = client.post("/oracle_check_dbms_crypto", json=payload)
+    assert response.status_code == 400
+    assert b"Bad Request: connection_name is a required parameter" in response.data

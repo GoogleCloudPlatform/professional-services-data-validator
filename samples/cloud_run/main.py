@@ -410,5 +410,42 @@ def bulk_table_metadata():
         )
 
 
+@app.route("/oracle_check_dbms_crypto", methods=["POST"])
+def oracle_check_dbms_crypto():
+    try:
+        payload = _get_request_content(flask.request)
+        connection_name = payload.get("connection_name")
+
+        if not connection_name:
+            return flask.Response(
+                "Bad Request: connection_name is a required parameter",
+                status=400,
+                mimetype="text/plain",
+            )
+
+        mgr = state_manager.StateManager()
+        connection_config = mgr.get_connection_config(connection_name)
+
+        from data_validation import clients
+
+        with clients.get_data_client_ctx(connection_config) as client:
+            sql = "SELECT DBMS_CRYPTO.HASH(TO_CLOB('DVT'),4) FROM dual"
+            cursor = client.raw_sql(sql)
+            cursor.fetchone()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+
+        return flask.Response("OK", status=200, mimetype="text/plain")
+    except Exception as e:
+        logging.exception("An error occurred during oracle_check_dbms_crypto")
+        return flask.Response(
+            str(e),
+            status=500,
+            mimetype="text/plain",
+        )
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
