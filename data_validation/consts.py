@@ -195,8 +195,8 @@ FAILED_PRESENT_IN_BOTH_TABLES = "failed_rows_present_in_both_source_and_target"
 
 # Summary stats of Validation results (Generic)
 TOTAL_VALIDATIONS = "total_validations"
-TOTAL_VALIDATIONS_SUCCESS = "total_validations_success"
-TOTAL_VALIDATIONS_FAIL = "total_validations_fail"
+TOTAL_VALIDATIONS_SUCCESS = "total_success_validation_status"
+TOTAL_VALIDATIONS_FAIL = "total_fail_validation_status"
 
 # Combiner only constants
 COMBINER_TABLE_NAME = "dvt_table_name"
