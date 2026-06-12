@@ -2,10 +2,10 @@
 set -e
 
 # Variables
-PROJECT_ID="pso-kokoro-resources"
+PROJECT_ID="XXXXXXXXXXX"
 REGION="us-central1"
 NETWORK="default"
-BUCKET_NAME="pso-kokoro-mudupalli" # Replace with your bucket
+BUCKET_NAME="XXXXXXXXXXXXXX" # Replace with your bucket
 
 # New Instance Names
 NEW_MYSQL_INSTANCE="data-validator-mysql-v8"
