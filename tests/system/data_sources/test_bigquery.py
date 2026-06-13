@@ -486,7 +486,11 @@ def test_numeric_types():
         )
 
 
-def test_cli_store_yaml_then_run_gcs():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_cli_store_yaml_then_run_gcs(mock_conn):
     """Test storing and retrieving validation YAMLs in GCS."""
     # Store BQ Connection
     _store_bq_conn()
@@ -512,7 +516,11 @@ def test_cli_store_yaml_then_run_gcs():
     main.run_validations(run_config_args, config_managers)
 
 
-def test_cli_store_yaml_then_run_local():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_cli_store_yaml_then_run_local(mock_conn):
     """Test storing and retrieving validation YAML locally."""
     # Store BQ Connection
     _store_bq_conn()
@@ -1018,12 +1026,16 @@ def test_bigquery_row():
     assert df["source_agg_value"][0] == df[consts.TARGET_AGG_VALUE][0]
 
 
-def test_custom_query():
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    return_value=BQ_CONN,
+)
+def test_custom_query(mock_conn):
     """Test custom query validation config with row-level comparison."""
     SAMPLE_CUSTOMQUERY_CONFIG = {
         "type": "Custom-query",
-        "source_conn_name": BQ_CONN_NAME,
-        "target_conn_name": BQ_CONN_NAME,
+        "source_conn_name": "mock-conn",
+        "target_conn_name": "mock-conn",
         "table_name": None,
         "schema_name": None,
         "target_schema_name": None,

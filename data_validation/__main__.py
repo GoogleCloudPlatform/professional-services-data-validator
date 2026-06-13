@@ -26,6 +26,7 @@ from data_validation import (
     clients,
     consts,
     exceptions,
+    gcs_helper,
     raw_query,
     state_manager,
     util,
@@ -49,6 +50,10 @@ LOG_LEVEL_MAP = {
     "ERROR": logging.ERROR,
     "CRITICAL": logging.CRITICAL,
 }
+
+CUSTOM_QUERY_DIR_SUPPORT_ERROR = (
+    "Saving custom-query validations to directory configs is not supported."
+)
 
 
 def _get_arg_config_file(args):
@@ -579,6 +584,58 @@ def store_json_config_file(args, config_managers):
     cli_tools.store_validation(config_file_path, json_config)
 
 
+def store_config_dir(args, config_managers, is_json=False):
+    """Build and store validation configs inside a directory (as YAML or JSON files).
+
+    Args:
+        args (Namespace): User specified Arguments.
+        config_managers (list[ConfigManager]): List of config manager instances.
+        is_json (bool): If True, store as JSON files. Otherwise, store as YAML.
+    """
+    if any(cm.validation_type == consts.CUSTOM_QUERY for cm in config_managers):
+        raise ValueError(CUSTOM_QUERY_DIR_SUPPORT_ERROR)
+
+    config_dir = args.config_dir_json if is_json else args.config_dir
+
+    # Enforce empty directory to prevent accidental overwrites (Abort and Fail)
+    if gcs_helper._is_gcs_path(config_dir):
+        if gcs_helper.list_gcs_directory(config_dir):
+            raise ValueError(f"GCS directory {config_dir} is not empty. Aborting.")
+    else:
+        if os.path.exists(config_dir) and os.listdir(config_dir):
+            raise ValueError(f"Directory {config_dir} is not empty. Aborting.")
+
+    seen_names = {}
+    extension = "json" if is_json else "yaml"
+    logging.info(f"Writing validation configs to directory: {config_dir}")
+
+    for config_manager in config_managers:
+        source_schema = config_manager.source_schema
+        source_table = config_manager.source_table
+
+        base_name = f"{source_schema}.{source_table}" if source_schema else source_table
+
+        # Prevent internal collisions within the same execution list
+        if base_name not in seen_names:
+            seen_names[base_name] = 0
+            file_name = f"{base_name}.{extension}"
+        else:
+            seen_names[base_name] += 1
+            file_name = f"{base_name}_{seen_names[base_name]}.{extension}"
+
+        # Format config format matching is_json
+        if is_json:
+            config_to_store = convert_config_to_json([config_manager])
+        else:
+            config_to_store = convert_config_to_yaml(args, [config_manager])
+
+        target_file_path = os.path.join(config_dir, file_name)
+        logging.debug(f"Saving config file: {target_file_path}")
+        cli_tools.store_validation(target_file_path, config_to_store, include_log=True)
+
+    logging.info(f"Success! Validation configs written to directory: {config_dir}")
+
+
 def partition_and_store_config_files(args: "Namespace") -> None:
     """Build multiple YAML Config files using user specified partition logic
 
@@ -615,6 +672,10 @@ def run(args) -> None:
         store_yaml_config_file(args, config_managers)
     elif args.config_file_json:
         store_json_config_file(args, config_managers)
+    elif getattr(args, "config_dir", None):
+        store_config_dir(args, config_managers, is_json=False)
+    elif getattr(args, "config_dir_json", None):
+        store_config_dir(args, config_managers, is_json=True)
     else:
         run_validations(args, config_managers)
 

@@ -187,7 +187,7 @@ TEST_VALIDATION_CONFIG = {
             "schema_name": "bigquery-public-data.new_york_citibike",
             "target_schema_name": "bigquery-public-data.new_york_citibike",
             "target_table_name": "citibike_trips",
-            "labels": [],
+            "labels": [("name", "test_run")],
             "threshold": 0.0,
             "format": consts.FORMAT_TYPE_TABLE,
             "filters": [],
@@ -465,6 +465,20 @@ def test_create_and_list_and_get_validations(caplog, fs):
     # Retrieve the stored validation config
     yaml_config = cli_tools.get_validation("example_validation.yaml")
     assert yaml_config == TEST_VALIDATION_CONFIG
+
+
+def test_get_validation_unsafe_yaml(fs):
+    """Test that get_validation safely rejects unsafe YAML payloads.
+
+    This regression test ensures that !!python/object/apply and other unsafe
+    tags are rejected with a ConstructorError.
+    """
+    unsafe_yaml = "!!python/object/apply:eval ['print(\"hello\")']"
+    validation_path = gcs_helper.get_validation_path("unsafe_validation.yaml")
+    fs.create_file(validation_path, contents=unsafe_yaml)
+
+    with pytest.raises(yaml.constructor.ConstructorError):
+        cli_tools.get_validation("unsafe_validation.yaml")
 
 
 def test_find_tables_config():
@@ -1177,3 +1191,55 @@ def test_check_gt_one_fail(test_input: int):
     """Test _check_positive."""
     with pytest.raises(argparse.ArgumentTypeError):
         _ = cli_tools._check_gt_one(test_input)
+
+
+def test_config_mutually_exclusive_args():
+    parser = cli_tools.configure_arg_parser()
+    base_args = [
+        "validate",
+        "column",
+        "-sc",
+        "source",
+        "-tc",
+        "target",
+        "-tbls",
+        "s.t=s.t",
+    ]
+
+    for arg1, arg2 in [
+        ("-c", "-cj"),
+        ("-c", "-cdir"),
+        ("-c", "-cdirj"),
+        ("-cj", "-cdir"),
+        ("-cj", "-cdirj"),
+        ("-cdir", "-cdirj"),
+    ]:
+        with pytest.raises(SystemExit):
+            parser.parse_args(base_args + [arg1, "path1", arg2, "path2"])
+
+
+def test_custom_query_with_config_dir_errors():
+    parser = cli_tools.configure_arg_parser()
+    base_args = [
+        "validate",
+        "custom-query",
+        "row",
+        "-sc",
+        "source",
+        "-tc",
+        "target",
+        "-sq",
+        "SELECT 1",
+        "-tq",
+        "SELECT 1",
+    ]
+
+    with pytest.raises(SystemExit):
+        cli_tools._check_custom_query_args(
+            parser, parser.parse_args(base_args + ["--config-dir", "dir_path"])
+        )
+
+    with pytest.raises(SystemExit):
+        cli_tools._check_custom_query_args(
+            parser, parser.parse_args(base_args + ["--config-dir-json", "dir_path"])
+        )

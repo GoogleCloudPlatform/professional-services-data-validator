@@ -53,7 +53,7 @@ import uuid
 import os
 import math
 from typing import Dict, List, Optional, TYPE_CHECKING
-from yaml import Dumper, Loader, dump, load
+import yaml
 
 from data_validation import (
     clients,
@@ -68,6 +68,13 @@ from data_validation.validation_builder import list_to_sublists
 
 if TYPE_CHECKING:
     from argparse import Namespace
+
+
+def _construct_yaml_tuple(loader, node):
+    return tuple(loader.construct_sequence(node))
+
+
+yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/tuple", _construct_yaml_tuple)
 
 
 CONNECTION_SOURCE_FIELDS = {
@@ -244,6 +251,17 @@ class deprecate_action(argparse.Action):
 def _check_custom_query_args(parser: argparse.ArgumentParser, parsed_args: "Namespace"):
     # This is where we make additional checks if the arguments provided are what we expect
     # For example, only one of -tbls and custom query options can be provided
+    if (
+        getattr(parsed_args, "command", None) == "validate"
+        and getattr(parsed_args, "validate_cmd", None) == "custom-query"
+    ):
+        if getattr(parsed_args, "config_dir", None) or getattr(
+            parsed_args, "config_dir_json", None
+        ):
+            parser.error(
+                "validate custom-query: directory-based validation storage (--config-dir / --config-dir-json) is not supported for custom-query validations"
+            )
+
     if hasattr(parsed_args, "tables_list") and hasattr(
         parsed_args, "source_query"
     ):  # New Format
@@ -1096,15 +1114,26 @@ def _add_common_arguments(
         help="Path to SA key file for result handler output",
     )
     if not is_generate_partitions:
-        optional_arguments.add_argument(
+        config_group = optional_arguments.add_mutually_exclusive_group()
+        config_group.add_argument(
             "--config-file",
             "-c",
             help="Store the validation config in the YAML File Path specified",
         )
-        optional_arguments.add_argument(
+        config_group.add_argument(
             "--config-file-json",
             "-cj",
             help="Store the validation config in the JSON File Path specified to be used for application use cases",
+        )
+        config_group.add_argument(
+            "--config-dir",
+            "-cdir",
+            help="Store the validation configs as individual YAML files in the specified directory path (GCS or local)",
+        )
+        config_group.add_argument(
+            "--config-dir-json",
+            "-cdirj",
+            help="Store the validation configs as individual JSON files in the specified directory path (GCS or local)",
         )
 
     optional_arguments.add_argument(
@@ -1240,7 +1269,7 @@ def store_validation(validation_file_name, config, include_log=True):
     validation_path = gcs_helper.get_validation_path(validation_file_name)
 
     if validation_file_name.endswith(".yaml"):
-        config_str = dump(config, Dumper=Dumper)
+        config_str = yaml.dump(config, Dumper=yaml.Dumper)
     elif validation_file_name.endswith("json"):
         config_str = json.dumps(config)
     else:
@@ -1257,7 +1286,7 @@ def get_validation(name: str, config_dir: str = None):
         validation_path = gcs_helper.get_validation_path(name)
 
     validation_bytes = gcs_helper.read_file(validation_path)
-    return load(validation_bytes, Loader=Loader)
+    return yaml.safe_load(validation_bytes)
 
 
 def list_validations(config_dir="./"):

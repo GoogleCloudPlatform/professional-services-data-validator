@@ -43,7 +43,7 @@ dependencies = [
     "pydata-google-auth>=1.8.2",
     "PyMySQL>=1.1.1",
     "PyYAML>=6.0.2",
-    "SQLAlchemy>=2.0.49",  # Need 2.0 or higher for oracledb
+    "SQLAlchemy>=2.0.49",  # Fixes warning when using MS SQL 2025
     "tabulate>=0.9.0",
 ]
 
@@ -51,7 +51,7 @@ extras_require = {
     "apache-airflow": "1.10.11",
     "pyspark": "3.0.0",
     "develop": [
-        "black==26.1.0",
+        "black==26.5.1",
         "flake8",
         "freezegun",
         "pyfakefs",
