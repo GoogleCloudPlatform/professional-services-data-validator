@@ -18,8 +18,8 @@ import pytest
 
 from google.auth import credentials
 import pandas
-import ibis.backends.pandas
-from ibis.backends.pandas import BasePandasBackend as PandasBackend
+import ibis.backends.duckdb
+from ibis.backends.duckdb import Backend as DuckDBBackend
 
 from data_validation import clients, consts, exceptions
 
@@ -36,7 +36,7 @@ except Exception:
 
 TABLE_NAME = "my_table"
 DATA = [{"a": 1, "b": 2}]
-TABLES_RESULT = [(None, TABLE_NAME)]
+TABLES_RESULT = [("memory", TABLE_NAME)]
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""
@@ -70,16 +70,17 @@ def _create_table_file(table_path, data):
 
 def _get_pandas_client():
     df = pandas.DataFrame(DATA)
-    pandas_client = ibis.pandas.connect({TABLE_NAME: df})
+    con = ibis.duckdb.connect()
+    con.create_table(TABLE_NAME, df)
 
-    return pandas_client
+    return con
 
 
 def test_get_all_tables():
     """Test get all tables util."""
     client = _get_pandas_client()
     all_tables = clients.get_all_tables(client)
-
+    all_tables = [t for t in all_tables if not (t[1] and t[1].startswith("_ibis_pandas_memtable_"))]
     assert all_tables == TABLES_RESULT
 
 
@@ -114,7 +115,7 @@ def test_get_pandas_data_client():
     _create_table_file(SOURCE_TABLE_FILE_PATH, JSON_DATA)
     ibis_client = clients.get_data_client(conn_config)
 
-    assert isinstance(ibis_client, PandasBackend)
+    assert isinstance(ibis_client, DuckDBBackend)
 
 
 if ibm_db_sa:

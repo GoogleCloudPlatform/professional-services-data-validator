@@ -516,9 +516,10 @@ def teardown_module(module):
 
 def _get_pandas_client():
     df = pandas.DataFrame([{"a": 1, "b": 2}])
-    pandas_client = ibis.pandas.connect({"my_table": df})
+    con = ibis.duckdb.connect()
+    con.create_table("my_table", df)
 
-    return pandas_client
+    return con
 
 
 def _generate_fake_data(

@@ -20,7 +20,8 @@ import pytest
 from third_party.ibis.ibis_addon import operations
 
 TABLE_DF = pandas.DataFrame([{"column": "value"}])
-CLIENT = ibis.pandas.connect({"table": TABLE_DF})
+CLIENT = ibis.duckdb.connect()
+CLIENT.create_table("table", TABLE_DF)
 WHERE_FILTER = "id > 100"
 
 SECONDS_IN_A_DAY = 60 * 60 * 24

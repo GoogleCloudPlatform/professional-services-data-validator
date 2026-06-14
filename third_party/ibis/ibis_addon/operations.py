@@ -945,3 +945,33 @@ try:
     SqlglotMySQLType._from_sqlglot_TIMESTAMP = _from_sqlglot_timestamp_patched
 except Exception:
     pass
+
+
+# Patch ExtractEpochSeconds return type to int64 to prevent overflows for tricky dates
+ops.ExtractEpochSeconds.dtype = dt.int64
+
+# Register DuckDB translation of ExtractEpochSeconds to use EPOCH casted to BIGINT
+try:
+    from ibis.backends.duckdb.compiler import DuckDBSQLExprTranslator
+    def duckdb_sa_epoch_seconds(translator, op):
+        arg = translator.translate(op.arg)
+        return sa.cast(sa.func.epoch(arg), sa.BIGINT)
+
+    DuckDBSQLExprTranslator._registry[ops.ExtractEpochSeconds] = duckdb_sa_epoch_seconds
+
+    def duckdb_sa_cast(t, op):
+        arg = op.arg
+        typ = op.to
+        arg_dtype = arg.dtype
+
+        sa_arg = t.translate(arg)
+        if arg_dtype.is_binary() and typ.is_string():
+            return sa.func.lower(sa.func.hex(sa_arg))
+
+        return sa_fixed_cast(t, op)
+
+    DuckDBSQLExprTranslator._registry[ops.Cast] = duckdb_sa_cast
+except Exception:
+    pass
+
+

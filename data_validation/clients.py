@@ -206,9 +206,23 @@ def get_pandas_client(table_name, file_path, file_type):
     else:
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
-    pandas_client = ibis.pandas.connect({table_name: df})
+    import ibis
+    if df.empty:
+        df = df.copy()
+        for col in df.columns:
+            df[col] = df[col].astype("string")
+    else:
+        schema = ibis.memtable(df).schema()
+        null_cols = [col for col, dtype in schema.items() if dtype.is_null()]
+        if null_cols:
+            df = df.copy()
+            for col in null_cols:
+                df[col] = df[col].astype("string")
 
-    return pandas_client
+    con = ibis.duckdb.connect()
+    con.create_table(table_name, df)
+
+    return con
 
 
 def is_sqlalchemy_backend(client):
@@ -248,8 +262,8 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
         "sybase",
     ]:
         return client.table(table_name, database=database_name, schema=schema_name)
-    elif client.name == "pandas":
-        return client.table(table_name, schema=schema_name)
+    elif client.name in ["pandas", "duckdb"]:
+        return client.table(table_name)
     else:
         return client.table(table_name, database=schema_name)
 
@@ -271,7 +285,9 @@ def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Sch
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if is_sqlalchemy_backend(client):
+    if client.name in ["pandas", "duckdb"]:
+        return client.table(table_name).schema()
+    elif is_sqlalchemy_backend(client):
         return client.table(table_name, schema=schema_name).schema()
     elif client.name == "bigquery":
         database_name = None
@@ -307,7 +323,7 @@ def list_tables(client, schema_name, tables_only=True):
     """Return a list of tables in the DB schema."""
     fn = (
         client.dvt_list_tables
-        if tables_only and hasattr(client, "dvt_list_tables")
+        if tables_only and hasattr(client, "dvt_list_tables") and client.name not in ["pandas", "duckdb"]
         else client.list_tables
     )
     if client.name in ["redshift", "snowflake", "pandas"]:

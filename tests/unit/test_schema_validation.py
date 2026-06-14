@@ -84,7 +84,7 @@ RANDOM_STRINGS = ["a", "b", "c", "d"]
 def ibis_pandas():
     import ibis
 
-    return ibis.pandas.connect()
+    return ibis.duckdb.connect()
 
 
 @pytest.fixture
