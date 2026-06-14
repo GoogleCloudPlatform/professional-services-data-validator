@@ -162,7 +162,7 @@ class Backend(BaseSQLBackend):
         sql = query_ast.compile()
         self._log(sql)
 
-        schema = self.ast_schema(query_ast, **kwargs)
+        schema = expr.as_table().schema()
 
         self._register_in_memory_tables(expr)
         db = self.instance.database(self.dataset_id)

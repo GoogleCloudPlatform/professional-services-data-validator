@@ -94,6 +94,9 @@ class Backend(BaseAlchemyBackend):
     def find_db(self):
         return self.url
 
+    def list_databases(self) -> list:
+        return sa.inspect(self.con).get_schema_names()
+
     def _metadata(self, query) -> Iterable[Tuple[str, dt.DataType]]:
         if (
             re.search(r"^\s*SELECT\s", query, flags=re.MULTILINE | re.IGNORECASE)

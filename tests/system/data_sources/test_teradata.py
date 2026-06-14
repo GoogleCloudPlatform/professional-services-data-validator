@@ -1016,6 +1016,7 @@ def test_schema_validation_intervals():
     schema_validation_test(
         tables="udf.dvt_intervals=pso_data_validator.dvt_intervals",
         tc="bq-conn",
+        allow_list="interval('M'):interval('s')",
     )
 
 

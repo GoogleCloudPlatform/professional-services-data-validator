@@ -365,7 +365,6 @@ _operation_registry.update(
         ops.TableColumn: _table_column,
         ops.Strftime: _strftime,
         ops.Cast: _cast,
-        ops.Coalesce: fixed_arity("NVL", 2),
         ops.StringJoin: _string_join,
         ops.ExtractEpochSeconds: _extract_epoch,
         ops.RStrip: _rstrip,

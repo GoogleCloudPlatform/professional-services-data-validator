@@ -231,7 +231,7 @@ class Backend(BaseSQLBackend):
 
         self._log(sql)
 
-        schema = self.ast_schema(query_ast, **kwargs)
+        schema = expr.as_table().schema()
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support

@@ -307,7 +307,7 @@ def list_tables(client, schema_name, tables_only=True):
     """Return a list of tables in the DB schema."""
     fn = (
         client.dvt_list_tables
-        if tables_only and client.name != "pandas"
+        if tables_only and hasattr(client, "dvt_list_tables")
         else client.list_tables
     )
     if client.name in ["redshift", "snowflake", "pandas"]:

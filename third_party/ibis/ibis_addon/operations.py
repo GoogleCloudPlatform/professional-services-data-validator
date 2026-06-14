@@ -662,8 +662,8 @@ def execute_epoch_seconds_new(op, data, **kwargs):
         series = convert(np.int64)
         # We need int64 below because NaT overflows int32.
         return (series // 1_000_000_000).astype(np.int64)
-    except TypeError:
-        # Catch 'TypeError' for large timestamps beyond max datetime64[ns] as per Issue #1053
+    except (TypeError, ValueError):
+        # Catch 'TypeError' or 'ValueError' for large timestamps beyond max datetime64[ns] as per Issue #1053
         # Cast to string instead to work around datetime64[ns] limitation
         series = data.astype("string")
         epoch_series = series.map(string_to_epoch)
@@ -924,5 +924,24 @@ try:
     BigQueryBackend._parse_project_and_dataset = ibq.Backend._parse_project_and_dataset
     BigQueryBackend.list_primary_key_columns = ibq.Backend.list_primary_key_columns
     BigQueryBackend.dvt_list_tables = ibq.Backend.dvt_list_tables
+except Exception:
+    pass
+
+
+# Monkey-patch SqlglotMySQLType._from_sqlglot_DATETIME and TIMESTAMP to accept precision/scale arguments
+try:
+    from ibis.backends.mysql.datatypes import SqlglotMySQLType
+    import ibis.expr.datatypes as dt
+
+    @classmethod
+    def _from_sqlglot_datetime_patched(cls, *args, **kwargs) -> dt.Timestamp:
+        return dt.Timestamp(nullable=cls.default_nullable)
+
+    @classmethod
+    def _from_sqlglot_timestamp_patched(cls, *args, **kwargs) -> dt.Timestamp:
+        return dt.Timestamp(timezone="UTC", nullable=cls.default_nullable)
+
+    SqlglotMySQLType._from_sqlglot_DATETIME = _from_sqlglot_datetime_patched
+    SqlglotMySQLType._from_sqlglot_TIMESTAMP = _from_sqlglot_timestamp_patched
 except Exception:
     pass

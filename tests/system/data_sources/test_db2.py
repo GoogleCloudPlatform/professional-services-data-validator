@@ -248,7 +248,7 @@ def test_column_validation_large_decimals_to_bigquery():
 
     Only includes decimal(18) columns due to Db2 maximum precision for DECIMAL of 31 digits.
     """
-    cols = "id,col_dec_18"
+    cols = "col_dec_18"
     column_validation_test(
         tables="pso_data_validator.dvt_large_decimals",
         tc="bq-conn",

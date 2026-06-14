@@ -71,5 +71,9 @@ def _get_type(column) -> dt.DataType:
         scale = column[5]
         if precision is not None and scale is not None:
             return dt.Decimal(precision, scale)
+        return dt.Decimal()
+
+    if isinstance(typ, type):
+        return typ()
 
     return typ
