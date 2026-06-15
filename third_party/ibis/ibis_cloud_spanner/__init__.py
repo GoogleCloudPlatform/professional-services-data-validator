@@ -130,8 +130,8 @@ class Backend(BaseSQLBackend):
             ]
         return tables
 
-    def dvt_list_tables(self, like=None, database=None):
-        return self.list_tables(like=like, database=database)
+    def dvt_list_tables(self, like=None, database=None, schema=None):
+        return self.list_tables(like=like, database=schema or database)
 
     def exists_table(self, name, database=None):
 

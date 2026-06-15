@@ -618,8 +618,8 @@ def test_generate_report_without_group_by(
                     consts.VALIDATION_TYPE: ["Column"] * 6,
                     consts.AGGREGATION_TYPE: ["count"] * 6,
                     consts.VALIDATION_NAME: ["count"] * 6,
-                    consts.SOURCE_AGG_VALUE: ["2", "4", _NAN, _NAN, "6", "8"],
-                    consts.TARGET_AGG_VALUE: ["1", "3", "5", "7", _NAN, _NAN],
+                    consts.SOURCE_AGG_VALUE: ["2", "4", None, None, "6", "8"],
+                    consts.TARGET_AGG_VALUE: ["1", "3", "5", "7", None, None],
                     consts.GROUP_BY_COLUMNS: [
                         '{"grp_a": "a", "grp_i": "0"}',
                         '{"grp_a": "a", "grp_i": "1"}',

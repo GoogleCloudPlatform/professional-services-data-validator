@@ -186,7 +186,7 @@ def _create_and_populate_table(client, name: str, df: "DataFrame", schema: "ibis
         elif dtype.is_boolean():
             return sa.BOOLEAN
         elif dtype.is_timestamp():
-            return sa.TIMESTAMP
+            return sa.TIMESTAMP(timezone=dtype.timezone is not None)
         elif dtype.is_date():
             return sa.DATE
         elif dtype.is_binary():

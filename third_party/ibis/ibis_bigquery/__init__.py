@@ -147,5 +147,5 @@ class Backend(BigQueryBackend):
         # TODO: Related to issue-1253, it's not clear if this is possible, we should revisit if it becomes a requirement.
         return None
 
-    def dvt_list_tables(self, like=None, database=None):
-        return self.list_tables(like=like, database=database)
+    def dvt_list_tables(self, like=None, database=None, schema=None):
+        return self.list_tables(like=like, database=database, schema=schema)

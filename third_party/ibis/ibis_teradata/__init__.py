@@ -103,9 +103,9 @@ class Backend(BaseSQLBackend):
         tables_df = self._execute(list_table_sql, results=True)
         return list(tables_df.TableName.str.rstrip())
 
-    def dvt_list_tables(self, like=None, database=None) -> list:
+    def dvt_list_tables(self, like=None, database=None, schema=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""
-        return self.list_tables(like=like, database=database, kind_like="T")
+        return self.list_tables(like=like, database=schema or database, kind_like="T")
 
     def _fully_qualified_name(self, name, database):
         if database:

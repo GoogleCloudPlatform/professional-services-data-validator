@@ -192,6 +192,6 @@ class Backend(BaseAlchemyBackend):
             )
             return [_[0] for _ in result.cursor.fetchall()]
 
-    def dvt_list_tables(self, like=None, database=None) -> list:
+    def dvt_list_tables(self, like=None, database=None, schema=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""
-        return self.list_tables(table=like, schema=database, type_like="BASE TABLE")
+        return self.list_tables(table=like, schema=schema or database, type_like="BASE TABLE")

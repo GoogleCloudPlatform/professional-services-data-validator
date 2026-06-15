@@ -179,6 +179,6 @@ class Backend(BaseAlchemyBackend):
         rows = self.raw_sql(list_table_sql).fetchall()
         return [_[2] for _ in rows]
 
-    def dvt_list_tables(self, like=None, database=None) -> list:
+    def dvt_list_tables(self, like=None, database=None, schema=None) -> list:
         """Duplicate of list_tables() but only returning tables in the output."""
-        return self.list_tables(table=like, schema=database, type_like="TABLE")
+        return self.list_tables(table=like, schema=schema or database, type_like="TABLE")

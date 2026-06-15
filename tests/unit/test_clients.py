@@ -36,7 +36,7 @@ except Exception:
 
 TABLE_NAME = "my_table"
 DATA = [{"a": 1, "b": 2}]
-TABLES_RESULT = [("memory", TABLE_NAME)]
+TABLES_RESULT = [("main", TABLE_NAME)]
 
 SOURCE_TABLE_FILE_PATH = "source_table_data.json"
 JSON_DATA = """[{"col_a":0,"col_b":"a"},{"col_a":1,"col_b":"b"}]"""

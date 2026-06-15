@@ -273,7 +273,7 @@ def get_ibis_query(client, query) -> "ir.Table":
     iq = client.sql(query)
     # Normalise all columns in the query to lower case.
     # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/992
-    iq = iq.relabel(dict(zip(iq.columns, [_.lower() for _ in iq.columns])))
+    iq = iq.rename(dict(zip([_.lower() for _ in iq.columns], iq.columns)))
     return iq
 
 
@@ -310,6 +310,11 @@ def get_ibis_query_schema(client, query_str) -> "sch.Schema":
 
 def list_schemas(client):
     """Return a list of schemas in the DB."""
+    if hasattr(client, "list_schemas"):
+        try:
+            return client.list_schemas()
+        except NotImplementedError:
+            pass
     if hasattr(client, "list_databases"):
         try:
             return client.list_databases()
@@ -321,6 +326,7 @@ def list_schemas(client):
 
 def list_tables(client, schema_name, tables_only=True):
     """Return a list of tables in the DB schema."""
+    import inspect
     fn = (
         client.dvt_list_tables
         if tables_only and hasattr(client, "dvt_list_tables") and client.name not in ["pandas", "duckdb"]
@@ -328,7 +334,12 @@ def list_tables(client, schema_name, tables_only=True):
     )
     if client.name in ["redshift", "snowflake", "pandas"]:
         return fn()
-    return fn(database=schema_name)
+
+    sig = inspect.signature(fn)
+    if "schema" in sig.parameters:
+        return fn(schema=schema_name)
+    else:
+        return fn(database=schema_name)
 
 
 def get_all_tables(client, allowed_schemas=None, tables_only=True):
