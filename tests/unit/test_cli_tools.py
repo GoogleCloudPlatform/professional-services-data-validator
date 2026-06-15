@@ -187,7 +187,7 @@ TEST_VALIDATION_CONFIG = {
             "schema_name": "bigquery-public-data.new_york_citibike",
             "target_schema_name": "bigquery-public-data.new_york_citibike",
             "target_table_name": "citibike_trips",
-            "labels": [],
+            "labels": [("name", "test_run")],
             "threshold": 0.0,
             "format": consts.FORMAT_TYPE_TABLE,
             "filters": [],
@@ -465,6 +465,20 @@ def test_create_and_list_and_get_validations(caplog, fs):
     # Retrieve the stored validation config
     yaml_config = cli_tools.get_validation("example_validation.yaml")
     assert yaml_config == TEST_VALIDATION_CONFIG
+
+
+def test_get_validation_unsafe_yaml(fs):
+    """Test that get_validation safely rejects unsafe YAML payloads.
+
+    This regression test ensures that !!python/object/apply and other unsafe
+    tags are rejected with a ConstructorError.
+    """
+    unsafe_yaml = "!!python/object/apply:eval ['print(\"hello\")']"
+    validation_path = gcs_helper.get_validation_path("unsafe_validation.yaml")
+    fs.create_file(validation_path, contents=unsafe_yaml)
+
+    with pytest.raises(yaml.constructor.ConstructorError):
+        cli_tools.get_validation("unsafe_validation.yaml")
 
 
 def test_find_tables_config():
