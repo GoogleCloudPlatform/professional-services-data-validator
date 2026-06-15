@@ -72,6 +72,23 @@ class RecordingBigQueryClient:
         return table_name, database, schema
 
 
+class RecordingSnowflakeTable:
+    def __init__(self, table_name, database=None, schema=None):
+        self.table_name = table_name
+        self.database = database
+        self.schema_name = schema
+
+    def schema(self):
+        return self.table_name, self.database, self.schema_name
+
+
+class RecordingSnowflakeClient:
+    name = "snowflake"
+
+    def table(self, table_name, database=None, schema=None):
+        return RecordingSnowflakeTable(table_name, database=database, schema=schema)
+
+
 def _create_table_file(table_path, data):
     """Write JSON data to given file."""
     with open(table_path, "w") as f:
@@ -138,6 +155,42 @@ def test_get_ibis_table_schema_uses_explicit_bigquery_database():
     )
 
     assert schema == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_splits_snowflake_database_and_schema():
+    client = RecordingSnowflakeClient()
+
+    table = clients.get_ibis_table(client, "SOURCE_DATABASE.PUBLIC", TABLE_NAME)
+
+    assert table.schema() == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
+
+
+def test_get_ibis_table_uses_explicit_snowflake_database():
+    client = RecordingSnowflakeClient()
+
+    table = clients.get_ibis_table(
+        client, "PUBLIC", TABLE_NAME, database_name="SOURCE_DATABASE"
+    )
+
+    assert table.schema() == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
+
+
+def test_get_ibis_table_schema_splits_snowflake_database_and_schema():
+    client = RecordingSnowflakeClient()
+
+    schema = clients.get_ibis_table_schema(client, "SOURCE_DATABASE.PUBLIC", TABLE_NAME)
+
+    assert schema == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
+
+
+def test_get_ibis_table_schema_uses_explicit_snowflake_database():
+    client = RecordingSnowflakeClient()
+
+    schema = clients.get_ibis_table_schema(
+        client, "PUBLIC", TABLE_NAME, database_name="SOURCE_DATABASE"
+    )
+
+    assert schema == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
 
 
 def test_import_oracle_client():
