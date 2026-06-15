@@ -387,15 +387,43 @@ def config_runner(args):
                 if "JOB_COMPLETION_INDEX" in os.environ.keys()
                 else int(os.environ.get("CLOUD_RUN_TASK_INDEX"))
             )
-            config_file_path = (
-                f"{args.config_dir}{job_index:04d}.yaml"
-                if args.config_dir.endswith("/")
-                else f"{args.config_dir}/{job_index:04d}.yaml"
+
+            # Check if total task count is available for dynamic chunking
+            job_count_str = (
+                os.environ.get("JOB_COMPLETION_COUNT") or
+                os.environ.get("CLOUD_RUN_TASK_COUNT")
             )
-            setattr(args, "config_dir", None)
-            setattr(args, "config_file", config_file_path)
-            config_managers = build_config_managers_from_yaml(args, config_file_path)
-            run_validations(args, config_managers)
+
+            if job_count_str:
+                # --- Dynamic Round-Robin Chunking ---
+                job_count = int(job_count_str)
+                all_files = sorted(cli_tools.list_validations(config_dir=args.config_dir))
+
+                # Select the round-robin slice for this task index
+                my_files = [f for idx, f in enumerate(all_files) if idx % job_count == job_index]
+
+                errors = False
+                for file in my_files:
+                    config_managers = build_config_managers_from_yaml(args, file)
+                    try:
+                        logging.info("Currently running the validation for YAML file: %s", file)
+                        run_validations(args, config_managers)
+                    except Exception as e:
+                        errors = True
+                        logging.error("Error '%s' occurred while running config file %s.", str(e), file)
+                if errors:
+                    raise exceptions.ValidationException("Some of the validations raised an exception")
+            else:
+                # --- Legacy 1-to-1 Fallback ---
+                config_file_path = (
+                    f"{args.config_dir}{job_index:04d}.yaml"
+                    if args.config_dir.endswith("/")
+                    else f"{args.config_dir}/{job_index:04d}.yaml"
+                )
+                setattr(args, "config_dir", None)
+                setattr(args, "config_file", config_file_path)
+                config_managers = build_config_managers_from_yaml(args, config_file_path)
+                run_validations(args, config_managers)
         else:
             if args.kube_completions:
                 logging.warning(

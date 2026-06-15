@@ -370,6 +370,83 @@ def test_config_runner_4(mock_args, mock_list, mock_build, mock_run, caplog):
     assert e_info.value.args[0] == "Some of the validations raised an exception"
 
 
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["e.yaml", "c.yaml", "a.yaml", "d.yaml", "b.yaml"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_dynamic_chunking(mock_args, mock_list, mock_build, mock_run, caplog):
+    """Test dynamic round-robin chunking in Kubernetes Completion Environment.
+    With job_count=3 and job_index=1, and 5 files:
+    Sorted files: a.yaml, b.yaml, c.yaml, d.yaml, e.yaml
+    Task 1 should get: b.yaml (idx 1), e.yaml (idx 4)
+    """
+    caplog.set_level(logging.INFO)
+    os.environ["JOB_COMPLETION_INDEX"] = "1"
+    os.environ["JOB_COMPLETION_COUNT"] = "3"
+    try:
+        args = cli_tools.get_parsed_args()
+        caplog.clear()
+        main.config_runner(args)
+
+        # Assert no warnings, check info logs
+        assert "Running in parallel completions mode with dynamic chunking." in caplog.text
+        assert "Task 1 of 3. Assigned 2 of 5 files." in caplog.text
+
+        # Assert validations called twice for the correct files in round-robin order
+        assert mock_run.call_count == 2
+        # Call 1: b.yaml
+        assert mock_build.call_args_list[0][0][1] == "b.yaml"
+        # Call 2: e.yaml
+        assert mock_build.call_args_list[1][0][1] == "e.yaml"
+    finally:
+        del os.environ["JOB_COMPLETION_INDEX"]
+        del os.environ["JOB_COMPLETION_COUNT"]
+
+
+@mock.patch("data_validation.__main__.run_validations")
+@mock.patch(
+    "data_validation.__main__.build_config_managers_from_yaml",
+    return_value=["config dict from one file"],
+)
+@mock.patch(
+    "data_validation.cli_tools.list_validations",
+    return_value=["e.yaml", "c.yaml", "a.yaml", "d.yaml", "b.yaml"],
+)
+@mock.patch(
+    "argparse.ArgumentParser.parse_args",
+    return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
+)
+def test_config_runner_dynamic_chunking_failures(mock_args, mock_list, mock_build, mock_run, caplog):
+    """Test dynamic round-robin chunking with failures in one of the validations."""
+    mock_run.side_effect = [ValueError("Boom!"), 10]
+    caplog.set_level(logging.ERROR)
+    os.environ["JOB_COMPLETION_INDEX"] = "1"
+    os.environ["JOB_COMPLETION_COUNT"] = "3"
+    try:
+        args = cli_tools.get_parsed_args()
+        caplog.clear()
+        with pytest.raises(exceptions.ValidationException) as e_info:
+            main.config_runner(args)
+
+        # Assert error is logged for b.yaml
+        assert "Error 'Boom!' occurred while running config file b.yaml." in caplog.text
+        # But both b.yaml and e.yaml should still be processed
+        assert mock_run.call_count == 2
+        assert e_info.value.args[0] == "Some of the validations raised an exception"
+    finally:
+        del os.environ["JOB_COMPLETION_INDEX"]
+        del os.environ["JOB_COMPLETION_COUNT"]
+
+
 @mock.patch("data_validation.__main__.run_validation")
 @mock.patch(
     "data_validation.__main__.build_config_managers_from_args",
