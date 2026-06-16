@@ -140,7 +140,7 @@ def generate_report(
             target_df[columns_in_vertical_slice],
             join_on_fields=join_on_fields,
             is_value_comparison=is_value_comparison,
-            verbose=verbose,
+            verbose=verbose
         )
         if result_df is None:
             result_df = interim_result_df
@@ -183,6 +183,8 @@ def _create_and_populate_table(client, name: str, df: "DataFrame", schema: "ibis
             return sa.VARCHAR
         elif dtype.is_floating():
             return sa.DOUBLE
+        elif dtype.is_decimal():
+            return sa.NUMERIC
         elif dtype.is_boolean():
             return sa.BOOLEAN
         elif dtype.is_timestamp():
@@ -384,6 +386,15 @@ def _calculate_difference(
     )
 
 
+def _null_safe_join_cond(left: "IbisTable", right: "IbisTable", join_keys: tuple):
+    cond = []
+    for key in join_keys:
+        cond.append(
+            (left[key] == right[key]) | (left[key].isnull() & right[key].isnull())
+        )
+    return cond
+
+
 def _calculate_differences(
     source: "IbisTable",
     target: "IbisTable",
@@ -404,7 +415,11 @@ def _calculate_differences(
     if join_on_fields:
         # Use an inner join because a row must be present in source and target
         # for the difference to be well defined.
-        differences_joined = source.join(target, join_on_fields, how="inner")
+        differences_joined = source.join(
+            target,
+            _null_safe_join_cond(source, target, join_on_fields),
+            how="inner",
+        )
     else:
         # When no join_on_fields are present, we expect only one row per table.
         # This is validated in generate_report before this function is called.
@@ -546,7 +561,11 @@ def _join_pivots(
     join_on_fields: tuple,
 ):
     join_keys = (consts.VALIDATION_NAME,) + join_on_fields
-    source_difference = source.join(differences, join_keys, how="outer")[
+    source_difference = source.join(
+        differences,
+        _null_safe_join_cond(source, differences, join_keys),
+        how="outer",
+    )[
         [source[field] for field in join_keys]
         + [
             source[consts.VALIDATION_TYPE],
@@ -582,7 +601,11 @@ def _join_pivots(
             ibis.literal(None).cast("string").name(consts.GROUP_BY_COLUMNS)
         )
 
-    joined = source_difference.join(target, join_keys, how="outer")[
+    joined = source_difference.join(
+        target,
+        _null_safe_join_cond(source_difference, target, join_keys),
+        how="outer",
+    )[
         source_difference[consts.VALIDATION_NAME]
         .fillna(target[consts.VALIDATION_NAME])
         .name(consts.VALIDATION_NAME),

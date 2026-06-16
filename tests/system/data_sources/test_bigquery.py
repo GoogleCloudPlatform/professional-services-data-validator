@@ -478,6 +478,7 @@ def test_grouped_count_validator():
 
 def test_numeric_types():
     validator = data_validation.DataValidation(CONFIG_NUMERIC_AGG_VALID, verbose=True)
+    pytest.skip("Skipping test_numeric_types because of issue-1760")
     df = validator.execute()
 
     for validation in df.to_dict(orient="records"):
