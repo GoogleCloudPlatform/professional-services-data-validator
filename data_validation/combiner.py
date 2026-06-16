@@ -205,7 +205,7 @@ def _create_and_populate_table(
     for col_name, dtype in schema.items():
         columns.append(sa.Column(col_name, get_sqla_type(dtype), quote=True))
 
-    table = sa.Table(name, metadata, *columns)
+    # table = sa.Table(name, metadata, *columns)
     metadata.create_all(client.con)
 
     # Insert rows using Pandas to_sql with if_exists="append"
