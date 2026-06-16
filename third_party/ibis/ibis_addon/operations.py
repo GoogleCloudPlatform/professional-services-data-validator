@@ -954,6 +954,7 @@ ops.ExtractEpochSeconds.dtype = dt.int64
 # Register DuckDB translation of ExtractEpochSeconds to use EPOCH casted to BIGINT
 try:
     from ibis.backends.duckdb.compiler import DuckDBSQLExprTranslator
+
     def duckdb_sa_epoch_seconds(translator, op):
         arg = translator.translate(op.arg)
         return sa.cast(sa.func.epoch(arg), sa.BIGINT)
@@ -974,5 +975,3 @@ try:
     DuckDBSQLExprTranslator._registry[ops.Cast] = duckdb_sa_cast
 except Exception:
     pass
-
-
