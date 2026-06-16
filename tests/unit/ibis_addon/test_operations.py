@@ -80,6 +80,10 @@ def test_format_raw_sql_expr(module_under_test):
             -60,
         ),
         (
+            "1969-12-31 23:59:00Z",
+            -60,
+        ),
+        (
             "1970-01-01T00:00:00Z",
             0,
         ),
