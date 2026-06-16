@@ -86,6 +86,7 @@ def generate_report(
     verbose=False,
 ) -> "DataFrame":
     import sys
+
     # Increase recursion limit to handle deep compilation ASTs from unioning wide table validations
     sys.setrecursionlimit(20000)
     """Combine results into a report.
@@ -140,7 +141,7 @@ def generate_report(
             target_df[columns_in_vertical_slice],
             join_on_fields=join_on_fields,
             is_value_comparison=is_value_comparison,
-            verbose=verbose
+            verbose=verbose,
         )
         if result_df is None:
             result_df = interim_result_df
@@ -173,8 +174,11 @@ def _sanitize_schema(schema: "ibis.Schema") -> "ibis.Schema":
     return ibis.schema(new_pairs)
 
 
-def _create_and_populate_table(client, name: str, df: "DataFrame", schema: "ibis.Schema"):
+def _create_and_populate_table(
+    client, name: str, df: "DataFrame", schema: "ibis.Schema"
+):
     import sqlalchemy as sa
+
     # Map Ibis types to SQLAlchemy types
     def get_sqla_type(dtype):
         if dtype.is_integer():
@@ -239,8 +243,12 @@ def _generate_report_slice(
     target_schema = _sanitize_schema(ibis.memtable(target_df).schema())
 
     client = ibis.duckdb.connect()
-    _create_and_populate_table(client, consts.RESULT_TYPE_SOURCE, source_df, source_schema)
-    _create_and_populate_table(client, consts.RESULT_TYPE_TARGET, target_df, target_schema)
+    _create_and_populate_table(
+        client, consts.RESULT_TYPE_SOURCE, source_df, source_schema
+    )
+    _create_and_populate_table(
+        client, consts.RESULT_TYPE_TARGET, target_df, target_schema
+    )
     source = client.table(consts.RESULT_TYPE_SOURCE)
     target = client.table(consts.RESULT_TYPE_TARGET)
 
@@ -259,9 +267,15 @@ def _generate_report_slice(
     )
     target_pivot_df = client.execute(target_pivot)
 
-    source_pivot_mt = ibis.memtable(source_pivot_df, schema=_sanitize_schema(source_pivot.schema()))
-    differences_mt = ibis.memtable(differences_df, schema=_sanitize_schema(differences_pivot.schema()))
-    target_pivot_mt = ibis.memtable(target_pivot_df, schema=_sanitize_schema(target_pivot.schema()))
+    source_pivot_mt = ibis.memtable(
+        source_pivot_df, schema=_sanitize_schema(source_pivot.schema())
+    )
+    differences_mt = ibis.memtable(
+        differences_df, schema=_sanitize_schema(differences_pivot.schema())
+    )
+    target_pivot_mt = ibis.memtable(
+        target_pivot_df, schema=_sanitize_schema(target_pivot.schema())
+    )
 
     con = ibis.duckdb.connect()
     con.create_table(consts.RESULT_TYPE_SOURCE, source_pivot_mt)
@@ -546,12 +560,7 @@ def _as_json(expr):
     if expr.type().is_timestamp():
         casted = casted.re_replace(r" 00:00:00(\.0+)?$", "")
         casted = casted.re_replace(r"\+00$", "+00:00")
-    return (
-        casted
-        .fillna("null")
-        .re_replace(r"\\", r"\\\\")
-        .re_replace('"', r'\\"')
-    )
+    return casted.fillna("null").re_replace(r"\\", r"\\\\").re_replace('"', r'\\"')
 
 
 def _join_pivots(

@@ -499,7 +499,9 @@ def test_column_validation_ss_types_to_bigquery():
     ]
     # TODO Include col_int1 in max_cols when working on issue-1585.
     max_cols = [_ for _ in cols if _ not in ("col_int1",)]
-    pytest.skip("Skipping test_column_validation_ss_types_to_bigquery due to issue-1764.")
+    pytest.skip(
+        "Skipping test_column_validation_ss_types_to_bigquery due to issue-1764."
+    )
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_sql_server_types",
@@ -706,7 +708,9 @@ def test_row_validation_comp_fields_ss_types_to_bigquery():
             )
         ]
     )
-    pytest.skip("Skipping test_row_validation_comp_fields_ss_types_to_bigquery due to issue-1764.")
+    pytest.skip(
+        "Skipping test_row_validation_comp_fields_ss_types_to_bigquery due to issue-1764."
+    )
     row_validation_test(
         tables="pso_data_validator.dvt_sql_server_types",
         tc="bq-conn",

@@ -80,7 +80,11 @@ def test_get_all_tables():
     """Test get all tables util."""
     client = _get_pandas_client()
     all_tables = clients.get_all_tables(client)
-    all_tables = [t for t in all_tables if not (t[1] and t[1].startswith("_ibis_pandas_memtable_"))]
+    all_tables = [
+        t
+        for t in all_tables
+        if not (t[1] and t[1].startswith("_ibis_pandas_memtable_"))
+    ]
     assert all_tables == TABLES_RESULT
 
 

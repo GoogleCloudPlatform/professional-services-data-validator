@@ -14,12 +14,16 @@
 
 try:
     import urllib3.contrib.pyopenssl
-    
+
     # Store original methods/properties
     orig_verify_mode_fset = urllib3.contrib.pyopenssl.PyOpenSSLContext.verify_mode.fset
     orig_options_fset = urllib3.contrib.pyopenssl.PyOpenSSLContext.options.fset
-    orig_verify_flags_fset = urllib3.contrib.pyopenssl.PyOpenSSLContext.verify_flags.fset
-    orig_load_verify_locations = urllib3.contrib.pyopenssl.PyOpenSSLContext.load_verify_locations
+    orig_verify_flags_fset = (
+        urllib3.contrib.pyopenssl.PyOpenSSLContext.verify_flags.fset
+    )
+    orig_load_verify_locations = (
+        urllib3.contrib.pyopenssl.PyOpenSSLContext.load_verify_locations
+    )
 
     def patched_verify_mode_setter(self, value):
         if getattr(self, "_dvt_verify_mode", None) == value:
@@ -68,7 +72,9 @@ try:
                 return
             raise
 
-    orig_set_alpn_protocols = urllib3.contrib.pyopenssl.PyOpenSSLContext.set_alpn_protocols
+    orig_set_alpn_protocols = (
+        urllib3.contrib.pyopenssl.PyOpenSSLContext.set_alpn_protocols
+    )
 
     def patched_set_alpn_protocols(self, protocols):
         cache_key = tuple(protocols)
@@ -85,18 +91,21 @@ try:
     # Re-apply patched properties and methods
     urllib3.contrib.pyopenssl.PyOpenSSLContext.verify_mode = property(
         urllib3.contrib.pyopenssl.PyOpenSSLContext.verify_mode.fget,
-        patched_verify_mode_setter
+        patched_verify_mode_setter,
     )
     urllib3.contrib.pyopenssl.PyOpenSSLContext.options = property(
-        urllib3.contrib.pyopenssl.PyOpenSSLContext.options.fget,
-        patched_options_setter
+        urllib3.contrib.pyopenssl.PyOpenSSLContext.options.fget, patched_options_setter
     )
     urllib3.contrib.pyopenssl.PyOpenSSLContext.verify_flags = property(
         urllib3.contrib.pyopenssl.PyOpenSSLContext.verify_flags.fget,
-        patched_verify_flags_setter
+        patched_verify_flags_setter,
     )
-    urllib3.contrib.pyopenssl.PyOpenSSLContext.load_verify_locations = patched_load_verify_locations
-    urllib3.contrib.pyopenssl.PyOpenSSLContext.set_alpn_protocols = patched_set_alpn_protocols
+    urllib3.contrib.pyopenssl.PyOpenSSLContext.load_verify_locations = (
+        patched_load_verify_locations
+    )
+    urllib3.contrib.pyopenssl.PyOpenSSLContext.set_alpn_protocols = (
+        patched_set_alpn_protocols
+    )
 
 except Exception:
     pass

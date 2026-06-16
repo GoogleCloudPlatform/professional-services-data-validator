@@ -485,7 +485,9 @@ def test_column_validation_all_null_oracle_to_postgres():
             )
         ]
     )
-    pytest.skip("Skipping test_column_validation_all_null_oracle_to_postgres due to issue-1763.")
+    pytest.skip(
+        "Skipping test_column_validation_all_null_oracle_to_postgres due to issue-1763."
+    )
     column_validation_test(
         tc="pg-conn",
         tables="pso_data_validator.dvt_ora2pg_types",
@@ -776,7 +778,9 @@ def test_row_validation_core_types_to_bigquery():
 )
 def test_row_validation_comp_fields_core_types():
     """Oracle to Oracle dvt_core_types row validation with --comp-fields"""
-    pytest.skip("Skipping test_row_validation_comp_fields_core_types due to issue-1763.")
+    pytest.skip(
+        "Skipping test_row_validation_comp_fields_core_types due to issue-1763."
+    )
     row_validation_test(
         tables="pso_data_validator.dvt_core_types",
         tc="mock-conn",

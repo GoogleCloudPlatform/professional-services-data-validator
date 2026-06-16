@@ -207,6 +207,7 @@ def get_pandas_client(table_name, file_path, file_type):
         raise ValueError(f"Unknown Pandas File Type: {file_type}")
 
     import ibis
+
     if df.empty:
         df = df.copy()
         for col in df.columns:
@@ -327,9 +328,12 @@ def list_schemas(client):
 def list_tables(client, schema_name, tables_only=True):
     """Return a list of tables in the DB schema."""
     import inspect
+
     fn = (
         client.dvt_list_tables
-        if tables_only and hasattr(client, "dvt_list_tables") and client.name not in ["pandas", "duckdb"]
+        if tables_only
+        and hasattr(client, "dvt_list_tables")
+        and client.name not in ["pandas", "duckdb"]
         else client.list_tables
     )
     if client.name in ["redshift", "snowflake", "pandas"]:
