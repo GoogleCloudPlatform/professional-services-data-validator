@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib.metadata
+
 import ibis
 import pytest
 from ibis.backends.bigquery.compiler import BigQueryCompiler
@@ -22,7 +24,24 @@ from ibis.backends.postgres.compiler import PostgreSQLCompiler
 
 # Import required in order to register DVT operations.
 import third_party.ibis.ibis_addon.operations  # noqa: F401
+from third_party.ibis.ibis_cloud_spanner.compiler import SpannerCompiler
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
+
+try:
+    from ibis.backends.snowflake import SnowflakeCompiler
+except (ImportError, importlib.metadata.PackageNotFoundError) as exc:
+    SnowflakeCompiler = None
+    SNOWFLAKE_SKIP_REASON = f"Snowflake compiler unavailable: {exc}"
+else:
+    SNOWFLAKE_SKIP_REASON = ""
+
+try:
+    from third_party.ibis.ibis_teradata.compiler import TeradataCompiler
+except ImportError as exc:
+    TeradataCompiler = None
+    TERADATA_SKIP_REASON = f"Teradata compiler unavailable: {exc}"
+else:
+    TERADATA_SKIP_REASON = ""
 
 try:
     from third_party.ibis.ibis_oracle.compiler import OracleCompiler
@@ -47,115 +66,157 @@ def _compile(compiler_class, expr):
     return str(compiler_class().to_sql(expr))
 
 
-COMPILER_CASES = [
+def _assert_fragments(sql, expected_fragments, unexpected_fragments):
+    for fragment in expected_fragments:
+        assert fragment in sql
+    for fragment in unexpected_fragments:
+        assert fragment not in sql
+
+
+HASHBYTES_COMPILER_CASES = [
     pytest.param(
         BigQueryCompiler,
-        lambda: TABLE.s.hashbytes().name("h"),
         ["TO_HEX(SHA256(t0.`s`))"],
         [],
-        id="bigquery-hashbytes",
-    ),
-    pytest.param(
-        BigQueryCompiler,
-        lambda: TABLE.b.byte_length().name("len"),
-        ["LENGTH(t0.`b`)"],
-        [],
-        id="bigquery-binary-length",
-    ),
-    pytest.param(
-        BigQueryCompiler,
-        lambda: TABLE.ts.epoch_seconds().name("epoch"),
-        ["UNIX_SECONDS(CAST(t0.`ts` AS TIMESTAMP))"],
-        [],
-        id="bigquery-epoch",
+        id="bigquery",
     ),
     pytest.param(
         PostgreSQLCompiler,
-        lambda: TABLE.s.hashbytes().name("h"),
         ["encode(sha256(convert_to(t0.s, 'UTF8')), 'hex')"],
         [],
-        id="postgres-hashbytes",
-    ),
-    pytest.param(
-        PostgreSQLCompiler,
-        lambda: TABLE.d.cast("string").name("dstr"),
-        ["rtrim(to_char(t0.d"],
-        [],
-        id="postgres-decimal-string",
+        id="postgres",
     ),
     pytest.param(
         MySQLCompiler,
-        lambda: TABLE.s.hashbytes().name("h"),
         ["sha2(t0.s, '256')"],
         [],
-        id="mysql-hashbytes",
-    ),
-    pytest.param(
-        MySQLCompiler,
-        lambda: TABLE.b.byte_length().name("len"),
-        ["length(t0.b)"],
-        [],
-        id="mysql-binary-length",
+        id="mysql",
     ),
     pytest.param(
         MsSqlCompiler,
-        lambda: TABLE.s.hashbytes().name("h"),
         ["hashbytes('SHA2_256'", "convert(VARCHAR(MAX), t0.s)"],
         [],
-        id="mssql-hashbytes",
-    ),
-    pytest.param(
-        MsSqlCompiler,
-        lambda: TABLE.b.byte_length().name("len"),
-        ["datalength(t0.b)"],
-        [],
-        id="mssql-binary-length",
+        id="mssql",
     ),
     pytest.param(
         ImpalaCompiler,
-        lambda: TABLE.s.hashbytes().name("h"),
         ["sha2(t0.`s`, 256)"],
         [],
-        id="impala-hashbytes",
-    ),
-    pytest.param(
-        ImpalaCompiler,
-        lambda: TABLE.b.byte_length().name("len"),
-        ["length(t0.`b`)"],
-        [":length"],
-        id="impala-binary-length",
+        id="impala",
     ),
     pytest.param(
         RedshiftCompiler,
-        lambda: TABLE.s.hashbytes().name("h"),
         ["sha2(t0.s, 256)"],
         [],
-        id="redshift-hashbytes",
+        id="redshift",
     ),
     pytest.param(
-        RedshiftCompiler,
-        lambda: TABLE.b.byte_length().name("len"),
-        ["length(t0.b)"],
+        SpannerCompiler,
+        ["TO_HEX(SHA256(t0.`s`))"],
         [],
-        id="redshift-binary-length",
+        id="spanner",
+    ),
+    pytest.param(
+        SnowflakeCompiler,
+        ['sha2(t0."s")'],
+        [],
+        id="snowflake",
+        marks=pytest.mark.skipif(
+            SnowflakeCompiler is None,
+            reason=SNOWFLAKE_SKIP_REASON,
+        ),
+    ),
+    pytest.param(
+        TeradataCompiler,
+        ['rtrim(hash_sha256(TransUnicodeToUTF8(t0."s")))'],
+        [],
+        id="teradata",
+        marks=pytest.mark.skipif(
+            TeradataCompiler is None,
+            reason=TERADATA_SKIP_REASON,
+        ),
     ),
     pytest.param(
         OracleCompiler,
-        lambda: TABLE.s.hashbytes().name("h"),
         ["standard_hash(convert(t0.s, 'UTF8'), 'SHA256')"],
         [],
-        id="oracle-hashbytes",
+        id="oracle",
         marks=pytest.mark.skipif(
             OracleCompiler is None,
             reason=ORACLE_SKIP_REASON,
         ),
     ),
+]
+
+
+BINARY_LENGTH_COMPILER_CASES = [
+    pytest.param(
+        BigQueryCompiler,
+        ["LENGTH(t0.`b`)"],
+        [],
+        id="bigquery",
+    ),
+    pytest.param(
+        PostgreSQLCompiler,
+        ["length(t0.b)"],
+        [],
+        id="postgres",
+    ),
+    pytest.param(
+        MySQLCompiler,
+        ["length(t0.b)"],
+        [],
+        id="mysql",
+    ),
+    pytest.param(
+        MsSqlCompiler,
+        ["datalength(t0.b)"],
+        [],
+        id="mssql",
+    ),
+    pytest.param(
+        ImpalaCompiler,
+        ["length(t0.`b`)"],
+        [":length"],
+        id="impala",
+    ),
+    pytest.param(
+        RedshiftCompiler,
+        ["length(t0.b)"],
+        [],
+        id="redshift",
+    ),
+    pytest.param(
+        SpannerCompiler,
+        ["length(t0.`b`)"],
+        [":length"],
+        id="spanner",
+    ),
+    pytest.param(
+        SnowflakeCompiler,
+        ['length(t0."b")'],
+        [],
+        id="snowflake",
+        marks=pytest.mark.skipif(
+            SnowflakeCompiler is None,
+            reason=SNOWFLAKE_SKIP_REASON,
+        ),
+    ),
+    pytest.param(
+        TeradataCompiler,
+        ['length(t0."b")'],
+        [":length"],
+        id="teradata",
+        marks=pytest.mark.skipif(
+            TeradataCompiler is None,
+            reason=TERADATA_SKIP_REASON,
+        ),
+    ),
     pytest.param(
         OracleCompiler,
-        lambda: TABLE.b.byte_length().name("len"),
         ["dbms_lob.getlength(t0.b)"],
         [],
-        id="oracle-binary-length",
+        id="oracle",
         marks=pytest.mark.skipif(
             OracleCompiler is None,
             reason=ORACLE_SKIP_REASON,
@@ -165,15 +226,36 @@ COMPILER_CASES = [
 
 
 @pytest.mark.parametrize(
-    "compiler_class,expr_factory,expected_fragments,unexpected_fragments",
-    COMPILER_CASES,
+    "compiler_class,expected_fragments,unexpected_fragments",
+    HASHBYTES_COMPILER_CASES,
 )
-def test_backend_compiler_matrix(
-    compiler_class, expr_factory, expected_fragments, unexpected_fragments
+def test_hashbytes_compiler_matrix(
+    compiler_class, expected_fragments, unexpected_fragments
 ):
-    sql = _compile(compiler_class, expr_factory())
+    sql = _compile(compiler_class, TABLE.s.hashbytes().name("h"))
 
-    for fragment in expected_fragments:
-        assert fragment in sql
-    for fragment in unexpected_fragments:
-        assert fragment not in sql
+    _assert_fragments(sql, expected_fragments, unexpected_fragments)
+
+
+@pytest.mark.parametrize(
+    "compiler_class,expected_fragments,unexpected_fragments",
+    BINARY_LENGTH_COMPILER_CASES,
+)
+def test_binary_length_compiler_matrix(
+    compiler_class, expected_fragments, unexpected_fragments
+):
+    sql = _compile(compiler_class, TABLE.b.byte_length().name("len"))
+
+    _assert_fragments(sql, expected_fragments, unexpected_fragments)
+
+
+def test_bigquery_epoch_seconds_compiles_timestamp_cast():
+    sql = _compile(BigQueryCompiler, TABLE.ts.epoch_seconds().name("epoch"))
+
+    assert "UNIX_SECONDS(CAST(t0.`ts` AS TIMESTAMP))" in sql
+
+
+def test_postgres_decimal_string_cast_compiles_to_char():
+    sql = _compile(PostgreSQLCompiler, TABLE.d.cast("string").name("dstr"))
+
+    assert "rtrim(to_char(t0.d, :to_char_1), :rtrim_1)" in sql
