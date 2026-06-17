@@ -211,7 +211,7 @@ def strftime_mysql(translator, op):
     arg = op.arg
     format_string = op.format_str
     arg_formatted = translator.translate(arg)
-    arg_type = arg.output_dtype
+    arg_type = arg.dtype
     fmt_string = translator.translate(format_string)
     if isinstance(arg_type, dt.Timestamp):
         fmt_string = "%Y-%m-%d %H:%i:%S"
@@ -296,7 +296,7 @@ def sa_cast_mysql(t, op):
     # Add cast from numeric to string
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
     # Specialize going from numeric(p,s>0) to string
@@ -327,7 +327,7 @@ def sa_cast_mysql(t, op):
 def sa_cast_snowflake(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
     sa_arg = t.translate(arg)
 
     # Specialize going from numeric(p,s>0) to string
@@ -422,7 +422,7 @@ def impala_sa_cast(t, op):
 
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
     arg_formatted = t.translate(arg)
     if arg_dtype.is_binary() and typ.is_string():
         return f"lower(hex({arg_formatted}))"
@@ -482,7 +482,7 @@ def postgres_sa_epoch_seconds(translator, op):
 def postgres_sa_cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
     sa_arg = t.translate(arg)
     if arg_dtype.is_decimal() and typ.is_string():
         if arg_dtype.scale is None:
@@ -522,8 +522,8 @@ def mssql_sa_table_column(t, op):
     sa_table = get_sqla_table(ctx, table)
     out_expr = get_col(sa_table, op)
     out_expr.quote = t._quote_column_names
-    if op.output_dtype.is_timestamp():
-        timezone = op.output_dtype.timezone
+    if op.dtype.is_timestamp():
+        timezone = op.dtype.timezone
         if timezone is not None:
             out_expr = sa.literal_column(
                 f"{out_expr.name} AT TIME ZONE '{timezone}'"
@@ -550,7 +550,7 @@ def mssql_strftime(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-    arg_type = op.args[0].output_dtype
+    arg_type = op.args[0].dtype
     if hasattr(arg_type, "timezone") and arg_type.timezone:
         arg = sa.cast(arg, sa.types.DateTime)
     return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
@@ -586,7 +586,7 @@ def mssql_sa_format_hashbytes(translator, op):
 def mssql_sa_cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
     sa_arg = t.translate(arg)
     if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
         return sa.func.format(sa_arg, "G")

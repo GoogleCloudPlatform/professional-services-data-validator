@@ -28,7 +28,7 @@ def _compiles_strftime(translator, op):
     """Timestamp formatting."""
     arg = op.arg
     format_str = op.format_str
-    arg_type = arg.output_dtype
+    arg_type = arg.dtype
     strftime_format_func_name = STRFTIME_FORMAT_FUNCTIONS[arg_type]
     fmt_string = translator.translate(format_str)
     # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types

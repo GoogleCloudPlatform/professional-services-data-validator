@@ -108,6 +108,14 @@ steps:
   - 'CLOUD_SQL_CONNECTION=pso-kokoro-resources:us-central1:data-validator-postgres-v18'
   secretEnv: ['ORACLE_PASSWORD', 'POSTGRES_PASSWORD']
   waitFor: ['proxy-install']
+- id: integration_hive
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_hive'
+  - 'PROJECT_ID=pso-kokoro-resources'
+  - 'HIVE_HOST=10.128.15.219'
+  waitFor: ['-']
 - id: integration_db2
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'
   args: ['bash', './ci/build.sh']
@@ -116,6 +124,13 @@ steps:
   - 'PROJECT_ID=pso-kokoro-resources'
   - 'DB2_HOST=10.128.0.45'
   secretEnv: ['DB2_PASSWORD']
+  waitFor: ['-']
+- id: integration_filesystem
+  name: 'gcr.io/cloud-devrel-public-resources/python-multi'
+  args: ['bash', './ci/build.sh']
+  env:
+  - 'NOX_SESSION=integration_filesystem'
+  - 'PROJECT_ID=pso-kokoro-resources'
   waitFor: ['-']
 - id: integration_impala
   name: 'gcr.io/cloud-devrel-public-resources/python-multi'

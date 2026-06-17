@@ -73,7 +73,7 @@ def _sa_strftime(t, op):
 def db2_zos_cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
 

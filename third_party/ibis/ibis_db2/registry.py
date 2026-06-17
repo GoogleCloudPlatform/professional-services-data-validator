@@ -126,7 +126,7 @@ def _is_inf(t, op):
 def db2_luw_cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
 
@@ -352,7 +352,7 @@ def _reduction(func_name):
     def reduction_compiler(t, op):
         arg, where = op.args
 
-        if arg.output_dtype.is_boolean():
+        if arg.dtype.is_boolean():
             arg = arg.cast("int32")
 
         func = getattr(sa.func, func_name)
@@ -393,7 +393,7 @@ def _log(t, op):
         sa_base = t.translate(base)
         return sa.cast(
             sa.func.log(sa.cast(sa_base, sa.NUMERIC), sa.cast(sa_arg, sa.NUMERIC)),
-            t.get_sqla_type(op.output_dtype),
+            t.get_sqla_type(op.dtype),
         )
     return sa.func.ln(sa_arg)
 
@@ -473,7 +473,7 @@ def _string_join(t, op):
 
 
 def _literal(t, op):
-    dtype = op.output_dtype
+    dtype = op.dtype
     value = op.value
 
     if dtype.is_interval():

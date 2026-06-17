@@ -141,7 +141,7 @@ def teradata_cast_generate(compiled_arg, from_, to):
 def _cast(t, op):
     arg, target_type = op.args
     arg_formatted = t.translate(arg)
-    input_dtype = arg.output_dtype
+    input_dtype = arg.dtype
 
     # Specialize going from a binary float type to a string.
     # Trying to avoid scientific notation.
@@ -169,8 +169,8 @@ def _table_column(t, op):
     alias = ctx.get_ref(table, search_parents=True)
     if alias is not None:
         quoted_name = f"{alias}.{quoted_name}"
-    if op.output_dtype.is_timestamp():
-        timezone = op.output_dtype.timezone
+    if op.dtype.is_timestamp():
+        timezone = op.dtype.timezone
         if timezone is not None:
             timezone = "GMT" if timezone == "UTC" else timezone
             quoted_name = f"{quoted_name} AT TIME ZONE '{timezone}'"
@@ -329,7 +329,7 @@ def _string_join(translator, op):
 def _extract_epoch(translator, op):
     arg = translator.translate(op.arg)
     # Since the change to table_column, column is already at UTC we don't need to set the time zone here
-    extract_arg = f"CAST({arg} AS TIMESTAMP)" if op.arg.output_dtype.is_date() else arg
+    extract_arg = f"CAST({arg} AS TIMESTAMP)" if op.arg.dtype.is_date() else arg
     return (
         f"CAST((CAST ({arg} AS DATE) - DATE '1970-01-01') AS BIGINT) * 86400 + "
         f"CAST((EXTRACT(HOUR FROM {extract_arg} ) * 3600) + "
@@ -349,7 +349,7 @@ def _string_literal_format(translator, op):
 
 
 def _literal(t, op):
-    dtype = op.output_dtype
+    dtype = op.dtype
     if dtype.is_string():
         return _string_literal_format(t, op)
     elif dtype.is_time():  # The base backend does not have a renderer for TIME Literals

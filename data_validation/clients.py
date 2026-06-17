@@ -23,6 +23,13 @@ import google.oauth2.service_account
 from google.cloud import bigquery
 from google.api_core import client_options
 import ibis
+
+try:
+    import ibis.backends.impala.udf as impala_udf
+
+    impala_udf._impala_to_ibis_type["binary"] = "binary"
+except ImportError:
+    pass
 import pandas
 
 from data_validation import client_info, consts, exceptions
@@ -257,9 +264,7 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
 def get_ibis_query(client, query) -> "ir.Table":
     """Return Ibis Table from query expression for Supplied Client."""
     iq = client.sql(query)
-    # Normalise all columns in the query to lower case.
-    # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/992
-    iq = iq.relabel(dict(zip(iq.columns, [_.lower() for _ in iq.columns])))
+    iq = iq.rename(dict(zip([_.lower() for _ in iq.columns], iq.columns)))
     return iq
 
 
@@ -294,6 +299,12 @@ def get_ibis_query_schema(client, query_str) -> "sch.Schema":
 
 def list_schemas(client):
     """Return a list of schemas in the DB."""
+    if hasattr(client, "list_schemas"):
+        try:
+            return client.list_schemas()
+        except NotImplementedError:
+            pass
+
     if hasattr(client, "list_databases"):
         try:
             return client.list_databases()
@@ -441,9 +452,18 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
         return None
 
 
+def impala_connect(*args, **kwargs):
+    client = ibis.impala.connect(*args, **kwargs)
+    try:
+        client.raw_sql("set hive.resultset.use.unique.column.names=false")
+    except Exception:
+        pass
+    return client
+
+
 CLIENT_LOOKUP = {
     consts.SOURCE_TYPE_BIGQUERY: get_bigquery_client,
-    consts.SOURCE_TYPE_IMPALA: ibis.impala.connect,
+    consts.SOURCE_TYPE_IMPALA: impala_connect,
     consts.SOURCE_TYPE_MYSQL: ibis.mysql.connect,
     consts.SOURCE_TYPE_ORACLE: oracle_connect,
     consts.SOURCE_TYPE_FILESYSTEM: get_pandas_client,

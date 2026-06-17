@@ -24,6 +24,14 @@ from data_validation import metadata, consts
 
 _NAN = float("nan")
 
+
+def _assert_frame_equal(report, expected):
+    with pandas.option_context("future.no_silent_downcasting", True):
+        report_filled = report.fillna(value=_NAN)
+        expected_filled = expected.fillna(value=_NAN)
+    pandas.testing.assert_frame_equal(report_filled, expected_filled)
+
+
 EXAMPLE_RUN_METADATA = metadata.RunMetadata(
     validations={
         "count": metadata.ValidationMetadata(
@@ -413,7 +421,7 @@ def test_generate_report_without_group_by(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -690,7 +698,7 @@ def test_generate_report_with_group_by(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -1009,7 +1017,7 @@ def test_generate_report_with_nan_agg_value(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @pytest.mark.parametrize(

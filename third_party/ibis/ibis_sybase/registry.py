@@ -48,7 +48,7 @@ def sa_table_column(t, op):
 def sa_cast_sybase(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
     # Specialize going from DECIMAL(p,s>0) to string
@@ -162,7 +162,7 @@ def strftime(translator, op):
 
     Incredibly there isn't a format matching ISO formats."""
     arg, pattern = map(translator.translate, op.args)
-    arg_type = op.args[0].output_dtype
+    arg_type = op.args[0].dtype
     if (
         hasattr(arg_type, "timezone") and arg_type.timezone
     ):  # Our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
@@ -205,7 +205,7 @@ def sa_whitespace_rstrip(t, op):
 
 
 def sa_literal(t, op):
-    if op.output_dtype.is_timestamp() and op.output_dtype.timezone:
+    if op.dtype.is_timestamp() and op.dtype.timezone:
         # Sybase ASE does not have a time zoned data type.
         value = op.value.replace(tzinfo=None)
         return sa.literal(value)

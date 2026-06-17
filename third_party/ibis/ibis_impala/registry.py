@@ -22,7 +22,7 @@ from ibis.backends.base.sql.registry import (
 def sa_cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     arg_formatted = t.translate(arg)
 
