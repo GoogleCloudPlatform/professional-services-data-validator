@@ -2,6 +2,21 @@
 
 ## Untagged
 
+## [8.8.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.7.1...v8.8.0) (2026-06-18)
+
+
+### Features
+
+* Add --config-dir/--config-dir-json to table validation commands ([#1742](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1742)) ([f5e9f79](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/f5e9f79983da6ad046f1aa0ca5b3d12a5a4150ff))
+
+
+### Bug Fixes
+
+* Fix extract epoch expression for Db2 ([#1750](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1750)) ([a09844d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/a09844dfe52a38b1bc7e6c8df746b121f1cbefaf))
+* Use UTC for naive timestamp epoch conversion ([#1761](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1761)) ([d3bba8d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/d3bba8d2e48861f3bb3e2cd58f4d29bd7cbe8a7f))
+* Workaround for ibm_db_sa ForeignKeyConstraint exception ([#1756](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1756)) ([0c52e8e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0c52e8e40bffb4c600ea21a72c69662de46f87cd))
+* YAML deserialization fix ([#1752](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1752)) ([8a7944e](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/8a7944e40ccf6a33099fb0b8bd47c90f1aff4132))
+
 ## [8.7.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.7.0...v8.7.1) (2026-05-21)
 
 
