@@ -76,6 +76,8 @@ def ibis_table_to_sql(ibis_table: "IbisTable", alchemy_client: "BaseBackend") ->
 
     We need the client in order to find the dialect, otherwise we end up with generic literals.
     """
+    # Import clients here because it is a heavy weight import for a utility module
+    # and we want to avoid circular imports since clients also (eventually) imports utils.
     from data_validation import clients
 
     # If the backend uses sqlalchemy, we will need to request sqla to bind variables
