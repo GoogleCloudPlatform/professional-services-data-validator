@@ -381,7 +381,10 @@ def string_to_epoch(ts: str) -> int:
             # Casting datetime64 to int64 uses the minimum possible int64 when it
             # encounters NaT. Simulating the same here for when auto cast fails.
             return NAT_INT64_MIN_IN_SECONDS
-        parsed_ts = dateutil.parser.isoparse(ts).astimezone(dateutil.tz.UTC)
+        parsed_ts = dateutil.parser.isoparse(ts)
+        if parsed_ts.tzinfo is None:
+            parsed_ts = parsed_ts.replace(tzinfo=datetime.timezone.utc)
+        parsed_ts = parsed_ts.astimezone(datetime.timezone.utc)
         return (
             parsed_ts - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
         ).total_seconds()

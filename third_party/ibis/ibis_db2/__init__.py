@@ -86,6 +86,9 @@ class Backend(BaseAlchemyBackend):
             # Pessimistic disconnect handling
             pool_pre_ping=True,
         )
+        # Disable foreign key reflection (DVT does not need FK info)
+        engine.dialect.get_foreign_keys = lambda *args, **kwargs: []
+
         self.database_name = database
         self.url = sa_url
 
