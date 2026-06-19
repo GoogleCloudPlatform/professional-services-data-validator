@@ -716,7 +716,7 @@ ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
 ImpalaExprTranslator._registry[ops.HashBytes] = impala_sa_format_hashbytes
 ImpalaExprTranslator._registry[ops.RandomScalar] = fixed_arity("RAND", 0)
 ImpalaExprTranslator._registry[ops.Strftime] = impala_sa_strftime
-ImpalaExprTranslator._registry[BinaryLength] = sa_format_binary_length
+ImpalaExprTranslator._registry[BinaryLength] = fixed_arity("length", 1)
 
 if OracleExprTranslator:
     OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
@@ -784,12 +784,12 @@ if Db2zOSExprTranslator:
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
 SpannerExprTranslator._registry[ops.HashBytes] = bigquery_format_hashbytes
-SpannerExprTranslator._registry[BinaryLength] = sa_format_binary_length
+SpannerExprTranslator._registry[BinaryLength] = fixed_arity("length", 1)
 
 if TeradataExprTranslator:
     TeradataExprTranslator._registry[RawSQL] = format_raw_sql
     TeradataExprTranslator._registry[ops.HashBytes] = format_hashbytes_teradata
-    TeradataExprTranslator._registry[BinaryLength] = sa_format_binary_length
+    TeradataExprTranslator._registry[BinaryLength] = fixed_arity("length", 1)
     TeradataExprTranslator._registry[PaddedCharLength] = (
         TeradataExprTranslator._registry[ops.StringLength]
     )
