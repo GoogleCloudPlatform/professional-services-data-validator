@@ -62,6 +62,16 @@ ORACLE_CONN_CONFIG = {
 }
 
 
+class RecordingBigQueryClient:
+    name = "bigquery"
+
+    def table(self, table_name, database=None, schema=None):
+        return table_name, database, schema
+
+    def get_schema(self, table_name, database=None, schema=None):
+        return table_name, database, schema
+
+
 def _create_table_file(table_path, data):
     """Write JSON data to given file."""
     with open(table_path, "w") as f:
@@ -90,6 +100,44 @@ def test_get_bigquery_client_sets_user_agent():
     )
     user_agent = ibis_client.client._connection._client_info.to_user_agent()
     assert "google-pso-tool/data-validator" in user_agent
+
+
+def test_get_ibis_table_splits_bigquery_project_and_dataset():
+    client = RecordingBigQueryClient()
+
+    table = clients.get_ibis_table(client, "source-project.source_dataset", TABLE_NAME)
+
+    assert table == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_uses_explicit_bigquery_database():
+    client = RecordingBigQueryClient()
+
+    table = clients.get_ibis_table(
+        client, "source_dataset", TABLE_NAME, database_name="source-project"
+    )
+
+    assert table == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_schema_splits_bigquery_project_and_dataset():
+    client = RecordingBigQueryClient()
+
+    schema = clients.get_ibis_table_schema(
+        client, "source-project.source_dataset", TABLE_NAME
+    )
+
+    assert schema == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_schema_uses_explicit_bigquery_database():
+    client = RecordingBigQueryClient()
+
+    schema = clients.get_ibis_table_schema(
+        client, "source_dataset", TABLE_NAME, database_name="source-project"
+    )
+
+    assert schema == (TABLE_NAME, "source-project", "source_dataset")
 
 
 def test_import_oracle_client():

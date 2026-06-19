@@ -233,6 +233,14 @@ def is_oracle_client(client):
         return False
 
 
+def _split_bigquery_table_location(schema_name, database_name=None):
+    if database_name:
+        return database_name, schema_name
+    if schema_name and "." in schema_name:
+        return schema_name.split(".", 1)
+    return None, schema_name
+
+
 def get_ibis_table(client, schema_name, table_name, database_name=None):
     """Return Ibis Table for Supplied Client.
 
@@ -242,8 +250,9 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     database_name (str): Database name (generally default is used)
     """
     if client.name == "bigquery":
-        if schema_name and "." in schema_name:
-            database_name, schema_name = schema_name.split(".", 1)
+        database_name, schema_name = _split_bigquery_table_location(
+            schema_name, database_name
+        )
         return client.table(table_name, database=database_name, schema=schema_name)
     elif client.name in [
         "oracle",
@@ -268,7 +277,9 @@ def get_ibis_query(client, query) -> "ir.Table":
     return iq
 
 
-def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Schema":
+def get_ibis_table_schema(
+    client, schema_name: str, table_name: str, database_name=None
+) -> "sch.Schema":
     """Return Ibis Table Schema for Supplied Client.
 
     client (IbisClient): Client to use for table
@@ -279,9 +290,9 @@ def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Sch
     if is_sqlalchemy_backend(client):
         return client.table(table_name, schema=schema_name).schema()
     elif client.name == "bigquery":
-        database_name = None
-        if schema_name and "." in schema_name:
-            database_name, schema_name = schema_name.split(".", 1)
+        database_name, schema_name = _split_bigquery_table_location(
+            schema_name, database_name
+        )
         return client.get_schema(table_name, schema=schema_name, database=database_name)
     else:
         return client.get_schema(table_name, schema_name)
