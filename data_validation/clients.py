@@ -254,6 +254,8 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
             schema_name, database_name
         )
         return client.table(table_name, database=database_name, schema=schema_name)
+    elif client.name == "spanner":
+        return client.table(table_name)
     elif client.name in [
         "oracle",
         "postgres",
@@ -294,6 +296,8 @@ def get_ibis_table_schema(
             schema_name, database_name
         )
         return client.get_schema(table_name, schema=schema_name, database=database_name)
+    elif client.name == "spanner":
+        return client.get_schema(table_name)
     else:
         return client.get_schema(table_name, schema_name)
 
