@@ -18,19 +18,20 @@ from ibis.backends.snowflake import Backend as SnowflakeBackend
 from ibis.backends.snowflake.datatypes import SnowflakeType
 from snowflake.connector.constants import FIELD_ID_TO_NAME
 from snowflake.sqlalchemy import NUMBER, BINARY
+from sqlalchemy.types import VARBINARY, Numeric, Float
 
 orig_snowflake_to_ibis = SnowflakeType.to_ibis
 
 
 @classmethod
 def dvt_snowflake_to_ibis(cls, typ, nullable=True):
-    if isinstance(typ, NUMBER):
+    if isinstance(typ, Numeric) and not isinstance(typ, Float):
         return dt.Decimal(
             precision=typ.precision or 38,
             scale=typ.scale or 0,
             nullable=nullable,
         )
-    elif isinstance(typ, BINARY):
+    elif isinstance(typ, (BINARY, VARBINARY)):
         return dt.Binary(nullable=nullable)
     return orig_snowflake_to_ibis(
         typ,

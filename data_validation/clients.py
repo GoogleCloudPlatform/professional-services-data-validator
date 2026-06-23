@@ -85,13 +85,12 @@ except ImportError:
     oracle_connect = _raise_missing_client_error("pip install oracledb")
 
 
-def snowflake_connect(*args, **kwargs):
-    try:
-        return ibis.snowflake.connect(*args, **kwargs)
-    except ImportError:
-        raise Exception(
-            "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
-        )
+try:
+    from third_party.ibis.ibis_snowflake.api import snowflake_connect
+except ImportError:
+    snowflake_connect = _raise_missing_client_error(
+        "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
+    )
 
 
 # DB2 requires ibm_db_sa
