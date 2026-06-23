@@ -19,11 +19,13 @@ from ibis.backends.base.sql.alchemy import (
     fixed_arity,
     sqlalchemy_operation_registry,
     sqlalchemy_window_functions_registry,
+    varargs,
 )
 from ibis.backends.base.sql.alchemy.registry import _literal as base_literal
 
 from ibis.backends.base.sql.alchemy import get_sqla_table
 from ibis.backends.base.sql.alchemy.registry import get_col
+from third_party.ibis.ibis_mssql import registry as mssql_registry
 
 
 def sa_format_new_id(t, op):
@@ -219,7 +221,7 @@ operation_registry.update(sqlalchemy_window_functions_registry)
 operation_registry[ops.Cast] = sa_cast_sybase
 operation_registry[ops.ExtractEpochSeconds] = sa_epoch_seconds
 operation_registry[ops.HashBytes] = sa_format_hashbytes
-operation_registry[ops.Coalesce] = fixed_arity(sa.func.isnull, 2)
+operation_registry[ops.Coalesce] = varargs(sa.func.coalesce)
 operation_registry[ops.Literal] = sa_literal
 operation_registry[ops.RandomScalar] = sa_format_new_id
 operation_registry[ops.RStrip] = sa_whitespace_rstrip

@@ -88,10 +88,15 @@ class SybaseAlchemySelect(AlchemySelect):
             self.context.set_ref(expr, result)
 
 
+from third_party.ibis.ibis_sybase.datatypes import SybaseType
+
+
 class SybaseExprTranslator(AlchemyExprTranslator):
     _registry = operation_registry
     _timestamp_type = DATETIME
     _rewrites = AlchemyExprTranslator._rewrites.copy()
+    type_mapper = SybaseType
+
 
 
 class SybaseCompiler(AlchemyCompiler):
