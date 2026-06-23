@@ -98,7 +98,6 @@ class SybaseExprTranslator(AlchemyExprTranslator):
     type_mapper = SybaseType
 
 
-
 class SybaseCompiler(AlchemyCompiler):
     translator_class = SybaseExprTranslator
     select_class = SybaseAlchemySelect
