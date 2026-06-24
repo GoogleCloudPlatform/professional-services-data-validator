@@ -41,7 +41,13 @@ BLACK_PATHS = (
     "setup.py",
 )
 LINT_PACKAGES = ["flake8", "black==26.5.1"]
-UNIT_PACKAGES = ["pyfakefs", "freezegun", "teradatasql", "snowflake-connector-python"]
+UNIT_PACKAGES = [
+    "pyfakefs",
+    "freezegun",
+    "teradatasql",
+    "snowflake-connector-python",
+    "snowflake-sqlalchemy",
+]
 
 
 def _setup_session_requirements(session, extra_packages=[]):
