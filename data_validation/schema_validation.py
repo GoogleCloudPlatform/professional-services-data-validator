@@ -240,8 +240,9 @@ def split_allow_list_str(allow_list_str: str) -> list:
     # happen once per command and I felt splitting the pattern into variables
     # aided readability.
     nullable_pattern = r"!?"  # Matches an optional '!'
-    # Matches precision/scale like (N), (N,M), ('UTC'), (N, 'UTC') or ('UTC', N)
-    precision_scale_pattern = r"(?:\([^)]+\))?"
+    # Matches precision/scale like (N), (N,M), ('UTC'), or (N, 'UTC')
+    # Crucially, [0-9 ,-]+ allows for digits, spaces, commas, and hyphens (for ranges like "1-18").
+    precision_scale_pattern = r"(?:\((?:[0-9 ,-]+(?:,[ ]*'UTC')?|'UTC')\))?"
     data_type_pattern = nullable_pattern + r"[a-z0-9 ]+" + precision_scale_pattern
     csv_split_pattern = data_type_pattern + r":" + data_type_pattern
     data_type_pairs = [

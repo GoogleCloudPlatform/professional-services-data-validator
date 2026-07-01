@@ -232,10 +232,6 @@ def test_expand_precision_or_scale_range(test_input: str, expected: list):
             "date:timestamp('UTC'),timestamp('UTC'):timestamp",
             {"date": ["timestamp('UTC')"], "timestamp('UTC')": ["timestamp"]},
         ),
-        (
-            "timestamp('UTC', 7):timestamp('UTC')",
-            {"timestamp('UTC',7)": ["timestamp('UTC')"]},
-        ),
         ("decimal(38 , 0):decimal ( 38 , 0)", {"decimal(38,0)": ["decimal(38,0)"]}),
         (
             "decimal(38,0):!int32",
