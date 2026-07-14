@@ -35,6 +35,17 @@ except (ImportError, importlib.metadata.PackageNotFoundError) as exc:
 else:
     SNOWFLAKE_SKIP_REASON = ""
 
+# Note: We do not add pure SQLAlchemy backends (e.g., Db2) to this compiler matrix.
+# This matrix uses `ibis.table(..., name="t")` to create an UnboundTable. In Ibis 7+,
+# compiling an UnboundTable for an AlchemyBackend invokes `sqlglot` to resolve the
+# table's fully qualified name. Because our custom Db2 backend uses a custom dialect
+# name ("db2") that `sqlglot` does not natively recognize, it will throw an
+# "Unknown dialect" ValueError.
+#
+# In an actual DVT run, tables are bound to the backend (DatabaseTable), completely
+# bypassing `sqlglot` and using SQLAlchemy natively. Testing via `sqlglot` here is
+# disconnected from the true execution path and requires misleading monkey patches.
+
 try:
     from third_party.ibis.ibis_teradata.compiler import TeradataCompiler
 except ImportError as exc:
