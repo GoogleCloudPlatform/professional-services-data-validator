@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Optional, Tuple
 import pathlib
 
 import pytest
+from unittest import mock
 
 from data_validation import __main__ as main
 from data_validation import (
@@ -419,7 +420,13 @@ def column_validation_test(
         result_handler=result_handler,
         cast_to_bigint=cast_to_bigint,
     )
-    df = run_test_from_cli_args(args)
+    with mock.patch("data_validation.combiner.logging.warning") as mock_warning:
+        df = run_test_from_cli_args(args)
+        for call in mock_warning.call_args_list:
+            from data_validation import combiner
+            assert combiner.COMBINER_GET_SUMMARY_EXC_TEXT not in str(
+                call.args[0]
+            ), "Combiner summary warning was logged"
     assert (
         len(df) == expected_rows
     ), f"len(df) != expected_rows: {len(df)} != {expected_rows}"
