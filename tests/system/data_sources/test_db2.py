@@ -15,9 +15,10 @@
 import os
 from unittest import mock
 
+import ibis
 import pytest
 
-from data_validation import cli_tools, consts
+from data_validation import cli_tools, clients, consts
 from tests.system.data_sources.common_functions import (
     DVT_CORE_TYPES_COLUMNS,
     DVT_TRICKY_DATES_COLUMNS,
@@ -53,6 +54,15 @@ DB2_PORT = os.getenv("DB2_PORT", "50000")
 
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2,
+    "host": DB2_HOST,
+    "user": DB2_USER,
+    "password": DB2_PASSWORD,
+    "port": int(DB2_PORT),
+    "database": DB2_DATABASE,
+}
+
+ZOS_CONN = {
+    consts.SOURCE_TYPE: consts.SOURCE_TYPE_DB2_ZOS,
     "host": DB2_HOST,
     "user": DB2_USER,
     "password": DB2_PASSWORD,
@@ -674,3 +684,53 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
     connections_add_test(
         caplog, consts.SOURCE_TYPE_DB2, conn_args, tmp_path, monkeypatch
     )
+
+
+def test_db2_zos_expressions():
+    """Test Db2 z/OS code path using an LUW base table.
+
+    This is a bit of a fudge but we do not have any Db2 z/OS test infrastructure.
+
+    This test builds a bound table using Db2ZosBackend over the LUW connection,
+    and verifies Db2 z/OS SQL expression generation (without executing any SQL).
+
+    We can't do this as a pure unit test because unbound tables in Ibis use sqlglot,
+    bound tables, like in this test, allow the specific driver to handle SQL generation.
+    """
+    client = clients.get_data_client(ZOS_CONN)
+
+    # The Z/OS client uses 'CCSID' for reflection, which fails on LUW databases.
+    # We patch it to use 'CODEPAGE' like LUW does, just so we can reflect the bound table.
+    with mock.patch.object(
+        client,
+        "raw_column_metadata_sql",
+        new="""
+        SELECT NAME, TYPENAME, LENGTH, SCALE, NULLS, CODEPAGE
+        FROM SYSIBM.SYSCOLUMNS
+        WHERE TBCREATOR = ? AND TBNAME = ?
+        ORDER BY COLNO""",
+    ), mock.patch.object(client, "for_bit_data_codepage", new=0):
+        table = client.table("dvt_core_types", schema="pso_data_validator")
+
+    # 1. Hashbytes.
+    expr_hash = table.col_string.hashbytes().name("h")
+    sa_select_hash = expr_hash.compile()
+    sql_hash = str(sa_select_hash.compile(dialect=client.con.dialect)).lower()
+    assert "lower(hex(hash_sha256(unicode_str(t0.col_string))))" in sql_hash
+
+    # 2. Cast decimal to string.
+    expr_cast = table.col_dec_10_2.cast("string").name("c")
+    sa_select_cast = expr_cast.compile()
+    sql_cast = str(sa_select_cast.compile(dialect=client.con.dialect)).lower()
+    assert (
+        "ltrim(rtrim(rtrim(to_char(t0.col_dec_10_2, '99999990.99'), '0'), '.'))"
+        in sql_cast
+    )
+
+    # 3. Coalesce (Db2 z/OS specific sa.literal_column handling).
+    expr_coalesce = ibis.coalesce(table.col_string, ibis.literal("default")).name(
+        "coal"
+    )
+    sa_select_coalesce = expr_coalesce.compile()
+    sql_coalesce = str(sa_select_coalesce.compile(dialect=client.con.dialect)).lower()
+    assert "coalesce(t0.col_string, 'default')" in sql_coalesce
