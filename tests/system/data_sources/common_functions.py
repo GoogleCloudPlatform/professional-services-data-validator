@@ -424,6 +424,7 @@ def column_validation_test(
         df = run_test_from_cli_args(args)
         for call in mock_warning.call_args_list:
             from data_validation import combiner
+
             assert combiner.COMBINER_GET_SUMMARY_EXC_TEXT not in str(
                 call.args[0]
             ), "Combiner summary warning was logged"
