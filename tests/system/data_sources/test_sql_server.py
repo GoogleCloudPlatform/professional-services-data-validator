@@ -820,7 +820,7 @@ def test_row_validation_datetime_pk_to_bigquery():
 )
 def test_fixed_char_pk_row_validation_to_bigquery():
     """Test fixed char primary keys"""
-    id_column_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+    id_column_row_validation_test("pso_data_validator.dvt_fixed_char_id", hash="id")
 
 
 @mock.patch(
@@ -1049,7 +1049,9 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
 )
 def test_fixed_char_pk_query_row_validation_to_bigquery():
     """Test fixed char primary keys on custom query"""
-    id_column_query_row_validation_test("pso_data_validator.dvt_fixed_char_id")
+    id_column_query_row_validation_test(
+        "pso_data_validator.dvt_fixed_char_id", hash="id"
+    )
 
 
 @mock.patch(
