@@ -3,6 +3,7 @@
 ## General
 
 - Floating-point data types, e.g. Float and Double, are inexact by nature. Validations that involve conversion of floating-point data to string, e.g. `--hash` and `--concat`, can be problematic.
+- Row validations using `--comparison-fields` require at least one comparison column that is not a primary key. When all table columns are used as primary keys, you must use `--concat` or `--hash` to validate the rows.
 
 ## BigQuery
 
@@ -42,6 +43,7 @@
 - SQL Server does not have a function to "right trim" all whitespace, only spaces, therefore any validations relying on removal of trailing white space may encounter issues.
 - The `text` and `ntext` data types are incompatible with the `len()` therefore the `datalength()` function ius used in it's place which will give different results for multibyte characters.
 - The `image` data type is not currently supported, these columns are skipped when validated. See (issue-1578)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1578] for details.
+- SQL Server's `AVG()` function can overflow and return an arithmetic overflow error when calculating the average of a max-precision decimal column (e.g. `decimal(38)`). If you encounter this, exclude the column(s) from the list of columns passed to the `--avg` option.
 
 ## Sybase ASE
 
