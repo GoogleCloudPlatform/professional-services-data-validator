@@ -497,16 +497,18 @@ def test_column_validation_ss_types_to_bigquery():
             "col_ntext",
         )
     ]
-    # TODO Include col_int1 in max_cols when working on issue-1585.
-    max_cols = [_ for _ in cols if _ not in ("col_int1",)]
-    avg_cols = [_ for _ in cols if _ in ("id", "col_int1", "col_int2", "col_int4", "col_int8", "col_dec")]
+    avg_cols = [
+        _
+        for _ in cols
+        if _ in ("id", "col_int1", "col_int2", "col_int4", "col_int8", "col_dec")
+    ]
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_sql_server_types",
         count_cols=",".join(cols),
         sum_cols=",".join(cols),
         min_cols=",".join(cols),
-        max_cols=",".join(max_cols),
+        max_cols=",".join(cols),
         avg_cols=",".join(avg_cols),
         # SQL Server requires cast_to_bigint for summing tinyint/smallint/int.
         cast_to_bigint=True,
@@ -699,8 +701,6 @@ def test_row_validation_comp_fields_ss_types_to_bigquery():
                 "id",
                 # Excluded col_float32 because BigQuery does not have a float32 type.
                 "col_float32",
-                # TODO Include col_int1 in max_cols when working on issue-1585.
-                "col_int1",
                 # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
