@@ -336,6 +336,12 @@ def build_config_from_args(args: "Namespace", config_manager: ConfigManager):
                 _get_comparison_config(args, config_manager, primary_keys)
             )
 
+        if not config_manager.comparison_fields:
+            raise ValueError(
+                "No comparison fields remaining after excluding primary keys. "
+                "Use --concat or --hash when all columns are also primary key columns."
+            )
+
     return config_manager
 
 

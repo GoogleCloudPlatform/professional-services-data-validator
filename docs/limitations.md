@@ -3,6 +3,7 @@
 ## General
 
 - Floating-point data types, e.g. Float and Double, are inexact by nature. Validations that involve conversion of floating-point data to string, e.g. `--hash` and `--concat`, can be problematic.
+- Row validations using `--comparison-fields` require at least one comparison column that is not a primary key. When all table columns are used as primary keys, you must use `--concat` or `--hash` to validate the rows.
 
 ## BigQuery
 

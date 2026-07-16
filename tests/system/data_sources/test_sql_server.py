@@ -499,7 +499,11 @@ def test_column_validation_ss_types_to_bigquery():
     ]
     # TODO Include col_int1 in max_cols when working on issue-1585.
     max_cols = [_ for _ in cols if _ not in ("col_int1",)]
-    avg_cols = [_ for _ in cols if _ in ("id", "col_int1", "col_int2", "col_int4", "col_int8", "col_dec")]
+    avg_cols = [
+        _
+        for _ in cols
+        if _ in ("id", "col_int1", "col_int2", "col_int4", "col_int8", "col_dec")
+    ]
     column_validation_test(
         tc="bq-conn",
         tables="pso_data_validator.dvt_sql_server_types",
