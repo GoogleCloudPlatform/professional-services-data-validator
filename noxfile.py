@@ -301,6 +301,7 @@ def integration_snowflake(session):
     """Run Snowflake integration tests.
     Ensure Snowflake validation is running as expected.
     """
+    session.skip("Snowflake testing disabled due to account suspension.")
     # TODO Remove pinned version below when working on issue-1592.
     _setup_session_requirements(
         session,

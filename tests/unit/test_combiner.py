@@ -1108,6 +1108,78 @@ def test_generate_report_with_nan_agg_value(
                 consts.FAILED_PRESENT_IN_BOTH_TABLES: 0,
             },
         ),
+        # Test Case 3: Column Validation Summary
+        # Verifies that a standard column validation correctly logs
+        # total, success, and fail validation counts.
+        (
+            metadata.RunMetadata(
+                run_id="col-test-run",
+                start_time=datetime.datetime(
+                    2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_TYPE: [consts.COLUMN_VALIDATION] * 5,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
+                    + [consts.VALIDATION_STATUS_FAIL] * 3,
+                    consts.SOURCE_COLUMN_NAME: ["col1", "col2", "col3", "col4", "col5"],
+                    consts.TARGET_COLUMN_NAME: ["col1", "col2", "col3", "col4", "col5"],
+                    consts.SOURCE_AGG_VALUE: [10, 20, 30, 40, None],
+                    consts.TARGET_AGG_VALUE: [10, 20, 60, None, 80],
+                }
+            ),
+            pandas.DataFrame(),
+            pandas.DataFrame(),
+            {
+                consts.CONFIG_RUN_ID: "col-test-run",
+                consts.CONFIG_START_TIME: "2025-02-12T07:30:10+00:00",
+                consts.CONFIG_END_TIME: "2025-02-12T07:32:15+00:00",
+                consts.TOTAL_VALIDATIONS: 5,
+                consts.TOTAL_VALIDATIONS_SUCCESS: 2,
+                consts.TOTAL_VALIDATIONS_FAIL: 3,
+            },
+        ),
+        # Test Case 4: Custom Query (Column-like) Validation Summary
+        # Verifies that a custom query validation without primary keys
+        # (which behaves like a column validation) correctly logs
+        # total, success, and fail validation counts.
+        (
+            metadata.RunMetadata(
+                run_id="custom-col-test-run",
+                start_time=datetime.datetime(
+                    2025, 2, 12, 7, 30, 10, tzinfo=datetime.timezone.utc
+                ),
+                end_time=datetime.datetime(
+                    2025, 2, 12, 7, 32, 15, tzinfo=datetime.timezone.utc
+                ),
+            ),
+            pandas.DataFrame(
+                {
+                    consts.VALIDATION_TYPE: [consts.CUSTOM_QUERY] * 5,
+                    consts.CONFIG_PRIMARY_KEYS: [None] * 5,
+                    consts.VALIDATION_STATUS: [consts.VALIDATION_STATUS_SUCCESS] * 2
+                    + [consts.VALIDATION_STATUS_FAIL] * 3,
+                    consts.SOURCE_COLUMN_NAME: [None] * 5,
+                    consts.TARGET_COLUMN_NAME: [None] * 5,
+                    consts.SOURCE_AGG_VALUE: [10, 20, 30, 40, None],
+                    consts.TARGET_AGG_VALUE: [10, 20, 60, None, 80],
+                }
+            ),
+            pandas.DataFrame(),
+            pandas.DataFrame(),
+            {
+                consts.CONFIG_RUN_ID: "custom-col-test-run",
+                consts.CONFIG_START_TIME: "2025-02-12T07:30:10+00:00",
+                consts.CONFIG_END_TIME: "2025-02-12T07:32:15+00:00",
+                consts.TOTAL_VALIDATIONS: 5,
+                consts.TOTAL_VALIDATIONS_SUCCESS: 2,
+                consts.TOTAL_VALIDATIONS_FAIL: 3,
+            },
+        ),
     ),
 )
 def test_get_summary_with_values_for_all_stats(

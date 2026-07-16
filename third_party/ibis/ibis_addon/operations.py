@@ -68,6 +68,8 @@ import third_party.ibis.ibis_postgres  # noqa
 from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
+from third_party.ibis.ibis_mssql import registry as mssql_registry
+
 # DB2 requires ibm_db_dbi
 try:
     from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
@@ -753,6 +755,7 @@ MsSqlExprTranslator._registry[BinaryLength] = mssql_sa_format_binary_length
 MsSqlExprTranslator._registry[ops.TableColumn] = mssql_sa_table_column
 MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_sa_epoch_seconds
 MsSqlExprTranslator._registry[ops.RStrip] = mssql_sa_whitespace_rstrip
+MsSqlExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
 MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
     ops.StringLength
 ]
