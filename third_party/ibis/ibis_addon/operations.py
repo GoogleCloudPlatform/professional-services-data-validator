@@ -494,6 +494,7 @@ MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_le
 MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
 MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
 MsSqlExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
+MsSqlExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
 MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
     ops.StringLength
 ]
