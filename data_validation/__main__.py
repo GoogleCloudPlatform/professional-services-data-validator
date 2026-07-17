@@ -529,33 +529,40 @@ def run_validation(config_manager: ConfigManager, dry_run=False, verbose=False):
         logging.warning(
             "Trim String Primary Keys has been deprecated, validation results may vary"
         )
-    with DataValidation(
-        config_manager.config,
-        validation_builder=None,
-        result_handler=None,
-        verbose=verbose,
-        cached_source_client=source_client,
-        cached_target_client=target_client,
-    ) as validator:
+    try:
+        with DataValidation(
+            config_manager.config,
+            validation_builder=None,
+            result_handler=None,
+            verbose=verbose,
+            cached_source_client=source_client,
+            cached_target_client=target_client,
+        ) as validator:
 
-        if dry_run:
-            print(
-                json.dumps(
-                    {
-                        "source_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_source_query(),
-                            source_client,
-                        ),
-                        "target_query": util.ibis_table_to_sql(
-                            validator.validation_builder.get_target_query(),
-                            target_client,
-                        ),
-                    },
-                    indent=4,
+            if dry_run:
+                print(
+                    json.dumps(
+                        {
+                            "source_query": util.ibis_table_to_sql(
+                                validator.validation_builder.get_source_query(),
+                                source_client,
+                            ),
+                            "target_query": util.ibis_table_to_sql(
+                                validator.validation_builder.get_target_query(),
+                                target_client,
+                            ),
+                        },
+                        indent=4,
+                    )
                 )
-            )
-        else:
-            validator.execute()
+            else:
+                validator.execute()
+    except Exception as e:
+        if config_manager.full_source_table:
+            raise exceptions.ValidationException(
+                f"Validation failed for table '{config_manager.full_source_table}': {e}"
+            ) from e
+        raise
 
 
 def run_validations(args, config_managers):

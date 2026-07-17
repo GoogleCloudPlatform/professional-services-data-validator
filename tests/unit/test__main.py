@@ -678,3 +678,21 @@ def test_store_config_dir_custom_query_raises():
         main.store_config_dir(args, [config_mgr], is_json=False)
 
     assert main.CUSTOM_QUERY_DIR_SUPPORT_ERROR in str(exc_info.value)
+
+
+@mock.patch("data_validation.__main__.DataValidation")
+def test_run_validation_exception_handling(mock_data_validation):
+    """Test that exceptions in run_validation are wrapped with table names."""
+    mock_validator = mock.Mock()
+    mock_validator.execute.side_effect = ValueError("Some execution error")
+    mock_data_validation.return_value.__enter__.return_value = mock_validator
+
+    mock_config_manager = mock.Mock()
+    mock_config_manager.full_source_table = "test_schema.test_table"
+    mock_config_manager.config = {}
+
+    with pytest.raises(exceptions.ValidationException) as exc_info:
+        main.run_validation(mock_config_manager)
+
+    assert "Validation failed for table 'test_schema.test_table': Some execution error" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, ValueError)
