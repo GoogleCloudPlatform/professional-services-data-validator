@@ -108,7 +108,7 @@ def generate_report(
         if result_df is None:
             result_df = interim_result_df
         else:
-            result_df = pandas.concat([result_df, interim_result_df])
+            result_df = pandas.concat([result_df, interim_result_df], ignore_index=True)
 
     # Get the first validation metadata object to fill source and/or target empty table names.
     first = run_metadata.validations[next(iter(run_metadata.validations))]

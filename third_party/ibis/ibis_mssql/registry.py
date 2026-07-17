@@ -176,3 +176,16 @@ def sa_string_join(t, op):
 def sa_whitespace_rstrip(t, op):
     sa_arg = t.translate(op.arg)
     return sa.func.rtrim(sa.cast(sa_arg, sa.VARCHAR(length=None)))
+
+
+def sa_format_mean(translator, op):
+    """Calculate the average aggregation.
+
+    Casts integer inputs to FLOAT to prevent integer truncation. Leaves other
+    types unchanged to preserve precision (e.g., Decimals).
+    """
+    arg = translator.translate(op.arg)
+
+    if op.arg.output_dtype.is_integer():
+        return sa.func.avg(sa.cast(arg, sa.FLOAT))
+    return sa.func.avg(arg)

@@ -1,6 +1,7 @@
 # DVT Hash Validation Throughput
 
 ## TL;DR
+
 Customers often ask for throughput numbers for DVT row hash validations. This document attempts to provide "best case" numbers we can talk about. By "best case" we mean that all systems tested are in GCP and therefore customers testing with on-premises databases will likely experience lower throughput numbers.
 
 We only tested up to Cloud Run parallelism of 8. Customers could go higher but should keep in mind the overhead on source and target systems.
@@ -55,8 +56,8 @@ All tests were executed for tables containing 100 million rows each.
   </tbody>
 </table>
 
-
 ## Assumptions
+
 The actual data in source and target rows is irrelevant for these tests because we are only interested in DVT's ability to process the hashes and the hash values are the same size regardless of how many input columns there are. We are not trying to measure the speed of customers' SQL engines.
 
 The source and target databases are in GCP in the same region as DVT itself. Again we are not trying to measure the speed of customers' connections to GCP, only DVT itself.
@@ -65,9 +66,9 @@ DVT utilizes threads when receiving results from source and target engines but i
 
 Working assumption (based on internal testing) is that we need 2GB of RAM per million rows processed in a single pass. We've carefully sized DVT partitions to fit within the memory provisioned in Cloud Run for a single vCPU. For limits see https://cloud.google.com/run/docs/configuring/jobs/memory-limits.
 
-
 ## Helper environment variables
-```
+
+```bash
 PROJECT=my-project
 LOCATION=my-region
 NETWORK=my-network
@@ -77,8 +78,8 @@ SA=dvt-sa@${PROJECT}.iam.gserviceaccount.com
 DVT_TAG=dvt:770
 ```
 
-
 ## Connections
+
 We created three connections:
 - An Oracle source connection
 - A BigQuery target connection
@@ -86,7 +87,7 @@ We created three connections:
 
 The connections were stored in Cloud Storage so they can be used from Cloud Run.
 
-```
+```bash
 export PSO_DV_CONN_HOME=gs://${BUCKET}
 
 # Oracle
@@ -114,8 +115,10 @@ data-validation connections add --secret-manager-type GCP \
 We have created plenty of partitions to keep the individual memory requirement below the memory provisioned in Cloud Run for a single vCPU. We only intend to test up to parallelism 8 and therefore use `--parts-per-file=4` to group partitions into fewer configuration files which reduces the overhead of creating/closing Cloud Run Jobs.
 
 ### With filter on status
+
 This command uses `--filter-status=fail` to prevent any data being written to the result handler.
-```
+
+```bash
 data-validation generate-table-partitions \
 -sc=ora -tc=bq \
 -tbls=dvt_test.tab_vol_100m \
@@ -128,8 +131,10 @@ data-validation generate-table-partitions \
 ```
 
 ### Without filter on status
+
 This command generates partitions that will write all validation results to the result handler, i.e. all 100 million rows will write their status.
-```
+
+```bash
 data-validation generate-table-partitions \
 -sc=ora -tc=pg \
 -tbls=dvt_test.tab_vol_100m \
@@ -141,11 +146,12 @@ data-validation generate-table-partitions \
 ```
 
 ## DVT container
-First we need to define a container with DVT installed into a Python virtual environment and, if validating Oracle data, the cx_Oracle package and a supporting Oracle client.
+
+First we need to define a container with DVT installed into a Python virtual environment and, if validating Oracle data, the oracledb package and, optionally, an Oracle client.
 
 Example `Dockerfile`:
 
-```
+```dockerfile
 FROM python:3.11-slim
 
 # Allow statements and log messages to immediately appear in the Knative logs
@@ -166,9 +172,6 @@ RUN wget -q ${OTN_URL}/218000/instantclient-sdk-linux.x64-21.8.0.0.0dbru.zip && 
 ENV ORACLE_HOME=/opt/oracle/instantclient_21_8
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_8
 
-# Python pre-reqs (gcc for cx_Oracle)
-RUN apt-get install gcc -y
-
 # Install DVT
 ENV DVT_HOME=/opt/dvt
 ENV VIRTUAL_ENV=${DVT_HOME}/.venv
@@ -178,14 +181,15 @@ RUN python3 -m venv ${VIRTUAL_ENV}
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
 RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} --upgrade pip
 RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} google_pso_data_validator
-RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} cx_Oracle
+RUN . ${VIRTUAL_ENV}/bin/activate && pip install ${PIPOPTS} oracledb
 
 # Entrypoint
 ENTRYPOINT ["python","-m","data_validation"]
 ```
 
 Build image example:
-```
+
+```bash
 gcloud builds submit \
  --project=${PROJECT} --region=${LOCATION} \
  --service-account=projects/${PROJECT}/serviceAccounts/${SA} \
@@ -196,12 +200,15 @@ gcloud builds submit \
 ## Test commands
 
 ### Oracle & BigQuery validation without result handler writes
-```
+
+```bash
 PSO_DV_CONN_HOME=gs://${BUCKET}
 PART_DIR="partitions_dir/ora2bq_t16/dvt_test.tab_vol_100m"
 ```
+
 #### Parallel 1
-```
+
+```bash
 JOB_NAME=$(echo "dvt_ora2bq_px1_$(date +'%Y%m%d%H%M%S')"|tr _ -)
 gcloud run jobs create ${JOB_NAME} \
   --project ${PROJECT} --region ${LOCATION} --network=${NETWORK} \
@@ -213,8 +220,10 @@ gcloud run jobs create ${JOB_NAME} \
   --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} \
   --args="configs,run,-kc,-cdir=gs://${BUCKET}/${PART_DIR}"
 ```
+
 #### Parallel 2
-```
+
+```bash
 JOB_NAME=$(echo "dvt_ora2bq_px2_$(date +'%Y%m%d%H%M%S')"|tr _ -)
 gcloud run jobs create ${JOB_NAME} \
   --project ${PROJECT} --region ${LOCATION} --network=${NETWORK} \
@@ -226,8 +235,10 @@ gcloud run jobs create ${JOB_NAME} \
   --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} \
   --args="configs,run,-kc,-cdir=gs://${BUCKET}/${PART_DIR}"
 ```
+
 #### Parallel 4
-```
+
+```bash
 JOB_NAME=$(echo "dvt_ora2bq_px4_$(date +'%Y%m%d%H%M%S')"|tr _ -)
 gcloud run jobs create ${JOB_NAME} \
   --project ${PROJECT} --region ${LOCATION} --network=${NETWORK} \
@@ -239,8 +250,10 @@ gcloud run jobs create ${JOB_NAME} \
   --set-env-vars PSO_DV_CONN_HOME=${PSO_DV_CONN_HOME} \
   --args="configs,run,-kc,-cdir=gs://${BUCKET}/${PART_DIR}"
 ```
+
 #### Parallel 8
-```
+
+```bash
 JOB_NAME=$(echo "dvt_ora2bq_px8_$(date +'%Y%m%d%H%M%S')"|tr _ -)
 gcloud run jobs create ${JOB_NAME} \
   --project ${PROJECT} --region ${LOCATION} --network=${NETWORK} \
@@ -254,7 +267,8 @@ gcloud run jobs create ${JOB_NAME} \
 ```
 
 ### Oracle & BigQuery validation with result  handler writes
-```
+
+```bash
 PSO_DV_CONN_HOME=gs://${BUCKET}
 PART_DIR="partitions_dir/ora2bq_t16_rh/dvt_test.tab_vol_100m"
 ```
