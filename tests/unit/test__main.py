@@ -694,5 +694,8 @@ def test_run_validation_exception_handling(mock_data_validation):
     with pytest.raises(exceptions.ValidationException) as exc_info:
         main.run_validation(mock_config_manager)
 
-    assert "Validation failed for table 'test_schema.test_table': Some execution error" in str(exc_info.value)
+    assert (
+        "Validation failed for table 'test_schema.test_table': Some execution error"
+        in str(exc_info.value)
+    )
     assert isinstance(exc_info.value.__cause__, ValueError)
