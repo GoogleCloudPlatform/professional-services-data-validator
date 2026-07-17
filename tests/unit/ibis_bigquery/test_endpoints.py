@@ -14,7 +14,6 @@
 
 from unittest import mock
 
-import pytest
 from google.auth import credentials
 
 from data_validation import clients, consts
