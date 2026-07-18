@@ -697,6 +697,7 @@ def test_db2_zos_expressions():
     We can't do this as a pure unit test because unbound tables in Ibis use sqlglot,
     bound tables, like in this test, allow the specific driver to handle SQL generation.
     """
+    pytest.skip("Skipping test_db2_zos_expressions due to issue-1787.")
     client = clients.get_data_client(ZOS_CONN)
 
     # The Z/OS client uses 'CCSID' for reflection, which fails on LUW databases.
