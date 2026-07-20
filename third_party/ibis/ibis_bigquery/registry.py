@@ -47,14 +47,17 @@ def strftime(translator, op):
     if format_str.value.startswith("%Y"):
         fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
     arg_formatted = translator.translate(arg)
-    if isinstance(arg_type, dt.Timestamp):
-        return "FORMAT_{}({}, {}({}), {!r})".format(
-            strftime_format_func_name,
-            fmt_string,
-            strftime_format_func_name,
-            arg_formatted,
-            arg_type.timezone if arg_type.timezone is not None else "UTC",
-        )
+    if arg_type.is_timestamp():
+        if getattr(arg_type, "timezone", None) is None:
+            return "FORMAT_DATETIME({}, DATETIME({}))".format(
+                fmt_string, arg_formatted
+            )
+        else:
+            return "FORMAT_TIMESTAMP({}, TIMESTAMP({}), {!r})".format(
+                fmt_string,
+                arg_formatted,
+                arg_type.timezone if arg_type.timezone is not None else "UTC",
+            )
     return "FORMAT_{}({}, {})".format(
         strftime_format_func_name, fmt_string, arg_formatted
     )
