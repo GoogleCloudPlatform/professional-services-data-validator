@@ -71,6 +71,8 @@ from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_bigquery import registry as bigquery_registry
 from third_party.ibis.ibis_impala import registry as impala_registry
+from third_party.ibis.ibis_postgres import registry as postgres_registry
+
 # DB2 requires ibm_db_dbi
 try:
     from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
@@ -374,54 +376,6 @@ def sa_format_random(t, op):
 
 
 
-# --- Postgres Custom Handlers ---
-def postgres_sa_format_hashbytes(translator, op):
-    arg = translator.translate(op.arg)
-    convert = sa.func.convert_to(arg, sa.sql.literal_column("'UTF8'"))
-    hash_func = sa.func.sha256(convert)
-    return sa.func.encode(hash_func, sa.sql.literal_column("'hex'"))
-
-
-def postgres_sa_epoch_seconds(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.cast(
-        sa.extract("epoch", sa.func.date_trunc(sa.sql.literal_column("'second'"), arg)),
-        sa.BIGINT,
-    )
-
-
-def postgres_sa_cast(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.dtype
-    sa_arg = t.translate(arg)
-    if arg_dtype.is_decimal() and typ.is_string():
-        if arg_dtype.scale is None:
-            return sa.cast(sa.func.trim_scale(sa_arg), t.get_sqla_type(typ))
-        elif arg_dtype.scale > 0:
-            precision = arg_dtype.precision or 38
-            fmt = (
-                "FM"
-                + ("9" * (precision - arg_dtype.scale - 1))
-                + "0."
-                + ("9" * arg_dtype.scale)
-            )
-            return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
-    elif arg_dtype.is_binary() and typ.is_string():
-        return sa.func.encode(sa_arg, sa.literal("hex"))
-    elif arg_dtype.is_string() and typ.is_binary():
-        return sa.func.decode(sa_arg, sa.literal("hex"))
-    return sa_fixed_cast(t, op)
-
-
-def postgres_sa_format_padded_char_length(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.func.char_length(
-        sa.case(
-            (arg.is_(None), sa.literal_column("NULL")),
-            else_=sa.func.concat(arg, sa.text("''")),
-        )
-    )
 
 
 
@@ -523,14 +477,14 @@ if OracleExprTranslator:
         ops.StringLength
     ]
 
-PostgreSQLExprTranslator._registry[ops.HashBytes] = postgres_sa_format_hashbytes
+PostgreSQLExprTranslator._registry[ops.HashBytes] = postgres_registry.sa_format_hashbytes
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
-PostgreSQLExprTranslator._registry[ops.Cast] = postgres_sa_cast
+PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = postgres_sa_epoch_seconds
+PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = postgres_registry.sa_epoch_seconds
 PostgreSQLExprTranslator._registry[PaddedCharLength] = (
-    postgres_sa_format_padded_char_length
+    postgres_registry.sa_format_postgres_padded_char_length
 )
 
 
