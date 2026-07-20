@@ -520,3 +520,15 @@ operation_registry.update(
         ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
     }
 )
+
+
+def format_hashbytes(translator, op):
+    arg = translator.translate(op.arg)
+    convert = sa.func.convert(arg, sa.sql.literal_column("'UTF8'"))
+    hash_func = sa.func.standard_hash(convert, sa.sql.literal_column("'SHA256'"))
+    return sa.func.lower(hash_func)
+
+
+def format_binary_length(translator, op):
+    arg = translator.translate(op.arg)
+    return sa.func.dbms_lob.getlength(arg)

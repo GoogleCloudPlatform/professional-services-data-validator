@@ -64,3 +64,11 @@ def strftime(translator, op):
 def format_binary_length(translator, op):
     arg = translator.translate(op.arg)
     return f"LENGTH({arg})"
+
+
+def extract_epoch_seconds(translator, op):
+    arg = op.arg
+    arg_formatted = translator.translate(arg)
+    if arg.dtype.is_date() or (arg.dtype.is_timestamp() and arg.dtype.timezone is None):
+        return f"UNIX_SECONDS(CAST({arg_formatted} AS TIMESTAMP))"
+    return f"UNIX_SECONDS({arg_formatted})"

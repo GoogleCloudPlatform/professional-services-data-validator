@@ -71,7 +71,9 @@ from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_bigquery import registry as bigquery_registry
 from third_party.ibis.ibis_impala import registry as impala_registry
+from third_party.ibis.ibis_oracle import registry as oracle_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
+from third_party.ibis.ibis_snowflake import registry as snowflake_registry
 
 # DB2 requires ibm_db_dbi
 try:
@@ -253,13 +255,6 @@ def sa_format_raw_sql(translator, op):
     return sa.text(raw_sql.args[0])
 
 
-def sa_format_hashbytes_oracle(translator, op):
-    arg = translator.translate(op.arg)
-    convert = sa.func.convert(arg, sa.sql.literal_column("'UTF8'"))
-    hash_func = sa.func.standard_hash(convert, sa.sql.literal_column("'SHA256'"))
-    return sa.func.lower(hash_func)
-
-
 def sa_format_hashbytes_mysql(translator, op):
     arg = translator.translate(op.arg)
     hash_func = sa.func.sha2(arg, sa.sql.literal_column("'256'"))
@@ -271,16 +266,6 @@ def sa_format_hashbytes_redshift(translator, op):
     return sa.sql.literal_column(f"sha2({arg}, 256)")
 
 
-def sa_format_hashbytes_snowflake(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.func.sha2(arg)
-
-
-def sa_epoch_time_snowflake(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.func.date_part(sa.sql.literal_column("epoch_seconds"), arg)
-
-
 def sa_format_to_char(translator, op):
     arg = translator.translate(op.arg)
     fmt = translator.translate(op.fmt)
@@ -290,11 +275,6 @@ def sa_format_to_char(translator, op):
 def sa_format_binary_length(translator, op):
     arg = translator.translate(op.arg)
     return sa.func.length(arg)
-
-
-def sa_format_binary_length_oracle(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.func.dbms_lob.getlength(arg)
 
 
 def sa_cast_mysql(t, op):
@@ -324,45 +304,6 @@ def sa_cast_mysql(t, op):
     elif arg_dtype.is_string() and typ.is_binary():
         # Binary from string cast is a "from hex" conversion for DVT.
         return sa.func.unhex(sa_arg)
-
-    # Follow the original Ibis code path.
-    return sa_fixed_cast(t, op)
-
-
-def sa_cast_snowflake(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.dtype
-    sa_arg = t.translate(arg)
-
-    # Specialize going from numeric(p,s>0) to string
-    if (
-        arg_dtype.is_decimal()
-        and arg_dtype.scale
-        and arg_dtype.scale > 0
-        and typ.is_string()
-    ):
-        # When casting a number to string Snowflake includes the full scale, e.g.:
-        #   SELECT CAST(CAST(100 AS DECIMAL(5,2)) AS VARCHAR(10));
-        #     100.00
-        # This doesn't match most engines which would return "100".
-        # Using to_char() function instead of cast to return a more typical value.
-        # We've wrapped to_char in rtrim(".") due to whole numbers having a trailing ".".
-        precision = arg_dtype.precision or 38
-        fmt = (
-            "FM"
-            + ("9" * (precision - arg_dtype.scale - 1))
-            + "0."
-            + ("9" * arg_dtype.scale)
-        )
-        return sa.func.rtrim(sa.func.to_char(sa_arg, fmt), ".")
-
-    if arg_dtype.is_binary() and typ.is_string():
-        # Binary to string cast is a "to hex" conversion for DVT.
-        return sa.func.hex_encode(sa_arg, sa.literal(0))
-    elif arg_dtype.is_string() and typ.is_binary():
-        # Binary from string cast is a "from hex" conversion for DVT.
-        return sa.func.hex_decode_binary(sa_arg)
 
     # Follow the original Ibis code path.
     return sa_fixed_cast(t, op)
@@ -441,6 +382,9 @@ BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashb
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
 BigQueryExprTranslator._registry[ops.Strftime] = bigquery_registry.strftime
 BigQueryExprTranslator._registry[BinaryLength] = bigquery_registry.format_binary_length
+BigQueryExprTranslator._registry[ops.ExtractEpochSeconds] = (
+    bigquery_registry.extract_epoch_seconds
+)
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
@@ -461,9 +405,9 @@ ImpalaExprTranslator._registry[BinaryLength] = fixed_arity("length", 1)
 
 if OracleExprTranslator:
     OracleExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    OracleExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_oracle
+    OracleExprTranslator._registry[ops.HashBytes] = oracle_registry.format_hashbytes
     OracleExprTranslator._registry[ToChar] = sa_format_to_char
-    OracleExprTranslator._registry[BinaryLength] = sa_format_binary_length_oracle
+    OracleExprTranslator._registry[BinaryLength] = oracle_registry.format_binary_length
     OracleExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
     OracleExprTranslator._registry[PaddedCharLength] = OracleExprTranslator._registry[
         ops.StringLength
@@ -541,10 +485,14 @@ if TeradataExprTranslator:
     )
 
 if SnowflakeExprTranslator:
-    SnowflakeExprTranslator._registry[ops.Cast] = sa_cast_snowflake
-    SnowflakeExprTranslator._registry[ops.HashBytes] = sa_format_hashbytes_snowflake
+    SnowflakeExprTranslator._registry[ops.Cast] = snowflake_registry.cast_snowflake
+    SnowflakeExprTranslator._registry[ops.HashBytes] = (
+        snowflake_registry.format_hashbytes_snowflake
+    )
     SnowflakeExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    SnowflakeExprTranslator._registry[ops.ExtractEpochSeconds] = sa_epoch_time_snowflake
+    SnowflakeExprTranslator._registry[ops.ExtractEpochSeconds] = (
+        snowflake_registry.epoch_time_snowflake
+    )
     SnowflakeExprTranslator._registry[ops.RandomScalar] = sa_format_random
     SnowflakeExprTranslator._registry[BinaryLength] = sa_format_binary_length
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
@@ -599,18 +547,6 @@ try:
     BigQueryType.to_ibis = dvt_bq_to_ibis
 except Exception:
     pass
-
-
-# Patch BigQuery translation of ExtractEpochSeconds to handle DATETIME and DATE correctly
-def bq_extract_epoch_seconds(translator, op):
-    arg = op.arg
-    arg_formatted = translator.translate(arg)
-    if arg.dtype.is_date() or (arg.dtype.is_timestamp() and arg.dtype.timezone is None):
-        return f"UNIX_SECONDS(CAST({arg_formatted} AS TIMESTAMP))"
-    return f"UNIX_SECONDS({arg_formatted})"
-
-
-BigQueryExprTranslator._registry[ops.ExtractEpochSeconds] = bq_extract_epoch_seconds
 
 
 # Monkey-patch PandasData.convert_Date to handle out-of-bounds / tricky dates safely
