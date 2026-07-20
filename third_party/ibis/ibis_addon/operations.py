@@ -372,14 +372,6 @@ def sa_format_random(t, op):
     return sa.func.RANDOM()
 
 
-
-
-
-
-
-
-
-
 # Native BigQueryType/BigQuerySchema mapping is used in Ibis 7.1.0
 
 
@@ -477,12 +469,16 @@ if OracleExprTranslator:
         ops.StringLength
     ]
 
-PostgreSQLExprTranslator._registry[ops.HashBytes] = postgres_registry.sa_format_hashbytes
+PostgreSQLExprTranslator._registry[ops.HashBytes] = (
+    postgres_registry.sa_format_hashbytes
+)
 PostgreSQLExprTranslator._registry[RawSQL] = sa_format_raw_sql
 PostgreSQLExprTranslator._registry[ToChar] = sa_format_to_char
 PostgreSQLExprTranslator._registry[ops.Cast] = postgres_registry.sa_cast_postgres
 PostgreSQLExprTranslator._registry[BinaryLength] = sa_format_binary_length
-PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = postgres_registry.sa_epoch_seconds
+PostgreSQLExprTranslator._registry[ops.ExtractEpochSeconds] = (
+    postgres_registry.sa_epoch_seconds
+)
 PostgreSQLExprTranslator._registry[PaddedCharLength] = (
     postgres_registry.sa_format_postgres_padded_char_length
 )
@@ -554,9 +550,13 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
 if SybaseExprTranslator:
-    SybaseExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
+    SybaseExprTranslator._registry[BinaryLength] = (
+        mssql_registry.sa_format_binary_length
+    )
     SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    SybaseExprTranslator._registry[PaddedCharLength] = mssql_registry.sa_format_string_length
+    SybaseExprTranslator._registry[PaddedCharLength] = (
+        mssql_registry.sa_format_string_length
+    )
 
 # Patch TemporalValue to support strftime in custom calculations
 import ibis.expr.types as et
