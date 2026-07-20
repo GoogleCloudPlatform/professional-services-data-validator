@@ -558,19 +558,6 @@ if SybaseExprTranslator:
         mssql_registry.sa_format_string_length
     )
 
-# Patch TemporalValue to support strftime in custom calculations
-import ibis.expr.types as et
-
-
-class TemporalValue:
-    @staticmethod
-    def strftime(expr, format_str):
-        return expr.strftime(format_str)
-
-
-et.TemporalValue = TemporalValue
-
-
 # Monkey-patch pandas backend compute_row_reduction to handle string/bytes/dict scalars correctly
 try:
     import ibis.backends.pandas.execution.generic as gp
