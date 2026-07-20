@@ -515,125 +515,6 @@ def postgres_sa_format_padded_char_length(translator, op):
     )
 
 
-# --- MSSQL Custom Handlers ---
-def mssql_sa_table_column(t, op):
-    from ibis.backends.base.sql.alchemy.registry import get_col
-
-    ctx = t.context
-    table = op.table
-    sa_table = get_sqla_table(ctx, table)
-    out_expr = get_col(sa_table, op)
-    out_expr.quote = t._quote_column_names
-    if op.dtype.is_timestamp():
-        timezone = op.dtype.timezone
-        if timezone is not None:
-            out_expr = sa.literal_column(
-                f"{out_expr.name} AT TIME ZONE '{timezone}'"
-            ).label(op.name)
-    if t.permit_subquery and ctx.is_foreign_expr(table):
-        try:
-            subq = sa_table.subquery()
-        except AttributeError:
-            subq = sa_table
-        return sa.select(subq.c[out_expr.name])
-    return out_expr
-
-
-def mssql_strftime(translator, op):
-    arg, pattern = map(translator.translate, op.args)
-    supported_convert_styles = {
-        "%Y-%m-%d": 23,
-        "%Y-%m-%d %H:%M:%S": 20,
-        "%Y-%m-%d %H:%M:%S.%f": 21,
-    }
-    try:
-        convert_style = supported_convert_styles[pattern.value]
-    except KeyError:
-        raise NotImplementedError(
-            f"strftime format {pattern.value} not supported for SQL Server."
-        )
-    arg_type = op.args[0].dtype
-    if hasattr(arg_type, "timezone") and arg_type.timezone:
-        arg = sa.cast(arg, sa.types.DateTime)
-    return sa.func.convert(sa.text("VARCHAR"), arg, convert_style)
-
-
-def mssql_sa_epoch_seconds(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.cast(
-        sa.func.datediff_big(sa.text("s"), "1970-01-01 00:00:00", arg), sa.BIGINT
-    )
-
-
-def mssql_sa_format_string_length(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.func.cast(sa.func.len(sa.func.replace(arg, " ", "_")), sa.BIGINT)
-
-
-def mssql_sa_format_binary_length(translator, op):
-    arg = translator.translate(op.arg)
-    return sa.func.cast(sa.func.datalength(arg), sa.BIGINT)
-
-
-def mssql_sa_format_hashbytes(translator, op):
-    arg = translator.translate(op.arg)
-    cast_arg = sa.func.convert(sa.sql.literal_column("VARCHAR(MAX)"), arg)
-    hash_func = sa.func.hashbytes(sa.sql.literal_column("'SHA2_256'"), cast_arg)
-    hash_to_string = sa.func.convert(
-        sa.sql.literal_column("CHAR(64)"), hash_func, sa.sql.literal_column("2")
-    )
-    return sa.func.lower(hash_to_string)
-
-
-def mssql_sa_cast(t, op):
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.dtype
-    sa_arg = t.translate(arg)
-    if (arg_dtype.is_float32() or arg_dtype.is_float64()) and typ.is_string():
-        return sa.func.format(sa_arg, "G")
-    elif arg_dtype.is_binary() and typ.is_string():
-        return sa.func.lower(
-            sa.func.convert(sa.text("VARCHAR(MAX)"), sa_arg, sa.literal(2))
-        )
-    elif arg_dtype.is_string() and typ.is_binary():
-        return sa.func.convert(sa.text("VARBINARY(MAX)"), sa_arg, sa.literal(2))
-    elif (
-        arg_dtype.is_decimal()
-        and arg_dtype.scale
-        and arg_dtype.scale > 0
-        and typ.is_string()
-    ):
-        scale = arg_dtype.scale
-        format_string = f'0.{("#" * scale)}'
-        formatted_value = sa.func.format(sa_arg, format_string)
-        return sa.func.replace(formatted_value, ".0", "")
-    elif arg_dtype.is_boolean() and typ.is_string():
-        return sa.case(
-            (sa_arg == 0, sa.literal_column("'false'")),
-            (sa_arg == 1, sa.literal_column("'true'")),
-            else_=sa.null(),
-        )
-    return sa_fixed_cast(t, op)
-
-
-def mssql_sa_format_new_id(t, op):
-    return sa.func.NEWID()
-
-
-def mssql_sa_string_join(t, op):
-    if len(op.arg) == 1:
-        return sa.type_coerce(
-            t.translate(op.arg[0]),
-            sa.types.String,
-        )
-    else:
-        return sa.func.concat(*map(t.translate, op.arg))
-
-
-def mssql_sa_whitespace_rstrip(t, op):
-    sa_arg = t.translate(op.arg)
-    return sa.func.rtrim(sa.cast(sa_arg, sa.VARCHAR(length=None)))
 
 
 # Native BigQueryType/BigQuerySchema mapping is used in Ibis 7.1.0
@@ -744,17 +625,17 @@ PostgreSQLExprTranslator._registry[PaddedCharLength] = (
 )
 
 
-MsSqlExprTranslator._registry[ops.HashBytes] = mssql_sa_format_hashbytes
+MsSqlExprTranslator._registry[ops.HashBytes] = mssql_registry.sa_format_hashbytes
 MsSqlExprTranslator._registry[RawSQL] = sa_format_raw_sql
-MsSqlExprTranslator._registry[ops.StringJoin] = mssql_sa_string_join
-MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_sa_format_new_id
-MsSqlExprTranslator._registry[ops.StringLength] = mssql_sa_format_string_length
-MsSqlExprTranslator._registry[ops.Strftime] = mssql_strftime
-MsSqlExprTranslator._registry[ops.Cast] = mssql_sa_cast
-MsSqlExprTranslator._registry[BinaryLength] = mssql_sa_format_binary_length
-MsSqlExprTranslator._registry[ops.TableColumn] = mssql_sa_table_column
-MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_sa_epoch_seconds
-MsSqlExprTranslator._registry[ops.RStrip] = mssql_sa_whitespace_rstrip
+MsSqlExprTranslator._registry[ops.StringJoin] = mssql_registry.sa_string_join
+MsSqlExprTranslator._registry[ops.RandomScalar] = mssql_registry.sa_format_new_id
+MsSqlExprTranslator._registry[ops.StringLength] = mssql_registry.sa_format_string_length
+MsSqlExprTranslator._registry[ops.Strftime] = mssql_registry.strftime
+MsSqlExprTranslator._registry[ops.Cast] = mssql_registry.sa_cast_mssql
+MsSqlExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
+MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
+MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
+MsSqlExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
 MsSqlExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
 MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
     ops.StringLength
@@ -810,9 +691,9 @@ if SnowflakeExprTranslator:
     SnowflakeExprTranslator._registry[ops.RStrip] = _sa_whitespace_rstrip
 
 if SybaseExprTranslator:
-    SybaseExprTranslator._registry[BinaryLength] = mssql_sa_format_binary_length
+    SybaseExprTranslator._registry[BinaryLength] = mssql_registry.sa_format_binary_length
     SybaseExprTranslator._registry[RawSQL] = sa_format_raw_sql
-    SybaseExprTranslator._registry[PaddedCharLength] = mssql_sa_format_string_length
+    SybaseExprTranslator._registry[PaddedCharLength] = mssql_registry.sa_format_string_length
 
 # Patch TemporalValue to support strftime in custom calculations
 import ibis.expr.types as et
