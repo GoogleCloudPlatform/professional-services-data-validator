@@ -49,9 +49,7 @@ def strftime(translator, op):
     arg_formatted = translator.translate(arg)
     if arg_type.is_timestamp():
         if getattr(arg_type, "timezone", None) is None:
-            return "FORMAT_DATETIME({}, DATETIME({}))".format(
-                fmt_string, arg_formatted
-            )
+            return "FORMAT_DATETIME({}, DATETIME({}))".format(fmt_string, arg_formatted)
         else:
             return "FORMAT_TIMESTAMP({}, TIMESTAMP({}), {!r})".format(
                 fmt_string,
