@@ -151,11 +151,17 @@ class Backend(BaseAlchemyBackend):
             for column in result.mappings():
                 # Extract relevant metadata from the result set and construct the metadata tuple (DB API format)
                 # Note: Metadata may vary based on the SQL Server version and the specific query used.
+                system_type = column["system_type_name"]
+                base_type = (
+                    system_type.split("(")[0].strip().lower() if system_type else None
+                )
+                max_length = column.get("max_length")
+
                 yield (
                     column["name"],
-                    column["system_type_name"],  # type_code
-                    None,  # display_size
-                    None,  # internal_size
+                    base_type,  # type_code
+                    max_length,  # display_size
+                    max_length,  # internal_size
                     column["precision"],
                     column["scale"],
                     column["is_nullable"],
