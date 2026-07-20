@@ -71,7 +71,6 @@ from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_bigquery import registry as bigquery_registry
 from third_party.ibis.ibis_impala import registry as impala_registry
-from third_party.ibis.ibis_oracle import registry as oracle_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
 from third_party.ibis.ibis_snowflake import registry as snowflake_registry
 
@@ -86,6 +85,7 @@ except Exception:
 # Oracle requires oracledb
 try:
     from third_party.ibis.ibis_oracle.compiler import OracleExprTranslator
+    from third_party.ibis.ibis_oracle import registry as oracle_registry
 except Exception:
     OracleExprTranslator = None
 
