@@ -69,6 +69,7 @@ from third_party.ibis.ibis_cloud_spanner.compiler import SpannerExprTranslator
 from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
 from third_party.ibis.ibis_mssql import registry as mssql_registry
+from third_party.ibis.ibis_bigquery import registry as bigquery_registry
 
 # DB2 requires ibm_db_dbi
 try:
@@ -369,51 +370,6 @@ def sa_format_random(t, op):
     return sa.func.RANDOM()
 
 
-# --- BigQuery Custom Handlers ---
-def bigquery_format_hashbytes(translator, op):
-    arg = translator.translate(op.arg)
-    if op.how == "sha256":
-        return f"TO_HEX(SHA256({arg}))"
-    elif op.how == "farm_fingerprint":
-        return f"FARM_FINGERPRINT({arg})"
-    else:
-        raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
-def bigquery_strftime(translator, op):
-    arg = op.arg
-    format_str = op.format_str
-    arg_type = arg.dtype
-    if arg_type.is_date():
-        strftime_format_func_name = "DATE"
-    elif arg_type.is_time():
-        strftime_format_func_name = "TIME"
-    elif arg_type.is_timestamp():
-        if arg_type.timezone is None:
-            strftime_format_func_name = "DATETIME"
-        else:
-            strftime_format_func_name = "TIMESTAMP"
-    else:
-        raise TypeError(f"Unsupported strftime argument type: {arg_type}")
-
-    fmt_string = translator.translate(format_str)
-    if format_str.value.startswith("%Y"):
-        fmt_string = fmt_string.replace("%Y", "%E4Y", 1)
-    arg_formatted = translator.translate(arg)
-    if strftime_format_func_name == "TIMESTAMP":
-        return "FORMAT_TIMESTAMP({}, {}, {!r})".format(
-            fmt_string,
-            arg_formatted,
-            arg_type.timezone if arg_type.timezone is not None else "UTC",
-        )
-    return "FORMAT_{}({}, {})".format(
-        strftime_format_func_name, fmt_string, arg_formatted
-    )
-
-
-def bigquery_format_binary_length(translator, op):
-    arg = translator.translate(op.arg)
-    return f"LENGTH({arg})"
 
 
 # --- Impala Custom Handlers ---
@@ -582,10 +538,10 @@ TimestampValue.to_char = compile_to_char
 # so we can piggy back Ibis code rather than writing metadata queries for all engines.
 BaseAlchemyBackend.dvt_list_tables = _dvt_list_tables
 
-BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_format_hashbytes
+BigQueryExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 BigQueryExprTranslator._registry[RawSQL] = format_raw_sql
-BigQueryExprTranslator._registry[ops.Strftime] = bigquery_strftime
-BigQueryExprTranslator._registry[BinaryLength] = bigquery_format_binary_length
+BigQueryExprTranslator._registry[ops.Strftime] = bigquery_registry.strftime
+BigQueryExprTranslator._registry[BinaryLength] = bigquery_registry.format_binary_length
 
 AlchemyExprTranslator._registry[RawSQL] = format_raw_sql
 AlchemyExprTranslator._registry[ops.HashBytes] = format_hashbytes_alchemy
@@ -670,7 +626,7 @@ if Db2zOSExprTranslator:
     ]
 
 SpannerExprTranslator._registry[RawSQL] = format_raw_sql
-SpannerExprTranslator._registry[ops.HashBytes] = bigquery_format_hashbytes
+SpannerExprTranslator._registry[ops.HashBytes] = bigquery_registry.format_hashbytes
 SpannerExprTranslator._registry[BinaryLength] = fixed_arity("length", 1)
 
 if TeradataExprTranslator:
