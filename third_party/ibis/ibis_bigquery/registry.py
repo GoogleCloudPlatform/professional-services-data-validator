@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ibis.backends.bigquery.registry import (
-    STRFTIME_FORMAT_FUNCTIONS as BQ_STRFTIME_FORMAT_FUNCTIONS,
-)
 import ibis.expr.datatypes as dt
 
 
@@ -33,7 +30,18 @@ def strftime(translator, op):
     arg = op.arg
     format_str = op.format_str
     arg_type = arg.dtype
-    strftime_format_func_name = BQ_STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
+
+    if arg_type.is_date():
+        strftime_format_func_name = "DATE"
+    elif arg_type.is_time():
+        strftime_format_func_name = "TIME"
+    elif arg_type.is_timestamp():
+        if getattr(arg_type, "timezone", None) is None:
+            strftime_format_func_name = "DATETIME"
+        else:
+            strftime_format_func_name = "TIMESTAMP"
+    else:
+        raise ValueError(f"Unsupported type for strftime: {arg_type}")
     fmt_string = translator.translate(format_str)
     # Deal with issue 1181 due a GoogleSQL bug with dates before 1000 CE affects both date and timestamp types
     if format_str.value.startswith("%Y"):
