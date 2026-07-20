@@ -72,7 +72,6 @@ from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_bigquery import registry as bigquery_registry
 from third_party.ibis.ibis_impala import registry as impala_registry
 from third_party.ibis.ibis_postgres import registry as postgres_registry
-from third_party.ibis.ibis_snowflake import registry as snowflake_registry
 
 # DB2 requires ibm_db_dbi
 try:
@@ -98,6 +97,7 @@ except Exception:
 # Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
     from ibis.backends.snowflake import SnowflakeExprTranslator
+    from third_party.ibis.ibis_snowflake import registry as snowflake_registry
 except Exception:
     SnowflakeExprTranslator = None
 
