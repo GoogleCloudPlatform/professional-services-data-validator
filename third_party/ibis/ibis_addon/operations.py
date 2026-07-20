@@ -70,7 +70,7 @@ from third_party.ibis.ibis_redshift.compiler import RedShiftExprTranslator
 
 from third_party.ibis.ibis_mssql import registry as mssql_registry
 from third_party.ibis.ibis_bigquery import registry as bigquery_registry
-
+from third_party.ibis.ibis_impala import registry as impala_registry
 # DB2 requires ibm_db_dbi
 try:
     from third_party.ibis.ibis_db2.compiler import Db2ExprTranslator
@@ -372,53 +372,6 @@ def sa_format_random(t, op):
 
 
 
-# --- Impala Custom Handlers ---
-def impala_sa_cast(t, op):
-    from ibis.backends.base.sql.registry import (
-        type_to_sql_string as base_type_to_sql_string,
-    )
-
-    arg = op.arg
-    typ = op.to
-    arg_dtype = arg.dtype
-    arg_formatted = t.translate(arg)
-    if arg_dtype.is_binary() and typ.is_string():
-        return f"lower(hex({arg_formatted}))"
-    elif arg_dtype.is_string() and typ.is_binary():
-        return f"unhex({arg_formatted})"
-    sql_type = base_type_to_sql_string(typ)
-    cast_expr = "CAST({} AS {})".format(arg_formatted, sql_type)
-    if arg_dtype.is_boolean() and typ.is_string():
-        return f"LOWER({cast_expr})"
-    else:
-        return cast_expr
-
-
-def impala_sa_ifnull(t, op):
-    arg_formatted = t.translate(op.arg)
-    return f"coalesce({arg_formatted},'{op.ifnull_expr.value}')"
-
-
-def impala_sa_format_hashbytes(translator, op):
-    arg = translator.translate(op.arg)
-    if op.how == "sha256":
-        return f"sha2({arg}, 256)"
-    elif op.how == "md5":
-        return f"md5({arg})"
-    else:
-        raise ValueError(f"unexpected value for 'how': {op.how}")
-
-
-def impala_sa_strftime(t, op):
-    import sqlglot as sg
-
-    hive_dialect = sg.dialects.hive.Hive
-    if (time_mapping := getattr(hive_dialect, "TIME_MAPPING", None)) is None:
-        time_mapping = hive_dialect.time_mapping
-    reverse_hive_mapping = {v: k for k, v in time_mapping.items()}
-    format_str = sg.time.format_time(op.format_str.value, reverse_hive_mapping)
-    targ = t.translate(ops.Cast(op.arg, to=dt.string))
-    return f"from_unixtime(unix_timestamp({targ}, {format_str!r}), {format_str!r})"
 
 
 # --- Postgres Custom Handlers ---
@@ -553,11 +506,11 @@ ExprTranslator._registry[ops.HashBytes] = format_hashbytes_base
 # Base length of padded string is the same as for a standard string.
 ExprTranslator._registry[PaddedCharLength] = ExprTranslator._registry[ops.StringLength]
 
-ImpalaExprTranslator._registry[ops.Cast] = impala_sa_cast
+ImpalaExprTranslator._registry[ops.Cast] = impala_registry.sa_cast
 ImpalaExprTranslator._registry[RawSQL] = format_raw_sql
-ImpalaExprTranslator._registry[ops.HashBytes] = impala_sa_format_hashbytes
+ImpalaExprTranslator._registry[ops.HashBytes] = impala_registry.sa_format_hashbytes
 ImpalaExprTranslator._registry[ops.RandomScalar] = fixed_arity("RAND", 0)
-ImpalaExprTranslator._registry[ops.Strftime] = impala_sa_strftime
+ImpalaExprTranslator._registry[ops.Strftime] = impala_registry.sa_strftime
 ImpalaExprTranslator._registry[BinaryLength] = fixed_arity("length", 1)
 
 if OracleExprTranslator:
