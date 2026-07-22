@@ -28,6 +28,7 @@ from tests.system.data_sources.common_functions import (
     binary_key_assertions,
     connections_add_test,
     find_tables_test,
+    id_column_query_row_validation_test,
     id_column_row_validation_test,
     id_type_test_assertions,
     null_not_null_assertions,
@@ -52,6 +53,7 @@ SQL_SERVER_PORT = os.getenv("SQL_SERVER_PORT", "1433")
 SQL_SERVER_USER = os.getenv("SQL_SERVER_USER", "sqlserver")
 SQL_SERVER_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
 SQL_SERVER_DATABASE = os.getenv("SQL_SERVER_DATABASE", "guestbook")
+SQL_SERVER_CONFIG_JSON = os.getenv("SQL_SERVER_CONFIG_JSON")
 PROJECT_ID = os.getenv("PROJECT_ID")
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_MSSQL,
@@ -61,6 +63,8 @@ CONN = {
     "port": int(SQL_SERVER_PORT),
     "database": SQL_SERVER_DATABASE,
 }
+if SQL_SERVER_CONFIG_JSON:
+    CONN["query"] = SQL_SERVER_CONFIG_JSON
 
 EXPECTED_DATETIME_ID_PARTITION_FILTER = [
     [
@@ -820,6 +824,26 @@ def test_row_validation_datetime_pk_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_fixed_char_id", hash="id", use_random_row=True
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_pangrams_to_bigquery():
     """SQL Server to BigQuery dvt_pangrams row validation.
     This is testing comparisons across a wider set of characters than standard test data.
@@ -1025,6 +1049,26 @@ def test_custom_query_row_hash_validation_core_types_to_bigquery():
         target_query="select id,col_int64,col_varchar_30,COL_DATE from pso_data_validator.dvt_core_types",
         hash="col_int64,col_varchar_30,col_date",
     )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_query_row_validation_to_bigquery():
+    """Test fixed char primary keys on custom query"""
+    id_column_query_row_validation_test(
+        "pso_data_validator.dvt_fixed_char_id", hash="id"
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_query_row_validation_to_bigquery():
+    """Test varchar primary keys on custom query"""
+    id_column_query_row_validation_test("pso_data_validator.dvt_varchar_id")
 
 
 @mock.patch(

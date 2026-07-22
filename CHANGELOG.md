@@ -2,6 +2,21 @@
 
 ## Untagged
 
+## [8.8.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.0...v8.8.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* Better message when all columns are pks for -comp-fields ([#1780](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1780)) ([b0d2fae](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b0d2fae534f9a5d029d16b6c9cae00d96fe53ebd))
+* Fix SQL Server avg for integer columns ([#1782](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1782)) ([42be1e5](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/42be1e515aec61a9c3a4f2c2ce9f85fbfd307946))
+* Incorrect concat of Dataframes when broken up into multiple slices ([#1775](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1775)) ([2b3f61f](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/2b3f61f49d96deb9e6b5f700778f84aa43c78d0b))
+* SQL Server padded char columns are detected correctly ([#1779](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1779)) ([b3ce0ba](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b3ce0ba1444e8ad0d659e31e0a4740b6147d4755))
+
+
+### Documentation
+
+* Update internal throughput test case ([#1770](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1770)) ([634a07a](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/634a07a41710f2acc3a4b667516047dc44032709))
+
 ## [8.8.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.7.1...v8.8.0) (2026-06-18)
 
 
