@@ -25,6 +25,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     connections_add_test,
     custom_query_validation_test,
+    find_tables_test,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -399,6 +400,9 @@ def test_custom_query_row_validation_many_columns():
     row_validation_many_columns_test(validation_type="custom-query", schema=None)
 
 
+##################
+# RAW QUERY TESTS
+##################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -424,3 +428,15 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
     connections_add_test(
         caplog, consts.SOURCE_TYPE_SPANNER, conn_args, tmp_path, monkeypatch
     )
+
+
+##############################
+# FIND-TABLE VALIDATION TESTS
+##############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Spanner test of find-tables command."""
+    find_tables_test()

@@ -1268,25 +1268,7 @@ def test_custom_query_row_validation_many_columns():
     )
 
 
-##############################
-# FIND-TABLE VALIDATION TESTS
-##############################
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_find_tables():
-    """Oracle to BigQuery test of find-tables command."""
-    find_tables_test()
 
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
-def test_find_views_and_tables():
-    """Oracle to BigQuery test of find-tables command."""
-    find_tables_test(include_views=True)
 
 
 @mock.patch(
@@ -1526,6 +1508,27 @@ def test_generate_and_run_partitions(tmp_path: pathlib.Path):
         sc="mock-conn",
         tc="bq-conn",
     )
+
+
+##############################
+# FIND-TABLE VALIDATION TESTS
+##############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Oracle to BigQuery test of find-tables command."""
+    find_tables_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_views_and_tables():
+    """Oracle to BigQuery test of find-tables command."""
+    find_tables_test(include_views=True)
 
 
 ##################
