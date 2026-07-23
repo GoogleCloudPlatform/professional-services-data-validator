@@ -24,6 +24,9 @@ import pytest
 from freezegun import freeze_time
 from data_validation import metadata, consts
 
+# Ensure Pandas is patched as it would be in a true DVT execution.
+import third_party.ibis.ibis_addon.operations  # noqa: F401
+
 _NAN = float("nan")
 
 
