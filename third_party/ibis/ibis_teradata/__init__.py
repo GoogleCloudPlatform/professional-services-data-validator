@@ -67,7 +67,11 @@ class Backend(BaseSQLBackend):
         self.con.close()
 
     def __del__(self):
-        self.con.close()
+        if getattr(self, "con", None) is not None:
+            try:
+                self.con.close()
+            except Exception:
+                pass
 
     @property
     def version(self):

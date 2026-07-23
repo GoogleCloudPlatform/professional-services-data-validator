@@ -19,6 +19,7 @@ original data type is used.
 """
 
 import datetime
+import decimal
 import functools
 import json
 import logging
@@ -45,10 +46,18 @@ COMBINER_GET_SUMMARY_EXC_TEXT = (
     "Error while generating summary report of row validation results"
 )
 
+_MAX_INT64 = 9223372036854775807
+_MIN_INT64 = -9223372036854775808
+
 
 def _convert_large_ints_to_decimals(df: "DataFrame") -> "DataFrame":
-    import decimal
+    """Casts out-of-bounds 64-bit python int values to decimal.Decimal objects.
 
+    This prevents PyArrow from failing with `OverflowError: Python int too large to convert to C long`
+    during table inference, by converting integers that exceed 64-bit limits (e.g., 20-digit or 38-digit
+    integers returned by some database drivers) to decimals inside Pandas DataFrames prior to loading
+    them into the in-memory pandas client.
+    """
     df_copied = False
     for col in df.columns:
         if df[col].dtype == object:
@@ -59,8 +68,7 @@ def _convert_large_ints_to_decimals(df: "DataFrame") -> "DataFrame":
             )
             if is_int_col:
                 large_ints = df[col].apply(
-                    lambda x: isinstance(x, int)
-                    and (x > 9223372036854775807 or x < -9223372036854775808)
+                    lambda x: isinstance(x, int) and (x > _MAX_INT64 or x < _MIN_INT64)
                 )
                 if large_ints.any():
                     if not df_copied:
@@ -69,8 +77,7 @@ def _convert_large_ints_to_decimals(df: "DataFrame") -> "DataFrame":
                     df[col] = df[col].apply(
                         lambda x: (
                             decimal.Decimal(str(x))
-                            if isinstance(x, int)
-                            and (x > 9223372036854775807 or x < -9223372036854775808)
+                            if isinstance(x, int) and (x > _MAX_INT64 or x < _MIN_INT64)
                             else x
                         )
                     )

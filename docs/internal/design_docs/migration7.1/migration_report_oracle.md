@@ -90,6 +90,8 @@ In Ibis 7.1, `dt.dtype` is locked against external registrations using `del dtyp
 
 ### 9. Core Combiner PyArrow Overflow Fix
 * In [combiner.py](file:///usr/local/google/home/mudupalli/professional-services-data-validator/data_validation/combiner.py), implemented `_convert_large_ints_to_decimals` helper function to automatically cast out-of-bounds 64-bit python `int` values (e.g. 20-digit or 38-digit integers returned by some database drivers) to `decimal.Decimal` objects inside Pandas DataFrames prior to loading them into the in-memory pandas client, preventing PyArrow from failing with `OverflowError: Python int too large to convert to C long` during table inference.
+  * Extracted `_MAX_INT64` and `_MIN_INT64` into constants, moved imports to the module level, and added a detailed docstring.
+* In [test_combiner.py](file:///usr/local/google/home/mudupalli/professional-services-data-validator/tests/unit/test_combiner.py), added unit tests for `_convert_large_ints_to_decimals` to verify that values exceeding 64-bit bounds are correctly converted to `decimal.Decimal`, while standard integer ranges and other data types remain unmodified.
 
 ---
 
