@@ -149,3 +149,32 @@ class Backend(BigQueryBackend):
 
     def dvt_list_tables(self, like=None, database=None):
         return self.list_tables(like=like, database=database)
+
+
+# Monkey-patch BigQuery backend to support converting INTERVAL columns to Ibis types
+try:
+    from ibis.backends.bigquery.datatypes import BigQueryType
+    import ibis.expr.datatypes as dt
+
+    orig_bq_to_ibis = BigQueryType.to_ibis
+
+    @classmethod
+    def dvt_bq_to_ibis(cls, typ: str, nullable: bool = True) -> dt.DataType:
+        if typ == "INTERVAL":
+            return dt.Interval(unit="s", nullable=nullable)
+        return orig_bq_to_ibis(typ, nullable=nullable)
+
+    BigQueryType.to_ibis = dvt_bq_to_ibis
+except Exception:
+    pass
+
+
+# Monkey-patch BigQueryBackend to load custom DVT methods
+try:
+    BigQueryBackend.do_connect = Backend.do_connect
+    BigQueryBackend._cursor_to_arrow = Backend._cursor_to_arrow
+    BigQueryBackend._parse_project_and_dataset = Backend._parse_project_and_dataset
+    BigQueryBackend.list_primary_key_columns = Backend.list_primary_key_columns
+    BigQueryBackend.dvt_list_tables = Backend.dvt_list_tables
+except Exception:
+    pass

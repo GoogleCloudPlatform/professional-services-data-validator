@@ -24,18 +24,13 @@ from google.cloud import bigquery
 from google.api_core import client_options
 import ibis
 
-try:
-    import ibis.backends.impala.udf as impala_udf
-
-    impala_udf._impala_to_ibis_type["binary"] = "binary"
-except ImportError:
-    pass
 import pandas
 
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
 
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
+from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
 
 if TYPE_CHECKING:
@@ -331,17 +326,21 @@ def get_ibis_query_schema(client, query_str) -> "sch.Schema":
         return client._get_schema_using_query(query_str)
 
 
-def list_schemas(client):
-    """Return a list of schemas in the DB."""
-    if hasattr(client, "list_schemas"):
-        try:
-            return client.list_schemas()
-        except NotImplementedError:
-            pass
-
+def list_databases(client):
+    """Return a list of databases in the DB.
+    In version 7.1, Ibis adopted a uniform way of referring
+    to a collection of tables as a database, irrespective of the terminology used by the specific backend.
+    Here we want the collection of tables that may be used for validation, hence the changing
+    the function name to list_databases()."""
     if hasattr(client, "list_databases"):
         try:
             return client.list_databases()
+        except NotImplementedError:
+            pass
+
+    if hasattr(client, "list_schemas"):
+        try:
+            return client.list_schemas()
         except NotImplementedError:
             return [None]
     else:
@@ -367,7 +366,7 @@ def get_all_tables(client, allowed_schemas=None, tables_only=True):
     allowed_schemas (List[str]): List of schemas to pull.
     """
     table_objs = []
-    schemas = list_schemas(client)
+    schemas = list_databases(client)
     for schema_name in schemas:
         if allowed_schemas and schema_name not in allowed_schemas:
             continue
@@ -484,15 +483,6 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
         return 1000
     else:
         return None
-
-
-def impala_connect(*args, **kwargs):
-    client = ibis.impala.connect(*args, **kwargs)
-    try:
-        client.raw_sql("set hive.resultset.use.unique.column.names=false")
-    except Exception:
-        pass
-    return client
 
 
 CLIENT_LOOKUP = {

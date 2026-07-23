@@ -174,8 +174,7 @@ class ToChar(ops.Value):
 
 
 class RawSQL(ops.Comparison):
-    left: ops.Value[dt.String]
-    right: ops.Value[dt.String]
+    pass
 
 
 def compile_binary_length(binary_value):
@@ -506,115 +505,4 @@ if SybaseExprTranslator:
         mssql_registry.sa_format_string_length
     )
 
-# Monkey-patch pandas backend compute_row_reduction to handle string/bytes/dict scalars correctly
-try:
-    import ibis.backends.pandas.execution.generic as gp
-    from collections.abc import Sized
-    import pandas as pd
-    import numpy as np
-
-    orig_compute_row_reduction = gp.compute_row_reduction
-
-    def dvt_compute_row_reduction(func, values, **kwargs):
-        final_sizes = {
-            len(x)
-            for x in values
-            if isinstance(x, Sized) and not isinstance(x, (str, bytes, dict))
-        }
-        if not final_sizes:
-            return func(values)
-        (final_size,) = final_sizes
-        raw = func(list(map(gp.promote_to_sequence(final_size), values)), **kwargs)
-        return pd.Series(raw).squeeze()
-
-    gp.compute_row_reduction = dvt_compute_row_reduction
-except Exception:
-    pass
-
-
-# Monkey-patch BigQuery backend to support converting INTERVAL columns to Ibis types
-try:
-    from ibis.backends.bigquery.datatypes import BigQueryType
-
-    orig_bq_to_ibis = BigQueryType.to_ibis
-
-    @classmethod
-    def dvt_bq_to_ibis(cls, typ: str, nullable: bool = True) -> dt.DataType:
-        if typ == "INTERVAL":
-            return dt.Interval(unit="s", nullable=nullable)
-        return orig_bq_to_ibis(typ, nullable=nullable)
-
-    BigQueryType.to_ibis = dvt_bq_to_ibis
-except Exception:
-    pass
-
-
-# Monkey-patch PandasData.convert_Date to handle out-of-bounds / tricky dates safely
-try:
-    import ibis.formats.pandas as fp
-    import pandas as pd
-    from datetime import date
-
-    orig_convert_Date = fp.PandasData.convert_Date
-
-    def dvt_convert_Date(s, dtype, pandas_type):
-        if isinstance(s.dtype, pd.DatetimeTZDtype):
-            s = s.dt.tz_convert("UTC").dt.tz_localize(None)
-        try:
-            return s.astype(pandas_type).dt.normalize()
-        except Exception:
-
-            def to_date_safe(x):
-                if isinstance(x, date):
-                    return x
-                elif isinstance(x, str):
-                    try:
-                        parts = list(map(int, x.split("-")))
-                        return date(*parts)
-                    except Exception:
-                        try:
-                            import dateutil.parser
-
-                            return dateutil.parser.parse(x).date()
-                        except Exception:
-                            return x
-                return x
-
-            return s.map(to_date_safe)
-
-    fp.PandasData.convert_Date = dvt_convert_Date
-except Exception:
-    pass
-
-
-# Monkey-patch BigQueryBackend to load custom DVT methods
-try:
-    from ibis.backends.bigquery import Backend as BigQueryBackend
-    import third_party.ibis.ibis_bigquery as ibq
-
-    BigQueryBackend.do_connect = ibq.Backend.do_connect
-    BigQueryBackend._cursor_to_arrow = ibq.Backend._cursor_to_arrow
-    BigQueryBackend._parse_project_and_dataset = ibq.Backend._parse_project_and_dataset
-    BigQueryBackend.list_primary_key_columns = ibq.Backend.list_primary_key_columns
-    BigQueryBackend.dvt_list_tables = ibq.Backend.dvt_list_tables
-except Exception:
-    pass
-
-
-# Monkey-patch SqlglotMySQLType._from_sqlglot_DATETIME and TIMESTAMP to accept precision/scale arguments
-try:
-    from ibis.backends.mysql.datatypes import SqlglotMySQLType
-    import ibis.expr.datatypes as dt
-
-    @classmethod
-    def _from_sqlglot_datetime_patched(cls, *args, **kwargs) -> dt.Timestamp:
-        return dt.Timestamp(nullable=cls.default_nullable)
-
-    @classmethod
-    def _from_sqlglot_timestamp_patched(cls, *args, **kwargs) -> dt.Timestamp:
-        return dt.Timestamp(timezone="UTC", nullable=cls.default_nullable)
-
-    SqlglotMySQLType._from_sqlglot_DATETIME = _from_sqlglot_datetime_patched
-    SqlglotMySQLType._from_sqlglot_TIMESTAMP = _from_sqlglot_timestamp_patched
-except Exception:
-    pass
+import third_party.ibis.ibis_pandas

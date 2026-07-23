@@ -240,6 +240,7 @@ def _dvt_list_tables(self, like=None, database=None):
     return self.list_tables(like=like, database=database)
 
 
+udf._impala_to_ibis_type["binary"] = "binary"
 udf.parse_type = parse_type
 ibis.backends.impala._chunks_to_pandas_array = _chunks_to_pandas_array
 ImpalaBackend.get_schema = get_schema
@@ -281,4 +282,8 @@ def impala_connect(
         use_http_transport=use_http_transport,
         http_path=http_path,
     )
+    try:
+        backend.raw_sql("set hive.resultset.use.unique.column.names=false")
+    except Exception:
+        pass
     return backend
