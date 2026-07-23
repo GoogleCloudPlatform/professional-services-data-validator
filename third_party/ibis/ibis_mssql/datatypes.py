@@ -34,6 +34,7 @@ def sa_mssql_datetime2(_, sa_type, nullable=True):
 _MSSQL_TYPE_MAP[dt.String] = mssql.VARCHAR
 _MSSQL_TYPE_MAP[dt.Float64] = mssql.FLOAT
 
+
 @dt.dtype.register(MSDialect, mssql.TINYINT)
 def sa_mssql_tinyint(_, sa_type, nullable=True):
     return dt.Int16(nullable=nullable)
