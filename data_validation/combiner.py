@@ -61,26 +61,22 @@ def _convert_large_ints_to_decimals(df: "DataFrame") -> "DataFrame":
     df_copied = False
     for col in df.columns:
         if df[col].dtype == object:
-            is_int_col = (
-                df[col]
-                .apply(lambda x: isinstance(x, int) and not isinstance(x, bool))
-                .any()
-            )
-            if is_int_col:
-                large_ints = df[col].apply(
-                    lambda x: isinstance(x, int) and (x > _MAX_INT64 or x < _MIN_INT64)
-                )
-                if large_ints.any():
-                    if not df_copied:
-                        df = df.copy()
-                        df_copied = True
-                    df[col] = df[col].apply(
-                        lambda x: (
-                            decimal.Decimal(str(x))
-                            if isinstance(x, int) and (x > _MAX_INT64 or x < _MIN_INT64)
-                            else x
-                        )
-                    )
+            converted = False
+
+            def convert_if_large(x):
+                nonlocal converted
+                if type(x) is int and (x > _MAX_INT64 or x < _MIN_INT64):
+                    converted = True
+                    return decimal.Decimal(str(x))
+                return x
+
+            new_col = df[col].apply(convert_if_large)
+
+            if converted:
+                if not df_copied:
+                    df = df.copy()
+                    df_copied = True
+                df[col] = new_col
     return df
 
 
