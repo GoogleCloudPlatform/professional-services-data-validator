@@ -28,6 +28,7 @@ from ibis.backends.bigquery import (
     SCOPES,
 )
 from ibis.backends.bigquery.client import parse_project_and_dataset
+import third_party.ibis.ibis_bigquery.datatypes  # noqa: F401
 
 if TYPE_CHECKING:
     import google.cloud.bigquery_storage_v1
@@ -91,14 +92,20 @@ class Backend(BigQueryBackend):
         self.data_project = project_id or self.billing_project
         self.dataset = None
 
-        if client is None:
+        if client is not None:
+            self.client = client
+        else:
             self.client = bq.Client(
                 project=self.billing_project,
                 credentials=credentials,
                 client_info=_create_client_info(application_name),
+                location=location,
             )
-        else:
-            self.client = client
+
+        self.client.default_query_job_config = bq.QueryJobConfig(
+            use_legacy_sql=False, allow_large_results=True
+        )
+
         self.partition_column = partition_column
         self.storage_client = storage_client
 
@@ -149,32 +156,3 @@ class Backend(BigQueryBackend):
 
     def dvt_list_tables(self, like=None, database=None):
         return self.list_tables(like=like, database=database)
-
-
-# Monkey-patch BigQuery backend to support converting INTERVAL columns to Ibis types
-try:
-    from ibis.backends.bigquery.datatypes import BigQueryType
-    import ibis.expr.datatypes as dt
-
-    orig_bq_to_ibis = BigQueryType.to_ibis
-
-    @classmethod
-    def dvt_bq_to_ibis(cls, typ: str, nullable: bool = True) -> dt.DataType:
-        if typ == "INTERVAL":
-            return dt.Interval(unit="s", nullable=nullable)
-        return orig_bq_to_ibis(typ, nullable=nullable)
-
-    BigQueryType.to_ibis = dvt_bq_to_ibis
-except Exception:
-    pass
-
-
-# Monkey-patch BigQueryBackend to load custom DVT methods
-try:
-    BigQueryBackend.do_connect = Backend.do_connect
-    BigQueryBackend._cursor_to_arrow = Backend._cursor_to_arrow
-    BigQueryBackend._parse_project_and_dataset = Backend._parse_project_and_dataset
-    BigQueryBackend.list_primary_key_columns = Backend.list_primary_key_columns
-    BigQueryBackend.dvt_list_tables = Backend.dvt_list_tables
-except Exception:
-    pass

@@ -29,6 +29,7 @@ import pandas
 from data_validation import client_info, consts, exceptions
 from data_validation.secret_manager import SecretManagerBuilder
 
+from third_party.ibis.ibis_bigquery.api import bigquery_connect
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
@@ -73,12 +74,12 @@ try:
 except ImportError:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
-# Oracle requires python-oracldb driver
+
+# Oracle requires oracledb driver
 try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
 except ImportError:
     oracle_connect = _raise_missing_client_error("pip install oracledb")
-
 
 try:
     from third_party.ibis.ibis_snowflake.api import snowflake_connect
@@ -86,7 +87,6 @@ except ImportError:
     snowflake_connect = _raise_missing_client_error(
         "pip install snowflake-connector-python && pip install snowflake-sqlalchemy"
     )
-
 
 # DB2 requires ibm_db_sa
 try:
@@ -180,12 +180,12 @@ def get_bigquery_client(
             quota_project_id=billing_project_id,
         )
 
-    return ibis.bigquery.connect(
+    return bigquery_connect(
         project_id=project_id or client_project_id,
         dataset_id=dataset_id,
         credentials=credentials,
-        client=google_client,
-        storage_client=bqstorage_client,
+        bigquery_client=google_client,
+        bqstorage_client=bqstorage_client,
     )
 
 
