@@ -28,19 +28,18 @@ import dateutil
 import numpy as np
 import string
 
-import google.cloud.bigquery as bq
 import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
 import pandas as pd
 import sqlalchemy as sa
-from ibis.backends.base.sql.alchemy import BaseAlchemyBackend, get_sqla_table
+from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.base.sql.alchemy.registry import _cast as sa_fixed_cast
-from ibis.backends.base.sql.alchemy.registry import fixed_arity as sa_fixed_arity
 from ibis.backends.base.sql.alchemy.translator import AlchemyExprTranslator
 from ibis.backends.base.sql.compiler.translator import ExprTranslator
 from ibis.backends.base.sql.registry import fixed_arity
+import third_party.ibis.ibis_pandas
 
 # In Ibis 7.1.0, BigQueryType handles type conversion natively.
 from ibis.backends.bigquery.compiler import BigQueryExprTranslator
@@ -49,7 +48,6 @@ from ibis.backends.impala.compiler import ImpalaExprTranslator
 from ibis.backends.mssql.compiler import MsSqlExprTranslator
 from ibis.backends.mysql.compiler import MySQLExprTranslator
 from ibis.backends.pandas.dispatch import execute_node
-from ibis.backends.pandas.execution.temporal import execute_epoch_seconds
 from ibis.backends.postgres.compiler import PostgreSQLExprTranslator
 from ibis.expr.types import (
     BinaryValue,
@@ -106,48 +104,6 @@ try:
     from third_party.ibis.ibis_sybase.compiler import SybaseExprTranslator
 except Exception:
     SybaseExprTranslator = None
-
-
-import ibis.backends.pandas.execution.constants as pandas_constants
-
-
-class PandasTypeMapping(dict):
-    def __getitem__(self, key):
-        if isinstance(key, dt.Decimal):
-            return object
-        if isinstance(key, dt.Date):
-            return object
-        try:
-            return super().__getitem__(key)
-        except KeyError:
-            if isinstance(key, dt.DataType):
-                for k, v in self.items():
-                    if isinstance(key, type(k)) or key == k:
-                        return v
-            raise
-
-    def get(self, key, default=None):
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
-    def __contains__(self, key):
-        if isinstance(key, (dt.Decimal, dt.Date)):
-            return True
-        if super().__contains__(key):
-            return True
-        if isinstance(key, dt.DataType):
-            for k in self.keys():
-                if isinstance(key, type(k)) or key == k:
-                    return True
-        return False
-
-
-pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE = PandasTypeMapping(
-    pandas_constants.IBIS_TYPE_TO_PANDAS_TYPE
-)
-
 
 # Cast of datetime64 NaT to int64 and then in seconds results in the value below.
 # We need to use this value in the datetime.date simulation of the datetime64 behaviour.
@@ -504,5 +460,3 @@ if SybaseExprTranslator:
     SybaseExprTranslator._registry[PaddedCharLength] = (
         mssql_registry.sa_format_string_length
     )
-
-import third_party.ibis.ibis_pandas
