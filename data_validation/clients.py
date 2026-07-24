@@ -328,7 +328,7 @@ def get_ibis_query_schema(client, query_str) -> "sch.Schema":
 
 def list_databases(client):
     """Return a list of databases in the DB.
-    In version 7.1, Ibis adopted a uniform way of referring
+    In version 7.1, Ibis adopted a uniform way of referring (see https://ibis-project.org/concepts/backend-table-hierarchy)
     to a collection of tables as a database, irrespective of the terminology used by the specific backend.
     Here we want the collection of tables that may be used for validation, hence the changing
     the function name to list_databases()."""
@@ -336,15 +336,9 @@ def list_databases(client):
         try:
             return client.list_databases()
         except NotImplementedError:
-            pass
-
-    if hasattr(client, "list_schemas"):
-        try:
-            return client.list_schemas()
-        except NotImplementedError:
-            return [None]
-    else:
-        return [None]
+            raise NotImplementedError(
+                "list_databases is not implemented for this client"
+            )
 
 
 def list_tables(client, schema_name, tables_only=True):

@@ -11,20 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from ibis.backends.mysql.datatypes import SqlglotMySQLType
+import ibis.expr.datatypes as dt
 
-try:
-    from ibis.backends.mysql.datatypes import SqlglotMySQLType
-    import ibis.expr.datatypes as dt
 
-    @classmethod
-    def _from_sqlglot_datetime_patched(cls, *args, **kwargs) -> dt.Timestamp:
-        return dt.Timestamp(nullable=cls.default_nullable)
+@classmethod
+def _from_sqlglot_datetime_patched(cls, *args, **kwargs) -> dt.Timestamp:
+    return dt.Timestamp(nullable=cls.default_nullable)
 
-    @classmethod
-    def _from_sqlglot_timestamp_patched(cls, *args, **kwargs) -> dt.Timestamp:
-        return dt.Timestamp(timezone="UTC", nullable=cls.default_nullable)
 
-    SqlglotMySQLType._from_sqlglot_DATETIME = _from_sqlglot_datetime_patched
-    SqlglotMySQLType._from_sqlglot_TIMESTAMP = _from_sqlglot_timestamp_patched
-except Exception:
-    pass
+@classmethod
+def _from_sqlglot_timestamp_patched(cls, *args, **kwargs) -> dt.Timestamp:
+    return dt.Timestamp(timezone="UTC", nullable=cls.default_nullable)
+
+
+SqlglotMySQLType._from_sqlglot_DATETIME = _from_sqlglot_datetime_patched
+SqlglotMySQLType._from_sqlglot_TIMESTAMP = _from_sqlglot_timestamp_patched
