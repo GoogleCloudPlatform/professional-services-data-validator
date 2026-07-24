@@ -32,6 +32,10 @@ DEFAULT_PYTHON_VERSION = "3.11"
 # Python versions used for testing.
 PYTHON_VERSIONS = ["3.10", "3.11"]
 
+# Temporary for experimentation.
+PYTHON_VERSIONS = ["3.12", "3.13"]
+DEFAULT_PYTHON_VERSION = "3.12"
+
 BLACK_PATHS = (
     "data_validation",
     "samples",
