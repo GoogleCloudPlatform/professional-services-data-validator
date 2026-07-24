@@ -30,10 +30,7 @@ import nox
 DEFAULT_PYTHON_VERSION = "3.11"
 
 # Python versions used for testing.
-PYTHON_VERSIONS = ["3.10", "3.11"]
-
-# Temporary for experimentation.
-PYTHON_VERSIONS = ["3.12"]
+PYTHON_VERSIONS = ["3.10", "3.11", "3.12"]
 
 BLACK_PATHS = (
     "data_validation",
