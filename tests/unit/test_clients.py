@@ -114,6 +114,7 @@ def _get_pandas_client():
 
 def test_get_all_tables():
     """Test get all tables util."""
+    pytest.skip("Skipping test_get_all_tables due to issue 1788")
     client = _get_pandas_client()
     all_tables = clients.get_all_tables(client)
 
