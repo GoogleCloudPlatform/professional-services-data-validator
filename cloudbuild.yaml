@@ -30,11 +30,10 @@ steps:
   - 'NOX_SESSION=unit'
   waitFor: ['-']
 - id: unit-alpine
-  # name: 'python:3.11-alpine3.19'
-  name: 'python:3.12-alpine3.23'
+  name: 'python:3.11-alpine3.19'
   script: |
     apk add --no-cache bash build-base python3-dev cmake git boost-dev apache-arrow-dev
-    bash ./ci/build.sh python3.12
+    bash ./ci/build.sh python3.11
   env:
   - 'NOX_SESSION=unit_default_python'
   waitFor: ['-']
