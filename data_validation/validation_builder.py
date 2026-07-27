@@ -105,8 +105,8 @@ class ValidationBuilder(object):
         # Clients only need to implement _is_char_type_padded method if they pad strings
         return (
             (
-                client.is_char_type_padded(raw_column_metadata[column_name])
-                if raw_column_metadata.get(column_name)
+                client.is_char_type_padded(raw_column_metadata[column_name.casefold()])
+                if raw_column_metadata.get(column_name.casefold())
                 else False
             )
             if hasattr(client, "is_char_type_padded") and raw_column_metadata
