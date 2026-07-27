@@ -246,7 +246,7 @@ CREATE TABLE pso_data_validator.dvt_fixed_char_id_upper
 ,   [OTHER_DATA]  CHAR(100)
 );
 EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test fixed char pk matching on upper case ID column.', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_fixed_char_id_upper';
-INSERT INTO pso_data_validator.dvt_fixed_char_id_upper SELECT * FORM pso_data_validator.dvt_fixed_char_id;
+INSERT INTO pso_data_validator.dvt_fixed_char_id_upper SELECT * FROM pso_data_validator.dvt_fixed_char_id;
 
 DROP TABLE IF EXISTS pso_data_validator.dvt_varchar_id;
 CREATE TABLE pso_data_validator.dvt_varchar_id
