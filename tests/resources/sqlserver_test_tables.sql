@@ -758,7 +758,6 @@ CREATE TABLE pso_data_validator.dvt_reserved_word_columns (
 EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test potentially difficult column names', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_reserved_word_columns';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
 
-
 -- CamelCase test table.
 DROP TABLE IF EXISTS pso_data_validator.[DvtCamelCase];
 CREATE TABLE pso_data_validator.[DvtCamelCase]
@@ -787,3 +786,13 @@ CREATE TABLE pso_data_validator.dvt_camel_case_lower
 EXECUTE sp_addextendedproperty 'Comment', 'SQL Server table to compare with DvtCamelCase.', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_camel_case_lower';
 INSERT INTO pso_data_validator.dvt_camel_case_lower
 SELECT * FROM pso_data_validator.[DvtCamelCase];
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_int_overflow;
+CREATE TABLE pso_data_validator.dvt_int_overflow
+(   id          INT NOT NULL PRIMARY KEY
+,   col_int32   INT NOT NULL
+,   col_val     DECIMAL(10,2)
+);
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test INT column SUM overflow in SQL Server', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_int_overflow';
+INSERT INTO pso_data_validator.dvt_int_overflow VALUES (1, 1500000000, 100.50);
+INSERT INTO pso_data_validator.dvt_int_overflow VALUES (2, 1500000000, 200.75);
