@@ -378,8 +378,6 @@ def test_schema_validation_not_null_vs_nullable():
             "-sc=sql-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
-            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
-            "--allow-list=timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -501,8 +499,6 @@ def test_column_validation_ss_types_to_bigquery():
             "col_ntext",
         )
     ]
-    # TODO Include col_int1 in max_cols when working on issue-1585.
-    max_cols = [_ for _ in cols if _ not in ("col_int1",)]
     avg_cols = [
         _
         for _ in cols
@@ -514,7 +510,7 @@ def test_column_validation_ss_types_to_bigquery():
         count_cols=",".join(cols),
         sum_cols=",".join(cols),
         min_cols=",".join(cols),
-        max_cols=",".join(max_cols),
+        max_cols=",".join(cols),
         avg_cols=",".join(avg_cols),
         # SQL Server requires cast_to_bigint for summing tinyint/smallint/int.
         cast_to_bigint=True,
@@ -707,8 +703,6 @@ def test_row_validation_comp_fields_ss_types_to_bigquery():
                 "id",
                 # Excluded col_float32 because BigQuery does not have a float32 type.
                 "col_float32",
-                # TODO Include col_int1 in max_cols when working on issue-1585.
-                "col_int1",
                 # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
