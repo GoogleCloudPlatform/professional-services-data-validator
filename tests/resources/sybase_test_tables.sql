@@ -672,3 +672,19 @@ INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s'
 GO
 INSERT INTO pso_data_validator.test_generate_partitions_v2 VALUES ('St. Paul''s', 5678, '2023-08-27 15:00:00', '2023-08-23', 0, 3.5)
 GO
+
+--Integration test table used to test INT column SUM overflow in Sybase
+DROP TABLE pso_data_validator.dvt_int_overflow
+GO
+
+CREATE TABLE pso_data_validator.dvt_int_overflow
+(   id          INT NOT NULL PRIMARY KEY
+,   col_int32   INT NOT NULL
+,   col_val     DECIMAL(10,2)
+)
+GO
+
+INSERT INTO pso_data_validator.dvt_int_overflow VALUES (1, 1500000000, 100.50)
+GO
+INSERT INTO pso_data_validator.dvt_int_overflow VALUES (2, 1500000000, 200.75)
+GO
