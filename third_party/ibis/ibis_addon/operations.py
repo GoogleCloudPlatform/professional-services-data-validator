@@ -558,3 +558,5 @@ if SybaseExprTranslator:
     SybaseExprTranslator._registry[PaddedCharLength] = (
         mssql_registry.sa_format_string_length
     )
+    SybaseExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
+    SybaseExprTranslator._registry[ops.Sum] = mssql_registry.sa_format_sum
