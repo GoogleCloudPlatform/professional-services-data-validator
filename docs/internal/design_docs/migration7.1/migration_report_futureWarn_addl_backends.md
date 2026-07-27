@@ -54,5 +54,5 @@ This walkthrough documents the changes made in the current session to successful
    * Command: `pytest tests/system/data_sources/test_filesystem.py`
    * Results: **8 passed, 1 warning**
 3. **Hive Integration Tests**:
-   * Command: `PROJECT_ID=pso-kokoro-resources pytest tests/system/data_sources/test_hive.py`
+   * Command: `PROJECT_ID=XXXXXX pytest tests/system/data_sources/test_hive.py`
    * Results: **12 passed, 8 skipped, 96 warnings**

@@ -75,7 +75,7 @@ except Exception:
 ## Verification Results
 
 1. **BigQuery System Test**:
-   * Command: `PROJECT_ID=pso-kokoro-resources pytest tests/system/data_sources/test_bigquery.py -k test_cli_store_yaml_then_run_gcs -v`
+   * Command: `PROJECT_ID=XXXXXX pytest tests/system/data_sources/test_bigquery.py -k test_cli_store_yaml_then_run_gcs -v`
    * Result: **PASSED (100%)**
 
 2. **Unit Test Suite**:

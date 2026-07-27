@@ -92,5 +92,5 @@ In Ibis 7.1, `dt.dtype` is locked against external registrations using `del dtyp
    * Command: `pytest tests/system/data_sources/test_sql_server.py`
    * Results: **46 passed, 3 skipped, 0 failed** (100% success rate).
 4. **BigQuery System/Integration Tests**:
-   * Command: `PROJECT_ID=pso-kokoro-resources pytest tests/system/data_sources/test_bigquery.py`
+   * Command: `PROJECT_ID=XXXXXX pytest tests/system/data_sources/test_bigquery.py`
    * Results: **40 passed, 2 skipped, 0 failed** (100% success rate).
