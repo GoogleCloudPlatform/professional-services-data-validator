@@ -189,3 +189,16 @@ def sa_format_mean(translator, op):
     if op.arg.output_dtype.is_integer():
         return sa.func.avg(sa.cast(arg, sa.FLOAT))
     return sa.func.avg(arg)
+
+
+def sa_format_sum(translator, op):
+    """Calculate the sum aggregation for SQL Server.
+
+    Casts integer inputs to BIGINT to prevent 32-bit integer arithmetic overflow (Error 8115).
+    Leaves non-integer types (e.g., Decimals, Floats) unchanged to preserve precision.
+    """
+    arg = translator.translate(op.arg)
+
+    if op.arg.output_dtype.is_integer():
+        return sa.func.sum(sa.cast(arg, sa.BIGINT))
+    return sa.func.sum(arg)

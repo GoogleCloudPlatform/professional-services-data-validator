@@ -365,6 +365,21 @@ def test_column_validation_reserved_words():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_int_overflow():
+    """Sybase dvt_int_overflow column validation.
+
+    SUM(int_column) results in an INT which can cause an overflow error."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_int_overflow",
+        tc="mock-conn",
+        sum_cols="*",
+    )
+
+
 ###########################
 # ROW VALIDATION TESTS
 ###########################
