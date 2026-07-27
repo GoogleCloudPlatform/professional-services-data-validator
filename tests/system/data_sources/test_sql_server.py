@@ -838,7 +838,9 @@ def test_fixed_char_pk_row_validation_to_bigquery():
 def test_fixed_char_pk_upper_row_validation_to_bigquery():
     """Test fixed char primary keys"""
     id_column_row_validation_test(
-        "pso_data_validator.dvt_fixed_char_id_upper=pso_data_validator.dvt_fixed_char_id", hash="id", use_random_row=True
+        "pso_data_validator.dvt_fixed_char_id_upper=pso_data_validator.dvt_fixed_char_id",
+        hash="id",
+        use_random_row=True,
     )
 
 
