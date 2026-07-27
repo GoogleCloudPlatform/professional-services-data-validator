@@ -844,6 +844,19 @@ def test_fixed_char_pk_row_validation_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_fixed_char_pk_upper_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_fixed_char_id_upper=pso_data_validator.dvt_fixed_char_id",
+        hash="id",
+        use_random_row=True,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_varchar_pk_row_validation_to_bigquery():
     """Test varchar primary keys"""
     id_column_row_validation_test("pso_data_validator.dvt_varchar_id")
