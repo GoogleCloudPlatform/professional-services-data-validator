@@ -659,7 +659,7 @@ def test_column_validation_int_overflow():
     SUM(int_column) results in an INT which can cause an overflow error."""
     column_validation_test(
         tables="pso_data_validator.dvt_int_overflow",
-        tc="bq-conn",
+        tc="mock-conn",
         sum_cols="*",
     )
 
