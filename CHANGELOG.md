@@ -2,6 +2,15 @@
 
 ## Untagged
 
+## [8.8.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.1...v8.8.2) (2026-07-28)
+
+
+### Bug Fixes
+
+* Ensure padded char PK detection works for upper case columns ([#1792](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1792)) ([9019167](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/901916735a6f1c837ff942cd42d4074066ac365d))
+* Fix SQL Server overflow on SUM(INT) ([#1790](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1790)) ([b4eb1cb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b4eb1cbc36eab1ae6229c0c24d147aed1e95bb11))
+* SQL Server tinyint type detection ([#1784](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1784)) ([78658ab](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/78658ab718ca021e8a280f1a4c649a8c39ab834e))
+
 ## [8.8.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.0...v8.8.1) (2026-07-20)
 
 
