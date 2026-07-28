@@ -77,7 +77,7 @@ class Backend(BaseAlchemyBackend):
         self.database_name = alchemy_url.database
         engine = sa.create_engine(
             alchemy_url,
-            poolclass=sa.pool.StaticPool,
+            poolclass=sa.pool.NullPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,
         )

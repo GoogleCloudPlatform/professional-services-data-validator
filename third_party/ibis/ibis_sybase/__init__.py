@@ -95,7 +95,7 @@ class Backend(BaseAlchemyBackend):
         self.database_name = alchemy_url.database
         engine = sa.create_engine(
             alchemy_url,
-            poolclass=sa.pool.StaticPool,
+            poolclass=sa.pool.NullPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,
         )
@@ -120,17 +120,20 @@ class Backend(BaseAlchemyBackend):
         ):
             with self.begin() as con:
                 result = con.execute(sa.text(f"SELECT TOP 1 * FROM ({query}) AS t0"))
-                col_types = result.cursor.description
-                yield from (
+                col_types = list(result.cursor.description)
+                result.close()
+                return [
                     (c[0], type_from_result_set_info(c[0], c[1], c[4], c[5], c[6]))
                     for c in col_types
-                )
+                ]
         else:
             database, table = query.split(".", maxsplit=1)
             result = self.raw_sql(f"EXEC sp_columns [{table}], [{database}]")
+            rows = result.fetchall()
+            result.close()
             return [
                 (_[3], type_from_result_set_info(_[3], _[5], _[6], _[8], _[10]))
-                for _ in result.fetchall()
+                for _ in rows
             ]
 
     def list_primary_key_columns(self, database: str, table: str) -> list:
