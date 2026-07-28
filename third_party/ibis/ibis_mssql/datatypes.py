@@ -37,4 +37,3 @@ def _sa_mssql_to_ibis(cls, typ, nullable=True):
 
 
 MSSQLType.to_ibis = _sa_mssql_to_ibis
-
