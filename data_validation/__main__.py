@@ -395,30 +395,41 @@ def config_runner(args):
             )
 
             # Check if total task count is available for dynamic chunking
-            job_count_str = (
-                os.environ.get("JOB_COMPLETION_COUNT") or
-                os.environ.get("CLOUD_RUN_TASK_COUNT")
+            job_count_str = os.environ.get("JOB_COMPLETION_COUNT") or os.environ.get(
+                "CLOUD_RUN_TASK_COUNT"
             )
 
             if job_count_str:
                 # --- Dynamic Round-Robin Chunking ---
                 job_count = int(job_count_str)
-                all_files = sorted(cli_tools.list_validations(config_dir=args.config_dir))
+                all_files = sorted(
+                    cli_tools.list_validations(config_dir=args.config_dir)
+                )
 
                 # Select the round-robin slice for this task index
-                my_files = [f for idx, f in enumerate(all_files) if idx % job_count == job_index]
+                my_files = [
+                    f for idx, f in enumerate(all_files) if idx % job_count == job_index
+                ]
 
                 errors = False
                 for file in my_files:
                     config_managers = build_config_managers_from_yaml(args, file)
                     try:
-                        logging.info("Currently running the validation for YAML file: %s", file)
+                        logging.info(
+                            "Currently running the validation for YAML file: %s", file
+                        )
                         run_validations(args, config_managers)
                     except Exception as e:
                         errors = True
-                        logging.error("Error '%s' occurred while running config file %s.", str(e), file)
+                        logging.error(
+                            "Error '%s' occurred while running config file %s.",
+                            str(e),
+                            file,
+                        )
                 if errors:
-                    raise exceptions.ValidationException("Some of the validations raised an exception")
+                    raise exceptions.ValidationException(
+                        "Some of the validations raised an exception"
+                    )
             else:
                 # --- Legacy 1-to-1 Fallback ---
                 config_file_path = (
@@ -428,7 +439,9 @@ def config_runner(args):
                 )
                 setattr(args, "config_dir", None)
                 setattr(args, "config_file", config_file_path)
-                config_managers = build_config_managers_from_yaml(args, config_file_path)
+                config_managers = build_config_managers_from_yaml(
+                    args, config_file_path
+                )
                 run_validations(args, config_managers)
         else:
             if args.kube_completions:
@@ -596,35 +609,46 @@ def run_validations(args, config_managers):
         run_validation(config_manager, dry_run=args.dry_run, verbose=args.verbose)
 
 
-def store_yaml_config_file(args, config_managers):
+def store_yaml_config_file(args, config_managers) -> str:
     """Build a YAML config file from the supplied configs.
 
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
+
+    Returns:
+        str: File path where the YAML config file was saved.
     """
     yaml_configs = convert_config_to_yaml(args, config_managers)
     config_file_path = _get_arg_config_file(args)
     cli_tools.store_validation(config_file_path, yaml_configs)
+    return config_file_path
 
 
-def store_json_config_file(args, config_managers):
+def store_json_config_file(args, config_managers) -> str:
     """Build a JSON config file from the supplied configs.
 
     Args:
         config_managers (list[ConfigManager]): List of config manager instances.
+
+    Returns:
+        str: File path where the JSON config file was saved.
     """
     json_config = convert_config_to_json(config_managers)
     config_file_path = _get_arg_config_file_json(args)
     cli_tools.store_validation(config_file_path, json_config)
+    return config_file_path
 
 
-def store_config_dir(args, config_managers, is_json=False):
+def store_config_dir(args, config_managers, is_json=False) -> list[str]:
     """Build and store validation configs inside a directory (as YAML or JSON files).
 
     Args:
         args (Namespace): User specified Arguments.
         config_managers (list[ConfigManager]): List of config manager instances.
         is_json (bool): If True, store as JSON files. Otherwise, store as YAML.
+
+    Returns:
+        list[str]: List of paths to the created config files.
     """
     if any(cm.validation_type == consts.CUSTOM_QUERY for cm in config_managers):
         raise ValueError(CUSTOM_QUERY_DIR_SUPPORT_ERROR)
@@ -643,6 +667,7 @@ def store_config_dir(args, config_managers, is_json=False):
     extension = "json" if is_json else "yaml"
     logging.info(f"Writing validation configs to directory: {config_dir}")
 
+    created_files = []
     for config_manager in config_managers:
         source_schema = config_manager.source_schema
         source_table = config_manager.source_table
@@ -666,8 +691,10 @@ def store_config_dir(args, config_managers, is_json=False):
         target_file_path = os.path.join(config_dir, file_name)
         logging.debug(f"Saving config file: {target_file_path}")
         cli_tools.store_validation(target_file_path, config_to_store, include_log=True)
+        created_files.append(target_file_path)
 
     logging.info(f"Success! Validation configs written to directory: {config_dir}")
+    return created_files
 
 
 def partition_and_store_config_files(args: "Namespace") -> None:
