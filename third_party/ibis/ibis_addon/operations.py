@@ -495,6 +495,7 @@ MsSqlExprTranslator._registry[ops.TableColumn] = mssql_registry.sa_table_column
 MsSqlExprTranslator._registry[ops.ExtractEpochSeconds] = mssql_registry.sa_epoch_seconds
 MsSqlExprTranslator._registry[ops.RStrip] = mssql_registry.sa_whitespace_rstrip
 MsSqlExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
+MsSqlExprTranslator._registry[ops.Sum] = mssql_registry.sa_format_sum
 MsSqlExprTranslator._registry[PaddedCharLength] = MsSqlExprTranslator._registry[
     ops.StringLength
 ]
@@ -557,3 +558,5 @@ if SybaseExprTranslator:
     SybaseExprTranslator._registry[PaddedCharLength] = (
         mssql_registry.sa_format_string_length
     )
+    SybaseExprTranslator._registry[ops.Mean] = mssql_registry.sa_format_mean
+    SybaseExprTranslator._registry[ops.Sum] = mssql_registry.sa_format_sum
