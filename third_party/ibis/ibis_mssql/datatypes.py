@@ -37,8 +37,3 @@ def _sa_mssql_to_ibis(cls, typ, nullable=True):
 
 
 MSSQLType.to_ibis = _sa_mssql_to_ibis
-
-
-@dt.dtype.register(MSDialect, mssql.TINYINT)
-def sa_mssql_tinyint(_, sa_type, nullable=True):
-    return dt.Int16(nullable=nullable)
