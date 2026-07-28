@@ -25,6 +25,7 @@ from tests.system.data_sources.common_functions import (
     column_validation_test,
     connections_add_test,
     custom_query_validation_test,
+    find_tables_test,
     raw_query_test,
     row_validation_many_columns_test,
     row_validation_test,
@@ -204,42 +205,6 @@ def test_grouped_count_validator(grouped_config):
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_cli_find_tables():
-    parser = cli_tools.configure_arg_parser()
-    args = parser.parse_args(CLI_FIND_TABLES_ARGS)
-    tables_json = find_tables.find_tables_using_string_matching(args)
-    tables = json.loads(tables_json)
-    assert isinstance(tables_json, str)
-    assert {
-        "schema_name": "pso_data_validator",
-        "table_name": "array_table",
-        "target_schema_name": "pso_data_validator",
-        "target_table_name": "array_table",
-    } in tables
-    assert {
-        "schema_name": "pso_data_validator",
-        "table_name": "functional_alltypes",
-        "target_schema_name": "pso_data_validator",
-        "target_table_name": "functional_alltypes",
-    } in tables
-    assert {
-        "schema_name": "pso_data_validator",
-        "table_name": "students_pointer",
-        "target_schema_name": "pso_data_validator",
-        "target_table_name": "students_pointer",
-    } in tables
-    assert {
-        "schema_name": "pso_data_validator",
-        "table_name": "dvt_core_types_vw",
-        "target_schema_name": "pso_data_validator",
-        "target_table_name": "dvt_core_types_vw",
-    } not in tables
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_schema_validation_core_types():
     """Spanner to Spanner dvt_core_types schema validation"""
     schema_validation_test(
@@ -399,6 +364,9 @@ def test_custom_query_row_validation_many_columns():
     row_validation_many_columns_test(validation_type="custom-query", schema=None)
 
 
+##################
+# RAW QUERY TESTS
+##################
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
@@ -424,3 +392,51 @@ def test_connections_add(caplog, tmp_path, monkeypatch):
     connections_add_test(
         caplog, consts.SOURCE_TYPE_SPANNER, conn_args, tmp_path, monkeypatch
     )
+
+
+##############################
+# FIND-TABLE VALIDATION TESTS
+##############################
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_find_tables():
+    """Spanner test of find-tables command."""
+    find_tables_test()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_cli_find_tables():
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(CLI_FIND_TABLES_ARGS)
+    tables_json = find_tables.find_tables_using_string_matching(args)
+    tables = json.loads(tables_json)
+    assert isinstance(tables_json, str)
+    assert {
+        "schema_name": "pso_data_validator",
+        "table_name": "array_table",
+        "target_schema_name": "pso_data_validator",
+        "target_table_name": "array_table",
+    } in tables
+    assert {
+        "schema_name": "pso_data_validator",
+        "table_name": "functional_alltypes",
+        "target_schema_name": "pso_data_validator",
+        "target_table_name": "functional_alltypes",
+    } in tables
+    assert {
+        "schema_name": "pso_data_validator",
+        "table_name": "students_pointer",
+        "target_schema_name": "pso_data_validator",
+        "target_table_name": "students_pointer",
+    } in tables
+    assert {
+        "schema_name": "pso_data_validator",
+        "table_name": "dvt_core_types_vw",
+        "target_schema_name": "pso_data_validator",
+        "target_table_name": "dvt_core_types_vw",
+    } not in tables

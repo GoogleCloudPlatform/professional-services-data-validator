@@ -40,10 +40,12 @@ from tests.system.data_sources.test_bigquery import BQ_CONN
 from tests.system.data_sources.common_functions import DVT_CORE_TYPES_COLUMNS
 
 # Our Sybase test infra has a habit of failing to connect but then working on retry.
+# Because of SSH Tunnel Saturation (MaxSessions) and Sybase ASE number of user connections limit
+# as mentioned by Generative AI, tests late in the cycle, say after 30 or so tests can fail.
 pytestmark = pytest.mark.flaky(
-    reruns=1,
-    reruns_delay=2,
-    only_rerun=["DataClientConnectionFailure"],
+    reruns=2,
+    reruns_delay=3,
+    only_rerun=["DataClientConnectionFailure", "OperationalError"],
 )
 
 SYBASE_HOST = os.getenv("SYBASE_HOST", "127.0.0.1")

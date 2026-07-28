@@ -229,7 +229,13 @@ class Backend(BaseAlchemyBackend):
 
         assert (database and table) or query, "We should never receive all args=None"
         if database and table:
-            source = f'"{database}"."{table}"'.upper()
+            db_tables = self.list_tables(database=database)
+            matched_table = next(
+                (t for t in db_tables if t.lower() == table.lower()), table.upper()
+            )
+            dialect = self.con.dialect
+            preparer = dialect.identifier_preparer
+            source = f"{preparer.quote(database, None)}.{preparer.quote(matched_table, None)}"
         elif query:
             source = f"({query})"
 
@@ -245,3 +251,6 @@ class Backend(BaseAlchemyBackend):
         """Define this method if the backend supports character/string types that are padded and returns
         padded values, which DVT may want to trim"""
         return char_type[0] in ["CHAR", "NCHAR"]
+
+    def list_databases(self) -> list:
+        return sa.inspect(self.con).get_schema_names()

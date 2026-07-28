@@ -13,28 +13,27 @@
 # limitations under the License.
 
 import ibis.expr.datatypes as dt
-from ibis.backends.mssql.datatypes import _MSSQL_TYPE_MAP
+from ibis.backends.mssql.datatypes import _to_mssql_types, MSSQLType
 from sqlalchemy.dialects import mssql
-from sqlalchemy.dialects.mssql.base import MSDialect
-
-
-# Override DATETIMEOFFSET and DATETIME to remove timestamp
-# scale of 7 for valid schema matching
-@dt.dtype.register(MSDialect, mssql.DATETIMEOFFSET)
-def sa_mssql_datetimeoffset(_, sa_type, nullable=True):
-    return dt.Timestamp(timezone="UTC", nullable=nullable)
-
-
-@dt.dtype.register(MSDialect, mssql.DATETIME2)
-def sa_mssql_datetime2(_, sa_type, nullable=True):
-    return dt.Timestamp(nullable=nullable)
-
 
 # Needs to be VARCHAR instead of NVARCHAR for Hash function
-_MSSQL_TYPE_MAP[dt.String] = mssql.VARCHAR
-_MSSQL_TYPE_MAP[dt.Float64] = mssql.FLOAT
+_to_mssql_types[dt.String] = mssql.VARCHAR
+_to_mssql_types[dt.Float64] = mssql.FLOAT
+
+_original_to_ibis = MSSQLType.to_ibis
 
 
-@dt.dtype.register(MSDialect, mssql.TINYINT)
-def sa_mssql_tinyint(_, sa_type, nullable=True):
-    return dt.Int16(nullable=nullable)
+@classmethod
+def _sa_mssql_to_ibis(cls, typ, nullable=True):
+    if isinstance(typ, mssql.DATETIMEOFFSET):
+        # Override DATETIMEOFFSET to remove timestamp scale of 7 for valid schema matching
+        return dt.Timestamp(timezone="UTC", nullable=nullable)
+    elif isinstance(typ, (mssql.DATETIME2, mssql.DATETIME)):
+        # Override DATETIME2 and DATETIME to remove timestamp scale of 7 for valid schema matching
+        return dt.Timestamp(nullable=nullable)
+    elif isinstance(typ, mssql.TINYINT):
+        return dt.Int16(nullable=nullable)
+    return _original_to_ibis(typ, nullable=nullable)
+
+
+MSSQLType.to_ibis = _sa_mssql_to_ibis

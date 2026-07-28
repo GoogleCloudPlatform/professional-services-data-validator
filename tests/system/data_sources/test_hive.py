@@ -43,11 +43,15 @@ HIVE_HOST = os.getenv("HIVE_HOST", "localhost")
 HIVE_DATABASE = os.getenv("HIVE_DATABASE", "default")
 
 
+HIVE_AUTH_MECH = os.getenv("HIVE_AUTH_MECH", "PLAIN")
+
+
 CONN = {
     consts.SOURCE_TYPE: consts.SOURCE_TYPE_IMPALA,
     "host": HIVE_HOST,
     "port": 10000,
     "database": HIVE_DATABASE,
+    "auth_mechanism": HIVE_AUTH_MECH,
 }
 
 

@@ -30,8 +30,8 @@ def sa_table_column(t, op):
     out_expr = get_col(sa_table, op)
     out_expr.quote = t._quote_column_names
 
-    if op.output_dtype.is_timestamp():
-        timezone = op.output_dtype.timezone
+    if op.dtype.is_timestamp():
+        timezone = op.dtype.timezone
         if timezone is not None:
             # Using literal_column on SQL Server because the time zone string cannot be a bind.
             out_expr = sa.literal_column(
@@ -68,7 +68,7 @@ def strftime(translator, op):
         raise NotImplementedError(
             f"strftime format {pattern.value} not supported for SQL Server."
         )
-    arg_type = op.args[0].output_dtype
+    arg_type = op.args[0].dtype
     if (
         hasattr(arg_type, "timezone") and arg_type.timezone
     ):  # our datetime comparisons do not include timezone, so we need to cast this to Datetime which is timezone naive
@@ -118,7 +118,7 @@ def sa_format_hashbytes(translator, op):
 def sa_cast_mssql(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
     # Specialize going from a binary float type to a string.

@@ -23,6 +23,7 @@ import google.oauth2.service_account
 from google.cloud import bigquery
 from google.api_core import client_options
 import ibis
+
 import pandas
 
 from data_validation import client_info, consts, exceptions
@@ -31,7 +32,6 @@ from data_validation.secret_manager import SecretManagerBuilder
 from third_party.ibis.ibis_bigquery.api import bigquery_connect
 from third_party.ibis.ibis_cloud_spanner.api import spanner_connect
 from third_party.ibis.ibis_impala.api import impala_connect
-from third_party.ibis.ibis_mssql.api import mssql_connect
 from third_party.ibis.ibis_redshift.api import redshift_connect
 
 if TYPE_CHECKING:
@@ -75,13 +75,12 @@ except ImportError:
     msg = "pip install teradatasql (requires Teradata licensing)"
     teradata_connect = _raise_missing_client_error(msg)
 
-# Oracle requires python-oracldb driver
+# Oracle requires oracledb driver
 try:
     from third_party.ibis.ibis_oracle.api import oracle_connect
 except ImportError:
     oracle_connect = _raise_missing_client_error("pip install oracledb")
 
-# Snowflake requires snowflake-connector-python and snowflake-sqlalchemy
 try:
     from third_party.ibis.ibis_snowflake.api import snowflake_connect
 except ImportError:
@@ -102,6 +101,13 @@ try:
     from third_party.ibis.ibis_sybase.api import sybase_connect
 except ImportError:
     sybase_connect = _raise_missing_client_error("pip install sqlalchemy_sybase")
+
+
+# MSSQL requires pyodbc package.
+try:
+    from third_party.ibis.ibis_mssql.api import mssql_connect
+except ImportError:
+    mssql_connect = _raise_missing_client_error("pip install pyodbc")
 
 
 def get_google_bigquery_client(
@@ -221,6 +227,22 @@ def is_oracle_client(client):
         return False
 
 
+def _split_bigquery_table_location(schema_name, database_name=None):
+    if database_name:
+        return database_name, schema_name
+    if schema_name and "." in schema_name:
+        return schema_name.split(".", 1)
+    return None, schema_name
+
+
+def _split_snowflake_table_location(schema_name, database_name=None):
+    if database_name:
+        return database_name, schema_name
+    if schema_name and "." in schema_name:
+        return schema_name.split(".", 1)
+    return None, schema_name
+
+
 def get_ibis_table(client, schema_name, table_name, database_name=None):
     """Return Ibis Table for Supplied Client.
 
@@ -229,7 +251,19 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if client.name in [
+    if client.name == "bigquery":
+        database_name, schema_name = _split_bigquery_table_location(
+            schema_name, database_name
+        )
+        return client.table(table_name, database=database_name, schema=schema_name)
+    elif client.name == "snowflake":
+        database_name, schema_name = _split_snowflake_table_location(
+            schema_name, database_name
+        )
+        return client.table(table_name, database=database_name, schema=schema_name)
+    elif client.name == "spanner":
+        return client.table(table_name)
+    elif client.name in [
         "oracle",
         "postgres",
         "db2",
@@ -248,13 +282,13 @@ def get_ibis_table(client, schema_name, table_name, database_name=None):
 def get_ibis_query(client, query) -> "ir.Table":
     """Return Ibis Table from query expression for Supplied Client."""
     iq = client.sql(query)
-    # Normalise all columns in the query to lower case.
-    # https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/992
-    iq = iq.relabel(dict(zip(iq.columns, [_.lower() for _ in iq.columns])))
+    iq = iq.rename(dict(zip([_.lower() for _ in iq.columns], iq.columns)))
     return iq
 
 
-def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Schema":
+def get_ibis_table_schema(
+    client, schema_name: str, table_name: str, database_name=None
+) -> "sch.Schema":
     """Return Ibis Table Schema for Supplied Client.
 
     client (IbisClient): Client to use for table
@@ -262,8 +296,22 @@ def get_ibis_table_schema(client, schema_name: str, table_name: str) -> "sch.Sch
     table_name (str): Table name of table object
     database_name (str): Database name (generally default is used)
     """
-    if is_sqlalchemy_backend(client):
+    if client.name == "bigquery":
+        database_name, schema_name = _split_bigquery_table_location(
+            schema_name, database_name
+        )
+        return client.get_schema(table_name, schema=schema_name, database=database_name)
+    elif client.name == "snowflake":
+        database_name, schema_name = _split_snowflake_table_location(
+            schema_name, database_name
+        )
+        return client.table(
+            table_name, database=database_name, schema=schema_name
+        ).schema()
+    elif is_sqlalchemy_backend(client):
         return client.table(table_name, schema=schema_name).schema()
+    elif client.name == "spanner":
+        return client.get_schema(table_name)
     else:
         return client.get_schema(table_name, schema_name)
 
@@ -278,22 +326,26 @@ def get_ibis_query_schema(client, query_str) -> "sch.Schema":
         return client._get_schema_using_query(query_str)
 
 
-def list_schemas(client):
-    """Return a list of schemas in the DB."""
+def list_databases(client):
+    """Return a list of databases in the DB.
+    In version 7.1, Ibis adopted a uniform way of referring (see https://ibis-project.org/concepts/backend-table-hierarchy)
+    to a collection of tables as a database, irrespective of the terminology used by the specific backend.
+    Here we want the collection of tables that may be used for validation, hence the changing
+    the function name to list_databases()."""
     if hasattr(client, "list_databases"):
         try:
             return client.list_databases()
         except NotImplementedError:
-            return [None]
-    else:
-        return [None]
+            raise NotImplementedError(
+                "list_databases is not implemented for this client"
+            )
 
 
 def list_tables(client, schema_name, tables_only=True):
     """Return a list of tables in the DB schema."""
     fn = (
         client.dvt_list_tables
-        if tables_only and client.name != "pandas"
+        if tables_only and hasattr(client, "dvt_list_tables")
         else client.list_tables
     )
     if client.name in ["redshift", "snowflake", "pandas"]:
@@ -308,7 +360,7 @@ def get_all_tables(client, allowed_schemas=None, tables_only=True):
     allowed_schemas (List[str]): List of schemas to pull.
     """
     table_objs = []
-    schemas = list_schemas(client)
+    schemas = list_databases(client)
     for schema_name in schemas:
         if allowed_schemas and schema_name not in allowed_schemas:
             continue

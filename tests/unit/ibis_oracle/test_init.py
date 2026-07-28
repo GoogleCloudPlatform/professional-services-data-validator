@@ -75,6 +75,14 @@ def test_raw_column_metadata_no_args(module_under_test):
 def test_raw_column_metadata_core_types(mock_begin, module_under_test):
     mock_begin().__enter__().exec_driver_sql().cursor.description = DVT_CORE_TYPES_CURS
     backend = module_under_test.Backend()
+    backend.list_tables = mock.Mock(return_value=["dvt_core_types"])
+
+    mock_dialect = mock.Mock()
+    mock_preparer = mock.Mock()
+    mock_preparer.quote.side_effect = lambda val, *args: f'"{val}"'
+    mock_dialect.identifier_preparer = mock_preparer
+    backend.con = mock.Mock(dialect=mock_dialect)
+
     raw_types = list(
         backend.raw_column_metadata(
             database="pso_data_validator", table="dvt_core_types"

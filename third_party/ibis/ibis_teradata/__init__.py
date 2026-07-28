@@ -67,7 +67,11 @@ class Backend(BaseSQLBackend):
         self.con.close()
 
     def __del__(self):
-        self.con.close()
+        if getattr(self, "con", None) is not None:
+            try:
+                self.con.close()
+            except Exception:
+                pass
 
     @property
     def version(self):
@@ -231,7 +235,7 @@ class Backend(BaseSQLBackend):
 
         self._log(sql)
 
-        schema = self.ast_schema(query_ast, **kwargs)
+        schema = expr.as_table().schema()
 
         with warnings.catch_warnings():
             # Suppress pandas warning of SQLAlchemy connectable DB support

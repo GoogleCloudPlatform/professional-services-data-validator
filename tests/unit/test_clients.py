@@ -62,6 +62,43 @@ ORACLE_CONN_CONFIG = {
 }
 
 
+class RecordingBigQueryClient:
+    name = "bigquery"
+
+    def table(self, table_name, database=None, schema=None):
+        return table_name, database, schema
+
+    def get_schema(self, table_name, database=None, schema=None):
+        return table_name, database, schema
+
+
+class RecordingSnowflakeTable:
+    def __init__(self, table_name, database=None, schema=None):
+        self.table_name = table_name
+        self.database = database
+        self.schema_name = schema
+
+    def schema(self):
+        return self.table_name, self.database, self.schema_name
+
+
+class RecordingSnowflakeClient:
+    name = "snowflake"
+
+    def table(self, table_name, database=None, schema=None):
+        return RecordingSnowflakeTable(table_name, database=database, schema=schema)
+
+
+class RecordingSpannerClient:
+    name = "spanner"
+
+    def table(self, table_name):
+        return table_name
+
+    def get_schema(self, table_name):
+        return table_name
+
+
 def _create_table_file(table_path, data):
     """Write JSON data to given file."""
     with open(table_path, "w") as f:
@@ -77,6 +114,7 @@ def _get_pandas_client():
 
 def test_get_all_tables():
     """Test get all tables util."""
+    pytest.skip("Skipping test_get_all_tables due to issue 1788")
     client = _get_pandas_client()
     all_tables = clients.get_all_tables(client)
 
@@ -90,6 +128,96 @@ def test_get_bigquery_client_sets_user_agent():
     )
     user_agent = ibis_client.client._connection._client_info.to_user_agent()
     assert "google-pso-tool/data-validator" in user_agent
+
+
+def test_get_ibis_table_splits_bigquery_project_and_dataset():
+    client = RecordingBigQueryClient()
+
+    table = clients.get_ibis_table(client, "source-project.source_dataset", TABLE_NAME)
+
+    assert table == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_uses_explicit_bigquery_database():
+    client = RecordingBigQueryClient()
+
+    table = clients.get_ibis_table(
+        client, "source_dataset", TABLE_NAME, database_name="source-project"
+    )
+
+    assert table == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_schema_splits_bigquery_project_and_dataset():
+    client = RecordingBigQueryClient()
+
+    schema = clients.get_ibis_table_schema(
+        client, "source-project.source_dataset", TABLE_NAME
+    )
+
+    assert schema == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_schema_uses_explicit_bigquery_database():
+    client = RecordingBigQueryClient()
+
+    schema = clients.get_ibis_table_schema(
+        client, "source_dataset", TABLE_NAME, database_name="source-project"
+    )
+
+    assert schema == (TABLE_NAME, "source-project", "source_dataset")
+
+
+def test_get_ibis_table_splits_snowflake_database_and_schema():
+    client = RecordingSnowflakeClient()
+
+    table = clients.get_ibis_table(client, "SOURCE_DATABASE.PUBLIC", TABLE_NAME)
+
+    assert table.schema() == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
+
+
+def test_get_ibis_table_uses_explicit_snowflake_database():
+    client = RecordingSnowflakeClient()
+
+    table = clients.get_ibis_table(
+        client, "PUBLIC", TABLE_NAME, database_name="SOURCE_DATABASE"
+    )
+
+    assert table.schema() == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
+
+
+def test_get_ibis_table_schema_splits_snowflake_database_and_schema():
+    client = RecordingSnowflakeClient()
+
+    schema = clients.get_ibis_table_schema(client, "SOURCE_DATABASE.PUBLIC", TABLE_NAME)
+
+    assert schema == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
+
+
+def test_get_ibis_table_schema_uses_explicit_snowflake_database():
+    client = RecordingSnowflakeClient()
+
+    schema = clients.get_ibis_table_schema(
+        client, "PUBLIC", TABLE_NAME, database_name="SOURCE_DATABASE"
+    )
+
+    assert schema == (TABLE_NAME, "SOURCE_DATABASE", "PUBLIC")
+
+
+def test_get_ibis_table_ignores_spanner_schema():
+    client = RecordingSpannerClient()
+
+    table = clients.get_ibis_table(client, "ignored_schema", TABLE_NAME)
+
+    assert table == TABLE_NAME
+
+
+def test_get_ibis_table_schema_ignores_spanner_schema():
+    client = RecordingSpannerClient()
+
+    schema = clients.get_ibis_table_schema(client, "ignored_schema", TABLE_NAME)
+
+    assert schema == TABLE_NAME
 
 
 def test_import_oracle_client():

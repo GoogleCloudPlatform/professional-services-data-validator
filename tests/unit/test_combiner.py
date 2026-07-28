@@ -12,17 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
+import decimal
+import json
+import logging
 
+import numpy
 import pandas
 import pandas.testing
 import pytest
-import logging
-import json
 
 from freezegun import freeze_time
 from data_validation import metadata, consts
 
+# Ensure Pandas is patched as it would be in a true DVT execution.
+import third_party.ibis.ibis_addon.operations  # noqa: F401
+
 _NAN = float("nan")
+
+
+def _assert_frame_equal(report, expected):
+    with pandas.option_context("future.no_silent_downcasting", True):
+        report_filled = report.fillna(value=_NAN)
+        expected_filled = expected.fillna(value=_NAN)
+    pandas.testing.assert_frame_equal(report_filled, expected_filled)
+
 
 EXAMPLE_RUN_METADATA = metadata.RunMetadata(
     validations={
@@ -413,7 +426,7 @@ def test_generate_report_without_group_by(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -690,7 +703,7 @@ def test_generate_report_with_group_by(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @freeze_time("1998-09-04 07:31:42")
@@ -1009,7 +1022,7 @@ def test_generate_report_with_nan_agg_value(
         .reset_index(drop=True)
         .reindex(sorted(expected.columns), axis=1)
     )
-    pandas.testing.assert_frame_equal(report, expected)
+    _assert_frame_equal(report, expected)
 
 
 @pytest.mark.parametrize(
@@ -1225,3 +1238,29 @@ def test_get_summary_with_empty_inputs(
         module_under_test.COMBINER_GET_SUMMARY_EXC_TEXT not in _.message
         for _ in caplog.records
     )
+
+
+def test_convert_large_ints_to_decimals(module_under_test):
+    df = pandas.DataFrame(
+        {
+            "normal_int": [1, 2],
+            "large_pos": [module_under_test._MAX_INT64 * 10, 1],
+            "large_neg": [module_under_test._MIN_INT64 * 10, 1],
+            "string_col": ["a", "b"],
+            "bool_col": [True, False],
+            "float_col": [1.1, 2.2],
+        }
+    )
+
+    res = module_under_test._convert_large_ints_to_decimals(df)
+
+    assert isinstance(res["large_pos"][0], decimal.Decimal)
+    assert str(res["large_pos"][0]) == str(module_under_test._MAX_INT64 * 10)
+    assert isinstance(res["large_pos"][1], int)
+
+    assert isinstance(res["large_neg"][0], decimal.Decimal)
+    assert str(res["large_neg"][0]) == str(module_under_test._MIN_INT64 * 10)
+    assert isinstance(res["large_neg"][1], int)
+
+    assert isinstance(res["normal_int"][0], (int, numpy.integer))
+    assert isinstance(res["string_col"][0], str)
