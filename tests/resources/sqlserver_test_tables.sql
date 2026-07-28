@@ -240,6 +240,14 @@ INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT3', 'Row 3  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT4', 'Row 4  	  ');
 INSERT INTO pso_data_validator.dvt_fixed_char_id VALUES ('DVT5', 'Row 5');
 
+DROP TABLE IF EXISTS pso_data_validator.dvt_fixed_char_id_upper;
+CREATE TABLE pso_data_validator.dvt_fixed_char_id_upper
+(   [ID]          CHAR(6) NOT NULL PRIMARY KEY
+,   [OTHER_DATA]  CHAR(100)
+);
+EXECUTE sp_addextendedproperty 'Comment', 'Integration test table used to test fixed char pk matching on upper case ID column.', 'SCHEMA', 'pso_data_validator', 'table', 'dvt_fixed_char_id_upper';
+INSERT INTO pso_data_validator.dvt_fixed_char_id_upper SELECT * FROM pso_data_validator.dvt_fixed_char_id;
+
 DROP TABLE IF EXISTS pso_data_validator.dvt_varchar_id;
 CREATE TABLE pso_data_validator.dvt_varchar_id
 (   id          VARCHAR(15) NOT NULL PRIMARY KEY
