@@ -208,7 +208,7 @@ def format_raw_sql(translator, op):
 
 def sa_format_raw_sql(translator, op):
     rand_col, raw_sql = op.args
-    return sa.text(raw_sql.args[0])
+    return sa.literal_column(f"({raw_sql.args[0]})")
 
 
 def sa_format_hashbytes_mysql(translator, op):

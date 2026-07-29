@@ -15,7 +15,8 @@
 import logging
 import ibis
 import pandas
-from data_validation import consts
+from data_validation import clients, consts
+from data_validation.util import list_to_sublists
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
 
@@ -208,12 +209,21 @@ class FilterField(object):
         """Build a hybrid composite key filter: native Tuple/Struct IN for supported engines,
         falling back to OR-of-ANDs for SQL Server, Spanner, Teradata, BigQuery, etc.
         """
+        max_batch_size = clients.get_max_in_list_size(client) or 1000
+
         if (
             hasattr(client, "dvt_tuple_in_supported")
             and client.dvt_tuple_in_supported()
         ):
             tuples_list = [tuple(x) for x in values_df[columns].to_numpy()]
-            return FilterField.tuple_in(columns, tuples_list, client.name)
+            if len(tuples_list) > max_batch_size:
+                sub_batches = [
+                    FilterField.tuple_in(columns, sublist, client.name)
+                    for sublist in list_to_sublists(tuples_list, max_batch_size)
+                ]
+                return FilterField.or_(sub_batches)
+            else:
+                return FilterField.tuple_in(columns, tuples_list, client.name)
 
         row_filters = []
         for row in values_df[columns].itertuples(index=False):
@@ -228,10 +238,6 @@ class FilterField(object):
         if not row_filters:
             return None
 
-        from data_validation.clients import get_max_in_list_size
-        from data_validation.validation_builder import list_to_sublists
-
-        max_batch_size = get_max_in_list_size(client) or 1000
         if len(row_filters) > max_batch_size:
             sub_batches = [
                 FilterField.or_(sublist)

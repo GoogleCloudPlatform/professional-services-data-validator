@@ -95,6 +95,22 @@ def test_composite_isin_chunking(mock_get_max_in):
         assert sub_batch.expr == ibis.or_
 
 
+@mock.patch("data_validation.clients.get_max_in_list_size", return_value=2)
+def test_composite_isin_tuple_in_chunking(mock_get_max_in):
+    mock_client = mock.MagicMock()
+    mock_client.name = "postgres"
+    mock_client.dvt_tuple_in_supported.return_value = True
+
+    df = pandas.DataFrame({"col1": ["a", "b", "c", "d", "e"], "col2": [1, 2, 3, 4, 5]})
+    ff = FilterField.composite_isin(mock_client, ["col1", "col2"], df)
+
+    assert ff.expr == ibis.or_
+    # Chunked into sub-batches of 2
+    assert len(ff.left) == 3
+    for sub_batch in ff.left:
+        assert sub_batch.expr == "tuple_in"
+
+
 def test_backend_class_tuple_in_supported():
     try:
         from third_party.ibis.ibis_oracle import Backend as OracleBackend
