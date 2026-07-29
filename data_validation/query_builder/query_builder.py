@@ -14,6 +14,7 @@
 
 import logging
 import ibis
+import pandas
 from data_validation import consts
 from ibis.expr.types import StringScalar
 from third_party.ibis.ibis_addon import api, operations
@@ -164,6 +165,10 @@ class FilterField(object):
         )
 
     @staticmethod
+    def is_null(field_name):
+        return FilterField(ibis.expr.types.ColumnExpr.isnull, left_field=field_name)
+
+    @staticmethod
     def isin(field_name, values):
         # Build Left and Right Objects
         return FilterField(
@@ -183,18 +188,91 @@ class FilterField(object):
     def or_(field_list: list):
         return FilterField(ibis.or_, left=field_list)
 
+    @staticmethod
+    def and_(field_list: list):
+        return FilterField(ibis.and_, left=field_list)
+
+    @staticmethod
+    def tuple_in(columns: list, tuples_list: list, backend_name: str) -> "FilterField":
+        """Build a native Tuple/Struct IN expression for supported engines."""
+        return FilterField(
+            "tuple_in", left=columns, right=tuples_list, left_field=backend_name
+        )
+
+    @staticmethod
+    def composite_isin(
+        client,
+        columns: list,
+        values_df: pandas.DataFrame,
+    ) -> "FilterField":
+        """Build a hybrid composite key filter: native Tuple/Struct IN for supported engines,
+        falling back to OR-of-ANDs for SQL Server, Spanner, Teradata, BigQuery, etc.
+        """
+        if (
+            hasattr(client, "dvt_tuple_in_supported")
+            and client.dvt_tuple_in_supported()
+        ):
+            tuples_list = [tuple(x) for x in values_df[columns].to_numpy()]
+            return FilterField.tuple_in(columns, tuples_list, client.name)
+
+        row_filters = []
+        for row in values_df[columns].itertuples(index=False):
+            eq_filters = []
+            for col_name, val in zip(columns, row):
+                if pandas.isna(val):
+                    eq_filters.append(FilterField.is_null(col_name))
+                else:
+                    eq_filters.append(FilterField.equal_to(col_name, val))
+            row_filters.append(FilterField.and_(eq_filters))
+
+        if not row_filters:
+            return None
+
+        from data_validation.clients import get_max_in_list_size
+        from data_validation.validation_builder import list_to_sublists
+
+        max_batch_size = get_max_in_list_size(client) or 1000
+        if len(row_filters) > max_batch_size:
+            sub_batches = [
+                FilterField.or_(sublist)
+                for sublist in list_to_sublists(row_filters, max_batch_size)
+            ]
+            return FilterField.or_(sub_batches)
+        else:
+            return FilterField.or_(row_filters)
+
+    def _compile_tuple_in(self, ibis_table):
+        cols_str = f"({', '.join(self.left)})"
+        formatted_tuples = []
+        for t in self.right:
+            vals = []
+            for v in t:
+                if isinstance(v, str):
+                    escaped = v.replace("'", "''")
+                    vals.append(f"'{escaped}'")
+                elif pandas.isna(v):
+                    vals.append("NULL")
+                else:
+                    vals.append(str(v))
+            formatted_tuples.append(f"({', '.join(vals)})")
+        tuples_str = ", ".join(formatted_tuples)
+        raw_sql = f"{cols_str} IN ({tuples_str})"
+        return operations.compile_raw_sql(ibis_table, raw_sql)
+
     def compile(self, ibis_table):
         if self.expr is None:
             return operations.compile_raw_sql(ibis_table, self.left)
 
-        if self.left_field:
+        if self.left_field and self.expr != "tuple_in":
             self.left = ibis_table[self.left_field]
 
         if self.right_field:
             self.right = ibis_table[self.right_field]
 
-        if self.expr == ibis.or_:
+        if self.expr in (ibis.or_, ibis.and_):
             return self.expr(*[_.compile(ibis_table) for _ in self.left])
+        elif self.expr == "tuple_in":
+            return self._compile_tuple_in(ibis_table)
         else:
             return self.expr(self.left, self.right)
 

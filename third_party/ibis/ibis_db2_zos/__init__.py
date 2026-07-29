@@ -85,3 +85,7 @@ class Backend(Db2LUWBackend):
         self, table: sa.Table, nulltype_cols: Iterable[str]
     ) -> sa.Table:
         return dvt_handle_failed_column_type_inference(self, table, nulltype_cols)
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return True

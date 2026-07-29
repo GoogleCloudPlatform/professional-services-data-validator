@@ -562,6 +562,30 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_composite_pk_random_rows_to_bigquery():
+    """Test composite primary key row validation with random row sampling."""
+    parser = cli_tools.configure_arg_parser()
+    args = parser.parse_args(
+        [
+            "validate",
+            "row",
+            "-sc=db2-conn",
+            "-tc=bq-conn",
+            "-tbls=pso_data_validator.dvt_composite_pk",
+            "--primary-keys=key1,key2,key3",
+            "--use-random-row",
+            "--random-row-batch-size=5",
+        ]
+    )
+    df = run_test_from_cli_args(args)
+    assert len(df) == 5
+    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
+
+
 ################################
 # CUSTOM-QUERY VALIDATION TESTS
 ################################

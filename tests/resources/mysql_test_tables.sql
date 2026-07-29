@@ -649,3 +649,24 @@ CREATE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
 , `string`   varchar(10)
 ) COMMENT='Integration test table used to test potentially difficult column names.';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_composite_pk`;
+CREATE TABLE `pso_data_validator`.`dvt_composite_pk` (
+  key1 INT NOT NULL
+, key2 VARCHAR(10) NOT NULL
+, key3 CHAR(2) NOT NULL
+, val  VARCHAR(50)
+, PRIMARY KEY (key1, key2, key3)) COMMENT='Integration test table used to test composite primary keys.';
+INSERT INTO `pso_data_validator`.`dvt_composite_pk` VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+

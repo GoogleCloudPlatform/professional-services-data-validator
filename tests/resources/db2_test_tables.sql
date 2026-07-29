@@ -258,3 +258,23 @@ CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_db2_generated_cols2
 ,   col_int                     INTEGER);
 COMMENT ON TABLE pso_data_validator.dvt_db2_generated_cols2 IS 'Test table to prove generated columns are ignored.';
 INSERT INTO pso_data_validator.dvt_db2_generated_cols2 VALUES (1,1);
+COMMIT;
+
+CREATE TABLE IF NOT EXISTS pso_data_validator.dvt_composite_pk
+(   key1  INTEGER NOT NULL
+,   key2  VARCHAR(10) NOT NULL
+,   key3  CHAR(2) NOT NULL
+,   val   VARCHAR(50)
+,   PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_composite_pk IS 'Test table for composite primary keys.';
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'X', 'val1');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'B', 'X', 'val3');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'A', 'X', 'val4');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'X', 'val7');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
+COMMIT;

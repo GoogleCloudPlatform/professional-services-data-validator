@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from unittest import mock
 from google.cloud import bigquery
 
+import ibis
 import ibis.expr.datatypes as dt
 
 from data_validation import consts
@@ -898,3 +899,61 @@ def test_console_data_shown_for_matching_validation_with_result_written_to_bq_in
     caplog_messages = [_.message for _ in caplog.records]
     assert BQRH_NO_WRITE_MESSAGE in caplog_messages
     assert any([_ for _ in caplog_messages if _.startswith("Empty DataFrame")])
+
+
+def test_add_random_row_filter_composite_pk(module_under_test, monkeypatch):
+    """Test _add_random_row_filter() with composite primary key columns across hybrid backends.
+
+    Verifies that:
+    1. All composite primary key columns are sampled (k1, k2 -> target_k1, target_k2).
+    2. Column names are mapped from source to target key columns to prevent KeyError.
+    3. The native SQL tuple IN filter (expr == 'tuple_in') is applied to the source builder
+       when source_client.dvt_tuple_in_supported() is True (PostgreSQL).
+    4. The disjunctive OR-of-ANDs fallback filter (expr == ibis.or_) is applied to the target
+       builder when target_client.dvt_tuple_in_supported() is False (MSSQL).
+    """
+    source_client = mock.MagicMock()
+
+    source_client.name = "postgres"
+    source_client.dvt_tuple_in_supported.return_value = True
+    target_client = mock.MagicMock()
+    target_client.name = "mssql"
+    target_client.dvt_tuple_in_supported.return_value = False
+
+    sample_df = pandas.DataFrame({"k1": [101, 102], "k2": ["A", "B"]})
+    source_client.execute.return_value = sample_df
+
+    config_manager = mock.MagicMock()
+    config_manager.primary_keys = [
+        {consts.CONFIG_SOURCE_COLUMN: "k1", consts.CONFIG_TARGET_COLUMN: "target_k1"},
+        {consts.CONFIG_SOURCE_COLUMN: "k2", consts.CONFIG_TARGET_COLUMN: "target_k2"},
+    ]
+    config_manager.random_row_batch_size.return_value = 10
+    config_manager.validation_type = consts.ROW_VALIDATION
+    config_manager.custom_query_type = None
+    config_manager.source_client = source_client
+    config_manager.target_client = target_client
+    config_manager.get_source_raw_data_types.return_value = {}
+    config_manager.get_target_raw_data_types.return_value = {}
+
+    dv = module_under_test.DataValidation.__new__(module_under_test.DataValidation)
+    dv.config_manager = config_manager
+    dv.validation_builder = mock.MagicMock()
+
+    dv._add_random_row_filter()
+
+    dv.validation_builder.source_builder.add_filter_field.assert_called_once()
+    dv.validation_builder.target_builder.add_filter_field.assert_called_once()
+
+    source_filter = dv.validation_builder.source_builder.add_filter_field.call_args[0][
+        0
+    ]
+    target_filter = dv.validation_builder.target_builder.add_filter_field.call_args[0][
+        0
+    ]
+
+    # Source client (PostgreSQL) has dvt_tuple_in_supported = True, so native tuple_in filter is generated
+    assert source_filter.expr == "tuple_in"
+    assert source_filter.left == ["k1", "k2"]
+    # Target client (MSSQL) has dvt_tuple_in_supported = False, falling back to disjunctive OR-of-ANDs filter (ibis.or_)
+    assert target_filter.expr == ibis.or_

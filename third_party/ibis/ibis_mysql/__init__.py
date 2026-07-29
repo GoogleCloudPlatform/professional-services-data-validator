@@ -13,6 +13,9 @@
 # limitations under the License.
 
 from ibis.backends.mysql import Backend as MySQLBackend
+
+# Import datatypes and client to patch Ibis MySQL support.
+import third_party.ibis.ibis_mysql.compiler
 import third_party.ibis.ibis_mysql.datatypes
 
 
@@ -33,3 +36,4 @@ def _list_primary_key_columns(self, database: str, table: str) -> list:
 
 
 MySQLBackend.list_primary_key_columns = _list_primary_key_columns
+MySQLBackend.dvt_tuple_in_supported = lambda self: True

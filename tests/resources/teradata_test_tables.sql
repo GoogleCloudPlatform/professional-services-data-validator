@@ -798,3 +798,21 @@ INSERT INTO udf.dvt_intervals VALUES
 (2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-02' YEAR TO MONTH);
 INSERT INTO udf.dvt_intervals VALUES
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
+
+DROP TABLE pso_data_validator.dvt_composite_pk;
+CREATE TABLE pso_data_validator.dvt_composite_pk (
+  key1 INTEGER NOT NULL
+, key2 VARCHAR(10) NOT NULL
+, key3 CHAR(2) NOT NULL
+, val  VARCHAR(50)
+, PRIMARY KEY (key1, key2, key3));
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'X', 'val1');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'A', 'Y', 'val2');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (1, 'B', 'X', 'val3');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'A', 'X', 'val4');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Y', 'val5');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (2, 'B', 'Z', 'val6');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'X', 'val7');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');

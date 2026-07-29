@@ -61,6 +61,14 @@ IBIS_ALCHEMY_BACKENDS = [
 ]
 
 
+def dvt_tuple_in_supported(client) -> bool:
+    """Return True if backend client supports native SQL tuple/struct IN expressions."""
+    if hasattr(client, "dvt_tuple_in_supported"):
+        return client.dvt_tuple_in_supported()
+    else:
+        return False
+
+
 def _raise_missing_client_error(msg):
     def get_client_call(*args, **kwargs):
         raise Exception(msg)
