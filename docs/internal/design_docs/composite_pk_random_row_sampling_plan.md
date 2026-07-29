@@ -104,7 +104,34 @@ WHERE CONCAT(CAST(col1 AS STRING), '||', CAST(col2 AS STRING)) IN ('A||1', 'B||2
 
 ---
 
-### Solution 4: Hybrid Engine-Aware Strategy (Best Architecture)
+### Solution 4: CTE / Memory Table Join Strategy (Evaluated & Rejected)
+
+Construct a Common Table Expression (CTE) containing the sampled primary key tuples and join the source/target table against it:
+
+```sql
+WITH sampled_pks AS (
+  SELECT 'valA' AS col1, 100 AS col2
+  UNION ALL
+  SELECT 'valB' AS col1, 200 AS col2
+)
+SELECT target.*
+FROM target_table target
+INNER JOIN sampled_pks pks
+  ON target.col1 = pks.col1 AND target.col2 = pks.col2
+```
+*(Or via `ibis.memtable(df)` / `semi_join` in Ibis).*
+
+- **Pros**:
+  - Eliminates deep boolean AST trees in `WHERE` clauses for very large batch sizes.
+  - Allows database optimizers to execute hash joins or nested loop driving tables.
+- **Cons & Rejection Rationale**:
+  - **Severe Dialect Incompatibility for Inline Tables**: Inline constant table syntax varies dramatically across database engines (e.g., ANSI `WITH pks AS (VALUES ...)`, BigQuery `UNION ALL SELECT` or `UNNEST(STRUCT)`, Oracle `SELECT ... FROM DUAL UNION ALL`, SQL Server `VALUES` subquery, Spanner `UNNEST(STRUCT)`). Generating dialect-specific CTE inline tables across DVT's 15+ supported database backends requires extensive custom SQL generators.
+  - **Architectural Mismatch with `ValidationBuilder`**: DVT's validation pipeline relies on `table.filter(boolean_expression)` (`WHERE` clause filter predicates). A CTE `JOIN` or `SEMI JOIN` requires mutating the core `ibis.Expr` table structure, breaking the clean predicate abstraction in `ValidationBuilder`.
+  - **Optimizer & Index Impact**: Direct `WHERE` equality predicates allow optimizers on traditional RDBMS engines (Postgres, Oracle, SQL Server) to perform direct composite index seeks. Unindexed CTE joins may force temporary table materialization or full scans on unindexed CTE driver tables.
+
+---
+
+### Solution 5: Hybrid Engine-Aware Strategy (Best Architecture)
 
 Combine **Solution 2 (Native Tuple IN)** for supported high-performance backends with **Solution 1 (Disjunctive OR-of-ANDs)** as a universal fallback:
 
@@ -140,6 +167,11 @@ graph TD
 >
 > *Note on Method Naming (`dvt_tuple_in_supported`)*: We explicitly prefix custom DVT methods with `dvt_` (e.g. `dvt_tuple_in_supported`) to clearly distinguish DVT-specific capability extensions on backend classes from native upstream Ibis framework methods.
 
+> [!NOTE]
+> **Bind Parameters vs. SQL Literal Rendering**:
+> - **Disjunctive `OR-of-ANDs`** (`ibis.or_([ibis.and_(...)])`): Uses native Ibis equality comparisons (`FilterField.equal_to()`), which SQLAlchemy natively compiles into **bind parameters** (`:param_1`, `:param_2`, etc.) on supported database drivers.
+> - **Native Tuple `IN`** (`FilterField.tuple_in()`): Because Ibis lacks a native multi-column tuple `IN` AST node, DVT formats the tuples as a raw SQL string and compiles them via `operations.compile_raw_sql()` (`sa.text(...)`). Because `sa.text()` represents literal SQL text without a bound parameter dictionary, values in native tuple `IN` queries are rendered directly as **SQL literals** (`WHERE (a, b) IN ((1, 'X'), ...)`).
+> - *Phase 2 Enhancement*: Extending `RawSQL` in `operations.py` to support parameterized execution (`sa.text(sql).bindparams(**params)`) or introducing a custom `TupleIn` AST operation with bind parameters can be evaluated as a Phase 2 enhancement.
 
 ---
 
@@ -349,5 +381,7 @@ Currently, [`data_validation.py:L163-L227`](file://./data_validation/data_valida
 | Solution | Universal Compatibility | Exact Matching | Performance Impact | Code Complexity | Overall Recommendation |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Current (`PK[0]` only)** | Yes | ❌ No (Massive Over-fetch) | Poor | Low | Baseline (Flawed) |
+| **Concatenated / Hashed Key** | ⚠️ Dialect dependent | Yes | Poor (Table Scans) | Medium | Rejected (Invalidates Indexes) |
+| **CTE / Memtable Join** | ❌ Poor Dialect Portability | Yes | Moderate | High | **Rejected (Dialect & Architecture Mismatch)** |
 | **Universal `OR-of-ANDs`** | **Yes (100%)** | **Yes** | **Good** | **Medium** | **Recommended Standard** |
 | **Hybrid (Tuple `IN` + `OR-of-AND`)** | **Yes** | **Yes** | **Excellent** | **High** | **Target Final Architecture** |

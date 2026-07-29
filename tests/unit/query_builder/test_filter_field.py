@@ -97,28 +97,28 @@ def test_composite_isin_chunking(mock_get_max_in):
 
 def test_backend_class_tuple_in_supported():
     try:
-        from third_party.ibis.ibis_oracle import Backend as OracleBackend  # noqa: E402
+        from third_party.ibis.ibis_oracle import Backend as OracleBackend
 
         assert OracleBackend().dvt_tuple_in_supported() is True
     except ImportError:
         pass
 
     try:
-        from third_party.ibis.ibis_db2 import Backend as Db2Backend  # noqa: E402
+        from third_party.ibis.ibis_db2 import Backend as Db2Backend
 
         assert Db2Backend().dvt_tuple_in_supported() is True
     except ImportError:
         pass
 
     try:
-        from third_party.ibis.ibis_db2_zos import Backend as Db2zOSBackend  # noqa: E402
+        from third_party.ibis.ibis_db2_zos import Backend as Db2zOSBackend
 
         assert Db2zOSBackend().dvt_tuple_in_supported() is True
     except ImportError:
         pass
 
     try:
-        from third_party.ibis.ibis_mssql import Backend as MsSqlBackend  # noqa: E402
+        from third_party.ibis.ibis_mssql import Backend as MsSqlBackend
 
         assert MsSqlBackend().dvt_tuple_in_supported() is False
     except ImportError:
