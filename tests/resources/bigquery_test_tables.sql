@@ -875,4 +875,18 @@ INSERT INTO `pso_data_validator`.`dvt_composite_pk` VALUES
 (4, 'D', 'W', 'val9'),
 (4, 'D', 'Z', 'val10');
 
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_vol_composite_pk` (
+  key1 INT64
+, key2 INT64
+, key3 INT64
+, val  INT64
+) OPTIONS (description='Integration test table used for volume testing composite primary keys.');
+INSERT INTO `pso_data_validator`.`dvt_vol_composite_pk`
+SELECT
+    MOD(x - 1, 10) + 1 AS key1,
+    MOD(DIV(x - 1, 10), 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS x;
+
 

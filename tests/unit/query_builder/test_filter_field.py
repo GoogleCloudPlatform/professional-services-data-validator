@@ -145,5 +145,5 @@ def test_backend_class_tuple_in_supported():
     except ImportError:
         pass
 
-    assert BigQueryBackend().dvt_tuple_in_supported() is False
+    assert BigQueryBackend().dvt_tuple_in_supported() is True
     assert SpannerBackend().dvt_tuple_in_supported() is False

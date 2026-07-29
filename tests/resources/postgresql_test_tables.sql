@@ -1037,3 +1037,19 @@ INSERT INTO pso_data_validator.dvt_composite_pk VALUES
 (3, 'C', 'Y', 'val8'),
 (4, 'D', 'W', 'val9'),
 (4, 'D', 'Z', 'val10');
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk (
+  key1  bigint NOT NULL
+, key2  bigint NOT NULL
+, key3  bigint NOT NULL
+, val   bigint
+, PRIMARY KEY (key1, key2, key3));
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Integration test table used for volume testing composite primary keys.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk
+SELECT
+    ((x - 1) % 10) + 1 AS key1,
+    (((x - 1) / 10) % 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM generate_series(1, 10000) AS x;

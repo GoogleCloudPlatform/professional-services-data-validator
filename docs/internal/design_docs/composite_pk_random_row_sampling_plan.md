@@ -150,7 +150,7 @@ graph TD
 
 | Database Backend | Native Tuple `IN` (`(a,b) IN (...)`) | Struct `IN` | Disjunctive `OR-of-ANDs` | Recommended Strategy |
 | :--- | :---: | :---: | :---: | :--- |
-| **BigQuery** | Yes | Yes (`STRUCT(...) IN (...)`) | Yes | **Disjunctive `OR-of-ANDs`** (Ibis literal limit) |
+| **BigQuery** | Yes | Yes (`STRUCT(...) IN (...)`) | Yes | Native Tuple `IN` |
 | **PostgreSQL** | Yes | N/A | Yes | Native Tuple `IN` |
 | **MySQL / MariaDB** | Yes | N/A | Yes | Native Tuple `IN` |
 | **Oracle** | Yes (max 1000 items) | N/A | Yes | Native Tuple `IN` (chunked) |

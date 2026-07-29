@@ -980,3 +980,22 @@ INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
 INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
 INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk
+(   key1       number(10) NOT NULL
+,   key2       number(10) NOT NULL
+,   key3       number(10) NOT NULL
+,   val        number(10)
+,   PRIMARY KEY (key1, key2, key3)
+) COMPRESS BASIC;
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Oracle table for volume testing composite primary key validations.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk
+SELECT
+    MOD(ROWNUM - 1, 10) + 1,
+    MOD(TRUNC((ROWNUM - 1) / 10), 10) + 1,
+    ROWNUM,
+    ROWNUM * 10
+FROM DUAL
+CONNECT BY ROWNUM <= 10000;
+COMMIT;
