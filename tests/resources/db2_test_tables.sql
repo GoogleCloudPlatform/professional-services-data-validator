@@ -278,3 +278,38 @@ INSERT INTO pso_data_validator.dvt_composite_pk VALUES (3, 'C', 'Y', 'val8');
 INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'W', 'val9');
 INSERT INTO pso_data_validator.dvt_composite_pk VALUES (4, 'D', 'Z', 'val10');
 COMMIT;
+
+DROP TABLE pso_data_validator.dvt_vol_composite_pk;
+CREATE TABLE pso_data_validator.dvt_vol_composite_pk
+(   key1       INTEGER NOT NULL
+,   key2       INTEGER NOT NULL
+,   key3       INTEGER NOT NULL
+,   val        INTEGER
+,   PRIMARY KEY (key1, key2, key3)
+);
+COMMENT ON TABLE pso_data_validator.dvt_vol_composite_pk IS 'Db2 table for volume testing composite primary key validations.';
+INSERT INTO pso_data_validator.dvt_vol_composite_pk (key1, key2, key3, val)
+WITH
+  t0 AS (
+    SELECT 0 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 1 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 2 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 3 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 4 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 5 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 6 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 7 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 8 AS n FROM SYSIBM.SYSDUMMY1 UNION ALL
+    SELECT 9 AS n FROM SYSIBM.SYSDUMMY1
+  ),
+  Tally AS (
+    SELECT a.n + b.n*10 + c.n*100 + d.n*1000 + 1 AS x
+    FROM t0 a CROSS JOIN t0 b CROSS JOIN t0 c CROSS JOIN t0 d
+  )
+SELECT
+    MOD(x - 1, 10) + 1 AS key1,
+    MOD((x - 1) / 10, 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM Tally;
+COMMIT;

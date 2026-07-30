@@ -278,4 +278,4 @@ class Backend(BaseAlchemyBackend):
 
     def dvt_tuple_in_supported(self) -> bool:
         """Return True if backend client supports native SQL tuple/struct IN expressions."""
-        return True
+        return False

@@ -180,6 +180,31 @@ To mitigate this entirely, `FilterField.compile()` transforms sequences of `OR` 
 > - **Native Tuple `IN`** (`FilterField.tuple_in()`): Because Ibis lacks a native multi-column tuple `IN` AST node, DVT formats the tuples as a raw SQL string and compiles them via `operations.compile_raw_sql()` (`sa.text(...)`). Because `sa.text()` represents literal SQL text without a bound parameter dictionary, values in native tuple `IN` queries are rendered directly as **SQL literals** (`WHERE (a, b) IN ((1, 'X'), ...)`).
 > - *Phase 2 Enhancement*: Extending `RawSQL` in `operations.py` to support parameterized execution (`sa.text(sql).bindparams(**params)`) or introducing a custom `TupleIn` AST operation with bind parameters can be evaluated as a Phase 2 enhancement.
 
+### 3.2 Note on Db2 Support
+
+While Db2 supports multiple columns in an `IN` clause (e.g. `(COL1, COL2) IN (SELECT ...)`), it does **not** support evaluating against a static list of literal tuples (e.g. `(COL1, COL2) IN ((val1, val2), (val3, val4))`). Generating a `VALUES` table constructor via Ibis to support this syntax is highly complex and non-trivial due to type-casting issues and limitations of older Ibis versions. Therefore, Db2 utilizes the universal `OR-of-ANDs` fallback to maintain stability and cross-engine compatibility.
+
+### 3.3 Manual tests of limits
+
+Tested using a table with a 3 column composite key and 10,000 rows.
+
+Caveat: the 3 columns were numeric, which gives us a smaller query string length than if we had used varchar/text columns.
+
+| Database Backend | Max Rows Successfully Sampled | Details / Limits Encountered |
+| :--- | :--- | :--- |
+| **BigQuery** | 10,000 | Native Tuple `IN`. |
+| **Db2 LUW** | 3,000 | `OR-of-ANDs` fallback. Failed at 4,000 rows due to "SQL0973N Not enough storage is available in the "AGENT_STACK_SZ" heap or stack to process the statement." |
+| **Hive** | Not tested | `OR-of-ANDs` fallback. |
+| **Impala** | Not yet tested | `OR-of-ANDs` fallback. |
+| **MySQL / MariaDB** | 10,000 | Native tuple `IN`. |
+| **Oracle** | 10,000 | Native Tuple `IN`. |
+| **PostgreSQL** | 10,000 | Native Tuple `IN`. |
+| **SQL Server (T-SQL)** | 650 | `OR-of-ANDs` fallback. Failed at 750 rows due to exceeding 2,100 query parameter limit (750 * 3 > 2,100). |
+| **Snowflake** | Not yet tested | Native tuple `IN`. |
+| **Spanner** | 10,000 | Native Tuple `IN`. |
+| **Sybase** | Not yet tested | `OR-of-ANDs` fallback. |
+| **Teradata** | Not yet tested | `OR-of-ANDs` fallback. |
+
 ---
 
 ## 4. Implementation Roadmap (Phased Approach)
@@ -204,7 +229,7 @@ To mitigate this entirely, `FilterField.compile()` transforms sequences of `OR` 
 
 In [`data_validation/query_builder/query_builder.py`](file://./data_validation/query_builder/query_builder.py#L123), implement **Solution 4 (Hybrid Engine-Aware Strategy)** by:
 1. Adding `@staticmethod def and_(field_list: list)` to `FilterField` and updating `compile()` to support recursive compilation for both `ibis.or_` and `ibis.and_`.
-2. Adding a `dvt_tuple_in_supported() -> bool` method to each database backend (returning `True` for engines like PostgreSQL, MySQL, Oracle, Snowflake, and Db2, and `False` by default on SQL Server, Spanner, Teradata, and BigQuery).
+2. Adding a `dvt_tuple_in_supported() -> bool` method to each database backend (returning `True` for engines like PostgreSQL, MySQL, Oracle, Snowflake, and `False` by default on SQL Server, Spanner, Teradata, BigQuery, and Db2).
 3. Extending `FilterField` with `@staticmethod def composite_isin(...)` to check `client.dvt_tuple_in_supported()`:
 
 ```python

@@ -888,5 +888,3 @@ SELECT
     x AS key3,
     x * 10 AS val
 FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS x;
-
-
