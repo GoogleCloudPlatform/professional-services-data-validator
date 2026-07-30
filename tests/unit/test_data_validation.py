@@ -22,6 +22,7 @@ from google.cloud import bigquery
 import ibis.expr.datatypes as dt
 import pandas
 import pytest
+
 # Import tabulate here because it is lazily loaded in pandas which fails when fakefs is in play.
 import tabulate  # noqa: F401
 
