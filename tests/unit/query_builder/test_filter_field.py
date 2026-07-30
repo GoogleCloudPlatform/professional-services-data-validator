@@ -184,3 +184,29 @@ def test_backend_class_tuple_in_supported():
         assert RedshiftBackend().dvt_tuple_in_supported() is False
     except ImportError:
         pass
+
+
+def test_filter_field_large_or_compilation():
+    """Verify that compiling a large OR tree doesn't raise RecursionError.
+    This ensures our balanced binary tree mitigation works."""
+    table = ibis.table([("a", "int64"), ("b", "int64")], name="my_table")
+
+    # 1000 items would typically trigger recursion error in sqlglot if parsed linearly
+    eq_filters = []
+    for i in range(1000):
+        # We simulate the fallback row condition: (a=i AND b=i)
+        f = FilterField.and_([
+            FilterField.equal_to("a", i),
+            FilterField.equal_to("b", i)
+        ])
+        eq_filters.append(f)
+
+    large_or = FilterField.or_(eq_filters)
+
+    try:
+        # Compilation should succeed via balanced binary tree
+        compiled = large_or.compile(table)
+        assert compiled is not None
+    except RecursionError:
+        import pytest
+        pytest.fail("RecursionError encountered while compiling large OR condition.")

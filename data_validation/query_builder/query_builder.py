@@ -276,7 +276,27 @@ class FilterField(object):
             self.right = ibis_table[self.right_field]
 
         if self.expr in (ibis.or_, ibis.and_):
-            return self.expr(*[_.compile(ibis_table) for _ in self.left])
+
+            def _build_balanced(exprs, expr_func):
+                """
+                Constructs a balanced binary tree of Ibis expressions instead of a linear list.
+                Ibis (via sqlglot) can hit Python's recursion depth limit when parsing/compiling
+                deep, linear ASTs (e.g. `expr1 | expr2 | ... | exprN` for N > 50).
+                A balanced tree reduces the AST depth from O(N) to O(log N), preventing RecursionErrors
+                during query compilation for large random row sample sizes.
+                """
+                if not exprs:
+                    return None
+                if len(exprs) == 1:
+                    return exprs[0]
+                mid = len(exprs) // 2
+                return expr_func(
+                    _build_balanced(exprs[:mid], expr_func),
+                    _build_balanced(exprs[mid:], expr_func),
+                )
+
+            compiled_left = [_.compile(ibis_table) for _ in self.left]
+            return _build_balanced(compiled_left, self.expr)
         elif self.expr == "tuple_in":
             return self._compile_tuple_in(ibis_table)
         else:

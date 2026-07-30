@@ -163,6 +163,10 @@ graph TD
 | **Apache Hive** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
 | **Apache Impala** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
 
+### 3.1 Disjunctive `OR-of-ANDs` Recursion Depth Mitigation
+When fallback strategies generate large numbers of conditions (e.g. `row_batch_size = 50`), passing them in a linear list to `ibis.or_()` causes the query string/AST parser (`sqlglot`) to recursively parse a deeply nested AST (a left- or right-heavy binary tree). This triggers Python's `RecursionError` on large sample sizes.
+To mitigate this entirely, `FilterField.compile()` transforms sequences of `OR` and `AND` conditions into **balanced binary trees**. This reduces the AST depth for $N$ conditions from $O(N)$ down to $O(\log N)$, ensuring the compilation scales robustly to any batch size supported by the database engine's query text length limit.
+
 > [!IMPORTANT]
 > **Ibis Compiler vs. SQL Dialect Support**:
 > Native tuple `(a, b) IN (...)` and struct `STRUCT(a, b) IN (...)` expressions are not natively compiled by Ibis across all backends out-of-the-box (e.g., BigQuery can raise `Unsupported type for BigQuery literal` if struct literals are not registered in the translator).
