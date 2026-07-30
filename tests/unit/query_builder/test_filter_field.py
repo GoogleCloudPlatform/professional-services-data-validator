@@ -162,4 +162,25 @@ def test_backend_class_tuple_in_supported():
         pass
 
     assert BigQueryBackend().dvt_tuple_in_supported() is True
-    assert SpannerBackend().dvt_tuple_in_supported() is False
+    assert SpannerBackend().dvt_tuple_in_supported() is True
+
+    try:
+        from third_party.ibis.ibis_sybase import Backend as SybaseBackend
+
+        assert SybaseBackend().dvt_tuple_in_supported() is False
+    except ImportError:
+        pass
+
+    try:
+        from third_party.ibis.ibis_teradata import Backend as TeradataBackend
+
+        assert TeradataBackend().dvt_tuple_in_supported() is False
+    except ImportError:
+        pass
+
+    try:
+        from third_party.ibis.ibis_redshift import Backend as RedshiftBackend
+
+        assert RedshiftBackend().dvt_tuple_in_supported() is False
+    except ImportError:
+        pass

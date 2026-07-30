@@ -153,12 +153,15 @@ graph TD
 | **BigQuery** | Yes | Yes (`STRUCT(...) IN (...)`) | Yes | Native Tuple `IN` |
 | **PostgreSQL** | Yes | N/A | Yes | Native Tuple `IN` |
 | **MySQL / MariaDB** | Yes | N/A | Yes | Native Tuple `IN` |
-| **Oracle** | Yes (max 1000 items) | N/A | Yes | Native Tuple `IN` (chunked) |
+| **Oracle** | Yes (max 1000 items) | N/A | Yes | Native Tuple `IN` |
 | **Snowflake** | Yes | N/A | Yes | Native Tuple `IN` |
 | **SQL Server (T-SQL)** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
-| **Google Cloud Spanner**| Limited (`UNNEST`) | Limited | **Yes** | **Disjunctive `OR-of-ANDs`** |
+| **Sybase** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
+| **Google Cloud Spanner**| Yes | Limited | Yes | Native Tuple `IN` |
 | **Teradata** | Limited | N/A | **Yes** | **Disjunctive `OR-of-ANDs`** |
 | **IBM Db2** | Yes | N/A | **Yes** | Native Tuple `IN` |
+| **Apache Hive** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
+| **Apache Impala** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
 
 > [!IMPORTANT]
 > **Ibis Compiler vs. SQL Dialect Support**:

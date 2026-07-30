@@ -178,3 +178,22 @@ INSERT INTO pso_data_validator.dvt_tricky_dates VALUES
 ,'1000-01-01 00:00:00','1970-01-01 00:00:00','9999-12-31 23:59:59','4712-12-31 23:23:59');
 -- NULL in all columns.
 INSERT INTO pso_data_validator.dvt_tricky_dates (id) VALUES (2);
+
+DROP TABLE IF EXISTS pso_data_validator.dvt_composite_pk;
+CREATE TABLE pso_data_validator.dvt_composite_pk (
+  key1 INT
+, key2 STRING
+, key3 STRING
+, val  STRING
+) STORED AS PARQUET;
+INSERT INTO pso_data_validator.dvt_composite_pk VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
