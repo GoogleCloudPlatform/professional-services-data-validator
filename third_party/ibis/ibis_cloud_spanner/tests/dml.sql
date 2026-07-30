@@ -135,3 +135,12 @@ VALUES
 (3, 'C', 'Y', 'val8'),
 (4, 'D', 'W', 'val9'),
 (4, 'D', 'Z', 'val10');
+
+INSERT INTO dvt_vol_composite_pk
+(key1, key2, key3, val)
+SELECT
+    MOD(x - 1, 10) + 1 AS key1,
+    MOD(DIV(x - 1, 10), 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS x;
