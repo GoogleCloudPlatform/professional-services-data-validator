@@ -82,7 +82,7 @@ def test_composite_isin_or_of_ands_fallback():
 @mock.patch("data_validation.clients.get_max_in_list_size", return_value=2)
 def test_composite_isin_chunking(mock_get_max_in):
     mock_client = mock.MagicMock()
-    mock_client.name = "mssql"
+    mock_client.name = "teradata"
     mock_client.dvt_tuple_in_supported.return_value = False
 
     df = pandas.DataFrame({"col1": ["a", "b", "c", "d", "e"], "col2": [1, 2, 3, 4, 5]})
@@ -210,3 +210,4 @@ def test_filter_field_large_or_compilation():
     except RecursionError:
         import pytest
         pytest.fail("RecursionError encountered while compiling large OR condition.")
+

@@ -483,6 +483,9 @@ def get_max_in_list_size(client, in_list_over_expressions=False):
         # This is a workaround for Oracle limitation:
         #   ORA-01795: maximum number of expressions in a list is 1000
         return 1000
+    elif client.name == "mssql":
+        # Workaround for SQL Server limitation: 2100 maximum parameters in a single query
+        return 2000
     else:
         return None
 
