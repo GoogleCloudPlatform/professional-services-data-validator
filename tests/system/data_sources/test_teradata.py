@@ -1067,7 +1067,7 @@ def test_raw_query_dvt_row_types(capsys):
 def test_row_validation_composite_pk_random_rows_to_bigquery():
     """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
     df = row_validation_test(
-        tables="pso_data_validator.dvt_composite_pk",
+        tables="udf.dvt_composite_pk=pso_data_validator.dvt_composite_pk",
         tc="bq-conn",
         comp_fields="*",
         primary_keys="key1,key2,key3",

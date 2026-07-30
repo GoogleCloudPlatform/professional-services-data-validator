@@ -190,20 +190,20 @@ Tested using a table with a 3 column composite key and 10,000 rows.
 
 Caveat: the 3 columns were numeric, which gives us a smaller query string length than if we had used varchar/text columns.
 
-| Database Backend | Max Rows Successfully Sampled | Details / Limits Encountered |
-| :--- | :--- | :--- |
-| **BigQuery** | 10,000 | Native Tuple `IN`. |
-| **Db2 LUW** | 3,000 | `OR-of-ANDs` fallback. Failed at 4,000 rows due to "SQL0973N Not enough storage is available in the "AGENT_STACK_SZ" heap or stack to process the statement." |
-| **Hive** | Not tested | `OR-of-ANDs` fallback. |
-| **Impala** | Not yet tested | `OR-of-ANDs` fallback. |
-| **MySQL / MariaDB** | 10,000 | Native tuple `IN`. |
-| **Oracle** | 10,000 | Native Tuple `IN`. |
-| **PostgreSQL** | 10,000 | Native Tuple `IN`. |
-| **SQL Server (T-SQL)** | 650 | `OR-of-ANDs` fallback. Failed at 750 rows due to exceeding 2,100 query parameter limit (750 * 3 > 2,100). |
-| **Snowflake** | Not yet tested | Native tuple `IN`. |
-| **Spanner** | 10,000 | Native Tuple `IN`. |
-| **Sybase** | Not yet tested | `OR-of-ANDs` fallback. |
-| **Teradata** | Not yet tested | `OR-of-ANDs` fallback. |
+| Database Backend | Max Rows Successfully Sampled | Baseline Time | Sampling Time | Details / Limits Encountered |
+| :--- | :--- | :--- | :--- | :--- |
+| **BigQuery** | 10,000 | 6.3s | 23.1s | Native Tuple `IN`. |
+| **Db2 LUW** | 3,000 | 3.3s | 52.0s | `OR-of-ANDs` fallback. Failed at 4,000 rows due to "SQL0973N Not enough storage is available in the "AGENT_STACK_SZ" heap or stack to process the statement." |
+| **Hive** | Not tested | | | `OR-of-ANDs` fallback. |
+| **Impala** | Not yet tested | | | `OR-of-ANDs` fallback. |
+| **MySQL / MariaDB** | 10,000 | 3.3s | 3.5s | Native tuple `IN`. |
+| **Oracle** | 10,000 | 3.1s | 22.8s | Native Tuple `IN`. |
+| **PostgreSQL** | 10,000 | 3.1s | 5.0s | Native Tuple `IN`. |
+| **SQL Server (T-SQL)** | 650 | | | `OR-of-ANDs` fallback. Failed at 750 rows due to exceeding 2,100 query parameter limit (750 * 3 > 2,100). |
+| **Snowflake** | Not yet tested | | | Native tuple `IN`. |
+| **Spanner** | 10,000 | 6.6s | 21.6s | Native Tuple `IN`. |
+| **Sybase** | Not yet tested | | | `OR-of-ANDs` fallback. |
+| **Teradata** | 7,000 | 7.6s | 5m+ | `OR-of-ANDs` fallback. Failed at 8,000 rows due to "[SQLState HY001] Insufficient memory to parse this request, during queryrewrite phase." |
 
 ---
 
