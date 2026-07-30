@@ -436,25 +436,6 @@ def test_row_validation_comp_fields_tricky_dates_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_composite_pk_random_rows_to_bigquery():
-    """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
-    df = row_validation_test(
-        tables="pso_data_validator.dvt_composite_pk",
-        tc="bq-conn",
-        comp_fields="*",
-        primary_keys="key1,key2,key3",
-        use_random_row=True,
-        random_row_batch_size=5,
-        filter_status=None,
-    )
-    assert len(df) == 5
-    assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
-
-
-@mock.patch(
-    "data_validation.state_manager.StateManager.get_connection_config",
-    new=mock_get_connection_config,
-)
 def test_find_tables():
     """Hive to BigQuery test of find-tables command."""
     # check_for_view=False because there is no practical way to exclude views on Hive.

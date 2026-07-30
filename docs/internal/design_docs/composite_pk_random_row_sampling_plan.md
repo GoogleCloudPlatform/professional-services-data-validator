@@ -195,7 +195,7 @@ Caveat: the 3 columns were numeric, which gives us a smaller query string length
 | **BigQuery** | 10,000 | 6.3s | 23.1s | Native Tuple `IN`. |
 | **Db2 LUW** | 3,000 | 3.3s | 52.0s | `OR-of-ANDs` fallback. Failed at 4,000 rows due to "SQL0973N Not enough storage is available in the "AGENT_STACK_SZ" heap or stack to process the statement." |
 | **Hive** | Not tested | | | `OR-of-ANDs` fallback. |
-| **Impala** | Not yet tested | | | `OR-of-ANDs` fallback. |
+| **Impala** | 3,000 | 3.8s | 3m30s | `OR-of-ANDs` fallback. Failed at 5,000 rows due to "thrift.transport.TTransport.TTransportException: read timeout" |
 | **MySQL / MariaDB** | 10,000 | 3.3s | 3.5s | Native tuple `IN`. |
 | **Oracle** | 10,000 | 3.1s | 22.8s | Native Tuple `IN`. |
 | **PostgreSQL** | 10,000 | 3.1s | 5.0s | Native Tuple `IN`. |

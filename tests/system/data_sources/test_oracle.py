@@ -824,7 +824,7 @@ def test_row_validation_oracle_to_postgres():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_composite_pk_random_rows_to_postgres():
+def test_row_validation_composite_pk_to_postgres():
     """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
     df = row_validation_test(
         tables="pso_data_validator.dvt_composite_pk",
@@ -837,6 +837,25 @@ def test_row_validation_composite_pk_random_rows_to_postgres():
     )
     assert len(df) == 5
     assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_vol_composite_pk_to_postgres():
+    """Test composite primary key high volume row sampling validation.
+
+    This test covers both Oracle and PostgreSQL."""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_vol_composite_pk",
+        tc="pg-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        random_row_batch_size=10000,
+    )
+    assert len(df) == 0
 
 
 @mock.patch(

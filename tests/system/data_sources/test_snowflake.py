@@ -665,12 +665,12 @@ def test_row_validation_comp_fields_reserved_words():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
-def test_row_validation_composite_pk_random_rows_to_bigquery():
+def test_row_validation_composite_pk_to_bigquery():
     """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
     df = row_validation_test(
         tables="PSO_DATA_VALIDATOR.PUBLIC.DVT_COMPOSITE_PK",
         tc="bq-conn",
-        comp_fields="*",
+        hash="*",
         primary_keys="key1,key2,key3",
         use_random_row=True,
         random_row_batch_size=5,

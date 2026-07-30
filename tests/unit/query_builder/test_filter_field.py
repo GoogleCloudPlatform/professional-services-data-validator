@@ -195,10 +195,9 @@ def test_filter_field_large_or_compilation():
     eq_filters = []
     for i in range(1000):
         # We simulate the fallback row condition: (a=i AND b=i)
-        f = FilterField.and_([
-            FilterField.equal_to("a", i),
-            FilterField.equal_to("b", i)
-        ])
+        f = FilterField.and_(
+            [FilterField.equal_to("a", i), FilterField.equal_to("b", i)]
+        )
         eq_filters.append(f)
 
     large_or = FilterField.or_(eq_filters)
@@ -209,5 +208,5 @@ def test_filter_field_large_or_compilation():
         assert compiled is not None
     except RecursionError:
         import pytest
-        pytest.fail("RecursionError encountered while compiling large OR condition.")
 
+        pytest.fail("RecursionError encountered while compiling large OR condition.")
