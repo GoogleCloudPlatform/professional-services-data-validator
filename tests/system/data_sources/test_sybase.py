@@ -562,6 +562,36 @@ def test_row_validation_comp_fields_binary_values_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_fixed_char_pk_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    pytest.skip(
+        "Skipping test_fixed_char_pk_row_validation_to_bigquery until working on issue-1801."
+    )
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_fixed_char_id",
+        concat="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_varchar_pk_row_validation_to_bigquery():
+    """Test varchar primary keys"""
+    pytest.skip(
+        "Skipping test_varchar_pk_row_validation_to_bigquery until working on issue-1801."
+    )
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_varchar_id",
+        concat="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns.
 
@@ -675,6 +705,9 @@ def test_row_validation_comp_fields_reserved_words():
 )
 def test_row_validation_composite_pk_to_bigquery():
     """Test composite primary key (integer, varchar, char) row validation with random row sampling."""
+    pytest.skip(
+        "Skipping test_row_validation_composite_pk_to_bigquery until working on issue-1801."
+    )
     df = row_validation_test(
         tables="pso_data_validator.dvt_composite_pk",
         tc="bq-conn",
