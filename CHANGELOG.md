@@ -2,6 +2,18 @@
 
 ## Untagged
 
+## [8.9.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.2...v8.9.0) (2026-07-31)
+
+
+### Features
+
+* modernize DVT to upgrade ibis-framework to 7.1.0 ([#1802](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1802)) ([5c3160d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5c3160d9ebc41df31c71c106c41987bcfd54900f))
+
+
+### Bug Fixes
+
+* Type hints compatible with Python 3.9 ([#1797](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1797)) ([0830ad9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0830ad99466f3845831df2dba45e520dc02c64f9))
+
 ## [8.8.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.1...v8.8.2) (2026-07-28)
 
 
