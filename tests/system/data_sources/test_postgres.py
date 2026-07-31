@@ -887,6 +887,9 @@ def test_row_validation_composite_pk_to_bigquery():
     assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
 
 
+# Not including test_row_validation_vol_composite_pk_to_bigquery because is included in test_oracle.py.
+
+
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
