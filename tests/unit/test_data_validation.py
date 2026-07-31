@@ -12,17 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import datetime, timedelta
 import json
 import logging
-import pandas
-import pytest
 import random
-from datetime import datetime, timedelta
 from unittest import mock
-from google.cloud import bigquery
 
+from google.cloud import bigquery
 import ibis
 import ibis.expr.datatypes as dt
+import pandas
+import pytest
+
+# Import tabulate here because it is lazily loaded in pandas which fails when fakefs is in play.
+import tabulate  # noqa: F401
 
 from data_validation import consts
 from data_validation.result_handlers.bigquery import BQRH_NO_WRITE_MESSAGE

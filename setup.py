@@ -59,6 +59,8 @@ extras_require = {
         "pytest-cov",
         "pytest-rerunfailures",
         "pytest-timeout",
+        "snowflake-connector-python",
+        "snowflake-sqlalchemy",
     ],
 }
 
