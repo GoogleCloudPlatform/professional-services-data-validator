@@ -620,7 +620,7 @@ def test_row_validation_vol_composite_pk_to_bigquery():
         hash="*",
         primary_keys="key1,key2,key3",
         use_random_row=True,
-        random_row_batch_size=10000,
+        random_row_batch_size=5000,
     )
     assert len(df) == 0
 

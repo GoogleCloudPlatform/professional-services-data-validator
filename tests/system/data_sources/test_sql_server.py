@@ -1048,6 +1048,24 @@ def test_row_validation_composite_pk_to_bigquery():
     assert (df["validation_status"] == consts.VALIDATION_STATUS_SUCCESS).all()
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_vol_composite_pk_to_bigquery():
+    """Test composite primary key high volume row sampling validation."""
+    df = row_validation_test(
+        tables="pso_data_validator.dvt_vol_composite_pk",
+        tc="bq-conn",
+        hash="*",
+        primary_keys="key1,key2,key3",
+        use_random_row=True,
+        # Only testing with 500 due to high elapsed time using higher sample sizes.
+        random_row_batch_size=500,
+    )
+    assert len(df) == 0
+
+
 ###############################
 # Custom query validation
 ###############################
