@@ -199,7 +199,7 @@ Caveat: the 3 columns were numeric, which gives us a smaller query string length
 | **MySQL / MariaDB** | 10,000 | 3.3s | 3.5s | Native tuple `IN`. |
 | **Oracle** | 10,000 | 3.1s | 22.8s | Native Tuple `IN`. |
 | **PostgreSQL** | 10,000 | 3.1s | 5.0s | Native Tuple `IN`. |
-| **SQL Server (T-SQL)** | 650 | | | `OR-of-ANDs` fallback. Failed at 750 rows due to exceeding 2,100 query parameter limit (750 * 3 > 2,100). |
+| **SQL Server (T-SQL)** | 650 | 5.4s | 15.1s | `OR-of-ANDs` fallback. Failed at 750 rows due to exceeding 2,100 query parameter limit (750 * 3 > 2,100). |
 | **Snowflake** | Not yet tested | | | Native tuple `IN`. |
 | **Spanner** | 10,000 | 6.6s | 21.6s | Native Tuple `IN`. |
 | **Sybase** | Not yet tested | | | `OR-of-ANDs` fallback. |
