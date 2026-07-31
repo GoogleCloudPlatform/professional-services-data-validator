@@ -588,7 +588,7 @@ def test_row_validation_composite_pk_to_bigquery():
 def test_row_validation_vol_composite_pk_to_bigquery():
     """Test composite primary key high volume row sampling validation."""
     df = row_validation_test(
-        tables="udf.dvt_vol_composite_pk=pso_data_validator.dvt_vol_composite_pk",
+        tables="pso_data_validator.dvt_vol_composite_pk",
         tc="bq-conn",
         hash="*",
         primary_keys="key1,key2,key3",
