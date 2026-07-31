@@ -25,13 +25,14 @@ non-textual languages.
 
 import datetime
 import dateutil
-import numpy as np
 import string
+from typing import Union
 
 import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rules as rlz
+import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
@@ -111,7 +112,7 @@ NAT_INT64_MIN_IN_SECONDS = np.iinfo(np.int64).min // 1_000_000_000
 
 
 class BinaryLength(ops.Value):
-    arg: ops.Value[dt.Binary | dt.String]
+    arg: ops.Value[Union[dt.Binary, dt.String]]
     dtype = dt.int32
     shape = rlz.shape_like("arg")
 
@@ -123,7 +124,7 @@ class PaddedCharLength(ops.Value):
 
 
 class ToChar(ops.Value):
-    arg: ops.Value[dt.Decimal | dt.Float64 | dt.Date | dt.Time | dt.Timestamp]
+    arg: ops.Value[Union[dt.Decimal, dt.Float64, dt.Date, dt.Time, dt.Timestamp]]
     fmt: ops.Value[dt.String]
     dtype = dt.string
     shape = rlz.shape_like("arg")
