@@ -155,13 +155,13 @@ graph TD
 | **MySQL / MariaDB** | Yes | N/A | Yes | Native Tuple `IN` |
 | **Oracle** | Yes (max 1000 items) | N/A | Yes | Native Tuple `IN` |
 | **Snowflake** | Yes | N/A | Yes | Native Tuple `IN` |
-| **SQL Server (T-SQL)** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
-| **Sybase** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
+| **SQL Server (T-SQL)** | **No** | **No** | Yes | **Disjunctive `OR-of-ANDs`** |
+| **Sybase** | **No** | **No** | Yes | **Disjunctive `OR-of-ANDs`** |
 | **Google Cloud Spanner**| Yes | Limited | Yes | Native Tuple `IN` |
-| **Teradata** | No | N/A | **Yes** | **Disjunctive `OR-of-ANDs`** |
-| **IBM Db2** | Yes | N/A | **Yes** | Native Tuple `IN` |
-| **Apache Hive** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
-| **Apache Impala** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
+| **Teradata** | No | N/A | Yes | **Disjunctive `OR-of-ANDs`** |
+| **IBM Db2** | Yes | N/A | Yes | **Disjunctive `OR-of-ANDs`** because Native Tuple `IN` requires `VALUES` keyword that Ibis will not generate. |
+| **Apache Hive** | **No** | **No** | Yes | **Disjunctive `OR-of-ANDs`** |
+| **Apache Impala** | **No** | **No** | Yes | **Disjunctive `OR-of-ANDs`** |
 
 ### 3.1 Disjunctive `OR-of-ANDs` Recursion Depth Mitigation
 When fallback strategies generate large numbers of conditions (e.g. `row_batch_size = 50`), passing them in a linear list to `ibis.or_()` causes the query string/AST parser (`sqlglot`) to recursively parse a deeply nested AST (a left- or right-heavy binary tree). This triggers Python's `RecursionError` on large sample sizes.
