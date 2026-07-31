@@ -158,7 +158,7 @@ graph TD
 | **SQL Server (T-SQL)** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
 | **Sybase** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
 | **Google Cloud Spanner**| Yes | Limited | Yes | Native Tuple `IN` |
-| **Teradata** | Limited | N/A | **Yes** | **Disjunctive `OR-of-ANDs`** |
+| **Teradata** | No | N/A | **Yes** | **Disjunctive `OR-of-ANDs`** |
 | **IBM Db2** | Yes | N/A | **Yes** | Native Tuple `IN` |
 | **Apache Hive** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
 | **Apache Impala** | **No** | **No** | **Yes** | **Disjunctive `OR-of-ANDs`** |
