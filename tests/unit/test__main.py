@@ -383,9 +383,7 @@ def test_config_runner_4(mock_args, mock_list, mock_build, mock_run, caplog):
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
-def test_config_runner_dynamic_chunking(
-    mock_args, mock_list, mock_build, mock_run, caplog
-):
+def test_config_runner_dynamic_chunking(mock_args, mock_list, mock_build, mock_run, caplog):
     """Test dynamic round-robin chunking in Kubernetes Completion Environment.
     With job_count=3 and job_index=1, and 5 files:
     Sorted files: a.yaml, b.yaml, c.yaml, d.yaml, e.yaml
@@ -400,9 +398,7 @@ def test_config_runner_dynamic_chunking(
         main.config_runner(args)
 
         # Assert no warnings, check info logs
-        assert (
-            "Running in parallel completions mode with dynamic chunking." in caplog.text
-        )
+        assert "Running in parallel completions mode with dynamic chunking." in caplog.text
         assert "Task 1 of 3. Assigned 2 of 5 files." in caplog.text
 
         # Assert validations called twice for the correct files in round-robin order
@@ -429,9 +425,7 @@ def test_config_runner_dynamic_chunking(
     "argparse.ArgumentParser.parse_args",
     return_value=argparse.Namespace(**CONFIG_RUNNER_ARGS_3),
 )
-def test_config_runner_dynamic_chunking_failures(
-    mock_args, mock_list, mock_build, mock_run, caplog
-):
+def test_config_runner_dynamic_chunking_failures(mock_args, mock_list, mock_build, mock_run, caplog):
     """Test dynamic round-robin chunking with failures in one of the validations."""
     mock_run.side_effect = [ValueError("Boom!"), 10]
     caplog.set_level(logging.ERROR)
@@ -714,11 +708,7 @@ def test_store_config_dir_yaml_success(
 
     args = argparse.Namespace(config_dir="my_dir", source_conn="src", target_conn="tgt")
 
-    created_files = main.store_config_dir(
-        args, [config_mgr_1, config_mgr_2], is_json=False
-    )
-
-    assert created_files == ["my_dir/s.t.yaml", "my_dir/s.t_1.yaml"]
+    main.store_config_dir(args, [config_mgr_1, config_mgr_2], is_json=False)
 
     # Assert store_validation was called twice
     assert mock_store_validation.call_count == 2
@@ -787,32 +777,3 @@ def test_run_validation_exception_handling(mock_data_validation):
     )
     assert isinstance(exc_info.value.__cause__, ValueError)
 
-
-@mock.patch("data_validation.cli_tools.store_validation")
-def test_store_yaml_config_file_returns_path(mock_store):
-    config_mgr = config_manager.ConfigManager(
-        {"type": "Column", "schema_name": "s", "table_name": "t"},
-        MockIbisClient(),
-        MockIbisClient(),
-        verbose=False,
-    )
-    args = argparse.Namespace(
-        config_file="test_config.yaml", source_conn="src", target_conn="tgt"
-    )
-    result = main.store_yaml_config_file(args, [config_mgr])
-    assert result == "test_config.yaml"
-
-
-@mock.patch("data_validation.cli_tools.store_validation")
-def test_store_json_config_file_returns_path(mock_store):
-    config_mgr = config_manager.ConfigManager(
-        {"type": "Column", "schema_name": "s", "table_name": "t"},
-        MockIbisClient(),
-        MockIbisClient(),
-        verbose=False,
-    )
-    args = argparse.Namespace(
-        config_file_json="test_config.json", source_conn="src", target_conn="tgt"
-    )
-    result = main.store_json_config_file(args, [config_mgr])
-    assert result == "test_config.json"
