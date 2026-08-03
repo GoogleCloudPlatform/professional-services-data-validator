@@ -25,6 +25,15 @@ from data_validation import consts
 REPO_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 SCHEMA_PATH = REPO_ROOT / "terraform" / "results_schema.json"
 _NAN = float("nan")
+
+
+def _assert_frame_equal(report, expected):
+    with pandas.option_context("future.no_silent_downcasting", True):
+        report_filled = report.fillna(value=_NAN)
+        expected_filled = expected.fillna(value=_NAN)
+    pandas.testing.assert_frame_equal(report_filled, expected_filled)
+
+
 GET_DATAFRAME_TIMEOUT_SECONDS = 30
 
 
@@ -169,5 +178,5 @@ def test_execute_with_nan(bigquery_client, bigquery_dataset_id):
     )
     object_under_test.execute(df)
     result = get_dataframe(bigquery_client, table_id)
-    pandas.testing.assert_frame_equal(result, df)
+    _assert_frame_equal(result, df)
     bigquery_client.delete_table(table_id)

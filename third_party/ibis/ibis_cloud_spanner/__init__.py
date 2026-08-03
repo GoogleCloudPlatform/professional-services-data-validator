@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from typing import Any, Mapping, Optional, Tuple
 
 from google.api_core import client_options
@@ -161,8 +162,6 @@ class Backend(BaseSQLBackend):
         query_ast = self.compiler.to_ast_ensure_limit(expr, limit, params=params)
         sql = query_ast.compile()
         self._log(sql)
-
-        schema = self.ast_schema(query_ast, **kwargs)
 
         self._register_in_memory_tables(expr)
         db = self.instance.database(self.dataset_id)

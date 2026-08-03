@@ -335,9 +335,7 @@ def test_schema_validation_core_types_to_bigquery():
             # All SQL Server integers go to BigQuery INT64.
             "int8:int64,int16:int64,int32:int64,!int32:!int64,"
             # BigQuery does not have a float32 type.
-            "float32:float64,"
-            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
-            "timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),"
+            "float32:float64"
         ),
     )
 
@@ -355,9 +353,7 @@ def test_schema_validation_ss_types_to_bigquery():
             # All SQL Server integers go to BigQuery INT64.
             "int8:int64,int16:int64,int32:int64,!int32:!int64,"
             # BigQuery does not have a float32 type.
-            "float32:float64,"
-            # SQL Server datetime scales are picked up.
-            "timestamp(7):timestamp,timestamp(7, 'UTC'):timestamp('UTC')"
+            "float32:float64"
         ),
         # TODO money types are being identified as integers - issue-1582
         exclusion_columns="col_money,col_smallmoney",
@@ -378,8 +374,6 @@ def test_schema_validation_not_null_vs_nullable():
             "-sc=sql-conn",
             "-tc=bq-conn",
             "-tbls=pso_data_validator.dvt_null_not_null=pso_data_validator.dvt_null_not_null",
-            # SQL Server TIMESTAMP type has scale=7 on Ibis which does not happen in BigQuery.
-            "--allow-list=timestamp(7):timestamp,!timestamp(7):!timestamp,timestamp(7, 'UTC'):timestamp('UTC'),",
         ]
     )
     df = run_test_from_cli_args(args)
@@ -501,8 +495,6 @@ def test_column_validation_ss_types_to_bigquery():
             "col_ntext",
         )
     ]
-    # TODO Include col_int1 in max_cols when working on issue-1585.
-    max_cols = [_ for _ in cols if _ not in ("col_int1",)]
     avg_cols = [
         _
         for _ in cols
@@ -514,7 +506,7 @@ def test_column_validation_ss_types_to_bigquery():
         count_cols=",".join(cols),
         sum_cols=",".join(cols),
         min_cols=",".join(cols),
-        max_cols=",".join(max_cols),
+        max_cols=",".join(cols),
         avg_cols=",".join(avg_cols),
         # SQL Server requires cast_to_bigint for summing tinyint/smallint/int.
         cast_to_bigint=True,
@@ -649,6 +641,21 @@ def test_column_validation_uuid_to_bigquery():
     )
 
 
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_column_validation_int_overflow():
+    """SQL Server dvt_int_overflow column validation.
+
+    SUM(int_column) results in an INT which can cause an overflow error."""
+    column_validation_test(
+        tables="pso_data_validator.dvt_int_overflow",
+        tc="mock-conn",
+        sum_cols="*",
+    )
+
+
 ###############################
 # Row validation
 ###############################
@@ -707,8 +714,6 @@ def test_row_validation_comp_fields_ss_types_to_bigquery():
                 "id",
                 # Excluded col_float32 because BigQuery does not have a float32 type.
                 "col_float32",
-                # TODO Include col_int1 in max_cols when working on issue-1585.
-                "col_int1",
                 # TODO Remove money types from exclude list when working on - issue-1582
                 "col_money",
                 "col_smallmoney",
@@ -828,6 +833,19 @@ def test_fixed_char_pk_row_validation_to_bigquery():
     """Test fixed char primary keys"""
     id_column_row_validation_test(
         "pso_data_validator.dvt_fixed_char_id", hash="id", use_random_row=True
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_fixed_char_pk_upper_row_validation_to_bigquery():
+    """Test fixed char primary keys"""
+    id_column_row_validation_test(
+        "pso_data_validator.dvt_fixed_char_id_upper=pso_data_validator.dvt_fixed_char_id",
+        hash="id",
+        use_random_row=True,
     )
 
 

@@ -81,7 +81,7 @@ class AggregateField(object):
     @staticmethod
     def sum(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.sum,
+            ibis.expr.types.IntegerColumn.sum,
             field_name=field_name,
             alias=alias,
             cast=cast,
@@ -90,7 +90,7 @@ class AggregateField(object):
     @staticmethod
     def bit_xor(field_name=None, alias=None, cast=None):
         return AggregateField(
-            ibis.expr.api.IntegerColumn.bit_xor,
+            ibis.expr.types.IntegerColumn.bit_xor,
             field_name=field_name,
             alias=alias,
             cast=cast,
@@ -335,7 +335,7 @@ class CalculatedField(object):
     def to_char(config, fields):
         fmt = ibis.literal(config.get("default_to_char_fmt", "FM90.099"))
         return CalculatedField(
-            ibis.expr.api.NumericValue.to_char, config, fields, fmt=fmt
+            ibis.expr.types.NumericValue.to_char, config, fields, fmt=fmt
         )
 
     @staticmethod
@@ -414,7 +414,7 @@ class CalculatedField(object):
     @staticmethod
     def custom(config, fields):
         """Returns a CalculatedField instance built for any custom ibis expression
-        e.g. 'ibis.expr.api.StringValue.replace'. For a list of supported functions,
+        e.g. 'ibis.expr.types.StringValue.replace'. For a list of supported functions,
         see https://github.com/ibis-project/ibis/blob/1.4.0/ibis/expr/api.py
         Args:
             expr (Str): A custom ibis expression to be used as a calc field

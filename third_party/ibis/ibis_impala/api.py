@@ -195,14 +195,6 @@ def _chunks_to_pandas_array(chunks):
     return target
 
 
-# TODO The rewrite below is rewriting across all engines, not just Impala.
-#      It should be moved to operations.py or removed and implement system
-#      specific overrides. See issue-1728.
-@rewrites(ops.IfNull)
-def _if_null(op):
-    return ops.Coalesce((op.arg, op.ifnull_expr))
-
-
 def update_query_with_limit(query):
     limit_pattern = re.compile(r"LIMIT\s+\d+(\s+OFFSET\s+\d+)?\s*;?\s*$", re.IGNORECASE)
     last_limit_match = limit_pattern.search(query)
@@ -248,6 +240,7 @@ def _dvt_list_tables(self, like=None, database=None):
     return self.list_tables(like=like, database=database)
 
 
+udf._impala_to_ibis_type["binary"] = "binary"
 udf.parse_type = parse_type
 ibis.backends.impala._chunks_to_pandas_array = _chunks_to_pandas_array
 ImpalaBackend.get_schema = get_schema
@@ -289,4 +282,8 @@ def impala_connect(
         use_http_transport=use_http_transport,
         http_path=http_path,
     )
+    try:
+        backend.raw_sql("set hive.resultset.use.unique.column.names=false")
+    except Exception:
+        pass
     return backend

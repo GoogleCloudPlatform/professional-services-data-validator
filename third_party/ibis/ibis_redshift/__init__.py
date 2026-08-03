@@ -16,10 +16,75 @@ import sqlalchemy as sa
 import ibis.expr.datatypes as dt
 from typing import Iterable, Literal, Tuple
 from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
+from sqlalchemy.dialects import registry
+from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
+from sqlalchemy.engine.reflection import ReflectionDefaults
 from third_party.ibis.ibis_redshift.compiler import RedshiftCompiler
-from ibis.backends.postgres.datatypes import _BRACKETS, _parse_numeric, _type_mapping
+from ibis.backends.postgres.datatypes import PostgresType
 from third_party.ibis.ibis_addon.api import cache_generator_results
 from ibis import util
+
+
+class RedshiftPsycopg2Dialect(PGDialect_psycopg2):
+    name = "redshift"
+    supports_native_enum = False
+    supports_statement_cache = True
+
+    def _set_backslash_escapes(self, connection):
+        self._backslash_escapes = False
+
+    def _load_domains(self, connection, schema=None, **kw):
+        return []
+
+    def _empty_reflection(self, schema, filter_names, default):
+        if filter_names is None:
+            return []
+        return [((schema, table_name), default()) for table_name in filter_names]
+
+    def get_multi_pk_constraint(
+        self, connection, schema, filter_names, scope, kind, **kw
+    ):
+        return self._empty_reflection(
+            schema, filter_names, ReflectionDefaults.pk_constraint
+        )
+
+    def get_multi_foreign_keys(
+        self,
+        connection,
+        schema,
+        filter_names,
+        scope,
+        kind,
+        postgresql_ignore_search_path=False,
+        **kw,
+    ):
+        return self._empty_reflection(
+            schema, filter_names, ReflectionDefaults.foreign_keys
+        )
+
+    def get_multi_indexes(self, connection, schema, filter_names, scope, kind, **kw):
+        return self._empty_reflection(schema, filter_names, ReflectionDefaults.indexes)
+
+    def get_multi_unique_constraints(
+        self, connection, schema, filter_names, scope, kind, **kw
+    ):
+        return self._empty_reflection(
+            schema, filter_names, ReflectionDefaults.unique_constraints
+        )
+
+    def get_multi_check_constraints(
+        self, connection, schema, filter_names, scope, kind, **kw
+    ):
+        return self._empty_reflection(
+            schema, filter_names, ReflectionDefaults.check_constraints
+        )
+
+
+registry.register(
+    "redshift.psycopg2",
+    "third_party.ibis.ibis_redshift",
+    "RedshiftPsycopg2Dialect",
+)
 
 
 class Backend(BaseAlchemyBackend):
@@ -48,7 +113,7 @@ class Backend(BaseAlchemyBackend):
             user=user,
             password=password,
             database=database,
-            driver=f"postgresql+{driver}",
+            driver=f"redshift+{driver}",
         )
         self.database_name = alchemy_url.database
 
@@ -88,8 +153,8 @@ class Backend(BaseAlchemyBackend):
         raw_name = util.guid().lower()
         name = self._quote(raw_name)
         type_info_sql = """
-        SELECT 
-            "column_name", 
+        SELECT
+            "column_name",
             "data_type"
         FROM SVV_ALL_COLUMNS
         WHERE table_name = :raw_name
@@ -121,16 +186,4 @@ class Backend(BaseAlchemyBackend):
 
 
 def _get_type(typestr: str) -> dt.DataType:
-    is_array = typestr.endswith(_BRACKETS)
-    typestr_wob = typestr.replace(_BRACKETS, "")
-    if "(" in typestr_wob:
-        typestr_wo_length = (
-            typestr_wob[: typestr_wob.index("(")]
-            + typestr_wob[typestr_wob.index(")") + 1 :]
-        )
-    else:
-        typestr_wo_length = typestr_wob
-    typ = _type_mapping.get(typestr_wo_length)
-    if typ is not None:
-        return dt.Array(typ) if is_array else typ
-    return _parse_numeric(typestr)
+    return PostgresType.from_string(typestr)

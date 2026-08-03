@@ -24,12 +24,14 @@ import sqlalchemy as sa
 import ibis
 import ibis.common.exceptions as com
 import ibis.expr.operations as ops
+import ibis.expr.datatypes as dt
 from ibis.backends.base.sql.alchemy import (
     fixed_arity,
     sqlalchemy_operation_registry,
     sqlalchemy_window_functions_registry,
     unary,
     get_sqla_table,
+    varargs,
 )
 from ibis.backends.base.sql.alchemy.registry import variance_reduction
 from ibm_db_sa import DOUBLE
@@ -124,7 +126,7 @@ def _is_inf(t, op):
 def db2_luw_cast(t, op):
     arg = op.arg
     typ = op.to
-    arg_dtype = arg.output_dtype
+    arg_dtype = arg.dtype
 
     sa_arg = t.translate(arg)
 
@@ -148,7 +150,7 @@ def db2_luw_cast(t, op):
         if arg_dtype.scale is not None and arg_dtype.scale > 0:
             # Db2 always pads fractional part of the number out to length of scale.
             # We need to remove those insignificant digits.
-            precision = arg_dtype.precision or 31
+            precision = min(arg_dtype.precision or 31, 31)
             fmt = (
                 ("9" * (precision - arg_dtype.scale - 1))
                 + "0."
@@ -350,7 +352,7 @@ def _reduction(func_name):
     def reduction_compiler(t, op):
         arg, where = op.args
 
-        if arg.output_dtype.is_boolean():
+        if arg.dtype.is_boolean():
             arg = arg.cast("int32")
 
         func = getattr(sa.func, func_name)
@@ -391,7 +393,7 @@ def _log(t, op):
         sa_base = t.translate(base)
         return sa.cast(
             sa.func.log(sa.cast(sa_base, sa.NUMERIC), sa.cast(sa_arg, sa.NUMERIC)),
-            t.get_sqla_type(op.output_dtype),
+            t.get_sqla_type(op.dtype),
         )
     return sa.func.ln(sa_arg)
 
@@ -471,12 +473,12 @@ def _string_join(t, op):
 
 
 def _literal(t, op):
-    dtype = op.output_dtype
+    dtype = op.dtype
     value = op.value
 
     if dtype.is_interval():
         return sa.literal_column(f"INTERVAL '{value} {dtype.resolution}'")
-    elif dtype.is_set():
+    elif isinstance(dtype, dt.Set):
         return list(map(sa.literal, value))
     else:
         return sa.literal(value)
@@ -514,12 +516,10 @@ operation_registry.update(
         ops.IsNan: _is_nan,
         ops.IsInf: _is_inf,
         # null handling
-        ops.IfNull: fixed_arity(sa.func.coalesce, 2),
+        ops.Coalesce: varargs(sa.func.coalesce),
         # boolean reductions
         ops.Any: unary(sa.func.bool_or),
         ops.All: unary(sa.func.bool_and),
-        ops.NotAny: unary(lambda x: sa.not_(sa.func.bool_or(x))),
-        ops.NotAll: unary(lambda x: sa.not_(sa.func.bool_and(x))),
         # strings
         ops.Substring: _substr,
         ops.StringFind: _string_find,
@@ -568,8 +568,6 @@ operation_registry.update(
         ops.Variance: variance_reduction("var", suffix={"sample": "", "pop": "p"}),
         ops.RandomScalar: _random,
         ops.TimestampNow: lambda *args: sa.func.timezone("UTC", sa.func.now()),
-        ops.CumulativeAll: unary(sa.func.bool_and),
-        ops.CumulativeAny: unary(sa.func.bool_or),
         ops.IdenticalTo: _identical_to,
         # aggregate methods
         ops.Count: _reduction_count(sa.func.count_big),

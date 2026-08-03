@@ -2,6 +2,27 @@
 
 ## Untagged
 
+## [8.9.0](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.2...v8.9.0) (2026-07-31)
+
+
+### Features
+
+* modernize DVT to upgrade ibis-framework to 7.1.0 ([#1802](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1802)) ([5c3160d](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/5c3160d9ebc41df31c71c106c41987bcfd54900f))
+
+
+### Bug Fixes
+
+* Type hints compatible with Python 3.9 ([#1797](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1797)) ([0830ad9](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/0830ad99466f3845831df2dba45e520dc02c64f9))
+
+## [8.8.2](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.1...v8.8.2) (2026-07-28)
+
+
+### Bug Fixes
+
+* Ensure padded char PK detection works for upper case columns ([#1792](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1792)) ([9019167](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/901916735a6f1c837ff942cd42d4074066ac365d))
+* Fix SQL Server overflow on SUM(INT) ([#1790](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1790)) ([b4eb1cb](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/b4eb1cbc36eab1ae6229c0c24d147aed1e95bb11))
+* SQL Server tinyint type detection ([#1784](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1784)) ([78658ab](https://github.com/GoogleCloudPlatform/professional-services-data-validator/commit/78658ab718ca021e8a280f1a4c649a8c39ab834e))
+
 ## [8.8.1](https://github.com/GoogleCloudPlatform/professional-services-data-validator/compare/v8.8.0...v8.8.1) (2026-07-20)
 
 

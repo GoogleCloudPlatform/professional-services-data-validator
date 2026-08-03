@@ -17,7 +17,19 @@ import decimal
 from functools import partial
 
 from sqlalchemy.types import DATETIME, VARBINARY
-from sqlalchemy_sybase.base import ischema_names, BIT, SybaseDialect
+from sqlalchemy_sybase.base import (
+    ischema_names,
+    BIT,
+    SybaseDialect,
+    TINYINT,
+    SMALLMONEY,
+    MONEY,
+    UNICHAR,
+    UNIVARCHAR,
+    UNITEXT,
+    IMAGE,
+    UNIQUEIDENTIFIER,
+)
 import ibis.expr.datatypes as dt
 
 ischema_names["bigdatetime"] = DATETIME
@@ -84,11 +96,27 @@ def type_from_result_set_info(
     return typ(nullable=bool(nullable))
 
 
-@dt.dtype.register(SybaseDialect, BIT)
-def sa_sybase_bit(_, sa_type, nullable=True):
-    return dt.Boolean(nullable=nullable)
+from ibis.backends.base.sql.alchemy.datatypes import AlchemyType
 
 
-@dt.dtype.register(SybaseDialect, VARBINARY)
-def sa_sybase_varbinary(_, sa_type, nullable=True):
-    return dt.Binary(nullable=nullable)
+class SybaseType(AlchemyType):
+    dialect = "sybase"
+
+    @classmethod
+    def to_ibis(cls, typ, nullable=True):
+        if isinstance(typ, BIT):
+            return dt.Boolean(nullable=nullable)
+        elif isinstance(typ, TINYINT):
+            return dt.Int8(nullable=nullable)
+        elif isinstance(typ, SMALLMONEY):
+            return dt.Int32(nullable=nullable)
+        elif isinstance(typ, MONEY):
+            return dt.Int64(nullable=nullable)
+        elif isinstance(typ, (UNICHAR, UNIVARCHAR, UNITEXT)):
+            return dt.String(nullable=nullable)
+        elif isinstance(typ, (IMAGE, VARBINARY)):
+            return dt.Binary(nullable=nullable)
+        elif isinstance(typ, UNIQUEIDENTIFIER):
+            return dt.UUID(nullable=nullable)
+        else:
+            return super().to_ibis(typ, nullable=nullable)

@@ -18,7 +18,7 @@ import setuptools
 
 name = "google-pso-data-validator"
 description = "A package to enable easy data validation"
-version = "8.8.1"
+version = "8.9.0"
 release_status = "Development Status :: 4 - Beta"
 
 with open("README.md", "r") as fh:
@@ -33,7 +33,7 @@ dependencies = [
     "google-cloud-secret-manager>=2.20.2",
     "google-cloud-spanner>=3.49.1",
     "google-cloud-storage>=2.18.2",
-    "ibis-framework==5.1.0",  # Pinned to 5.1.0, significant work to bump to 7.1.0
+    "ibis-framework==7.1.0",
     "impyla>=0.19.0",
     "jellyfish>=1.1.0",
     "pandas",
@@ -59,6 +59,8 @@ extras_require = {
         "pytest-cov",
         "pytest-rerunfailures",
         "pytest-timeout",
+        "snowflake-connector-python",
+        "snowflake-sqlalchemy",
     ],
 }
 

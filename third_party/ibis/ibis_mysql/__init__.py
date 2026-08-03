@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from ibis.backends.mysql import Backend as MySQLBackend
+import third_party.ibis.ibis_mysql.datatypes
 
 
 def _list_primary_key_columns(self, database: str, table: str) -> list:

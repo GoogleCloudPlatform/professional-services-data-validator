@@ -20,6 +20,9 @@ from ibis.backends.base.sql.alchemy import BaseAlchemyBackend
 from ibis.backends.mssql.compiler import MsSqlCompiler
 from ibis.backends.mssql.datatypes import _type_from_result_set_info
 
+# Import datatypes to patch Ibis MSSQL support.
+import third_party.ibis.ibis_mssql.datatypes
+
 import json
 
 DEFAULT_DRIVER_NAME = "ODBC Driver 17 for SQL Server"
@@ -74,7 +77,7 @@ class Backend(BaseAlchemyBackend):
         self.database_name = alchemy_url.database
         engine = sa.create_engine(
             alchemy_url,
-            poolclass=sa.pool.StaticPool,
+            poolclass=sa.pool.NullPool,
             # Pessimistic disconnect handling
             pool_pre_ping=True,
         )

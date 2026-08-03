@@ -20,19 +20,62 @@ from sqlalchemy.dialects import oracle
 from sqlalchemy.dialects.oracle.oracledb import OracleDialect_oracledb
 
 import ibis.expr.datatypes as dt
-from ibis.backends.base.sql.alchemy.datatypes import ibis_type_to_sqla
+from ibis.backends.base.sql.alchemy.datatypes import AlchemyType
 import oracledb
 
-# Update to avoid cast to CLOB/Text
-ibis_type_to_sqla[dt.String] = sa.sql.sqltypes.String(length=4000)
 
-# This is only required for SQLAlchemy 2.0+
-ibis_type_to_sqla[dt.Float32] = sat.Float(precision=23).with_variant(
-    oracle.FLOAT(), "oracle"
-)
-ibis_type_to_sqla[dt.Float64] = sat.Float(precision=53).with_variant(
-    oracle.FLOAT(), "oracle"
-)
+class OracleType(AlchemyType):
+    dialect = "oracle"
+
+    @classmethod
+    def from_ibis(cls, dtype: dt.DataType) -> sat.TypeEngine:
+        if isinstance(dtype, dt.String):
+            return sa.sql.sqltypes.String(length=4000)
+        elif isinstance(dtype, dt.Float32):
+            return sat.Float(precision=23).with_variant(oracle.FLOAT(), "oracle")
+        elif isinstance(dtype, dt.Float64):
+            return sat.Float(precision=53).with_variant(oracle.FLOAT(), "oracle")
+        return super().from_ibis(dtype)
+
+    @classmethod
+    def to_ibis(cls, typ: sat.TypeEngine, nullable: bool = True) -> dt.DataType:
+        if isinstance(
+            typ,
+            (
+                oracle.CLOB,
+                oracle.NCLOB,
+                oracle.LONG,
+                oracle.ROWID,
+                oracle.VARCHAR2,
+                oracle.VARCHAR,
+                oracle.NVARCHAR,
+                oracle.NVARCHAR2,
+                oracle.CHAR,
+                oracle.NCHAR,
+            ),
+        ):
+            return dt.String(nullable=nullable)
+        elif isinstance(typ, oracle.NUMBER):
+            return dt.Decimal(typ.precision, typ.scale, nullable=nullable)
+        elif isinstance(typ, oracle.FLOAT):
+            return dt.Decimal(nullable=nullable)
+        elif isinstance(typ, (oracle.BFILE, oracle.RAW, oracle.BLOB)):
+            return dt.Binary(nullable=nullable)
+        elif isinstance(typ, oracle.DATE):
+            return dt.Date(nullable=nullable)
+        elif isinstance(typ, oracle.TIMESTAMP):
+            if typ.timezone:
+                return dt.Timestamp(timezone="UTC", nullable=nullable)
+            else:
+                return dt.Timestamp(nullable=nullable)
+        elif isinstance(typ, (oracle.INTERVAL, sat.Interval)):
+            return dt.Interval(unit="s", nullable=nullable)
+        elif isinstance(typ, oracle.BINARY_FLOAT):
+            return dt.Float32(nullable=nullable)
+        elif isinstance(typ, oracle.BINARY_DOUBLE):
+            return dt.Float64(nullable=nullable)
+        else:
+            return super().to_ibis(typ, nullable=nullable)
 
 
 class _FieldDescription(TypedDict):
@@ -82,8 +125,8 @@ _type_mapping = {
     oracledb.DB_TYPE_BLOB: dt.Binary,
     oracledb.DB_TYPE_BINARY_FLOAT: dt.Float32,
     oracledb.DB_TYPE_BINARY_DOUBLE: dt.Float64,
-    oracledb.DB_TYPE_INTERVAL_DS: dt.Interval,
-    oracledb.DB_TYPE_INTERVAL_YM: dt.Interval,
+    oracledb.DB_TYPE_INTERVAL_DS: partial(dt.Interval, unit="s"),
+    oracledb.DB_TYPE_INTERVAL_YM: partial(dt.Interval, unit="s"),
     oracledb.DB_TYPE_BOOLEAN: dt.Boolean,
 }
 
@@ -103,107 +146,3 @@ if "TIMESTAMP WITH LOCAL TIME ZONE" not in OracleDialect_oracledb.ischema_names:
 
 if "BOOLEAN" not in OracleDialect_oracledb.ischema_names:
     OracleDialect_oracledb.ischema_names["BOOLEAN"] = sat.BOOLEAN
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.CLOB)
-def sa_oracle_CLOB(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.NCLOB)
-def sa_oracle_NCLOB(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.LONG)
-def sa_oracle_LONG(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.NUMBER)
-def sa_oracle_NUMBER(_, satype, nullable=True):
-    return dt.Decimal(satype.precision, satype.scale, nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.FLOAT)
-def sa_oracle_FLOAT(_, satype, nullable=True):
-    # Oracle FLOAT is a NUMBER under the hood.
-    return dt.Decimal(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.BFILE)
-def sa_oracle_BFILE(_, satype, nullable=True):
-    return dt.Binary(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.RAW)
-def sa_oracle_RAW(_, satype, nullable=True):
-    return dt.Binary(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.DATE)
-def sa_oracle_DATE(_, satype, nullable=True):
-    return dt.Date(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, (sa.dialects.oracle.VARCHAR2))
-def sa_oracle_VARCHAR2(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, (sa.dialects.oracle.VARCHAR))
-def sa_oracle_VARCHAR(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, (sa.dialects.oracle.NVARCHAR))
-def sa_oracle_NVARCHAR(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, (sa.dialects.oracle.NVARCHAR2))
-def sa_oracle_NVARCHAR2(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, (sa.dialects.oracle.CHAR))
-def sa_oracle_CHAR(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, (sa.dialects.oracle.NCHAR))
-def sa_oracle_NCHAR(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.TIMESTAMP)
-def sa_oracle_TIMESTAMP(_, satype, nullable=True):
-    if satype.timezone:
-        return dt.Timestamp(timezone="UTC", nullable=nullable)
-    else:
-        return dt.Timestamp(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, (sa.dialects.oracle.INTERVAL, sat.Interval))
-def sa_oracle_INTERVAL(_, satype, nullable=True):
-    return dt.Interval(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.BLOB)
-def sa_oracle_BLOB(_, satype, nullable=True):
-    return dt.Binary(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.BINARY_FLOAT)
-def sa_oracle_BINARY_FLOAT(_, satype, nullable=True):
-    return dt.Float32(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.BINARY_DOUBLE)
-def sa_oracle_BINARY_DOUBLE(_, satype, nullable=True):
-    return dt.Float64(nullable=nullable)
-
-
-@dt.dtype.register(OracleDialect_oracledb, sa.dialects.oracle.ROWID)
-def sa_oracle_ROWID(_, satype, nullable=True):
-    return dt.String(nullable=nullable)
