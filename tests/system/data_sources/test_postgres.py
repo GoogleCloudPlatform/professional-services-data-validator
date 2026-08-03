@@ -722,6 +722,23 @@ def test_column_validation_core_types_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_large_decimals_to_bigquery():
     """PostgreSQL to BigQuery dvt_large_decimals column validation."""
     # TODO Add col_dec_38 to cols when issue-1360 has been resolved.
@@ -822,6 +839,20 @@ def test_row_validation_comp_fields_pg_types():
         tables="pso_data_validator.dvt_pg_types",
         tc="mock-conn",
         comp_fields="*",
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
     )
 
 

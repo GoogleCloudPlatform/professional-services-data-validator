@@ -517,6 +517,23 @@ def test_column_validation_binary_to_bigquery():
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
 )
+def test_column_validation_decimals_to_bigquery():
+    """dvt_decimals column validation."""
+    cols = "col_dec_16_8"
+    column_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        count_cols=cols,
+        min_cols=cols,
+        sum_cols=cols,
+        avg_cols=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
 def test_column_validation_large_decimals_to_bigquery():
     """Oracle to BigQuery dvt_large_decimals column validation."""
     cols = "col_dec_18,col_dec_38,col_dec_38_9,col_dec_38_30"
@@ -848,6 +865,20 @@ def test_row_validation_comp_fields_oracle_to_postgres():
         tables="pso_data_validator.dvt_ora2pg_types",
         tc="pg-conn",
         comp_fields=cols,
+    )
+
+
+@mock.patch(
+    "data_validation.state_manager.StateManager.get_connection_config",
+    new=mock_get_connection_config,
+)
+def test_row_validation_decimals_to_bigquery():
+    """dvt_decimals row validation."""
+    row_validation_test(
+        tables="pso_data_validator.dvt_decimals",
+        tc="bq-conn",
+        hash="id,col_dec_16_8",
+        # No random row tests, we need to validate all values.
     )
 
 
