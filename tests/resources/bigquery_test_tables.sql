@@ -82,7 +82,6 @@ CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_decimals`
 (   id                INT64 NOT NULL
 ,   col_dec_16_8      NUMERIC(16,8)
 ) OPTIONS (description='Decimals integration test table');
-
 INSERT INTO `pso_data_validator`.`dvt_decimals` VALUES
  (1,NULL)
 ,(2,0)

@@ -533,7 +533,6 @@ def test_row_validation_decimals_to_bigquery():
     )
 
 
-
 @mock.patch(
     "data_validation.state_manager.StateManager.get_connection_config",
     new=mock_get_connection_config,
