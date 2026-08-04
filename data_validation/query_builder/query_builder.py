@@ -171,17 +171,11 @@ class FilterField(object):
         return FilterField(ibis.expr.types.ColumnExpr.isnull, left_field=field_name)
 
     @staticmethod
-    def isin(field_name, values, backend_name=None):
+    def isin(field_name, values):
         # Build Left and Right Objects
-        has_ibis_expr = any(hasattr(v, "compile") for v in values)
-        if has_ibis_expr:
-            return FilterField(
-                ibis.expr.types.ColumnExpr.isin, left_field=field_name, right=values
-            )
-        else:
-            ff = FilterField("isin", left_field=field_name, right=values)
-            ff.backend_name = backend_name
-            return ff
+        return FilterField(
+            ibis.expr.types.ColumnExpr.isin, left_field=field_name, right=values
+        )
 
     @staticmethod
     def custom(expr):
@@ -286,27 +280,7 @@ class FilterField(object):
         raw_sql = f"{cols_str} IN ({tuples_str})"
         return operations.compile_raw_sql(ibis_table, raw_sql)
 
-    def _compile_isin(self, ibis_table):
-        if not self.right:
-            return operations.compile_raw_sql(ibis_table, "1=0")
 
-        col_str = self.left_field
-        vals = []
-        for v in self.right:
-            if isinstance(v, str):
-                escaped = v.replace("'", "''")
-                vals.append(f"'{escaped}'")
-            elif pandas.isna(v):
-                vals.append("NULL")
-            elif isinstance(v, (datetime.date, datetime.datetime, pandas.Timestamp)):
-                backend_name = getattr(self, "backend_name", "")
-                vals.append(FilterField._format_date_literal(v, backend_name))
-            else:
-                vals.append(str(v))
-
-        in_list_str = ", ".join(vals)
-        raw_sql = f"{col_str} IN ({in_list_str})"
-        return operations.compile_raw_sql(ibis_table, raw_sql)
 
     def compile(self, ibis_table):
         if self.expr is None:
@@ -342,8 +316,6 @@ class FilterField(object):
             return _build_balanced(compiled_left, self.expr)
         elif self.expr == "tuple_in":
             return self._compile_tuple_in(ibis_table)
-        elif self.expr == "isin":
-            return self._compile_isin(ibis_table)
         else:
             return self.expr(self.left, self.right)
 

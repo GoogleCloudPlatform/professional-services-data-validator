@@ -246,25 +246,3 @@ def test_compile_tuple_in_timestamps_and_dates():
             assert "'2026-08-04 07:12:44'" in sql_str
             assert "'2026-08-04'" in sql_str
             assert "NULL" in sql_str
-
-
-def test_compile_isin_timestamps_and_dates():
-    values = [pandas.Timestamp("2026-08-04 07:12:44"), datetime.date(2026, 8, 4), None]
-
-    for client_name in ["postgres", "oracle", "mssql"]:
-        ff = FilterField.isin("ts", values, backend_name=client_name)
-        table = ibis.table([("id", "int64"), ("ts", "timestamp")], name="t")
-        compiled = ff.compile(table)
-        sql_str = str(compiled)
-
-        if client_name == "oracle":
-            assert (
-                "TO_TIMESTAMP('2026-08-04 07:12:44.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')"
-                in sql_str
-            )
-            assert "TO_DATE('2026-08-04', 'YYYY-MM-DD')" in sql_str
-            assert "NULL" in sql_str
-        else:
-            assert "'2026-08-04 07:12:44'" in sql_str
-            assert "'2026-08-04'" in sql_str
-            assert "NULL" in sql_str

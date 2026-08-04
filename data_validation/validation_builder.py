@@ -79,13 +79,13 @@ class ValidationBuilder(object):
         )
         if max_in_list_size and len(in_list) > max_in_list_size:
             source_filters = [
-                FilterField.isin(column_name, _, client.name)
+                FilterField.isin(column_name, _)
                 for _ in list_to_sublists(in_list, max_in_list_size)
             ]
             return FilterField.or_(source_filters)
 
         else:
-            return FilterField.isin(column_name, in_list, client.name)
+            return FilterField.isin(column_name, in_list)
 
     @staticmethod
     def is_padded_char(
