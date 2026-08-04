@@ -108,3 +108,8 @@ def dvt_temp_object_name(prefix: str = "dvt_temp") -> str:
             f"Invalid prefix: '{prefix}'. Only alphanumeric and underscore characters are allowed."
         )
     return f"{prefix}_{uuid.uuid4().hex[:8].lower()}"
+
+
+def list_to_sublists(id_list: list, max_size: int) -> list:
+    """Return a list of items as a list of lists based on a max list length of max_size."""
+    return [id_list[_ : _ + max_size] for _ in range(0, len(id_list), max_size)]

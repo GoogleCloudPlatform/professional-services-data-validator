@@ -856,3 +856,35 @@ INSERT INTO `pso_data_validator`.`dvt_intervals` VALUES
 (1,INTERVAL '1 02:03:44' DAY TO SECOND,INTERVAL '1-2' YEAR TO MONTH),
 (2,INTERVAL '2 02:03:44.123' DAY TO SECOND,INTERVAL '2-2' YEAR TO MONTH),
 (3,INTERVAL '30 22:33:44' DAY TO SECOND,INTERVAL '30-11' YEAR TO MONTH);
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_composite_pk` (
+  key1 INT64
+, key2 STRING
+, key3 STRING
+, val  STRING
+) OPTIONS (description='Integration test table used to test composite primary keys.');
+INSERT INTO `pso_data_validator`.`dvt_composite_pk` VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+CREATE OR REPLACE TABLE `pso_data_validator`.`dvt_vol_composite_pk` (
+  key1 INT64
+, key2 INT64
+, key3 INT64
+, val  INT64
+) OPTIONS (description='Integration test table used for volume testing composite primary keys.');
+INSERT INTO `pso_data_validator`.`dvt_vol_composite_pk`
+SELECT
+    MOD(x - 1, 10) + 1 AS key1,
+    MOD(DIV(x - 1, 10), 10) + 1 AS key2,
+    x AS key3,
+    x * 10 AS val
+FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS x;

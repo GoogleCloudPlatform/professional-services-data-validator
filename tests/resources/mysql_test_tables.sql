@@ -649,3 +649,48 @@ CREATE TABLE `pso_data_validator`.`dvt_reserved_word_columns` (
 , `string`   varchar(10)
 ) COMMENT='Integration test table used to test potentially difficult column names.';
 INSERT INTO pso_data_validator.dvt_reserved_word_columns (id) VALUES (1);
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_composite_pk`;
+CREATE TABLE `pso_data_validator`.`dvt_composite_pk` (
+  key1 INT NOT NULL
+, key2 VARCHAR(10) NOT NULL
+, key3 CHAR(2) NOT NULL
+, val  VARCHAR(50)
+, PRIMARY KEY (key1, key2, key3)) COMMENT='Integration test table used to test composite primary keys.';
+INSERT INTO `pso_data_validator`.`dvt_composite_pk` VALUES
+(1, 'A', 'X', 'val1'),
+(1, 'A', 'Y', 'val2'),
+(1, 'B', 'X', 'val3'),
+(2, 'A', 'X', 'val4'),
+(2, 'B', 'Y', 'val5'),
+(2, 'B', 'Z', 'val6'),
+(3, 'C', 'X', 'val7'),
+(3, 'C', 'Y', 'val8'),
+(4, 'D', 'W', 'val9'),
+(4, 'D', 'Z', 'val10');
+
+
+DROP TABLE IF EXISTS `pso_data_validator`.`dvt_vol_composite_pk`;
+CREATE TABLE `pso_data_validator`.`dvt_vol_composite_pk` (
+  key1 INT NOT NULL
+, key2 INT NOT NULL
+, key3 INT NOT NULL
+, val  INT
+, PRIMARY KEY (key1, key2, key3)
+) COMMENT='Integration test table used to test composite primary keys with volume.';
+
+INSERT INTO `pso_data_validator`.`dvt_vol_composite_pk` (key1, key2, key3, val)
+SELECT
+    ((seq - 1) % 10) + 1,
+    (FLOOR((seq - 1) / 10) % 10) + 1,
+    seq,
+    seq * 10
+FROM (
+    SELECT
+        1 + t1.n + t2.n * 10 + t3.n * 100 + t4.n * 1000 AS seq
+    FROM
+        (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) t1
+        CROSS JOIN (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) t2
+        CROSS JOIN (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) t3
+        CROSS JOIN (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) t4
+) seq_table;

@@ -254,3 +254,7 @@ class Backend(BaseAlchemyBackend):
 
     def list_databases(self) -> list:
         return sa.inspect(self.con).get_schema_names()
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return True

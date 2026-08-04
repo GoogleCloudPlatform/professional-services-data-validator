@@ -225,6 +225,10 @@ class Backend(BaseSQLBackend):
         # TODO: Related to issue-1253, it's not clear if this is possible, we should revisit if it becomes a requirement.
         return None
 
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return True
+
 
 def parse_instance_and_dataset(
     instance: str, dataset: Optional[str] = None

@@ -275,3 +275,7 @@ class Backend(BaseAlchemyBackend):
             return_table = new_op.to_expr()
 
         return return_table
+
+    def dvt_tuple_in_supported(self) -> bool:
+        """Return True if backend client supports native SQL tuple/struct IN expressions."""
+        return False
