@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 from unittest import mock
 
 import ibis
@@ -210,3 +211,60 @@ def test_filter_field_large_or_compilation():
         import pytest
 
         pytest.fail("RecursionError encountered while compiling large OR condition.")
+
+
+def test_compile_tuple_in_timestamps_and_dates():
+    df = pandas.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "ts": [
+                pandas.Timestamp("2026-08-04 07:12:44"),
+                datetime.date(2026, 8, 4),
+                None,
+            ],
+        }
+    )
+
+    for client_name in ["postgres", "oracle", "mssql"]:
+        mock_client = mock.MagicMock()
+        mock_client.name = client_name
+        mock_client.dvt_tuple_in_supported.return_value = True
+
+        ff = FilterField.composite_isin(mock_client, ["id", "ts"], df)
+        table = ibis.table([("id", "int64"), ("ts", "timestamp")], name="t")
+        compiled = ff.compile(table)
+        sql_str = str(compiled)
+
+        if client_name == "oracle":
+            assert (
+                "TO_TIMESTAMP('2026-08-04 07:12:44.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')"
+                in sql_str
+            )
+            assert "TO_DATE('2026-08-04', 'YYYY-MM-DD')" in sql_str
+            assert "NULL" in sql_str
+        else:
+            assert "'2026-08-04 07:12:44'" in sql_str
+            assert "'2026-08-04'" in sql_str
+            assert "NULL" in sql_str
+
+
+def test_compile_isin_timestamps_and_dates():
+    values = [pandas.Timestamp("2026-08-04 07:12:44"), datetime.date(2026, 8, 4), None]
+
+    for client_name in ["postgres", "oracle", "mssql"]:
+        ff = FilterField.isin("ts", values, backend_name=client_name)
+        table = ibis.table([("id", "int64"), ("ts", "timestamp")], name="t")
+        compiled = ff.compile(table)
+        sql_str = str(compiled)
+
+        if client_name == "oracle":
+            assert (
+                "TO_TIMESTAMP('2026-08-04 07:12:44.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')"
+                in sql_str
+            )
+            assert "TO_DATE('2026-08-04', 'YYYY-MM-DD')" in sql_str
+            assert "NULL" in sql_str
+        else:
+            assert "'2026-08-04 07:12:44'" in sql_str
+            assert "'2026-08-04'" in sql_str
+            assert "NULL" in sql_str
