@@ -946,11 +946,7 @@ def test_varchar_pk_query_row_validation_to_bigquery():
 )
 def test_row_validation_datetime_pk_to_bigquery():
     """Test datetime primary key join columns"""
-    # TODO Remove use_random_row option below when issue-1445 is actioned.
-    id_column_row_validation_test(
-        "pso_data_validator.dvt_datetime_id",
-        use_random_row=False,
-    )
+    id_column_row_validation_test("pso_data_validator.dvt_datetime_id")
 
 
 @mock.patch(
