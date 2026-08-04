@@ -211,10 +211,7 @@ class FilterField(object):
         """
         max_batch_size = clients.get_max_in_list_size(client) or 1000
 
-        if (
-            hasattr(client, "dvt_tuple_in_supported")
-            and client.dvt_tuple_in_supported()
-        ):
+        if clients.dvt_tuple_in_supported(client):
             tuples_list = [tuple(x) for x in values_df[columns].to_numpy()]
             if len(tuples_list) > max_batch_size:
                 sub_batches = [

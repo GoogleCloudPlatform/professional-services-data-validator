@@ -14,10 +14,10 @@ This plan details the root cause, explores alternative architectural solutions, 
 
 ### 1.1 Current Implementation Flow
 
-Random row sampling for row validation is triggered in [`data_validation/data_validation.py`](file://./data_validation/data_validation.py#L130-L237):
+Random row sampling for row validation is triggered in `data_validation/data_validation.py`:
 
 1. **First Primary Key Truncation**:
-   In [`data_validation.py:L135-L146`](file://./data_validation/data_validation.py#L135-L146), DVT explicitly extracts only the first primary key column:
+   In `data_validation/data_validation.py`, DVT explicitly extracts only the first primary key column:
    ```python
    # Filter for only first primary key (multi-pk filter not supported)
    source_pk_column = self.config_manager.primary_keys[0][consts.CONFIG_SOURCE_COLUMN]
@@ -30,10 +30,10 @@ Random row sampling for row validation is triggered in [`data_validation/data_va
    ```
 
 2. **Querying Sampled Values**:
-   [`RandomRowBuilder`](file://./data_validation/query_builder/random_row_builder.py#L43-L117) queries the source database for `batch_size` (e.g. 10,000) random values of `source_pk_column`.
+   `RandomRowBuilder` queries the source database for `batch_size` (e.g. 10,000) random values of `source_pk_column`.
 
 3. **Applying `ISIN` Filter**:
-   In [`data_validation.py:L228-L236`](file://./data_validation/data_validation.py#L228-L236), DVT creates a single `ISIN` filter:
+   In `data_validation.py`, DVT creates a single `ISIN` filter:
    ```sql
    WHERE source_pk_col IN ('val1', 'val2', 'val3', ...)
    ```
@@ -69,7 +69,7 @@ WHERE (col1 = 'A' AND col2 = 1 AND col3 = 'X')
   - SQL query string size grows linearly with batch size ($N \times \text{columns}$).
 - **Mitigations**:
   - Automatically reduce default `random_row_batch_size` for composite key tables (e.g. 500–1,000 rows).
-  - Split large IN-lists into sub-batches (similar to existing `get_max_in_list_size()` logic in [`validation_builder.py:L78`](file://./data_validation/validation_builder.py#L78)).
+  - Split large IN-lists into sub-batches (similar to existing `get_max_in_list_size()` logic in `validation_builder.py`).
 
 ---
 
@@ -210,7 +210,7 @@ Caveat: the 3 columns were numeric, which gives us a smaller query string length
 ## 4. Implementation Roadmap (Phased Approach)
 
 ### Phase 1: Enable Multi-Column Sampling in `RandomRowBuilder`
-- In [`data_validation/data_validation.py`](file://./data_validation/data_validation.py#L143-L146), update `RandomRowBuilder` initialization to pass **all** source primary key columns:
+- In `data_validation/data_validation.py`, update `RandomRowBuilder` initialization to pass **all** source primary key columns:
   ```python
   source_pk_columns = [
       pk[consts.CONFIG_SOURCE_COLUMN] for pk in self.config_manager.primary_keys
@@ -223,11 +223,11 @@ Caveat: the 3 columns were numeric, which gives us a smaller query string length
       self.config_manager.random_row_batch_size(),
   )
   ```
-- Note: [`RandomRowBuilder`](file://./data_validation/query_builder/random_row_builder.py#L43) already accepts `List[str]` for `primary_keys` and executes `table[self.primary_keys]`, returning a pandas DataFrame with all primary key columns.
+- Note: `RandomRowBuilder` already accepts `List[str]` for `primary_keys` and executes `table[self.primary_keys]`, returning a pandas DataFrame with all primary key columns.
 
 ### Phase 2: Add Hybrid Engine-Aware `FilterField.composite_isin`
 
-In [`data_validation/query_builder/query_builder.py`](file://./data_validation/query_builder/query_builder.py#L123), implement **Solution 4 (Hybrid Engine-Aware Strategy)** by:
+In `data_validation/query_builder/query_builder.py`, implement **Solution 4 (Hybrid Engine-Aware Strategy)** by:
 1. Adding `@staticmethod def and_(field_list: list)` to `FilterField` and updating `compile()` to support recursive compilation for both `ibis.or_` and `ibis.and_`.
 2. Adding a `dvt_tuple_in_supported() -> bool` method to each database backend (returning `True` for engines like PostgreSQL, MySQL, Oracle, Snowflake, and `False` by default on SQL Server, Spanner, Teradata, BigQuery, and Db2).
 3. Extending `FilterField` with `@staticmethod def composite_isin(...)` to check `client.dvt_tuple_in_supported()`:
@@ -334,12 +334,12 @@ compiled_ibis = filter_obj.compile(ibis_table)
   *(Note: BigQuery uses Path 2 due to Ibis struct literal compilation limits, unless custom STRUCT literal rules are added).*
 
 ### Phase 3: Integration in `ValidationBuilder` & `data_validation.py`
-- In `_add_random_row_filter()` ([`data_validation.py:L228`](file://./data_validation/data_validation.py#L228)), detect single vs composite primary keys.
+- In `_add_random_row_filter()` in `data_validation.py`, detect single vs composite primary keys.
 - If single PK: retain existing optimized single-column `ISIN` filter path.
 - If composite PK: apply `composite_isin` filter to source and target builders, ensuring that DataFrame columns are mapped from `source_pk_columns` to `target_pk_columns` when building the target filter.
 
 #### 3.1 Critical Edge Cases: Multi-Column Binary, Padded Char, NULLs, & Column Mapping
-Currently, [`data_validation.py:L163-L227`](file://./data_validation/data_validation.py#L163-L227) performs special formatting only for `primary_keys[0]`. When supporting composite primary keys, `_add_random_row_filter()` must loop across **all** primary key columns (`source_pk_columns` and `target_pk_columns`) to:
+Currently, `data_validation.py` performs special formatting only for `primary_keys[0]`. When supporting composite primary keys, `_add_random_row_filter()` must loop across **all** primary key columns (`source_pk_columns` and `target_pk_columns`) to:
 1. **Binary Primary Keys**:
    - For any column where `query[pk_col].type().is_binary()` is true, cast that column to `STRING` (hex) before executing the sample query:
      ```python
@@ -370,7 +370,7 @@ Currently, [`data_validation.py:L163-L227`](file://./data_validation/data_valida
 
 ### Phase 4: AST Depth Safeguards & Chunking for Composite Keys
 - **Expression Depth Limits**: An `OR-of-ANDs` WHERE clause for 10,000 sampled rows on a 3-column key creates an AST with 30,000 equality comparisons. Some database parsers (Oracle, SQL Server, Teradata) enforce limits on query text size or OR-branch count.
-- **Chunking Strategy**: Reuse DVT's `get_max_in_list_size(client)` pattern ([`validation_builder.py:L78`](file://./data_validation/validation_builder.py#L78)) to chunk composite row filters into sub-batches of `max_in_list_size` (e.g. 500–1000 tuples per `OR` block), or automatically cap default `random_row_batch_size` for composite primary keys.
+- **Chunking Strategy**: Reuse DVT's `get_max_in_list_size(client)` pattern to chunk composite row filters into sub-batches of `max_in_list_size` (e.g. 500–1000 tuples per `OR` block), or automatically cap default `random_row_batch_size` for composite primary keys.
 
 ---
 
@@ -380,7 +380,7 @@ Currently, [`data_validation.py:L163-L227`](file://./data_validation/data_valida
 - **`FilterField.composite_isin` Unit Tests (`tests/unit/query_builder/test_filter_field.py` / `test_query_builder.py`)**:
   - Test the **Supported Engine path (`client.tuple_in_supported() == True`)**: verify `FilterField.tuple_in()` is returned containing the expected list of tuples.
   - Test the **Universal Fallback path (`client.tuple_in_supported() == False`)**: verify an `OR` of `AND` equality expressions (`FilterField.or_([FilterField.and_(...)])`) is returned.
-- **`_add_random_row_filter()` Unit Tests ([`tests/unit/test_data_validation.py`](file://./tests/unit/test_data_validation.py))**:
+- **`_add_random_row_filter()` Unit Tests (`tests/unit/test_data_validation.py`)**:
   - Verify that when `len(primary_keys) > 1`, all primary key columns are passed to `RandomRowBuilder` and `FilterField.composite_isin()` is called.
   - Verify per-column binary casting and Oracle padded `CHAR` left-justification (`ljust`) across composite primary keys.
   - Verify that when primary keys have different column names on source vs. target (e.g., `src_id=tgt_id`), the target filter is constructed using `target_pk_columns` and mapped DataFrame column names without raising a `KeyError`.
@@ -388,7 +388,7 @@ Currently, [`data_validation.py:L163-L227`](file://./data_validation/data_valida
 ### 5.2 Integration & System Testing Strategy
 - **Test Schema & Data Across All Engines (`tests/resources/*.sql`)**:
   - Add a dedicated composite primary key test table `dvt_composite_pk` spanning multiple data types (e.g., Integer, String/`VARCHAR`, and padded `CHAR`) across **all database engines** in their respective test resource files.
-  - *Example DDL (Oracle syntax, e.g. in [`tests/resources/oracle_test_tables.sql`](file://./tests/resources/oracle_test_tables.sql)):*
+  - *Example DDL (Oracle syntax, e.g. in `tests/resources/oracle_test_tables.sql`):*
     ```sql
     CREATE TABLE pso_data_validator.dvt_composite_pk (
         key1 NUMBER(8) NOT NULL,

@@ -24,6 +24,7 @@ import pandas
 
 from data_validation import combiner, consts, metadata, util
 from data_validation.config_manager import ConfigManager
+from data_validation.query_builder.query_builder import FilterField
 from data_validation.query_builder.random_row_builder import RandomRowBuilder
 from data_validation.schema_validation import SchemaValidation
 from data_validation.validation_builder import ValidationBuilder
@@ -237,8 +238,6 @@ class DataValidation(object):
 
             self.validation_builder.add_filter(filter_field)
         else:
-            from data_validation.query_builder.query_builder import FilterField
-
             source_df = random_rows[source_pk_columns].copy()
             col_map = dict(zip(source_pk_columns, target_pk_columns))
             target_df = source_df.rename(columns=col_map)

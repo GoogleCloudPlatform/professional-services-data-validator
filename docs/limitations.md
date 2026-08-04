@@ -30,8 +30,8 @@
 ## Oracle
 
 - Requires the `oracledb` package to be installed as an extra dependency.
-- Tables with lower case/mixed case identifiers are not currently supported. See (issue-1773)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1773] for details.
-- Random row validation does not work with GUID/UUID primary keys. See (issue-1366)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1366] for details.
+- Tables with lower case/mixed case identifiers are not currently supported. See [issue-1773](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1773) for details.
+- Random row validation does not work with GUID/UUID primary keys. See [issue-1366](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1366) for details.
 - Oracle LONG and LONG RAW data types are not supported.
 - Oracle BLOB, CLOB, and NCLOB data types are not supported for row validation (except when used as part of a custom query).
 
@@ -44,7 +44,7 @@
 - Requires the `pyodbc` package to be installed as an extra dependency plus an OS level ODBC driver manager and client.
 - SQL Server does not have a function to "right trim" all whitespace, only spaces, therefore any validations relying on removal of trailing white space may encounter issues.
 - The `text` and `ntext` data types are incompatible with the `len()` therefore the `datalength()` function ius used in it's place which will give different results for multibyte characters.
-- The `image` data type is not currently supported, these columns are skipped when validated. See (issue-1578)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1578] for details.
+- The `image` data type is not currently supported, these columns are skipped when validated. See [issue-1578](https://github.com/GoogleCloudPlatform/professional-services-data-validator/issues/1578) for details.
 - SQL Server's `AVG()` function can overflow and return an arithmetic overflow error when calculating the average of a max-precision decimal column (e.g. `decimal(38)`). If you encounter this, exclude the column(s) from the list of columns passed to the `--avg` option.
 - SQL Server has a limit of 2,100 query parameters. This effects `--use-random-row` validation when using composite primary keys. `--random-row-batch-size` should be limited to 2,100 minus margin for other filters, divided by the number of primary key columns.
 
@@ -60,4 +60,4 @@
 ## Teradata
 
 - Requires the `teradatasql` package to be installed as an extra dependency.
-- Teradata does not have a native SHA-256 hash function but a third party UDF can be (installed)[https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#teradata].
+- Teradata does not have a native SHA-256 hash function but a third party UDF can be [installed](https://github.com/GoogleCloudPlatform/professional-services-data-validator/blob/develop/docs/installation.md#teradata).
