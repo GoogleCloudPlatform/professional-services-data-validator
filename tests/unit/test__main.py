@@ -699,3 +699,53 @@ def test_run_validation_exception_handling(mock_data_validation):
         in str(exc_info.value)
     )
     assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+@mock.patch("data_validation.config_manager.ConfigManager.build_config_manager")
+@mock.patch("data_validation.cli_tools.get_pre_build_configs")
+def test_build_config_managers_from_args_raises_build_config_exception(
+    mock_get_pre, mock_build_mgr
+):
+    mock_get_pre.return_value = [
+        {consts.CONFIG_PRE_BUILD_TABLE_OBJ: {consts.CONFIG_TABLE_NAME: "test_table"}}
+    ]
+    mock_build_mgr.side_effect = ValueError("Invalid schema")
+
+    args = argparse.Namespace()
+    with pytest.raises(exceptions.BuildConfigException) as exc_info:
+        main.build_config_managers_from_args(args, "column")
+
+    assert "Validation failed for table 'test_table': Invalid schema" in str(
+        exc_info.value
+    )
+    assert isinstance(exc_info.value.__cause__, ValueError)
+
+
+@mock.patch("data_validation.config_manager.ConfigManager.build_config_manager")
+@mock.patch("data_validation.cli_tools.get_pre_build_configs")
+def test_build_config_managers_from_args_re_raises_original_exception_when_table_obj_missing(
+    mock_get_pre, mock_build_mgr
+):
+    mock_get_pre.return_value = [{}]
+    mock_build_mgr.side_effect = ValueError("Invalid schema")
+
+    args = argparse.Namespace()
+    with pytest.raises(ValueError) as exc_info:
+        main.build_config_managers_from_args(args, "column")
+
+    assert str(exc_info.value) == "Invalid schema"
+
+
+@mock.patch("data_validation.config_manager.ConfigManager.build_config_manager")
+@mock.patch("data_validation.cli_tools.get_pre_build_configs")
+def test_build_config_managers_from_args_re_raises_original_exception_when_table_name_missing(
+    mock_get_pre, mock_build_mgr
+):
+    mock_get_pre.return_value = [{consts.CONFIG_PRE_BUILD_TABLE_OBJ: {}}]
+    mock_build_mgr.side_effect = ValueError("Invalid schema")
+
+    args = argparse.Namespace()
+    with pytest.raises(ValueError) as exc_info:
+        main.build_config_managers_from_args(args, "column")
+
+    assert str(exc_info.value) == "Invalid schema"

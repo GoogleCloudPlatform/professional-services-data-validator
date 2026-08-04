@@ -369,7 +369,9 @@ def build_config_managers_from_args(
                     raise exceptions.BuildConfigException(
                         f"Validation failed for table '{table_obj[consts.CONFIG_TABLE_NAME]}': {e}"
                     ) from e
-                raise
+                raise exceptions.BuildConfigException(
+                    f"Validation build failed: {e}"
+                ) from e
             # Append ConfigManager object to configs list
             configs.append(config_manager)
         return configs
