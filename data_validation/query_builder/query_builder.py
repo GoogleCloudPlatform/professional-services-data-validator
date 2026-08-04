@@ -280,8 +280,6 @@ class FilterField(object):
         raw_sql = f"{cols_str} IN ({tuples_str})"
         return operations.compile_raw_sql(ibis_table, raw_sql)
 
-
-
     def compile(self, ibis_table):
         if self.expr is None:
             return operations.compile_raw_sql(ibis_table, self.left)
